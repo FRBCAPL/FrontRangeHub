@@ -51,6 +51,7 @@ import {
   markFamilyCoachSeen
 } from '@shared/utils/estateFamilyCoach.js';
 import './EstateInventoryApp.css';
+import EstatePanelErrorBoundary from './EstatePanelErrorBoundary';
 
 const SiblingPortal = () => {
   const navigate = useNavigate();
@@ -679,6 +680,7 @@ const SiblingPortal = () => {
   const coachTargetId = showCoach ? FAMILY_COACH_STEPS[coachStep]?.targetId || '' : '';
 
   return (
+    <EstatePanelErrorBoundary title="Family portal failed to render." label="family">
     <EstateBillingLockedGate caseNumber={routeCase || caseNumber} roleLabel="The family portal">
     <div
       className={`estate-inventory ei-portal ei-portal--family${showCoach ? ' is-coaching' : ''}`}
@@ -983,6 +985,7 @@ const SiblingPortal = () => {
       <EstateSystemDisclaimer />
     </div>
     </EstateBillingLockedGate>
+    </EstatePanelErrorBoundary>
   );
 };
 

@@ -121,6 +121,12 @@ const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClos
       setError('Resolve the required readiness items before continuing.');
       return;
     }
+    if (step === 0 && !readiness?.claimsEnded && claimsOverrideReason.trim().length < 10) {
+      setError(
+        'Enter a written reason (at least 10 characters) before distributing while the claims period is still open.'
+      );
+      return;
+    }
     if (step === 1) {
       if (distributionCash < 0) {
         setError('Cash distribution cannot be negative.');

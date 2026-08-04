@@ -184,6 +184,7 @@ const EstateLedgerModal = ({
             caseNumber={caseNumber}
             estateName={summary.estateName}
             accounts={summary.accounts}
+            financeSummary={summary}
             readOnly={readOnly}
             onChanged={onChanged}
           />

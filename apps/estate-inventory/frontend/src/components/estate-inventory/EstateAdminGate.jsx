@@ -10,6 +10,7 @@ import { ESTATEIT_PATH, estateDisplayCaseNumber, estateitCasePath } from '@share
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import EstateInventoryApp from './EstateInventoryApp';
+import EstatePanelErrorBoundary from './EstatePanelErrorBoundary';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import ForceAdminPasswordModal from './ForceAdminPasswordModal';
 import EstateAdminPinResetModal from './EstateAdminPinResetModal';
@@ -135,23 +136,25 @@ const EstateAdminGate = () => {
       );
     }
     return (
-      <EstateInventoryApp
-        onLock={() => {
-          // Lock this device only — same estate, require admin PIN again.
-          estateInventoryService.clearAdminUnlock();
-          setUnlocked(false);
-          setMustChangePassword(false);
-          setPassword('');
-        }}
-        onLeaveEstate={async () => {
-          const path = await leaveCurrentEstateDestination();
-          navigate(path);
-        }}
-        onSignOutApp={async () => {
-          const result = await signOutEstateVault();
-          navigate(result.path || ESTATEIT_PATH);
-        }}
-      />
+      <EstatePanelErrorBoundary title="Admin workspace failed to render." label="admin">
+        <EstateInventoryApp
+          onLock={() => {
+            // Lock this device only — same estate, require admin PIN again.
+            estateInventoryService.clearAdminUnlock();
+            setUnlocked(false);
+            setMustChangePassword(false);
+            setPassword('');
+          }}
+          onLeaveEstate={async () => {
+            const path = await leaveCurrentEstateDestination();
+            navigate(path);
+          }}
+          onSignOutApp={async () => {
+            const result = await signOutEstateVault();
+            navigate(result.path || ESTATEIT_PATH);
+          }}
+        />
+      </EstatePanelErrorBoundary>
     );
   }
 

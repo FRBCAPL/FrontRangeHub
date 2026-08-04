@@ -15,11 +15,13 @@ import { acknowledgementStatusLabel } from '@shared/utils/estateAcknowledgement.
 import DistributionWizard from './DistributionWizard.jsx';
 import DistributionReceiptModal from '../DistributionReceiptModal.jsx';
 import EstateDecisionNotesModal from '../EstateDecisionNotesModal.jsx';
+import EstatePanelErrorBoundary from '../EstatePanelErrorBoundary.jsx';
 
 const LedgerDistributionsPanel = ({
   caseNumber,
   estateName,
   accounts = [],
+  financeSummary = null,
   readOnly,
   onChanged
 }) => {
@@ -31,22 +33,32 @@ const LedgerDistributionsPanel = ({
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [receipt, setReceipt] = useState(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const load = async () => {
     setBusy(true);
     setError('');
-    const result = await estateInventoryService.getDistributionReadiness(caseNumber);
-    setBusy(false);
-    if (!result.success) {
-      setError(result.error || 'Could not load distributions.');
-      return;
+    try {
+      const result = await estateInventoryService.getDistributionReadiness(caseNumber, {
+        finance: financeSummary || undefined
+      });
+      if (!result.success) {
+        setError(result.error || 'Could not load distributions.');
+        setReadiness(null);
+        return;
+      }
+      setReadiness(result.data);
+    } catch (err) {
+      setError(err?.message || 'Could not load distributions.');
+      setReadiness(null);
+    } finally {
+      setBusy(false);
     }
-    setReadiness(result.data);
   };
 
   useEffect(() => {
     load();
-  }, [caseNumber]);
+  }, [caseNumber, reloadToken]);
 
   const finishDistribution = async () => {
     setShowWizard(false);
@@ -127,7 +139,12 @@ const LedgerDistributionsPanel = ({
     caseNumber
   });
 
-  const distributions = readiness?.existingDistributions || [];
+  const distributions = Array.isArray(readiness?.existingDistributions)
+    ? readiness.existingDistributions
+    : [];
+  const finalizedBatchCount = distributions.filter(
+    (row) => row?.status === 'finalized'
+  ).length;
   const balanceStale =
     readiness &&
     distributionsNeedBalanceUpdate({
@@ -137,7 +154,11 @@ const LedgerDistributionsPanel = ({
     }).stale;
 
   return (
-    <>
+    <EstatePanelErrorBoundary
+      title="Give to heirs failed to render."
+      label="distributions"
+      onRetry={() => setReloadToken((n) => n + 1)}
+    >
       <div className="ei-accounts-section-head">
         <div>
           <h4>Distributions & receipts</h4>
@@ -157,7 +178,21 @@ const LedgerDistributionsPanel = ({
         ) : null}
       </div>
 
-      {error ? <div className="ei-error">{error}</div> : null}
+      {error ? (
+        <div className="ei-error">
+          {error}
+          <div className="ei-btn-row" style={{ marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className="ei-btn ei-btn-small"
+              onClick={() => setReloadToken((n) => n + 1)}
+              disabled={busy}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : null}
       {info ? <p className="ei-status">{info}</p> : null}
       {balanceStale ? (
         <div className="ei-distribution-final-warning" role="status">
@@ -179,14 +214,18 @@ const LedgerDistributionsPanel = ({
           </div>
           <div>
             <span>Finalized batches</span>
-            <strong>{distributions.filter((row) => row.status === 'finalized').length}</strong>
+            <strong>{finalizedBatchCount}</strong>
           </div>
         </div>
       ) : null}
 
       {distributions.length ? (
         <section className="ei-distribution-history">
-          {distributions.map((distribution) => (
+          {distributions.map((distribution) => {
+            const recipients = Array.isArray(distribution?.recipients)
+              ? distribution.recipients
+              : [];
+            return (
             <article
               key={distribution.id}
               className={distribution.status === 'void' ? 'is-void' : ''}
@@ -221,8 +260,13 @@ const LedgerDistributionsPanel = ({
                   {distribution.void_reason ? ` · ${distribution.void_reason}` : ''}
                 </p>
               ) : null}
+              {String(distribution.claims_override_reason || '').trim() ? (
+                <p className="ei-settings-hint">
+                  Early-distribution reason: {distribution.claims_override_reason}
+                </p>
+              ) : null}
               <ul>
-                {(distribution.recipients || []).map((recipient) => (
+                {recipients.map((recipient) => (
                   <li key={recipient.id}>
                     <div>
                       <strong>{recipient.recipient_name}</strong>
@@ -310,7 +354,8 @@ const LedgerDistributionsPanel = ({
                 </div>
               ) : null}
             </article>
-          ))}
+            );
+          })}
         </section>
       ) : !busy ? (
         <p className="ei-settings-hint">
@@ -318,14 +363,16 @@ const LedgerDistributionsPanel = ({
         </p>
       ) : null}
 
-      <DistributionWizard
-        open={showWizard}
-        readiness={readiness}
-        accounts={accounts}
-        caseNumber={caseNumber}
-        onClose={() => setShowWizard(false)}
-        onDone={finishDistribution}
-      />
+      {showWizard && readiness ? (
+        <DistributionWizard
+          open={showWizard}
+          readiness={readiness}
+          accounts={readiness.finance?.accounts || accounts}
+          caseNumber={caseNumber}
+          onClose={() => setShowWizard(false)}
+          onDone={finishDistribution}
+        />
+      ) : null}
       <DistributionReceiptModal
         open={Boolean(receipt)}
         payload={receipt}
@@ -340,7 +387,7 @@ const LedgerDistributionsPanel = ({
         distributionId={decisionContext.distributionId || ''}
         onMessage={setInfo}
       />
-    </>
+    </EstatePanelErrorBoundary>
   );
 };
 

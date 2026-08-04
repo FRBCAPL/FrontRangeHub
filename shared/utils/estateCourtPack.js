@@ -173,8 +173,12 @@ function auctionRows(lines) {
 
 function distributionRows(distributions) {
   return (distributions || [])
-    .flatMap((distribution) =>
-      (distribution.recipients || []).map(
+    .flatMap((distribution) => {
+      const recipients = Array.isArray(distribution.recipients)
+        ? distribution.recipients
+        : [];
+      const override = String(distribution.claims_override_reason || '').trim();
+      const rows = recipients.map(
         (recipient) => `<tr>
           <td>${escapeHtml(formatEstateDisplayDate(distribution.distribution_date) || distribution.distribution_date || '—')}</td>
           <td>${escapeHtml(distributionClassificationLabel(distribution.classification))}</td>
@@ -199,8 +203,14 @@ function distributionRows(distributions) {
               : 'Finalized'
           )}</td>
         </tr>`
-      )
-    )
+      );
+      if (override) {
+        rows.push(
+          `<tr><td colspan="7"><em>Early-distribution written reason:</em> ${escapeHtml(override)}</td></tr>`
+        );
+      }
+      return rows;
+    })
     .join('');
 }
 

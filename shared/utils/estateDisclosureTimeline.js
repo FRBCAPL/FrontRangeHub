@@ -27,6 +27,9 @@ function fmt(value) {
  * @param {Array}  [params.distributions] used to recover distributed counts
  * @param {object} [params.inventoryCounts] optional precomputed consistent counts
  * @param {object} [params.auctionBreakdown] optional precomputed auction breakdown
+ * @param {number|null} [params.estateFinalizedBatchCount] estate-wide finalized batches
+ * @param {number|null} [params.myDistributionBatchCount] batches that include this viewer
+ * @param {boolean} [params.distributionsAreRecipientScoped]
  * @param {Date}   [params.now]
  */
 export function buildDisclosureTimeline({
@@ -35,6 +38,9 @@ export function buildDisclosureTimeline({
   distributions = [],
   inventoryCounts = null,
   auctionBreakdown = null,
+  estateFinalizedBatchCount = null,
+  myDistributionBatchCount = null,
+  distributionsAreRecipientScoped = false,
   now = new Date()
 } = {}) {
   const probate = resolveProbateWindow(settings);
@@ -44,9 +50,19 @@ export function buildDisclosureTimeline({
     buildConsistentInventoryCounts({ items, distributions });
   const auctionStatus =
     auctionBreakdown || buildAuctionStatusBreakdown(items);
-  const finalized = (distributions || []).filter(
-    (row) => !row.status || row.status === 'finalized'
+  const finalized = (Array.isArray(distributions) ? distributions : []).filter(
+    (row) => row?.status === 'finalized'
   );
+  const myBatchCount =
+    myDistributionBatchCount != null
+      ? Number(myDistributionBatchCount) || 0
+      : finalized.length;
+  const estateBatchCount =
+    estateFinalizedBatchCount != null
+      ? Number(estateFinalizedBatchCount) || 0
+      : distributionsAreRecipientScoped
+        ? null
+        : finalized.length;
   const firstDistribution = finalized
     .map((row) => row.distribution_date || row.finalized_at)
     .filter(Boolean)
@@ -55,7 +71,8 @@ export function buildDisclosureTimeline({
   const inventoryComplete = Boolean(settings.inventory_completed_at);
   const estateClosed = Boolean(settings.closed_at);
   const hasPreliminaryAccounting =
-    finalized.length > 0 || Number(inventory.approvedForSale) > 0;
+    (estateBatchCount != null ? estateBatchCount : myBatchCount) > 0 ||
+    Number(inventory.approvedForSale) > 0;
 
   const events = [];
 
@@ -166,13 +183,25 @@ export function buildDisclosureTimeline({
     key: 'distributions',
     date: firstDistribution || null,
     dateLabel: firstDistribution ? fmt(firstDistribution) : null,
-    title: finalized.length
-      ? `${finalized.length} distribution batch(es) recorded`
-      : 'Distributions',
-    detail: finalized.length
-      ? `${inventory.distributed} property item(s) transferred across recorded batches — not necessarily the final residual split.`
-      : 'No distributions recorded yet.',
-    status: finalized.length ? 'done' : 'upcoming'
+    title:
+      estateBatchCount != null
+        ? estateBatchCount
+          ? `${estateBatchCount} estate distribution batch(es) recorded`
+          : 'Distributions'
+        : myBatchCount
+          ? `${myBatchCount} distribution batch(es) that include you`
+          : 'Distributions',
+    detail:
+      estateBatchCount != null
+        ? estateBatchCount
+          ? myBatchCount < estateBatchCount
+            ? `${myBatchCount} of those batches include you. ${inventory.distributed} property item(s) transferred across estate batches — not necessarily the final residual split.`
+            : `${inventory.distributed} property item(s) transferred across recorded batches — not necessarily the final residual split.`
+          : 'No distributions recorded yet.'
+        : myBatchCount
+          ? `${inventory.distributed} property item(s) on batches that include you. Estate-wide finalized batch count may be higher (admin / Evidence Pack).`
+          : 'No distributions recorded for you yet.',
+    status: (estateBatchCount != null ? estateBatchCount : myBatchCount) ? 'done' : 'upcoming'
   });
 
   events.push({

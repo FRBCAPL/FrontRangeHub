@@ -16,18 +16,30 @@ const HeirDisclosureTimeline = ({
   caseNumber
 }) => {
   const [serverCounts, setServerCounts] = useState(null);
+  const [batchCounts, setBatchCounts] = useState(null);
   const [open, setOpen] = useState(false);
   const [activeKey, setActiveKey] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const result = await estateInventoryService.getHeirTransparencySummary(caseNumber);
-      if (cancelled || !result.success) return;
-      setServerCounts({
-        inventory: result.data?.inventory || null,
-        auctionBreakdown: result.data?.auction_breakdown || null
-      });
+      const [summaryResult, batchResult] = await Promise.all([
+        estateInventoryService.getHeirTransparencySummary(caseNumber),
+        estateInventoryService.getHeirDistributionBatchCounts(caseNumber)
+      ]);
+      if (cancelled) return;
+      if (summaryResult.success) {
+        setServerCounts({
+          inventory: summaryResult.data?.inventory || null,
+          auctionBreakdown: summaryResult.data?.auction_breakdown || null
+        });
+      }
+      if (batchResult.success) {
+        setBatchCounts({
+          estateFinalizedBatchCount: batchResult.data?.finalizedBatchCount ?? null,
+          myDistributionBatchCount: batchResult.data?.myDistributionBatchCount ?? null
+        });
+      }
     })();
     return () => {
       cancelled = true;
@@ -73,9 +85,12 @@ const HeirDisclosureTimeline = ({
       items,
       distributions,
       inventoryCounts,
-      auctionBreakdown
+      auctionBreakdown,
+      estateFinalizedBatchCount: batchCounts?.estateFinalizedBatchCount,
+      myDistributionBatchCount: batchCounts?.myDistributionBatchCount,
+      distributionsAreRecipientScoped: true
     });
-  }, [settings, items, distributions, serverCounts]);
+  }, [settings, items, distributions, serverCounts, batchCounts]);
 
   const events = timeline.events || [];
   const doneCount = events.filter((e) => e.status === 'done').length;

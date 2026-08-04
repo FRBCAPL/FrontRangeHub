@@ -4789,8 +4789,10 @@ export async function listEstateDistributions(caseNumber) {
   return ok(data || []);
 }
 
-export async function getDistributionReadiness(caseNumber) {
+export async function getDistributionReadiness(caseNumber, options = {}) {
   const activeCase = caseNumber || getActiveEstateCase();
+  const cachedFinance =
+    options.finance && typeof options.finance === 'object' ? options.finance : null;
   const [
     settingsResult,
     financeResult,
@@ -4800,7 +4802,9 @@ export async function getDistributionReadiness(caseNumber) {
     distributionsResult
   ] = await Promise.all([
     getSettings(activeCase),
-    getFinanceSummary(activeCase),
+    cachedFinance
+      ? Promise.resolve(ok(cachedFinance))
+      : getFinanceSummary(activeCase),
     listSiblingAccounts(activeCase),
     listAllItemsWithRooms(activeCase),
     listPendingReviewItems(activeCase),
@@ -4836,6 +4840,9 @@ export async function getDistributionReadiness(caseNumber) {
         Number(finance.prLoansTotal || 0)
     )
   );
+  const existingDistributions = Array.isArray(distributionsResult.data)
+    ? distributionsResult.data
+    : [];
 
   return ok({
     settings,
@@ -4849,9 +4856,7 @@ export async function getDistributionReadiness(caseNumber) {
     inventoryComplete: Boolean(settings.inventory_completed_at),
     liquidAvailable,
     outstandingBids: Number(finance.outstandingBids || 0),
-    existingDistributions: distributionsResult.success
-      ? distributionsResult.data || []
-      : [],
+    existingDistributions: distributionsResult.success ? existingDistributions : [],
     migrationReady: distributionsResult.success
   });
 }
@@ -4881,6 +4886,18 @@ export async function finalizeEstateDistribution({
     .filter((recipient) => recipient.sibling_key);
   if (!normalizedRecipients.length) return fail('Add at least one recipient.');
 
+  const overrideReason = String(claimsOverrideReason || '').trim();
+  const settingsResult = await getSettings(caseNumber);
+  if (settingsResult.success) {
+    const probate = resolveProbateWindow(settingsResult.data || {});
+    const claimsEnded = Boolean(probate.end && new Date() > probate.end);
+    if (!claimsEnded && overrideReason.length < 10) {
+      return fail(
+        'Enter a written reason (at least 10 characters) before distributing while the claims period is still open.'
+      );
+    }
+  }
+
   const { data, error } = await supabase.rpc('estate_finalize_distribution', {
     p_case_number: resolveCaseArg(caseNumber),
     p_distribution_date:
@@ -4888,8 +4905,7 @@ export async function finalizeEstateDistribution({
     p_allocation_method:
       allocationMethod === 'custom' ? 'custom' : 'equal',
     p_notes: String(notes || '').trim() || null,
-    p_claims_override_reason:
-      String(claimsOverrideReason || '').trim() || null,
+    p_claims_override_reason: overrideReason || null,
     p_recipients: normalizedRecipients,
     p_classification: normalizeDistributionClassification(classification)
   });
@@ -4908,9 +4924,18 @@ export async function finalizeEstateDistribution({
     metadata: {
       distribution_id: data?.distribution_id || '',
       field: 'distribution_date',
-      new_value: distributionDate || new Date().toISOString().slice(0, 10)
+      new_value: distributionDate || new Date().toISOString().slice(0, 10),
+      claims_override_reason: overrideReason || null
     }
   });
+  if (overrideReason) {
+    await addDecisionNote({
+      caseNumber,
+      topic: 'distribution_override',
+      note: overrideReason,
+      distributionId: data?.distribution_id || ''
+    });
+  }
 
   // One-action: cash leaving the estate reduces Funds on the chosen account.
   const payFromAccount = String(accountId || '').trim();
@@ -5032,6 +5057,28 @@ export async function getHeirTransparencySummary(caseNumber) {
     return failed;
   }
   return ok(data);
+}
+
+/** Estate-wide vs heir-included finalized distribution batch counts. */
+export async function getHeirDistributionBatchCounts(caseNumber) {
+  const session = getStoredSiblingSession(caseNumber);
+  if (!session?.token) return fail('Sign in to the family portal again.');
+  const { data, error } = await supabase.rpc('estate_heir_distribution_batch_counts', {
+    p_session_token: session.token
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_heir_distribution_batch_counts|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Distribution batch counts need supabase-migrations/estate-heir-distribution-batch-counts-2026-08.sql.'
+      );
+    }
+    return failed;
+  }
+  return ok({
+    finalizedBatchCount: Number(data?.finalized_batch_count) || 0,
+    myDistributionBatchCount: Number(data?.my_distribution_batch_count) || 0
+  });
 }
 
 export async function acknowledgeMyDistribution(recipientId, note, caseNumber, status = 'acknowledged') {
@@ -5604,6 +5651,8 @@ export async function getFormalAccountingStatement(caseNumber) {
     claimsEnded,
     familyUpdatePublished: Boolean(updatesResult.success && (updatesResult.data || []).length)
   });
+  statement.filing_ready = Boolean(statement.completeness?.filingReady);
+  statement.balance_stale = Boolean(statement.completeness?.balanceStale);
   return ok(statement);
   } catch (err) {
     return fail(err?.message || 'Could not build formal accounting.');
@@ -5885,6 +5934,7 @@ const estateInventoryService = {
   voidEstateDistribution,
   listMyInheritance,
   getHeirTransparencySummary,
+  getHeirDistributionBatchCounts,
   acknowledgeMyDistribution,
   setRecipientAcknowledgement,
   addDecisionNote,

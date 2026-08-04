@@ -73,11 +73,34 @@ const EstateFinanceDashboard = ({
   };
 
   if (loading && !summary) {
-    return <p className="ei-status">Loading money overview…</p>;
+    return (
+      <div>
+        <p className="ei-status">Loading money overview…</p>
+        {error ? (
+          <div className="ei-error" style={{ marginTop: '0.5rem' }}>
+            {error}
+            <div className="ei-btn-row" style={{ marginTop: '0.5rem' }}>
+              <button type="button" className="ei-btn ei-btn-small" onClick={() => load()}>
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   if (error && !summary) {
-    return <div className="ei-error">{error}</div>;
+    return (
+      <div className="ei-error">
+        {error}
+        <div className="ei-btn-row" style={{ marginTop: '0.5rem' }}>
+          <button type="button" className="ei-btn ei-btn-small" onClick={() => load()}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!summary) return null;
