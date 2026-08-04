@@ -4,6 +4,7 @@
  */
 
 import { APP_NAME } from './estateInventoryConstants.js';
+import { estatePricingBlurbShort } from './estateBilling.js';
 
 /** Shared trust / storage line — keep footer, FAQ, and What is in sync. */
 export const ESTATE_DATA_TRUST_NOTE =
@@ -42,6 +43,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Export court-supporting reports for counsel to review'
     ],
     recordNote: ESTATE_DATA_TRUST_NOTE,
+    pricingNote: estatePricingBlurbShort(),
     continueLabel: 'Continue'
   },
   boundaries: {
@@ -62,6 +64,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       'You do not need to upload the will, death certificate, or Letters to use Estate Vault.',
       'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
       'Official account balances always come from banks and statements. In Estate Vault you keep Funds up to date; Cash available and Estate balance are calculated from what you recorded — they are supporting ledger totals, not a live bank feed.',
+      estatePricingBlurbShort(),
       ESTATE_DATA_TRUST_NOTE
     ],
     footer:

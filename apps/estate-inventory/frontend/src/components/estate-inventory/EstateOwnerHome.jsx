@@ -14,6 +14,7 @@ import {
   estateDisplayName,
   estateitCasePath
 } from '@shared/utils/estateInventoryConstants.js';
+import { estatePricingBlurbShort } from '@shared/utils/estateBilling.js';
 import EstateCreateEstateModal from './EstateCreateEstateModal';
 import EstateClaimEstateModal from './EstateClaimEstateModal';
 import EstateOwnerSignIn from './EstateOwnerSignIn';
@@ -119,6 +120,9 @@ const EstateOwnerHome = () => {
             Sign out of Estate Vault
           </button>
         </div>
+        <p className="ei-settings-hint" style={{ marginTop: '0.75rem', maxWidth: '36rem' }}>
+          {estatePricingBlurbShort()} See FAQ → Pricing &amp; billing for details.
+        </p>
       </header>
 
       {loading ? <p className="ei-status">Loading…</p> : null}

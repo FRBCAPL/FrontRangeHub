@@ -5,6 +5,11 @@
 
 import { APP_NAME } from './estateInventoryConstants.js';
 import { ESTATE_DATA_TRUST_NOTE } from './estateWhatIsVault.js';
+import {
+  ESTATE_BILLING_PLAN,
+  estatePricingFaqAnswer,
+  formatBillingMoney
+} from './estateBilling.js';
 
 export const ESTATE_FAQ = {
   title: 'Frequently asked questions',
@@ -24,6 +29,10 @@ export const ESTATE_FAQ = {
           a: 'Open “What is Estate Vault?” (or Start here as a PR on the home page) for the short walkthrough. Then create your PR account, create or open an estate, enter basic case details when you have them, invite family if ready, and begin documenting property and money. You do not need every document on day one.'
         },
         {
+          q: 'How much does Estate Vault cost?',
+          a: estatePricingFaqAnswer()
+        },
+        {
           q: 'Do I have to upload the will, death certificate, or Letters?',
           a: 'No. Those uploads are helpful when you have them and are not required to start. You can begin with case setup, inventory, and money tracking while paper documents stay with you and counsel.'
         },
@@ -38,6 +47,36 @@ export const ESTATE_FAQ = {
         {
           q: 'Quick check that the main workflow still works?',
           a: 'Smoke path for a living estate: add an item with a photo → log a Funds expense (or deposit) → mark a sale paid if you use sales → finalize a small distribution → export an evidence pack or publish a Family Update. Compare PR Ledger “Cash available” / estate balance with the heir overview when family visibility is on — they should match.'
+        }
+      ]
+    },
+    {
+      id: 'pricing',
+      title: 'Pricing & billing',
+      items: [
+        {
+          q: 'How much does Estate Vault cost?',
+          a: estatePricingFaqAnswer()
+        },
+        {
+          q: 'Is billing per estate or per person?',
+          a: `Per estate (per case). Heirs, helpers, and Specific Gift Recipients do not pay separately. One Personal Representative can manage several estates; each estate has its own subscription. Only the first estate includes a free trial.`
+        },
+        {
+          q: 'Do I get a free trial on every estate?',
+          a: `No. Only your first estate as Personal Representative includes the ${ESTATE_BILLING_PLAN.trialDays}-day free trial. Additional estates start at ${formatBillingMoney()}/month, with a ${ESTATE_BILLING_PLAN.graceDays}-day grace period to subscribe before that estate pauses.`
+        },
+        {
+          q: 'What happens when the trial ends?',
+          a: `After the ${ESTATE_BILLING_PLAN.trialDays}-day trial on your first estate, renew for ${formatBillingMoney()}/month to keep that estate open. During a ${ESTATE_BILLING_PLAN.graceDays}-day grace period you will see reminders. If it is not renewed, access for that estate pauses for the PR, family, helpers, and public sale until billing is restored. Settings → Billing shows status and Subscribe / Manage billing.`
+        },
+        {
+          q: 'Can I cancel when the estate is closed?',
+          a: 'Yes. Use Manage billing (Stripe customer portal) to cancel when you are finished. Access continues through the paid period, then grace rules apply. Closed estates can still be kept for records according to your Records & retention settings.'
+        },
+        {
+          q: 'Why does Checkout say Front Range Pool League?',
+          a: 'Payment is processed through the business Stripe account. The product line and price still show Estate Vault Standard. The merchant name on Checkout is the Stripe business profile for that account.'
         }
       ]
     },

@@ -106,6 +106,11 @@ const EstateWhatIsVaultModal = ({ open, onClose }) => {
                   {welcome.recordNote}
                 </p>
               ) : null}
+              {welcome.pricingNote ? (
+                <p className="ei-settings-hint ei-what-is-pricing" style={{ marginTop: '0.65rem' }}>
+                  {welcome.pricingNote}
+                </p>
+              ) : null}
             </>
           ) : null}
 

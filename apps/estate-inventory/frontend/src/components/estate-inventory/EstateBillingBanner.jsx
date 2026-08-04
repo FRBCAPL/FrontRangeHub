@@ -147,7 +147,7 @@ const EstateBillingBanner = ({
               ? access.message ||
                 `Renew now (${price}/mo) to avoid locking family, helpers, and the public sale.`
               : phase === 'trial'
-                ? `30-day free trial for this estate. After trial: ${price}/mo. Existing early estates stay grandfathered.`
+                ? `${ESTATE_BILLING_PLAN.trialDays}-day free trial on your first estate. After trial: ${price}/mo. Additional estates bill from day one (${price}/mo, short grace to subscribe).`
                 : access.message || `${ESTATE_BILLING_PLAN.name} · ${price}/${access.interval || 'month'}`}
         </p>
         {error ? <div className="ei-error">{error}</div> : null}

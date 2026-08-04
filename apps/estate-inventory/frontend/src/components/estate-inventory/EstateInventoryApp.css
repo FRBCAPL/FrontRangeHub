@@ -2971,6 +2971,7 @@ button.ei-helper-photo-remove {
   margin: 0 0 0.75rem;
   color: var(--ei-muted);
   font-size: 0.85rem;
+  white-space: pre-line;
 }
 
 .ei-activity-list {
@@ -6819,12 +6820,14 @@ button.ei-voice-btn.is-listening {
 }
 
 .ei-what-is-vault-modal {
-  /* Grow with content on short steps; scroll body only when needed. */
+  /* Cap overall height; only the body scrolls so head + Continue stay visible. */
   width: min(100%, 42rem);
   max-width: 42rem;
   height: auto !important;
-  max-height: min(88vh, 88dvh);
+  max-height: min(84vh, 84dvh, 40rem) !important;
   min-height: 0;
+  display: flex !important;
+  flex-direction: column;
   overflow: hidden !important;
 }
 
@@ -6837,8 +6840,7 @@ button.ei-voice-btn.is-listening {
 .ei-what-is-body {
   flex: 1 1 auto;
   min-height: 0;
-  max-height: calc(88vh - 11rem);
-  max-height: calc(88dvh - 11rem);
+  max-height: none;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -7039,6 +7041,7 @@ button.ei-voice-btn.is-listening {
   line-height: 1.5;
   display: grid;
   gap: 0.5rem;
+  white-space: pre-line;
 }
 
 .ei-what-is-footer {
@@ -7046,6 +7049,11 @@ button.ei-voice-btn.is-listening {
   font-size: 0.95rem;
   color: var(--ei-muted);
   line-height: 1.5;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.ei-what-is-pricing {
   text-align: center;
   white-space: pre-line;
 }
@@ -7375,6 +7383,7 @@ button.ei-voice-btn.is-listening {
   font-size: 0.94rem;
   line-height: 1.5;
   color: rgba(245, 245, 244, 0.92);
+  white-space: pre-line;
 }
 
 /* PR Home — how Estate Vault works (collapsed by default) */

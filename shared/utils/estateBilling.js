@@ -9,11 +9,39 @@ export const ESTATE_BILLING_PLAN = {
   interval: 'month',
   trialDays: 30,
   graceDays: 7,
+  /** Only the PR's first owned estate gets the free trial. */
+  trialOnFirstEstateOnly: true,
   priceLabel: '$29.99/month per estate'
 };
 
 export function formatBillingMoney(cents = ESTATE_BILLING_PLAN.amountCents) {
   return `$${(Number(cents) / 100).toFixed(Number(cents) % 100 === 0 ? 0 : 2)}`;
+}
+
+/** One-line soft pricing for landings / create / What is Vault. */
+export function estatePricingBlurbShort() {
+  const price = formatBillingMoney();
+  return (
+    `Your first estate includes a ${ESTATE_BILLING_PLAN.trialDays}-day free trial.` + 
+     `\nBilled at ${price}/month after the 30 days.` +
+    `\nAdditional estates start at ${price}/month. ` +
+    `\nFamily, helpers, and the public sale are always free with paid PR access.`
+  );
+}
+
+/** Slightly longer FAQ-style answer. */
+export function estatePricingFaqAnswer() {
+  const price = formatBillingMoney();
+  return (
+    `Estate Vault is billed per estate (per case), not per heir or helper. ` +
+    `Only your first estate as Personal Representative includes a ${ESTATE_BILLING_PLAN.trialDays}-day free trial. ` +
+    `After that first trial, ${price}/month keeps that estate open. ` +
+    `If you open another estate, it starts at ${price}/month with a ${ESTATE_BILLING_PLAN.graceDays}-day grace period to subscribe — no second free trial. ` +
+    `You can cancel in the Stripe customer portal when an estate is finished. ` +
+    `If a subscription lapses, there is a ${ESTATE_BILLING_PLAN.graceDays}-day grace period with warnings; ` +
+    `then Personal Representative, family, helper, and auction access for that estate pause until renewed. ` +
+    `Checkout may show Stripe business name (for example Front Range Pool League) while the product line says Estate Vault Standard.`
+  );
 }
 
 /** Human-readable phase for banners. */

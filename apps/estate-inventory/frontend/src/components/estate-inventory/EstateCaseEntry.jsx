@@ -4,6 +4,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   ESTATEIT_PATH
 } from '@shared/utils/estateInventoryConstants.js';
+import { estatePricingBlurbShort } from '@shared/utils/estateBilling.js';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateViewAuctionsModal from './EstateViewAuctionsModal';
@@ -87,6 +88,7 @@ const EstateCaseEntry = () => {
             <br />
             You do not need to upload the will, death certificate, or Letters.
           </p>
+          <p className="ei-settings-hint ei-gateway-pricing">{estatePricingBlurbShort()}</p>
           <p className="ei-gateway-start">
             <button type="button" className="ei-btn" onClick={() => setShowWhatIsVault(true)}>
               Start here as a PR
