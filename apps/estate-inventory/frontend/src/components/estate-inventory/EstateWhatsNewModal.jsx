@@ -1,37 +1,27 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   ESTATEIT_WHATS_NEW,
+  ESTATEIT_WHATS_NEW_ENABLED,
   getWhatsNewItemsForRole,
-  hasSeenWhatsNew,
   markWhatsNewSeen
 } from '@shared/utils/estateWhatsNew.js';
 
 /**
- * Auto-shows once per release id; can also be opened from Menu via `open` / `onOpenChange`.
- * Bump ESTATEIT_WHATS_NEW.id in estateWhatsNew.js when shipping updates.
+ * Manual What’s new — open from EV Menu only (no auto-popup).
+ * Gated by ESTATEIT_WHATS_NEW_ENABLED in estateWhatsNew.js.
  */
 const EstateWhatsNewModal = ({
   role = 'all',
-  enabled = true,
   open: openProp = false,
   onOpenChange = null
 }) => {
   const items = useMemo(() => getWhatsNewItemsForRole(role), [role]);
-  const [autoOpen, setAutoOpen] = useState(false);
-  const open = Boolean(openProp) || autoOpen;
-
-  useEffect(() => {
-    if (!enabled) return;
-    if (!items.length) return;
-    if (hasSeenWhatsNew(ESTATEIT_WHATS_NEW.id)) return;
-    setAutoOpen(true);
-  }, [enabled, items.length]);
+  const open = ESTATEIT_WHATS_NEW_ENABLED && Boolean(openProp);
 
   if (!open || !items.length) return null;
 
   const dismiss = () => {
     markWhatsNewSeen(ESTATEIT_WHATS_NEW.id);
-    setAutoOpen(false);
     onOpenChange?.(false);
   };
 

@@ -236,6 +236,13 @@ button.ei-nav-menu-btn-item {
   text-transform: uppercase;
 }
 
+.ei-nav-menu-sep {
+  height: 1px;
+  margin: 0.35rem 0.55rem;
+  background: rgba(168, 162, 158, 0.35);
+  pointer-events: none;
+}
+
 .ei-nav-crumbs {
   list-style: none;
   display: flex;

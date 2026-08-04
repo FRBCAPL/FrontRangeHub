@@ -10,6 +10,7 @@ import {
   estateDisplayCaseNumber,
   estateitCasePath
 } from '@shared/utils/estateInventoryConstants.js';
+import { ESTATEIT_WHATS_NEW_ENABLED } from '@shared/utils/estateWhatsNew.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateRoleGuideModal from './EstateRoleGuideModal';
 import EstateRolesOverviewModal from './EstateRolesOverviewModal';
@@ -182,8 +183,7 @@ const EstateNav = ({
         ? limitedHome
         : fullNavLinks;
 
-  // Menu order: current page(s) → tour → what is → FAQ → roles → sale/auction →
-  // what's new → legal → other links → leave → sign out
+  // Menu builders. PR (full) uses grouped order: Help → Navigate → Account → Exit.
   const showRolesOverview = variant === 'heir' || variant === 'full';
   const currentPageLinks = navSource.filter(
     (l) => l.active && !(showRolesOverview && l.kind === 'roles')
@@ -195,12 +195,17 @@ const EstateNav = ({
 
   const showMenu = variant !== 'none';
   const isHeirMenu = variant === 'heir';
+  const isPrMenu = variant === 'full';
   const onRolesHome =
     showRolesOverview && (path === caseHome || path === `${caseHome}/`);
 
   const closeMenu = () => setMenuOpen(false);
 
   const openRolesOverview = () => setRolesOverviewOpen(true);
+
+  const menuSep = (key) => (
+    <div key={key} className="ei-nav-menu-sep" role="separator" />
+  );
 
   const menuLink = (link) => (
     <Link
@@ -232,6 +237,57 @@ const EstateNav = ({
         {active ? <span className="ei-nav-here">Here</span> : null}
       </button>
     ) : null;
+
+  const prNavigateLinks = fullNavLinks.filter((l) => {
+    if (l.kind === 'roles') return false;
+    if (l.label === 'Helper / Inventory Taker' || l.label === 'Heir / Sibling') return false;
+    return true;
+  });
+
+  const exitItems = (
+    <>
+      <button
+        type="button"
+        role="menuitem"
+        className="ei-nav-menu-item ei-nav-menu-btn-item"
+        onClick={handleLeaveEstate}
+        disabled={exitBusy}
+      >
+        Leave estate
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        className="ei-nav-menu-item ei-nav-menu-btn-item"
+        onClick={handleSignOutApp}
+        disabled={exitBusy}
+      >
+        Sign out of Estate Vault
+      </button>
+    </>
+  );
+
+  const accountItems = (
+    <>
+      {showManageSubscription && onOpenBilling
+        ? menuAction('billing', 'Manage subscription', onOpenBilling)
+        : null}
+      {showSettings && onOpenSettings
+        ? menuAction('settings', 'Estate Settings', onOpenSettings)
+        : null}
+    </>
+  );
+
+  const helpItems = (
+    <>
+      {menuAction('what-is', 'What is Estate Vault?', onOpenWhatIsVault)}
+      {menuAction('faq', 'FAQ', onOpenFaq)}
+      {ESTATEIT_WHATS_NEW_ENABLED
+        ? menuAction('whats-new', "What's new", onOpenWhatsNew)
+        : null}
+      {menuAction('legal', 'Legal disclaimer', onOpenLegalDisclaimer)}
+    </>
+  );
 
   return (
     <nav className="ei-nav" aria-label={APP_NAME}>
@@ -297,64 +353,53 @@ const EstateNav = ({
           {variant !== 'full' ? extraRight : null}
           {menuOpen ? (
             <div className="ei-nav-menu" role="menu">
-              {currentPageLinks.map(menuLink)}
+              {isPrMenu ? (
+                <>
+                  {helpItems}
+                  {menuSep('sep-help')}
+                  {prNavigateLinks.map(menuLink)}
+                  {menuSep('sep-nav')}
+                  {accountItems}
+                  {menuSep('sep-account')}
+                  {exitItems}
+                </>
+              ) : (
+                <>
+                  {currentPageLinks.map(menuLink)}
 
-              {isHeirMenu ? menuAction('tour', 'Tour this page', onOpenPageTour) : null}
+                  {isHeirMenu ? menuAction('tour', 'Tour this page', onOpenPageTour) : null}
 
-              {menuAction('what-is', 'What is Estate Vault?', onOpenWhatIsVault)}
-              {menuAction('faq', 'FAQ', onOpenFaq)}
+                  {helpItems}
 
-              {showRolesOverview
-                ? menuAction(
-                    'roles',
-                    'Roles / portals',
-                    openRolesOverview,
-                    false,
-                    onRolesHome
-                  )
-                : null}
-              {roleGuide
-                ? menuAction('role-guide', 'Your role', () => setGuideOpen(true))
-                : null}
-              {auctionLinks.map(menuLink)}
+                  {showRolesOverview
+                    ? menuAction(
+                        'roles',
+                        'Roles / portals',
+                        openRolesOverview,
+                        false,
+                        onRolesHome
+                      )
+                    : null}
+                  {roleGuide
+                    ? menuAction('role-guide', 'Your role', () => setGuideOpen(true))
+                    : null}
+                  {auctionLinks.map(menuLink)}
 
-              {menuAction('whats-new', "What's new", onOpenWhatsNew)}
-              {menuAction('legal', 'Legal disclaimer', onOpenLegalDisclaimer)}
+                  {otherLinks.map(menuLink)}
 
-              {otherLinks.map(menuLink)}
+                  {variant === 'heir' && onChangeDisplayName
+                    ? menuAction('display-name', 'Change display name', onChangeDisplayName)
+                    : null}
+                  {variant === 'heir' && onChangePassword
+                    ? menuAction('password', 'Change password', onChangePassword)
+                    : null}
 
-              {variant === 'heir' && onChangeDisplayName
-                ? menuAction('display-name', 'Change display name', onChangeDisplayName)
-                : null}
-              {variant === 'heir' && onChangePassword
-                ? menuAction('password', 'Change password', onChangePassword)
-                : null}
-
-              {showSettings && onOpenSettings
-                ? menuAction('settings', 'Estate Settings', onOpenSettings)
-                : null}
-              {showManageSubscription && onOpenBilling
-                ? menuAction('billing', 'Manage subscription', onOpenBilling)
-                : null}
-
-              <button
-                type="button"
-                role="menuitem"
-                className="ei-nav-menu-item ei-nav-menu-btn-item"
-                onClick={handleLeaveEstate}
-                disabled={exitBusy}
-              >
-                Leave estate
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="ei-nav-menu-item ei-nav-menu-btn-item"
-                onClick={handleSignOutApp}
-                disabled={exitBusy}
-              >
-                Sign out of Estate Vault
-              </button>
+                  {menuSep('sep-account')}
+                  {accountItems}
+                  {menuSep('sep-exit')}
+                  {exitItems}
+                </>
+              )}
             </div>
           ) : null}
         </div>

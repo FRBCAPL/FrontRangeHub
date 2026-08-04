@@ -9,7 +9,7 @@ export const FAMILY_COACH_STEPS = [
     kicker: 'Hello',
     helloName: true,
     title: 'A small tour to start',
-    body: 'This page is made for family. \n A calm place to see how the estate affects you. \nWe’ll walk you through a few short steps.'
+    body: 'This page is made for family. \nWe’ll walk you through a few short steps to get you started.'
   },
   {
     targetId: 'ei-family-coach-welcome',

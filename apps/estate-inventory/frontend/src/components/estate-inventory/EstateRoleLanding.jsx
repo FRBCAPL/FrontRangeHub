@@ -18,6 +18,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
+import { ESTATEIT_WHATS_NEW_ENABLED } from '@shared/utils/estateWhatsNew.js';
 import './EstateInventoryApp.css';
 
 /**
@@ -179,14 +180,16 @@ const EstateRoleLanding = () => {
         >
           FAQ
         </button>
-        <button
-          type="button"
-          className="ei-btn ei-btn-secondary"
-          onClick={() => setShowWhatsNew(true)}
-          disabled={busyExit}
-        >
-          What&apos;s new
-        </button>
+        {ESTATEIT_WHATS_NEW_ENABLED ? (
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary"
+            onClick={() => setShowWhatsNew(true)}
+            disabled={busyExit}
+          >
+            What&apos;s new
+          </button>
+        ) : null}
         <button
           type="button"
           className="ei-btn ei-btn-secondary"

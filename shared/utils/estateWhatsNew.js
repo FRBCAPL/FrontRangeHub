@@ -1,38 +1,53 @@
 /**
- * Estate Vault release notes — bump `id` whenever you ship a user-facing update.
- * Users see the modal once per browser until `id` changes.
+ * Estate Vault release notes — open from EV Menu → What's new (no auto-popup).
+ * Set ESTATEIT_WHATS_NEW_ENABLED true to show Menu entry + modal again.
+ * Bump `id` when you rewrite items so stale cached labels are easy to spot in code review.
  *
  * roles: 'all' | 'admin' | 'heir' | 'helper' | 'auction'
  */
+export const ESTATEIT_WHATS_NEW_ENABLED = false;
+
 export const ESTATEIT_WHATS_NEW = {
-  id: '2026-07-28-vault',
+  id: '2026-08-04-vault',
   title: "What's new in Estate Vault",
-  dateLabel: 'July 28, 2026',
-  intro: 'A short summary of recent updates while this estate is in use.',
+  dateLabel: 'August 2026',
+  intro: 'Highlights of recent Estate Vault updates. Open anytime from EV Menu → What’s new.',
   items: [
     {
       roles: ['all'],
-      text: 'Each estate case stays separate — rooms, people, and items for one case do not mix with another.'
-    },
-    {
-      roles: ['heir', 'admin'],
-      text: 'Heirs can message the Personal Representative; conversations are kept with the estate records.'
-    },
-    {
-      roles: ['heir'],
-      text: 'Browse rooms with clear room buttons, and use in-app confirms for requests and “no interest.”'
-    },
-    {
-      roles: ['helper'],
-      text: 'Helper room lists only show rooms for the case you signed into.'
+      text: 'Estate Vault branding — navy & gold vault mark on entry, sign-in, and in-app navigation.'
     },
     {
       roles: ['admin'],
-      text: 'Locksmith / scene photos stay in admin Scene documentation (not heir or sale/auction lists).'
+      text: 'Billing per estate: your first estate includes a free trial; additional estates bill monthly after a short grace period. Subscribe / Manage subscription from Estate Settings or EV Menu.'
+    },
+    {
+      roles: ['admin'],
+      text: 'Admin home focuses on work: subscription status when needed, probate window, Needs attention, Inventory, and Money — plus What is / FAQ in the top bar.'
+    },
+    {
+      roles: ['admin', 'heir'],
+      text: 'Clearer money language — Cash available reconciliation hints and stronger export completeness warnings on Evidence Pack / Formal Accounting.'
+    },
+    {
+      roles: ['heir', 'admin'],
+      text: 'Heirs can message the Personal Representative; conversations stay with the estate records.'
+    },
+    {
+      roles: ['heir'],
+      text: 'Family portal: browse rooms, claim or pass on items, and follow Family Updates the PR publishes.'
+    },
+    {
+      roles: ['helper'],
+      text: 'Helpers add photos and draft items for PR review — room lists stay limited to the case you signed into.'
     },
     {
       roles: ['auction'],
-      text: 'Public auction stays tied to this estate case — bids and lots do not mix with other estates.'
+      text: 'Public sale / auction stays tied to this estate case — lots and bids do not mix with other estates.'
+    },
+    {
+      roles: ['all'],
+      text: 'Each estate case stays separate — rooms, people, and items for one case do not mix with another.'
     }
   ]
 };
