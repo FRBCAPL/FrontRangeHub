@@ -7004,7 +7004,7 @@ button.ei-voice-btn.is-listening {
   width: min(100%, 42rem);
   max-width: 42rem;
   height: auto !important;
-  max-height: min(84vh, 84dvh, 40rem) !important;
+  max-height: min(90vh, 90dvh, 46rem) !important;
   min-height: 0;
   display: flex !important;
   flex-direction: column;

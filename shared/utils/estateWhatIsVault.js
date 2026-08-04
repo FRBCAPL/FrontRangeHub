@@ -50,7 +50,7 @@ export const ESTATE_WHAT_IS_VAULT = {
     eyebrow: 'Before you begin',
     title: 'What it is not',
     intro:
-      'Estate Vault is an organization and documentation tool for administering an estate after appointment.\nIt is not a law firm, e-filing system, tax service, or pre-death family document vault.',
+      'Estate Vault is an organization and documentation tool. \nExcellent for administering an estate after appointment.\nIt is not a law firm, e-filing system, tax service, or pre-death family document vault.',
     replacesHeading: 'It does not replace',
     doesNotReplace: [
       'Attorney or legal advice',
@@ -61,11 +61,11 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Appraisals or official valuations'
     ],
     extraNotes: [
-      'You do not need to upload the will, death certificate, or Letters to use Estate Vault.',
+      'You do not need to upload the will, death certificate, Letters, or other sensitive data to use Estate Vault.',
+      'Estate Vault does not require, ask for, or handle bank credentials, full account numbers, routing numbers, SSNs, or other sensitive data.',
       'You record what the will requires yourself (gifts, people, notes). The app does not read or decide those instructions for you.',
       'Official account balances always come from banks and statements. In Estate Vault you keep Funds up to date; Cash available and Estate balance are calculated from what you recorded — they are supporting ledger totals, not a live bank feed.',
-      estatePricingBlurbShort(),
-      ESTATE_DATA_TRUST_NOTE
+      ESTATE_DATA_TRUST_NOTE,
     ],
     footer:
       'Use Estate Vault to stay organized and explain what happened. \nReview exports with counsel before filing anything.',
