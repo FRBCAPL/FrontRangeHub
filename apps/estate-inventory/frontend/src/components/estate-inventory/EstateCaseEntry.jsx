@@ -4,8 +4,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   ESTATEIT_PATH
 } from '@shared/utils/estateInventoryConstants.js';
-import { estatePricingBlurbShort } from '@shared/utils/estateBilling.js';
-import EstateBrandTitle from './EstateBrandTitle';
+import EstateBrandLogo from './EstateBrandLogo';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateViewAuctionsModal from './EstateViewAuctionsModal';
 import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
@@ -70,25 +69,34 @@ const EstateCaseEntry = () => {
 
       <div className="ei-gateway-inner">
         <header className="ei-landing-hero ei-gateway-hero">
-          <p className="ei-eyebrow ei-gateway-eyebrow-brand">Fiduciarylog.com</p>
-          <EstateBrandTitle textClassName="ei-gateway-brand" />
-          <p className="ei-gateway-what-is">
-            <button type="button" className="ei-link-btn" onClick={() => setShowWhatIsVault(true)}>
+          <div className="ei-gateway-brand-row">
+            <button
+              type="button"
+              className="ei-link-btn ei-gateway-brand-side ei-gateway-brand-side--left"
+              onClick={() => setShowWhatIsVault(true)}
+            >
               What is Estate Vault?
             </button>
-            <span className="ei-gateway-what-sep" aria-hidden="true">
-              ·
-            </span>
-            <button type="button" className="ei-link-btn" onClick={() => setShowFaq(true)}>
+            <div className="ei-gateway-brand-center">
+              <h1 className="ei-gateway-logo-wrap">
+                <EstateBrandLogo variant="main" className="ei-gateway-logo" />
+              </h1>
+              <p className="ei-eyebrow ei-gateway-eyebrow-brand">Fiduciarylog.com</p>
+            </div>
+            <button
+              type="button"
+              className="ei-link-btn ei-gateway-brand-side ei-gateway-brand-side--right"
+              onClick={() => setShowFaq(true)}
+            >
               FAQ
             </button>
-          </p>
+          </div>
           <p className="ei-lede ei-gateway-lede">
             Record property, money, and distributions for an estate you administer.
             <br />
             You do not need to upload the will, death certificate, or Letters.
           </p>
-          <p className="ei-settings-hint ei-gateway-pricing">{estatePricingBlurbShort()}</p>
+         
           <p className="ei-gateway-start">
             <button type="button" className="ei-btn" onClick={() => setShowWhatIsVault(true)}>
               Start here as a PR

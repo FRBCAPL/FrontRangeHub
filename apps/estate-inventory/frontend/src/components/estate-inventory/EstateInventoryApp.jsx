@@ -23,7 +23,10 @@ import EstateReportsModal from './EstateReportsModal';
 import EstateClosingWizard from './EstateClosingWizard';
 import EstateBillingBanner from './EstateBillingBanner';
 import { getEstateBillingStatus } from '@shared/services/estateBillingService.js';
-import { isBillingLocked } from '@shared/utils/estateBilling.js';
+import {
+  isBillingLocked,
+  isBillingQuietPhase
+} from '@shared/utils/estateBilling.js';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
@@ -86,7 +89,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
 
   const openAddItem = (collection = null, preset = null) => {
     if (billingLocked) {
-      setBanner('This estate is paused — renew billing in Settings → Billing to make changes.');
+      setBanner('This estate is frozen — renew billing in Settings → Billing or Subscribe on the banner to make changes.');
       return;
     }
     if (isClosed) {
@@ -350,20 +353,41 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         onBack={backHandler}
         backLabel={backLabel}
         showSettings
-            onOpenSettings={() => {
-              setSettingsSection(null);
-              setShowSettings(true);
-            }}
-            onOpenWhatsNew={() => setShowWhatsNew(true)}
-            onOpenWhatIsVault={() => setShowWhatIsVault(true)}
-            onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
-            onOpenFaq={() => setShowFaq(true)}
+        onOpenSettings={() => {
+          setSettingsSection(null);
+          setShowSettings(true);
+        }}
+        showManageSubscription={isBillingQuietPhase(billingAccess?.phase)}
+        onOpenBilling={() => {
+          setSettingsSection('billing');
+          setShowSettings(true);
+        }}
+        onOpenWhatsNew={() => setShowWhatsNew(true)}
+        onOpenWhatIsVault={() => setShowWhatIsVault(true)}
+        onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
+        onOpenFaq={() => setShowFaq(true)}
         onLeaveEstate={onLeaveEstate}
         onSignOutApp={onSignOutApp}
         estateName={estateDisplayName(settings, routeCase)}
         displayCaseNumber={settings?.court_case_number || null}
         extraRight={
           <>
+            <button
+              type="button"
+              className="ei-nav-icon-btn"
+              onClick={() => setShowWhatIsVault(true)}
+              title="What is Estate Vault?"
+            >
+              What is
+            </button>
+            <button
+              type="button"
+              className="ei-nav-icon-btn"
+              onClick={() => setShowFaq(true)}
+              title="FAQ"
+            >
+              FAQ
+            </button>
             <Link className="ei-nav-icon-btn" to={caseHome} title="Roles / portals">
               Roles
             </Link>
@@ -405,7 +429,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         </div>
       ) : null}
 
-      {billingLocked ? (
+      {billingLocked && view !== VIEW.HOME ? (
         <div className="ei-billing-locked-banner" role="alert">
           <EstateBillingBanner
             caseNumber={routeCase || settings?.case_number}
@@ -440,8 +464,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           onMessage={setBanner}
           onOpenClosing={() => setShowClosing(true)}
           onOpenReports={() => setShowReports(true)}
-          onOpenWhatIsVault={() => setShowWhatIsVault(true)}
-          onOpenFaq={() => setShowFaq(true)}
+          onBillingStatus={setBillingAccess}
           onFinanceSettingsSaved={(data) => {
             setSettings(data);
             setFinanceRefreshKey((n) => n + 1);

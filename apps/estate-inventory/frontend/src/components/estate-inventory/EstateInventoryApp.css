@@ -390,13 +390,22 @@ button.ei-nav-menu-btn-item {
   background: var(--ei-panel);
 }
 
+/* Probate — calm / neutral (must not look like Needs attention). */
+.ei-status-chip--probate,
+.ei-status-chip--ok {
+  border-color: var(--ei-line);
+  background: rgba(28, 25, 23, 0.55);
+}
+
 .ei-status-chip--warn {
   border-color: rgba(251, 146, 60, 0.45);
   background: rgba(154, 52, 18, 0.18);
 }
 
-.ei-status-chip--ok {
+/* Soft “needs setup” — not the Needs attention orange. */
+.ei-status-chip--setup {
   border-color: rgba(45, 212, 191, 0.28);
+  background: rgba(19, 78, 74, 0.28);
 }
 
 .ei-status-chip--progress {
@@ -1665,7 +1674,7 @@ button.ei-helper-photo-remove {
   border-radius: 10px;
   padding: 0.7rem 0.85rem;
   margin-bottom: 0.65rem;
-  background: linear-gradient(165deg, var(--ei-elevated) 0%, var(--ei-accent-soft) 100%);
+  background: rgba(28, 25, 23, 0.55);
 }
 
 .ei-countdown-top {
@@ -3886,6 +3895,44 @@ button.ei-helper-photo-remove {
   line-height: 1.05;
 }
 
+/* Official brand artwork (vault / EV monogram) */
+.ei-brand-logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.ei-brand-logo--icon {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1rem;
+}
+
+.ei-brand-logo--pro,
+.ei-brand-logo--main {
+  width: min(100%, 12.5rem);
+}
+
+.ei-gateway-logo-wrap {
+  margin: 0.2rem auto 0.45rem;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  max-width: min(100%, 13.5rem);
+}
+
+.ei-gateway-logo {
+  width: min(100%, 12.25rem);
+  height: auto;
+  border-radius: 0.75rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 28px rgba(0, 0, 0, 0.38);
+  background: #fff;
+}
+
 .ei-brand-title-text {
   position: relative;
   z-index: 1;
@@ -3973,9 +4020,46 @@ button.ei-helper-photo-remove {
 .ei-gateway-eyebrow-brand,
 .ei-gateway-lede,
 .ei-gateway-what-is,
-.ei-gateway-start {
+.ei-gateway-start,
+.ei-gateway-brand-row {
   position: relative;
   z-index: 1;
+}
+
+.ei-gateway-brand-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem 1rem;
+  width: min(100%, 44rem);
+  margin: 0 auto;
+}
+
+.ei-gateway-brand-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.ei-gateway-brand-side {
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1.25;
+  max-width: none;
+}
+
+.ei-gateway-brand-side--left {
+  justify-self: end;
+  text-align: right;
+}
+
+.ei-gateway-brand-side--right {
+  justify-self: start;
+  text-align: left;
 }
 
 .ei-gateway-what-is {
@@ -3997,6 +4081,30 @@ button.ei-helper-photo-remove {
 .ei-gateway-what-sep {
   color: var(--ei-muted);
   opacity: 0.8;
+}
+
+@media (max-width: 640px) {
+  .ei-gateway-brand-row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 0.55rem;
+  }
+
+  .ei-gateway-brand-center {
+    order: -1;
+  }
+
+  .ei-gateway-brand-side {
+    max-width: none;
+    justify-self: center;
+    text-align: center;
+  }
+
+  .ei-gateway-brand-side--left,
+  .ei-gateway-brand-side--right {
+    justify-self: center;
+    text-align: center;
+  }
 }
 
 .ei-gateway-start {
@@ -4040,12 +4148,13 @@ button.ei-helper-photo-remove {
 .ei-gateway-eyebrow-brand {
   position: relative;
   z-index: 1;
-  margin: 0 0 0.65rem;
+  margin: 0.45rem 0 0.55rem;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ei-gw-brass);
+  text-align: center;
 }
 
 .ei-gateway-lede {
@@ -5515,24 +5624,25 @@ button.ei-helper-photo-remove {
   margin: 0.75rem 0 1rem;
   padding: 0.85rem 1rem;
   border-radius: 0.65rem;
-  border: 1px solid rgba(120, 113, 108, 0.35);
-  background: rgba(28, 25, 23, 0.04);
+  border: 1px solid var(--ei-line);
+  background: rgba(28, 25, 23, 0.72);
+  color: var(--ei-ink, #f5f5f4);
 }
 
 .ei-billing-banner.is-info {
-  border-color: rgba(14, 116, 144, 0.35);
-  background: rgba(224, 242, 254, 0.55);
+  border-color: rgba(45, 212, 191, 0.4);
+  background: rgba(19, 78, 74, 0.35);
 }
 
 .ei-billing-banner.is-warn {
-  border-color: rgba(217, 119, 6, 0.45);
-  background: rgba(255, 247, 237, 0.9);
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(120, 53, 15, 0.4);
 }
 
 .ei-billing-banner.is-block,
 .ei-billing-banner.is-locked {
-  border-color: rgba(185, 28, 28, 0.45);
-  background: rgba(254, 226, 226, 0.75);
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(127, 29, 29, 0.4);
 }
 
 .ei-billing-banner-copy {
@@ -5543,13 +5653,27 @@ button.ei-helper-photo-remove {
 .ei-billing-banner-copy strong {
   display: block;
   margin-bottom: 0.25rem;
+  color: var(--ei-ink, #f5f5f4);
 }
 
 .ei-billing-banner-copy p {
   margin: 0;
   font-size: 0.86rem;
   line-height: 1.4;
-  color: var(--ei-muted, #57534e);
+  color: rgba(245, 245, 244, 0.88);
+}
+
+.ei-billing-banner.is-info .ei-billing-banner-copy strong {
+  color: #5eead4;
+}
+
+.ei-billing-banner.is-warn .ei-billing-banner-copy strong {
+  color: #fbbf24;
+}
+
+.ei-billing-banner.is-block .ei-billing-banner-copy strong,
+.ei-billing-banner.is-locked .ei-billing-banner-copy strong {
+  color: #fca5a5;
 }
 
 .ei-billing-banner-actions {

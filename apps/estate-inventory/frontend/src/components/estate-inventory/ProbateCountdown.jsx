@@ -73,16 +73,16 @@ const ProbateCountdown = ({
 
   if (isCompact) {
     let statusText = 'Probate window not set';
-    let tone = 'muted';
+    let tone = 'probate';
     if (windowInfo.needsLetters) {
       statusText = 'Set Letters issued date';
-      tone = 'warn';
+      tone = 'setup';
     } else if (windowInfo.needsEndDate) {
       statusText = 'Set probate end date';
-      tone = 'warn';
+      tone = 'setup';
     } else if (!windowInfo.end || remainingMs == null) {
       statusText = 'Invalid probate window';
-      tone = 'warn';
+      tone = 'setup';
     } else if (remainingMs <= 0) {
       statusText = 'Probate window ended';
       tone = 'warn';
@@ -92,7 +92,7 @@ const ProbateCountdown = ({
       statusText = endsOn
         ? `${days} day${days === 1 ? '' : 's'} left · ends ${endsOn}`
         : `${days} day${days === 1 ? '' : 's'} left`;
-      tone = 'ok';
+      tone = 'probate';
     }
 
     return (

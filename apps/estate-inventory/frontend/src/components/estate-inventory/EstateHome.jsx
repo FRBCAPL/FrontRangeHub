@@ -2,7 +2,6 @@ import React, { useRef, useState } from 'react';
 import EstateTimeline from './EstateTimeline';
 import EstateNextStepsPanel from './EstateNextStepsPanel';
 import EstateFinanceDashboard from './EstateFinanceDashboard';
-import EstateHowItWorksPanel from './EstateHowItWorksPanel';
 import EstateHomeStatusStrip from './EstateHomeStatusStrip';
 import EstateNeedsAttentionPanel from './EstateNeedsAttentionPanel';
 import EstateBillingBanner from './EstateBillingBanner';
@@ -27,10 +26,9 @@ const EstateHome = ({
   onMessage,
   onOpenClosing,
   onOpenReports,
-  onOpenWhatIsVault,
-  onOpenFaq,
   onFinanceSettingsSaved,
   onFinanceChanged,
+  onBillingStatus,
   inventoryCount = 0,
   pendingRefreshKey = 0,
   financeRefreshKey = 0,
@@ -60,14 +58,11 @@ const EstateHome = ({
 
   return (
     <section className="ei-home ei-home--command">
-      <EstateHowItWorksPanel
-        onOpenWhatIsVault={onOpenWhatIsVault}
-        onOpenFaq={onOpenFaq}
-        onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
-        onSeeCollections={onSeeCollections}
-        onOpenLedger={openLedger}
-        onOpenReports={onOpenReports}
-        onOpenClosing={onOpenClosing}
+      <EstateBillingBanner
+        caseNumber={settings?.case_number}
+        refreshKey={pendingRefreshKey + localRefresh}
+        onMessage={onMessage}
+        onStatus={onBillingStatus}
       />
 
       <EstateHomeStatusStrip
@@ -76,12 +71,6 @@ const EstateHome = ({
         refreshKey={pendingRefreshKey + localRefresh}
         onOpenSettings={onOpenSettings}
         onOpenProgress={openProgress}
-      />
-
-      <EstateBillingBanner
-        caseNumber={settings?.case_number}
-        refreshKey={pendingRefreshKey + localRefresh}
-        onMessage={onMessage}
       />
 
       <div className="ei-home-alerts" aria-label="Attention and next steps">

@@ -43,7 +43,10 @@ const EstateNav = ({
   onOpenPageTour = null,
   roleGuide = null,
   onLeaveEstate = null,
-  onSignOutApp = null
+  onSignOutApp = null,
+  /** Opens Settings → Billing (or portal). Shown when subscribed / quiet billing. */
+  onOpenBilling = null,
+  showManageSubscription = false
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -270,10 +273,10 @@ const EstateNav = ({
               type="button"
               className="ei-nav-icon-btn ei-nav-settings-btn"
                 onClick={onOpenSettings}
-                aria-label="Settings"
-                title="Settings"
+                aria-label="Estate Settings"
+                title="Estate Settings"
             >
-              <span className="ei-nav-settings-label">Settings</span>
+              <span className="ei-nav-settings-label">Estate Settings</span>
             </button>
           ) : null}
           {showMenu ? (
@@ -284,7 +287,7 @@ const EstateNav = ({
               aria-haspopup="true"
               onClick={() => setMenuOpen((o) => !o)}
             >
-              Menu
+              EV Menu
             </button>
           ) : null}
           {variant !== 'full' ? extraRight : null}
@@ -324,7 +327,10 @@ const EstateNav = ({
                 : null}
 
               {showSettings && onOpenSettings
-                ? menuAction('settings', 'Settings', onOpenSettings)
+                ? menuAction('settings', 'Estate Settings', onOpenSettings)
+                : null}
+              {showManageSubscription && onOpenBilling
+                ? menuAction('billing', 'Manage subscription', onOpenBilling)
                 : null}
 
               <button

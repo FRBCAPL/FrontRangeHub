@@ -11,12 +11,15 @@ import {
   billingBannerTone,
   billingDaysPhrase,
   formatBillingMoney,
-  isBillingLocked
+  isBillingLocked,
+  shouldShowHomeBillingBanner,
+  frozenEstateBannerMessage
 } from '@shared/utils/estateBilling.js';
 
 /**
- * PR billing status + renew CTAs. Shows on home when trial/grace/locked;
- * always usable from Settings.
+ * PR billing status + renew CTAs.
+ * Home: trial / grace / locked only (hidden after subscribe).
+ * Settings: pass forceShow.
  */
 const EstateBillingBanner = ({
   caseNumber,
@@ -35,7 +38,6 @@ const EstateBillingBanner = ({
     setError('');
     const result = await getEstateBillingStatus(caseNumber);
     if (!result.success) {
-      // Migration / backend not ready — stay quiet unless forceShow.
       if (forceShow) setError(result.error || 'Could not load billing.');
       setAccess(null);
       onStatus?.(null);
@@ -64,11 +66,17 @@ const EstateBillingBanner = ({
           onMessage?.('Subscription activated. Thank you.');
           await load();
         } else {
-          onMessage?.(finalized.error || 'Could not confirm payment yet — try Manage billing in a moment.');
+          onMessage?.(
+            finalized.error ||
+              'Could not confirm payment yet — try Manage subscription in the Menu.'
+          );
         }
-        // Clean query from hash without full reload.
         const base = window.location.hash.split('?')[0];
-        window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${base}`);
+        window.history.replaceState(
+          null,
+          '',
+          `${window.location.pathname}${window.location.search}${base}`
+        );
       })();
     } else if (billing === 'cancel') {
       onMessage?.('Checkout cancelled — your trial or grace status is unchanged.');
@@ -85,12 +93,7 @@ const EstateBillingBanner = ({
 
   const phase = access.phase;
   const tone = billingBannerTone(phase);
-  const show =
-    forceShow ||
-    phase === 'trial' ||
-    phase === 'grace' ||
-    phase === 'locked' ||
-    access.cancel_at_period_end;
+  const show = forceShow || shouldShowHomeBillingBanner(access);
   if (!show) return null;
 
   const days = billingDaysPhrase(access.days_remaining);
@@ -129,6 +132,18 @@ const EstateBillingBanner = ({
     setError('Portal URL missing.');
   };
 
+  const bodyCopy = locked
+    ? frozenEstateBannerMessage(access, price)
+    : phase === 'grace'
+      ? access.message ||
+        `Renew now (${price}/mo) to avoid freezing this estate — family, helpers, and the public sale will pause.`
+      : phase === 'trial'
+        ? `Free trial · first estate only. After trial: ${price}/mo. Extra estates bill from day one.`
+        : access.cancel_at_period_end
+          ? `Subscription cancels at period end. You can resume anytime from Manage subscription in the Menu, or renew below.`
+          : access.message ||
+            `${ESTATE_BILLING_PLAN.name} · ${price}/${access.interval || 'month'}`;
+
   return (
     <section
       className={`ei-billing-banner is-${tone}${compact ? ' is-compact' : ''}${locked ? ' is-locked' : ''}`}
@@ -136,20 +151,10 @@ const EstateBillingBanner = ({
     >
       <div className="ei-billing-banner-copy">
         <strong>
-          {billingPhaseLabel(phase)}
-          {days ? ` · ${days}` : ''}
+          {locked ? 'Estate frozen' : billingPhaseLabel(phase)}
+          {!locked && days ? ` · ${days}` : ''}
         </strong>
-        <p>
-          {locked
-            ? access.message ||
-              `This estate is paused. Renew Estate Vault (${price}/mo) to reopen Personal Representative, family, helper, and auction access.`
-            : phase === 'grace'
-              ? access.message ||
-                `Renew now (${price}/mo) to avoid locking family, helpers, and the public sale.`
-              : phase === 'trial'
-                ? `${ESTATE_BILLING_PLAN.trialDays}-day free trial on your first estate. After trial: ${price}/mo. Additional estates bill from day one (${price}/mo, short grace to subscribe).`
-                : access.message || `${ESTATE_BILLING_PLAN.name} · ${price}/${access.interval || 'month'}`}
-        </p>
+        <p>{bodyCopy}</p>
         {error ? <div className="ei-error">{error}</div> : null}
       </div>
       <div className="ei-billing-banner-actions">
@@ -163,15 +168,18 @@ const EstateBillingBanner = ({
             {busy === 'checkout' || busy === 'confirm' ? 'Working…' : `Subscribe · ${price}/mo`}
           </button>
         ) : null}
-        {access.stripe_customer_id || phase === 'active' ? (
-          <button
-            type="button"
-            className="ei-btn ei-btn-small ei-btn-secondary"
-            disabled={Boolean(busy)}
-            onClick={portal}
-          >
-            {busy === 'portal' ? 'Opening…' : 'Manage billing'}
-          </button>
+        {/* Manage lives in Menu once subscribed; keep on banner for Settings / canceling. */}
+        {forceShow || access.cancel_at_period_end ? (
+          access.stripe_customer_id || phase === 'active' ? (
+            <button
+              type="button"
+              className="ei-btn ei-btn-small ei-btn-secondary"
+              disabled={Boolean(busy)}
+              onClick={portal}
+            >
+              {busy === 'portal' ? 'Opening…' : 'Manage billing'}
+            </button>
+          ) : null
         ) : null}
       </div>
     </section>

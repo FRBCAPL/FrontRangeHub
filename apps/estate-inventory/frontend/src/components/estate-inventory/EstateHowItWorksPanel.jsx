@@ -1,14 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import {
-  ESTATE_HOW_IT_WORKS,
-  howItWorksDismissStorageKey
-} from '@shared/utils/estateHowItWorks.js';
-import { useEstateCase } from './EstateCaseContext';
+import React, { useState } from 'react';
+import { ESTATE_HOW_IT_WORKS } from '@shared/utils/estateHowItWorks.js';
 
 /**
  * Compact PR Home orientation strip.
- * Collapsed by default (one row) so it does not dominate the dashboard.
- * Expand shows the 8-step map. Dismissible per estate via localStorage.
+ * Collapsed by default (one row). Expand shows the 8-step map.
+ * Always visible — not dismissible.
  */
 const EstateHowItWorksPanel = ({
   onOpenWhatIsVault,
@@ -19,28 +15,7 @@ const EstateHowItWorksPanel = ({
   onOpenReports,
   onOpenClosing
 }) => {
-  const { caseNumber } = useEstateCase();
-  const storageKey = howItWorksDismissStorageKey(caseNumber);
-  const [dismissed, setDismissed] = useState(() => {
-    try {
-      return localStorage.getItem(storageKey) === '1';
-    } catch {
-      return false;
-    }
-  });
   const [expanded, setExpanded] = useState(false);
-
-  useEffect(() => {
-    try {
-      setDismissed(localStorage.getItem(storageKey) === '1');
-    } catch {
-      setDismissed(false);
-    }
-    setExpanded(false);
-  }, [storageKey]);
-
-  if (dismissed) return null;
-
   const content = ESTATE_HOW_IT_WORKS;
 
   const runAction = (actionKey) => {
@@ -66,15 +41,6 @@ const EstateHowItWorksPanel = ({
       default:
         break;
     }
-  };
-
-  const dismiss = () => {
-    try {
-      localStorage.setItem(storageKey, '1');
-    } catch {
-      /* ignore */
-    }
-    setDismissed(true);
   };
 
   return (
@@ -111,9 +77,6 @@ const EstateHowItWorksPanel = ({
             onClick={() => setExpanded((v) => !v)}
           >
             {expanded ? 'Hide workflow' : 'Show workflow'}
-          </button>
-          <button type="button" className="ei-link-btn ei-how-it-works-dismiss" onClick={dismiss}>
-            {content.dismissLabel}
           </button>
         </div>
       </div>

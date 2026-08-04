@@ -91,9 +91,45 @@ export function isBillingLocked(access) {
   return access.allowed === false || access.phase === 'locked';
 }
 
+/** Phases where billing is paid / complimentary and home banner should be hidden. */
+export function isBillingQuietPhase(phase) {
+  return ['active', 'grandfathered', 'comp'].includes(String(phase || ''));
+}
+
+/**
+ * Home banner: show for trial / grace / locked (and canceling active).
+ * Hide when subscribed (active) or grandfathered / comp.
+ */
+export function shouldShowHomeBillingBanner(access) {
+  if (!access || access.migrationMissing) return false;
+  if (access.cancel_at_period_end && access.phase === 'active') return true;
+  if (isBillingQuietPhase(access.phase)) return false;
+  return (
+    access.phase === 'trial' ||
+    access.phase === 'grace' ||
+    access.phase === 'locked' ||
+    isBillingLocked(access)
+  );
+}
+
 export function lockedPortalMessage(access) {
   return (
     access?.message ||
     'This estate is paused — the Personal Representative needs to renew Estate Vault to reopen it.'
+  );
+}
+
+/** Clear copy when the estate is frozen after trial/grace without payment. */
+export function frozenEstateBannerMessage(access, priceLabel) {
+  const price = priceLabel || formatBillingMoney(access?.amount_cents);
+  if (access?.needs_subscribe_no_trial) {
+    return (
+      access.message ||
+      `This additional estate is frozen. Subscribe at ${price}/mo to reopen Personal Representative, family, helper, and auction access.`
+    );
+  }
+  return (
+    access?.message ||
+    `This estate is frozen — the free trial ended without a subscription. Subscribe at ${price}/mo to reopen Personal Representative, family, helper, and auction access.`
   );
 }

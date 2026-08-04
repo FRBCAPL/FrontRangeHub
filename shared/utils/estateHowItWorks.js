@@ -1,14 +1,7 @@
 /**
- * PR Home — dismissible “how this works” overview (plain workflow map).
+ * PR Home — “how this works” orientation (plain workflow map).
  * Action checklist remains EstateNextStepsPanel.
  */
-
-export const HOW_IT_WORKS_DISMISS_KEY = 'ei_how_it_works_dismissed';
-
-export function howItWorksDismissStorageKey(caseNumber) {
-  const caseKey = String(caseNumber || '').trim().toUpperCase() || 'GLOBAL';
-  return `${HOW_IT_WORKS_DISMISS_KEY}:${caseKey}`;
-}
 
 export const ESTATE_HOW_IT_WORKS = {
   eyebrow: 'Orientation',
@@ -67,8 +60,7 @@ export const ESTATE_HOW_IT_WORKS = {
   ],
   footer: 'Next Steps below shows what to do next for this estate.',
   whatIsLabel: 'What is Estate Vault?',
-  faqLabel: 'FAQ',
-  dismissLabel: 'Dismiss'
+  faqLabel: 'FAQ'
 };
 
 export default ESTATE_HOW_IT_WORKS;
