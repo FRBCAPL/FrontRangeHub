@@ -8,6 +8,7 @@ import EstateBrandLogo from './EstateBrandLogo';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateViewAuctionsModal from './EstateViewAuctionsModal';
 import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
+import EstatePrStartGuideModal from './EstatePrStartGuideModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
 import EstateLegalDisclaimerGate from './EstateLegalDisclaimerGate';
@@ -19,6 +20,7 @@ import './EstateInventoryApp.css';
 const EstateCaseEntry = () => {
   const [showAuctions, setShowAuctions] = useState(false);
   const [showWhatIsVault, setShowWhatIsVault] = useState(false);
+  const [showPrStartGuide, setShowPrStartGuide] = useState(false);
   const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
   const [hasLiveAuctions, setHasLiveAuctions] = useState(false);
@@ -98,11 +100,11 @@ const EstateCaseEntry = () => {
           </p>
          
           <p className="ei-gateway-start">
-            <Link className="ei-btn" to={`${ESTATEIT_PATH}/owner`}>
+            <button type="button" className="ei-btn" onClick={() => setShowPrStartGuide(true)}>
               Start here as a PR
-            </Link>
+            </button>
             <span className="ei-gateway-start-hint">
-              Sign in or create your account — then create or open an estate
+              New PR? Short guide — then sign in to begin
             </span>
           </p>
         </header>
@@ -187,6 +189,10 @@ const EstateCaseEntry = () => {
       <EstateWhatIsVaultModal
         open={showWhatIsVault}
         onClose={() => setShowWhatIsVault(false)}
+      />
+      <EstatePrStartGuideModal
+        open={showPrStartGuide}
+        onClose={() => setShowPrStartGuide(false)}
       />
       <EstateLegalDisclaimerModal
         open={showLegalDisclaimer}

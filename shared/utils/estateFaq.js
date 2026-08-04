@@ -26,7 +26,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'Where should a new PR start?',
-          a: 'Open “What is Estate Vault?” (or Start here as a PR on the home page) for the short walkthrough. Then create your PR account, create or open an estate, enter basic case details when you have them, invite family if ready, and begin documenting property and money. You do not need every document on day one.'
+          a: 'Tap Start here as a PR on the home page for a short new-PR guide, then sign in or create your account and create or open an estate. For a fuller product tour anytime, open What is Estate Vault? Enter basic case details when you have them, invite family if ready, and begin documenting property and money. You do not need every document on day one.'
         },
         {
           q: 'How much does Estate Vault cost?',

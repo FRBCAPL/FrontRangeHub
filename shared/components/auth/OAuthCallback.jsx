@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabaseAuthService from '@shared/services/services/supabaseAuthService.js';
 import { supabase } from '@shared/config/supabase.js';
+import { estateOAuthCallbackHash } from '@shared/utils/estateAuthLanding.js';
 
 /**
  * OAuth Callback Handler
@@ -38,7 +39,7 @@ const OAuthCallback = ({ onSuccess }) => {
       }
       window.location.replace(
         tokenQuery
-          ? `${window.location.origin}/#/estateit/oauth#${tokenQuery}`
+          ? `${window.location.origin}${estateOAuthCallbackHash(tokenQuery)}`
           : `${window.location.origin}/#/estateit/oauth`
       );
       return;

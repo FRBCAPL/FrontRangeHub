@@ -7127,6 +7127,7 @@ button.ei-voice-btn.is-listening {
   color: var(--ei-ink);
   text-align: center;
   white-space: pre-line;
+  white-space: pre-line;
 }
 
 .ei-what-is-pillars {
@@ -7243,6 +7244,10 @@ button.ei-voice-btn.is-listening {
   line-height: 1.5;
   text-align: center;
   white-space: pre-line;
+}
+
+.ei-pr-start-guide-modal .ei-pr-start-guide-steps {
+  margin-top: 0.35rem;
 }
 
 .ei-what-is-pricing {

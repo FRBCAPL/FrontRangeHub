@@ -8,7 +8,9 @@
  * route, falls through to the catch-all, and the tokens are discarded.
  *
  * This module detects that landing and rewrites it to
- * #/estateit/oauth#<payload> so the normal OAuth callback finishes the sign-in.
+ * #/estateit/oauth?<payload> so HashRouter can match the route and the OAuth
+ * callback can read tokens from the hash query string.
+ *
  * It only fires on Estate Vault's own domain (or mid-flow, when the Google
  * sign-in flag is set), so Hub auth callbacks are never touched.
  */
@@ -24,12 +26,40 @@ const ERROR_KEYS = ['error_description', 'error_code', 'error'];
 // `type`, so requiring one keeps Hub Google callbacks out of this path.
 const ESTATE_LINK_TYPES = ['signup', 'magiclink', 'invite', 'email_change'];
 
+const OAUTH_ROUTE_PREFIX = `#${ESTATEIT_PATH}/oauth`;
+
+/** HashRouter-safe callback URL — query params, not a second `#` fragment. */
+export function estateOAuthCallbackHash(fragment) {
+  const payload = String(fragment || '').replace(/^[#?]/, '');
+  if (!payload) return OAUTH_ROUTE_PREFIX;
+  return `${OAUTH_ROUTE_PREFIX}?${payload}`;
+}
+
+function authPayloadFromHash(hash) {
+  if (!hash) return '';
+
+  // Raw OAuth at root: #access_token=...
+  if (!hash.startsWith('#/')) {
+    return hash.slice(1);
+  }
+
+  // Legacy double-hash: #/estateit/oauth#access_token=...
+  const secondHash = hash.indexOf('#', 1);
+  if (secondHash > 0) {
+    return hash.slice(secondHash + 1);
+  }
+
+  // Normalized: #/estateit/oauth?access_token=...
+  const q = hash.indexOf('?');
+  if (q > 0) {
+    return hash.slice(q + 1);
+  }
+
+  return '';
+}
+
 function fragmentOf(win) {
-  const hash = win?.location?.hash || '';
-  // Anything starting with #/ is already a router path — leave it alone. That
-  // includes the correctly formed #/estateit/oauth#access_token=... case.
-  if (!hash || hash.startsWith('#/')) return '';
-  return hash.slice(1);
+  return authPayloadFromHash(win?.location?.hash || '');
 }
 
 function parseFragment(fragment) {
@@ -43,10 +73,12 @@ function parseFragment(fragment) {
 
 function oauthFlagSet(win) {
   try {
-    return win.localStorage.getItem(ESTATE_VAULT_OAUTH_FLAG) === 'true';
+    if (win.localStorage.getItem(ESTATE_VAULT_OAUTH_FLAG) === 'true') return true;
+    if (win.sessionStorage.getItem(ESTATE_VAULT_OAUTH_FLAG) === 'true') return true;
   } catch {
-    return false;
+    // ignore
   }
+  return false;
 }
 
 function onEstateVaultHost(win) {
@@ -54,18 +86,27 @@ function onEstateVaultHost(win) {
   return ESTATE_VAULT_HOSTS.includes(host);
 }
 
+function alreadyNormalized(win) {
+  const hash = win?.location?.hash || '';
+  return hash.startsWith(`${OAUTH_ROUTE_PREFIX}?`);
+}
+
 /**
- * @returns {string} the hash to use (`#/estateit/oauth#...`), or '' to do nothing.
+ * @returns {string} the hash to use (`#/estateit/oauth?...`), or '' to do nothing.
  */
 export function estateAuthLandingTarget(win) {
+  const hash = win?.location?.hash || '';
   const fragment = fragmentOf(win);
   const params = parseFragment(fragment);
   if (!params) return '';
 
-  const target = `#${ESTATEIT_PATH}/oauth#${fragment}`;
   const failed = ERROR_KEYS.some((key) => params.get(key));
   const hasToken = Boolean(params.get('access_token'));
   if (!failed && !hasToken) return '';
+
+  if (alreadyNormalized(win)) return '';
+
+  const target = estateOAuthCallbackHash(fragment);
 
   // Mid-flow Google sign-in is unambiguous: we set the flag before leaving.
   if (oauthFlagSet(win)) return target;
@@ -118,6 +159,7 @@ export function estateAuthFragmentError(fragment) {
 
 export default {
   ESTATE_VAULT_OAUTH_FLAG,
+  estateOAuthCallbackHash,
   estateAuthLandingTarget,
   applyEstateAuthLanding,
   estateAuthFragmentError

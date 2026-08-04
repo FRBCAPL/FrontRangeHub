@@ -94,6 +94,7 @@ export function estateVaultOAuthRedirectUrl() {
 export async function signInEstateOwnerWithGoogle() {
   try {
     localStorage.setItem(ESTATE_VAULT_OAUTH_FLAG, 'true');
+    sessionStorage.setItem(ESTATE_VAULT_OAUTH_FLAG, 'true');
   } catch {
     // ignore
   }
@@ -292,21 +293,26 @@ export async function signInEstateOwnerWithEmail(email, password) {
 export async function completeEstateVaultOAuth() {
   try {
     localStorage.removeItem(ESTATE_VAULT_OAUTH_FLAG);
+    sessionStorage.removeItem(ESTATE_VAULT_OAUTH_FLAG);
   } catch {
     // ignore
   }
 
   const fullHash = typeof window !== 'undefined' ? window.location.hash || '' : '';
+  const payload = fullHash.startsWith('#') ? fullHash.slice(1) : fullHash;
+  const qIdx = payload.indexOf('?');
+  const hashQuery = qIdx >= 0 ? payload.slice(qIdx + 1) : '';
   const hashParts = fullHash.split('#');
-  const tokenHash = hashParts[hashParts.length - 1] || '';
+  const legacyTokenHash = hashParts[hashParts.length - 1] || '';
+  const tokenSource = hashQuery.includes('access_token') ? hashQuery : legacyTokenHash;
 
   // An expired or already-used confirmation link comes back as an error in the
   // fragment rather than tokens. Say so instead of "no session found".
-  const fragmentError = estateAuthFragmentError(tokenHash);
+  const fragmentError = estateAuthFragmentError(tokenSource);
   if (fragmentError) return fail(fragmentError);
 
-  if (tokenHash.includes('access_token')) {
-    const params = new URLSearchParams(tokenHash);
+  if (tokenSource.includes('access_token')) {
+    const params = new URLSearchParams(tokenSource);
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token');
     if (accessToken && refreshToken) {
@@ -322,9 +328,9 @@ export async function completeEstateVaultOAuth() {
         } catch {
           // ignore
         }
-        const payload = sessionPayload(data.session.user);
+        const payloadOut = sessionPayload(data.session.user);
         logEstateActivity({ eventType: 'pr_sign_in' });
-        return ok(payload);
+        return ok(payloadOut);
       }
     }
   }

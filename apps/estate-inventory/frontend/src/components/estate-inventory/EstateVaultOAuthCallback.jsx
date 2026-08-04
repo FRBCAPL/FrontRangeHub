@@ -29,6 +29,7 @@ const EstateVaultOAuthCallback = () => {
     (async () => {
       try {
         localStorage.removeItem(ESTATE_VAULT_OAUTH_FLAG);
+        sessionStorage.removeItem(ESTATE_VAULT_OAUTH_FLAG);
       } catch {
         // ignore
       }
