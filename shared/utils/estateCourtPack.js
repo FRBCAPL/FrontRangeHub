@@ -218,6 +218,14 @@ function section(title, content) {
   return `<section><h2>${escapeHtml(title)}</h2>${content}</section>`;
 }
 
+function formatPrimaryRepresentative(estate) {
+  const legalName = estate?.pr_legal_name || estate?.legal_name;
+  const email = estate?.owner_email;
+  if (legalName && email) return `${legalName} (${email})`;
+  if (legalName) return legalName;
+  return email || '—';
+}
+
 export function buildCourtPackHtml(pack) {
   const estate = pack.estate || {};
   const finance = pack.finance || {};
@@ -287,7 +295,7 @@ export function buildCourtPackHtml(pack) {
     <div><strong>Estate:</strong> ${escapeHtml(estate.estate_name || '—')}</div>
     <div><strong>Court case:</strong> ${escapeHtml(estate.court_case_number || '—')}</div>
     <div><strong>Portal case:</strong> ${escapeHtml(estate.case_number || '—')}</div>
-    <div><strong>Primary representative:</strong> ${escapeHtml(estate.owner_email || '—')}</div>
+    <div><strong>Primary representative:</strong> ${escapeHtml(formatPrimaryRepresentative(estate))}</div>
     <div><strong>Letters issued:</strong> ${escapeHtml(formatEstateDisplayDate(estate.letters_issued_at) || estate.letters_issued_at || '—')}</div>
     <div><strong>Inventory status:</strong> ${estate.inventory_completed_at ? `PR marked complete ${escapeHtml(estate.inventory_completed_at)}` : 'In progress / not certified complete'}</div>
     <div><strong>Record status:</strong> ${estate.closed_at ? `Closed ${escapeHtml(estate.closed_at)}` : 'Open'}</div>

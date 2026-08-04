@@ -210,6 +210,37 @@ export async function checkUserDisabled() {
   return rpc('estate_super_is_user_disabled', { p_user_id: null });
 }
 
+/** Super Admin — PR identity transfer queue (see estatePrIdentityService for PR-side APIs). */
+export async function listIdentityRequests(status = '') {
+  const result = await rpc('estate_super_list_identity_requests', {
+    p_status: status || null
+  });
+  if (!result.success) return result;
+  return ok(result.data?.requests || []);
+}
+
+export async function reviewIdentityRequest(requestId, action, reason) {
+  const token = await getAccessToken();
+  if (!token) return fail('Sign in required.');
+  try {
+    const res = await fetch(`${estateBackendBase()}/api/estate-super/identity/review`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ requestId, action, reason, requestMeta: requestMeta() })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.success === false) {
+      return fail(data?.error || `Request failed (${res.status}).`);
+    }
+    return ok(data);
+  } catch (err) {
+    return fail(err.message || 'Network error.');
+  }
+}
+
 export default {
   superMe,
   stayOnPrHome,
@@ -233,5 +264,7 @@ export default {
   clearSessions,
   assistUpdateSettings,
   logEstateView,
-  checkUserDisabled
+  checkUserDisabled,
+  listIdentityRequests,
+  reviewIdentityRequest
 };

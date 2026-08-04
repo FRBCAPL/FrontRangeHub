@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
+import { getPrProfile } from '@shared/services/estatePrIdentityService.js';
 import {
   PROBATE_DURATION_UNIT_OPTIONS,
   PROBATE_WINDOW_DAYS,
@@ -12,7 +14,8 @@ import {
   normalizeFamilyFinancialVisibility,
   normalizeProbateDurationUnit,
   normalizeProbateWindowAmount,
-  normalizeProbateWindowMode
+  normalizeProbateWindowMode,
+  ESTATEIT_PATH
 } from '@shared/utils/estateInventoryConstants.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
 import GlossaryTerm from './GlossaryTerm';
@@ -33,11 +36,19 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [prLegalName, setPrLegalName] = useState('');
 
   const portalKey = initialSettings?.case_number || '';
 
   useEffect(() => {
     if (!open) return;
+    getPrProfile().then((result) => {
+      if (result.success && result.data?.legal_name) {
+        setPrLegalName(result.data.legal_name);
+      } else {
+        setPrLegalName('');
+      }
+    });
     setEstateName(
       estateDisplayName(initialSettings, initialSettings?.case_number || '')
     );
@@ -154,7 +165,18 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
                 disabled
               />
               <p className="ei-settings-hint">
-                One email per estate. Heirs and helpers use invites, not this address.
+                One email per estate. Heirs and helpers use invites, not this address.{' '}
+                <Link to={`${ESTATEIT_PATH}/owner`}>Request identity change on My Estates</Link>
+              </p>
+            </div>
+          ) : null}
+          {prLegalName ? (
+            <div className="ei-field">
+              <label htmlFor="ei-pr-legal-name-readonly">PR legal name (account-wide)</label>
+              <input id="ei-pr-legal-name-readonly" value={prLegalName} readOnly disabled />
+              <p className="ei-settings-hint">
+                Used on court exports as primary representative.{' '}
+                <Link to={`${ESTATEIT_PATH}/owner`}>Request change on My Estates</Link>
               </p>
             </div>
           ) : null}

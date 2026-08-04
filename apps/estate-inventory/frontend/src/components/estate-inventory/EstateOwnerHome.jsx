@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { getEstateOwnerSession, signOutEstateOwner } from '@shared/services/estateVaultAuth.js';
 import { leaveCurrentEstate } from '@shared/services/estateVaultSession.js';
@@ -8,6 +8,11 @@ import {
   isStayOnPrHome,
   clearStayOnPrHome
 } from '@shared/services/estateSuperAdminService.js';
+import {
+  getPrProfile,
+  listMyIdentityRequests,
+  openIdentityRequestStatus
+} from '@shared/services/estatePrIdentityService.js';
 import {
   ESTATEIT_PATH,
   estateDisplayCaseNumber,
@@ -19,6 +24,8 @@ import EstateCreateEstateModal from './EstateCreateEstateModal';
 import EstateClaimEstateModal from './EstateClaimEstateModal';
 import EstateOwnerSignIn from './EstateOwnerSignIn';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
+import EstatePrLegalNameModal from './EstatePrLegalNameModal';
+import EstatePrIdentityRequestModal from './EstatePrIdentityRequestModal';
 import GlossaryTerm from './GlossaryTerm';
 import EstateBrandTitle from './EstateBrandTitle';
 import './EstateInventoryApp.css';
@@ -28,6 +35,7 @@ import './EstateInventoryApp.css';
  */
 const EstateOwnerHome = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [session, setSession] = useState(null);
   const [estates, setEstates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +44,28 @@ const EstateOwnerHome = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [showClaim, setShowClaim] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
+  const [prProfile, setPrProfile] = useState(null);
+  const [identityRequests, setIdentityRequests] = useState([]);
+  const [showLegalName, setShowLegalName] = useState(false);
+  const [showIdentityRequest, setShowIdentityRequest] = useState(false);
+
+  const openIdentityRequest = identityRequests.find((r) =>
+    ['pending_super_review', 'pending_pr_confirm'].includes(r.status)
+  );
+
+  const loadProfileAndRequests = useCallback(async () => {
+    const [profileResult, requestsResult] = await Promise.all([
+      getPrProfile(),
+      listMyIdentityRequests()
+    ]);
+    if (profileResult.success) {
+      setPrProfile(profileResult.data);
+      setShowLegalName(Boolean(profileResult.data?.needs_legal_name));
+    }
+    if (requestsResult.success) {
+      setIdentityRequests(requestsResult.data || []);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,6 +88,8 @@ const EstateOwnerHome = () => {
       }
     }
 
+    await loadProfileAndRequests();
+
     const listed = await estateInventoryService.listOwnedEstates();
     setLoading(false);
     if (!listed.success) {
@@ -66,11 +98,28 @@ const EstateOwnerHome = () => {
       return;
     }
     setEstates(listed.data || []);
-  }, [navigate]);
+  }, [navigate, loadProfileAndRequests]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const identity = searchParams.get('identity');
+    if (!identity) return;
+    if (identity === 'confirmed') {
+      setMessage(
+        'Identity change confirmed. Sign in with your new email to see transferred estates, or refresh if you already switched accounts.'
+      );
+    } else if (identity === 'error') {
+      const detail = searchParams.get('message');
+      setError(detail ? decodeURIComponent(detail.replace(/\+/g, ' ')) : 'Could not confirm identity change.');
+    }
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const needsLegalName = Boolean(prProfile?.needs_legal_name);
+  const estateActionsBlocked = needsLegalName;
 
   const handleSignOut = async () => {
     leaveCurrentEstate();
@@ -104,6 +153,12 @@ const EstateOwnerHome = () => {
           {session?.email ? (
             <>
               Primary executor: <strong>{session.email}</strong>
+              {prProfile?.legal_name ? (
+                <>
+                  <br />
+                  Legal name: <strong>{prProfile.legal_name}</strong>
+                </>
+              ) : null}
               <br />
               One email per estate — you can be PR for several estates.
             </>
@@ -112,11 +167,36 @@ const EstateOwnerHome = () => {
           )}
         </p>
         <div className="ei-landing-hero-actions">
-          <button type="button" className="ei-btn" onClick={() => setShowCreate(true)}>
+          <button
+            type="button"
+            className="ei-btn"
+            onClick={() => setShowCreate(true)}
+            disabled={estateActionsBlocked}
+            title={estateActionsBlocked ? 'Set your legal name first' : undefined}
+          >
             Start new estate
           </button>
-          <button type="button" className="ei-btn ei-btn-secondary" onClick={() => setShowClaim(true)}>
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary"
+            onClick={() => setShowClaim(true)}
+            disabled={estateActionsBlocked}
+            title={estateActionsBlocked ? 'Set your legal name first' : undefined}
+          >
             Link existing estate
+          </button>
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary"
+            onClick={() => setShowIdentityRequest(true)}
+            disabled={needsLegalName}
+            title={
+              needsLegalName
+                ? 'Set your legal name before requesting an identity change'
+                : 'Request legal name or email transfer'
+            }
+          >
+            Account identity
           </button>
           <button type="button" className="ei-btn ei-btn-secondary" onClick={handleSignOut}>
             Sign out of Estate Vault
@@ -131,6 +211,41 @@ const EstateOwnerHome = () => {
       {error ? <div className="ei-error">{error}</div> : null}
       {message ? <p className="ei-status">{message}</p> : null}
 
+      {openIdentityRequest ? (
+        <div className="ei-notice ei-portal-card" style={{ marginBottom: '1rem' }}>
+          <strong>Identity change in progress:</strong>{' '}
+          {openIdentityRequestStatus(openIdentityRequest)}
+          {openIdentityRequest.status === 'pending_pr_confirm' ? (
+            <>
+              {' '}
+              Check <strong>{openIdentityRequest.current_email}</strong> for the confirmation link
+              (expires{' '}
+              {openIdentityRequest.confirm_expires_at
+                ? new Date(openIdentityRequest.confirm_expires_at).toLocaleString()
+                : 'soon'}
+              ).
+            </>
+          ) : null}
+          <button
+            type="button"
+            className="ei-linkish"
+            style={{ marginLeft: '0.5rem' }}
+            onClick={() => setShowIdentityRequest(true)}
+          >
+            View request
+          </button>
+        </div>
+      ) : null}
+
+      {needsLegalName && !loading ? (
+        <div className="ei-notice ei-portal-card" style={{ marginBottom: '1rem' }}>
+          Set your legal name as Personal Representative before creating or opening estates.{' '}
+          <button type="button" className="ei-linkish" onClick={() => setShowLegalName(true)}>
+            Enter legal name
+          </button>
+        </div>
+      ) : null}
+
       {!loading && !estates.length ? (
         <div className="ei-empty ei-portal-card">
           <p>
@@ -138,10 +253,20 @@ const EstateOwnerHome = () => {
             PIN you already use.
           </p>
           <div className="ei-btn-row" style={{ marginTop: '0.75rem' }}>
-            <button type="button" className="ei-btn" onClick={() => setShowCreate(true)}>
+            <button
+              type="button"
+              className="ei-btn"
+              onClick={() => setShowCreate(true)}
+              disabled={estateActionsBlocked}
+            >
               Start new estate
             </button>
-            <button type="button" className="ei-btn ei-btn-secondary" onClick={() => setShowClaim(true)}>
+            <button
+              type="button"
+              className="ei-btn ei-btn-secondary"
+              onClick={() => setShowClaim(true)}
+              disabled={estateActionsBlocked}
+            >
               Link existing estate
             </button>
           </div>
@@ -159,9 +284,14 @@ const EstateOwnerHome = () => {
                 type="button"
                 className="ei-list-item"
                 onClick={() => {
+                  if (estateActionsBlocked) {
+                    setShowLegalName(true);
+                    return;
+                  }
                   estateInventoryService.setActiveEstateCase(cn);
                   navigate(estateitCasePath(cn, 'admin'));
                 }}
+                disabled={estateActionsBlocked}
               >
                 <div>
                   <strong>{label}</strong>
@@ -218,6 +348,33 @@ const EstateOwnerHome = () => {
           if (cn) {
             estateInventoryService.setActiveEstateCase(cn);
           }
+        }}
+      />
+
+      <EstatePrLegalNameModal
+        open={showLegalName}
+        required={needsLegalName}
+        initialName={prProfile?.legal_name || ''}
+        onSaved={(profile) => {
+          setPrProfile(profile);
+          setShowLegalName(false);
+          setMessage('Legal name saved.');
+        }}
+      />
+
+      <EstatePrIdentityRequestModal
+        open={showIdentityRequest}
+        onClose={() => setShowIdentityRequest(false)}
+        profile={prProfile}
+        sessionEmail={session?.email}
+        openRequest={openIdentityRequest}
+        onSubmitted={() => {
+          setMessage('Identity change submitted for operator review.');
+          loadProfileAndRequests();
+        }}
+        onCancelled={() => {
+          setMessage('Identity change request cancelled.');
+          loadProfileAndRequests();
         }}
       />
     </div>

@@ -31,6 +31,7 @@ import {
   syncAccountComputedBalance
 } from './estateFundsLedger.js';
 import { sealCourtPack } from '../utils/estateCourtPack.js';
+import { getPrProfile } from './estatePrIdentityService.js';
 import { buildFormalAccountingStatement } from '../utils/estateFormalAccounting.js';
 import { buildFamilyUpdatePackage } from '../utils/estateFamilyUpdate.js';
 import { buildCompletenessCertificate } from '../utils/estateCompleteness.js';
@@ -5538,6 +5539,16 @@ export async function buildCourtEvidencePack(caseNumber) {
   });
   formalAccounting.completeness = completeness;
 
+  let prLegalName = null;
+  try {
+    const profileResult = await getPrProfile();
+    if (profileResult.success && profileResult.data?.legal_name) {
+      prLegalName = profileResult.data.legal_name;
+    }
+  } catch {
+    prLegalName = null;
+  }
+
   const pack = await sealCourtPack({
     format: 'estate-vault-court-pack',
     version: 5,
@@ -5546,7 +5557,7 @@ export async function buildCourtEvidencePack(caseNumber) {
     read_only: true,
     filing_ready: completeness.filingReady,
     completeness,
-    estate: settings,
+    estate: { ...settings, pr_legal_name: prLegalName },
     inventory,
     scenes,
     finance,

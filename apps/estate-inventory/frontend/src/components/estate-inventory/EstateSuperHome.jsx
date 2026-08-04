@@ -12,6 +12,7 @@ import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateSuperEstatesPanel from './EstateSuperEstatesPanel';
 import EstateSuperUsersPanel from './EstateSuperUsersPanel';
 import EstateSuperAuditPanel from './EstateSuperAuditPanel';
+import EstateSuperIdentityPanel from './EstateSuperIdentityPanel';
 import './EstateInventoryApp.css';
 
 const TABS = [
@@ -24,6 +25,11 @@ const TABS = [
     id: 'users',
     label: 'Owners',
     title: 'Manage PR accounts: block Estate Vault sign-in, or permanently delete a test user’s EV data (login for other apps is kept).'
+  },
+  {
+    id: 'identity',
+    label: 'Identity',
+    title: 'Review PR legal name and email transfer requests before estates move to a new auth account.'
   },
   {
     id: 'audit',
@@ -103,6 +109,7 @@ const EstateSuperHome = ({ session }) => {
 
         {tab === 'estates' ? <EstateSuperEstatesPanel /> : null}
         {tab === 'users' ? <EstateSuperUsersPanel /> : null}
+        {tab === 'identity' ? <EstateSuperIdentityPanel /> : null}
         {tab === 'audit' ? <EstateSuperAuditPanel /> : null}
 
         <p className="ei-settings-hint" style={{ marginTop: '1rem' }}>
