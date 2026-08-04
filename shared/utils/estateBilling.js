@@ -7,7 +7,7 @@ export const ESTATE_BILLING_PLAN = {
   name: 'Estate Vault Standard',
   amountCents: 2999,
   interval: 'month',
-  trialDays: 30,
+  trialDays: 14,
   graceDays: 7,
   /** Only the PR's first owned estate gets the free trial. */
   trialOnFirstEstateOnly: true,
@@ -23,7 +23,7 @@ export function estatePricingBlurbShort() {
   const price = formatBillingMoney();
   return (
     `Your first estate includes a ${ESTATE_BILLING_PLAN.trialDays}-day free trial.` + 
-     `\nBilled at ${price}/month after the 30 days.` +
+     `\nBilled at ${price}/month after the ${ESTATE_BILLING_PLAN.trialDays}-day trial.` +
     `\nAdditional estates start at ${price}/month. ` +
     `\nFamily, helpers, and the public sale are always free with paid PR access.`
   );
