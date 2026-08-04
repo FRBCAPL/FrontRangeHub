@@ -1,8 +1,8 @@
 import React from 'react';
-import { APP_NAME } from '@shared/utils/estateInventoryConstants.js';
+import EstateBrandLogo from './EstateBrandLogo';
 
 /**
- * Decorative padlock watermark — sits behind the Estate Vault name.
+ * Legacy padlock decoration — kept for any leftover references.
  */
 export function EstateBrandLock() {
   return (
@@ -16,16 +16,31 @@ export function EstateBrandLock() {
 }
 
 /**
- * App name with consistent padlock watermark behind it.
- * @param {{ className?: string, textClassName?: string }} props
+ * Primary page brand mark (auth / landing heroes).
+ * Default: pro EV lockup. Gateway uses EstateBrandLogo main directly.
+ *
+ * @param {{
+ *   className?: string,
+ *   textClassName?: string,
+ *   variant?: 'main' | 'icon' | 'pro',
+ *   size?: 'landing' | 'compact'
+ * }} props
  */
-const EstateBrandTitle = ({ className = '', textClassName = '' }) => {
+const EstateBrandTitle = ({
+  className = '',
+  textClassName = '',
+  variant = 'pro',
+  size = 'landing'
+}) => {
+  void textClassName;
   return (
-    <h1 className={`ei-brand-title${className ? ` ${className}` : ''}`.trim()}>
-      <EstateBrandLock />
-      <span className={`ei-brand-title-text${textClassName ? ` ${textClassName}` : ''}`.trim()}>
-        {APP_NAME}
-      </span>
+    <h1
+      className={`ei-brand-title ei-brand-title--logo${className ? ` ${className}` : ''}`.trim()}
+    >
+      <EstateBrandLogo
+        variant={variant}
+        className={`ei-brand-title-logo ei-brand-title-logo--${size}`}
+      />
     </h1>
   );
 };

@@ -20,6 +20,7 @@ import EstateClaimEstateModal from './EstateClaimEstateModal';
 import EstateOwnerSignIn from './EstateOwnerSignIn';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import GlossaryTerm from './GlossaryTerm';
+import EstateBrandTitle from './EstateBrandTitle';
 import './EstateInventoryApp.css';
 
 /**
@@ -94,6 +95,7 @@ const EstateOwnerHome = () => {
   return (
     <div className="estate-inventory ei-landing ei-owner-home">
       <header className="ei-landing-hero">
+        <EstateBrandTitle size="compact" />
         <p className="ei-eyebrow">
           <GlossaryTerm termKey="personal_representative">Personal Representative</GlossaryTerm>
         </p>

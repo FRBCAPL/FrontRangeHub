@@ -13,6 +13,7 @@ import {
 import { useEstateCase } from './EstateCaseContext';
 import EstateRoleGuideModal from './EstateRoleGuideModal';
 import EstateRolesOverviewModal from './EstateRolesOverviewModal';
+import EstateBrandLogo from './EstateBrandLogo';
 
 /**
  * Shared EstateIt navigation: back, breadcrumbs, and section menu.
@@ -250,7 +251,10 @@ const EstateNav = ({
         </div>
 
         <div className="ei-nav-center">
-          <p className="ei-nav-app">{APP_NAME}</p>
+          <p className="ei-nav-app">
+            <EstateBrandLogo variant="icon" className="ei-nav-app-logo" alt="" />
+            <span>{APP_NAME}</span>
+          </p>
           <p className="ei-nav-case">
             {estateName ? (
               <>

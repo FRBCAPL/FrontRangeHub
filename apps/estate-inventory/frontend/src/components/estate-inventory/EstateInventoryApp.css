@@ -92,6 +92,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.ei-nav-app-logo {
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 0.35rem;
+  flex: 0 0 auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 .ei-nav-case {
@@ -3915,6 +3927,39 @@ button.ei-helper-photo-remove {
   width: min(100%, 12.5rem);
 }
 
+.ei-brand-title--logo {
+  display: flex;
+  justify-content: center;
+  padding-block: 0;
+  margin: 0 0 0.75rem;
+  line-height: 0;
+}
+
+.ei-brand-title-logo {
+  width: min(100%, 13.5rem);
+  height: auto;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.ei-brand-title-logo--compact {
+  width: min(100%, 10.5rem);
+}
+
+.ei-brand-title-logo--landing {
+  width: min(100%, 13.5rem);
+}
+
+.ei-landing-hero .ei-brand-title--logo {
+  margin: 0 auto 0.85rem;
+  font-size: inherit;
+  color: inherit;
+  line-height: 0;
+}
+
 .ei-gateway-logo-wrap {
   margin: 0.2rem auto 0.45rem;
   padding: 0;
@@ -4001,6 +4046,10 @@ button.ei-helper-photo-remove {
 .ei-gateway .ei-brand-title {
   margin: 0 0 0.75rem;
   font-size: clamp(2.55rem, 9vw, 3.65rem);
+}
+
+.ei-gateway .ei-brand-title--logo {
+  font-size: inherit;
 }
 
 .ei-gateway .ei-brand-title-text.ei-gateway-brand,
@@ -6988,11 +7037,22 @@ button.ei-voice-btn.is-listening {
 }
 
 .ei-what-is-brand {
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.75rem;
   position: relative;
   min-width: 0;
   width: 100%;
   text-align: center;
+}
+
+.ei-what-is-brand-logo {
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 0.55rem;
+  flex: 0 0 auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .ei-what-is-lock-wrap {
@@ -7022,9 +7082,10 @@ button.ei-voice-btn.is-listening {
   min-width: 0;
   max-width: 28rem;
   width: 100%;
-  margin: 0 auto;
-  padding: 0 0.25rem;
+  margin: 0;
+  padding: 0;
   text-align: center;
+  flex: 1 1 auto;
 }
 
 .ei-what-is-eyebrow {
