@@ -21,6 +21,9 @@ import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
 import EstateReportsModal from './EstateReportsModal';
 import EstateClosingWizard from './EstateClosingWizard';
+import EstateBillingBanner from './EstateBillingBanner';
+import { getEstateBillingStatus } from '@shared/services/estateBillingService.js';
+import { isBillingLocked } from '@shared/utils/estateBilling.js';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
@@ -77,9 +80,15 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [showFaq, setShowFaq] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showClosing, setShowClosing] = useState(false);
+  const [billingAccess, setBillingAccess] = useState(null);
   const isClosed = Boolean(settings?.closed_at);
+  const billingLocked = isBillingLocked(billingAccess);
 
   const openAddItem = (collection = null, preset = null) => {
+    if (billingLocked) {
+      setBanner('This estate is paused — renew billing in Settings → Billing to make changes.');
+      return;
+    }
     if (isClosed) {
       setBanner('This estate is closed for records. Reopen it in Settings → Records & retention before making changes.');
       return;
@@ -139,9 +148,19 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     setSettings((prev) => ({ ...prev, case_number: routeCase || '' }));
     refreshCollections();
     refreshSettings().then(() => estateInventoryService.ensureCaseSettings(routeCase));
+    (async () => {
+      const billing = await getEstateBillingStatus(routeCase);
+      setBillingAccess(billing.success ? billing.data : null);
+    })();
   }, [routeCase, refreshCollections, refreshSettings]);
 
   const handleCreateCollection = async (name) => {
+    if (billingLocked) {
+      return {
+        success: false,
+        error: 'This estate is paused — renew billing in Settings → Billing.'
+      };
+    }
     if (isClosed) {
       return {
         success: false,
@@ -383,6 +402,17 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
             Inventory, finance, settings, family, helper, and auction changes are blocked. Reopen
             with a written reason in Settings → Records &amp; retention.
           </span>
+        </div>
+      ) : null}
+
+      {billingLocked ? (
+        <div className="ei-billing-locked-banner" role="alert">
+          <EstateBillingBanner
+            caseNumber={routeCase || settings?.case_number}
+            forceShow
+            onStatus={setBillingAccess}
+            onMessage={setBanner}
+          />
         </div>
       ) : null}
 

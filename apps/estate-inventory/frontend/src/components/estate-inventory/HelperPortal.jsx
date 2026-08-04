@@ -17,6 +17,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
+import EstateBillingLockedGate from './EstateBillingLockedGate';
 import './EstateInventoryApp.css';
 
 const HelperPortal = () => {
@@ -129,6 +130,7 @@ const HelperPortal = () => {
 
   if (!session) {
     return (
+      <EstateBillingLockedGate caseNumber={caseNumber} roleLabel="The helper portal">
       <div className="estate-inventory ei-portal">
         <EstateNav
           variant="helper"
@@ -214,10 +216,12 @@ const HelperPortal = () => {
         <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
         <EstateSystemDisclaimer />
       </div>
+      </EstateBillingLockedGate>
     );
   }
 
   return (
+    <EstateBillingLockedGate caseNumber={caseNumber} roleLabel="The helper portal">
     <div className="estate-inventory ei-portal ei-helper-capture">
       <EstateNav
         variant="helper"
@@ -332,6 +336,7 @@ const HelperPortal = () => {
       />
       <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
     </div>
+    </EstateBillingLockedGate>
   );
 };
 

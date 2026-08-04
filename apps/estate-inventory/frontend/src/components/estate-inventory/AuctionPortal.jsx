@@ -19,6 +19,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
+import EstateBillingLockedGate from './EstateBillingLockedGate';
 import './EstateInventoryApp.css';
 
 function canPreviewBeforePublic(caseNumber) {
@@ -227,6 +228,7 @@ const AuctionPortal = () => {
 
   if (!loading && !allowed) {
     return (
+      <EstateBillingLockedGate caseNumber={caseNumber} roleLabel="The public sale / auction">
       <div className="estate-inventory ei-portal ei-auction">
         <EstateNav
           variant="auction"
@@ -272,10 +274,12 @@ const AuctionPortal = () => {
         />
         <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
       </div>
+      </EstateBillingLockedGate>
     );
   }
 
   return (
+    <EstateBillingLockedGate caseNumber={caseNumber} roleLabel="The public sale / auction">
     <div className="estate-inventory ei-portal ei-auction">
       <EstateNav
         variant={familyFollower ? 'heir' : 'auction'}
@@ -509,6 +513,7 @@ const AuctionPortal = () => {
       />
       <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
     </div>
+    </EstateBillingLockedGate>
   );
 };
 

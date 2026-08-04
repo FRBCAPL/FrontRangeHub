@@ -44,6 +44,7 @@ import HeirDisclosureTimeline from './HeirDisclosureTimeline';
 import HeirFamilyUpdatesPanel from './HeirFamilyUpdatesPanel';
 import HeirFamilyCoachMarks from './HeirFamilyCoachMarks';
 import EstateRoleGuideModal from './EstateRoleGuideModal';
+import EstateBillingLockedGate from './EstateBillingLockedGate';
 import {
   FAMILY_COACH_STEPS,
   hasSeenFamilyCoach,
@@ -591,6 +592,7 @@ const SiblingPortal = () => {
 
   if (!session) {
     return (
+      <EstateBillingLockedGate caseNumber={routeCase || caseNumber} roleLabel="The family portal">
       <div className="estate-inventory ei-portal ei-portal--family">
         <div className="ei-family-atmosphere" aria-hidden="true">
           <span className="ei-family-glow ei-family-glow-a" />
@@ -665,6 +667,7 @@ const SiblingPortal = () => {
         <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
         <EstateSystemDisclaimer />
       </div>
+      </EstateBillingLockedGate>
     );
   }
 
@@ -676,6 +679,7 @@ const SiblingPortal = () => {
   const coachTargetId = showCoach ? FAMILY_COACH_STEPS[coachStep]?.targetId || '' : '';
 
   return (
+    <EstateBillingLockedGate caseNumber={routeCase || caseNumber} roleLabel="The family portal">
     <div
       className={`estate-inventory ei-portal ei-portal--family${showCoach ? ' is-coaching' : ''}`}
     >
@@ -978,6 +982,7 @@ const SiblingPortal = () => {
 
       <EstateSystemDisclaimer />
     </div>
+    </EstateBillingLockedGate>
   );
 };
 

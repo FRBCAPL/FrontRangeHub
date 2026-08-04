@@ -8,9 +8,15 @@ import EstateSettingsHeirsModal from './EstateSettingsHeirsModal';
 import EstateSettingsViewPasswordsModal from './EstateSettingsViewPasswordsModal';
 import EstateSettingsActivityModal from './EstateSettingsActivityModal';
 import EstateSettingsRecordsModal from './EstateSettingsRecordsModal';
+import EstateSettingsBillingModal from './EstateSettingsBillingModal';
 import { EstateSettingsShell } from './EstateSettingsShell';
 
 const SECTIONS = [
+  {
+    id: 'billing',
+    label: 'Billing',
+    hint: 'Trial, subscription, and renew for this estate'
+  },
   {
     id: 'passwords',
     label: 'View passwords',
@@ -131,6 +137,10 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
         open={section === 'passwords'}
         onClose={closeSection}
         refreshKey={passwordRefreshKey}
+      />
+      <EstateSettingsBillingModal
+        open={section === 'billing'}
+        onClose={closeSection}
       />
       <EstateSettingsActivityModal open={section === 'activity'} onClose={closeSection} />
       <EstateSettingsRecordsModal

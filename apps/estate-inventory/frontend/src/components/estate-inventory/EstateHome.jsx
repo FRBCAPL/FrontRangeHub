@@ -5,6 +5,7 @@ import EstateFinanceDashboard from './EstateFinanceDashboard';
 import EstateHowItWorksPanel from './EstateHowItWorksPanel';
 import EstateHomeStatusStrip from './EstateHomeStatusStrip';
 import EstateNeedsAttentionPanel from './EstateNeedsAttentionPanel';
+import EstateBillingBanner from './EstateBillingBanner';
 
 /**
  * PR admin home — command center:
@@ -75,6 +76,12 @@ const EstateHome = ({
         refreshKey={pendingRefreshKey + localRefresh}
         onOpenSettings={onOpenSettings}
         onOpenProgress={openProgress}
+      />
+
+      <EstateBillingBanner
+        caseNumber={settings?.case_number}
+        refreshKey={pendingRefreshKey + localRefresh}
+        onMessage={onMessage}
       />
 
       <div className="ei-home-alerts" aria-label="Attention and next steps">

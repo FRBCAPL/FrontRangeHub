@@ -93,6 +93,11 @@ const EstateCreateEstateModal = ({ open, onClose, onCreated }) => {
               estate (you can still own multiple estates). Heirs and helpers join later by invite only.
               A one-time admin PIN is generated and shown once after you create the estate.
             </p>
+            <p className="ei-settings-hint">
+              <strong>Billing:</strong> each new estate includes a 30-day free trial, then $29.99/month
+              while it stays open. Family, helpers, and the public sale pause if a subscription is
+              not renewed after the trial and grace period.
+            </p>
             <div className="ei-field">
               <label htmlFor="ei-new-estate-name">Estate name</label>
               <input
