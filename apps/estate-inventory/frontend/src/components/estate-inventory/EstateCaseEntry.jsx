@@ -98,10 +98,12 @@ const EstateCaseEntry = () => {
           </p>
          
           <p className="ei-gateway-start">
-            <button type="button" className="ei-btn" onClick={() => setShowWhatIsVault(true)}>
+            <Link className="ei-btn" to={`${ESTATEIT_PATH}/owner`}>
               Start here as a PR
-            </button>
-            <span className="ei-gateway-start-hint">Short walkthrough — then choose your door</span>
+            </Link>
+            <span className="ei-gateway-start-hint">
+              Sign in or create your account — then create or open an estate
+            </span>
           </p>
         </header>
 

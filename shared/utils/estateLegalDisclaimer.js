@@ -39,15 +39,16 @@ export const ESTATE_LEGAL_DISCLAIMER = {
   intro:
     'We help Personal Representatives and authorized users keep estate administration records — inventory, money, sales, distributions — and prepare court-supporting documentation.',
   introHighlight:
-    'Estate Vault is not a law firm, CPA firm, tax service, court e-filing system, or pre-death document vault.',
+    'Estate Vault is not a law firm, CPA firm, tax service, \ncourt e-filing system, or pre-death document vault.',
   sections: [
     {
       heading: 'What this product is',
       items: [
         'A workspace to organize inventory, finances, decisions, evidence, and communication related to estate administration.',
-        'A source of reports and exports intended as supporting documentation for you, your counsel, and other professionals to review.',
+        'A source of reports and exports intended as supporting documentation for you, family, beneficiaries, your counsel, and other professionals to review.',
         'A recordkeeping aid that can help show what was tracked, when it was recorded, and what still appears incomplete.',
-        'A ledger that calculates Cash available and Estate balance from the Funds activity and other amounts you record — intended so the Personal Representative workspace and family overview can show the same money picture when finances are shared.'
+        'A ledger that calculates Cash available and Estate balance from the Funds activity and other amounts you record — Estate Vault is not a bank, broker, live bank feed, or official source of account balances. Accurate and complete information from the PR is required to keep these totals up to date.',
+        'Ditch the piles of scattered notes, spreadsheets, and multiple systems. Estate Vault is a single, integrated system for estate administration.'
       ]
     },
     {
@@ -57,9 +58,9 @@ export const ESTATE_LEGAL_DISCLAIMER = {
         'Not a substitute for an attorney, CPA, or any licensed professional.',
         'Not an official court filing system or e-filing software.',
         'Not a pre-death vault for wills, passwords, and life documents.',
-        'Not a guarantee that any report, export, receipt, or Family Update is complete, accurate, admissible, or ready to file.',
-        'Not a bank, broker, live bank feed, or official source of account balances.',
-        'Not a legally binding contract, court order, or instrument that creates or transfers rights by itself.'
+        'Not a guarantee that any report, export, receipt, or Family Update is complete, accurate, admissible, or ready to file. - Estate Vault depends on you to input complete and accurate information.',
+        'Not a bank, broker, live bank feed, or official source of account balances. - Estate Vault depends on you to keep Transactions/Funds up to date.',
+        'Not a legally binding contract, court order, or instrument that creates or transfers rights by itself. - Estate Vault depends on you to record all the information required by law.'
       ]
     },
     {

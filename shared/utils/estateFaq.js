@@ -34,7 +34,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'Do I have to upload the will, death certificate, or Letters?',
-          a: 'No. Those uploads are helpful when you have them and are not required to start. You can begin with case setup, inventory, and money tracking while paper documents stay with you and counsel.'
+          a: 'No. Those uploads are not required to use Estate Vault. You can begin with case setup, inventory, and money tracking while paper documents stay with you and counsel.'
         },
         {
           q: 'What if I already have spreadsheets and paper lists?',
@@ -45,8 +45,7 @@ export const ESTATE_FAQ = {
           a: 'Your attorney or CPA — not Estate Vault. The product organizes and documents; it does not give legal, tax, or fiduciary advice.'
         },
         {
-          q: 'Quick check that the main workflow still works?',
-          a: 'Smoke path for a living estate: add an item with a photo → log a Funds expense (or deposit) → mark a sale paid if you use sales → finalize a small distribution → export an evidence pack or publish a Family Update. Compare PR Ledger “Cash available” / estate balance with the heir overview when family visibility is on — they should match.'
+         
         }
       ]
     },
@@ -128,11 +127,11 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'What can the Personal Representative do?',
-          a: 'The PR runs the estate workspace: inventory and rooms, scene photos, accounts and expenses, distributions and receipts, family invites and visibility settings (including whether Specific Gift Recipients may browse rooms), Family Updates, and supporting reports. The PR also sets the estate admin PIN used on devices.'
+          a: 'The PR runs the estate workspace: inventory and rooms, scene photos, accounts and expenses, distributions and receipts, family invites/updates, and supporting reports.'
         },
         {
           q: 'What can heirs do?',
-          a: 'Depends on your role. Residual beneficiaries can usually browse remaining inventory, request items, message the PR, view inheritance receipts, and open published Family Updates. Specific Gift Recipients mainly see gifts named for them and cannot request residual inventory; the PR may optionally allow them to browse rooms (view only). Some people have both residual and specific-gift access.'
+          a: 'Depends on your role. Residual beneficiaries can usually browse remaining inventory, request items, message the PR, view inheritance receipts, and open published Family Updates. Specific Gift Recipients mainly see gifts named for them and cannot request residual inventory; in some cases they may be allowed to browse rooms (view only). Some people have both residual and specific-gift access.'
         },
         {
           q: 'What can helpers do?',
@@ -202,7 +201,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'What photo details does Estate Vault keep?',
-          a: 'When photos are uploaded, Estate Vault can retain capture-related details the device provides (such as a claimed capture time or GPS when available). Those device details are a claim from the camera/phone — not proof by themselves. The server also records when the photo was received, and important changes appear in estate activity history. Estate Vault does not currently store a separate cryptographic fingerprint (hash) of each image file.'
+          a: 'When photos are uploaded, Estate Vault can retain capture-related details the device provides (such as a claimed capture time or GPS when available). Those device details are a claim from the camera/phone — not proof by themselves. The server also records when the photo was received, and important changes appear in estate activity history.'
         },
         {
           q: 'Can heirs see bank statements and full finances?',

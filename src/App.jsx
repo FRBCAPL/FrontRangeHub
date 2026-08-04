@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { applyEstateAuthLanding, estateOAuthCallbackHash } from "@shared/utils/estateAuthLanding.js";
+
+// Estate Vault Google/email confirm — normalize #access_token=... before HashRouter mounts.
+applyEstateAuthLanding();
 
 // IMMEDIATE check for Dues Tracker OAuth callbacks - runs before React renders
 // This handles cases where OAuth tokens are in the pathname instead of hash

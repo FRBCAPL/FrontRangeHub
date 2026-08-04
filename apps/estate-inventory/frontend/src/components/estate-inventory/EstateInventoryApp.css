@@ -7409,6 +7409,7 @@ button.ei-voice-btn.is-listening {
   line-height: 1.45;
   text-align: center;
   color: var(--ei-ink);
+  white-space: pre-line;
 }
 
 .ei-legal-disclaimer-lead {
@@ -7426,6 +7427,7 @@ button.ei-voice-btn.is-listening {
   line-height: 1.5;
   text-align: center;
   color: var(--ei-ink);
+  white-space: pre-line;
 }
 
 .ei-legal-disclaimer-section {
@@ -7453,6 +7455,7 @@ button.ei-voice-btn.is-listening {
   font-size: 0.94rem;
   line-height: 1.45;
   color: rgba(245, 245, 244, 0.92);
+  white-space: pre-line;
 }
 
 .ei-legal-disclaimer-footer {

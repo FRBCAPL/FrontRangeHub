@@ -32,7 +32,7 @@ const OAuthCallback = ({ onSuccess }) => {
       }
       window.location.replace(
         tokenQuery
-          ? `${window.location.origin}/#/estateit/oauth#${tokenQuery}`
+          ? `${window.location.origin}${estateOAuthCallbackHash(tokenQuery)}`
           : `${window.location.origin}/#/estateit/oauth`
       );
       return;
