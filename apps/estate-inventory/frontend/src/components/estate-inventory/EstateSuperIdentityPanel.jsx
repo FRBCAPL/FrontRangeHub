@@ -48,6 +48,7 @@ const EstateSuperIdentityPanel = () => {
         ? [
             `${row.estate_count ?? '?'} estate(s) will move to ${row.requested_email} after PR confirms`,
             `Legal name becomes "${row.requested_legal_name}" on the target account`,
+            'On confirm: new case admin PINs emailed to the new login; old PINs stop working',
             'Stripe customer email sync runs when the PR confirms'
           ]
         : ['Request closes as denied', 'PR can submit a new request later'],

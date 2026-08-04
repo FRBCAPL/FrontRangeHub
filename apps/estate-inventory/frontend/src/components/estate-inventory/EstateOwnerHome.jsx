@@ -108,8 +108,11 @@ const EstateOwnerHome = () => {
     const identity = searchParams.get('identity');
     if (!identity) return;
     if (identity === 'confirmed') {
+      const pinsEmailed = searchParams.get('pins_emailed') === '1';
       setMessage(
-        'Identity change confirmed. Sign in with your new email to see transferred estates, or refresh if you already switched accounts.'
+        pinsEmailed
+          ? 'Identity change confirmed. Sign in with your new email — new case admin PINs were sent there (old PINs no longer work). You must set a personal PIN on first unlock.'
+          : 'Identity change confirmed. Sign in with your new email to see transferred estates.'
       );
     } else if (identity === 'error') {
       const detail = searchParams.get('message');
@@ -210,6 +213,25 @@ const EstateOwnerHome = () => {
       {loading ? <p className="ei-status">Loading…</p> : null}
       {error ? <div className="ei-error">{error}</div> : null}
       {message ? <p className="ei-status">{message}</p> : null}
+
+      {prProfile?.recent_identity_transfer ? (
+        <div className="ei-notice ei-portal-card" style={{ marginBottom: '1rem' }}>
+          <strong>Estates moved to this login.</strong>
+          {prProfile.recent_identity_transfer.admin_pins_rotated !== false ? (
+            <>
+              {' '}
+              New case admin PINs were emailed to this address when the transfer completed. Old PINs
+              no longer work. Check your inbox, then set a personal PIN on first unlock.
+            </>
+          ) : (
+            <>
+              {' '}
+              Sign in with this email to open your estates. If you completed a transfer before PIN
+              rotation was enabled, ask Super Admin to force a PIN reset.
+            </>
+          )}
+        </div>
+      ) : null}
 
       {openIdentityRequest ? (
         <div className="ei-notice ei-portal-card" style={{ marginBottom: '1rem' }}>

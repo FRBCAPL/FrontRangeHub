@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { getEstateOwnerSession } from '@shared/services/estateVaultAuth.js';
+import { getPrProfile } from '@shared/services/estatePrIdentityService.js';
 import {
   leaveCurrentEstateDestination,
   signOutEstateVault
@@ -49,6 +50,7 @@ const EstateAdminGate = () => {
   const [blockedRole, setBlockedRole] = useState(() =>
     estateInventoryService.describeActiveNonAdminEstateRole()
   );
+  const [recentTransfer, setRecentTransfer] = useState(null);
 
   useEffect(() => {
     setUnlocked(estateInventoryService.isAdminUnlocked(caseNumber));
@@ -61,6 +63,7 @@ const EstateAdminGate = () => {
     setInfo('');
     setCaseLabel(caseNumber);
     setBlockedRole(estateInventoryService.describeActiveNonAdminEstateRole());
+    setRecentTransfer(null);
 
     let cancelled = false;
     (async () => {
@@ -71,6 +74,12 @@ const EstateAdminGate = () => {
 
       const session = await getEstateOwnerSession();
       if (cancelled || !session.success) return;
+
+      const profileResult = await getPrProfile();
+      if (!cancelled && profileResult.success && profileResult.data?.recent_identity_transfer) {
+        setRecentTransfer(profileResult.data.recent_identity_transfer);
+      }
+
       const ownership = await estateInventoryService.isLoggedInOwnerOfCase(caseNumber);
       if (cancelled) return;
       if (ownership.success && ownership.data === true) {
@@ -191,6 +200,13 @@ const EstateAdminGate = () => {
         </div>
       ) : null}
       {ownerHint && !blockedRole ? <p className="ei-settings-hint">{ownerHint}</p> : null}
+      {recentTransfer && !blockedRole ? (
+        <div className="ei-notice ei-portal-card" style={{ marginBottom: '1rem' }}>
+          <strong>After identity transfer:</strong> use the <strong>new case admin PIN</strong> emailed
+          to this login address. Your previous PIN no longer works. You will choose a personal PIN on
+          first unlock.
+        </div>
+      ) : null}
       <form className="ei-portal-card" onSubmit={handleSubmit}>
         <div className="ei-field">
           <label htmlFor="ei-admin-pass">Admin PIN</label>
