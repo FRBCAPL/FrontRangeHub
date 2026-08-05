@@ -10,12 +10,14 @@ import LedgerExpensesPanel from './ledger/LedgerExpensesPanel.jsx';
 import LedgerAuctionPanel from './ledger/LedgerAuctionPanel.jsx';
 import LedgerDistributionsPanel from './ledger/LedgerDistributionsPanel.jsx';
 import LedgerInventoryReconPanel from './ledger/LedgerInventoryReconPanel.jsx';
+import LedgerClaimsPanel from './ledger/LedgerClaimsPanel.jsx';
 import CashAvailableHint from './CashAvailableHint.jsx';
 
 /** Everyday tasks — shown first for a new PR. */
 const PRIMARY_TABS = [
   { id: 'summary', label: 'Overview', hint: 'Simple picture of cash, property, and debts' },
   { id: 'accounts', label: 'Accounts', hint: 'Bank, retirement, SS, insurance, debts' },
+  { id: 'claims', label: 'Creditor claims', hint: 'Who claimed money against the estate' },
   { id: 'expenses', label: 'Pay a bill', hint: 'Record a cost paid from estate cash' },
   { id: 'transactions', label: 'Money in & out', hint: 'Running list of deposits and payments' },
   { id: 'distributions', label: 'Give to heirs', hint: 'Cash or property delivered to beneficiaries' }
@@ -32,6 +34,7 @@ const ALL_TABS = [...PRIMARY_TABS, ...MORE_TABS];
 
 function tabCount(id, summary) {
   if (id === 'accounts') return summary.accounts?.length || 0;
+  if (id === 'claims') return summary.creditorClaims?.length || 0;
   if (id === 'transactions') return summary.fundTransactions?.length || 0;
   if (id === 'expenses') return summary.expenses?.length || 0;
   if (id === 'loans') return summary.prLoans?.length || 0;
@@ -144,6 +147,14 @@ const EstateLedgerModal = ({
         {tab === 'accounts' ? (
           <LedgerAccountsPanel
             rows={summary.accounts}
+            caseNumber={caseNumber}
+            readOnly={readOnly}
+            onChanged={onChanged}
+          />
+        ) : null}
+        {tab === 'claims' ? (
+          <LedgerClaimsPanel
+            rows={summary.creditorClaims}
             caseNumber={caseNumber}
             readOnly={readOnly}
             onChanged={onChanged}

@@ -4811,6 +4811,167 @@ export async function deleteEstatePrLoan(loanId, caseNumber) {
   return ok(true);
 }
 
+const CREDITOR_CLAIM_SELECT =
+  'id, owner_id, estate_id, creditor_name, amount, status, noticed_date, filed_date, notes, created_at, updated_at';
+
+function normalizeCreditorClaimInput({
+  creditorName,
+  amount,
+  status,
+  noticedDate,
+  filedDate,
+  notes
+} = {}) {
+  const name = String(creditorName || '').trim();
+  if (!name) return { ok: false, error: 'Enter the creditor or claimant name.' };
+
+  let amt = null;
+  if (amount !== '' && amount != null) {
+    amt = roundMoney(amount);
+    if (!Number.isFinite(amt) || amt < 0) {
+      return { ok: false, error: 'Enter a valid claim amount (or leave blank).' };
+    }
+  }
+
+  const statusKey = String(status || 'open')
+    .trim()
+    .toLowerCase();
+  const allowed = new Set(['open', 'allowed', 'denied', 'paid', 'withdrawn']);
+  if (!allowed.has(statusKey)) {
+    return { ok: false, error: 'Choose a valid claim status.' };
+  }
+
+  return {
+    ok: true,
+    row: {
+      creditor_name: name,
+      amount: amt,
+      status: statusKey,
+      noticed_date: noticedDate || null,
+      filed_date: filedDate || null,
+      notes: String(notes || '').trim() || null
+    }
+  };
+}
+
+/** Creditor claims register — owner-only supporting record. */
+export async function listEstateCreditorClaims(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_creditor_claims')
+    .select(CREDITOR_CLAIM_SELECT)
+    .eq('owner_id', estate.userId)
+    .order('created_at', { ascending: false });
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q;
+  if (error) {
+    if (/estate_creditor_claims|schema cache|does not exist/i.test(error.message || '')) {
+      return ok([]);
+    }
+    return fail(error);
+  }
+  return ok(data || []);
+}
+
+export async function addEstateCreditorClaim(input = {}) {
+  const estate = await resolveOwnedEstate(input.caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (!estate.estateId) return fail('Estate id is required to record a claim.');
+
+  const normalized = normalizeCreditorClaimInput(input);
+  if (!normalized.ok) return fail(normalized.error);
+
+  const row = {
+    ...normalized.row,
+    owner_id: estate.userId,
+    estate_id: estate.estateId
+  };
+
+  const { data, error } = await supabase
+    .from('estate_creditor_claims')
+    .insert(row)
+    .select(CREDITOR_CLAIM_SELECT)
+    .single();
+  if (error) {
+    const msg = String(error.message || error.details || error.hint || '');
+    if (/schema cache|could not find the table|relation .* does not exist|does not exist/i.test(msg)) {
+      return fail(
+        'Creditor claims need a database update. Run supabase-migrations/estate-creditor-claims-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+
+  logEstateActivity({
+    eventType: 'creditor_claim_add',
+    caseNumber: estate.caseNumber,
+    metadata: { claim_id: data?.id, status: row.status }
+  });
+  return ok(data);
+}
+
+export async function updateEstateCreditorClaim(claimId, input = {}) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!claimId) return fail('Claim id required.');
+
+  const estate = await resolveOwnedEstate(input.caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const normalized = normalizeCreditorClaimInput(input);
+  if (!normalized.ok) return fail(normalized.error);
+
+  let q = supabase
+    .from('estate_creditor_claims')
+    .update({ ...normalized.row, updated_at: new Date().toISOString() })
+    .eq('id', claimId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q.select(CREDITOR_CLAIM_SELECT).single();
+  if (error) return fail(error);
+
+  logEstateActivity({
+    eventType: 'creditor_claim_update',
+    caseNumber: estate.caseNumber,
+    metadata: { claim_id: claimId, status: normalized.row.status }
+  });
+  return ok(data);
+}
+
+export async function deleteEstateCreditorClaim(claimId, caseNumber) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!claimId) return fail('Claim id required.');
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_creditor_claims')
+    .delete()
+    .eq('id', claimId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { error } = await q;
+  if (error) return fail(error);
+
+  logEstateActivity({
+    eventType: 'creditor_claim_delete',
+    caseNumber: estate.caseNumber,
+    metadata: { claim_id: claimId }
+  });
+  return ok(true);
+}
+
 /**
  * Admin-only fiduciary snapshot: PR loans + expense sum + auction gross − expenses = net.
  */
@@ -5291,6 +5452,7 @@ export async function getFinanceSummary(caseNumber) {
     expensesResult,
     accountsResult,
     loansResult,
+    claimsResult,
     itemsResult,
     documentsResult,
     distributionsResult
@@ -5300,6 +5462,7 @@ export async function getFinanceSummary(caseNumber) {
     listEstateExpenses(caseNumber),
     listEstateAccounts(caseNumber),
     listEstatePrLoans(caseNumber),
+    listEstateCreditorClaims(caseNumber),
     itemsQuery,
     documentsQuery,
     listEstateDistributions(caseNumber)
@@ -5343,6 +5506,7 @@ export async function getFinanceSummary(caseNumber) {
   const fundTransactions = txnList.success ? txnList.data || [] : [];
   const fundsComputed = txnList.success;
   const prLoans = loansResult.success ? loansResult.data || [] : [];
+  const creditorClaims = claimsResult.success ? claimsResult.data || [] : [];
   const unvaluedInventoryCount = items.filter(
     (item) =>
       !item.auction_paid_at &&
@@ -5418,9 +5582,11 @@ export async function getFinanceSummary(caseNumber) {
     accounts,
     fundTransactions,
     prLoans,
+    creditorClaims,
     accountDocuments: documentsResult.error ? [] : documentsResult.data || [],
     accountsUnavailable: !accountsResult.success,
     prLoansUnavailable: !loansResult.success,
+    creditorClaimsUnavailable: !claimsResult.success,
     accountDocumentsUnavailable: Boolean(documentsResult.error),
     distributionsUnavailable: !distributionsResult.success
   });
@@ -6014,6 +6180,10 @@ const estateInventoryService = {
   addEstatePrLoan,
   updateEstatePrLoan,
   deleteEstatePrLoan,
+  listEstateCreditorClaims,
+  addEstateCreditorClaim,
+  updateEstateCreditorClaim,
+  deleteEstateCreditorClaim,
   resetAdminPasswordAsOwner,
   listEstateAccounts,
   addEstateAccount,
