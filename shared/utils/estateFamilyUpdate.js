@@ -9,6 +9,7 @@ import { APP_NAME, distributionClassificationLabel, formatEstateDisplayDate } fr
 import { formatMoney, sumOutstandingBids, sumPaidAuctionSales } from './estateFinance.js';
 import { buildDisclosureTimeline } from './estateDisclosureTimeline.js';
 import { buildInventoryReconciliation } from './estateInventoryReconciliation.js';
+import { buildSimpleTextPdf, downloadPdfBytes } from './estateSimplePdf.js';
 
 function esc(value) {
   return String(value ?? '')
@@ -366,26 +367,203 @@ export function openFamilyUpdate(pack) {
   return { success: true };
 }
 
-/** Preferred path: save Family Update HTML locally (no popup required). */
+function familyUpdateBaseName(pack) {
+  const n = pack?.digest?.generatedLabel || pack?.generatedAt || 'update';
+  const num = pack?.updateNumber || pack?.update_number || '';
+  return String(`family-update-${num || n}`)
+    .replace(/[^\w.-]+/g, '_')
+    .slice(0, 60);
+}
+
+/** Flat printable lines for the native PDF builder. */
+export function buildFamilyUpdatePdfLines(pack) {
+  const p = pack || {};
+  const caseLabel = p.courtCaseNumber || p.caseNumber || 'estate';
+  const lines = [
+    `${APP_NAME} — Family Update`,
+    `${p.estateName || 'Estate'} · Case ${caseLabel}`,
+    `Generated ${new Date(p.generatedAt || Date.now()).toLocaleString()}`,
+    '',
+    'Staged transparency for beneficiaries — not a court binder and not a tax return.',
+    'Bank statements and sealed court evidence stay with the Personal Representative',
+    'unless separately shared.',
+    ''
+  ];
+
+  if (p.whyNotFinal) {
+    lines.push(`Why final numbers may not appear yet: ${p.whyNotFinal}`, '');
+  }
+  if (p.visibilityNote) {
+    lines.push(String(p.visibilityNote), '');
+  }
+
+  if (p.digest) {
+    lines.push(
+      'At a glance',
+      '----------------------------------------',
+      `Inventory: ${p.digest.inventory?.total || 0} recorded · ${
+        p.digest.inventory?.distributed || 0
+      } distributed · ${p.digest.inventory?.disputed || 0} disputed`,
+      `Sale/auction: ${p.digest.auction?.paid || 0} paid · ${
+        p.digest.auction?.pendingPayment || 0
+      } pending · ${p.digest.auction?.notListed || 0} approved not listed`,
+      `Claims: ${
+        p.digest.claims?.windowEndLabel
+          ? p.digest.claims.windowOpen
+            ? `Open until ${p.digest.claims.windowEndLabel}`
+            : `Closed ${p.digest.claims.windowEndLabel}`
+          : p.digest.claims?.note || '—'
+      }`,
+      `Distributions: ${p.digest.distributions?.batches || 0} batch(es) · cash ${formatMoney(
+        p.digest.distributions?.cash
+      )}`,
+      ''
+    );
+    if ((p.digest.expenses?.highlights || []).length) {
+      lines.push(`Expense highlights: ${p.digest.expenses.highlights.join(' · ')}`, '');
+    }
+    if ((p.digest.upcoming || []).length) {
+      lines.push(`Upcoming: ${p.digest.upcoming.join(' · ')}`, '');
+    }
+  }
+
+  if ((p.decisionNotes || []).length) {
+    lines.push('PR explanation notes', '----------------------------------------');
+    for (const row of p.decisionNotes) {
+      lines.push(
+        `- ${row.dateLabel || '—'} · ${row.topic || 'general'}`,
+        `  ${row.note || ''}`
+      );
+    }
+    lines.push('');
+  }
+
+  lines.push('Disclosure timeline', '----------------------------------------');
+  const events = p.timeline?.events || [];
+  if (!events.length) {
+    lines.push('No timeline events');
+  } else {
+    for (const event of events) {
+      lines.push(
+        `- ${event.dateLabel || '—'} · ${event.title || ''}`,
+        `  ${event.detail || ''} [${event.status || ''}]`
+      );
+    }
+  }
+  lines.push('');
+
+  lines.push(
+    'Inventory summary',
+    '----------------------------------------',
+    `Total items: ${p.reconciliation?.total || 0}`,
+    `Sale/auction lots: ${p.reconciliation?.auctionLotCount || 0}`,
+    `Distributed: ${p.reconciliation?.distributedCount || 0}`,
+    `Held / remaining: ${p.reconciliation?.heldCount || 0}`
+  );
+  const buckets = (p.reconciliation?.allBuckets || []).filter((b) => b.count > 0);
+  for (const bucket of buckets) {
+    lines.push(`- ${bucket.label || bucket.key}: ${bucket.count}`);
+  }
+  lines.push('');
+
+  lines.push(
+    'Sale/auction status',
+    '----------------------------------------',
+    `Approved: ${p.auction?.approvedCount || p.auction?.lotCount || 0}`,
+    `On catalog: ${p.auction?.listedCount || 0}`,
+    `Approved but not listed: ${p.auction?.notListedCount || 0}`,
+    `Expected proceeds: ${formatMoney(p.auction?.expectedTotal)}`,
+    `Collected: ${formatMoney(p.auction?.paidTotal)}`,
+    `Outstanding: ${formatMoney(p.auction?.outstandingTotal)}`
+  );
+  if (p.auction?.summaryLabel) lines.push(p.auction.summaryLabel);
+  const notListed = p.auction?.notListed || [];
+  if (notListed.length) {
+    lines.push('Not listed:');
+    for (const row of notListed) {
+      lines.push(`- ${row.name || 'Item'}: ${row.reason || '—'}`);
+    }
+  }
+  lines.push('');
+
+  lines.push('Distributions recorded', '----------------------------------------');
+  const dist = p.distributionLines || [];
+  if (!dist.length) {
+    lines.push('No finalized distributions');
+  } else {
+    for (const row of dist) {
+      lines.push(
+        `- ${row.date || '—'} · ${distributionClassificationLabel(row.classification)} · ${
+          row.recipientName || '—'
+        }`,
+        `  Cash ${formatMoney(row.cash)} · Property ${formatMoney(row.property)}`
+      );
+    }
+  }
+  lines.push('');
+
+  if (p.finance) {
+    lines.push(
+      'Staged financial snapshot',
+      '----------------------------------------',
+      `Estimated estate balance: ${formatMoney(p.finance.estateBalance)}`,
+      `Cash available (Funds): ${formatMoney(p.finance.fundsAvailable)}`,
+      `Gross assets: ${formatMoney(p.finance.grossAssets)}`,
+      `Debts & PR advances: ${formatMoney(p.finance.debts)}`,
+      `Expenses (activity): ${formatMoney(p.finance.expenses)}`,
+      `Cash distributed: ${formatMoney(p.finance.distributedCash)}`,
+      `Property distributed: ${formatMoney(p.finance.distributedProperty)}`,
+      ''
+    );
+    if (Number(p.finance.undepositedPaidSales) > 0) {
+      lines.splice(
+        lines.length - 1,
+        0,
+        `Paid sales not yet deposited: ${formatMoney(p.finance.undepositedPaidSales)}`
+      );
+    }
+  }
+
+  lines.push('Projected next steps', '----------------------------------------');
+  for (const step of p.nextSteps || []) {
+    lines.push(`- ${step}`);
+  }
+  if (!(p.nextSteps || []).length) lines.push('- No open staged actions recorded.');
+
+  lines.push(
+    '',
+    `${APP_NAME} Family Update v${p.version || 2} · Staged transparency, not live bank access.`
+  );
+  return lines;
+}
+
+/** Preferred path: save a native Family Update PDF locally (no popup required). */
 export function downloadFamilyUpdate(pack) {
   try {
+    const lines = buildFamilyUpdatePdfLines(pack);
+    const bytes = buildSimpleTextPdf(lines, { fontSize: 10, maxChars: 95 });
+    downloadPdfBytes(bytes, `${familyUpdateBaseName(pack)}.pdf`);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error?.message || 'Could not download Family Update PDF.' };
+  }
+}
+
+/** Optional: save Family Update HTML locally. */
+export function downloadFamilyUpdateHtml(pack) {
+  try {
     const html = buildFamilyUpdateHtml(pack);
-    const n = pack?.digest?.generatedLabel || pack?.generatedAt || 'update';
-    const num = pack?.updateNumber || pack?.update_number || '';
-    const safe = String(`family-update-${num || n}`)
-      .replace(/[^\w.-]+/g, '_')
-      .slice(0, 60);
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${safe}.html`;
+    link.download = `${familyUpdateBaseName(pack)}.html`;
     document.body.appendChild(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
     return { success: true };
   } catch (error) {
-    return { success: false, error: error?.message || 'Could not download Family Update.' };
+    return { success: false, error: error?.message || 'Could not download Family Update HTML.' };
   }
 }

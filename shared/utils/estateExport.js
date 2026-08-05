@@ -127,14 +127,14 @@ export function buildReadOnlyHtml({ caseNumber, items, generatedAt }) {
 </html>`;
 }
 
-/** Opens a print-ready catalog window (use browser Print → Save as PDF). */
-export function openPrintablePdfCatalog({
+/** Print-ready catalog HTML (preview / download — not a filing). */
+export function buildPrintableCatalogHtml({
   caseNumber,
   items,
   generatedAt,
   certificateHtml = ''
 }) {
-  const html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -143,16 +143,27 @@ export function openPrintablePdfCatalog({
   <style>${CATALOG_CSS}</style>
 </head>
 <body>
-  <div class="toolbar no-print">
-    <button type="button" onclick="window.print()">Print / Save as PDF</button>
-    <button type="button" onclick="window.close()">Close</button>
-  </div>
   <h1>${escapeHtml(APP_NAME)} Catalog</h1>
   <p class="meta">Case ${escapeHtml(caseNumber || 'estate')} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Supporting document — not a filing</p>
   ${certificateHtml || ''}
   ${catalogTableHtml(items)}
 </body>
 </html>`;
+}
+
+/** Opens a print-ready catalog window (use browser Print → Save as PDF). */
+export function openPrintablePdfCatalog({
+  caseNumber,
+  items,
+  generatedAt,
+  certificateHtml = ''
+}) {
+  const html = buildPrintableCatalogHtml({
+    caseNumber,
+    items,
+    generatedAt,
+    certificateHtml
+  });
 
   // Blob URL avoids blank tabs caused by window.open(..., 'noopener') + document.write
   try {

@@ -9151,6 +9151,21 @@ button.ei-voice-btn.is-listening {
   width: min(96vw, 52rem);
 }
 
+/* Report / Family Update preview: taller document viewport (keep original width) */
+.ei-modal.ei-modal-shell.ei-report-preview-modal,
+.ei-modal.ei-modal-shell.ei-family-update-modal {
+  max-width: 52rem;
+  width: min(96vw, 52rem);
+  max-height: min(96vh, 96dvh);
+  height: min(96vh, 96dvh);
+}
+
+.ei-report-preview-modal .ei-receipt-frame,
+.ei-family-update-modal .ei-receipt-frame {
+  min-height: min(72vh, 48rem);
+  height: min(72vh, 48rem);
+}
+
 .ei-family-updates-launch {
   margin: 1rem 0 1.1rem;
   padding: 0.75rem 0.85rem;

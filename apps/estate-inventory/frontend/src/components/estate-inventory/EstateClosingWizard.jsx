@@ -7,7 +7,6 @@ import {
 } from '@shared/utils/estateCourtPack.js';
 import { openFormalAccountingStatement } from '@shared/utils/estateFormalAccounting.js';
 import {
-  downloadFamilyUpdate,
   openFamilyUpdate
 } from '@shared/utils/estateFamilyUpdate.js';
 import { completenessConfirmMessage } from '@shared/utils/estateCompleteness.js';
@@ -153,24 +152,17 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
         setError(result.error || preview.error || 'Could not build Family Update.');
         return;
       }
-      const downloaded = downloadFamilyUpdate(preview.data);
-      if (!downloaded.success) {
-        const opened = openFamilyUpdate(preview.data);
-        if (!opened.success) setError(opened.error || downloaded.error);
-        else setInfo('Family Update preview opened — publish requires the Family Updates migration.');
-        return;
+      const opened = openFamilyUpdate(preview.data);
+      if (!opened.success) setError(opened.error || result.error);
+      else {
+        setInfo(
+          `${result.error || 'Could not publish.'} Preview opened — use Reports to download PDF or HTML.`
+        );
       }
-      setInfo(
-        `${result.error || 'Could not publish.'} Preview downloaded instead.`
-      );
       return;
     }
-    downloadFamilyUpdate({
-      ...result.data.package,
-      updateNumber: result.data.update_number
-    });
     setInfo(
-      `Published Family Update #${result.data.update_number} to the family portal.`
+      `Published Family Update #${result.data.update_number} to the family portal. Use Reports → Preview Family Update to download PDF or HTML.`
     );
   };
 

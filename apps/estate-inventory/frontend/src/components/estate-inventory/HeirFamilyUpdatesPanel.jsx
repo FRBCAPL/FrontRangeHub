@@ -2,12 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
-import {
-  buildFamilyUpdateHtml,
-  downloadFamilyUpdate
-} from '@shared/utils/estateFamilyUpdate.js';
 import { formatEstateDisplayDate } from '@shared/utils/estateInventoryConstants.js';
 import EstateModalShell from './EstateModalShell';
+import FamilyUpdatePreviewModal from './FamilyUpdatePreviewModal';
 
 function localReadKey(caseNumber, siblingKey) {
   return `ei-fu-read:${caseNumber || ''}:${siblingKey || 'heir'}`;
@@ -39,7 +36,7 @@ function isRowRead(row) {
 }
 
 /**
- * Heir Family Updates — compact launcher → list modal → report detail.
+ * Heir Family Updates — compact launcher → list modal → preview modal (PDF/HTML pick).
  * Per-heir read state from server (with localStorage fallback).
  */
 const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
@@ -108,17 +105,9 @@ const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
       return;
     }
     markReadLocalAndState(row.id);
+    // Preview only — downloads happen from buttons inside the preview modal.
+    setListOpen(false);
     setActive(result.data);
-  };
-
-  const downloadActive = () => {
-    if (!active?.package) return;
-    const pack = {
-      ...active.package,
-      updateNumber: active.update_number
-    };
-    const result = downloadFamilyUpdate(pack);
-    if (!result.success) setError(result.error);
   };
 
   const openList = () => setListOpen(true);
@@ -126,7 +115,10 @@ const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
     setListOpen(false);
     setError('');
   };
-  const closeActive = () => setActive(null);
+  const closeActive = () => {
+    setActive(null);
+    setListOpen(true);
+  };
 
   const emptyHint =
     'The Personal Representative has not published a Family Update yet. When they publish one from Reports, numbered reports will appear here.';
@@ -183,7 +175,7 @@ const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
     </section>
   );
 
-  const listModal = listOpen ? (
+  const listModal = listOpen && !active ? (
     <EstateModalShell
       title="Family Updates"
       subtitle={
@@ -245,31 +237,29 @@ const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
     </EstateModalShell>
   ) : null;
 
-  const detailModal = active ? (
-    <EstateModalShell
-      title={active.title || `Family Update #${active.update_number}`}
-      subtitle={`Published ${
-        active.published_at ? new Date(active.published_at).toLocaleString() : '—'
-      }`}
-      onClose={closeActive}
-      className="ei-modal-settings ei-family-update-modal"
-      foot={
-        <>
-          <button type="button" className="ei-btn ei-btn-small" onClick={downloadActive}>
-            Download full update
-          </button>
-          <button type="button" className="ei-btn ei-btn-small ei-btn-secondary" onClick={closeActive}>
-            Back to list
-          </button>
-        </>
+  const previewPack = active?.package
+    ? {
+        ...active.package,
+        updateNumber: active.update_number
       }
+    : null;
+
+  const detailModal = (
+    <FamilyUpdatePreviewModal
+      open={Boolean(active && previewPack)}
+      pack={previewPack}
+      title={active?.title || `Family Update #${active?.update_number || ''}`}
+      subtitle={`Published ${
+        active?.published_at ? new Date(active.published_at).toLocaleString() : '—'
+      } · choose PDF or HTML to download`}
+      onClose={closeActive}
     >
-      {active.pr_note ? (
+      {active?.pr_note ? (
         <p className="ei-status">
           <strong>Note from PR:</strong> {active.pr_note}
         </p>
       ) : null}
-      {active.package?.digest ? (
+      {active?.package?.digest ? (
         <div className="ei-transparency-section">
           <h4>At a glance</h4>
           <ul className="ei-transparency-lines">
@@ -305,20 +295,11 @@ const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
           ) : null}
         </div>
       ) : null}
-      <iframe
-        className="ei-receipt-frame"
-        title="Family Update"
-        srcDoc={buildFamilyUpdateHtml({
-          ...active.package,
-          updateNumber: active.update_number
-        })}
-        sandbox=""
-      />
-    </EstateModalShell>
-  ) : null;
+    </FamilyUpdatePreviewModal>
+  );
 
   const portalContent =
-    listModal || detailModal ? (
+    listModal || active ? (
       <div className="estate-inventory ei-modal-portal">
         {listModal}
         {detailModal}
