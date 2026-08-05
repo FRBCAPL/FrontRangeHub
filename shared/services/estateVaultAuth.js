@@ -330,6 +330,9 @@ export async function completeEstateVaultOAuth() {
         }
         const payloadOut = sessionPayload(data.session.user);
         logEstateActivity({ eventType: 'pr_sign_in' });
+        if (isLikelyNewGoogleAccount(data.session.user)) {
+          void notifyEstateOperator({ event: 'account' });
+        }
         return ok(payloadOut);
       }
     }
@@ -341,6 +344,9 @@ export async function completeEstateVaultOAuth() {
   if (sessionData?.session?.user) {
     const payload = sessionPayload(sessionData.session.user);
     logEstateActivity({ eventType: 'pr_sign_in' });
+    if (isLikelyNewGoogleAccount(sessionData.session.user)) {
+      void notifyEstateOperator({ event: 'account' });
+    }
     return ok(payload);
   }
 
@@ -367,6 +373,40 @@ export async function signOutEstateOwner() {
   return ok(true);
 }
 
+/**
+ * Best-effort operator alert (new account / new estate). Never throws; never blocks UX.
+ * @param {{ event: 'account'|'estate', estateName?: string, caseNumber?: string, courtCaseNumber?: string, estateId?: string }} payload
+ */
+export async function notifyEstateOperator(payload = {}) {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+    if (!token) return { success: false, skipped: true };
+
+    await fetch(`${estateBackendBase()}/api/estate-auth/notify-operator`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload || {})
+    });
+    return { success: true };
+  } catch {
+    return { success: false };
+  }
+}
+
+function isLikelyNewGoogleAccount(user) {
+  if (!user?.id) return false;
+  const providers = (user.identities || []).map((row) => row?.provider).filter(Boolean);
+  const isGoogle =
+    providers.includes('google') || user.app_metadata?.provider === 'google';
+  if (!isGoogle) return false;
+  const createdAt = Date.parse(user.created_at || '');
+  return Number.isFinite(createdAt) && Date.now() - createdAt < 30 * 60 * 1000;
+}
+
 export default {
   ESTATE_VAULT_OAUTH_FLAG,
   estateVaultOAuthRedirectUrl,
@@ -376,5 +416,6 @@ export default {
   signInEstateOwnerWithEmail,
   completeEstateVaultOAuth,
   getEstateOwnerSession,
-  signOutEstateOwner
+  signOutEstateOwner,
+  notifyEstateOperator
 };

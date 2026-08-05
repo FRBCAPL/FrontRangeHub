@@ -20,6 +20,7 @@ import {
   roundMoney
 } from '../utils/estateFinance.js';
 import { logEstateActivity, listEstateActivityEvents, writeEstateActivity } from './estateActivityLog.js';
+import { notifyEstateOperator } from './estateVaultAuth.js';
 import {
   addAccountTransaction,
   deleteAccountTransaction,
@@ -2715,6 +2716,13 @@ export async function createOwnedEstate({ estateName, courtCaseNumber = null, ca
     eventType: 'estate_create',
     caseNumber: data?.case_number,
     metadata: { court_case_number: data?.court_case_number || null }
+  });
+  void notifyEstateOperator({
+    event: 'estate',
+    estateName: data?.estate_name || String(estateName || '').trim() || null,
+    caseNumber: data?.case_number || null,
+    courtCaseNumber: data?.court_case_number || null,
+    estateId: data?.estate_id || data?.id || null
   });
   return ok(data);
 }
