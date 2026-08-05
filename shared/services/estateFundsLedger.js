@@ -15,6 +15,9 @@ const TXN_SELECT =
   'id, owner_id, estate_id, account_id, amount, txn_date, category, memo, expense_id, item_id, distribution_id, sibling_key, document_url, created_at, updated_at';
 
 const ACCOUNT_BALANCE_SELECT =
+  'id, owner_id, estate_id, kind, account_type, counts_as_funds, account_name, institution, last4, balance, opening_balance, is_primary, as_of_date, notes, created_at, updated_at';
+
+const ACCOUNT_BALANCE_SELECT_LEGACY =
   'id, owner_id, estate_id, kind, account_name, institution, last4, balance, opening_balance, is_primary, as_of_date, notes, created_at, updated_at';
 
 function fail(error) {
@@ -87,12 +90,20 @@ export async function listAccountTransactions(estate, accountId) {
 
 export async function syncAccountComputedBalance(estate, accountId) {
   if (!accountId) return fail('Account id required.');
-  const { data: account, error: acctErr } = await supabase
+  let { data: account, error: acctErr } = await supabase
     .from('estate_accounts')
     .select(ACCOUNT_BALANCE_SELECT)
     .eq('id', accountId)
     .eq('owner_id', estate.userId)
     .maybeSingle();
+  if (acctErr && /account_type|counts_as_funds/i.test(acctErr.message || '')) {
+    ({ data: account, error: acctErr } = await supabase
+      .from('estate_accounts')
+      .select(ACCOUNT_BALANCE_SELECT_LEGACY)
+      .eq('id', accountId)
+      .eq('owner_id', estate.userId)
+      .maybeSingle());
+  }
   if (acctErr) return fail(acctErr);
   if (!account) return fail('Account not found.');
   if (account.kind === 'debt') return ok(account);
@@ -100,7 +111,7 @@ export async function syncAccountComputedBalance(estate, accountId) {
   const txns = await listAccountTransactions(estate, accountId);
   if (!txns.success) return txns;
   const computed = computeAccountFundsBalance(account, txns.data);
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('estate_accounts')
     .update({
       balance: computed,
@@ -110,6 +121,18 @@ export async function syncAccountComputedBalance(estate, accountId) {
     .eq('owner_id', estate.userId)
     .select(ACCOUNT_BALANCE_SELECT)
     .single();
+  if (error && /account_type|counts_as_funds/i.test(error.message || '')) {
+    ({ data, error } = await supabase
+      .from('estate_accounts')
+      .update({
+        balance: computed,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', accountId)
+      .eq('owner_id', estate.userId)
+      .select(ACCOUNT_BALANCE_SELECT_LEGACY)
+      .single());
+  }
   if (error) return fail(error);
   return ok({ ...data, computed_balance: computed });
 }

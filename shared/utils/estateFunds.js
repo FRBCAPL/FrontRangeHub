@@ -82,10 +82,31 @@ export function withComputedAccountBalances(accounts = [], transactions = []) {
   });
 }
 
-/** Actual money in estate fund accounts (asset kind). */
+/** Actual money in estate fund accounts (asset kind with counts_as_funds). */
 export function sumFundsAvailable(accounts) {
   return (accounts || []).reduce((sum, row) => {
     if (row?.kind === 'debt') return sum;
+    const counts =
+      row.counts_as_funds == null && row.countsAsFunds == null
+        ? true
+        : Boolean(row.counts_as_funds != null ? row.counts_as_funds : row.countsAsFunds);
+    if (!counts) return sum;
+    const amt = Number(
+      row.computed_balance != null ? row.computed_balance : row.balance
+    );
+    return sum + (Number.isFinite(amt) ? amt : 0);
+  }, 0);
+}
+
+/** Asset accounts the PR tracks that are not Estate Funds cash. */
+export function sumTrackedNonFundAssets(accounts) {
+  return (accounts || []).reduce((sum, row) => {
+    if (row?.kind === 'debt') return sum;
+    const counts =
+      row.counts_as_funds == null && row.countsAsFunds == null
+        ? true
+        : Boolean(row.counts_as_funds != null ? row.counts_as_funds : row.countsAsFunds);
+    if (counts) return sum;
     const amt = Number(
       row.computed_balance != null ? row.computed_balance : row.balance
     );

@@ -19,6 +19,10 @@ import {
   mapSqlFinanceSnapshot,
   roundMoney
 } from '../utils/estateFinance.js';
+import {
+  normalizeAccountType,
+  countsAsFundsDefaultForType
+} from '../utils/estateAccountTypes.js';
 import { logEstateActivity, listEstateActivityEvents, writeEstateActivity } from './estateActivityLog.js';
 import { notifyEstateOperator } from './estateVaultAuth.js';
 import {
@@ -4236,6 +4240,9 @@ export async function deleteEstateExpense(expenseId, caseNumber) {
 }
 
 const ACCOUNT_SELECT =
+  'id, owner_id, estate_id, kind, account_type, counts_as_funds, account_name, institution, last4, balance, opening_balance, is_primary, as_of_date, notes, created_at, updated_at';
+
+const ACCOUNT_SELECT_MID =
   'id, owner_id, estate_id, kind, account_name, institution, last4, balance, opening_balance, is_primary, as_of_date, notes, created_at, updated_at';
 
 const ACCOUNT_SELECT_LEGACY =
@@ -4256,6 +4263,16 @@ export async function listEstateAccounts(caseNumber) {
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
 
   let { data, error } = await q;
+  if (error && /account_type|counts_as_funds/i.test(error.message || '')) {
+    let mid = supabase
+      .from('estate_accounts')
+      .select(ACCOUNT_SELECT_MID)
+      .eq('owner_id', estate.userId)
+      .order('kind', { ascending: true })
+      .order('created_at', { ascending: false });
+    if (estate.estateId) mid = mid.eq('estate_id', estate.estateId);
+    ({ data, error } = await mid);
+  }
   if (error && /opening_balance|is_primary/i.test(error.message || '')) {
     let legacy = supabase
       .from('estate_accounts')
@@ -4284,6 +4301,10 @@ function normalizeAccountInput(input = {}, { forUpdate = false, existingKind = n
   const name = String(input.accountName || '').trim();
   const balance = Number(input.balance ?? input.openingBalance);
   const last4 = String(input.last4 || '').replace(/\D/g, '').slice(-4);
+  const accountType = normalizeAccountType(
+    input.accountType || input.account_type,
+    finalKind
+  );
 
   if (name.length < 1) {
     return { ok: false, error: 'Give the account or debt a name.' };
@@ -4294,12 +4315,13 @@ function normalizeAccountInput(input = {}, { forUpdate = false, existingKind = n
       error:
         finalKind === 'debt'
           ? 'Enter the amount owed as a positive amount.'
-          : 'Enter the opening balance as a positive amount (or zero).'
+          : 'Enter the opening balance / value as a positive amount (or zero).'
     };
   }
 
   const row = {
     kind: finalKind,
+    account_type: accountType,
     account_name: name,
     institution: String(input.institution || '').trim() || null,
     last4: last4 || null,
@@ -4310,12 +4332,34 @@ function normalizeAccountInput(input = {}, { forUpdate = false, existingKind = n
   if (finalKind === 'debt') {
     row.balance = balance;
     row.opening_balance = balance;
-  } else if (!forUpdate) {
-    row.opening_balance = balance;
-    row.balance = balance;
-    if (input.isPrimary != null) row.is_primary = Boolean(input.isPrimary);
-  } else if (input.allowOpeningBalanceEdit) {
-    row.opening_balance = balance;
+    row.counts_as_funds = false;
+    row.is_primary = false;
+  } else {
+    const explicitCounts =
+      input.countsAsFunds != null
+        ? Boolean(input.countsAsFunds)
+        : input.counts_as_funds != null
+          ? Boolean(input.counts_as_funds)
+          : null;
+    row.counts_as_funds =
+      explicitCounts != null
+        ? explicitCounts
+        : countsAsFundsDefaultForType(accountType, 'asset');
+    if (!forUpdate) {
+      row.opening_balance = balance;
+      row.balance = balance;
+      if (input.isPrimary != null) {
+        row.is_primary = Boolean(input.isPrimary) && row.counts_as_funds;
+      }
+    } else {
+      if (input.isPrimary != null) {
+        row.is_primary = Boolean(input.isPrimary) && row.counts_as_funds;
+      }
+      if (input.allowOpeningBalanceEdit) {
+        row.opening_balance = balance;
+      }
+      // Always allow updating counts_as_funds / account_type on edit
+    }
   }
 
   return { ok: true, row, kind: finalKind };
@@ -4338,10 +4382,14 @@ export async function addEstateAccount(input = {}, caseNumber) {
     .select(ACCOUNT_SELECT)
     .single();
 
-  if (error && /opening_balance|is_primary/i.test(error.message || '')) {
+  if (error && /opening_balance|is_primary|account_type|counts_as_funds/i.test(error.message || '')) {
     const legacyRow = { ...insertRow };
     delete legacyRow.opening_balance;
     delete legacyRow.is_primary;
+    if (/account_type|counts_as_funds/i.test(error.message || '')) {
+      delete legacyRow.account_type;
+      delete legacyRow.counts_as_funds;
+    }
     ({ data, error } = await supabase
       .from('estate_accounts')
       .insert(legacyRow)
@@ -4376,11 +4424,23 @@ export async function updateEstateAccount(accountId, input = {}, caseNumber) {
     .eq('id', accountId)
     .eq('owner_id', auth.userId)
     .maybeSingle();
-  if (existingErr && !/opening_balance|is_primary/i.test(existingErr.message || '')) {
+  let existingRow = existing;
+  if (existingErr && /account_type|counts_as_funds/i.test(existingErr.message || '')) {
+    const mid = await supabase
+      .from('estate_accounts')
+      .select(ACCOUNT_SELECT_MID)
+      .eq('id', accountId)
+      .eq('owner_id', auth.userId)
+      .maybeSingle();
+    if (mid.error && !/opening_balance|is_primary/i.test(mid.error.message || '')) {
+      return fail(mid.error);
+    }
+    existingRow = mid.data;
+  } else if (existingErr && !/opening_balance|is_primary/i.test(existingErr.message || '')) {
     return fail(existingErr);
   }
 
-  const existingKind = existing?.kind || null;
+  const existingKind = existingRow?.kind || null;
   const normalized = normalizeAccountInput(
     {
       ...input,
@@ -4388,8 +4448,8 @@ export async function updateEstateAccount(accountId, input = {}, caseNumber) {
         input.balance != null
           ? input.balance
           : existingKind === 'debt'
-            ? existing?.balance
-            : existing?.opening_balance ?? existing?.balance
+            ? existingRow?.balance
+            : existingRow?.opening_balance ?? existingRow?.balance
     },
     { forUpdate: true, existingKind }
   );
@@ -4409,10 +4469,24 @@ export async function updateEstateAccount(accountId, input = {}, caseNumber) {
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
 
   let { data, error } = await q.select(ACCOUNT_SELECT).single();
+  if (error && /account_type|counts_as_funds/i.test(error.message || '')) {
+    const midPatch = { ...normalized.row };
+    delete midPatch.account_type;
+    delete midPatch.counts_as_funds;
+    let qMid = supabase
+      .from('estate_accounts')
+      .update({ ...midPatch, updated_at: new Date().toISOString() })
+      .eq('id', accountId)
+      .eq('owner_id', auth.userId);
+    if (estate.estateId) qMid = qMid.eq('estate_id', estate.estateId);
+    ({ data, error } = await qMid.select(ACCOUNT_SELECT_MID).single());
+  }
   if (error && /opening_balance|is_primary/i.test(error.message || '')) {
     const legacyPatch = { ...normalized.row };
     delete legacyPatch.opening_balance;
     delete legacyPatch.is_primary;
+    delete legacyPatch.account_type;
+    delete legacyPatch.counts_as_funds;
     let q2 = supabase
       .from('estate_accounts')
       .update({ ...legacyPatch, updated_at: new Date().toISOString() })

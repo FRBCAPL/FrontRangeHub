@@ -36,6 +36,7 @@ export function formatMoney(value) {
 export function mapSqlFinanceSnapshot(sql = {}) {
   if (!sql || sql.success === false) return null;
   const accountAssetsTotal = roundMoney(sql.account_assets_total);
+  const trackedNonFundAssets = roundMoney(sql.tracked_non_fund_assets);
   const otherCashOnHand = roundMoney(sql.other_cash);
   const undepositedPaidSales = roundMoney(sql.undeposited_paid_sales);
   const fundsAvailable = roundMoney(
@@ -48,7 +49,7 @@ export function mapSqlFinanceSnapshot(sql = {}) {
   const nonCashAssets = roundMoney(
     sql.non_cash_assets != null
       ? sql.non_cash_assets
-      : outstandingBids + unsoldInventoryValue
+      : outstandingBids + unsoldInventoryValue + trackedNonFundAssets
   );
   const paidAuctionSales = roundMoney(sql.paid_auction_sales);
   const expensesTotal = roundMoney(sql.expenses_total);
@@ -80,6 +81,7 @@ export function mapSqlFinanceSnapshot(sql = {}) {
     estateCashOnHand: roundMoney(paidAuctionSales + otherCashOnHand),
     netCashRemaining: roundMoney(paidAuctionSales - expensesTotal),
     accountAssetsTotal,
+    trackedNonFundAssets,
     accountDebtsTotal,
     unsoldInventoryValue,
     fundsAvailable,

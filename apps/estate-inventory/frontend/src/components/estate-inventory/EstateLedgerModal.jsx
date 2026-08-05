@@ -15,7 +15,7 @@ import CashAvailableHint from './CashAvailableHint.jsx';
 /** Everyday tasks — shown first for a new PR. */
 const PRIMARY_TABS = [
   { id: 'summary', label: 'Overview', hint: 'Simple picture of cash, property, and debts' },
-  { id: 'accounts', label: 'Bank accounts', hint: 'Where the estate keeps cash' },
+  { id: 'accounts', label: 'Accounts', hint: 'Bank, retirement, SS, insurance, debts' },
   { id: 'expenses', label: 'Pay a bill', hint: 'Record a cost paid from estate cash' },
   { id: 'transactions', label: 'Money in & out', hint: 'Running list of deposits and payments' },
   { id: 'distributions', label: 'Give to heirs', hint: 'Cash or property delivered to beneficiaries' }

@@ -128,23 +128,24 @@ const EstateFinanceDashboard = ({
         </div>
 
         <p className="ei-finance-plain">
-          This is <strong>bank money</strong> the estate can use to pay bills.<br /> Furniture, cars, and
-          house estimates are listed separately — they are not cash until sold and deposited.
+          This is <strong>spendable estate money</strong> (accounts you mark as Cash on hand).<br />{' '}
+          Retirement, Social Security, insurance, and furniture estimates stay in Accounts /
+          inventory until that money is actually available.
         </p>
 
         {!hasFundAccount && !isClosed ? (
           <div className="ei-finance-empty-guide">
             <p>
-              Start here: add the estate checking (or savings) account and its <em>opening</em>{' '}
-              balance from the bank statement. After that, every change is a deposit or a payment —
-              you never type a new balance.
+              Start here: add checking or savings and turn on <em>Include in Cash on hand</em>. You
+              can also record retirement, Social Security, life insurance, and debts on the same
+              Accounts screen.
             </p>
             <button
               type="button"
               className="ei-btn"
               onClick={() => setLedgerTab('accounts')}
             >
-              Add bank account
+              Add accounts
             </button>
           </div>
         ) : (
