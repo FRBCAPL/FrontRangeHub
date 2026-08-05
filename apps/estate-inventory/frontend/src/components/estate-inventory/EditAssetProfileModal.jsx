@@ -17,6 +17,7 @@ import StatusPill from './StatusPill';
 import MemorandumInterestSection from './MemorandumInterestSection';
 import EstatePhotoEditor from './EstatePhotoEditor';
 import ItemConditionFields from './ItemConditionFields';
+import EstateDecisionNotesModal from './EstateDecisionNotesModal';
 import { useEstateCase } from './EstateCaseContext';
 
 const SECTIONS = [
@@ -132,6 +133,8 @@ const EditAssetProfileModal = ({
   const [collectionId, setCollectionId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [decisionPrompt, setDecisionPrompt] = useState(null);
+  const [showItemDecisions, setShowItemDecisions] = useState(false);
 
   useEffect(() => {
     if (!open || !item) return;
@@ -158,6 +161,8 @@ const EditAssetProfileModal = ({
     setCollectionId(item.collection_id || '');
     setSaving(false);
     setError('');
+    setDecisionPrompt(null);
+    setShowItemDecisions(false);
     estateInventoryService.listEstateAccounts(caseNumber).then((result) => {
       if (!result.success) {
         setFundAccounts([]);
@@ -233,6 +238,22 @@ const EditAssetProfileModal = ({
       setError(result.warning);
       return;
     }
+
+    const becamePaid =
+      !item.auction_paid_at &&
+      Number(item.highest_bid) > 0 &&
+      auctionPaid;
+    const becameDistributed =
+      item.legal_status !== LEGAL_STATUS.distributed &&
+      legalStatus === LEGAL_STATUS.distributed;
+
+    if (!readOnly && (becamePaid || becameDistributed)) {
+      setDecisionPrompt({
+        topic: 'sale_disposition',
+        promptMode: true
+      });
+      return;
+    }
     onClose?.();
   };
 
@@ -272,9 +293,18 @@ const EditAssetProfileModal = ({
     onClose?.();
   };
 
+  if (!open || !item) return null;
+
   const activeMeta = SECTIONS.find((s) => s.id === section) || SECTIONS[0];
 
+  const closeDecisionPrompt = () => {
+    setDecisionPrompt(null);
+    onClose?.();
+  };
+
   return (
+    <>
+      {!decisionPrompt ? (
     <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
       <div
         className="ei-modal ei-modal-settings ei-modal-edit-asset"
@@ -591,6 +621,18 @@ const EditAssetProfileModal = ({
 
             {section === 'record' ? (
               <>
+                {!readOnly ? (
+                  <div className="ei-btn-row" style={{ marginBottom: '0.85rem' }}>
+                    <button
+                      type="button"
+                      className="ei-btn ei-btn-secondary ei-btn-small"
+                      onClick={() => setShowItemDecisions(true)}
+                    >
+                      Decision notes for this item
+                    </button>
+                  </div>
+                ) : null}
+
                 {claimCount ? (
                   <div className="ei-claims">
                     <p className="ei-inline-label">Heir requests on file</p>
@@ -706,6 +748,27 @@ const EditAssetProfileModal = ({
         </form>
       </div>
     </div>
+      ) : null}
+
+      <EstateDecisionNotesModal
+        open={Boolean(decisionPrompt)}
+        onClose={closeDecisionPrompt}
+        caseNumber={caseNumber}
+        defaultTopic={decisionPrompt?.topic || 'sale_disposition'}
+        itemId={item.id}
+        itemName={item.name || name || ''}
+        promptMode
+        onMessage={() => {}}
+      />
+      <EstateDecisionNotesModal
+        open={showItemDecisions}
+        onClose={() => setShowItemDecisions(false)}
+        caseNumber={caseNumber}
+        defaultTopic="sale_disposition"
+        itemId={item.id}
+        itemName={item.name || name || ''}
+      />
+    </>
   );
 };
 

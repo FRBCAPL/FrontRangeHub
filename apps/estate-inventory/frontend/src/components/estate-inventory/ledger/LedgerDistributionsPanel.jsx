@@ -29,6 +29,7 @@ const LedgerDistributionsPanel = ({
   const [showWizard, setShowWizard] = useState(false);
   const [showDecisionNotes, setShowDecisionNotes] = useState(false);
   const [decisionContext, setDecisionContext] = useState({});
+  const [decisionPromptMode, setDecisionPromptMode] = useState(false);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -60,13 +61,22 @@ const LedgerDistributionsPanel = ({
     load();
   }, [caseNumber, reloadToken]);
 
-  const finishDistribution = async () => {
+  const finishDistribution = async (data) => {
     setShowWizard(false);
     setInfo(
-      'Distribution finalized. Update account balances if cash left the estate, then publish a Family Update from Reports so heirs see the staged change.'
+      'Distribution finalized. Add a short decision note while it’s fresh, update account balances if cash left the estate, then publish a Family Update from Reports.'
     );
     await load();
     onChanged?.();
+    setDecisionContext({
+      defaultTopic:
+        data?.classification === 'interim'
+          ? 'interim_distribution'
+          : 'distribution_override',
+      distributionId: data?.distribution_id || data?.id || ''
+    });
+    setDecisionPromptMode(true);
+    setShowDecisionNotes(true);
   };
 
   const setAck = async (recipient, status) => {
@@ -95,6 +105,7 @@ const LedgerDistributionsPanel = ({
           : 'distribution_override',
       distributionId: distribution?.id || ''
     });
+    setDecisionPromptMode(false);
     setShowDecisionNotes(true);
   };
 
@@ -381,10 +392,14 @@ const LedgerDistributionsPanel = ({
       />
       <EstateDecisionNotesModal
         open={showDecisionNotes}
-        onClose={() => setShowDecisionNotes(false)}
+        onClose={() => {
+          setShowDecisionNotes(false);
+          setDecisionPromptMode(false);
+        }}
         caseNumber={caseNumber}
         defaultTopic={decisionContext.defaultTopic || 'general'}
         distributionId={decisionContext.distributionId || ''}
+        promptMode={decisionPromptMode}
         onMessage={setInfo}
       />
     </EstatePanelErrorBoundary>

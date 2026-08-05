@@ -9431,6 +9431,36 @@ button.ei-voice-btn.is-listening {
   color: #a8a29e;
 }
 
+.ei-decision-reason-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ei-decision-reason-chip {
+  margin: 0;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ei-muted, #a8a29e);
+  background: rgba(15, 23, 42, 0.45);
+  cursor: pointer;
+}
+
+.ei-decision-reason-chip.is-on {
+  border-color: rgba(45, 212, 191, 0.55);
+  color: #ccfbf1;
+  background: rgba(19, 78, 74, 0.45);
+}
+
+.ei-decision-reason-chip:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.7);
+  outline-offset: 2px;
+}
+
 @media (max-width: 640px) {
   .ei-records-gaps-list li {
     flex-direction: column;

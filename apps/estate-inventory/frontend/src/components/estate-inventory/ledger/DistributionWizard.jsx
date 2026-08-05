@@ -184,7 +184,10 @@ const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClos
     if (result.warning) {
       setError(result.warning);
     }
-    onDone?.(result.data);
+    onDone?.({
+      ...(result.data || {}),
+      classification: normalizeDistributionClassification(classification)
+    });
   };
 
   if (!open || !readiness) return null;
