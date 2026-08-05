@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { normalizeSiblingClaims } from '@shared/utils/estateInventoryConstants.js';
@@ -55,10 +55,29 @@ const EstateNeedsAttentionPanel = ({
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
 
+  /** Keep action handlers out of the load effect deps — parent re-renders (billing, etc.) were restarting the load forever. */
+  const actionsRef = useRef({});
+  actionsRef.current = {
+    onOpenPendingReview,
+    onOpenHeirRequests,
+    onOpenMessages,
+    onOpenLedger,
+    onOpenScenes,
+    onOpenReports,
+    onOpenSettingsSection,
+    onSeeCollections,
+    onCreateCollection,
+    onAddItem,
+    onLogLocksmith,
+    onOpenClosing,
+    onMessage
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      const actions = actionsRef.current;
       const [
         pendingResult,
         itemsResult,
@@ -95,7 +114,7 @@ const EstateNeedsAttentionPanel = ({
           title: 'Pending PR review',
           detail: `${pendingCount} item${pendingCount === 1 ? '' : 's'} waiting for classification.`,
           actionLabel: `Review queue (${pendingCount})`,
-          onAction: onOpenPendingReview
+          onAction: () => actions.onOpenPendingReview?.()
         });
       }
 
@@ -111,7 +130,7 @@ const EstateNeedsAttentionPanel = ({
           title: 'Heir requests',
           detail: `${requested.length} item${requested.length === 1 ? '' : 's'} with requests on file.`,
           actionLabel: `View requests (${requested.length})`,
-          onAction: onOpenHeirRequests
+          onAction: () => actions.onOpenHeirRequests?.()
         });
       }
 
@@ -125,7 +144,7 @@ const EstateNeedsAttentionPanel = ({
           title: 'Unread messages',
           detail: `${unread} unread message${unread === 1 ? '' : 's'} from heirs.`,
           actionLabel: `View messages (${unread})`,
-          onAction: onOpenMessages
+          onAction: () => actions.onOpenMessages?.()
         });
       }
 
@@ -142,12 +161,12 @@ const EstateNeedsAttentionPanel = ({
           samplesTotal: Number(row.samplesTotal) || (row.samples || []).length,
           actionLabel: meta.label || null,
           onAction: () => {
-            if (meta.tab) onOpenLedger?.(meta.tab);
-            else if (meta.kind === 'scenes') onOpenScenes?.();
-            else if (meta.kind === 'reports') onOpenReports?.();
-            else if (meta.kind === 'pending') onOpenPendingReview?.();
-            else if (meta.kind === 'settings_case') onOpenSettingsSection?.('case');
-            else if (meta.kind === 'collections') onSeeCollections?.();
+            if (meta.tab) actions.onOpenLedger?.(meta.tab);
+            else if (meta.kind === 'scenes') actions.onOpenScenes?.();
+            else if (meta.kind === 'reports') actions.onOpenReports?.();
+            else if (meta.kind === 'pending') actions.onOpenPendingReview?.();
+            else if (meta.kind === 'settings_case') actions.onOpenSettingsSection?.('case');
+            else if (meta.kind === 'collections') actions.onSeeCollections?.();
           }
         });
       }
@@ -177,9 +196,11 @@ const EstateNeedsAttentionPanel = ({
             settings?.case_number || caseNumber
           );
           await navigator.clipboard.writeText(notice);
-          onMessage?.('Invite notice copied — paste into a text or email to family.');
+          actions.onMessage?.('Invite notice copied — paste into a text or email to family.');
         } catch {
-          onMessage?.('Could not copy automatically. Open Family / heirs in Settings to share PINs.');
+          actions.onMessage?.(
+            'Could not copy automatically. Open Family / heirs in Settings to share PINs.'
+          );
         }
       };
 
@@ -188,15 +209,15 @@ const EstateNeedsAttentionPanel = ({
         inventoryCount,
         heirCount,
         isClosed,
-        onOpenSettingsSection,
-        onCreateCollection,
-        onAddItem,
-        onOpenScenes,
-        onOpenLedger,
-        onLogLocksmith,
+        onOpenSettingsSection: actions.onOpenSettingsSection,
+        onCreateCollection: actions.onCreateCollection,
+        onAddItem: actions.onAddItem,
+        onOpenScenes: actions.onOpenScenes,
+        onOpenLedger: actions.onOpenLedger,
+        onLogLocksmith: actions.onLogLocksmith,
         onCopyInvite: copyInvite,
-        onOpenClosing,
-        onOpenReports,
+        onOpenClosing: actions.onOpenClosing,
+        onOpenReports: actions.onOpenReports,
         needsFamilyUpdate,
         familyUpdateStale
       });
@@ -221,26 +242,7 @@ const EstateNeedsAttentionPanel = ({
     return () => {
       cancelled = true;
     };
-  }, [
-    caseNumber,
-    settings,
-    inventoryCount,
-    isClosed,
-    refreshKey,
-    onOpenPendingReview,
-    onOpenHeirRequests,
-    onOpenMessages,
-    onOpenLedger,
-    onOpenScenes,
-    onOpenReports,
-    onOpenSettingsSection,
-    onSeeCollections,
-    onCreateCollection,
-    onAddItem,
-    onLogLocksmith,
-    onOpenClosing,
-    onMessage
-  ]);
+  }, [caseNumber, settings, inventoryCount, isClosed, refreshKey]);
 
   const runAction = (row) => {
     setOpen(false);

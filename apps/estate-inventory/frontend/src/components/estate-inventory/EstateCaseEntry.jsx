@@ -4,6 +4,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   ESTATEIT_PATH
 } from '@shared/utils/estateInventoryConstants.js';
+import { ESTATE_BETA_BLURB, ESTATE_BETA_LABEL } from '@shared/utils/estateBeta.js';
 import EstateBrandLogo from './EstateBrandLogo';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateViewAuctionsModal from './EstateViewAuctionsModal';
@@ -83,7 +84,12 @@ const EstateCaseEntry = () => {
               <h1 className="ei-gateway-logo-wrap">
                 <EstateBrandLogo variant="main" className="ei-gateway-logo" />
               </h1>
-              <p className="ei-eyebrow ei-gateway-eyebrow-brand">Fiduciarylog.com</p>
+              <p className="ei-eyebrow ei-gateway-eyebrow-brand">
+                Fiduciarylog.com
+                <span className="ei-beta-chip" title={ESTATE_BETA_BLURB}>
+                  {ESTATE_BETA_LABEL}
+                </span>
+              </p>
             </div>
             <button
               type="button"
@@ -98,6 +104,7 @@ const EstateCaseEntry = () => {
             <br />
             You do not need to upload the will, death certificate, or Letters.
           </p>
+          <p className="ei-gateway-beta-note">{ESTATE_BETA_BLURB}</p>
          
           <p className="ei-gateway-start">
             <button type="button" className="ei-btn" onClick={() => setShowPrStartGuide(true)}>

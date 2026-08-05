@@ -106,6 +106,24 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
+.ei-beta-chip {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0.12rem 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--ei-accent) 35%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ei-accent) 12%, transparent);
+  color: var(--ei-accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
 .ei-nav-case {
   margin: 0.12rem 0 0;
   font-size: 0.84rem;
@@ -4205,6 +4223,12 @@ button.ei-helper-photo-remove {
   position: relative;
   z-index: 1;
   margin: 0.45rem 0 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  width: 100%;
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.18em;
@@ -4222,6 +4246,17 @@ button.ei-helper-photo-remove {
   font-weight: 400;
   line-height: 1.5;
   color: #d6d3d1;
+}
+
+.ei-gateway-beta-note {
+  position: relative;
+  z-index: 1;
+  margin: 0.65rem auto 0;
+  max-width: 26rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--ei-muted);
+  text-align: center;
 }
 
 .ei-gateway-paths {

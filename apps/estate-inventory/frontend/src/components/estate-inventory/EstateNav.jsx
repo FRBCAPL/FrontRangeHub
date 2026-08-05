@@ -10,6 +10,7 @@ import {
   estateDisplayCaseNumber,
   estateitCasePath
 } from '@shared/utils/estateInventoryConstants.js';
+import { ESTATE_BETA_BLURB, ESTATE_BETA_LABEL } from '@shared/utils/estateBeta.js';
 import { ESTATEIT_WHATS_NEW_ENABLED } from '@shared/utils/estateWhatsNew.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateRoleGuideModal from './EstateRoleGuideModal';
@@ -310,6 +311,9 @@ const EstateNav = ({
           <p className="ei-nav-app">
             <EstateBrandLogo variant="icon" className="ei-nav-app-logo" alt="" />
             <span>{APP_NAME}</span>
+            <span className="ei-beta-chip" title={ESTATE_BETA_BLURB}>
+              {ESTATE_BETA_LABEL}
+            </span>
           </p>
           <p className="ei-nav-case">
             {estateName ? (
