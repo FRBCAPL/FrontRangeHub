@@ -38,6 +38,10 @@ import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
 import HeirRoomBrowseModal from './HeirRoomBrowseModal';
+import {
+  EstateAuthPinInput,
+  EstateAutofillTrap
+} from './EstateAuthField';
 import HeirRoomsMenuModal from './HeirRoomsMenuModal';
 import ItemPhotoGallery from './ItemPhotoGallery';
 import StatusPill from './StatusPill';
@@ -728,6 +732,7 @@ const SiblingPortal = () => {
           </p>
         </header>
         <form className="ei-portal-card ei-family-signin-card" onSubmit={handleLogin} autoComplete="off">
+          <EstateAutofillTrap />
           <div className="ei-field">
             <label htmlFor="sib-estate">Estate</label>
             <input id="sib-estate" value={estateLabel} readOnly tabIndex={-1} className="ei-input-readonly" />
@@ -735,18 +740,16 @@ const SiblingPortal = () => {
           <div className="ei-field">
             <label htmlFor="sib-pin">Your PIN / invite code</label>
             <div className="ei-password-row">
-              <input
+              <EstateAuthPinInput
                 id="sib-pin"
                 name="estate_vault_family_pin"
-                type={showPassword ? 'text' : 'password'}
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
+                revealed={showPassword}
                 required
-                autoComplete="off"
-                data-lpignore="true"
-                data-1p-ignore="true"
                 inputMode="numeric"
                 placeholder="6-digit PIN"
+                autoFocus
               />
               <button
                 type="button"

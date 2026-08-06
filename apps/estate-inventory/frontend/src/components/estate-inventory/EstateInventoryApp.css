@@ -1782,12 +1782,13 @@ button.ei-nav-menu-btn-item {
   padding: 0.65rem 0.75rem;
   font: inherit;
   font-size: 16px;
+  line-height: 1.35;
   min-height: 44px;
   background: var(--ei-elevated) !important;
-  color: var(--ei-ink) !important;
-  /* Do not set -webkit-text-fill-color on empty fields ? Chromium often hides the caret. */
-  -webkit-text-fill-color: unset;
-  caret-color: var(--ei-accent) !important;
+  color: #fafaf9 !important;
+  -webkit-text-fill-color: #fafaf9 !important;
+  caret-color: #2dd4bf !important;
+  color-scheme: dark;
   cursor: text;
   outline: none;
 }
@@ -1800,26 +1801,50 @@ button.ei-nav-menu-btn-item {
 .estate-inventory textarea:focus {
   border-color: var(--ei-accent);
   box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.28);
+  caret-color: #5eead4 !important;
 }
 
 .estate-inventory input::placeholder,
 .estate-inventory textarea::placeholder {
   color: var(--ei-muted) !important;
-  -webkit-text-fill-color: var(--ei-muted);
+  -webkit-text-fill-color: var(--ei-muted) !important;
   opacity: 1;
 }
 
-/* Autofill: restore fill color only when browser paints credentials */
+/* Autofill: keep text/caret visible if Chrome still paints credentials */
 .estate-inventory input:-webkit-autofill,
 .estate-inventory input:-webkit-autofill:hover,
 .estate-inventory input:-webkit-autofill:focus,
 .estate-inventory textarea:-webkit-autofill,
 .estate-inventory textarea:-webkit-autofill:hover,
 .estate-inventory textarea:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--ei-ink) !important;
-  caret-color: var(--ei-accent) !important;
+  -webkit-text-fill-color: #fafaf9 !important;
+  caret-color: #5eead4 !important;
   box-shadow: 0 0 0 1000px var(--ei-elevated) inset !important;
   transition: background-color 99999s ease-in-out 0s;
+}
+
+/* Off-screen traps so Chrome dumps saved email/password here, not in real PIN fields */
+.ei-autofill-trap {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* PIN masking without type=password (avoids Chrome password autofill + hidden caret) */
+.estate-inventory input.ei-auth-pin:not(.is-revealed) {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
+.estate-inventory input.ei-auth-pin.is-revealed {
+  -webkit-text-security: none;
+  text-security: none;
 }
 
 .estate-inventory select,
@@ -1831,8 +1856,8 @@ button.ei-nav-menu-btn-item {
 .ei-input-readonly {
   background: var(--ei-panel) !important;
   color: var(--ei-muted) !important;
-  -webkit-text-fill-color: var(--ei-muted);
-  caret-color: transparent;
+  -webkit-text-fill-color: var(--ei-muted) !important;
+  caret-color: transparent !important;
   cursor: default;
   border-style: dashed;
 }

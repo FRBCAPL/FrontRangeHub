@@ -12,6 +12,12 @@ import { ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateLegalDisclaimerGate from './EstateLegalDisclaimerGate';
+import {
+  EstateAuthPinInput,
+  EstateAuthTextInput,
+  EstateAutofillTrap
+} from './EstateAuthField';
+import './EstateInventoryApp.css';
 
 /**
  * PR identity gate — Google or email/password (create account / sign in).
@@ -283,17 +289,15 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
         </div>
 
         <form className="ei-modal-form" onSubmit={handleEmailSubmit} autoComplete="off">
+          <EstateAutofillTrap />
           <div className="ei-field">
             <label htmlFor="ei-pr-email">{isSignup ? 'Email for your new account' : 'Email'}</label>
-            <input
+            <EstateAuthTextInput
               id="ei-pr-email"
               name="estate_vault_pr_email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              autoComplete="off"
-              data-lpignore="true"
-              data-1p-ignore="true"
               required
               disabled={disabled}
             />
@@ -303,15 +307,12 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
               {isSignup ? 'Create a password' : 'Password'}
             </label>
             <div className="ei-password-row">
-              <input
+              <EstateAuthPinInput
                 id="ei-pr-password"
                 name="estate_vault_pr_password"
-                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="off"
-                data-lpignore="true"
-                data-1p-ignore="true"
+                revealed={showPassword}
                 required
                 minLength={isSignup ? 8 : 1}
                 disabled={disabled}
@@ -335,15 +336,12 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
           {isSignup ? (
             <div className="ei-field">
               <label htmlFor="ei-pr-password-confirm">Confirm password</label>
-              <input
+              <EstateAuthPinInput
                 id="ei-pr-password-confirm"
                 name="estate_vault_pr_password_confirm"
-                type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="off"
-                data-lpignore="true"
-                data-1p-ignore="true"
+                revealed={showPassword}
                 required
                 minLength={8}
                 disabled={disabled}

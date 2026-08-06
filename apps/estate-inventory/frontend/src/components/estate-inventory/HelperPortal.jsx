@@ -18,6 +18,11 @@ import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
 import EstateBillingLockedGate from './EstateBillingLockedGate';
+import {
+  EstateAuthPinInput,
+  EstateAuthTextInput,
+  EstateAutofillTrap
+} from './EstateAuthField';
 import './EstateInventoryApp.css';
 
 const HelperPortal = () => {
@@ -150,6 +155,7 @@ const HelperPortal = () => {
           set for you under Settings → Helpers. Your name is stamped on every photo you take.
         </p>
         <form className="ei-portal-card" onSubmit={handleLogin} autoComplete="off">
+          <EstateAutofillTrap />
           <div className="ei-field">
             <label htmlFor="help-case">Case number</label>
             <input id="help-case" value={caseNumber} readOnly tabIndex={-1} className="ei-input-readonly" />
@@ -159,7 +165,7 @@ const HelperPortal = () => {
           </div>
           <div className="ei-field">
             <label htmlFor="help-name">Your name</label>
-            <input
+            <EstateAuthTextInput
               id="help-name"
               name="estate_vault_helper_name"
               value={displayName}
@@ -167,26 +173,19 @@ const HelperPortal = () => {
               placeholder="Exact name the PR set for you"
               required
               minLength={2}
-              autoComplete="off"
-              data-lpignore="true"
-              data-1p-ignore="true"
             />
           </div>
           <div className="ei-field">
             <label htmlFor="help-pass">Your PIN</label>
             <div className="ei-password-row">
-              <input
+              <EstateAuthPinInput
                 id="help-pass"
                 name="estate_vault_helper_pin"
-                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 inputMode="numeric"
-                pattern="[0-9]*"
+                revealed={showPassword}
                 required
-                autoComplete="off"
-                data-lpignore="true"
-                data-1p-ignore="true"
               />
               <button
                 type="button"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
@@ -11,6 +11,11 @@ import {
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateLegalDisclaimerGate from './EstateLegalDisclaimerGate';
+import {
+  EstateAuthPinInput,
+  EstateAuthTextInput,
+  EstateAutofillTrap
+} from './EstateAuthField';
 import './EstateInventoryApp.css';
 
 function rememberCase(caseNumber) {
@@ -44,6 +49,30 @@ const EstateFamilySignIn = () => {
       : ''
   );
 
+  // Chrome may paint saved credentials after mount — wipe them if user has not typed.
+  useEffect(() => {
+    if (step !== 'code') return undefined;
+    let touched = false;
+    const markTouched = () => {
+      touched = true;
+    };
+    const wipeChromeAutofill = () => {
+      if (touched) return;
+      setPersonName('');
+      setAccessCode('');
+    };
+    const t1 = window.setTimeout(wipeChromeAutofill, 50);
+    const t2 = window.setTimeout(wipeChromeAutofill, 300);
+    window.addEventListener('pointerdown', markTouched, { once: true, capture: true });
+    window.addEventListener('keydown', markTouched, { once: true, capture: true });
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.removeEventListener('pointerdown', markTouched, { capture: true });
+      window.removeEventListener('keydown', markTouched, { capture: true });
+    };
+  }, [step, matchedEstate?.caseNumber]);
+
   const handleFindEstate = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -57,6 +86,7 @@ const EstateFamilySignIn = () => {
     setMatchedEstate(result.data);
     setPersonName('');
     setAccessCode('');
+    setShowCode(false);
     setStep('code');
   };
 
@@ -116,9 +146,10 @@ const EstateFamilySignIn = () => {
           onSubmit={handleFindEstate}
           autoComplete="off"
         >
+          <EstateAutofillTrap />
           <div className="ei-field">
             <label htmlFor="ei-estate-name-entry">Estate name</label>
-            <input
+            <EstateAuthTextInput
               id="ei-estate-name-entry"
               name="estate_vault_estate_name"
               value={estateNameInput}
@@ -127,9 +158,6 @@ const EstateFamilySignIn = () => {
                 if (error) setError('');
               }}
               placeholder="Enter Estate Name"
-              autoComplete="off"
-              data-lpignore="true"
-              data-1p-ignore="true"
               autoFocus
               required
               minLength={2}
@@ -149,35 +177,30 @@ const EstateFamilySignIn = () => {
           onSubmit={handleAccessCode}
           autoComplete="off"
         >
+          <EstateAutofillTrap />
           <p className="ei-settings-hint" style={{ marginTop: 0 }}>
             Signing into <strong>{matchedEstate?.estateName}</strong>
           </p>
           <div className="ei-field">
             <label htmlFor="ei-person-name">Your name (required for helpers)</label>
-            <input
+            <EstateAuthTextInput
               id="ei-person-name"
               name="estate_vault_display_name"
               value={personName}
               onChange={(e) => setPersonName(e.target.value)}
               placeholder="Helpers: exact name the PR set"
-              autoComplete="off"
-              data-lpignore="true"
-              data-1p-ignore="true"
             />
           </div>
           <div className="ei-field">
             <label htmlFor="ei-entry-code">Access code / PIN</label>
             <div className="ei-password-row">
-              <input
+              <EstateAuthPinInput
                 id="ei-entry-code"
                 name="estate_vault_access_pin"
-                type={showCode ? 'text' : 'password'}
                 value={accessCode}
                 onChange={(e) => setAccessCode(e.target.value)}
                 placeholder="Your unique code for this estate"
-                autoComplete="off"
-                data-lpignore="true"
-                data-1p-ignore="true"
+                revealed={showCode}
                 required
                 autoFocus
               />

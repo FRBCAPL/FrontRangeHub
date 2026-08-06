@@ -19,6 +19,10 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
+import {
+  EstateAuthPinInput,
+  EstateAutofillTrap
+} from './EstateAuthField';
 import './EstateInventoryApp.css';
 
 /**
@@ -208,19 +212,17 @@ const EstateAdminGate = () => {
         </div>
       ) : null}
       <form className="ei-portal-card" onSubmit={handleSubmit} autoComplete="off">
+        <EstateAutofillTrap />
         <div className="ei-field">
           <label htmlFor="ei-admin-pass">Admin PIN</label>
           <div className="ei-password-row">
-            <input
+            <EstateAuthPinInput
               id="ei-admin-pass"
               name="estate_vault_admin_pin"
-              type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              revealed={showPassword}
               required
-              autoComplete="off"
-              data-lpignore="true"
-              data-1p-ignore="true"
               autoFocus
               disabled={Boolean(blockedRole)}
             />
