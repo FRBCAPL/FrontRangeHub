@@ -43,7 +43,7 @@ applyEstateAuthLanding();
   }
 })();
 
-/** fiduciarylog.com → Estate Vault landing */
+/** fiduciarylog.com → marketing storefront; app remains at /#/estateit */
 (function redirectEstateItCustomDomain() {
   const host = (window.location.hostname || '').toLowerCase();
   if (host !== 'fiduciarylog.com' && host !== 'www.fiduciarylog.com') return;
@@ -51,7 +51,19 @@ applyEstateAuthLanding();
   const hash = window.location.hash || '';
   if (hash.startsWith('#/estateit') || hash.startsWith('#/estate-inventory')) return;
   const pathname = window.location.pathname || '';
-  if (pathname.startsWith('/dues-tracker') || pathname.startsWith('/arcade')) return;
+  if (
+    pathname.startsWith('/estate-vault') ||
+    pathname.startsWith('/dues-tracker') ||
+    pathname.startsWith('/arcade')
+  ) {
+    return;
+  }
+  if (pathname === '/' || pathname === '') {
+    window.location.replace(
+      `${window.location.origin}/estate-vault/${window.location.search || ''}`
+    );
+    return;
+  }
   window.location.replace(
     `${window.location.origin}/#/estateit${window.location.search || ''}`
   );

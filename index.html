@@ -11,14 +11,31 @@
       (function () {
         var host = (window.location.hostname || '').toLowerCase();
         if (host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com') {
-          document.title = 'Estate Vault';
+          document.title = 'Estate Vault — Estate Inventory for Personal Representatives';
           var desc = document.querySelector('meta[name="description"]');
           if (desc) {
             desc.setAttribute(
               'content',
-              'Estate Vault — court-ready estate inventory and fiduciary portal.'
+              'Estate Vault helps personal representatives record property, money, and distributions. Court-supporting estate records — not legal advice.'
             );
           }
+          var icon = document.querySelector('link[rel="icon"]');
+          if (icon) icon.setAttribute('href', '/estate-vault/ev-app-icon.png');
+          function ensureMeta(attr, key, value) {
+            var el = document.querySelector('meta[' + attr + '="' + key + '"]');
+            if (!el) {
+              el = document.createElement('meta');
+              el.setAttribute(attr, key);
+              document.head.appendChild(el);
+            }
+            el.setAttribute('content', value);
+          }
+          ensureMeta('property', 'og:title', 'Estate Vault — Estate Inventory for Personal Representatives');
+          ensureMeta('property', 'og:description', 'Record property, money, and distributions. Organize the estate record and export court-supporting reports.');
+          ensureMeta('property', 'og:image', 'https://fiduciarylog.com/estate-vault/ev-main-logo.png');
+          ensureMeta('property', 'og:url', 'https://fiduciarylog.com/estate-vault/');
+          ensureMeta('property', 'og:type', 'website');
+          ensureMeta('name', 'twitter:card', 'summary_large_image');
         }
       })();
     </script>
@@ -38,15 +55,22 @@
           window.location.replace('/' + match[1] + '/index.html' + window.location.search + window.location.hash);
           return;
         }
-        // Estate Vault custom domain — always land on the estate app
+        // Estate Vault custom domain — marketing storefront first; app stays at /#/estateit
         var host = (window.location.hostname || '').toLowerCase();
         if (host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com') {
+          var path = window.location.pathname || '/';
           var hash = window.location.hash || '';
-          if (!hash.startsWith('#/estateit') && !hash.startsWith('#/estate-inventory')) {
+          if (path.indexOf('/estate-vault') === 0) return;
+          if (hash.startsWith('#/estateit') || hash.startsWith('#/estate-inventory')) return;
+          if (path === '/' || path === '') {
             window.location.replace(
-              window.location.origin + '/#/estateit' + (window.location.search || '')
+              window.location.origin + '/estate-vault/' + (window.location.search || '')
             );
+            return;
           }
+          window.location.replace(
+            window.location.origin + '/#/estateit' + (window.location.search || '')
+          );
         }
       })();
     </script>
