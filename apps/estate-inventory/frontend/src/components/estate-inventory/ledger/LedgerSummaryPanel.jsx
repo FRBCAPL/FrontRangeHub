@@ -54,15 +54,19 @@ const LedgerSummaryPanel = ({
       caseNumber,
       estateCashOnHand: Number(cash) || 0
     });
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not save cash on hand.');
       return;
     }
-    setInfo('Extra cash saved.');
     setEditingCash(false);
     onSettingsSaved?.(result.data);
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo('Extra cash saved.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const cashAvailable =

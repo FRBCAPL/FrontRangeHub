@@ -67,7 +67,7 @@ const LedgerDistributionsPanel = ({
       'Distribution finalized. Add a short decision note while it’s fresh, update account balances if cash left the estate, then publish a Family Update from Reports.'
     );
     await load();
-    onChanged?.();
+    await onChanged?.();
     setDecisionContext({
       defaultTopic:
         data?.classification === 'interim'
@@ -94,7 +94,7 @@ const LedgerDistributionsPanel = ({
     }
     setInfo(`${recipient.recipient_name}: ${acknowledgementStatusLabel(status)}.`);
     await load();
-    onChanged?.();
+    await onChanged?.();
   };
 
   const openDecisionNote = (distribution) => {
@@ -140,7 +140,7 @@ const LedgerDistributionsPanel = ({
         : 'Distribution reversed. Original record kept; Estate Funds restored with a compensating adjustment.'
     );
     await load();
-    onChanged?.();
+    await onChanged?.();
   };
 
   const receiptPayload = (distribution, recipient) => ({

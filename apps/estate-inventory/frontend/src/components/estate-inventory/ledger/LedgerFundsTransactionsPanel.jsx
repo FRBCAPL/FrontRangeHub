@@ -88,15 +88,19 @@ const LedgerFundsTransactionsPanel = ({
             txnDate,
             caseNumber
           });
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not save the transaction.');
       return;
     }
-    setInfo(mode === 'adjustment' ? 'Adjustment recorded.' : 'Deposit recorded. Funds balance updated.');
     setAmount('');
     setMemo('');
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo(mode === 'adjustment' ? 'Adjustment recorded.' : 'Deposit recorded. Funds balance updated.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const remove = async (row) => {
@@ -107,13 +111,17 @@ const LedgerFundsTransactionsPanel = ({
     setBusy(true);
     setError('');
     const result = await estateInventoryService.removeEstateFundsTransaction(row.id, caseNumber);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not remove transaction.');
       return;
     }
-    setInfo('Transaction removed. Funds balance updated.');
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo('Transaction removed. Funds balance updated.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (

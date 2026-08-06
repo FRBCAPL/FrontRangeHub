@@ -53,6 +53,7 @@ const EstateLedgerModal = ({
   open,
   summary,
   readOnly = false,
+  refreshing = false,
   initialTab = 'summary',
   onClose,
   onChanged,
@@ -249,6 +250,12 @@ const EstateLedgerModal = ({
       {readOnly ? (
         <p className="ei-ledger-readonly">
           This estate is closed for records. Money records are view-only.
+        </p>
+      ) : null}
+
+      {refreshing ? (
+        <p className="ei-status ei-ledger-refreshing" aria-live="polite">
+          Updating lists…
         </p>
       ) : null}
 

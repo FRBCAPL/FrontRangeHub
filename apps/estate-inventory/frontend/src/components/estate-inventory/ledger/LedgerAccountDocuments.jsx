@@ -59,7 +59,7 @@ const LedgerAccountDocuments = ({ account, caseNumber, readOnly, onClose, onChan
     if (inputRef.current) inputRef.current.value = '';
     setInfo('Statement attached and fingerprinted.');
     await load();
-    onChanged?.();
+    await onChanged?.();
   };
 
   const remove = async (row) => {
@@ -75,7 +75,7 @@ const LedgerAccountDocuments = ({ account, caseNumber, readOnly, onClose, onChan
     }
     setInfo(result.warning || 'Statement removed.');
     await load();
-    onChanged?.();
+    await onChanged?.();
   };
 
   return (

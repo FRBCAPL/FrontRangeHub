@@ -209,8 +209,8 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
     const result = editingId
       ? await estateInventoryService.updateEstateAccount(editingId, payload, caseNumber)
       : await estateInventoryService.addEstateAccount(payload, caseNumber);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not save.');
       return;
     }
@@ -224,7 +224,11 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
             : 'Account added and tracked. It is not included in Cash on hand — turn on “Include in Cash on hand” if estate money sits there.'
     );
     resetForm();
-    onChanged?.();
+    try {
+      await onChanged?.();
+    } finally {
+      setBusy(false);
+    }
   };
 
   const openStatements = (row) => {
@@ -275,15 +279,19 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
     setBusy(true);
     setError('');
     const result = await estateInventoryService.deleteEstateAccount(row.id, caseNumber);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not remove.');
       return;
     }
     if (editingId === row.id) resetForm();
     if (payingDebt?.id === row.id) setPayingDebt(null);
     setInfo(`Removed ${row.account_name}.`);
-    onChanged?.();
+    try {
+      await onChanged?.();
+    } finally {
+      setBusy(false);
+    }
   };
 
   const fundAccounts = rows.filter((r) => r.kind !== 'debt' && accountCountsAsFunds(r));

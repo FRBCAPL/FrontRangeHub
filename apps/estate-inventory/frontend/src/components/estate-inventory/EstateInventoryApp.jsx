@@ -173,8 +173,10 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     }
     const result = await estateInventoryService.createCollection(name, routeCase);
     if (result.success) {
-      setCollections((prev) => [result.data, ...prev]);
+      setCollections((prev) => [result.data, ...prev.filter((c) => c.id !== result.data.id)]);
       setBanner(`Created “${result.data.name}”.`);
+      await refreshCollections();
+      setPendingRefreshKey((n) => n + 1);
     }
     return result;
   };

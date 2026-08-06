@@ -86,22 +86,29 @@ const LedgerDebtPayPanel = ({ debt, fundAccounts = [], caseNumber, onClose, onCh
       },
       caseNumber
     );
-    setBusy(false);
     if (!debtResult.success) {
       setError(
         debtResult.error ||
           'Payment left Cash on hand, but the debt balance could not be updated. Edit the debt amount manually.'
       );
-      onChanged?.(expenseResult);
+      try {
+        await onChanged?.();
+      } finally {
+        setBusy(false);
+      }
       return;
     }
 
-    onChanged?.(expenseResult);
-    onClose?.(
-      expenseResult.warning
-        ? `Paid ${formatMoney(amt)} toward ${debt.account_name}. ${expenseResult.warning}`
-        : `Paid ${formatMoney(amt)} toward ${debt.account_name}. Remaining: ${formatMoney(nextBalance)}.`
-    );
+    try {
+      await onChanged?.();
+      onClose?.(
+        expenseResult.warning
+          ? `Paid ${formatMoney(amt)} toward ${debt.account_name}. ${expenseResult.warning}`
+          : `Paid ${formatMoney(amt)} toward ${debt.account_name}. Remaining: ${formatMoney(nextBalance)}.`
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (

@@ -6121,6 +6121,7 @@ export async function getFinanceSummary(caseNumber) {
     creditorClaims,
     accountDocuments: documentsResult.error ? [] : documentsResult.data || [],
     accountsUnavailable: !accountsResult.success,
+    fundTransactionsUnavailable: !txnList.success,
     prLoansUnavailable: !loansResult.success,
     creditorClaimsUnavailable: !claimsResult.success,
     accountDocumentsUnavailable: Boolean(documentsResult.error),

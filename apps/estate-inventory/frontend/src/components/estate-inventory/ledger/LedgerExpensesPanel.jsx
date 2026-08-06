@@ -126,25 +126,31 @@ const LedgerExpensesPanel = ({
     const result = editingId
       ? await estateInventoryService.updateEstateExpense(editingId, input)
       : await estateInventoryService.addEstateExpense(input);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not save the expense.');
       return;
     }
-    setInfo(
-      result.warning
-        ? result.warning
-        : editingId
-          ? 'Expense changes saved. Publish a Family Update from Reports when you want heirs to see the change.'
-          : payFromAccountId
-            ? 'Expense logged and withdrawn from Estate Funds in one step. Publish a Family Update from Reports when material spending should be disclosed.'
-            : 'Expense logged. Choose a fund account next time so Funds balance updates automatically.'
-    );
     if (result.data) {
       onExpenseSaved?.(result.data, { editing: Boolean(editingId) });
     }
+    const wasEditing = Boolean(editingId);
+    const usedPayFrom = Boolean(payFromAccountId);
     resetForm();
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo(
+        result.warning
+          ? result.warning
+          : wasEditing
+            ? 'Expense changes saved. Publish a Family Update from Reports when you want heirs to see the change.'
+            : usedPayFrom
+              ? 'Expense logged and withdrawn from Estate Funds in one step. Publish a Family Update from Reports when material spending should be disclosed.'
+              : 'Expense logged. Choose a fund account next time so Funds balance updates automatically.'
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   const startEdit = (row) => {
@@ -164,18 +170,22 @@ const LedgerExpensesPanel = ({
     setBusy(true);
     setError('');
     const result = await estateInventoryService.deleteEstateExpense(row.id, caseNumber);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || `Could not remove ${row.expense_name}.`);
       return;
     }
     if (editingId === row.id) resetForm();
-    setInfo(
-      result.warning
-        ? `Removed ${row.expense_name}. ${result.warning}`
-        : `Removed ${row.expense_name}. Linked Funds withdrawal was reversed with a compensating adjustment (original row kept for the record).`
-    );
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo(
+        result.warning
+          ? `Removed ${row.expense_name}. ${result.warning}`
+          : `Removed ${row.expense_name}. Linked Funds withdrawal was reversed with a compensating adjustment (original row kept for the record).`
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (

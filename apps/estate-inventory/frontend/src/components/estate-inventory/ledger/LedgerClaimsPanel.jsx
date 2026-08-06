@@ -48,14 +48,19 @@ const LedgerClaimsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => {
     const result = editingId
       ? await estateInventoryService.updateEstateCreditorClaim(editingId, payload)
       : await estateInventoryService.addEstateCreditorClaim(payload);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not save the claim.');
       return;
     }
-    setInfo(editingId ? 'Claim updated.' : 'Claim recorded.');
+    const wasEditing = Boolean(editingId);
     resetForm();
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo(wasEditing ? 'Claim updated.' : 'Claim recorded.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const startEdit = (row) => {
@@ -77,14 +82,18 @@ const LedgerClaimsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => {
     setError('');
     setInfo('');
     const result = await estateInventoryService.deleteEstateCreditorClaim(row.id, caseNumber);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not remove the claim.');
       return;
     }
     if (editingId === row.id) resetForm();
-    setInfo(`Removed claim from ${row.creditor_name}.`);
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo(`Removed claim from ${row.creditor_name}.`);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const activeTotal = sumActiveClaimAmounts(rows);

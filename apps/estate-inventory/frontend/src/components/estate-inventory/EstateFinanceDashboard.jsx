@@ -6,6 +6,28 @@ import EstateLedgerModal from './EstateLedgerModal.jsx';
 import CashAvailableHint from './CashAvailableHint.jsx';
 import { useEstateCase } from './EstateCaseContext';
 
+/** Keep prior list data when a soft-failed sub-query returns empty. */
+function mergeFinanceSummary(prev, next) {
+  if (!prev || !next) return next;
+  const keep = (unavailable, prevList, nextList) =>
+    unavailable && (prevList?.length || 0) > 0 && !(nextList?.length || 0) ? prevList : nextList;
+  return {
+    ...next,
+    accounts: keep(next.accountsUnavailable, prev.accounts, next.accounts),
+    fundTransactions: keep(
+      next.fundTransactionsUnavailable,
+      prev.fundTransactions,
+      next.fundTransactions
+    ),
+    prLoans: keep(next.prLoansUnavailable, prev.prLoans, next.prLoans),
+    creditorClaims: keep(
+      next.creditorClaimsUnavailable,
+      prev.creditorClaims,
+      next.creditorClaims
+    )
+  };
+}
+
 /**
  * Home Money card — plain language for a first-time PR.
  * Deep work happens in EstateLedgerModal.
@@ -22,40 +44,53 @@ const EstateFinanceDashboard = ({
   const { caseNumber } = useEstateCase();
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [localRefresh, setLocalRefresh] = useState(0);
   const [ledgerTab, setLedgerTab] = useState(null);
   const loadSeqRef = useRef(0);
   const hasSummaryRef = useRef(false);
+  const skipNextExternalKeyRef = useRef(false);
   hasSummaryRef.current = Boolean(summary);
 
   const load = useCallback(async () => {
     const seq = ++loadSeqRef.current;
     if (!hasSummaryRef.current) setLoading(true);
+    else setRefreshing(true);
     setError('');
     const result = await estateInventoryService.getFinanceSummary(caseNumber);
     if (seq !== loadSeqRef.current) return;
     setLoading(false);
+    setRefreshing(false);
     if (!result.success) {
       setError(result.error || 'Could not load money overview.');
-      setSummary(null);
+      if (!hasSummaryRef.current) setSummary(null);
       return;
     }
-    setSummary(result.data);
+    setSummary((prev) => mergeFinanceSummary(prev, result.data));
   }, [caseNumber]);
 
   useEffect(() => {
+    if (skipNextExternalKeyRef.current) {
+      skipNextExternalKeyRef.current = false;
+      return;
+    }
     load();
-  }, [load, refreshKey, localRefresh]);
+  }, [load, refreshKey]);
 
   useEffect(() => {
     if (ledgerRequestKey > 0) setLedgerTab(ledgerRequestTab || 'summary');
   }, [ledgerRequestKey, ledgerRequestTab]);
 
-  const bump = () => {
-    setLocalRefresh((n) => n + 1);
-    onChanged?.();
-  };
+  /** Awaitable refresh so ledger saves can wait until lists show new rows. */
+  const refresh = useCallback(async () => {
+    await load();
+    skipNextExternalKeyRef.current = true;
+    try {
+      await onChanged?.();
+    } catch {
+      /* parent notify should not break save UX */
+    }
+  }, [load, onChanged]);
 
   const applyExpenseRow = (row, { editing = false } = {}) => {
     if (!row?.id) return;
@@ -126,6 +161,12 @@ const EstateFinanceDashboard = ({
             <p className="ei-finance-case">Case {caseLabel}</p>
           </div>
         </div>
+
+        {refreshing ? (
+          <p className="ei-status ei-finance-refreshing" aria-live="polite">
+            Updating money lists…
+          </p>
+        ) : null}
 
         <p className="ei-finance-plain">
           This is <strong>spendable estate money</strong> (accounts you mark as Cash on hand).<br />{' '}
@@ -228,8 +269,9 @@ const EstateFinanceDashboard = ({
         initialTab={ledgerTab || 'summary'}
         summary={summary}
         readOnly={isClosed}
+        refreshing={refreshing}
         onClose={() => setLedgerTab(null)}
-        onChanged={bump}
+        onChanged={refresh}
         onExpenseSaved={applyExpenseRow}
         onSettingsSaved={onSettingsSaved}
       />

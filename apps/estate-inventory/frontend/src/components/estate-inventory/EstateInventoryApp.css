@@ -1218,6 +1218,12 @@ button.ei-nav-menu-btn-item {
   margin: 0.5rem 0 1rem;
 }
 
+.ei-ledger-refreshing,
+.ei-finance-refreshing {
+  color: var(--ei-accent);
+  margin: 0.35rem 0 0.65rem;
+}
+
 .ei-records-closed-banner {
   display: flex;
   flex-direction: column;

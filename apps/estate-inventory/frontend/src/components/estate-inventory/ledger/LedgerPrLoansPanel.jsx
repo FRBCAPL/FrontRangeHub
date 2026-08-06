@@ -38,14 +38,19 @@ const LedgerPrLoansPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => {
     const result = editingId
       ? await estateInventoryService.updateEstatePrLoan(editingId, input)
       : await estateInventoryService.addEstatePrLoan(input);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not save the loan.');
       return;
     }
-    setInfo(editingId ? 'Loan changes saved.' : 'Loan recorded.');
+    const wasEditing = Boolean(editingId);
     resetForm();
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo(wasEditing ? 'Loan changes saved.' : 'Loan recorded.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const startEdit = (loan) => {
@@ -63,14 +68,18 @@ const LedgerPrLoansPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => {
     setError('');
     setInfo('');
     const result = await estateInventoryService.deleteEstatePrLoan(loan.id, caseNumber);
-    setBusy(false);
     if (!result.success) {
+      setBusy(false);
       setError(result.error || 'Could not remove the loan.');
       return;
     }
     if (editingId === loan.id) resetForm();
-    setInfo(`Removed ${loan.purpose}.`);
-    onChanged?.();
+    try {
+      await onChanged?.();
+      setInfo(`Removed ${loan.purpose}.`);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
