@@ -23,6 +23,7 @@ import {
   normalizeAccountType,
   countsAsFundsDefaultForType
 } from '../utils/estateAccountTypes.js';
+import { isKnownContactCategory } from '../utils/estateContactTypes.js';
 import { logEstateActivity, listEstateActivityEvents, writeEstateActivity } from './estateActivityLog.js';
 import { notifyEstateOperator } from './estateVaultAuth.js';
 import {
@@ -51,6 +52,10 @@ const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
 const ITEM_SELECT =
+  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, item_condition, condition_notes, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, auction_proceeds_where, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, room_number, item_number, created_at, updated_at';
+
+/** Before inventory ref-code migration. */
+const ITEM_SELECT_NO_REF =
   'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, item_condition, condition_notes, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, auction_proceeds_where, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
@@ -153,6 +158,14 @@ async function selectItems(applyFilters) {
   let { data, error } = await q;
   if (
     error &&
+    (isMissingColumnError(error, 'room_number') || isMissingColumnError(error, 'item_number'))
+  ) {
+    itemSelect = ITEM_SELECT_NO_REF;
+    q = applyFilters(supabase.from('estate_items').select(itemSelect));
+    ({ data, error } = await q);
+  }
+  if (
+    error &&
     (isMissingColumnError(error, 'estimated_value') ||
       isMissingColumnError(error, 'valuation_date') ||
       isMissingColumnError(error, 'valuation_source') ||
@@ -165,6 +178,61 @@ async function selectItems(applyFilters) {
     ({ data, error } = await q);
   }
   return { data, error };
+}
+
+async function allocateCollectionNumber(estateId) {
+  if (!estateId) return null;
+  const { data, error } = await supabase.rpc('estate_next_collection_number', {
+    p_estate_id: estateId
+  });
+  if (!error && data != null && Number.isFinite(Number(data))) {
+    return Math.floor(Number(data));
+  }
+  const { data: rows, error: maxErr } = await supabase
+    .from('estate_collections')
+    .select('collection_number')
+    .eq('estate_id', estateId)
+    .not('collection_number', 'is', null)
+    .order('collection_number', { ascending: false })
+    .limit(1);
+  if (maxErr || isMissingColumnError(maxErr, 'collection_number')) return null;
+  return (Number(rows?.[0]?.collection_number) || 0) + 1;
+}
+
+async function allocateItemNumber(estateId, roomNumber) {
+  if (!estateId || roomNumber == null) return null;
+  const { data, error } = await supabase.rpc('estate_next_item_number', {
+    p_estate_id: estateId,
+    p_room_number: roomNumber
+  });
+  if (!error && data != null && Number.isFinite(Number(data))) {
+    return Math.floor(Number(data));
+  }
+  const { data: rows, error: maxErr } = await supabase
+    .from('estate_items')
+    .select('item_number')
+    .eq('estate_id', estateId)
+    .eq('room_number', roomNumber)
+    .not('item_number', 'is', null)
+    .order('item_number', { ascending: false })
+    .limit(1);
+  if (maxErr || isMissingColumnError(maxErr, 'item_number')) return null;
+  return (Number(rows?.[0]?.item_number) || 0) + 1;
+}
+
+async function ensureCollectionNumber(collectionRow, estateId) {
+  const existing = Number(collectionRow?.collection_number);
+  if (Number.isFinite(existing) && existing >= 1) return Math.floor(existing);
+  if (!estateId || !collectionRow?.id) return null;
+  const next = await allocateCollectionNumber(estateId);
+  if (next == null) return null;
+  const { error } = await supabase
+    .from('estate_collections')
+    .update({ collection_number: next })
+    .eq('id', collectionRow.id)
+    .is('collection_number', null);
+  if (error && isMissingColumnError(error, 'collection_number')) return null;
+  return next;
 }
 
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
@@ -482,12 +550,21 @@ export async function listCollections(caseNumber) {
 
   let collectionsQuery = supabase
     .from('estate_collections')
-    .select('id, name, estate_id, created_at, updated_at')
+    .select('id, name, estate_id, collection_number, created_at, updated_at')
     .eq('owner_id', estate.userId)
     .order('created_at', { ascending: false });
   if (estate.estateId) collectionsQuery = collectionsQuery.eq('estate_id', estate.estateId);
 
-  const { data: collections, error } = await collectionsQuery;
+  let { data: collections, error } = await collectionsQuery;
+  if (error && isMissingColumnError(error, 'collection_number')) {
+    collectionsQuery = supabase
+      .from('estate_collections')
+      .select('id, name, estate_id, created_at, updated_at')
+      .eq('owner_id', estate.userId)
+      .order('created_at', { ascending: false });
+    if (estate.estateId) collectionsQuery = collectionsQuery.eq('estate_id', estate.estateId);
+    ({ data: collections, error } = await collectionsQuery);
+  }
   if (error) return fail(error);
 
   let itemsQuery = supabase
@@ -520,13 +597,26 @@ export async function createCollection(name, caseNumber) {
   if (!trimmed) return fail('Collection name is required.');
 
   const row = { owner_id: estate.userId, name: trimmed };
-  if (estate.estateId) row.estate_id = estate.estateId;
+  if (estate.estateId) {
+    row.estate_id = estate.estateId;
+    const n = await allocateCollectionNumber(estate.estateId);
+    if (n != null) row.collection_number = n;
+  }
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('estate_collections')
     .insert(row)
-    .select('id, name, created_at, updated_at')
+    .select('id, name, collection_number, created_at, updated_at')
     .single();
+
+  if (error && isMissingColumnError(error, 'collection_number')) {
+    delete row.collection_number;
+    ({ data, error } = await supabase
+      .from('estate_collections')
+      .insert(row)
+      .select('id, name, created_at, updated_at')
+      .single());
+  }
 
   if (error) return fail(error);
   return ok({ ...data, itemCount: 0 });
@@ -539,12 +629,21 @@ export async function getCollection(collectionId, caseNumber) {
 
   let q = supabase
     .from('estate_collections')
-    .select('id, name, created_at, updated_at')
+    .select('id, name, collection_number, created_at, updated_at')
     .eq('id', collectionId)
     .eq('owner_id', estate.userId);
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
 
-  const { data, error } = await q.maybeSingle();
+  let { data, error } = await q.maybeSingle();
+  if (error && isMissingColumnError(error, 'collection_number')) {
+    q = supabase
+      .from('estate_collections')
+      .select('id, name, created_at, updated_at')
+      .eq('id', collectionId)
+      .eq('owner_id', estate.userId);
+    if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+    ({ data, error } = await q.maybeSingle());
+  }
 
   if (error) return fail(error);
   if (!data) return fail('Collection not found.');
@@ -669,13 +768,22 @@ export async function createItem(input) {
   }
 
   let collectionId = input?.collectionId || null;
+  let roomNumber = null;
   if (collectionId && estate.estateId) {
-    const { data: col, error: colErr } = await supabase
+    let { data: col, error: colErr } = await supabase
       .from('estate_collections')
-      .select('id, estate_id, name')
+      .select('id, estate_id, name, collection_number')
       .eq('id', collectionId)
       .eq('owner_id', estate.userId)
       .maybeSingle();
+    if (colErr && isMissingColumnError(colErr, 'collection_number')) {
+      ({ data: col, error: colErr } = await supabase
+        .from('estate_collections')
+        .select('id, estate_id, name')
+        .eq('id', collectionId)
+        .eq('owner_id', estate.userId)
+        .maybeSingle());
+    }
     if (colErr) return fail(colErr);
     if (!col) return fail('Room / collection not found.');
     if (col.estate_id && col.estate_id !== estate.estateId) {
@@ -690,6 +798,7 @@ export async function createItem(input) {
         .eq('id', collectionId)
         .eq('owner_id', estate.userId);
     }
+    roomNumber = await ensureCollectionNumber(col, estate.estateId);
   }
 
   if (!collectionId) {
@@ -698,6 +807,7 @@ export async function createItem(input) {
     const created = await createCollection(newName, estate.caseNumber);
     if (!created.success) return created;
     collectionId = created.data.id;
+    roomNumber = Number(created.data.collection_number) || null;
   }
 
   if (input?.isMemorandumAsset && !input?.assignedBeneficiary) {
@@ -730,11 +840,33 @@ export async function createItem(input) {
   );
   if (!estate.estateId) delete payload.estate_id;
 
+  if (estate.estateId && roomNumber != null) {
+    const itemNumber = await allocateItemNumber(estate.estateId, roomNumber);
+    if (itemNumber != null) {
+      payload.room_number = roomNumber;
+      payload.item_number = itemNumber;
+    }
+  }
+
   let { data: item, error } = await supabase
     .from('estate_items')
     .insert(payload)
     .select(itemSelect)
     .single();
+
+  if (
+    error &&
+    (isMissingColumnError(error, 'room_number') || isMissingColumnError(error, 'item_number'))
+  ) {
+    itemSelect = ITEM_SELECT_NO_REF;
+    delete payload.room_number;
+    delete payload.item_number;
+    ({ data: item, error } = await supabase
+      .from('estate_items')
+      .insert(payload)
+      .select(itemSelect)
+      .single());
+  }
 
   if (
     error &&
@@ -751,6 +883,8 @@ export async function createItem(input) {
     delete legacyPayload.valuation_notes;
     delete legacyPayload.item_condition;
     delete legacyPayload.condition_notes;
+    delete legacyPayload.room_number;
+    delete legacyPayload.item_number;
     ({ data: item, error } = await supabase
       .from('estate_items')
       .insert(legacyPayload)
@@ -5045,8 +5179,171 @@ export async function deleteEstateCreditorClaim(claimId, caseNumber) {
   return ok(true);
 }
 
+const ESTATE_CONTACT_SELECT =
+  'id, owner_id, estate_id, category, custom_category, display_name, company, role_title, phone, email, website, address_line1, address_line2, city, region, postal_code, notes, linked_sibling_key, sort_order, created_at, updated_at';
+
+function normalizeEstateContactInput(input = {}) {
+  const displayName = String(input.displayName || input.display_name || '').trim();
+  if (displayName.length < 1) return { ok: false, error: 'Contact name is required.' };
+
+  let category = String(input.category || 'other').trim() || 'other';
+  const customCategory = String(input.customCategory || input.custom_category || '').trim();
+  if (!isKnownContactCategory(category)) category = 'other';
+  if (category === 'other' && !customCategory) {
+    return { ok: false, error: 'Enter a custom category label, or pick a standard category.' };
+  }
+
+  const email = String(input.email || '').trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: 'Enter a valid email, or leave it blank.' };
+  }
+
+  const sortOrder = Number(input.sortOrder ?? input.sort_order);
+  const linkedSiblingKey = String(input.linkedSiblingKey || input.linked_sibling_key || '').trim();
+
+  return {
+    ok: true,
+    row: {
+      category,
+      custom_category: category === 'other' ? customCategory : null,
+      display_name: displayName,
+      company: String(input.company || '').trim() || null,
+      role_title: String(input.roleTitle || input.role_title || '').trim() || null,
+      phone: String(input.phone || '').trim() || null,
+      email: email || null,
+      website: String(input.website || '').trim() || null,
+      address_line1: String(input.addressLine1 || input.address_line1 || '').trim() || null,
+      address_line2: String(input.addressLine2 || input.address_line2 || '').trim() || null,
+      city: String(input.city || '').trim() || null,
+      region: String(input.region || '').trim() || null,
+      postal_code: String(input.postalCode || input.postal_code || '').trim() || null,
+      notes: String(input.notes || '').trim() || null,
+      linked_sibling_key: linkedSiblingKey || null,
+      sort_order: Number.isFinite(sortOrder) ? Math.trunc(sortOrder) : 0
+    }
+  };
+}
+
+export async function listEstateContacts(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_contacts')
+    .select(ESTATE_CONTACT_SELECT)
+    .eq('owner_id', estate.userId)
+    .order('category', { ascending: true })
+    .order('display_name', { ascending: true });
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q;
+  if (error) {
+    if (/estate_contacts|schema cache|does not exist/i.test(error.message || '')) {
+      return ok([]);
+    }
+    return fail(error);
+  }
+  return ok(data || []);
+}
+
+export async function addEstateContact(input = {}) {
+  const estate = await resolveOwnedEstate(input.caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (!estate.estateId) return fail('Estate id is required to save a contact.');
+
+  const normalized = normalizeEstateContactInput(input);
+  if (!normalized.ok) return fail(normalized.error);
+
+  const row = {
+    ...normalized.row,
+    owner_id: estate.userId,
+    estate_id: estate.estateId
+  };
+
+  const { data, error } = await supabase
+    .from('estate_contacts')
+    .insert(row)
+    .select(ESTATE_CONTACT_SELECT)
+    .single();
+  if (error) {
+    const msg = String(error.message || error.details || error.hint || '');
+    if (/schema cache|could not find the table|relation .* does not exist|does not exist/i.test(msg)) {
+      return fail(
+        'Contacts need a database update. Run supabase-migrations/estate-contacts-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+
+  logEstateActivity({
+    eventType: 'contact_add',
+    caseNumber: estate.caseNumber,
+    metadata: { contact_id: data?.id, category: row.category }
+  });
+  return ok(data);
+}
+
+export async function updateEstateContact(contactId, input = {}) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!contactId) return fail('Contact id required.');
+
+  const estate = await resolveOwnedEstate(input.caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const normalized = normalizeEstateContactInput(input);
+  if (!normalized.ok) return fail(normalized.error);
+
+  let q = supabase
+    .from('estate_contacts')
+    .update({ ...normalized.row, updated_at: new Date().toISOString() })
+    .eq('id', contactId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q.select(ESTATE_CONTACT_SELECT).single();
+  if (error) return fail(error);
+
+  logEstateActivity({
+    eventType: 'contact_update',
+    caseNumber: estate.caseNumber,
+    metadata: { contact_id: contactId, category: normalized.row.category }
+  });
+  return ok(data);
+}
+
+export async function deleteEstateContact(contactId, caseNumber) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  if (!contactId) return fail('Contact id required.');
+
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_contacts')
+    .delete()
+    .eq('id', contactId)
+    .eq('owner_id', auth.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { error } = await q;
+  if (error) return fail(error);
+
+  logEstateActivity({
+    eventType: 'contact_delete',
+    caseNumber: estate.caseNumber,
+    metadata: { contact_id: contactId }
+  });
+  return ok(true);
+}
+
 /**
- * Admin-only fiduciary snapshot: PR loans + expense sum + auction gross − expenses = net.
+ * Distribution batches and readiness helpers.
  */
 const DISTRIBUTION_SELECT =
   'id, owner_id, estate_id, distribution_date, allocation_method, classification, status, cash_total, property_value_total, notes, claims_override_reason, readiness_snapshot, finalized_at, voided_at, void_reason, created_at, updated_at, recipients:estate_distribution_recipients(id, sibling_key, recipient_name, access_tier, share_percent, cash_amount, acknowledgement_status, acknowledged_at, acknowledgement_note, noticed_at, reminded_at, items:estate_distribution_items(id, item_id, item_name, estimated_value_snapshot, transferred_at, transfer_notes))';
@@ -6258,6 +6555,10 @@ const estateInventoryService = {
   addEstateCreditorClaim,
   updateEstateCreditorClaim,
   deleteEstateCreditorClaim,
+  listEstateContacts,
+  addEstateContact,
+  updateEstateContact,
+  deleteEstateContact,
   resetAdminPasswordAsOwner,
   listEstateAccounts,
   addEstateAccount,

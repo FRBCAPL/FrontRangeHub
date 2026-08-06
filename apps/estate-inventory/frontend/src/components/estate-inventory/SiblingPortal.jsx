@@ -20,8 +20,11 @@ import {
   normalizeHeirAccessTier,
   isMemorandumOnlyHeir,
   resolveProbateWindow,
-  formatEstateLocalDate
+  formatEstateLocalDate,
+  isSettledOrClaimedInventoryItem,
+  canAccessClaimedInventoryFilter
 } from '@shared/utils/estateInventoryConstants.js';
+import { formatItemRefLabel } from '@shared/utils/estateInventoryRefCode.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import HeirPreferredNameModal from './HeirPreferredNameModal';
@@ -88,6 +91,7 @@ const SiblingPortal = () => {
   const [roomFilter, setRoomFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
+  const [showClaimedOnly, setShowClaimedOnly] = useState(false);
   const [lettersIssuedAt, setLettersIssuedAt] = useState(null);
   const [probateWindow, setProbateWindow] = useState({
     mode: 'duration',
@@ -418,6 +422,32 @@ const SiblingPortal = () => {
     });
   }, [items, roomFilter, searchQuery]);
 
+  const allowClaimedFilter = canAccessClaimedInventoryFilter({
+    role: 'heir',
+    access_tier: session?.access_tier,
+    can_browse_rooms: session?.can_browse_rooms
+  });
+
+  const browseClaimedCount = useMemo(
+    () => filteredItems.filter(isSettledOrClaimedInventoryItem).length,
+    [filteredItems]
+  );
+
+  const browseItems = useMemo(() => {
+    const list = [...filteredItems];
+    list.sort((a, b) => {
+      const an = Number(a?.item_number);
+      const bn = Number(b?.item_number);
+      const ak = Number.isFinite(an) && an >= 1 ? an : Number.POSITIVE_INFINITY;
+      const bk = Number.isFinite(bn) && bn >= 1 ? bn : Number.POSITIVE_INFINITY;
+      if (ak !== bk) return ak - bk;
+      return String(a?.name || '').localeCompare(String(b?.name || ''));
+    });
+    if (!allowClaimedFilter) return list;
+    if (showClaimedOnly) return list.filter(isSettledOrClaimedInventoryItem);
+    return list.filter((item) => !isSettledOrClaimedInventoryItem(item));
+  }, [filteredItems, allowClaimedFilter, showClaimedOnly]);
+
   const familyRoleGuide = useMemo(
     () =>
       heirRolePortalGuide(session?.access_tier, {
@@ -457,11 +487,13 @@ const SiblingPortal = () => {
   const handleRoomChange = (room) => {
     setRoomFilter(room);
     setSearchQuery('');
+    setShowClaimedOnly(false);
     setBrowseOpen(Boolean(room));
   };
 
   const handleSearchChange = (q) => {
     setSearchQuery(q);
+    setShowClaimedOnly(false);
     if (q.trim()) {
       setRoomFilter('');
       setBrowseOpen(true);
@@ -474,6 +506,7 @@ const SiblingPortal = () => {
     setBrowseOpen(false);
     setRoomFilter('');
     setSearchQuery('');
+    setShowClaimedOnly(false);
   };
 
   const renderHeirItem = (item) => {
@@ -502,6 +535,11 @@ const SiblingPortal = () => {
           <div className="ei-card-photo-placeholder">No photo</div>
         )}
         <div className="ei-card-body">
+          {formatItemRefLabel(item.room_number, item.item_number) ? (
+            <p className="ei-item-ref-label">
+              {formatItemRefLabel(item.room_number, item.item_number)}
+            </p>
+          ) : null}
           <strong>{item.name}</strong>
           <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
           <StatusPill
@@ -889,9 +927,13 @@ const SiblingPortal = () => {
         open={browseOpen}
         onClose={closeBrowse}
         title={browseTitle}
-        itemCount={filteredItems.length}
+        itemCount={browseItems.length}
+        allowClaimedFilter={allowClaimedFilter}
+        showClaimedOnly={showClaimedOnly}
+        claimedCount={browseClaimedCount}
+        onToggleClaimedFilter={() => setShowClaimedOnly((v) => !v)}
       >
-        {filteredItems.map((item) => renderHeirItem(item))}
+        {browseItems.map((item) => renderHeirItem(item))}
       </HeirRoomBrowseModal>
 
       <HeirMyRequestsModal

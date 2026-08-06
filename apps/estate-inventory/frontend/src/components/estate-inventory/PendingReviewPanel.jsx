@@ -7,6 +7,7 @@ import {
   normalizeDescendantsInterestPct
 } from '@shared/utils/estateInventoryConstants.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
+import { formatItemRefLabel } from '@shared/utils/estateInventoryRefCode.js';
 import MemorandumInterestSection from './MemorandumInterestSection';
 import { useEstateCase } from './EstateCaseContext';
 
@@ -83,7 +84,8 @@ const PendingReviewPanel = ({ onChanged }) => {
     return items.filter((item) => {
       if (roomFilter && item.room !== roomFilter) return false;
       if (!q) return true;
-      const hay = `${item.name || ''} ${item.notes || ''} ${item.created_by_name || ''}`.toLowerCase();
+      const code = formatItemRefLabel(item.room_number, item.item_number);
+      const hay = `${code} ${item.name || ''} ${item.notes || ''} ${item.created_by_name || ''}`.toLowerCase();
       return hay.includes(q);
     });
   }, [items, roomFilter, searchQuery]);
@@ -273,7 +275,14 @@ const PendingReviewPanel = ({ onChanged }) => {
             <div className="ei-pending-photo ei-card-photo-placeholder">No photo</div>
           )}
           <div className="ei-pending-body">
-            <strong>{focusItem.name}</strong>
+            <strong>
+              {formatItemRefLabel(focusItem.room_number, focusItem.item_number) ? (
+                <span className="ei-ref-code">
+                  {formatItemRefLabel(focusItem.room_number, focusItem.item_number)}
+                </span>
+              ) : null}
+              {focusItem.name}
+            </strong>
             <p className="ei-card-meta">
               {focusItem.room}
               {photoBy ? ` · photo by ${photoBy}` : ''}
@@ -378,7 +387,11 @@ const PendingReviewPanel = ({ onChanged }) => {
                 type="button"
                 className={`ei-pending-strip-item${active ? ' is-active' : ''}`}
                 onClick={() => setFocusId(item.id)}
-                title={item.name}
+                title={
+                  formatItemRefLabel(item.room_number, item.item_number)
+                    ? `${formatItemRefLabel(item.room_number, item.item_number)} · ${item.name}`
+                    : item.name
+                }
               >
                 {thumb ? (
                   <img src={thumb} alt="" />

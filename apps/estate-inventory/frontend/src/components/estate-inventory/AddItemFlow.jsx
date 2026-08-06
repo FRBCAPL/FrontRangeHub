@@ -10,6 +10,7 @@ import {
 } from '@shared/utils/estateInventoryConstants.js';
 import { prSelfAcquireHint } from '@shared/utils/estateLegalOps.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
+import { roomTitleWithCode } from '@shared/utils/estateInventoryRefCode.js';
 import VoiceNotesButton from './VoiceNotesButton';
 import ItemConditionFields from './ItemConditionFields';
 import DescendantsInterestField from './DescendantsInterestField';
@@ -492,7 +493,7 @@ const AddItemFlow = ({
                     <option value="">Create new room…</option>
                     {(collections || []).map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name}
+                        {roomTitleWithCode(c.name, c.collection_number)}
                       </option>
                     ))}
                   </select>

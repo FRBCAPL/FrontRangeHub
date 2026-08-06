@@ -9,9 +9,15 @@ import EstateSettingsViewPasswordsModal from './EstateSettingsViewPasswordsModal
 import EstateSettingsActivityModal from './EstateSettingsActivityModal';
 import EstateSettingsRecordsModal from './EstateSettingsRecordsModal';
 import EstateSettingsBillingModal from './EstateSettingsBillingModal';
+import EstateSettingsContactsModal from './EstateSettingsContactsModal';
 import { EstateSettingsShell } from './EstateSettingsShell';
 
 const SECTIONS = [
+  {
+    id: 'contacts',
+    label: 'Contacts',
+    hint: 'Attorneys, CPA, banks, utilities, auction, funeral home, and custom roles'
+  },
   {
     id: 'billing',
     label: 'Billing',
@@ -133,6 +139,7 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
         </EstateSettingsShell>
       ) : null}
 
+      <EstateSettingsContactsModal open={section === 'contacts'} onClose={closeSection} />
       <EstateSettingsViewPasswordsModal
         open={section === 'passwords'}
         onClose={closeSection}

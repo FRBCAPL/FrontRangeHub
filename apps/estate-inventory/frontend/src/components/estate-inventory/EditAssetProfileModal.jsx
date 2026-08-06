@@ -12,6 +12,7 @@ import {
 import { prSelfAcquireHint } from '@shared/utils/estateLegalOps.js';
 import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
+import { itemTitleWithCode, roomTitleWithCode } from '@shared/utils/estateInventoryRefCode.js';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import StatusPill from './StatusPill';
 import MemorandumInterestSection from './MemorandumInterestSection';
@@ -355,7 +356,10 @@ const EditAssetProfileModal = ({
         <div className="ei-modal-head">
           <div className="ei-edit-asset-head-text">
             <h3 id="ei-edit-asset-title">Edit asset</h3>
-            <p className="ei-edit-asset-item-name">{item.name || 'Untitled item'}</p>
+            <p className="ei-edit-asset-item-name">
+              {itemTitleWithCode(item.name, item.room_number, item.item_number) ||
+                'Untitled item'}
+            </p>
           </div>
           <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
             ×
@@ -451,12 +455,12 @@ const EditAssetProfileModal = ({
                 >
                   {(collections || []).map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name}
+                      {roomTitleWithCode(c.name, c.collection_number)}
                     </option>
                   ))}
                 </select>
                 <p className="ei-settings-hint">
-                  Moving an item here updates which room it appears under in Collections.
+                  Moving changes which room list the item appears under. The inventory code (R-NN-MMM) stays the same.
                 </p>
               </div>
             ) : null}

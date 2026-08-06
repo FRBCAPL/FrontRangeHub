@@ -152,6 +152,14 @@ const EstateHome = ({
               <span className="ei-action-label">Create room</span>
               <span className="ei-action-hint">Group by room or category</span>
             </button>
+            <button
+              type="button"
+              className="ei-action"
+              onClick={() => onOpenSettingsSection?.('contacts')}
+            >
+              <span className="ei-action-label">Contacts</span>
+              <span className="ei-action-hint">Attorney, CPA, banks, utilities, auction…</span>
+            </button>
           </div>
         </section>
 

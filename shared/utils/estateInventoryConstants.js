@@ -1052,6 +1052,44 @@ export function isArchived(status) {
   return status === LEGAL_STATUS.archived;
 }
 
+/**
+ * Items kept out of the open room inventory list (shown under Claimed / memo / disputed).
+ */
+export function isSettledOrClaimedInventoryItem(item) {
+  if (!item) return false;
+  if (item.legal_status === LEGAL_STATUS.claimed_memorandum) return true;
+  if (item.legal_status === LEGAL_STATUS.distributed) return true;
+  if (item.legal_status === LEGAL_STATUS.disputed) return true;
+  if (item.is_memorandum_asset) return true;
+  return claimCount(item) > 0;
+}
+
+/**
+ * Who may open the Claimed / memo / disputed room filter.
+ * PR/admin: always. Helpers: never. Family: only when room browse is allowed for their role.
+ * @param {{ role?: string, access_tier?: string, can_browse_rooms?: boolean }|string|null} viewer
+ */
+export function canAccessClaimedInventoryFilter(viewer) {
+  if (viewer == null) return false;
+  if (typeof viewer === 'string') {
+    const role = viewer.toLowerCase();
+    if (role === 'admin' || role === 'pr' || role === 'personal_representative') return true;
+    if (role === 'helper') return false;
+    return false;
+  }
+  const role = String(viewer.role || '').toLowerCase();
+  if (role === 'admin' || role === 'pr' || role === 'personal_representative') return true;
+  if (role === 'helper') return false;
+  if (role === 'heir' || role === 'sibling' || role === 'family') {
+    return heirCanBrowseRooms(viewer);
+  }
+  // Session-shaped heir object without explicit role
+  if (viewer.access_tier != null || viewer.can_browse_rooms != null) {
+    return heirCanBrowseRooms(viewer);
+  }
+  return false;
+}
+
 export function claimCount(item) {
   return normalizeSiblingClaims(item?.sibling_claims).length;
 }

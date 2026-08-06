@@ -27,6 +27,7 @@ import {
   isBillingLocked,
   isBillingQuietPhase
 } from '@shared/utils/estateBilling.js';
+import { roomTitleWithCode } from '@shared/utils/estateInventoryRefCode.js';
 import EditAssetProfileModal from './EditAssetProfileModal';
 import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
@@ -278,7 +279,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
 
   const navTitle =
     view === VIEW.DETAIL
-      ? activeCollection?.name || 'Room'
+      ? roomTitleWithCode(activeCollection?.name, activeCollection?.collection_number)
       : view === VIEW.COLLECTIONS
         ? 'Collections'
         : view === VIEW.PENDING
@@ -333,7 +334,12 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
                     { label: 'Home', to: caseHome },
                     { label: 'Admin', onClick: goHome },
                     { label: 'Collections', onClick: goCollections },
-                    { label: activeCollection?.name || 'Room' }
+                    {
+                      label: roomTitleWithCode(
+                        activeCollection?.name,
+                        activeCollection?.collection_number
+                      )
+                    }
                   ];
 
   const backHandler =
@@ -541,6 +547,8 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           error={itemsError}
           onAddItem={() => openAddItem(activeCollection)}
           onEditItem={setEditingItem}
+          onBackToRooms={goCollections}
+          viewerRole="admin"
         />
       ) : null}
 
