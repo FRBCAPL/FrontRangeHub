@@ -189,6 +189,20 @@ const EstateCaseEntry = () => {
           <span> — tracking and supporting records only; not legal advice or court filings</span>
         </p>
 
+        <p className="ei-gateway-auctions ei-gateway-seo-links">
+          <a className="ei-link-btn" href="/estate-vault/">
+            About Estate Vault
+          </a>
+          <span> · </span>
+          <a className="ei-link-btn" href="/estate-vault/how-it-works.html">
+            How it works
+          </a>
+          <span> · </span>
+          <a className="ei-link-btn" href="/estate-vault/pricing.html">
+            Pricing
+          </a>
+        </p>
+
         <EstateSystemDisclaimer generic />
       </div>
 

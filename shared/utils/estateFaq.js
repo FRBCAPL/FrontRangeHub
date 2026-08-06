@@ -29,10 +29,6 @@ export const ESTATE_FAQ = {
           a: 'Tap Start here as a PR on the home page for a short new-PR guide, then sign in or create your account and create or open an estate. For a fuller product tour anytime, open What is Estate Vault? Enter basic case details when you have them, invite family if ready, and begin documenting property and money. You do not need every document on day one.'
         },
         {
-          q: 'How much does Estate Vault cost?',
-          a: estatePricingFaqAnswer()
-        },
-        {
           q: 'Do I have to upload the will, death certificate, or Letters?',
           a: 'No. Those uploads are not required to use Estate Vault. You can begin with case setup, inventory, and money tracking while paper documents stay with you and counsel.'
         },
@@ -43,9 +39,6 @@ export const ESTATE_FAQ = {
         {
           q: 'Who should I contact for legal or tax questions?',
           a: 'Your attorney or CPA — not Estate Vault. The product organizes and documents; it does not give legal, tax, or fiduciary advice.'
-        },
-        {
-         
         }
       ]
     },
