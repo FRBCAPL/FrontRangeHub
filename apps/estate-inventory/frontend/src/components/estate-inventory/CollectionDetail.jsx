@@ -12,7 +12,7 @@ import {
   isSettledOrClaimedInventoryItem,
   canAccessClaimedInventoryFilter
 } from '@shared/utils/estateInventoryConstants.js';
-import { getPhotoEntries } from '@shared/utils/estatePhotoMeta.js';
+import { getPhotoEntries, getCoverPhotoEntry, extraPhotoCount } from '@shared/utils/estatePhotoMeta.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import {
   formatItemRefLabel,
@@ -124,6 +124,8 @@ const CollectionDetail = ({
           const disputed = isDisputed(item.legal_status);
           const claims = Array.isArray(item.sibling_claims) ? item.sibling_claims : [];
           const photos = getPhotoEntries(item);
+          const cover = getCoverPhotoEntry(item);
+          const extras = extraPhotoCount(item);
           const photoBy = [...new Set(photos.map((p) => p.taken_by).filter(Boolean))].join(', ');
           const unauthorized = isUnauthorizedRemoval(item.legal_status);
           const pending = isPendingReview(item);
@@ -139,18 +141,18 @@ const CollectionDetail = ({
               key={item.id}
               className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}${item.legal_status === LEGAL_STATUS.archived ? ' ei-card-archived' : ''}${pending ? ' ei-card-pending' : ''}`}
             >
-              {photos[0] ? (
-                <img className="ei-card-photo" src={photos[0].url} alt={item.name} loading="lazy" />
-              ) : (
-                <div className="ei-card-photo-placeholder">No photo</div>
-              )}
-              {photos.length > 1 ? (
-                <div className="ei-card-photo-strip">
-                  {photos.slice(1, 4).map((photo) => (
-                    <img key={photo.url} src={photo.url} alt="" loading="lazy" />
-                  ))}
-                </div>
-              ) : null}
+              <div className="ei-card-photo-wrap">
+                {cover ? (
+                  <img className="ei-card-photo" src={cover.url} alt={item.name} loading="lazy" />
+                ) : (
+                  <div className="ei-card-photo-placeholder">No photo</div>
+                )}
+                {extras > 0 ? (
+                  <span className="ei-card-photo-count" title={`${extras + 1} photos`}>
+                    +{extras} photo{extras === 1 ? '' : 's'}
+                  </span>
+                ) : null}
+              </div>
               <div className="ei-card-body">
                 {itemLabel ? <p className="ei-item-ref-label">{itemLabel}</p> : null}
                 <strong>{item.name}</strong>

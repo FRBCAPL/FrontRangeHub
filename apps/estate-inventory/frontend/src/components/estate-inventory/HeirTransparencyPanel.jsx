@@ -15,7 +15,7 @@ import EstateModalShell from './EstateModalShell';
  * Compact launcher → modal with the full overview.
  * Specific Gift Recipients get the same data with softer, role-framed copy.
  */
-const HeirTransparencyPanel = ({ caseNumber }) => {
+const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
@@ -43,13 +43,29 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
   }, [caseNumber]);
 
   if (!loaded) {
+    if (asMenuTile) {
+      return (
+          <button
+            type="button"
+            className="ei-family-action-tile ei-family-action-tile--overview ei-family-coach-target"
+            id="ei-family-coach-overview"
+            disabled
+          >
+          <span className="ei-family-action-label">Estate overview</span>
+          <span className="ei-family-action-meta">Loading…</span>
+        </button>
+      );
+    }
     return (
       <section className="ei-transparency-panel ei-transparency-launch">
         <p className="ei-transparency-launch-hint">Loading estate overview…</p>
       </section>
     );
   }
-  if (!data && !error) return null;
+  if (!data && !error) {
+    if (asMenuTile) return null;
+    return null;
+  }
 
   const visibility = data?.visibility || 'Limited';
   const summary = data?.summary || {};
@@ -383,7 +399,18 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
     </>
   );
 
-  const opener = (
+  const opener = asMenuTile ? (
+    <button
+      type="button"
+      className="ei-family-action-tile ei-family-action-tile--overview ei-family-coach-target"
+      id="ei-family-coach-overview"
+      onClick={() => setOpen(true)}
+      aria-haspopup="dialog"
+    >
+      <span className="ei-family-action-label">{isMemo ? 'Estate status' : 'Estate overview'}</span>
+      <span className="ei-family-action-meta">{launchHint}</span>
+    </button>
+  ) : (
     <section
       className="ei-transparency-panel ei-transparency-launch"
       aria-labelledby="ei-transparency-title"

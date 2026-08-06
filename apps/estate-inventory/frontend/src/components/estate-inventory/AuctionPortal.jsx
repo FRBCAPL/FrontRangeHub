@@ -20,6 +20,7 @@ import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
 import EstateBillingLockedGate from './EstateBillingLockedGate';
+import ItemPhotoGallery from './ItemPhotoGallery';
 import './EstateInventoryApp.css';
 
 function canPreviewBeforePublic(caseNumber) {
@@ -400,11 +401,7 @@ const AuctionPortal = () => {
       <div className="ei-grid">
         {items.map((item) => (
           <article key={item.id} className="ei-card">
-            {item.photo_url ? (
-              <img className="ei-card-photo" src={item.photo_url} alt={item.name} loading="lazy" />
-            ) : (
-              <div className="ei-card-photo-placeholder">No photo</div>
-            )}
+            <ItemPhotoGallery item={item} alt={item.name} />
             <div className="ei-card-body">
               <strong>{item.name}</strong>
               <p className="ei-card-meta">

@@ -156,8 +156,7 @@ const EditAssetProfileModal = ({
     setIsMemorandum(Boolean(item.is_memorandum_asset));
     setBeneficiary(item.assigned_beneficiary || '');
     setDescendantsInterestPct(
-      normalizeDescendantsInterestPct(item.descendants_interest_pct) ??
-        (item.descendants_interest ? 100 : null)
+      normalizeDescendantsInterestPct(item.descendants_interest_pct) ?? 100
     );
     setApprovedForSale(Boolean(item.approved_for_sale));
     setAuctionPaid(Boolean(item.auction_paid_at));

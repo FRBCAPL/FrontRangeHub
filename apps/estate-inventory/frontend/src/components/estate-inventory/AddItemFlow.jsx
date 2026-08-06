@@ -9,7 +9,7 @@ import {
   VALUE_TIER_OPTIONS
 } from '@shared/utils/estateInventoryConstants.js';
 import { prSelfAcquireHint } from '@shared/utils/estateLegalOps.js';
-import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
+import { requestDeviceGeolocation, MAX_ITEM_PHOTOS } from '@shared/utils/estatePhotoMeta.js';
 import { roomTitleWithCode } from '@shared/utils/estateInventoryRefCode.js';
 import VoiceNotesButton from './VoiceNotesButton';
 import ItemConditionFields from './ItemConditionFields';
@@ -17,7 +17,7 @@ import DescendantsInterestField from './DescendantsInterestField';
 import { useEstateCase } from './EstateCaseContext';
 
 const STEPS = [
-  { id: 'photo', label: 'Photo', hint: 'Capture or attach a photo of the item' },
+  { id: 'photo', label: 'Photo', hint: 'Add up to 4 photos — first one is the cover' },
   { id: 'details', label: 'Details', hint: 'Name, description, and condition' },
   { id: 'room', label: 'Room', hint: 'Which room or collection this belongs in' },
   { id: 'status', label: 'Status & value', hint: 'Legal status and court inventory estimate' },
@@ -57,7 +57,7 @@ const AddItemFlow = ({
   const [valuationSource, setValuationSource] = useState('');
   const [isMemorandumAsset, setIsMemorandumAsset] = useState(false);
   const [assignedBeneficiary, setAssignedBeneficiary] = useState('');
-  const [descendantsInterestPct, setDescendantsInterestPct] = useState(null);
+  const [descendantsInterestPct, setDescendantsInterestPct] = useState(100);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [postSave, setPostSave] = useState(null); // { itemName, collectionId }
@@ -84,7 +84,7 @@ const AddItemFlow = ({
     setValuationSource('');
     setIsMemorandumAsset(false);
     setAssignedBeneficiary('');
-    setDescendantsInterestPct(null);
+    setDescendantsInterestPct(100);
     setSaving(false);
     setError('');
     setPostSave(null);
@@ -142,7 +142,7 @@ const AddItemFlow = ({
   const appendFiles = (fileList) => {
     const next = Array.from(fileList || []).filter((f) => f?.type?.startsWith('image/'));
     if (!next.length) return;
-    setPhotoFiles((prev) => [...prev, ...next].slice(0, 8));
+    setPhotoFiles((prev) => [...prev, ...next].slice(0, MAX_ITEM_PHOTOS));
   };
 
   const handleCameraChange = async (e) => {
@@ -231,7 +231,7 @@ const AddItemFlow = ({
     setValuationSource('');
     setIsMemorandumAsset(false);
     setAssignedBeneficiary('');
-    setDescendantsInterestPct(null);
+    setDescendantsInterestPct(100);
     setSaving(false);
     setError('');
     setPostSave(null);
@@ -411,26 +411,61 @@ const AddItemFlow = ({
                   />
 
                   <div className="ei-photo-actions">
-                    <button type="button" className="ei-btn ei-btn-camera" onClick={openCamera}>
-                      Take a picture
-                    </button>
-                    <button type="button" className="ei-btn ei-btn-secondary" onClick={openGallery}>
-                      Gallery
-                    </button>
-                    {photoPreviews.length ? (
-                      <button
-                        type="button"
-                        className="ei-btn ei-btn-secondary"
-                        onClick={clearPhotos}
-                      >
-                        Remove
-                      </button>
-                    ) : null}
+                    {!photoPreviews.length ? (
+                      <>
+                        <button type="button" className="ei-btn ei-btn-camera" onClick={openCamera}>
+                          Take a picture
+                        </button>
+                        <button type="button" className="ei-btn ei-btn-secondary" onClick={openGallery}>
+                          Gallery
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="ei-btn ei-btn-camera"
+                          onClick={openCamera}
+                          disabled={photoFiles.length >= MAX_ITEM_PHOTOS}
+                        >
+                          Add another photo
+                          {photoFiles.length < MAX_ITEM_PHOTOS
+                            ? ` (${photoFiles.length} of ${MAX_ITEM_PHOTOS})`
+                            : ''}
+                        </button>
+                        <button
+                          type="button"
+                          className="ei-btn ei-btn-secondary"
+                          onClick={openGallery}
+                          disabled={photoFiles.length >= MAX_ITEM_PHOTOS}
+                        >
+                          Add from gallery
+                        </button>
+                        <button
+                          type="button"
+                          className="ei-btn ei-btn-secondary"
+                          onClick={clearPhotos}
+                        >
+                          Remove all
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
                 {!photoPreviews.length ? (
-                  <p className="ei-settings-hint">You can continue without a photo if needed.</p>
-                ) : null}
+                  <p className="ei-settings-hint">
+                    You can continue without a photo if needed. Up to {MAX_ITEM_PHOTOS} photos —
+                    first photo is the cover.
+                  </p>
+                ) : (
+                  <p className="ei-settings-hint">
+                    Up to {MAX_ITEM_PHOTOS} photos. First photo is the cover
+                    {photoFiles.length >= MAX_ITEM_PHOTOS
+                      ? ` · max reached (${MAX_ITEM_PHOTOS})`
+                      : ` · ${photoFiles.length} of ${MAX_ITEM_PHOTOS} · tap Add another photo for more`}
+                    .
+                  </p>
+                )}
               </div>
             ) : null}
 

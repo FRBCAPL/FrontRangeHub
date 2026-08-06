@@ -471,6 +471,7 @@ export function heirCanBrowseRooms(sessionOrTier, canBrowseRoomsFlag) {
 /**
  * What this heir role means (capabilities) — used under the name badge / “Your role” modal.
  * Separate from heirRoleGuide() which is the how-to steps for the Guide button.
+ * Keep labels short; put detail in tip for hover/tap tooltips.
  */
 export function heirRoleMeaning(accessTier, options = {}) {
   const tier = normalizeHeirAccessTier(accessTier);
@@ -478,49 +479,80 @@ export function heirRoleMeaning(accessTier, options = {}) {
     access_tier: tier,
     can_browse_rooms: options.canBrowseRooms
   });
+
+  const tipGifts = {
+    label: 'Review gifts named for you',
+    tip: 'Open Rooms (or My gifts) to see items named for you in a personal property memorandum. Check photos and descriptions so you know what was set aside for you.'
+  };
+  const tipBrowseView = {
+    label: 'Browse rooms and collections',
+    tip: 'Open Rooms & inventory to look through collections and items. Take your time room by room and use search if you need to find something by name.'
+  };
+  const tipBrowseFull = {
+    label: 'Browse rooms and inventory',
+    tip: 'Open Rooms & inventory to explore the full estate list. Tap a room to see its items, photos, and status before you decide what to request.'
+  };
+  const tipRequest = {
+    label: 'Request items and cancel your own requests',
+    tip: 'On an item, choose Request and give a short reason. Open My requests later to review anything you asked for, or cancel a request while it is still open.'
+  };
+  const tipNoInterest = {
+    label: 'Mark no interest for remaining items in a room',
+    tip: 'After you finish with a room, use “No interest in remaining items in this room.” That covers the rest of that room in one step and skips anything you already requested.'
+  };
+  const tipStatus = {
+    label: 'View inheritance, updates, overview, and timeline',
+    tip: 'My inheritance shows distributions recorded for you. Family updates are reports from the Personal Representative. Estate overview and Timeline give status and milestones as the estate moves forward.'
+  };
+  const tipMessages = {
+    label: 'Message the Personal Representative',
+    tip: 'Open Messages for a private, saved conversation with the Personal Representative. Questions and answers stay with the estate record.'
+  };
+  const tipAuction = {
+    label: 'Follow sale / auction listings',
+    tip: 'Open Sale & auction to watch lots approved for public sale. Useful when you want to see what is headed to the public listing.'
+  };
+  const tipHelp = {
+    label: 'Open Help / FAQ anytime',
+    tip: 'Help / FAQ answers common questions about this portal. You can also replay Show me around from the welcome card for a guided walkthrough.'
+  };
+
   if (tier === HEIR_ACCESS_TIER.memorandum) {
     return {
       title: 'Specific Gift Recipient',
       summary: canBrowse
-        ? 'You were named for specific gifts. Room browsing, if enabled, is view-only.'
-        : 'You were named for specific gifts.',
-      details:
-        'Your role on this estate is Specific Gift Recipient — someone named for particular items (often in a personal property memorandum).\n\n' +
-        (canBrowse
-          ? 'Your access allows you to browse rooms and collections. That access is view-only.\n\n'
-          : 'You mainly see items named for you. \nRoom browsing, if enabled, is view only.\n\n' +
-            'Even if browsing is later enabled, this role stays view-only.\n\n') +
-        'Use Messages if something looks wrong. \nSale & auction is optional if you want to follow public lots.',
-      notes:
-        'Prefer not to use the portal? You may still work with the Personal Representative by paper list inside the probate window.'
+        ? 'Review gifts named for you, and browse rooms when that access is open.'
+        : 'Review gifts named for you.',
+      canDo: canBrowse
+        ? [tipGifts, tipBrowseView, tipMessages, tipAuction, tipHelp]
+        : [tipGifts, tipMessages, tipAuction, tipHelp],
+      details: '',
+      notes: ''
     };
   }
   if (tier === HEIR_ACCESS_TIER.both) {
     return {
       title: 'Heir / Residual Beneficiary + Specific Gift Recipient',
-      summary:
-        'You have named gifts and also share in what remains — browse, request, and release like a residual heir.',
-      details:
-        'Your role combines two paths: Specific Gift Recipient (items named for you) and Heir / Residual Beneficiary (a share of what remains after debts, expenses, and specific gifts).\n\n' +
-        'You can browse the full inventory, request items with a written reason, cancel your own requests, and mark no interest / approve for public sale when you do not want something.\n\n' +
-        'You cannot edit inventory records or change legal status — those stay with the Personal Representative.\n\n' +
-        'It helps to review gifts named for you first, then consider requests from the remaining inventory.',
-      notes:
-        'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
+      summary: 'Review named gifts, then browse, request, and release from the remaining inventory.',
+      canDo: [
+        tipGifts,
+        tipBrowseFull,
+        tipRequest,
+        tipNoInterest,
+        tipStatus,
+        tipMessages,
+        tipAuction
+      ],
+      details: '',
+      notes: ''
     };
   }
   return {
     title: 'Heir / Residual Beneficiary',
-    summary:
-      'You share in what remains after debts, expenses, and specific gifts — browse, request, and release items here.',
-    details:
-      'Your role on this estate is Heir / Residual Beneficiary.\n' +
-      'That means you may receive a share of what is left after debts, expenses, and any specific gifts to others have been handled.\n\n' +
-      'In the family portal you can browse rooms and collections, request items you want, cancel your own requests, and mark no interest / approve for public sale on items you do not want.\n\n' +
-      'Sale & auction is where public lots are followed once items are approved for sale.\n\n' +
-      'Use Messages for questions.',
-    notes:
-      'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
+    summary: 'Browse inventory, request what you want, and release what you do not.',
+    canDo: [tipBrowseFull, tipRequest, tipNoInterest, tipStatus, tipMessages, tipAuction],
+    details: '',
+    notes: ''
   };
 }
 
@@ -539,62 +571,46 @@ export function heirRoleGuide(accessTier, options = {}) {
     return {
       title: 'Specific Gift Recipient guide',
       summary: canBrowse
-        ? 'Browse rooms according to your access, and review gifts named for you.'
+        ? 'Review gifts named for you, and browse rooms when that access is open.'
         : 'Review gifts named for you.',
       steps: [
         {
-          heading: '1. Confirm your name',
-          body: 'If asked, set the preferred name you want the Personal Representative and family to see.'
+          heading: '1. Start with Messages or Inheritance',
+          body: 'Ask the Personal Representative questions, and open My inheritance for anything already recorded for you.'
         },
         {
-          heading: '2. Review your specific gifts',
+          heading: '2. Review your gifts',
           body: canBrowse
-            ? 'You can browse rooms and collections according to your access. This access is view-only — you cannot request estate items.'
-            : 'You see items named for you in a personal property memorandum.'
+            ? 'Open Rooms to browse collections and review gifts named for you.'
+            : 'Open Rooms when gifts are listed for you and review those items.'
         },
         {
-          heading: '3. Message the Personal Representative',
-          body: 'Use Messages if something looks wrong or you have a question about a gift.'
-        },
-        {
-          heading: '4. Follow the sale/auction (optional)',
-          body: 'Use Sale & auction if you want to watch public lots. You do not need the auction to view rooms when browsing is enabled for you.'
+          heading: '3. Stay oriented',
+          body: 'Use Family updates, Timeline, and Help / FAQ when you want status or answers.'
         }
       ],
-      notes: 'Prefer not to use the portal? You may still work with the Personal Representative by paper list inside the probate window.'
+      notes: ''
     };
   }
   if (tier === HEIR_ACCESS_TIER.both) {
     return {
       title: 'Heir / Residual Beneficiary + Specific Gift Recipient guide',
-      summary: 'Review your named gifts, then browse the rest of the inventory and make requests.',
+      summary: 'Review named gifts, then browse, request, and release from the remaining inventory.',
       steps: [
         {
-          heading: '1. Confirm your name',
-          body: 'Set the preferred name you want shown to the Personal Representative and family.'
+          heading: '1. Check gifts and inheritance',
+          body: 'Open My inheritance and review gifts named for you first.'
         },
         {
-          heading: '2. Check specific gifts first',
-          body: 'Items named for you in a personal property memorandum appear first. Review those before requesting from the remaining estate inventory.'
+          heading: '2. Browse and request',
+          body: 'Open Rooms, request what you want, and use no interest for remaining items in a room when you are done there.'
         },
         {
-          heading: '3. Browse the remaining inventory',
-          body: 'Open rooms and items. Request anything you want from what is left, or mark no interest / approve for public sale when you do not want it.'
-        },
-        {
-          heading: '4. Track your requests',
-          body: 'Use My requests to review or cancel requests you already submitted.'
-        },
-        {
-          heading: '5. Message when needed',
-          body: 'Use Messages for questions. Decisions stay documented for the estate record.'
-        },
-        {
-          heading: '6. Follow the sale/auction',
-          body: 'Use Follow sale/auction to see lots approved for public sale. Bidding opens on the sale/auction start date.'
+          heading: '3. Track and follow up',
+          body: 'Use My requests, Messages, and Sale & auction to track claims and public lots.'
         }
       ],
-      notes: 'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
+      notes: ''
     };
   }
   return {
@@ -602,36 +618,24 @@ export function heirRoleGuide(accessTier, options = {}) {
     summary: 'Browse inventory, request items you want, and release what you do not.',
     steps: [
       {
-        heading: '1. Confirm your name',
-        body: 'Set the preferred name you want the Personal Representative and family to see.'
+        heading: '1. Browse by room',
+        body: 'Open Rooms & inventory and review items room by room.'
       },
       {
-        heading: '2. Browse by room',
-        body: 'Open the inventory and review items as they are documented.'
+        heading: '2. Request or release',
+        body: 'Request what you want. When finished with a room, use no interest for remaining items there.'
       },
       {
-        heading: '3. Request or release',
-        body: 'Request items you want. Mark no interest / approve for public sale on items you do not want so they can move toward sale/auction.'
-      },
-      {
-        heading: '4. Track your requests',
-        body: 'Use My requests to review or cancel requests you already submitted.'
-      },
-      {
-        heading: '5. Message when needed',
-        body: 'Use Messages for questions. Your conversation stays with the estate record.'
-      },
-      {
-        heading: '6. Follow the sale/auction',
-        body: 'Use Follow sale/auction to see lots approved for public sale. Bidding opens on the sale/auction start date.'
+        heading: '3. Track and stay in touch',
+        body: 'Use My requests, Messages, Inheritance, and Sale & auction as the estate moves forward.'
       }
     ],
-    notes: 'Paper lists are still accepted inside the probate window and are held to the same audit standard as digital requests.'
+    notes: ''
   };
 }
 
 /**
- * Family “Your role” modal: what the role means, then short progress steps.
+ * Family badge modal: short summary, can-do list, then a few steps.
  */
 export function heirRolePortalGuide(accessTier, options = {}) {
   const meaning = heirRoleMeaning(accessTier, options);
@@ -639,9 +643,10 @@ export function heirRolePortalGuide(accessTier, options = {}) {
   return {
     title: meaning.title,
     summary: meaning.summary,
-    details: meaning.details,
+    details: '',
+    canDo: Array.isArray(meaning.canDo) ? meaning.canDo : [],
     steps: guide.steps,
-    notes: meaning.notes || guide.notes
+    notes: ''
   };
 }
 

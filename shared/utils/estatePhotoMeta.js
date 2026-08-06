@@ -4,6 +4,12 @@
  * Authoritative receipt time is stamped by the database — treat EXIF as a device claim only.
  */
 
+/** Soft cap for new uploads (egress + storage). Existing items may already have more. */
+export const MAX_ITEM_PHOTOS = 4;
+
+/** Historical storage slot ceiling (`{itemId}_0.jpg` … `_7.jpg`). */
+export const ITEM_PHOTO_SLOT_MAX = 8;
+
 function readUint16(view, offset, little) {
   return little ? view.getUint16(offset, true) : view.getUint16(offset, false);
 }
@@ -194,6 +200,15 @@ export function getPhotoEntries(item) {
       };
     })
     .filter(Boolean);
+}
+
+/** Cover entry only — safe for list/card browse (one download). */
+export function getCoverPhotoEntry(item) {
+  return getPhotoEntries(item)[0] || null;
+}
+
+export function extraPhotoCount(item) {
+  return Math.max(0, getPhotoEntries(item).length - 1);
 }
 
 /**

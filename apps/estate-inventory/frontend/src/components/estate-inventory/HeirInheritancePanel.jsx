@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import { downloadDistributionReceipt } from '@shared/utils/estateDistributionReceipt.js';
@@ -8,14 +9,21 @@ import {
 } from '@shared/utils/estateInventoryConstants.js';
 import { acknowledgementStatusLabel } from '@shared/utils/estateAcknowledgement.js';
 import DistributionReceiptModal from './DistributionReceiptModal.jsx';
+import EstateModalShell from './EstateModalShell';
 
-const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
+const HeirInheritancePanel = ({
+  caseNumber,
+  estateName,
+  recipientName,
+  asMenuTile = false
+}) => {
   const [rows, setRows] = useState([]);
   const [confirmed, setConfirmed] = useState({});
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
   const [receipt, setReceipt] = useState(null);
+  const [open, setOpen] = useState(false);
 
   const load = async () => {
     const result = await estateInventoryService.listMyInheritance(caseNumber);
@@ -70,21 +78,13 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
     caseNumber
   });
 
-  if (loaded && !rows.length && !error) return null;
-
-  return (
-    <section className="ei-inheritance-panel" aria-labelledby="ei-inheritance-title">
-      <div className="ei-accounts-section-head">
-        <div>
-          <h3 id="ei-inheritance-title">My inheritance</h3>
-          <p className="ei-settings-hint">
-            Cash and property the Personal Representative recorded for you. Acknowledgements are
-            saved to the estate record and included in formal accounting / court evidence.
-          </p>
-        </div>
-      </div>
+  const body = (
+    <>
       {error ? <div className="ei-error">{error}</div> : null}
       {!loaded ? <p className="ei-settings-hint">Loading your inheritance…</p> : null}
+      {loaded && !rows.length && !error ? (
+        <p className="ei-settings-hint">Nothing has been recorded for you yet.</p>
+      ) : null}
       <div className="ei-inheritance-list">
         {rows.map((row) => (
           <article key={row.recipient_id}>
@@ -175,6 +175,74 @@ const HeirInheritancePanel = ({ caseNumber, estateName, recipientName }) => {
         onClose={() => setReceipt(null)}
         onError={setError}
       />
+    </>
+  );
+
+  if (asMenuTile) {
+    const meta = !loaded
+      ? 'Loading…'
+      : rows.length
+        ? `${rows.length} distribution${rows.length === 1 ? '' : 's'}`
+        : 'Nothing recorded yet';
+    const tile = (
+      <button
+        type="button"
+        className="ei-family-action-tile ei-family-action-tile--inheritance ei-family-coach-target"
+        id="ei-family-coach-inheritance"
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+      >
+        <span className="ei-family-action-label">My inheritance</span>
+        <span className="ei-family-action-meta">{meta}</span>
+      </button>
+    );
+    const modal = open ? (
+      <div className="estate-inventory ei-modal-portal">
+        <EstateModalShell
+          title="My inheritance"
+          subtitle="Cash and property recorded for you"
+          onClose={() => setOpen(false)}
+          className="ei-heir-center-modal ei-inheritance-modal"
+          foot={
+            <button type="button" className="ei-btn" onClick={() => setOpen(false)}>
+              Close
+            </button>
+          }
+        >
+          <div className="ei-inheritance-panel ei-inheritance-panel--modal">{body}</div>
+        </EstateModalShell>
+      </div>
+    ) : null;
+    if (typeof document !== 'undefined' && document.body && modal) {
+      return (
+        <>
+          {tile}
+          {createPortal(modal, document.body)}
+        </>
+      );
+    }
+    return (
+      <>
+        {tile}
+        {modal}
+      </>
+    );
+  }
+
+  if (loaded && !rows.length && !error) return null;
+
+  return (
+    <section className="ei-inheritance-panel" aria-labelledby="ei-inheritance-title">
+      <div className="ei-accounts-section-head">
+        <div>
+          <h3 id="ei-inheritance-title">My inheritance</h3>
+          <p className="ei-settings-hint">
+            Cash and property the Personal Representative recorded for you. Acknowledgements are
+            saved to the estate record and included in formal accounting / court evidence.
+          </p>
+        </div>
+      </div>
+      {body}
     </section>
   );
 };

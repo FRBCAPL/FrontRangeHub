@@ -13,7 +13,8 @@ const HeirDisclosureTimeline = ({
   settings = {},
   items = [],
   distributions = [],
-  caseNumber
+  caseNumber,
+  asMenuTile = false
 }) => {
   const [serverCounts, setServerCounts] = useState(null);
   const [batchCounts, setBatchCounts] = useState(null);
@@ -113,7 +114,24 @@ const HeirDisclosureTimeline = ({
   };
   const closeDetail = () => setActiveKey(null);
 
-  const opener = (
+  const opener = asMenuTile ? (
+    <button
+      type="button"
+      className="ei-family-action-tile ei-family-action-tile--timeline ei-family-coach-target"
+      id="ei-family-coach-timeline"
+      onClick={openList}
+      aria-haspopup="dialog"
+    >
+      <span className="ei-family-action-label">Timeline</span>
+      <span className="ei-family-action-meta">
+        {current?.title
+          ? `Now: ${current.title}`
+          : events.length
+            ? `${doneCount}/${events.length} milestones`
+            : 'Milestones · tap to review'}
+      </span>
+    </button>
+  ) : (
     <section
       className="ei-disclosure-timeline ei-disclosure-timeline-launch"
       aria-labelledby="ei-disclosure-title"

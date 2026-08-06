@@ -4,6 +4,7 @@ import {
   insetsToCropNorm,
   transformImageSource
 } from '@shared/utils/estateImageTransform.js';
+import { MAX_ITEM_PHOTOS, requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
 import { useEstateCase } from './EstateCaseContext';
 
 const EMPTY_INSETS = { left: 0, right: 0, top: 0, bottom: 0 };
@@ -15,10 +16,13 @@ function trimAmount(insets) {
 /**
  * Compact photo strip in Edit Asset; rotate/crop opens its own modal
  * so tools stay on screen.
+ * Cover loads first; extra photos load only after "Show all photos".
  */
 const EstatePhotoEditor = ({ item, photos = [], onUpdated, onError, readOnly = false }) => {
   const { caseNumber } = useEstateCase();
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const [appending, setAppending] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [rotateDeg, setRotateDeg] = useState(0);
   const [cropOn, setCropOn] = useState(false);
@@ -32,9 +36,12 @@ const EstatePhotoEditor = ({ item, photos = [], onUpdated, onError, readOnly = f
   const previewUrlRef = useRef('');
   const savedPreviewRef = useRef('');
   const bakeGenRef = useRef(0);
+  const addInputRef = useRef(null);
 
   const active = photos[photoIndex] || photos[0] || null;
-  const controlsLocked = loading || saving;
+  const controlsLocked = loading || saving || appending;
+  const extraCount = Math.max(0, photos.length - 1);
+  const canAddMore = photos.length < MAX_ITEM_PHOTOS;
 
   const cropNorm = useMemo(
     () => (cropOn ? insetsToCropNorm(insets) : null),
@@ -88,6 +95,7 @@ const EstatePhotoEditor = ({ item, photos = [], onUpdated, onError, readOnly = f
 
   useEffect(() => {
     setPhotoIndex(0);
+    setShowAllPhotos(false);
     closeModal();
     setSavedPreview(null);
   }, [item?.id]);
@@ -155,8 +163,69 @@ const EstatePhotoEditor = ({ item, photos = [], onUpdated, onError, readOnly = f
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modalOpen, baseBlob, rotateDeg]);
 
+  const handleAppendFiles = async (e) => {
+    const list = Array.from(e.target.files || []).filter((f) => f?.type?.startsWith('image/'));
+    e.target.value = '';
+    if (!list.length || !item?.id || readOnly) return;
+    setAppending(true);
+    onError?.('');
+    try {
+      const geo = await requestDeviceGeolocation();
+      const result = await estateInventoryService.appendItemPhotos(item.id, list, caseNumber, {
+        deviceGps: geo
+      });
+      setAppending(false);
+      if (!result.success) {
+        const msg = result.error || 'Could not add photos.';
+        onError?.(msg);
+        window.alert(msg);
+        return;
+      }
+      if (result.warning) onError?.(result.warning);
+      setShowAllPhotos(true);
+      onUpdated?.(result.data);
+    } catch (err) {
+      setAppending(false);
+      const msg = err?.message || 'Could not add photos.';
+      onError?.(msg);
+      window.alert(msg);
+    }
+  };
+
   if (!active?.url) {
-    return <div className="ei-card-photo-placeholder ei-edit-asset-photo-empty">No photo</div>;
+    return (
+      <div className="ei-photo-editor">
+        <div className="ei-card-photo-placeholder ei-edit-asset-photo-empty">No photo</div>
+        {!readOnly ? (
+          <>
+            <input
+              ref={addInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="ei-file-hidden"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={handleAppendFiles}
+            />
+            <button
+              type="button"
+              className="ei-btn ei-btn-small"
+              onClick={() => {
+                if (addInputRef.current) {
+                  addInputRef.current.value = '';
+                  addInputRef.current.click();
+                }
+              }}
+              disabled={appending}
+            >
+              {appending ? 'Uploading…' : 'Add photos'}
+            </button>
+            <p className="ei-settings-hint">Up to {MAX_ITEM_PHOTOS} photos. First photo is the cover.</p>
+          </>
+        ) : null}
+      </div>
+    );
   }
 
   const stripSrc = savedPreviewUrl || active.url;
@@ -228,7 +297,17 @@ const EstatePhotoEditor = ({ item, photos = [], onUpdated, onError, readOnly = f
         <img key={stripSrc} src={stripSrc} alt="" loading="eager" />
       </div>
 
-      {photos.length > 1 ? (
+      {extraCount > 0 && !showAllPhotos ? (
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary ei-btn-small"
+          onClick={() => setShowAllPhotos(true)}
+        >
+          Show all photos ({photos.length})
+        </button>
+      ) : null}
+
+      {showAllPhotos && photos.length > 1 ? (
         <div className="ei-photo-editor-thumbs" role="tablist" aria-label="Photos">
           {photos.map((photo, index) => (
             <button
@@ -242,21 +321,56 @@ const EstatePhotoEditor = ({ item, photos = [], onUpdated, onError, readOnly = f
               disabled={controlsLocked}
               aria-label={`Photo ${index + 1}`}
             >
-              <img src={photo.url} alt="" />
+              <img src={photo.url} alt="" loading="lazy" />
             </button>
           ))}
         </div>
       ) : null}
 
-      <button
-        type="button"
-        className="ei-btn ei-btn-secondary ei-btn-small"
-        onClick={() => setModalOpen(true)}
-        disabled={readOnly}
-        title={readOnly ? 'Estate is closed for records.' : ''}
-      >
-        Rotate / crop photo
-      </button>
+      <div className="ei-photo-editor-actions">
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary ei-btn-small"
+          onClick={() => setModalOpen(true)}
+          disabled={readOnly}
+          title={readOnly ? 'Estate is closed for records.' : ''}
+        >
+          Rotate / crop photo
+        </button>
+        {!readOnly && canAddMore ? (
+          <>
+            <input
+              ref={addInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="ei-file-hidden"
+              aria-hidden="true"
+              tabIndex={-1}
+              onChange={handleAppendFiles}
+            />
+            <button
+              type="button"
+              className="ei-btn ei-btn-small"
+              onClick={() => {
+                if (addInputRef.current) {
+                  addInputRef.current.value = '';
+                  addInputRef.current.click();
+                }
+              }}
+              disabled={controlsLocked}
+            >
+              {appending ? 'Uploading…' : 'Add photos'}
+            </button>
+          </>
+        ) : null}
+      </div>
+      {!readOnly ? (
+        <p className="ei-settings-hint">
+          Up to {MAX_ITEM_PHOTOS} photos · cover loads first
+          {photos.length ? ` · ${photos.length} of ${MAX_ITEM_PHOTOS}` : ''}.
+        </p>
+      ) : null}
 
       {modalOpen ? (
         <div

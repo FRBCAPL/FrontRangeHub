@@ -1,8 +1,11 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { heirFacingLegalStatusLabel, valueTierLabel } from '@shared/utils/estateInventoryConstants.js';
+import EstateModalShell from './EstateModalShell';
 
 /**
  * Lists items the signed-in heir has requested (with their reasons).
+ * Centered overlay modal (portaled) — same pattern as room browse.
  */
 const HeirMyRequestsModal = ({
   open,
@@ -14,22 +17,24 @@ const HeirMyRequestsModal = ({
 }) => {
   if (!open) return null;
 
-  return (
-    <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
-      <div
-        className="ei-modal ei-modal-settings"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ei-my-requests-title"
-        onClick={(ev) => ev.stopPropagation()}
-      >
-        <div className="ei-modal-head">
-          <h3 id="ei-my-requests-title">My requested items</h3>
-          <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
-            ×
+  const modal = (
+    <div className="estate-inventory ei-modal-portal">
+      <EstateModalShell
+        title="My requested items"
+        subtitle={
+          items.length
+            ? `${items.length} request${items.length === 1 ? '' : 's'}`
+            : 'No requests yet'
+        }
+        onClose={onClose}
+        className="ei-heir-center-modal ei-my-requests-modal"
+        foot={
+          <button type="button" className="ei-btn" onClick={onClose}>
+            Close
           </button>
-        </div>
-        <div className="ei-modal-body ei-my-requests-body">
+        }
+      >
+        <div className="ei-my-requests-body">
           {items.length === 0 ? (
             <p className="ei-settings-hint">You have not requested any items yet.</p>
           ) : (
@@ -78,14 +83,14 @@ const HeirMyRequestsModal = ({
             </ul>
           )}
         </div>
-        <div className="ei-modal-foot ei-btn-row">
-          <button type="button" className="ei-btn" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
+      </EstateModalShell>
     </div>
   );
+
+  if (typeof document !== 'undefined' && document.body) {
+    return createPortal(modal, document.body);
+  }
+  return modal;
 };
 
 export default HeirMyRequestsModal;

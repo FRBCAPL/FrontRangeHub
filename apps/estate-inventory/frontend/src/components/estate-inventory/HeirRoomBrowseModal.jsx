@@ -1,7 +1,11 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
+import EstateModalShell from './EstateModalShell';
 
 /**
  * Modal browse for one room/collection (or search results) on the heir portal.
+ * Portaled to document.body so the dimmed overlay covers the full viewport
+ * (family portal uses isolation:isolate, which traps position:fixed otherwise).
  */
 const HeirRoomBrowseModal = ({
   open,
@@ -12,35 +16,47 @@ const HeirRoomBrowseModal = ({
   allowClaimedFilter = false,
   showClaimedOnly = false,
   claimedCount = 0,
-  onToggleClaimedFilter
+  onToggleClaimedFilter,
+  showBulkNoInterest = false,
+  roomRemainingCount = 0,
+  bulkNoInterestBusy = false,
+  onBulkNoInterest
 }) => {
   if (!open) return null;
 
-  return (
-    <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
-      <div
-        className="ei-modal ei-modal-settings ei-heir-browse-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ei-heir-browse-title"
-        onClick={(ev) => ev.stopPropagation()}
-      >
-        <div className="ei-modal-head">
-          <div>
-            <h3 id="ei-heir-browse-title">{title}</h3>
-            <p className="ei-settings-hint" style={{ margin: '0.2rem 0 0' }}>
-              {itemCount} item{itemCount === 1 ? '' : 's'}
-              {allowClaimedFilter && showClaimedOnly
-                ? ' · claimed / memo / disputed'
-                : ''}
-            </p>
+  const subtitle = `${itemCount} item${itemCount === 1 ? '' : 's'}${
+    allowClaimedFilter && showClaimedOnly ? ' · claimed / memo / disputed' : ''
+  }`;
+
+  const modal = (
+    <div className="estate-inventory ei-modal-portal">
+      <EstateModalShell
+        title={title}
+        subtitle={subtitle}
+        onClose={onClose}
+        className="ei-heir-browse-modal"
+        foot={
+          <div className="ei-btn-row ei-heir-browse-foot">
+            {showBulkNoInterest ? (
+              <button
+                type="button"
+                className="ei-btn ei-btn-secondary"
+                disabled={bulkNoInterestBusy || roomRemainingCount < 1}
+                onClick={() => onBulkNoInterest?.()}
+              >
+                {roomRemainingCount < 1
+                  ? 'No remaining items in this room'
+                  : `No interest in remaining items in this room (${roomRemainingCount})`}
+              </button>
+            ) : null}
+            <button type="button" className="ei-btn" onClick={onClose}>
+              Close room
+            </button>
           </div>
-          <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
-            ×
-          </button>
-        </div>
+        }
+      >
         {allowClaimedFilter ? (
-          <div className="ei-heir-browse-filter-bar">
+          <div className="ei-heir-browse-filter-bar" style={{ padding: '0 0 0.65rem' }}>
             <button
               type="button"
               className={`ei-btn ei-btn-small ei-room-filter-btn${showClaimedOnly ? ' is-active' : ''}`}
@@ -53,27 +69,25 @@ const HeirRoomBrowseModal = ({
             </button>
           </div>
         ) : null}
-        <div className="ei-modal-body ei-heir-browse-body">
-          {itemCount === 0 ? (
-            <p className="ei-settings-hint">
-              {allowClaimedFilter && showClaimedOnly
-                ? 'No claimed, memorandum, disputed, or distributed items here.'
-                : allowClaimedFilter
-                  ? 'No open inventory items in this collection.'
-                  : 'No items in this collection.'}
-            </p>
-          ) : (
-            <div className="ei-grid ei-heir-browse-grid">{children}</div>
-          )}
-        </div>
-        <div className="ei-modal-foot ei-btn-row">
-          <button type="button" className="ei-btn" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
+        {itemCount === 0 ? (
+          <p className="ei-settings-hint">
+            {allowClaimedFilter && showClaimedOnly
+              ? 'No claimed, memorandum, disputed, or distributed items here.'
+              : allowClaimedFilter
+                ? 'No open inventory items in this collection.'
+                : 'No items in this collection.'}
+          </p>
+        ) : (
+          <div className="ei-grid ei-heir-browse-grid">{children}</div>
+        )}
+      </EstateModalShell>
     </div>
   );
+
+  if (typeof document !== 'undefined' && document.body) {
+    return createPortal(modal, document.body);
+  }
+  return modal;
 };
 
 export default HeirRoomBrowseModal;

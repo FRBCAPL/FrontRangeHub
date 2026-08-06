@@ -13,7 +13,13 @@ import {
   normalizeItemCondition
 } from '../utils/estateInventoryConstants.js';
 import { estateBackendBase } from '../utils/estateBackend.js';
-import { extractPhotoMetadata, buildPhotoEntry, getPhotoEntries } from '../utils/estatePhotoMeta.js';
+import {
+  extractPhotoMetadata,
+  buildPhotoEntry,
+  getPhotoEntries,
+  MAX_ITEM_PHOTOS,
+  ITEM_PHOTO_SLOT_MAX
+} from '../utils/estatePhotoMeta.js';
 import { buildReadOnlyHtml, buildCatalogJson } from '../utils/estateExport.js';
 import {
   mapSqlFinanceSnapshot,
@@ -817,14 +823,15 @@ export async function createItem(input) {
   const files = [];
   if (Array.isArray(input?.photoFiles)) files.push(...input.photoFiles.filter(Boolean));
   else if (input?.photoFile) files.push(input.photoFile);
+  const photoBatch = files.slice(0, MAX_ITEM_PHOTOS);
 
   let meta = {
     photo_captured_at: null,
     photo_gps_lat: null,
     photo_gps_lng: null
   };
-  if (files[0]) {
-    meta = await extractPhotoMetadata(files[0]);
+  if (photoBatch[0]) {
+    meta = await extractPhotoMetadata(photoBatch[0]);
     if (meta.photo_gps_lat == null && input?.deviceGps?.lat != null) {
       meta.photo_gps_lat = input.deviceGps.lat;
       meta.photo_gps_lng = input.deviceGps.lng;
@@ -918,15 +925,15 @@ export async function createItem(input) {
     metadata: { item_id: item?.id }
   });
 
-  if (!files.length) return ok(item);
+  if (!photoBatch.length) return ok(item);
 
   const urls = [];
   let warning = '';
-  for (let i = 0; i < files.length; i += 1) {
+  for (let i = 0; i < photoBatch.length; i += 1) {
     const fileMeta =
       i === 0
         ? meta
-        : await extractPhotoMetadata(files[i]).then((m) => {
+        : await extractPhotoMetadata(photoBatch[i]).then((m) => {
             if (m.photo_gps_lat == null && input?.deviceGps?.lat != null) {
               return {
                 ...m,
@@ -936,7 +943,7 @@ export async function createItem(input) {
             }
             return m;
           });
-    const uploaded = await uploadPhotoAtPath(estate.userId, `${item.id}_${i}.jpg`, files[i]);
+    const uploaded = await uploadPhotoAtPath(estate.userId, `${item.id}_${i}.jpg`, photoBatch[i]);
     if (!uploaded.success) {
       warning = uploaded.error || 'Some photos failed to upload.';
       break;
@@ -1284,8 +1291,8 @@ export async function replaceItemPhoto(itemId, photoIndex, file, caseNumber) {
   const id = String(itemId || '').trim();
   const index = Number(photoIndex);
   if (!id) return fail('Missing item.');
-  if (!Number.isInteger(index) || index < 0 || index > 7) {
-    return fail('Photo index must be between 0 and 7.');
+  if (!Number.isInteger(index) || index < 0 || index >= ITEM_PHOTO_SLOT_MAX) {
+    return fail(`Photo index must be between 0 and ${ITEM_PHOTO_SLOT_MAX - 1}.`);
   }
   if (!file) return fail('Missing photo file.');
 
@@ -1321,8 +1328,8 @@ export async function replaceItemPhotoTransformed(
   const id = String(itemId || '').trim();
   const index = Number(photoIndex);
   if (!id) return fail('Missing item.');
-  if (!Number.isInteger(index) || index < 0 || index > 7) {
-    return fail('Photo index must be between 0 and 7.');
+  if (!Number.isInteger(index) || index < 0 || index >= ITEM_PHOTO_SLOT_MAX) {
+    return fail(`Photo index must be between 0 and ${ITEM_PHOTO_SLOT_MAX - 1}.`);
   }
   const deg = ((Number(rotateDeg) || 0) % 360 + 360) % 360;
   if (!deg && !cropNorm) return fail('Rotate or crop before saving.');
@@ -1459,6 +1466,107 @@ async function writeReplacedItemPhoto(estate, item, index, file, { skipCompress 
   }
 
   return ok(updated);
+}
+
+/**
+ * Append new photos to an item (PR edit). Respects MAX_ITEM_PHOTOS.
+ * @param {string} itemId
+ * @param {Array<File|Blob>} files
+ * @param {string} [caseNumber]
+ * @param {{ deviceGps?: { lat: number|null, lng: number|null } }} [opts]
+ */
+export async function appendItemPhotos(itemId, files, caseNumber, opts = {}) {
+  const auth = await requireUserId();
+  if (!auth.ok) return fail(auth.error);
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  const id = String(itemId || '').trim();
+  if (!id) return fail('Missing item.');
+  const incoming = (Array.isArray(files) ? files : [files]).filter(Boolean);
+  if (!incoming.length) return fail('Choose at least one photo.');
+
+  let getQ = supabase
+    .from('estate_items')
+    .select(itemSelect)
+    .eq('id', id)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) getQ = getQ.eq('estate_id', estate.estateId);
+  const { data: item, error: getError } = await getQ.single();
+  if (getError) return fail(getError);
+  if (!item) return fail('Item not found.');
+
+  const existing = getPhotoEntries(item);
+  const room = MAX_ITEM_PHOTOS - existing.length;
+  if (room <= 0) {
+    return fail(`This item already has the maximum of ${MAX_ITEM_PHOTOS} photos.`);
+  }
+  const batch = incoming.slice(0, room);
+  const urls = [...existing];
+  let warning = '';
+
+  for (let i = 0; i < batch.length; i += 1) {
+    const index = urls.length;
+    if (index >= ITEM_PHOTO_SLOT_MAX) {
+      warning = `Reached storage slot limit (${ITEM_PHOTO_SLOT_MAX}).`;
+      break;
+    }
+    const fileMeta = await extractPhotoMetadata(batch[i]).then((m) => {
+      if (m.photo_gps_lat == null && opts?.deviceGps?.lat != null) {
+        return {
+          ...m,
+          photo_gps_lat: opts.deviceGps.lat,
+          photo_gps_lng: opts.deviceGps.lng
+        };
+      }
+      return m;
+    });
+    const uploaded = await uploadPhotoAtPath(
+      estate.userId,
+      `${id}_${index}_${Date.now()}.jpg`,
+      batch[i]
+    );
+    if (!uploaded.success) {
+      warning = uploaded.error || 'Some photos failed to upload.';
+      break;
+    }
+    urls.push(
+      buildPhotoEntry(uploaded.data, {
+        takenBy: 'Personal Representative',
+        capturedAt: item.photo_captured_at || new Date().toISOString(),
+        receivedAt: item.photo_received_at || new Date().toISOString(),
+        gpsLat: fileMeta.photo_gps_lat,
+        gpsLng: fileMeta.photo_gps_lng,
+        deviceCapturedAtClaim: fileMeta.photo_captured_at || null
+      })
+    );
+  }
+
+  if (urls.length === existing.length) {
+    return fail(warning || 'Photos failed to upload.');
+  }
+
+  let photoQ = supabase
+    .from('estate_items')
+    .update({
+      photo_url: urls[0]?.url || item.photo_url,
+      photo_urls: urls,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) photoQ = photoQ.eq('estate_id', estate.estateId);
+  const { data: updated, error: updateError } = await photoQ.select(itemSelect).single();
+  if (updateError) return fail(updateError);
+
+  logEstateActivity({
+    eventType: 'item_photo_append',
+    caseNumber: estate.caseNumber,
+    metadata: { item_id: id, added: urls.length - existing.length }
+  });
+
+  return warning ? { success: true, data: updated, warning } : ok(updated);
 }
 
 /** Download an estate photo for rotate/crop (Storage API first). */
@@ -3655,13 +3763,18 @@ export async function helperCreateItem(input) {
   const session = getStoredHelperSession();
   if (!session?.token) return fail('Please sign in.');
 
+  const photoFiles = [];
+  if (Array.isArray(input?.photoFiles)) photoFiles.push(...input.photoFiles.filter(Boolean));
+  else if (input?.photoFile) photoFiles.push(input.photoFile);
+  const photoBatch = photoFiles.slice(0, MAX_ITEM_PHOTOS);
+
   let meta = {
     photo_captured_at: null,
     photo_gps_lat: null,
     photo_gps_lng: null
   };
-  if (input?.photoFile) {
-    meta = await extractPhotoMetadata(input.photoFile);
+  if (photoBatch[0]) {
+    meta = await extractPhotoMetadata(photoBatch[0]);
     if (meta.photo_gps_lat == null && input?.deviceGps?.lat != null) {
       meta.photo_gps_lat = input.deviceGps.lat;
       meta.photo_gps_lng = input.deviceGps.lng;
@@ -3718,63 +3831,116 @@ export async function helperCreateItem(input) {
     return condData?.item || row;
   };
 
-  if (input?.photoFile && item?.id && uploadPrefix) {
-    const compressed = await compressImageFile(input.photoFile);
-    const path = `${uploadPrefix}.jpg`;
-    const { error: upErr } = await supabase.storage.from(PHOTO_BUCKET).upload(path, compressed, {
-      upsert: true,
-      contentType: 'image/jpeg',
-      cacheControl: '3600'
-    });
-    if (!upErr) {
+  if (photoBatch.length && item?.id && uploadPrefix) {
+    // upload_prefix is `{ownerId}/{itemId}_0` — strip trailing `_0` for base path
+    const basePath = String(uploadPrefix).replace(/_0$/, '');
+    const entries = [];
+    let uploadWarning = '';
+
+    for (let i = 0; i < photoBatch.length; i += 1) {
+      const fileMeta =
+        i === 0
+          ? meta
+          : await extractPhotoMetadata(photoBatch[i]).then((m) => {
+              if (m.photo_gps_lat == null && input?.deviceGps?.lat != null) {
+                return {
+                  ...m,
+                  photo_gps_lat: input.deviceGps.lat,
+                  photo_gps_lng: input.deviceGps.lng
+                };
+              }
+              return m;
+            });
+      const compressed = await compressImageFile(photoBatch[i]);
+      const path = `${basePath}_${i}.jpg`;
+      const { error: upErr } = await supabase.storage.from(PHOTO_BUCKET).upload(path, compressed, {
+        upsert: true,
+        contentType: 'image/jpeg',
+        cacheControl: '3600'
+      });
+      if (upErr) {
+        uploadWarning = upErr.message || 'Some photos failed to upload.';
+        break;
+      }
       const { data: pub } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
       const photoUrl = pub?.publicUrl;
-      if (photoUrl) {
+      if (!photoUrl) {
+        uploadWarning = 'Photo upload URL missing.';
+        break;
+      }
+      entries.push(
+        buildPhotoEntry(photoUrl, {
+          takenBy: session.display_name || 'Helper',
+          capturedAt: item.photo_captured_at || new Date().toISOString(),
+          receivedAt: item.photo_received_at || new Date().toISOString(),
+          gpsLat: fileMeta.photo_gps_lat,
+          gpsLng: fileMeta.photo_gps_lng,
+          deviceCapturedAtClaim: fileMeta.photo_captured_at || null
+        })
+      );
+    }
+
+    if (entries.length) {
+      let saved = item;
+      const multi = await supabase.rpc('estate_helper_set_photos', {
+        p_token: session.token,
+        p_item_id: item.id,
+        p_photo_urls: entries
+      });
+      if (multi.data?.success && multi.data?.item) {
+        saved = multi.data.item;
+      } else if (
+        multi.error &&
+        /estate_helper_set_photos|schema cache|does not exist/i.test(multi.error.message || '')
+      ) {
+        // Fallback until SQL migration is applied — first photo only via legacy RPC
         const attached = await supabase.rpc('estate_helper_set_photo', {
           p_token: session.token,
           p_item_id: item.id,
-          p_photo_url: photoUrl,
+          p_photo_url: entries[0].url,
           p_device_captured_at: meta.photo_captured_at || null
         });
-        let saved = item;
         if (attached.data?.success && attached.data?.item) {
           saved = attached.data.item;
+          if (entries.length > 1) {
+            uploadWarning =
+              (uploadWarning ? `${uploadWarning} ` : '') +
+              'Only the first photo was linked. Run supabase-migrations/estate-helper-set-photos-2026-08.sql for multi-photo.';
+          }
         } else {
-          saved = { ...item, photo_url: photoUrl };
+          saved = { ...item, photo_url: entries[0].url, photo_urls: entries };
         }
-        saved = await applyCondition(saved);
-        const warning = saved._conditionWarning;
-        if (warning) {
-          delete saved._conditionWarning;
-          return { success: true, data: saved, warning };
-        }
-        if (attached.data?.success && attached.data?.item) return ok(saved);
-        return {
-          success: true,
-          data: saved,
-          warning: 'Item saved; photo link may need refresh.'
-        };
+      } else if (multi.data?.success === false) {
+        uploadWarning = multi.data.error || uploadWarning || 'Could not link photos.';
+        saved = { ...item, photo_url: entries[0].url, photo_urls: entries };
+      } else {
+        saved = { ...item, photo_url: entries[0].url, photo_urls: entries };
+        uploadWarning =
+          uploadWarning ||
+          multi.error?.message ||
+          'Item saved; photo link may need refresh.';
       }
+
+      saved = await applyCondition(saved);
+      const warning = [saved._conditionWarning, uploadWarning].filter(Boolean).join(' ');
+      if (saved._conditionWarning) delete saved._conditionWarning;
+      return warning ? { success: true, data: saved, warning } : ok(saved);
     }
+
     const withCond = await applyCondition(item);
     const warning = withCond._conditionWarning;
     if (warning) delete withCond._conditionWarning;
     return {
       success: true,
       data: withCond,
-      warning:
-        warning ||
-        'Item saved for PR review, but the photo upload failed.'
+      warning: warning || uploadWarning || 'Item saved for PR review, but the photo upload failed.'
     };
   }
 
   const withCond = await applyCondition(item);
   const warning = withCond._conditionWarning;
-  if (warning) {
-    delete withCond._conditionWarning;
-    return { success: true, data: withCond, warning };
-  }
-  return ok(withCond);
+  if (warning) delete withCond._conditionWarning;
+  return warning ? { success: true, data: withCond, warning } : ok(withCond);
 }
 
 const SCENE_SELECT =
@@ -6528,6 +6694,7 @@ const estateInventoryService = {
   itemHasSaleProceedsDeposit,
   replaceItemPhoto,
   replaceItemPhotoTransformed,
+  appendItemPhotos,
   downloadItemPhotoForEdit,
   archiveItem,
   deleteItemPermanently,

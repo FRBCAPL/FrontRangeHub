@@ -42,7 +42,7 @@
 
 .ei-nav-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   gap: 0.5rem;
   align-items: center;
 }
@@ -53,9 +53,16 @@
   align-items: center;
   gap: 0.35rem;
   position: relative;
+  min-width: 0;
+}
+
+.ei-nav-left {
+  justify-self: start;
+  justify-content: flex-start;
 }
 
 .ei-nav-right {
+  justify-self: end;
   justify-content: flex-end;
 }
 
@@ -77,8 +84,11 @@
 }
 
 .ei-nav-center {
+  grid-column: 2;
+  justify-self: center;
   text-align: center;
   min-width: 0;
+  max-width: min(70vw, 20rem);
 }
 
 .ei-nav-app {
@@ -1089,6 +1099,57 @@ button.ei-nav-menu-btn-item {
   display: block;
 }
 
+.ei-heir-bulk-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 12px;
+  background: var(--ei-elevated);
+}
+
+.ei-heir-bulk-actions .ei-btn {
+  width: 100%;
+}
+
+.ei-show-all-photos-btn {
+  margin: 0 0.55rem;
+  align-self: stretch;
+}
+
+.ei-item-photo-gallery-extras {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0 0.55rem 0.35rem;
+}
+
+.ei-item-photo-gallery-extra {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: #0c0a09;
+  border-radius: 8px;
+  border: 1px solid var(--ei-line);
+}
+
+.ei-card-photo-count {
+  position: absolute;
+  right: 0.45rem;
+  bottom: 0.45rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #fafaf9;
+  -webkit-text-fill-color: #fafaf9;
+  background: rgba(28, 25, 23, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
 .ei-card-photo-placeholder {
   aspect-ratio: 1;
   display: grid;
@@ -2094,6 +2155,92 @@ button.ei-helper-photo-remove {
   width: min(100%, 520px);
 }
 
+.ei-role-guide-summary {
+  margin: 0 0 0.85rem;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  color: var(--ei-ink);
+}
+
+.ei-role-guide-cando {
+  list-style: none;
+  margin: 0 0 0.35rem;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ei-role-guide-cando-item {
+  position: relative;
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid var(--ei-line);
+  background: var(--ei-elevated, rgba(255, 255, 255, 0.03));
+}
+
+.ei-role-guide-cando-item.is-tip-open {
+  border-color: color-mix(in srgb, var(--ei-accent) 45%, var(--ei-line));
+  z-index: 2;
+}
+
+.ei-role-guide-cando-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.7rem 0.55rem 1.7rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: help;
+}
+
+.ei-role-guide-cando-btn::before {
+  content: '';
+  position: absolute;
+  left: 0.65rem;
+  top: 0.85rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--ei-accent);
+}
+
+.ei-role-guide-cando-label {
+  flex: 1 1 auto;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.ei-role-guide-cando-hint {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ei-accent) 40%, transparent);
+  color: var(--ei-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ei-role-guide-cando-tip {
+  margin: 0 0.55rem 0.6rem 1.7rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--ei-accent) 28%, var(--ei-line));
+  background: color-mix(in srgb, var(--ei-accent) 10%, transparent);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--ei-muted, #a8a29e);
+}
+
 .ei-roles-overview-modal {
   width: min(100%, 540px);
 }
@@ -2380,6 +2527,14 @@ button.ei-helper-photo-remove {
   align-items: center;
   gap: 0.55rem;
   margin: 0 0 0.85rem;
+}
+
+.ei-photo-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  align-items: center;
 }
 
 .ei-photo-editor-preview {
@@ -3462,7 +3617,10 @@ button.ei-helper-photo-remove {
 .ei-messages-modal {
   display: flex;
   flex-direction: column;
-  max-height: min(88vh, 88dvh);
+}
+
+.ei-messages-modal .ei-messages-compose {
+  width: 100%;
 }
 
 .ei-messages-body {
@@ -3660,7 +3818,7 @@ button.ei-helper-photo-remove {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.15rem;
+  gap: 0.12rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--ei-line);
   border-radius: 10px;
@@ -3681,6 +3839,15 @@ button.ei-helper-photo-remove {
 .ei-heir-room-btn.is-active {
   border-color: var(--ei-accent);
   background: var(--ei-accent-soft);
+}
+
+.ei-heir-room-btn-num {
+  font-size: 0.72rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--ei-muted);
+  line-height: 1.2;
 }
 
 .ei-heir-room-btn-name {
@@ -3707,13 +3874,116 @@ button.ei-helper-photo-remove {
 
 .ei-heir-browse-modal {
   width: min(720px, 96vw);
-  max-height: min(92vh, 820px);
+  max-height: min(70vh, 70dvh) !important;
+}
+
+/* Full-viewport overlay when portaled; above family nav */
+.ei-modal-portal .ei-modal-backdrop:has(.ei-heir-center-modal) {
+  z-index: 12000;
+  place-items: center !important;
+  align-items: center !important;
+  padding: 1rem !important;
+  background: rgba(8, 12, 11, 0.72);
+}
+
+.ei-modal-portal .ei-modal-backdrop:has(.ei-heir-browse-modal) {
+  z-index: 12100;
+  place-items: center !important;
+  align-items: center !important;
+  padding: 1rem !important;
+  background: rgba(8, 12, 11, 0.72);
+}
+
+.ei-modal.ei-heir-browse-modal,
+.ei-modal.ei-heir-center-modal {
+  width: min(720px, 96vw) !important;
+  max-width: min(720px, 96vw) !important;
+  max-height: min(70vh, 70dvh) !important;
+  height: auto;
+  border-radius: 16px !important;
+  margin: 0;
+}
+
+.ei-heir-browse-modal .ei-modal-head,
+.ei-heir-center-modal .ei-modal-head {
+  position: relative;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-inline: 2.75rem;
+}
+
+.ei-heir-browse-modal .ei-modal-head > div:first-child,
+.ei-heir-center-modal .ei-modal-head > div:first-child {
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.ei-heir-browse-modal .ei-modal-head h3,
+.ei-heir-browse-modal .ei-modal-head .ei-settings-hint,
+.ei-heir-center-modal .ei-modal-head h3,
+.ei-heir-center-modal .ei-modal-head .ei-settings-hint {
+  text-align: center;
+}
+
+.ei-heir-browse-modal .ei-modal-close,
+.ei-heir-center-modal .ei-modal-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+}
+
+.ei-heir-browse-modal .ei-modal-body,
+.ei-heir-center-modal .ei-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 
 .ei-heir-browse-filter-bar {
   display: flex;
   justify-content: flex-end;
   padding: 0 1.1rem 0.55rem;
+}
+
+.ei-heir-browse-foot {
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.ei-heir-browse-foot .ei-btn-secondary {
+  margin-right: auto;
+}
+
+.ei-bulk-no-interest-backdrop {
+  z-index: 13000 !important;
+  place-items: center !important;
+  align-items: center !important;
+  padding: 1rem !important;
+  background: rgba(8, 12, 11, 0.78);
+}
+
+.ei-bulk-no-interest-modal {
+  width: min(440px, 96vw) !important;
+  max-width: min(440px, 96vw) !important;
+  border-radius: 16px !important;
+}
+
+/* Nested heir dialogs (request reason, cancel, no-interest) above room browse */
+.ei-heir-stack-backdrop {
+  z-index: 13000 !important;
+  place-items: center !important;
+  align-items: center !important;
+  padding: 1rem !important;
+  background: rgba(8, 12, 11, 0.78);
+}
+
+.ei-heir-stack-modal {
+  width: min(440px, 96vw) !important;
+  max-width: min(440px, 96vw) !important;
+  border-radius: 16px !important;
 }
 
 .ei-heir-browse-body {
@@ -10352,12 +10622,22 @@ button.ei-voice-btn.is-listening {
   text-shadow: 0 1px 18px rgba(228, 201, 150, 0.18);
 }
 
+.ei-family-welcome-role-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 0.45rem;
+  margin: 0.7rem 0 0;
+}
+
 .ei-family-welcome-role {
   display: inline-flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.12rem;
-  margin: 0.7rem 0 0;
+  margin: 0;
   padding: 0.4rem 0.85rem 0.42rem;
   border-radius: 999px;
   border: 1px solid rgba(94, 234, 212, 0.45);
@@ -10368,7 +10648,7 @@ button.ei-voice-btn.is-listening {
   color: #ccfbf1;
   box-shadow: 0 0 18px rgba(45, 212, 191, 0.18);
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition:
     border-color 0.18s ease,
     box-shadow 0.18s ease,
@@ -10485,14 +10765,26 @@ button.ei-voice-btn.is-listening {
 
 .ei-family-action-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.65rem;
 }
 
-@media (min-width: 560px) {
+@media (max-width: 419px) {
   .ei-family-action-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
+}
+
+.ei-family-menu {
+  margin: 0.35rem 0 1.25rem;
+}
+
+.ei-family-home-status {
+  margin: 0 0 0.65rem;
+}
+
+.ei-family-probate-bar {
+  margin: 2.25rem 0 0;
 }
 
 .ei-family-action-tile {
@@ -10503,6 +10795,7 @@ button.ei-voice-btn.is-listening {
   width: 100%;
   margin: 0;
   padding: 0.95rem 1rem;
+  min-height: 4.5rem;
   border-radius: 14px;
   border: 1px solid var(--ei-family-line);
   background: var(--ei-family-panel);
@@ -10510,12 +10803,26 @@ button.ei-voice-btn.is-listening {
   text-align: left;
   text-decoration: none;
   cursor: pointer;
+  font: inherit;
   box-shadow: inset 0 1px 0 rgba(250, 246, 239, 0.05);
   transition:
     background 0.18s ease,
     border-color 0.18s ease,
     box-shadow 0.18s ease,
     transform 0.18s ease;
+}
+
+.ei-family-action-tile:disabled {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
+}
+
+.ei-family-action-tile--rooms {
+  border-color: rgba(94, 234, 212, 0.4);
+  background:
+    linear-gradient(160deg, rgba(13, 148, 136, 0.38), transparent 55%),
+    var(--ei-family-panel-solid);
 }
 
 .ei-family-action-tile--requests {
@@ -10539,6 +10846,45 @@ button.ei-voice-btn.is-listening {
     var(--ei-family-panel-solid);
 }
 
+.ei-family-action-tile--inheritance {
+  border-color: rgba(94, 234, 212, 0.28);
+  background:
+    linear-gradient(160deg, rgba(15, 118, 110, 0.22), transparent 55%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-family-action-tile--updates {
+  border-color: rgba(228, 201, 150, 0.32);
+  background:
+    linear-gradient(160deg, rgba(184, 149, 90, 0.22), transparent 55%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-family-action-tile--updates.has-unread {
+  border-color: rgba(94, 234, 212, 0.5);
+}
+
+.ei-family-action-tile--overview {
+  border-color: rgba(148, 163, 184, 0.35);
+  background:
+    linear-gradient(160deg, rgba(71, 85, 105, 0.28), transparent 55%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-family-action-tile--timeline {
+  border-color: rgba(148, 163, 184, 0.38);
+  background:
+    linear-gradient(160deg, rgba(51, 65, 85, 0.32), transparent 55%),
+    var(--ei-family-panel-solid);
+}
+
+.ei-family-action-tile--help {
+  border-color: rgba(228, 201, 150, 0.34);
+  background:
+    linear-gradient(160deg, rgba(184, 149, 90, 0.2), transparent 55%),
+    var(--ei-family-panel-solid);
+}
+
 .ei-family-action-tile:hover,
 .ei-family-action-tile:focus-visible {
   outline: none;
@@ -10548,13 +10894,21 @@ button.ei-voice-btn.is-listening {
     inset 0 1px 0 rgba(250, 246, 239, 0.08);
 }
 
+.ei-family-action-tile--rooms:hover,
+.ei-family-action-tile--rooms:focus-visible,
 .ei-family-action-tile--requests:hover,
-.ei-family-action-tile--requests:focus-visible {
+.ei-family-action-tile--requests:focus-visible,
+.ei-family-action-tile--inheritance:hover,
+.ei-family-action-tile--inheritance:focus-visible {
   border-color: rgba(94, 234, 212, 0.55);
 }
 
 .ei-family-action-tile--messages:hover,
-.ei-family-action-tile--messages:focus-visible {
+.ei-family-action-tile--messages:focus-visible,
+.ei-family-action-tile--updates:hover,
+.ei-family-action-tile--updates:focus-visible,
+.ei-family-action-tile--help:hover,
+.ei-family-action-tile--help:focus-visible {
   border-color: rgba(228, 201, 150, 0.58);
 }
 
@@ -10697,6 +11051,14 @@ button.ei-voice-btn.is-listening {
   color: #faf6ef;
 }
 
+.ei-portal--family .ei-heir-room-btn-num {
+  color: rgba(228, 201, 150, 0.85);
+}
+
+.ei-portal--family .ei-heir-room-btn-count {
+  color: #c9bba8;
+}
+
 .ei-portal--family .ei-heir-room-btn:hover,
 .ei-portal--family .ei-heir-room-btn:focus-visible {
   border-color: rgba(228, 201, 150, 0.5);
@@ -10739,7 +11101,7 @@ button.ei-voice-btn.is-listening {
 /* Family portal ? inline coach marks */
 .ei-family-tour-link {
   display: inline-flex;
-  margin-top: 0.95rem;
+  margin-top: 0;
   padding: 0;
   border: none;
   background: none;
@@ -10798,8 +11160,10 @@ button.ei-voice-btn.is-listening {
 .ei-family-coach-card {
   position: relative;
   z-index: 1;
-  width: min(30.5rem, 100%);
+  width: min(34rem, 100%);
   max-width: 100%;
+  max-height: min(78vh, 78dvh);
+  overflow-y: auto;
   margin: 0;
   padding: 1.45rem 1.45rem 1.25rem;
   border-radius: 18px;

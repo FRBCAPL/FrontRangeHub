@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
+import EstateModalShell from './EstateModalShell';
 
 function formatMsgTime(iso) {
   if (!iso) return '';
@@ -17,6 +19,7 @@ function formatMsgTime(iso) {
 
 /**
  * Heir ↔ Personal Representative conversation (tracked, saved).
+ * Centered overlay modal (portaled) — same pattern as room browse.
  */
 const HeirMessagesModal = ({ open, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -69,37 +72,48 @@ const HeirMessagesModal = ({ open, onClose }) => {
     await load();
   };
 
-  return (
-    <div
-      className="ei-modal-backdrop"
-      role="presentation"
-      onClick={() => {
-        if (!sending) onClose?.();
-      }}
-    >
-      <div
-        className="ei-modal ei-modal-settings ei-messages-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="ei-heir-messages-title"
-        onClick={(ev) => ev.stopPropagation()}
+  const handleClose = () => {
+    if (!sending) onClose?.();
+  };
+
+  const modal = (
+    <div className="estate-inventory ei-modal-portal">
+      <EstateModalShell
+        title="Message Personal Representative"
+        subtitle="Messages are saved in the Estate Records."
+        onClose={handleClose}
+        className="ei-heir-center-modal ei-messages-modal"
+        foot={
+          <form className="ei-messages-compose" onSubmit={handleSend}>
+            <label className="ei-sr-only" htmlFor="ei-heir-msg-draft">
+              Your message
+            </label>
+            <textarea
+              id="ei-heir-msg-draft"
+              rows={2}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Write a message…"
+              maxLength={4000}
+              disabled={sending}
+            />
+            <div className="ei-btn-row">
+              <button
+                type="button"
+                className="ei-btn ei-btn-secondary"
+                onClick={handleClose}
+                disabled={sending}
+              >
+                Close
+              </button>
+              <button type="submit" className="ei-btn" disabled={sending || !draft.trim()}>
+                {sending ? 'Sending…' : 'Send'}
+              </button>
+            </div>
+          </form>
+        }
       >
-        <div className="ei-modal-head">
-          <h3 id="ei-heir-messages-title">Message Personal Representative</h3>
-          <button
-            type="button"
-            className="ei-modal-close"
-            onClick={onClose}
-            aria-label="Close"
-            disabled={sending}
-          >
-            ×
-          </button>
-        </div>
-        <div className="ei-modal-body ei-messages-body">
-          <p className="ei-settings-hint" style={{ marginTop: 0 }}>
-            Messages are saved in the Estate Records.
-          </p>
+        <div className="ei-messages-body">
           {loading ? <p className="ei-status">Loading…</p> : null}
           {error ? <div className="ei-error">{error}</div> : null}
           {!loading && !messages.length ? (
@@ -109,7 +123,9 @@ const HeirMessagesModal = ({ open, onClose }) => {
             {messages.map((m) => (
               <li
                 key={m.id}
-                className={`ei-message-bubble ei-message-bubble--${m.sender_role === 'admin' ? 'pr' : 'me'}`}
+                className={`ei-message-bubble ei-message-bubble--${
+                  m.sender_role === 'admin' ? 'pr' : 'me'
+                }`}
               >
                 <p className="ei-message-meta">
                   {m.sender_role === 'admin' ? 'Personal Representative' : 'You'}
@@ -121,31 +137,14 @@ const HeirMessagesModal = ({ open, onClose }) => {
             <li ref={bottomRef} aria-hidden="true" className="ei-messages-anchor" />
           </ul>
         </div>
-        <form className="ei-modal-foot ei-messages-compose" onSubmit={handleSend}>
-          <label className="ei-sr-only" htmlFor="ei-heir-msg-draft">
-            Your message
-          </label>
-          <textarea
-            id="ei-heir-msg-draft"
-            rows={2}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Write a message…"
-            maxLength={4000}
-            disabled={sending}
-          />
-          <div className="ei-btn-row">
-            <button type="button" className="ei-btn ei-btn-secondary" onClick={onClose} disabled={sending}>
-              Close
-            </button>
-            <button type="submit" className="ei-btn" disabled={sending || !draft.trim()}>
-              {sending ? 'Sending…' : 'Send'}
-            </button>
-          </div>
-        </form>
-      </div>
+      </EstateModalShell>
     </div>
   );
+
+  if (typeof document !== 'undefined' && document.body) {
+    return createPortal(modal, document.body);
+  }
+  return modal;
 };
 
 export default HeirMessagesModal;

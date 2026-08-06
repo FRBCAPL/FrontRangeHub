@@ -15,7 +15,6 @@ import {
   heirCanRequestItems,
   heirPublicName,
   heirAccessTierLabel,
-  heirRoleMeaning,
   heirRolePortalGuide,
   normalizeHeirAccessTier,
   isMemorandumOnlyHeir,
@@ -24,21 +23,23 @@ import {
   isSettledOrClaimedInventoryItem,
   canAccessClaimedInventoryFilter
 } from '@shared/utils/estateInventoryConstants.js';
-import { formatItemRefLabel } from '@shared/utils/estateInventoryRefCode.js';
+import { formatItemRefLabel, roomTitleWithCode } from '@shared/utils/estateInventoryRefCode.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import HeirPreferredNameModal from './HeirPreferredNameModal';
 import HeirRequestReasonModal from './HeirRequestReasonModal';
 import HeirNoInterestModal from './HeirNoInterestModal';
+import HeirBulkNoInterestModal from './HeirBulkNoInterestModal';
 import HeirCancelRequestModal from './HeirCancelRequestModal';
 import HeirMessagesModal from './HeirMessagesModal';
 import HeirMyRequestsModal from './HeirMyRequestsModal';
-import HeirInventoryFilters from './HeirInventoryFilters';
 import EstateWhatsNewModal from './EstateWhatsNewModal';
 import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
 import HeirRoomBrowseModal from './HeirRoomBrowseModal';
+import HeirRoomsMenuModal from './HeirRoomsMenuModal';
+import ItemPhotoGallery from './ItemPhotoGallery';
 import StatusPill from './StatusPill';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import HeirInheritancePanel from './HeirInheritancePanel';
@@ -49,7 +50,7 @@ import HeirFamilyCoachMarks from './HeirFamilyCoachMarks';
 import EstateRoleGuideModal from './EstateRoleGuideModal';
 import EstateBillingLockedGate from './EstateBillingLockedGate';
 import {
-  FAMILY_COACH_STEPS,
+  buildFamilyCoachSteps,
   hasSeenFamilyCoach,
   markFamilyCoachSeen
 } from '@shared/utils/estateFamilyCoach.js';
@@ -85,8 +86,12 @@ const SiblingPortal = () => {
   const [cancelBusyId, setCancelBusyId] = useState(null);
   const [releaseTarget, setReleaseTarget] = useState(null);
   const [releaseBusyId, setReleaseBusyId] = useState(null);
+  const [bulkNoInterestOpen, setBulkNoInterestOpen] = useState(false);
+  const [bulkNoInterestBusy, setBulkNoInterestBusy] = useState(false);
+  const [bulkProgressText, setBulkProgressText] = useState('');
   const [showMyRequests, setShowMyRequests] = useState(false);
   const [showMessages, setShowMessages] = useState(false);
+  const [showRoomsMenu, setShowRoomsMenu] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [roomFilter, setRoomFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -377,6 +382,65 @@ const SiblingPortal = () => {
 
   const youReleased = (item) => youReleasedItem(item, session?.sibling_key);
 
+  /** Remaining releasable items in the open room only (excludes this heir’s requests). */
+  const roomRemainingNoInterestItems = useMemo(() => {
+    if (!session?.sibling_key || !roomFilter) return [];
+    return (items || []).filter((item) => {
+      if (!item?.id) return false;
+      const roomName = item.room?.trim() || 'Unassigned';
+      if (roomName !== roomFilter) return false;
+      if (item.is_memorandum_asset) return false;
+      if (isClaimedMemorandum(item.legal_status)) return false;
+      if (isUnauthorizedRemoval(item.legal_status)) return false;
+      if (item.legal_status === 'distributed' || item.legal_status === 'archived') return false;
+      if (item.approved_for_sale) return false;
+      if (youReleasedItem(item, session.sibling_key)) return false;
+      const claims = Array.isArray(item.sibling_claims) ? item.sibling_claims : [];
+      if (claims.some((c) => c.sibling_key === session.sibling_key)) return false;
+      return true;
+    });
+  }, [items, session?.sibling_key, roomFilter]);
+
+  const handleBulkNoInterestConfirm = async () => {
+    const targets = roomRemainingNoInterestItems;
+    if (!targets.length) {
+      setBulkNoInterestOpen(false);
+      return;
+    }
+    setBulkNoInterestBusy(true);
+    setError('');
+    setMessage('');
+    let okCount = 0;
+    let failCount = 0;
+    for (let i = 0; i < targets.length; i += 1) {
+      const item = targets[i];
+      setBulkProgressText(`Saving ${i + 1} of ${targets.length}…`);
+      const result = await estateInventoryService.siblingReleaseForSale(item.id);
+      if (result.success) okCount += 1;
+      else failCount += 1;
+    }
+    setBulkNoInterestBusy(false);
+    setBulkProgressText('');
+    setBulkNoInterestOpen(false);
+    await loadItems();
+    const roomLabel = roomFilter || 'this room';
+    if (failCount && !okCount) {
+      setError(
+        `Could not record no interest for remaining items in ${roomLabel}. Try again or mark items one at a time.`
+      );
+      return;
+    }
+    if (failCount) {
+      setMessage(
+        `Recorded no interest on ${okCount} item${okCount === 1 ? '' : 's'} in ${roomLabel}. ${failCount} could not be updated.`
+      );
+      return;
+    }
+    setMessage(
+      `Recorded no interest on ${okCount} remaining item${okCount === 1 ? '' : 's'} in ${roomLabel}. Your requested items were left unchanged.`
+    );
+  };
+
   const requestButtonLabel = (item) => {
     if (youRequested(item)) return 'You have requested this item';
     if (othersRequested(item)) return 'Item requested';
@@ -391,15 +455,30 @@ const SiblingPortal = () => {
     .filter(Boolean);
 
   const roomOptions = useMemo(() => {
-    const counts = new Map();
+    const byName = new Map();
     items.forEach((item) => {
       const name = item.room?.trim() || 'Unassigned';
-      counts.set(name, (counts.get(name) || 0) + 1);
+      const prev = byName.get(name) || { name, count: 0, collection_number: null };
+      prev.count += 1;
+      // Prefer live collection #; fall back to stamped room_number on the item.
+      if (prev.collection_number == null) {
+        const n = Number(item.collection_number ?? item.room_number);
+        if (Number.isFinite(n) && n >= 1) prev.collection_number = n;
+      }
+      byName.set(name, prev);
     });
-    return [...counts.entries()]
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return [...byName.values()].sort((a, b) => {
+      const an = Number(a.collection_number);
+      const bn = Number(b.collection_number);
+      if (Number.isFinite(an) && Number.isFinite(bn) && an !== bn) return an - bn;
+      return a.name.localeCompare(b.name);
+    });
   }, [items]);
+
+  const activeRoomMeta = useMemo(
+    () => roomOptions.find((r) => r.name === roomFilter) || null,
+    [roomOptions, roomFilter]
+  );
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -455,13 +534,6 @@ const SiblingPortal = () => {
       }),
     [session?.access_tier, session?.can_browse_rooms]
   );
-  const familyRoleMeaning = useMemo(
-    () =>
-      heirRoleMeaning(session?.access_tier, {
-        canBrowseRooms: session?.can_browse_rooms
-      }),
-    [session?.access_tier, session?.can_browse_rooms]
-  );
   const probateFootnote = useMemo(() => {
     const resolved = resolveProbateWindow({
       letters_issued_at: lettersIssuedAt,
@@ -479,16 +551,18 @@ const SiblingPortal = () => {
   }, [lettersIssuedAt, probateWindow]);
 
   const browseTitle = roomFilter
-    ? roomFilter
+    ? roomTitleWithCode(roomFilter, activeRoomMeta?.collection_number)
     : searchQuery.trim()
       ? `Search: “${searchQuery.trim()}”`
       : 'Browse';
 
-  const handleRoomChange = (room) => {
-    setRoomFilter(room);
+  const handleRoomChange = (roomName) => {
+    const name = String(roomName || '').trim();
+    if (!name) return;
+    setRoomFilter(name);
     setSearchQuery('');
     setShowClaimedOnly(false);
-    setBrowseOpen(Boolean(room));
+    setBrowseOpen(true);
   };
 
   const handleSearchChange = (q) => {
@@ -529,11 +603,7 @@ const SiblingPortal = () => {
         key={item.id}
         className={`ei-card${claimed ? ' ei-card-claimed' : ''}${showDisputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}`}
       >
-        {item.photo_url ? (
-          <img className="ei-card-photo" src={item.photo_url} alt={item.name} loading="lazy" />
-        ) : (
-          <div className="ei-card-photo-placeholder">No photo</div>
-        )}
+        <ItemPhotoGallery item={item} alt={item.name} />
         <div className="ei-card-body">
           {formatItemRefLabel(item.room_number, item.item_number) ? (
             <p className="ei-item-ref-label">
@@ -715,7 +785,25 @@ const SiblingPortal = () => {
   const canRequestItems = heirCanRequestItems(session?.access_tier);
   const canBrowseFullRooms = heirCanBrowseRooms(session);
   const memorandumOnly = isMemorandumOnlyHeir(session?.access_tier);
-  const coachTargetId = showCoach ? FAMILY_COACH_STEPS[coachStep]?.targetId || '' : '';
+  const showRoomsTile = canBrowseFullRooms || items.length > 0;
+  const familyCoachSteps = useMemo(
+    () =>
+      buildFamilyCoachSteps({
+        accessTier: session?.access_tier,
+        canBrowseRooms: session?.can_browse_rooms,
+        showRooms: showRoomsTile,
+        showRequests: canRequestItems
+      }),
+    [session?.access_tier, session?.can_browse_rooms, showRoomsTile, canRequestItems]
+  );
+  const coachTargetId = showCoach ? familyCoachSteps[coachStep]?.targetId || '' : '';
+
+  useEffect(() => {
+    if (!showCoach) return;
+    if (coachStep > familyCoachSteps.length - 1) {
+      setCoachStep(Math.max(0, familyCoachSteps.length - 1));
+    }
+  }, [showCoach, coachStep, familyCoachSteps.length]);
 
   return (
     <EstatePanelErrorBoundary title="Family portal failed to render." label="family">
@@ -757,110 +845,105 @@ const SiblingPortal = () => {
       >
         <p className="ei-family-welcome-eyebrow">Welcome to the family portal</p>
         <h1 className="ei-family-welcome-title">Hello, {helloName}</h1>
-        <button
-          type="button"
-          className="ei-family-welcome-role"
-          onClick={() => setShowRoleGuide(true)}
-          aria-haspopup="dialog"
-          title="What your role means"
-        >
-          {roleLabel}
-          <span className="ei-family-welcome-role-hint">Your role · tap to explain</span>
-        </button>
-        {familyRoleMeaning?.summary ? (
-          <p className="ei-family-welcome-role-summary">{familyRoleMeaning.summary}</p>
-        ) : null}
-        <p className="ei-family-welcome-lede">
-          Start with what applies to you, then review the wider estate picture, then browse
-          property when you are ready.
-        </p>
-        {!showCoach ? (
-          <button type="button" className="ei-family-tour-link" onClick={startCoach}>
-            Show me around
+        <div className="ei-family-welcome-role-stack">
+          <button
+            type="button"
+            className="ei-family-welcome-role"
+            onClick={() => setShowRoleGuide(true)}
+            aria-haspopup="dialog"
+            title="What your role means"
+          >
+            {roleLabel}
+            <span className="ei-family-welcome-role-hint">Your role · tap to explain</span>
           </button>
-        ) : null}
+          {!showCoach ? (
+            <button type="button" className="ei-family-tour-link" onClick={startCoach}>
+              Show me around
+            </button>
+          ) : null}
+        </div>
       </header>
 
-      <section
-        id="ei-family-coach-you"
-        className={`ei-family-section ei-family-coach-target${
-          coachTargetId === 'ei-family-coach-you' ? ' is-coach-spotlight' : ''
+      {message ? <p className="ei-status ei-family-home-status">{message}</p> : null}
+      {error ? <div className="ei-error ei-family-home-status">{error}</div> : null}
+
+      <nav
+        id="ei-family-coach-menu"
+        className={`ei-family-menu ei-family-coach-target${
+          coachTargetId === 'ei-family-coach-menu' ? ' is-coach-spotlight' : ''
         }`}
-        aria-labelledby="ei-family-you-heading"
+        aria-label="Family portal menu"
       >
-        <div className="ei-family-section-head">
-          <p className="ei-family-section-kicker">Step 1</p>
-          <h2 id="ei-family-you-heading" className="ei-family-section-title">
-            For you
-          </h2>
-          <p className="ei-family-section-hint">
-            Your distributions, family updates, and quick ways to stay in touch.
-          </p>
-        </div>
-        <div className="ei-family-stack">
+        <div className="ei-family-action-grid" role="group" aria-label="Open a section">
+          <button
+            type="button"
+            id="ei-family-coach-messages"
+            className={`ei-family-action-tile ei-family-action-tile--messages ei-family-coach-target${
+              coachTargetId === 'ei-family-coach-messages' ? ' is-coach-spotlight' : ''
+            }`}
+            onClick={() => setShowMessages(true)}
+          >
+            <span className="ei-family-action-label">Messages</span>
+            <span className="ei-family-action-meta">
+              {unreadMessages
+                ? `${unreadMessages} unread`
+                : 'Talk with the Personal Representative'}
+            </span>
+          </button>
+
           <HeirInheritancePanel
+            asMenuTile
             caseNumber={caseNumber}
             estateName={estateLabel}
             recipientName={helloName}
           />
-          <HeirFamilyUpdatesPanel caseNumber={caseNumber} />
-          <div className="ei-family-action-grid" role="group" aria-label="Quick actions">
-            {canRequestItems ? (
-              <button
-                type="button"
-                className="ei-family-action-tile ei-family-action-tile--requests"
-                onClick={() => setShowMyRequests(true)}
-              >
-                <span className="ei-family-action-label">My requests</span>
-                <span className="ei-family-action-meta">
-                  {myRequestedItems.length
-                    ? `${myRequestedItems.length} item${myRequestedItems.length === 1 ? '' : 's'}`
-                    : 'Items you asked for'}
-                </span>
-              </button>
-            ) : null}
+
+          {canRequestItems ? (
             <button
               type="button"
-              className="ei-family-action-tile ei-family-action-tile--messages"
-              onClick={() => setShowMessages(true)}
+              id="ei-family-coach-requests"
+              className={`ei-family-action-tile ei-family-action-tile--requests ei-family-coach-target${
+                coachTargetId === 'ei-family-coach-requests' ? ' is-coach-spotlight' : ''
+              }`}
+              onClick={() => setShowMyRequests(true)}
             >
-              <span className="ei-family-action-label">Messages</span>
+              <span className="ei-family-action-label">My requests</span>
               <span className="ei-family-action-meta">
-                {unreadMessages
-                  ? `${unreadMessages} unread`
-                  : 'Talk with the Personal Representative'}
+                {myRequestedItems.length
+                  ? `${myRequestedItems.length} item${myRequestedItems.length === 1 ? '' : 's'}`
+                  : 'Items you asked for'}
               </span>
             </button>
-            <Link
-              to={estateitCasePath(routeCase, 'auction')}
-              className="ei-family-action-tile ei-family-action-tile--auction"
-            >
-              <span className="ei-family-action-label">Sale & auction</span>
-              <span className="ei-family-action-meta">Follow items headed to sale</span>
-            </Link>
-          </div>
-        </div>
-      </section>
+          ) : null}
 
-      <section
-        id="ei-family-coach-overview"
-        className={`ei-family-section ei-family-coach-target${
-          coachTargetId === 'ei-family-coach-overview' ? ' is-coach-spotlight' : ''
-        }`}
-        aria-labelledby="ei-family-estate-heading"
-      >
-        <div className="ei-family-section-head">
-          <p className="ei-family-section-kicker">Step 2</p>
-          <h2 id="ei-family-estate-heading" className="ei-family-section-title">
-            Estate Overview
-          </h2>
-          <p className="ei-family-section-hint">
-            Numbers and milestones.
-          </p>
-        </div>
-        <div className="ei-family-stack">
-          <HeirTransparencyPanel caseNumber={caseNumber} />
+          <HeirFamilyUpdatesPanel asMenuTile caseNumber={caseNumber} />
+          <HeirTransparencyPanel asMenuTile caseNumber={caseNumber} />
+
+          {showRoomsTile ? (
+            <button
+              type="button"
+              id="ei-family-coach-rooms"
+              className={`ei-family-action-tile ei-family-action-tile--rooms ei-family-coach-target${
+                coachTargetId === 'ei-family-coach-rooms' ? ' is-coach-spotlight' : ''
+              }`}
+              onClick={() => setShowRoomsMenu(true)}
+              aria-haspopup="dialog"
+            >
+              <span className="ei-family-action-label">
+                {canBrowseFullRooms ? 'Rooms & inventory' : 'My gifts & rooms'}
+              </span>
+              <span className="ei-family-action-meta">
+                {loading
+                  ? 'Loading…'
+                  : items.length
+                    ? `${roomOptions.length} room${roomOptions.length === 1 ? '' : 's'} · ${items.length} item${items.length === 1 ? '' : 's'}`
+                    : 'Browse rooms and items'}
+              </span>
+            </button>
+          ) : null}
+
           <HeirDisclosureTimeline
+            asMenuTile
             caseNumber={caseNumber}
             settings={{
               ...estateSettings,
@@ -874,54 +957,55 @@ const SiblingPortal = () => {
             items={items}
             distributions={inheritanceRows}
           />
-          {probateFootnote ? (
-            <p className="ei-family-footnote">{probateFootnote}</p>
-          ) : null}
-        </div>
-      </section>
 
-      <section
-        id="ei-family-coach-property"
-        className={`ei-family-section ei-family-section--inventory ei-family-coach-target${
-          coachTargetId === 'ei-family-coach-property' ? ' is-coach-spotlight' : ''
-        }`}
-        aria-labelledby="ei-family-property-heading"
-      >
-        <div className="ei-family-section-head">
-          <p className="ei-family-section-kicker">Step 3</p>
-          <h2 id="ei-family-property-heading" className="ei-family-section-title">
-            Estate Inventory
-          </h2>
-          <p className="ei-family-section-hint">
-            {canRequestItems
-              ? 'Open a room to view items. Request or release only where your role allows.'
-              : canBrowseFullRooms
-                ? 'Open a room to browse items. Your access is view-only — you cannot request items.'
-                : 'Specific gifts named for you appear here.'}
-          </p>
+          <Link
+            id="ei-family-coach-auction"
+            to={estateitCasePath(routeCase, 'auction')}
+            className={`ei-family-action-tile ei-family-action-tile--auction ei-family-coach-target${
+              coachTargetId === 'ei-family-coach-auction' ? ' is-coach-spotlight' : ''
+            }`}
+          >
+            <span className="ei-family-action-label">Sale & auction</span>
+            <span className="ei-family-action-meta">Follow items headed to sale</span>
+          </Link>
+
+          <button
+            type="button"
+            id="ei-family-coach-help"
+            className={`ei-family-action-tile ei-family-action-tile--help ei-family-coach-target${
+              coachTargetId === 'ei-family-coach-help' ? ' is-coach-spotlight' : ''
+            }`}
+            onClick={() => setShowFaq(true)}
+            aria-haspopup="dialog"
+          >
+            <span className="ei-family-action-label">Help / FAQ</span>
+            <span className="ei-family-action-meta">Common questions about this portal</span>
+          </button>
         </div>
-        {message ? <p className="ei-status">{message}</p> : null}
-        {error ? <div className="ei-error">{error}</div> : null}
-        {loading ? <p className="ei-status">Loading…</p> : null}
-        {!loading && items.length === 0 ? (
-          <div className="ei-empty">
-            <p>
-              {memorandumOnly && !canBrowseFullRooms
-                ? 'No specific gifts are listed for you yet, and full room browsing is not enabled.'
-                : 'No inventory items to show yet.'}
-            </p>
-          </div>
-        ) : (
-          <HeirInventoryFilters
-            rooms={roomOptions}
-            roomFilter={roomFilter}
-            onRoomChange={handleRoomChange}
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            totalCount={items.length}
-          />
-        )}
-      </section>
+      </nav>
+
+      {probateFootnote ? (
+        <p className="ei-family-footnote ei-family-home-status ei-family-probate-bar">
+          {probateFootnote}
+        </p>
+      ) : null}
+
+      <HeirRoomsMenuModal
+        open={showRoomsMenu}
+        onClose={() => setShowRoomsMenu(false)}
+        rooms={roomOptions}
+        roomFilter={roomFilter}
+        onRoomChange={handleRoomChange}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+        totalCount={items.length}
+        loading={loading}
+        emptyMessage={
+          memorandumOnly && !canBrowseFullRooms
+            ? 'No specific gifts are listed for you yet, and full room browsing is not enabled.'
+            : 'No inventory items to show yet.'
+        }
+      />
 
       <HeirRoomBrowseModal
         open={browseOpen}
@@ -932,6 +1016,16 @@ const SiblingPortal = () => {
         showClaimedOnly={showClaimedOnly}
         claimedCount={browseClaimedCount}
         onToggleClaimedFilter={() => setShowClaimedOnly((v) => !v)}
+        showBulkNoInterest={
+          Boolean(canRequestItems && roomFilter && !needsPreferredName && !searchQuery.trim())
+        }
+        roomRemainingCount={roomRemainingNoInterestItems.length}
+        bulkNoInterestBusy={bulkNoInterestBusy}
+        onBulkNoInterest={() => {
+          setError('');
+          setMessage('');
+          setBulkNoInterestOpen(true);
+        }}
       >
         {browseItems.map((item) => renderHeirItem(item))}
       </HeirRoomBrowseModal>
@@ -983,6 +1077,25 @@ const SiblingPortal = () => {
         onConfirm={handleReleaseConfirm}
       />
 
+      <HeirBulkNoInterestModal
+        open={bulkNoInterestOpen}
+        roomName={roomFilter}
+        remainingCount={roomRemainingNoInterestItems.length}
+        keptClaimCount={
+          roomFilter
+            ? myRequestedItems.filter(
+                ({ item }) => (item.room?.trim() || 'Unassigned') === roomFilter
+              ).length
+            : 0
+        }
+        busy={bulkNoInterestBusy}
+        progressText={bulkProgressText}
+        onClose={() => {
+          if (!bulkNoInterestBusy) setBulkNoInterestOpen(false);
+        }}
+        onConfirm={handleBulkNoInterestConfirm}
+      />
+
       <HeirPreferredNameModal
         open={needsPreferredName}
         required
@@ -994,6 +1107,7 @@ const SiblingPortal = () => {
       <HeirFamilyCoachMarks
         open={showCoach}
         stepIndex={coachStep}
+        steps={familyCoachSteps}
         onStepChange={setCoachStep}
         onSkip={() => finishCoach(true)}
         onDone={() => finishCoach(true)}
@@ -1003,7 +1117,6 @@ const SiblingPortal = () => {
       <EstateRoleGuideModal
         open={showRoleGuide}
         title={familyRoleGuide?.title || 'Your role'}
-        eyebrow="Your role"
         guide={familyRoleGuide}
         onClose={() => setShowRoleGuide(false)}
       />

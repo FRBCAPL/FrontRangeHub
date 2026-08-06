@@ -39,7 +39,7 @@ function isRowRead(row) {
  * Heir Family Updates — compact launcher → list modal → preview modal (PDF/HTML pick).
  * Per-heir read state from server (with localStorage fallback).
  */
-const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
+const HeirFamilyUpdatesPanel = ({ caseNumber, asMenuTile = false }) => {
   const [updates, setUpdates] = useState([]);
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
@@ -123,7 +123,33 @@ const HeirFamilyUpdatesPanel = ({ caseNumber }) => {
   const emptyHint =
     'The Personal Representative has not published a Family Update yet. When they publish one from Reports, numbered reports will appear here.';
 
-  const opener = (
+  const opener = asMenuTile ? (
+    <button
+      type="button"
+      className={`ei-family-action-tile ei-family-action-tile--updates ei-family-coach-target${
+        unreadCount > 0 ? ' has-unread' : ''
+      }`}
+      id="ei-family-coach-updates"
+      onClick={openList}
+      aria-haspopup="dialog"
+      aria-label={
+        unreadCount > 0
+          ? `Family Updates — ${reportCount} reports, ${unreadCount} unread. Open list.`
+          : `Family Updates — ${reportCount} report${reportCount === 1 ? '' : 's'}. Open list.`
+      }
+    >
+      <span className="ei-family-action-label">Family updates</span>
+      <span className="ei-family-action-meta">
+        {!loaded
+          ? 'Loading…'
+          : reportCount === 0
+            ? 'No reports yet'
+            : unreadCount > 0
+              ? `${unreadCount} unread · ${reportCount} report${reportCount === 1 ? '' : 's'}`
+              : `${reportCount} report${reportCount === 1 ? '' : 's'} · all caught up`}
+      </span>
+    </button>
+  ) : (
     <section
       className={`ei-family-updates-panel ei-family-updates-launch${
         unreadCount > 0 ? ' has-unread' : ''
