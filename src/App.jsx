@@ -109,6 +109,7 @@ import EstateRoleLanding from '@apps/estate-inventory/frontend/src/components/es
 import { EstateCaseProvider } from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseContext';
 import SiblingPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/SiblingPortal';
 import HelperPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/HelperPortal';
+import AdvisorPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/AdvisorPortal';
 import AuctionPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/AuctionPortal';
 import { APP_NAME, ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import adminAuthService from '@shared/services/services/adminAuthService.js';
@@ -181,11 +182,13 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/estateit/admin': '#/estateit/owner',
   '/estateit/helper': '#/estateit/enter',
   '/estateit/family': '#/estateit/enter',
+  '/estateit/advisor': '#/estateit/enter',
   '/estateit/auction': '#/estateit',
   '/estate-inventory': '#/estateit',
   '/estate-inventory/admin': '#/estateit/owner',
   '/estate-inventory/helper': '#/estateit/enter',
   '/estate-inventory/family': '#/estateit/enter',
+  '/estate-inventory/advisor': '#/estateit/enter',
   '/estate-inventory/auction': '#/estateit',
 };
 
@@ -898,6 +901,10 @@ function AppContent() {
               element={<Navigate to={`${ESTATEIT_PATH}/enter`} replace />}
             />
             <Route
+              path="/estate-inventory/advisor"
+              element={<Navigate to={`${ESTATEIT_PATH}/enter`} replace />}
+            />
+            <Route
               path="/estate-inventory/auction"
               element={<Navigate to={ESTATEIT_PATH} replace />}
             />
@@ -961,6 +968,10 @@ function AppContent() {
               element={<Navigate to={`${ESTATEIT_PATH}/enter`} replace />}
             />
             <Route
+              path="/estateit/advisor"
+              element={<Navigate to={`${ESTATEIT_PATH}/enter`} replace />}
+            />
+            <Route
               path="/estateit/auction"
               element={<Navigate to={ESTATEIT_PATH} replace />}
             />
@@ -995,6 +1006,17 @@ function AppContent() {
                 <EstateCaseProvider>
                   <main className="main-app-content">
                     <HelperPortal />
+                  </main>
+                </EstateCaseProvider>
+              }
+            />
+
+            <Route
+              path="/estateit/:caseNumber/advisor"
+              element={
+                <EstateCaseProvider>
+                  <main className="main-app-content">
+                    <AdvisorPortal />
                   </main>
                 </EstateCaseProvider>
               }

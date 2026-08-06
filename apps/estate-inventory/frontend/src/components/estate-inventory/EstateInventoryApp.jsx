@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   estateDisplayName,
@@ -376,51 +376,12 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         onOpenWhatIsVault={() => setShowWhatIsVault(true)}
         onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
         onOpenFaq={() => setShowFaq(true)}
+        onOpenReports={() => setShowReports(true)}
+        onLockAdmin={onLock || null}
         onLeaveEstate={onLeaveEstate}
         onSignOutApp={onSignOutApp}
         estateName={estateDisplayName(settings, routeCase)}
         displayCaseNumber={settings?.court_case_number || null}
-        extraRight={
-          <>
-            <button
-              type="button"
-              className="ei-nav-icon-btn"
-              onClick={() => setShowWhatIsVault(true)}
-              title="What is Estate Vault?"
-            >
-              What is
-            </button>
-            <button
-              type="button"
-              className="ei-nav-icon-btn"
-              onClick={() => setShowFaq(true)}
-              title="FAQ"
-            >
-              FAQ
-            </button>
-            <Link className="ei-nav-icon-btn" to={caseHome} title="Roles / portals">
-              Roles
-            </Link>
-            {onLock ? (
-              <button
-                type="button"
-                className="ei-nav-icon-btn"
-                onClick={onLock}
-                title="Require the admin PIN again on this device"
-              >
-                Lock
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="ei-nav-icon-btn"
-              onClick={() => setShowReports(true)}
-              title="Court pack, PDF, share link, and JSON exports"
-            >
-              Reports
-            </button>
-          </>
-        }
       />
 
       {banner ? (

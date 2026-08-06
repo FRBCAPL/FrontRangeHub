@@ -123,16 +123,16 @@ const EstateFamilySignIn = () => {
     <EstateLegalDisclaimerGate>
     <div className="estate-inventory ei-landing ei-case-entry ei-family-signin">
       <header className="ei-landing-hero">
-        <p className="ei-eyebrow">Family · heirs · helpers</p>
+        <p className="ei-eyebrow">Family · heirs · helpers · advisors</p>
         <EstateBrandTitle />
         <p className="ei-lede">
           {step === 'name'
             ? 'Enter the estate name, then your name and access code.'
-            : 'Heirs: enter your PIN. Helpers: enter your name and PIN.'}
+            : 'Heirs: enter your PIN. Helpers: enter your name and PIN. Advisors: invite PIN (first time) or your personal password.'}
         </p>
         <p className="ei-settings-hint ei-family-access-hint">
           Your role determines what you can see and do — residual beneficiary, specific-gift
-          recipient, or helper.
+          recipient, helper, or read-only advisor.
         </p>
         <p className="ei-settings-hint ei-family-access-hint">
           Lost your invite code, or unsure which role you have? Ask the Personal Representative —

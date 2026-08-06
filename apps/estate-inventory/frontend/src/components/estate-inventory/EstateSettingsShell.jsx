@@ -42,14 +42,17 @@ export function EstateSettingsShell({
   titleId,
   children,
   foot,
-  wide = false
+  wide = false,
+  extraClass = ''
 }) {
   if (!open) return null;
 
   return (
     <div className="ei-modal-backdrop" role="presentation" onClick={onClose}>
       <div
-        className={`ei-modal ei-modal-settings${wide ? ' ei-modal-settings-wide' : ''}`}
+        className={`ei-modal ei-modal-settings${wide ? ' ei-modal-settings-wide' : ''}${
+          extraClass ? ` ${extraClass}` : ''
+        }`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

@@ -3,8 +3,10 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   HEIR_ACCESS_TIER,
   HEIR_ACCESS_TIER_OPTIONS,
+  FAMILY_FINANCIAL_VISIBILITY_OPTIONS,
   generateHeirInviteCode,
   normalizeHeirAccessTier,
+  normalizeFamilyFinancialVisibility,
   heirAdminLabel,
   heirPublicName,
   isMemorandumOnlyHeir
@@ -15,6 +17,7 @@ import { useEstateCase } from './EstateCaseContext';
 const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
   const { caseNumber } = useEstateCase();
   const [heirAccounts, setHeirAccounts] = useState([]);
+  const [contacts, setContacts] = useState([]);
   const [inviteByKey, setInviteByKey] = useState({});
   const [newHeirName, setNewHeirName] = useState('');
   const [newHeirTier, setNewHeirTier] = useState(HEIR_ACCESS_TIER.residual);
@@ -26,9 +29,10 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
   const [lastIssued, setLastIssued] = useState(null);
 
   const refreshHeirs = async () => {
-    const [listResult, passResult] = await Promise.all([
+    const [listResult, passResult, contactsResult] = await Promise.all([
       estateInventoryService.listSiblingAccounts(caseNumber),
-      estateInventoryService.getAccessPasswords(caseNumber)
+      estateInventoryService.getAccessPasswords(caseNumber),
+      estateInventoryService.listEstateContacts(caseNumber)
     ]);
     if (listResult.success) setHeirAccounts(listResult.data || []);
     if (passResult.success) {
@@ -38,6 +42,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
       });
       setInviteByKey(map);
     }
+    if (contactsResult.success) setContacts(contactsResult.data || []);
   };
 
   useEffect(() => {
@@ -148,12 +153,43 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
               can_browse_rooms:
                 result.data?.can_browse_rooms != null
                   ? Boolean(result.data.can_browse_rooms)
-                  : normalizeHeirAccessTier(nextTier) !== HEIR_ACCESS_TIER.memorandum
+                  : normalizeHeirAccessTier(nextTier) !== HEIR_ACCESS_TIER.memorandum,
+              financial_visibility: normalizeFamilyFinancialVisibility(
+                result.data?.financial_visibility ||
+                  (normalizeHeirAccessTier(nextTier) === HEIR_ACCESS_TIER.memorandum
+                    ? 'minimal'
+                    : h.financial_visibility)
+              )
             }
           : h
       )
     );
     setInfo(`Updated access for ${label}.`);
+  };
+
+  const handleFinancialVisibilityChange = async (siblingKey, label, nextVisibility, memoOnly) => {
+    if (memoOnly) return;
+    setError('');
+    setInfo('');
+    const result = await estateInventoryService.setHeirFinancialVisibility(
+      siblingKey,
+      nextVisibility,
+      caseNumber
+    );
+    if (!result.success) {
+      setError(result.error || `Could not update financial disclosure for ${label}.`);
+      await refreshHeirs();
+      return;
+    }
+    const saved = normalizeFamilyFinancialVisibility(
+      result.data?.financial_visibility || nextVisibility
+    );
+    setHeirAccounts((prev) =>
+      prev.map((h) =>
+        h.sibling_key === siblingKey ? { ...h, financial_visibility: saved } : h
+      )
+    );
+    setInfo(`Updated financial disclosure for ${label}.`);
   };
 
   const handleBrowseRoomsChange = async (siblingKey, label, checked) => {
@@ -227,6 +263,9 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     return 'Needs PIN';
   };
 
+  const advisorsForHeir = (siblingKey) =>
+    (contacts || []).filter((c) => c.linked_sibling_key === siblingKey);
+
   return (
     <EstateSettingsShell
       open={open}
@@ -274,6 +313,9 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                 const browseOn = memoOnly
                   ? Boolean(h.can_browse_rooms)
                   : true;
+                const financialVis = memoOnly
+                  ? 'minimal'
+                  : normalizeFamilyFinancialVisibility(h.financial_visibility);
                 return (
                   <li key={h.sibling_key} className="ei-heir-row">
                     <div className="ei-heir-row-main">
@@ -283,6 +325,15 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                         {preferred && preferred !== adminLabel ? ` · shows as ${publicName}` : ''}
                       </span>
                       <span className="ei-heir-invite-status">{inviteStatus(h.sibling_key)}</span>
+                      {advisorsForHeir(h.sibling_key).length ? (
+                        <span className="ei-heir-invite-status">
+                          Advisor
+                          {advisorsForHeir(h.sibling_key).length > 1 ? 's' : ''}:{' '}
+                          {advisorsForHeir(h.sibling_key)
+                            .map((c) => c.display_name)
+                            .join(', ')}
+                        </span>
+                      ) : null}
                       <label className="ei-heir-tier-label" htmlFor={`ei-tier-${h.sibling_key}`}>
                         Access
                         <select
@@ -302,6 +353,39 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                       </label>
                       <span className="ei-settings-hint ei-heir-tier-hint">
                         {HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === tier)?.hint}
+                      </span>
+                      <label
+                        className="ei-heir-tier-label"
+                        htmlFor={`ei-fin-vis-${h.sibling_key}`}
+                      >
+                        Financial disclosure
+                        <select
+                          id={`ei-fin-vis-${h.sibling_key}`}
+                          className="ei-heir-tier-select"
+                          value={financialVis}
+                          disabled={memoOnly}
+                          onChange={(e) =>
+                            handleFinancialVisibilityChange(
+                              h.sibling_key,
+                              adminLabel,
+                              e.target.value,
+                              memoOnly
+                            )
+                          }
+                        >
+                          {FAMILY_FINANCIAL_VISIBILITY_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value} title={opt.hint}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <span className="ei-settings-hint ei-heir-tier-hint">
+                        {memoOnly
+                          ? 'Specific Gift Recipients stay on Minimal.'
+                          : FAMILY_FINANCIAL_VISIBILITY_OPTIONS.find(
+                              (o) => o.value === financialVis
+                            )?.hint}
                       </span>
                       {memoOnly ? (
                         <label

@@ -166,6 +166,11 @@ export function generateHelperPin() {
   return generateHeirInviteCode();
 }
 
+/** Alias — advisor invite PINs use the same 6-digit rules. */
+export function generateAdvisorInvitePin() {
+  return generateHeirInviteCode();
+}
+
 /** Normalize user-entered case numbers (trim, uppercase, strip spaces). */
 export function normalizeEstateCaseNumber(raw) {
   return String(raw || '')
@@ -282,14 +287,14 @@ export function resolveAuctionWindow(settings = {}, now = new Date()) {
 /**
  * Build a case-scoped EstateIt path.
  * @param {string} caseNumber
- * @param {string} [suffix] e.g. 'admin' | 'family' | 'helper' | 'auction'
+ * @param {string} [suffix] e.g. 'admin' | 'family' | 'helper' | 'advisor' | 'auction'
  */
 export function estateitCasePath(caseNumber, suffix = '') {
   const cn = normalizeEstateCaseNumber(caseNumber);
   if (!cn) {
     const clean = String(suffix || '').replace(/^\/+/, '');
     // No case yet — send people to the gateway (or family door), never invent an ID.
-    if (clean === 'family' || clean === 'helper') return `${ESTATEIT_PATH}/enter`;
+    if (clean === 'family' || clean === 'helper' || clean === 'advisor') return `${ESTATEIT_PATH}/enter`;
     if (clean === 'admin' || clean === 'owner') return `${ESTATEIT_PATH}/owner`;
     return ESTATEIT_PATH;
   }

@@ -35,7 +35,7 @@
         <span class="ev-grid"></span>
       </div>
 
-      <div class="ev-inner">
+      <div class="ev-inner ev-inner--wide">
         <nav class="ev-nav" aria-label="Estate Vault">
           <a class="ev-nav-brand" href="/estate-vault/">
             <img src="/estate-vault/ev-app-icon.png" width="42" height="42" alt="" />
@@ -53,77 +53,139 @@
           <p class="ev-eyebrow">Workflow</p>
           <h1>How Estate Vault works</h1>
           <p class="ev-lede">
-            Estate Vault does not interpret your will or give legal advice. You decide what must be
-            done. Use it to record property, money, decisions, receipts, communications, and
-            distributions as the estate progresses.
+            You decide what must be done. Estate Vault helps you record property, money,
+            decisions, and distributions — then export a clear record for counsel to review.
           </p>
+          <nav class="ev-journey" aria-label="Jump to a stage">
+            <a href="#setup">Set up</a>
+            <a href="#inventory">Inventory</a>
+            <a href="#money">Money &amp; family</a>
+            <a href="#export">Export</a>
+          </nav>
         </header>
 
-        <section class="ev-section" aria-labelledby="steps-heading">
-          <h2 id="steps-heading">Eight steps, one record</h2>
-          <p>
-            You do not need to finish everything at once. Work through inventory → money → sales
-            (if any) → distributions → exports as the estate moves forward.
-          </p>
-          <ol class="ev-steps">
-            <li>
-              <span class="ev-step-num">1</span>
-              <div>
-                <div class="ev-step-title">Set up the estate</div>
-                <p class="ev-note">Create the case, admin access, and basic probate details.</p>
-              </div>
-            </li>
-            <li>
-              <span class="ev-step-num">2</span>
-              <div>
-                <div class="ev-step-title">Record will instructions yourself</div>
-                <p class="ev-note">Enter gifts, people, and notes. The app does not decide them for you.</p>
-              </div>
-            </li>
-            <li>
-              <span class="ev-step-num">3</span>
-              <div>
-                <div class="ev-step-title">Inventory property</div>
-                <p class="ev-note">Rooms, photos, status, and reference codes in one place.</p>
-              </div>
-            </li>
-            <li>
-              <span class="ev-step-num">4</span>
-              <div>
-                <div class="ev-step-title">Track money in and out</div>
-                <p class="ev-note">Funds, expenses, debts, and PR advances with Cash available totals.</p>
-              </div>
-            </li>
-            <li>
-              <span class="ev-step-num">5</span>
-              <div>
-                <div class="ev-step-title">Document decisions</div>
-                <p class="ev-note">Keep notes and history so you can explain what happened later.</p>
-              </div>
-            </li>
-            <li>
-              <span class="ev-step-num">6</span>
-              <div>
-                <div class="ev-step-title">Communicate with beneficiaries</div>
-                <p class="ev-note">Invite heirs, send Family Updates, and keep messaging in the record.</p>
-              </div>
-            </li>
-            <li>
-              <span class="ev-step-num">7</span>
-              <div>
-                <div class="ev-step-title">Record distributions &amp; receipts</div>
-                <p class="ev-note">Cash and property distributions with acknowledgements.</p>
-              </div>
-            </li>
-            <li>
-              <span class="ev-step-num">8</span>
-              <div>
-                <div class="ev-step-title">Export the final record</div>
-                <p class="ev-note">Court-supporting packs and formal accounting for counsel to review.</p>
-              </div>
-            </li>
-          </ol>
-        </section>
+        <article class="ev-stage" id="setup">
+          <div class="ev-stage-copy">
+            <p class="ev-stage-kicker">Steps 1–2</p>
+            <h2>Set up the estate — then record will instructions yourself</h2>
+            <p>
+              Create the case, set your admin access, and enter basic probate details when you have
+              them. You type gifts, people, and notes from the will. The app does not read or decide
+              those instructions for you.
+            </p>
+            <ul class="ev-list">
+              <li>One workspace per estate (case)</li>
+              <li>No required upload of the will, death certificate, or Letters</li>
+              <li>Start documenting before every paper is in hand</li>
+            </ul>
+          </div>
+          <figure class="ev-stage-media">
+            <img
+              class="ev-shot"
+              src="/estate-vault/screenshots/hiw-setup.png"
+              width="1280"
+              height="720"
+              alt="Estate Vault case setup"
+              loading="lazy"
+            />
+            <figcaption class="ev-shot-fallback">
+              Add real screenshot:<br /><code>screenshots/hiw-setup.png</code>
+              <span>Case settings or create-estate screen</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <article class="ev-stage ev-stage--flip" id="inventory">
+          <div class="ev-stage-copy">
+            <p class="ev-stage-kicker">Step 3</p>
+            <h2>Inventory property with photos and rooms</h2>
+            <p>
+              Capture what is in the house by room. Add photos, titles, and reference codes so
+              family, helpers, and counsel can talk about the same item.
+            </p>
+            <ul class="ev-list">
+              <li>Photo-backed inventory instead of scattered lists</li>
+              <li>Helpers can submit items for PR review</li>
+              <li>Status and value tiers stay with each item</li>
+            </ul>
+          </div>
+          <figure class="ev-stage-media">
+            <img
+              class="ev-shot"
+              src="/estate-vault/screenshots/hiw-inventory.png"
+              width="1280"
+              height="720"
+              alt="Estate Vault inventory"
+              loading="lazy"
+            />
+            <figcaption class="ev-shot-fallback">
+              Add real screenshot:<br /><code>screenshots/hiw-inventory.png</code>
+              <span>Collections / inventory with items visible</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <article class="ev-stage" id="money">
+          <div class="ev-stage-copy">
+            <p class="ev-stage-kicker">Steps 4–6</p>
+            <h2>Track money, document decisions, update beneficiaries</h2>
+            <p>
+              Keep Funds, expenses, debts, and PR advances in one ledger picture — including Cash
+              available. Log decisions as you go. Invite family and send Family Updates so heirs
+              see progress without endless group texts.
+            </p>
+            <ul class="ev-list">
+              <li>Cash available and Estate balance from what you recorded</li>
+              <li>Decision notes and activity history in the record</li>
+              <li>Role-based access for family and helpers</li>
+            </ul>
+          </div>
+          <figure class="ev-stage-media">
+            <img
+              class="ev-shot"
+              src="/estate-vault/screenshots/hiw-ledger.png"
+              width="1280"
+              height="720"
+              alt="Estate Vault ledger"
+              loading="lazy"
+            />
+            <figcaption class="ev-shot-fallback">
+              Add real screenshot:<br /><code>screenshots/hiw-ledger.png</code>
+              <span>Ledger with Cash available showing</span>
+            </figcaption>
+          </figure>
+        </article>
+
+        <article class="ev-stage ev-stage--flip" id="export">
+          <div class="ev-stage-copy">
+            <p class="ev-stage-kicker">Steps 7–8</p>
+            <h2>Record distributions — then export the final record</h2>
+            <p>
+              Document cash and property distributions with receipts. When you are ready, export
+              court-supporting packs and formal accounting for your attorney to review before any
+              filing.
+            </p>
+            <ul class="ev-list">
+              <li>Distribution receipts and acknowledgements</li>
+              <li>Optional sales / auctions when you need them</li>
+              <li>Exports support counsel — Estate Vault is not court e-filing</li>
+            </ul>
+          </div>
+          <figure class="ev-stage-media">
+            <img
+              class="ev-shot"
+              src="/estate-vault/screenshots/hiw-export.png"
+              width="1280"
+              height="720"
+              alt="Estate Vault reports and export"
+              loading="lazy"
+            />
+            <figcaption class="ev-shot-fallback">
+              Add real screenshot:<br /><code>screenshots/hiw-export.png</code>
+              <span>Reports / export or closing screen</span>
+            </figcaption>
+          </figure>
+        </article>
 
         <section class="ev-section" aria-labelledby="cta-heading">
           <h2 id="cta-heading">Start documenting</h2>
@@ -148,5 +210,14 @@
         </footer>
       </div>
     </div>
+    <script>
+      document.querySelectorAll('.ev-shot').forEach(function (img) {
+        function markMissing() {
+          img.classList.add('ev-shot--missing');
+        }
+        img.addEventListener('error', markMissing);
+        if (img.complete && img.naturalWidth === 0) markMissing();
+      });
+    </script>
   </body>
 </html>

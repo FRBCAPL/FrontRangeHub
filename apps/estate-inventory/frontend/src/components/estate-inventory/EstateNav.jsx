@@ -49,7 +49,9 @@ const EstateNav = ({
   onSignOutApp = null,
   /** Opens Settings → Billing (or portal). Shown when subscribed / quiet billing. */
   onOpenBilling = null,
-  showManageSubscription = false
+  showManageSubscription = false,
+  onOpenReports = null,
+  onLockAdmin = null
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -240,7 +242,6 @@ const EstateNav = ({
     ) : null;
 
   const prNavigateLinks = fullNavLinks.filter((l) => {
-    if (l.kind === 'roles') return false;
     if (l.label === 'Helper / Inventory Taker' || l.label === 'Heir / Sibling') return false;
     return true;
   });
@@ -270,6 +271,10 @@ const EstateNav = ({
 
   const accountItems = (
     <>
+      {onOpenReports ? menuAction('reports', 'Reports & exports', onOpenReports) : null}
+      {onLockAdmin
+        ? menuAction('lock', 'Lock admin (require PIN again)', onLockAdmin)
+        : null}
       {showManageSubscription && onOpenBilling
         ? menuAction('billing', 'Manage subscription', onOpenBilling)
         : null}
@@ -331,14 +336,13 @@ const EstateNav = ({
         </div>
 
         <div className="ei-nav-right" ref={menuRef}>
-          {variant === 'full' ? extraRight : null}
           {showSettings && onOpenSettings ? (
             <button
               type="button"
               className="ei-nav-icon-btn ei-nav-settings-btn"
-                onClick={onOpenSettings}
-                aria-label="Estate Settings"
-                title="Estate Settings"
+              onClick={onOpenSettings}
+              aria-label="Estate Settings"
+              title="Estate Settings"
             >
               <span className="ei-nav-settings-label">Estate Settings</span>
             </button>

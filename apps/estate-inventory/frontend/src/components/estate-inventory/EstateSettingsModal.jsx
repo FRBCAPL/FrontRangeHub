@@ -12,61 +12,82 @@ import EstateSettingsBillingModal from './EstateSettingsBillingModal';
 import EstateSettingsContactsModal from './EstateSettingsContactsModal';
 import { EstateSettingsShell } from './EstateSettingsShell';
 
-const SECTIONS = [
+/** Settings hub — grouped cards in a multi-column layout (not one long list). */
+const SETTINGS_GROUPS = [
   {
-    id: 'contacts',
-    label: 'Contacts',
-    hint: 'Attorneys, CPA, banks, utilities, auction, funeral home, and custom roles'
+    id: 'estate',
+    title: 'Estate',
+    items: [
+      {
+        id: 'case',
+        label: 'Case settings',
+        hint: 'Name, court case number, probate clock, family disclosure'
+      },
+      {
+        id: 'auction',
+        label: 'Sale / Auction',
+        hint: 'Dates, pickup window, PR bid-block emails'
+      },
+      {
+        id: 'contacts',
+        label: 'Contacts',
+        hint: 'Attorneys, CPA, banks, utilities, and more'
+      }
+    ]
   },
   {
-    id: 'billing',
-    label: 'Billing',
-    hint: 'Trial, subscription, and renew for this estate'
+    id: 'people',
+    title: 'People & access',
+    items: [
+      {
+        id: 'heirs',
+        label: 'Family / heirs',
+        hint: 'People, access tiers, and per-person PINs'
+      },
+      {
+        id: 'helper',
+        label: 'Helpers',
+        hint: 'Named inventory assistants and PINs'
+      },
+      {
+        id: 'admin',
+        label: 'Admin PIN',
+        hint: 'Executor / PR unlock password'
+      },
+      {
+        id: 'passwords',
+        label: 'View passwords',
+        hint: 'Show admin, helper, and each person’s PIN'
+      }
+    ]
   },
   {
-    id: 'passwords',
-    label: 'View passwords',
-    hint: 'Show admin, helper, and each person’s PIN'
-  },
-  {
-    id: 'activity',
-    label: 'Activity log',
-    hint: 'Who signed in and key actions on this estate'
-  },
-  {
-    id: 'records',
-    label: 'Records & retention',
-    hint: 'Close/reopen the estate and review what records are kept'
-  },
-  {
-    id: 'case',
-    label: 'Estate & probate',
-    hint: 'Estate name, optional court case number, and probate window'
-  },
-  {
-    id: 'auction',
-    label: 'Sale / Auction',
-    hint: 'Start/end dates, pickup window, and PR bid-block emails'
-  },
-  {
-    id: 'admin',
-    label: 'Admin PIN',
-    hint: 'Executor / PR unlock password'
-  },
-  {
-    id: 'helper',
-    label: 'Helpers',
-    hint: 'Named inventory assistants, each with their own PIN'
-  },
-  {
-    id: 'heirs',
-    label: 'Family / heirs',
-    hint: 'People, access tiers, admin labels, and per-person PINs'
+    id: 'account',
+    title: 'Account & records',
+    items: [
+      {
+        id: 'billing',
+        label: 'Billing',
+        hint: 'Trial, subscription, and renew for this estate'
+      },
+      {
+        id: 'activity',
+        label: 'Activity log',
+        hint: 'Who signed in and key actions'
+      },
+      {
+        id: 'records',
+        label: 'Records & retention',
+        hint: 'Close/reopen and review what is kept'
+      }
+    ]
   }
 ];
 
+const ALL_SECTION_IDS = SETTINGS_GROUPS.flatMap((g) => g.items.map((s) => s.id));
+
 /**
- * Settings menu — opens one focused section modal at a time (no long scroll form).
+ * Settings menu — opens one focused section modal at a time.
  */
 const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialSection = null }) => {
   const [section, setSection] = useState(null);
@@ -80,10 +101,7 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
     }
     setSettings(initialSettings || null);
     setPasswordRefreshKey((k) => k + 1);
-    if (
-      initialSection &&
-      SECTIONS.some((s) => s.id === initialSection)
-    ) {
+    if (initialSection && ALL_SECTION_IDS.includes(initialSection)) {
       setSection(initialSection);
     } else {
       setSection(null);
@@ -111,6 +129,8 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
           onClose={onClose}
           title="Estate settings"
           titleId="ei-settings-menu-title"
+          wide
+          extraClass="ei-settings-hub-modal"
           foot={
             <button type="button" className="ei-btn" onClick={onClose}>
               Close
@@ -119,20 +139,29 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
         >
           <div className="ei-modal-body">
             <p className="ei-settings-intro">
-              Choose a section to open. Each area saves on its own — financial cards still edit from
-              the Financial Health Snapshot on the admin home.
+              Choose a section. Each area saves on its own — money cards still edit from Financial
+              Health on the admin home.
             </p>
-            <div className="ei-settings-menu-grid" role="navigation" aria-label="Settings sections">
-              {SECTIONS.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="ei-action ei-settings-menu-card"
-                  onClick={() => setSection(s.id)}
-                >
-                  <span className="ei-action-label">{s.label}</span>
-                  <span className="ei-action-hint">{s.hint}</span>
-                </button>
+            <div className="ei-settings-menu-columns" role="navigation" aria-label="Settings sections">
+              {SETTINGS_GROUPS.map((group) => (
+                <section key={group.id} className="ei-settings-menu-group" aria-labelledby={`ei-set-g-${group.id}`}>
+                  <h4 id={`ei-set-g-${group.id}`} className="ei-settings-menu-group-title">
+                    {group.title}
+                  </h4>
+                  <div className="ei-settings-menu-grid">
+                    {group.items.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className="ei-action ei-settings-menu-card"
+                        onClick={() => setSection(s.id)}
+                      >
+                        <span className="ei-action-label">{s.label}</span>
+                        <span className="ei-action-hint">{s.hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           </div>

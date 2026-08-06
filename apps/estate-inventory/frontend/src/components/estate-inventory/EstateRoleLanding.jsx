@@ -102,6 +102,13 @@ const EstateRoleLanding = () => {
       primary: false
     },
     {
+      to: estateitCasePath(caseNumber, 'advisor'),
+      eyebrow: 'Counsel',
+      title: 'Advisor (read-only)',
+      hint: 'Attorney, CPA, or other invited contact. First visit: invite PIN then set password. Later: personal password. Family Updates, overview, and formal accounting only.',
+      primary: false
+    },
+    {
       to: estateitCasePath(caseNumber, 'auction'),
       eyebrow:
         auctionWindow.phase === 'open'
@@ -125,7 +132,7 @@ const EstateRoleLanding = () => {
             <>
               Choose a role — open any portal to work or preview.
               <br />
-              Heirs and helpers usually skip this page after signing in with their code.
+              Heirs, helpers, and advisors usually skip this page after signing in with their code.
             </>
           ) : (
             <>

@@ -244,6 +244,7 @@ async function ensureCollectionNumber(collectionRow, estateId) {
 const SIBLING_SESSION_KEY = 'estate-sibling-session';
 const ADMIN_UNLOCK_KEY = 'estate-admin-unlocked';
 const HELPER_SESSION_KEY = 'estate-helper-session';
+const ADVISOR_SESSION_KEY = 'estate-advisor-session';
 const AUCTION_BIDDER_KEY = 'estate-auction-bidder';
 const ADMIN_MUST_CHANGE_KEY = 'estate-admin-must-change-password';
 
@@ -271,12 +272,23 @@ export function setActiveEstateCase(caseNumber) {
     } catch {
       /* ignore */
     }
+    try {
+      const advisor = getStoredAdvisorSession();
+      if (advisor?.case_number && normalizeEstateCaseNumber(advisor.case_number) !== next) {
+        clearAdvisorSession();
+      }
+    } catch {
+      /* ignore */
+    }
   }
   if (next && next !== prev) {
     let sessionToken = null;
     try {
       sessionToken =
-        getStoredSiblingSession(next)?.token || getStoredHelperSession(next)?.token || null;
+        getStoredSiblingSession(next)?.token ||
+        getStoredHelperSession(next)?.token ||
+        getStoredAdvisorSession(next)?.token ||
+        null;
     } catch {
       /* ignore */
     }
@@ -1653,37 +1665,53 @@ export async function listSiblingAccounts(caseNumber) {
   if (!scoped.ok) return fail(scoped.error);
   let q = supabase
     .from('estate_sibling_accounts')
-    .select('sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, updated_at')
+    .select(
+      'sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, financial_visibility, updated_at'
+    )
     .eq('owner_id', estate.userId)
     .order('display_name', { ascending: true });
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
   const { data, error } = await q;
   if (error) {
     // Older DBs without newer columns — step down
-    if (/can_browse_rooms|preferred_name/i.test(error.message || '')) {
+    if (/financial_visibility|can_browse_rooms|preferred_name/i.test(error.message || '')) {
       let q2 = supabase
         .from('estate_sibling_accounts')
-        .select('sibling_key, display_name, preferred_name, access_tier, updated_at')
+        .select('sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, updated_at')
         .eq('owner_id', estate.userId)
         .order('display_name', { ascending: true });
       if (estate.estateId) q2 = q2.eq('estate_id', estate.estateId);
       let retry = await q2;
-      if (retry.error && /preferred_name/i.test(retry.error.message || '')) {
+      if (retry.error && /can_browse_rooms|preferred_name/i.test(retry.error.message || '')) {
         let q3 = supabase
           .from('estate_sibling_accounts')
-          .select('sibling_key, display_name, access_tier, updated_at')
+          .select('sibling_key, display_name, preferred_name, access_tier, updated_at')
           .eq('owner_id', estate.userId)
           .order('display_name', { ascending: true });
         if (estate.estateId) q3 = q3.eq('estate_id', estate.estateId);
         retry = await q3;
+        if (retry.error && /preferred_name/i.test(retry.error.message || '')) {
+          let q4 = supabase
+            .from('estate_sibling_accounts')
+            .select('sibling_key, display_name, access_tier, updated_at')
+            .eq('owner_id', estate.userId)
+            .order('display_name', { ascending: true });
+          if (estate.estateId) q4 = q4.eq('estate_id', estate.estateId);
+          retry = await q4;
+        }
       }
       if (retry.error) return fail(retry.error);
       return ok(
         (retry.data || []).map((row) => ({
           ...row,
           preferred_name: row.preferred_name ?? null,
-          can_browse_rooms: ['residual', 'both'].includes(
-            String(row.access_tier || 'residual').toLowerCase()
+          can_browse_rooms:
+            row.can_browse_rooms != null
+              ? Boolean(row.can_browse_rooms)
+              : ['residual', 'both'].includes(String(row.access_tier || 'residual').toLowerCase()),
+          financial_visibility: normalizeFamilyFinancialVisibility(
+            row.financial_visibility ||
+              (String(row.access_tier || '').toLowerCase() === 'memorandum' ? 'minimal' : 'minimal')
           ),
           admin_label: row.display_name
         }))
@@ -1698,6 +1726,11 @@ export async function listSiblingAccounts(caseNumber) {
         row.can_browse_rooms != null
           ? Boolean(row.can_browse_rooms)
           : ['residual', 'both'].includes(String(row.access_tier || 'residual').toLowerCase()),
+      financial_visibility: normalizeFamilyFinancialVisibility(
+        String(row.access_tier || '').toLowerCase() === 'memorandum'
+          ? 'minimal'
+          : row.financial_visibility
+      ),
       admin_label: row.display_name,
       preferred_name: row.preferred_name || null
     }))
@@ -1814,6 +1847,19 @@ export async function setHeirCanBrowseRooms(siblingKey, canBrowseRooms, caseNumb
   const { data, error } = await supabase.rpc('estate_set_heir_can_browse_rooms', {
     p_sibling_key: key,
     p_can_browse: Boolean(canBrowseRooms),
+    p_case_number: resolveCaseArg(caseNumber)
+  });
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+export async function setHeirFinancialVisibility(siblingKey, visibility, caseNumber) {
+  const key = String(siblingKey || '').trim();
+  if (!key) return fail('Missing heir key');
+  const { data, error } = await supabase.rpc('estate_set_heir_financial_visibility', {
+    p_sibling_key: key,
+    p_visibility: normalizeFamilyFinancialVisibility(visibility),
     p_case_number: resolveCaseArg(caseNumber)
   });
   const failed = rpcFail(data, error);
@@ -1954,6 +2000,7 @@ export async function loginEstateAdmin(password, caseNumber = '') {
     const cn = data.caseNumber || resolveCaseArg(caseNumber);
     clearSiblingSession();
     clearHelperSession();
+    clearAdvisorSession();
     clearAuctionBidder();
     markAdminUnlocked(Boolean(data.mustChangePassword), cn);
     logEstateActivity({
@@ -1981,6 +2028,7 @@ export async function verifyAdminPassword(password, caseNumber) {
   if (failed) return failed;
   clearSiblingSession();
   clearHelperSession();
+  clearAdvisorSession();
   markAdminUnlocked(Boolean(data?.must_change_password), caseNumber);
   return ok(data);
 }
@@ -2046,11 +2094,11 @@ export function clearSiblingSession() {
 }
 
 /**
- * True when this browser has an active heir or helper invite session.
+ * True when this browser has an active heir, helper, or advisor invite session.
  * Those roles must leave before unlocking Personal Representative / admin.
  */
 export function hasActiveNonAdminEstateRole() {
-  return Boolean(getStoredSiblingSession() || getStoredHelperSession());
+  return Boolean(getStoredSiblingSession() || getStoredHelperSession() || getStoredAdvisorSession());
 }
 
 /** Short label for the active invite role, if any. */
@@ -2067,11 +2115,17 @@ export function describeActiveNonAdminEstateRole() {
     const caseLabel = helper.case_number ? ` (case ${helper.case_number})` : '';
     return `helper (${name})${caseLabel}`;
   }
+  const advisor = getStoredAdvisorSession();
+  if (advisor) {
+    const name = advisor.display_name || 'advisor';
+    const caseLabel = advisor.case_number ? ` (case ${advisor.case_number})` : '';
+    return `advisor (${name})${caseLabel}`;
+  }
   return '';
 }
 
 const NON_ADMIN_ROLE_BLOCK =
-  'You are signed in as a family or helper role. Leave that estate session before signing in as Personal Representative.';
+  'You are signed in as a family, helper, or advisor role. Leave that estate session before signing in as Personal Representative.';
 
 export async function siblingLogin(caseNumber, displayName, password) {
   const name = String(displayName || '').trim();
@@ -2087,6 +2141,7 @@ export async function siblingLogin(caseNumber, displayName, password) {
   if (failed) return failed;
   clearAdminUnlock();
   clearHelperSession();
+  clearAdvisorSession();
   const session = persistSiblingSession(
     buildSiblingSessionFromPayload(data, resolveCaseArg(caseNumber))
   );
@@ -3212,6 +3267,7 @@ export async function loginWithEstateAccessCode({ caseNumber, code, displayName 
     const role = data.role;
     if (role === 'family') {
       clearHelperSession();
+      clearAdvisorSession();
       clearAdminUnlock();
       const session = persistSiblingSession(buildSiblingSessionFromPayload(data, cn));
       logEstateActivity({
@@ -3223,6 +3279,7 @@ export async function loginWithEstateAccessCode({ caseNumber, code, displayName 
     }
     if (role === 'helper') {
       clearSiblingSession();
+      clearAdvisorSession();
       clearAdminUnlock();
       const session = {
         token: data.token,
@@ -3243,10 +3300,30 @@ export async function loginWithEstateAccessCode({ caseNumber, code, displayName 
       });
       return ok({ role: 'helper', ...session });
     }
+    if (role === 'advisor') {
+      clearSiblingSession();
+      clearHelperSession();
+      clearAdminUnlock();
+      const session = persistAdvisorSession({
+        token: data.token,
+        display_name: data.display_name || 'Advisor',
+        contact_id: data.contact_id || null,
+        category: data.category || null,
+        case_number: data.case_number || cn,
+        expires_at: data.expires_at,
+        must_change_password: Boolean(data.must_change_password)
+      });
+      logEstateActivity({
+        eventType: 'advisor_login',
+        caseNumber: session.case_number,
+        sessionToken: session.token
+      });
+      return ok({ role: 'advisor', ...session });
+    }
   }
 
   // Personal Representative (admin password) — never escalate from an active
-  // heir/helper session on this device.
+  // heir/helper/advisor session on this device.
   if (hasActiveNonAdminEstateRole()) {
     return fail(NON_ADMIN_ROLE_BLOCK);
   }
@@ -3254,13 +3331,14 @@ export async function loginWithEstateAccessCode({ caseNumber, code, displayName 
   if (admin.success) {
     clearSiblingSession();
     clearHelperSession();
+    clearAdvisorSession();
     return ok({ role: 'admin', ...admin.data });
   }
 
   const rpcMsg = data?.error || (error ? error.message : '');
   if (rpcMsg && /does not exist|schema cache|estate_login_by_access_code/i.test(rpcMsg)) {
     return fail(
-      'Access-code sign-in needs a database update. Run supabase-migrations/estate-helper-accounts-2026-08.sql in Supabase.'
+      'Access-code sign-in needs a database update. Run supabase-migrations/estate-contact-advisor-portal-2026-08.sql in Supabase.'
     );
   }
   return fail(rpcMsg || admin.error || 'Incorrect access code for this estate.');
@@ -3694,6 +3772,201 @@ export function clearHelperSession() {
   }
 }
 
+function persistAdvisorSession(session) {
+  try {
+    localStorage.setItem(ADVISOR_SESSION_KEY, JSON.stringify(session));
+  } catch {
+    // ignore
+  }
+  return session;
+}
+
+export function getStoredAdvisorSession(caseNumber) {
+  try {
+    const raw = localStorage.getItem(ADVISOR_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.token) return null;
+    if (parsed.expires_at && new Date(parsed.expires_at).getTime() < Date.now()) {
+      localStorage.removeItem(ADVISOR_SESSION_KEY);
+      return null;
+    }
+    if (caseNumber) {
+      const want = normalizeEstateCaseNumber(caseNumber);
+      const have = normalizeEstateCaseNumber(parsed.case_number);
+      if (!want || !have || want !== have) return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function clearAdvisorSession() {
+  try {
+    localStorage.removeItem(ADVISOR_SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * PR: enable advisor portal for a contact and set/reset PIN (min 6 chars).
+ * Pass enabled=false to disable and clear the PIN.
+ */
+export async function setContactPortalPin({ contactId, pin, enabled = true, caseNumber }) {
+  const id = contactId;
+  if (!id) return fail('Contact required.');
+  const turnOn = enabled !== false;
+  const code = String(pin || '').trim();
+  if (turnOn && code.length < 6) {
+    return fail('PIN must be at least 6 characters.');
+  }
+  const { data, error } = await supabase.rpc('estate_set_contact_portal_pin', {
+    p_contact_id: id,
+    p_pin: turnOn ? code : '',
+    p_enabled: turnOn,
+    p_case_number: resolveCaseArg(caseNumber)
+  });
+  if (error) {
+    if (/estate_set_contact_portal_pin|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Advisor portal needs a database update. Run supabase-migrations/estate-contact-advisor-portal-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+/**
+ * Advisor sets personal password after invite PIN login (or changes later).
+ * First-time: pass empty currentPassword.
+ */
+export async function advisorSetPassword(currentPassword, newPassword, token) {
+  const sessionToken = token || getStoredAdvisorSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const next = String(newPassword || '').trim();
+  if (next.length < 6) return fail('New password must be at least 6 characters.');
+  const { data, error } = await supabase.rpc('estate_advisor_set_password', {
+    p_session_token: sessionToken,
+    p_current_password: String(currentPassword || '').trim(),
+    p_new_password: next
+  });
+  if (error) {
+    if (/estate_advisor_set_password|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Advisor passwords need a database update. Run supabase-migrations/estate-advisor-personal-password-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  try {
+    const raw = localStorage.getItem(ADVISOR_SESSION_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      parsed.must_change_password = false;
+      localStorage.setItem(ADVISOR_SESSION_KEY, JSON.stringify(parsed));
+    }
+  } catch {
+    // ignore
+  }
+  return ok(data);
+}
+
+export async function advisorListFamilyUpdates(token) {
+  const sessionToken = token || getStoredAdvisorSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_advisor_list_family_updates', {
+    p_session_token: sessionToken
+  });
+  if (error) {
+    if (/estate_advisor_list_family_updates|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Advisor portal needs a database update. Run supabase-migrations/estate-contact-advisor-portal-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data?.updates || []);
+}
+
+export async function advisorGetFamilyUpdate(updateId, token) {
+  const sessionToken = token || getStoredAdvisorSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  if (!updateId) return fail('Update required.');
+  const { data, error } = await supabase.rpc('estate_advisor_get_family_update', {
+    p_session_token: sessionToken,
+    p_update_id: updateId
+  });
+  if (error) {
+    if (/estate_advisor_get_family_update|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Advisor portal needs a database update. Run supabase-migrations/estate-contact-advisor-portal-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  const pack = data?.package && typeof data.package === 'object' ? data.package : {};
+  return ok({
+    id: data.id,
+    update_number: data.update_number,
+    updateNumber: data.update_number,
+    title: data.title,
+    pr_note: data.pr_note,
+    prNote: data.pr_note,
+    published_at: data.published_at,
+    package: pack,
+    ...pack
+  });
+}
+
+export async function advisorGetOverview(token) {
+  const sessionToken = token || getStoredAdvisorSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_advisor_overview', {
+    p_session_token: sessionToken
+  });
+  if (error) {
+    if (/estate_advisor_overview|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Advisor portal needs a database update. Run supabase-migrations/estate-contact-advisor-portal-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
+export async function advisorGetFormalAccounting(token) {
+  const sessionToken = token || getStoredAdvisorSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_advisor_formal_accounting', {
+    p_session_token: sessionToken
+  });
+  if (error) {
+    if (/estate_advisor_formal_accounting|schema cache|does not exist/i.test(error.message || '')) {
+      return fail(
+        'Advisor portal needs a database update. Run supabase-migrations/estate-contact-advisor-portal-2026-08.sql in Supabase.'
+      );
+    }
+    return fail(error);
+  }
+  const failed = rpcFail(data, error);
+  if (failed) return failed;
+  return ok(data);
+}
+
 export async function helperLogin(caseNumber, password, displayName) {
   const name = (displayName || '').trim();
   if (name.length < 2) {
@@ -3718,6 +3991,7 @@ export async function helperLogin(caseNumber, password, displayName) {
   if (failed) return failed;
   clearAdminUnlock();
   clearSiblingSession();
+  clearAdvisorSession();
   const session = {
     token: data.token,
     display_name: data.display_name,
@@ -5346,6 +5620,12 @@ export async function deleteEstateCreditorClaim(claimId, caseNumber) {
 }
 
 const ESTATE_CONTACT_SELECT =
+  'id, owner_id, estate_id, category, custom_category, display_name, company, role_title, phone, email, website, address_line1, address_line2, city, region, postal_code, notes, linked_sibling_key, portal_enabled, pin_plain, password_configured, sort_order, created_at, updated_at';
+
+const ESTATE_CONTACT_SELECT_LEGACY =
+  'id, owner_id, estate_id, category, custom_category, display_name, company, role_title, phone, email, website, address_line1, address_line2, city, region, postal_code, notes, linked_sibling_key, portal_enabled, pin_plain, sort_order, created_at, updated_at';
+
+const ESTATE_CONTACT_SELECT_BASE =
   'id, owner_id, estate_id, category, custom_category, display_name, company, role_title, phone, email, website, address_line1, address_line2, city, region, postal_code, notes, linked_sibling_key, sort_order, created_at, updated_at';
 
 function normalizeEstateContactInput(input = {}) {
@@ -5403,14 +5683,41 @@ export async function listEstateContacts(caseNumber) {
     .order('display_name', { ascending: true });
   if (estate.estateId) q = q.eq('estate_id', estate.estateId);
 
-  const { data, error } = await q;
+  let { data, error } = await q;
+  if (error && /password_configured|schema cache|column/i.test(error.message || '')) {
+    let q2 = supabase
+      .from('estate_contacts')
+      .select(ESTATE_CONTACT_SELECT_LEGACY)
+      .eq('owner_id', estate.userId)
+      .order('category', { ascending: true })
+      .order('display_name', { ascending: true });
+    if (estate.estateId) q2 = q2.eq('estate_id', estate.estateId);
+    ({ data, error } = await q2);
+  }
+  if (error && /portal_enabled|pin_plain|schema cache|column/i.test(error.message || '')) {
+    let q3 = supabase
+      .from('estate_contacts')
+      .select(ESTATE_CONTACT_SELECT_BASE)
+      .eq('owner_id', estate.userId)
+      .order('category', { ascending: true })
+      .order('display_name', { ascending: true });
+    if (estate.estateId) q3 = q3.eq('estate_id', estate.estateId);
+    ({ data, error } = await q3);
+  }
   if (error) {
     if (/estate_contacts|schema cache|does not exist/i.test(error.message || '')) {
       return ok([]);
     }
     return fail(error);
   }
-  return ok(data || []);
+  return ok(
+    (data || []).map((row) => ({
+      ...row,
+      portal_enabled: Boolean(row.portal_enabled),
+      pin_configured: Boolean(row.portal_enabled && (row.pin_plain || row.pin_hash)),
+      password_configured: Boolean(row.password_configured)
+    }))
+  );
 }
 
 export async function addEstateContact(input = {}) {
@@ -6776,6 +7083,7 @@ const estateInventoryService = {
   addHeir,
   setHeirAccessTier,
   setHeirCanBrowseRooms,
+  setHeirFinancialVisibility,
   renameHeir,
   listHeirNamesForCase,
   removeHeir,
@@ -6813,6 +7121,14 @@ const estateInventoryService = {
   markAdminMessagesRead,
   getStoredHelperSession,
   clearHelperSession,
+  getStoredAdvisorSession,
+  clearAdvisorSession,
+  setContactPortalPin,
+  advisorSetPassword,
+  advisorListFamilyUpdates,
+  advisorGetFamilyUpdate,
+  advisorGetOverview,
+  advisorGetFormalAccounting,
   helperLogin,
   helperListCollections,
   helperCreateItem,

@@ -103,6 +103,16 @@ export const ESTATE_GLOSSARY = {
     term: 'Disclosure timeline',
     short: 'What has been disclosed and what stage comes next.',
     full: 'The disclosure timeline shows estate milestones (Letters, inventory, sale/auction, claims window, distributions, final accounting) so beneficiaries understand why final numbers may not appear yet. It supports staged transparency rather than continuous live financial access.'
+  },
+  contact_advisor_portal: {
+    term: 'Advisor portal',
+    short: 'Invite counsel or CPA with a PIN; they set their own password after first sign-in.',
+    full: 'Generate an invite PIN for a contact. They sign in from Estate Vault home with that PIN once, then must set a personal password for later visits. Regenerating the invite PIN clears their personal password. The Advisor portal is read-only: Family Updates, estate overview, and formal accounting. Disable the portal to revoke access.'
+  },
+  contact_link_heir: {
+    term: 'Advisor for',
+    short: 'Assign this contact as a specific heir’s advisor (attorney, CPA, etc.).',
+    full: 'Use this when a contact represents or advises one person on the estate — for example, an attorney retained by a particular beneficiary. It is a directory assignment for your records and does not change that heir’s PIN, the Advisor portal PIN, or what either person can see. Leave blank if the contact advises the estate as a whole.'
   }
 };
 

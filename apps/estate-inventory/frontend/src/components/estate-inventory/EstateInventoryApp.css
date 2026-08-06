@@ -854,16 +854,64 @@ button.ei-nav-menu-btn-item {
   text-align: left;
   color: var(--ei-ink) !important;
   -webkit-text-fill-color: var(--ei-ink);
+  min-height: 0;
+  padding: 0.7rem 0.8rem;
 }
 
 .ei-settings-menu-card .ei-action-label {
   color: var(--ei-ink) !important;
   -webkit-text-fill-color: var(--ei-ink);
+  font-size: 0.95rem;
 }
 
 .ei-settings-menu-card .ei-action-hint {
   color: var(--ei-muted) !important;
   -webkit-text-fill-color: var(--ei-muted);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.ei-settings-menu-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  margin-top: 0.35rem;
+  align-items: start;
+}
+
+.ei-settings-menu-group {
+  margin: 0;
+  min-width: 0;
+}
+
+.ei-settings-menu-group-title {
+  margin: 0 0 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--ei-line);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ei-accent);
+}
+
+.ei-settings-menu-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0;
+}
+
+@media (max-width: 820px) {
+  .ei-settings-menu-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .ei-settings-menu-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ei-toolbar {
@@ -2443,11 +2491,259 @@ button.ei-helper-photo-remove {
   margin: 0.55rem 0 0;
 }
 
-.ei-settings-menu-grid {
+/* Case settings — clearer sections */
+.ei-case-identity {
+  margin: 0 0 0.95rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ei-elevated) 55%, var(--ei-panel));
+}
+
+.ei-case-identity-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ei-case-identity-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+
+.ei-case-identity-label {
+  color: var(--ei-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ei-case-identity-value {
+  color: var(--ei-ink);
+  overflow-wrap: anywhere;
+}
+
+.ei-case-identity-meta {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ei-muted);
+}
+
+.ei-case-section {
+  margin: 0 0 0.95rem;
+  padding: 0.8rem 0.85rem 0.9rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ei-panel) 88%, transparent);
+}
+
+.ei-case-section-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--ei-ink);
+}
+
+.ei-case-section-hint {
+  margin: 0.15rem 0 0;
+}
+
+.ei-case-section .ei-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.ei-case-mode-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  margin: 0.15rem 0 0.75rem;
+}
+
+.ei-case-mode-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  background: var(--ei-surface);
+  font-size: 0.86rem;
+  cursor: pointer;
+  color: var(--ei-muted);
+}
+
+.ei-case-mode-choice input {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ei-case-mode-choice.is-selected {
+  border-color: color-mix(in srgb, var(--ei-accent) 55%, var(--ei-line));
+  background: color-mix(in srgb, var(--ei-accent) 12%, var(--ei-surface));
+  color: var(--ei-ink);
+  font-weight: 600;
+}
+
+.ei-case-optional {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.8rem 0.7rem;
+  border: 1px dashed color-mix(in srgb, var(--ei-line) 80%, transparent);
+  border-radius: 10px;
+  background: transparent;
+}
+
+.ei-case-optional summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--ei-ink);
+  list-style-position: outside;
+  padding: 0.2rem 0;
+}
+
+.ei-case-optional[open] summary {
+  margin-bottom: 0.55rem;
+}
+
+.ei-case-optional .ei-field {
+  margin-top: 0.55rem;
+}
+
+.ei-case-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0 0 0.9rem;
+}
+
+.ei-case-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.45rem 0.25rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  background: var(--ei-surface);
+  color: var(--ei-muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.ei-case-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: var(--ei-elevated);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.ei-case-step-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.ei-case-step.is-active {
+  border-color: color-mix(in srgb, var(--ei-accent) 55%, var(--ei-line));
+  background: color-mix(in srgb, var(--ei-accent) 12%, var(--ei-surface));
+  color: var(--ei-ink);
+}
+
+.ei-case-step.is-active .ei-case-step-num {
+  background: var(--ei-accent-soft);
+  color: var(--ei-accent);
+}
+
+.ei-case-step.is-done:not(.is-active) {
+  color: var(--ei-ink);
+}
+
+.ei-case-panel {
+  margin: 0;
+}
+
+.ei-case-people-heading {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--ei-ink);
+}
+
+.ei-case-heir-vis-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  margin-top: 0.35rem;
+}
+
+.ei-case-heir-vis-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 11rem);
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  background: var(--ei-surface);
+}
+
+.ei-case-heir-vis-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ei-case-heir-vis-name {
+  font-weight: 600;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.ei-case-heir-vis-label {
+  margin: 0;
+  display: block;
+}
+
+.ei-case-heir-vis-label select {
+  width: 100%;
+}
+
+.ei-modal-settings .ei-modal-foot.ei-btn-row {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 420px) {
+  .ei-case-mode-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ei-case-identity-row {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+
+  .ei-case-step-label {
+    font-size: 0.65rem;
+  }
+
+  .ei-case-heir-vis-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ei-access-passwords {
@@ -2526,6 +2822,164 @@ button.ei-helper-photo-remove {
 
 .ei-modal-settings-wide {
   max-width: min(560px, 96vw);
+}
+
+.ei-settings-hub-modal.ei-modal-settings-wide {
+  width: min(100%, 920px);
+  max-width: min(920px, 96vw);
+}
+
+/* Contacts — directory vs form */
+.ei-contacts-modal.ei-modal-settings-wide {
+  width: min(100%, 640px);
+  max-width: min(640px, 96vw);
+}
+
+.ei-contacts-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.ei-contacts-search {
+  margin: 0;
+  min-width: min(100%, 14rem);
+  flex: 1 1 12rem;
+  max-width: 18rem;
+}
+
+.ei-contacts-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.ei-contacts-group {
+  margin: 0;
+}
+
+.ei-contacts-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.ei-contacts-group-head h4 {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.ei-contacts-group-count {
+  font-size: 0.78rem;
+  color: var(--ei-muted);
+  font-weight: 600;
+}
+
+.ei-contacts-ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ei-contacts-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem 0.75rem;
+  align-items: start;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ei-panel) 88%, transparent);
+}
+
+.ei-contacts-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.ei-contacts-card-main strong {
+  font-size: 0.95rem;
+}
+
+.ei-contacts-card-sub {
+  font-size: 0.82rem;
+  color: var(--ei-muted);
+  overflow-wrap: anywhere;
+}
+
+.ei-contacts-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+
+.ei-contacts-form-intro {
+  margin: 0 0 0.75rem;
+}
+
+.ei-contacts-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 0.75rem;
+}
+
+.ei-contacts-form-grid .ei-field {
+  margin: 0;
+}
+
+.ei-contacts-form-grid .ei-field-wide {
+  grid-column: 1 / -1;
+}
+
+.ei-contacts-more {
+  margin-top: 0.85rem;
+  padding: 0.55rem 0.75rem 0.7rem;
+  border: 1px dashed color-mix(in srgb, var(--ei-line) 80%, transparent);
+  border-radius: 10px;
+}
+
+.ei-contacts-more summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 650;
+  padding: 0.15rem 0;
+}
+
+.ei-contacts-more[open] summary {
+  margin-bottom: 0.55rem;
+}
+
+.ei-contacts-label-with-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+  .ei-contacts-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ei-contacts-card-actions {
+    justify-content: flex-start;
+  }
+
+  .ei-contacts-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .ei-reports-actions {
@@ -5608,7 +6062,7 @@ button.ei-helper-photo-remove {
     flex: 1 1 auto;
     justify-content: flex-end;
     min-width: 0;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 0.3rem;
   }
 
@@ -5616,8 +6070,8 @@ button.ei-helper-photo-remove {
     font-size: 0.8rem !important;
     padding: 0.45rem 0.75rem !important;
     white-space: nowrap !important;
-    width: max-content !important;
-    min-width: max-content !important;
+    width: auto !important;
+    min-width: 0 !important;
     flex: 0 0 auto !important;
   }
 

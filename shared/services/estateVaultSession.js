@@ -9,6 +9,7 @@
 import { ESTATEIT_PATH } from '../utils/estateInventoryConstants.js';
 import {
   clearAdminUnlock,
+  clearAdvisorSession,
   clearAuctionBidder,
   clearAuctionUnlock,
   clearHelperSession,
@@ -22,6 +23,7 @@ export function leaveCurrentEstate() {
   clearAdminUnlock();
   clearSiblingSession();
   clearHelperSession();
+  clearAdvisorSession();
   clearAuctionBidder();
   clearAuctionUnlock();
   try {
