@@ -282,15 +282,18 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
           <span>or use email</span>
         </div>
 
-        <form className="ei-modal-form" onSubmit={handleEmailSubmit}>
+        <form className="ei-modal-form" onSubmit={handleEmailSubmit} autoComplete="off">
           <div className="ei-field">
             <label htmlFor="ei-pr-email">{isSignup ? 'Email for your new account' : 'Email'}</label>
             <input
               id="ei-pr-email"
+              name="estate_vault_pr_email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
               required
               disabled={disabled}
             />
@@ -302,10 +305,13 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
             <div className="ei-password-row">
               <input
                 id="ei-pr-password"
+                name="estate_vault_pr_password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
                 required
                 minLength={isSignup ? 8 : 1}
                 disabled={disabled}
@@ -331,10 +337,13 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
               <label htmlFor="ei-pr-password-confirm">Confirm password</label>
               <input
                 id="ei-pr-password-confirm"
+                name="estate_vault_pr_password_confirm"
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
                 required
                 minLength={8}
                 disabled={disabled}

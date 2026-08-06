@@ -727,7 +727,7 @@ const SiblingPortal = () => {
             code — no name required.
           </p>
         </header>
-        <form className="ei-portal-card ei-family-signin-card" onSubmit={handleLogin}>
+        <form className="ei-portal-card ei-family-signin-card" onSubmit={handleLogin} autoComplete="off">
           <div className="ei-field">
             <label htmlFor="sib-estate">Estate</label>
             <input id="sib-estate" value={estateLabel} readOnly tabIndex={-1} className="ei-input-readonly" />
@@ -737,11 +737,14 @@ const SiblingPortal = () => {
             <div className="ei-password-row">
               <input
                 id="sib-pin"
+                name="estate_vault_family_pin"
                 type={showPassword ? 'text' : 'password'}
                 value={pin}
                 onChange={(e) => setPin(e.target.value)}
                 required
-                autoComplete="one-time-code"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
                 inputMode="numeric"
                 placeholder="6-digit PIN"
               />

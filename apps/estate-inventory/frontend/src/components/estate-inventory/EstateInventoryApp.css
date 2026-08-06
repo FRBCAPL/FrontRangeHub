@@ -1785,8 +1785,21 @@ button.ei-nav-menu-btn-item {
   min-height: 44px;
   background: var(--ei-elevated) !important;
   color: var(--ei-ink) !important;
-  -webkit-text-fill-color: var(--ei-ink);
-  caret-color: var(--ei-ink);
+  /* Do not set -webkit-text-fill-color on empty fields ? Chromium often hides the caret. */
+  -webkit-text-fill-color: unset;
+  caret-color: var(--ei-accent) !important;
+  cursor: text;
+  outline: none;
+}
+
+.ei-field input:focus,
+.ei-field select:focus,
+.ei-field textarea:focus,
+.estate-inventory input:not([type='checkbox']):not([type='radio']):not([type='hidden']):focus,
+.estate-inventory select:focus,
+.estate-inventory textarea:focus {
+  border-color: var(--ei-accent);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.28);
 }
 
 .estate-inventory input::placeholder,
@@ -1796,11 +1809,30 @@ button.ei-nav-menu-btn-item {
   opacity: 1;
 }
 
+/* Autofill: restore fill color only when browser paints credentials */
+.estate-inventory input:-webkit-autofill,
+.estate-inventory input:-webkit-autofill:hover,
+.estate-inventory input:-webkit-autofill:focus,
+.estate-inventory textarea:-webkit-autofill,
+.estate-inventory textarea:-webkit-autofill:hover,
+.estate-inventory textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ei-ink) !important;
+  caret-color: var(--ei-accent) !important;
+  box-shadow: 0 0 0 1000px var(--ei-elevated) inset !important;
+  transition: background-color 99999s ease-in-out 0s;
+}
+
+.estate-inventory select,
+.ei-field select {
+  cursor: default;
+}
+
 .estate-inventory input.ei-input-readonly,
 .ei-input-readonly {
   background: var(--ei-panel) !important;
   color: var(--ei-muted) !important;
   -webkit-text-fill-color: var(--ei-muted);
+  caret-color: transparent;
   cursor: default;
   border-style: dashed;
 }
@@ -7143,10 +7175,12 @@ button.ei-voice-btn.is-listening {
   border-radius: 10px !important;
   background: var(--ei-elevated) !important;
   color: var(--ei-ink) !important;
-  -webkit-text-fill-color: var(--ei-ink) !important;
+  -webkit-text-fill-color: unset;
+  caret-color: var(--ei-accent) !important;
   font-size: 1rem !important;
   box-shadow: none !important;
   outline: none;
+  cursor: text;
 }
 
 .ei-force-pwd-modal .ei-field input:focus {

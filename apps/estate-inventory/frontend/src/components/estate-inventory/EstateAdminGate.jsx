@@ -207,17 +207,20 @@ const EstateAdminGate = () => {
           first unlock.
         </div>
       ) : null}
-      <form className="ei-portal-card" onSubmit={handleSubmit}>
+      <form className="ei-portal-card" onSubmit={handleSubmit} autoComplete="off">
         <div className="ei-field">
           <label htmlFor="ei-admin-pass">Admin PIN</label>
           <div className="ei-password-row">
             <input
               id="ei-admin-pass"
+              name="estate_vault_admin_pin"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              autoComplete="current-password"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
               autoFocus
               disabled={Boolean(blockedRole)}
             />

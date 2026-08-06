@@ -149,7 +149,7 @@ const HelperPortal = () => {
           Sign in with the <strong>name</strong> and <strong>PIN</strong> the Personal Representative
           set for you under Settings → Helpers. Your name is stamped on every photo you take.
         </p>
-        <form className="ei-portal-card" onSubmit={handleLogin}>
+        <form className="ei-portal-card" onSubmit={handleLogin} autoComplete="off">
           <div className="ei-field">
             <label htmlFor="help-case">Case number</label>
             <input id="help-case" value={caseNumber} readOnly tabIndex={-1} className="ei-input-readonly" />
@@ -161,12 +161,15 @@ const HelperPortal = () => {
             <label htmlFor="help-name">Your name</label>
             <input
               id="help-name"
+              name="estate_vault_helper_name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Exact name the PR set for you"
               required
               minLength={2}
-              autoComplete="name"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
             />
           </div>
           <div className="ei-field">
@@ -174,13 +177,16 @@ const HelperPortal = () => {
             <div className="ei-password-row">
               <input
                 id="help-pass"
+                name="estate_vault_helper_pin"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 inputMode="numeric"
                 pattern="[0-9]*"
                 required
-                autoComplete="one-time-code"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
               />
               <button
                 type="button"

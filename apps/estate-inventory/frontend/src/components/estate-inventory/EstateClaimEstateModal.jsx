@@ -47,7 +47,7 @@ const EstateClaimEstateModal = ({ open, onClose, onClaimed }) => {
             ×
           </button>
         </div>
-        <form className="ei-modal-form" onSubmit={handleSubmit}>
+        <form className="ei-modal-form" onSubmit={handleSubmit} autoComplete="off">
           <div className="ei-modal-body">
             <p className="ei-settings-hint" style={{ marginTop: 0 }}>
               Use this once per estate to set <strong>your account email</strong> as the sole primary
@@ -59,11 +59,15 @@ const EstateClaimEstateModal = ({ open, onClose, onClaimed }) => {
               <label htmlFor="ei-claim-case">Case number</label>
               <input
                 id="ei-claim-case"
+                name="estate_vault_claim_case"
                 value={caseNumber}
                 onChange={(e) => setCaseNumber(e.target.value)}
                 placeholder="e.g. 25PR09999"
                 required
                 autoFocus
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
               />
             </div>
             <div className="ei-field">
@@ -71,11 +75,14 @@ const EstateClaimEstateModal = ({ open, onClose, onClaimed }) => {
               <div className="ei-password-row">
                 <input
                   id="ei-claim-pass"
+                  name="estate_vault_claim_pin"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
                 />
                 <button
                   type="button"

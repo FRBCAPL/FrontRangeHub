@@ -111,18 +111,25 @@ const EstateFamilySignIn = () => {
       </header>
 
       {step === 'name' ? (
-        <form className="ei-portal-card ei-case-entry-card" onSubmit={handleFindEstate}>
+        <form
+          className="ei-portal-card ei-case-entry-card"
+          onSubmit={handleFindEstate}
+          autoComplete="off"
+        >
           <div className="ei-field">
             <label htmlFor="ei-estate-name-entry">Estate name</label>
             <input
               id="ei-estate-name-entry"
+              name="estate_vault_estate_name"
               value={estateNameInput}
               onChange={(e) => {
                 setEstateNameInput(e.target.value);
                 if (error) setError('');
               }}
               placeholder="Enter Estate Name"
-              autoComplete="organization"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
               autoFocus
               required
               minLength={2}
@@ -137,7 +144,11 @@ const EstateFamilySignIn = () => {
           </button>
         </form>
       ) : (
-        <form className="ei-portal-card ei-case-entry-card" onSubmit={handleAccessCode}>
+        <form
+          className="ei-portal-card ei-case-entry-card"
+          onSubmit={handleAccessCode}
+          autoComplete="off"
+        >
           <p className="ei-settings-hint" style={{ marginTop: 0 }}>
             Signing into <strong>{matchedEstate?.estateName}</strong>
           </p>
@@ -145,10 +156,13 @@ const EstateFamilySignIn = () => {
             <label htmlFor="ei-person-name">Your name (required for helpers)</label>
             <input
               id="ei-person-name"
+              name="estate_vault_display_name"
               value={personName}
               onChange={(e) => setPersonName(e.target.value)}
               placeholder="Helpers: exact name the PR set"
-              autoComplete="name"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
             />
           </div>
           <div className="ei-field">
@@ -156,11 +170,14 @@ const EstateFamilySignIn = () => {
             <div className="ei-password-row">
               <input
                 id="ei-entry-code"
+                name="estate_vault_access_pin"
                 type={showCode ? 'text' : 'password'}
                 value={accessCode}
                 onChange={(e) => setAccessCode(e.target.value)}
                 placeholder="Your unique code for this estate"
-                autoComplete="current-password"
+                autoComplete="off"
+                data-lpignore="true"
+                data-1p-ignore="true"
                 required
                 autoFocus
               />
