@@ -54,6 +54,16 @@ export const ESTATE_GLOSSARY = {
     short: 'Operational cash estimate from Funds.',
     full: CASH_AVAILABLE_RECONCILIATION
   },
+  estate_money_model: {
+    term: 'Estate money',
+    short: 'Think of estate money in two boxes: cash and property.',
+    full: 'Think of estate money in two boxes. Cash — money in estate bank accounts. You pay bills and heirs from here. The balance updates when you record money in or out — you don\u2019t type it. Property — house, car, furniture estimates. Useful for the big picture, but not spending money until sold and deposited.'
+  },
+  primary_fund_account: {
+    term: 'Primary fund account',
+    short: 'The default bank account for bills and deposits.',
+    full: 'The primary fund account is the default Cash on hand account Estate Vault picks when you pay a bill or record money coming in. Use the estate\u2019s main checking account here. You can still choose a different fund account on each transaction.'
+  },
   pr_loan: {
     term: 'PR loan',
     short: 'Money you paid out of pocket that the estate should pay back.',

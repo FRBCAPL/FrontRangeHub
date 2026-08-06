@@ -153,8 +153,8 @@ const EstateFinanceDashboard = ({
             <button
               type="button"
               className="ei-finance-balance-card"
-              onClick={() => setLedgerTab(hasFundAccount ? 'transactions' : 'accounts')}
-              title="See money in and out"
+              onClick={() => setLedgerTab('summary')}
+              title="Open estate money overview"
             >
               <span className="ei-finance-balance-label">Available</span>
               <span className="ei-finance-balance-amount">{formatMoney(cash)}</span>

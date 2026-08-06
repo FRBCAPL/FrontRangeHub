@@ -94,8 +94,8 @@ describe('computeFinanceSnapshot', () => {
       fundsAreTransactionComputed: true
     });
 
-    assert.equal(snap.fundsAvailable, 1150);
-    assert.equal(snap.nonCashAssets, 500);
+    assert.equal(snap.fundsAvailable, 1100);
+    assert.equal(snap.nonCashAssets, 550);
     assert.equal(snap.grossEstateValue, 1650);
     assert.equal(snap.totalLiabilities, 200);
     assert.equal(snap.netDistributable, 1450);

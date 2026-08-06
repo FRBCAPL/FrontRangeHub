@@ -334,7 +334,7 @@ button.ei-nav-menu-btn-item {
   max-width: 34rem;
 }
 
-/* PR admin home — denser ops-first layout */
+/* PR admin home ? denser ops-first layout */
 .ei-home {
   display: flex;
   flex-direction: column;
@@ -427,7 +427,7 @@ button.ei-nav-menu-btn-item {
   background: var(--ei-panel);
 }
 
-/* Probate — calm / neutral (must not look like Needs attention). */
+/* Probate ? calm / neutral (must not look like Needs attention). */
 .ei-status-chip--probate,
 .ei-status-chip--ok {
   border-color: var(--ei-line);
@@ -439,7 +439,7 @@ button.ei-nav-menu-btn-item {
   background: rgba(154, 52, 18, 0.18);
 }
 
-/* Soft “needs setup” — not the Needs attention orange. */
+/* Soft ?needs setup? ? not the Needs attention orange. */
 .ei-status-chip--setup {
   border-color: rgba(45, 212, 191, 0.28);
   background: rgba(19, 78, 74, 0.28);
@@ -737,7 +737,7 @@ button.ei-nav-menu-btn-item {
 }
 
 .ei-home-fold[open] > summary::before {
-  content: '−';
+  content: '?';
 }
 
 .ei-home-fold .ei-next-steps,
@@ -1448,18 +1448,56 @@ button.ei-nav-menu-btn-item {
 }
 
 .ei-modal-close {
+  position: relative;
   flex: 0 0 auto;
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 2.5rem;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  margin: 0;
+  padding: 0;
   border: none;
+  border-radius: 8px;
   background: transparent;
   color: var(--ei-muted);
-  font-size: 1.75rem;
-  line-height: 1;
+  /* Hide legacy ??? text so it can?t wrap/stack inside the hit target */
+  font-size: 0;
+  line-height: 0;
+  letter-spacing: 0;
+  overflow: hidden;
+  white-space: nowrap;
   cursor: pointer;
-  padding: 0.35rem 0.55rem;
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: 8px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.ei-modal-close::before,
+.ei-modal-close::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1rem;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.ei-modal-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.ei-modal-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.ei-modal-close-icon {
+  display: none;
 }
 
 .ei-modal-close:hover,
@@ -1471,11 +1509,16 @@ button.ei-nav-menu-btn-item {
 
 .ei-modal-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.85rem 1rem 0.55rem;
   flex-shrink: 0;
+  min-width: 0;
+}
+
+.ei-modal-head > div:first-child {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -2518,7 +2561,7 @@ button.ei-helper-photo-remove {
   background: var(--ei-panel);
 }
 
-/* Register-to-bid modal — compact, content-sized; shell CSS overrides */
+/* Register-to-bid modal ? compact, content-sized; shell CSS overrides */
 .ei-modal-auction-reg {
   display: flex;
   flex-direction: column;
@@ -2679,7 +2722,7 @@ button.ei-helper-photo-remove {
   accent-color: var(--ei-accent);
 }
 
-/* Memorandum vs residual interest — clear PR choice block */
+/* Memorandum vs residual interest ? clear PR choice block */
 .ei-ownership-block {
   margin: 0.85rem 0 0.35rem;
   padding: 0.85rem 0.9rem 0.95rem;
@@ -3815,7 +3858,7 @@ button.ei-helper-photo-remove {
   background: color-mix(in srgb, var(--ei-accent) 75%, #d6b981);
 }
 
-/* —— Estate Vault gateway (home) —— */
+/* ?? Estate Vault gateway (home) ?? */
 .estate-inventory.ei-gateway {
   --ei-gw-brass: #d6b981;
   --ei-gw-brass-soft: rgba(214, 185, 129, 0.16);
@@ -4067,7 +4110,7 @@ button.ei-helper-photo-remove {
   background: #0c0a09;
 }
 
-/* Gateway home: larger display name — lock uses same em sizing */
+/* Gateway home: larger display name ? lock uses same em sizing */
 .ei-gateway .ei-brand-title {
   margin: 0 0 0.75rem;
   font-size: clamp(2.55rem, 9vw, 3.65rem);
@@ -5387,10 +5430,10 @@ button.ei-helper-photo-remove {
   display: flex;
   flex-direction: column;
   padding: 0;
-  width: min(100%, 620px);
+  width: min(100%, 720px);
   /* An explicit height (not just max-height) is required. As a grid item the
      default min-height/min-width of auto resolves to min-content, and a
-     minimum beats a maximum — tall tabs would stretch the dialog past the
+     minimum beats a maximum ? tall tabs would stretch the dialog past the
      viewport and push the pinned footer off screen. */
   height: min(88dvh, 88vh);
   max-height: min(88dvh, 88vh);
@@ -5417,31 +5460,152 @@ button.ei-helper-photo-remove {
   flex-shrink: 0;
 }
 
-.ei-ledger-tabs {
-  flex-shrink: 0;
+/* ?? Estate money nav (underline tabs + pinned More/Help) ?? */
+.ei-ledger-nav {
   display: flex;
-  gap: 0.25rem;
-  padding: 0.5rem 0.75rem 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-width: 0;
   border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-ledger-nav-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0 0.55rem 0 0.65rem;
+}
+
+.ei-ledger-nav-scroll-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ei-ledger-nav-scroll {
+  display: flex;
+  align-items: stretch;
+  gap: 0.05rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  padding-right: 0.35rem;
+  scroll-padding-inline: 0.5rem;
+}
+
+.ei-ledger-nav-scroll::-webkit-scrollbar {
+  height: 3px;
+}
+
+.ei-ledger-nav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+.ei-ledger-nav-peek {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  margin: 0;
+  width: 1.45rem;
+  height: 1.45rem;
+  padding: 0;
+  border: 1px solid var(--ei-line);
+  border-radius: 999px;
+  background: var(--ei-panel, #0f172a);
+  color: var(--ei-ink);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: -10px 0 12px rgba(15, 23, 42, 0.85);
+}
+
+.ei-ledger-nav-peek:hover,
+.ei-ledger-nav-peek:focus-visible {
+  border-color: var(--ei-accent, #2dd4bf);
+  outline: none;
+}
+
+.ei-ledger-nav-aside {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding-left: 0.45rem;
+  border-left: 1px solid var(--ei-line);
+  align-self: center;
+}
+
+.ei-ledger-help-link {
+  margin: 0;
+  padding: 0.2rem 0.1rem;
+  border: none;
+  background: none;
+  color: var(--ei-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.ei-ledger-help-link:hover,
+.ei-ledger-help-link:focus-visible {
+  color: var(--ei-accent, #2dd4bf);
+  outline: none;
+}
+
+.ei-ledger-help-short {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .ei-ledger-help-full {
+    display: none;
+  }
+
+  .ei-ledger-help-short {
+    display: inline;
+  }
+
+  .ei-ledger-nav-row {
+    padding-right: 0.45rem;
+  }
+
+  .ei-ledger-tab {
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+    font-size: 0.78rem;
+  }
 }
 
 .ei-ledger-tab {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.45rem 0.7rem;
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0.65rem 0.5rem 0.55rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   background: transparent;
   color: var(--ei-muted);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  scroll-snap-align: start;
 }
 
 .ei-ledger-tab:hover {
@@ -5449,17 +5613,288 @@ button.ei-helper-photo-remove {
 }
 
 .ei-ledger-tab.is-active {
-  background: var(--ei-surface-2, rgba(148, 163, 184, 0.14));
-  border-color: var(--ei-line);
   color: var(--ei-ink);
+  border-bottom-color: var(--ei-accent, #e11d48);
+  background: transparent;
 }
 
 .ei-ledger-tab-count {
   padding: 0.05rem 0.35rem;
   border-radius: 999px;
   background: rgba(148, 163, 184, 0.25);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
+}
+
+.ei-ledger-nav-more {
+  display: flex;
+  gap: 0.1rem;
+  padding: 0 0.65rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: rgba(15, 23, 42, 0.35);
+  border-top: 1px solid var(--ei-line);
+}
+
+.ei-ledger-nav-more::-webkit-scrollbar {
+  display: none;
+}
+
+.ei-ledger-nav-more .ei-ledger-tab {
+  padding-top: 0.45rem;
+  padding-bottom: 0.4rem;
+  font-size: 0.76rem;
+  font-weight: 550;
+  color: var(--ei-muted);
+}
+
+.ei-ledger-nav-more .ei-ledger-tab.is-active {
+  color: var(--ei-ink);
+  font-weight: 650;
+}
+
+.ei-money-tour-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 0.85rem;
+  margin: 0.55rem 0.75rem 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 10px;
+  background: rgba(19, 78, 74, 0.28);
+  flex-shrink: 0;
+}
+
+.ei-money-tour-banner p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--ei-ink);
+}
+
+.ei-money-tour-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.ei-ledger-readonly {
+  margin: 0.5rem 0.75rem 0;
+  font-size: 0.82rem;
+  color: var(--ei-muted);
+  flex-shrink: 0;
+}
+
+.ei-ledger-page-head {
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-ledger-page-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ei-ledger-page-tip {
+  font-weight: 400;
+}
+
+.ei-ledger-page-head p {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ei-muted);
+  line-height: 1.35;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-last4-balance-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem 0.85rem;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-last4-balance-row > * {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-last4-balance-row .ei-accounts-last4 {
+  flex: 0 0 auto;
+  max-width: 7rem;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-last4-balance-row .ei-accounts-balance {
+  flex: 1 1 8rem;
+  min-width: 7.5rem;
+  max-width: 12rem;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-last4-balance-row .ei-accounts-asof {
+  flex: 1 1 9rem;
+  min-width: 9rem;
+  max-width: 12.5rem;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-last4-balance-row label {
+  display: block;
+  font-size: 0.82rem;
+}
+
+.ei-accounts-last4 input#ei-acct-last4 {
+  width: 5.5rem !important;
+  max-width: 5.5rem !important;
+  min-width: 5.5rem !important;
+  box-sizing: border-box;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-funds-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.35rem;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-funds-toggle .ei-check-label {
+  justify-content: center;
+}
+
+.ei-ledger-compose .ei-accounts-form .ei-accounts-funds-toggle .ei-settings-hint {
+  margin: 0;
+  max-width: 36rem;
+}
+
+.ei-ledger-compose-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.ei-ledger-compose .ei-settings-hint {
+  margin: 0 0 0.65rem;
+}
+
+.ei-ledger-compose .ei-finance-expense-form,
+.ei-ledger-compose .ei-accounts-form {
+  margin-bottom: 0;
+}
+
+.ei-ledger-history {
+  margin-top: 0.25rem;
+}
+
+.ei-money-guide {
+  margin: 0.55rem 0.75rem 0.35rem;
+  padding: 0.7rem 0.75rem 0.75rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.45);
+  flex-shrink: 0;
+  max-height: min(36vh, 18rem);
+  overflow: auto;
+}
+
+.ei-money-guide--first {
+  border-color: rgba(45, 212, 191, 0.4);
+  background: rgba(19, 78, 74, 0.28);
+}
+
+.ei-money-guide-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin-bottom: 0.55rem;
+}
+
+.ei-money-guide-head h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.ei-money-guide-eyebrow {
+  margin: 0 0 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ei-muted);
+}
+
+.ei-money-guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ei-money-guide-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.5rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(28, 25, 23, 0.35);
+  border: 1px solid rgba(120, 113, 108, 0.28);
+}
+
+.ei-money-guide-tip-main {
+  min-width: 0;
+}
+
+.ei-money-guide-tip-main strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.ei-money-guide-tip-main p {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--ei-muted);
+}
+
+.ei-money-guide-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+.ei-money-guide-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--ei-line);
+}
+
+.ei-money-guide-foot .ei-settings-hint {
+  margin: 0;
 }
 
 .ei-ledger-panel {
@@ -5470,15 +5905,15 @@ button.ei-helper-photo-remove {
   overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 0.75rem 1rem 1rem;
+  padding: 0.85rem 1rem 1rem;
 }
 
 .ei-ledger-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.15rem;
 }
 
 .ei-ledger-group h4 {
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.45rem;
   font-size: 0.92rem;
 }
 
@@ -5487,7 +5922,7 @@ button.ei-helper-photo-remove {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.4rem 0;
+  padding: 0.45rem 0;
   border-bottom: 1px dashed var(--ei-line);
 }
 
@@ -5677,33 +6112,109 @@ button.ei-helper-photo-remove {
 
 .ei-accounts-foot {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.ei-accounts-foot-row {
+  display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
+  min-width: 0;
 }
 
 .ei-accounts-foot-net {
   display: flex;
   flex-direction: column;
-  gap: 0.05rem;
+  gap: 0.1rem;
   font-size: 0.8rem;
   color: var(--ei-muted);
   min-width: 0;
+  flex: 1 1 auto;
 }
 
-.ei-accounts-foot-net strong {
-  font-size: 1.1rem;
+.ei-accounts-foot-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ei-muted);
+}
+
+.ei-accounts-foot-amount {
+  font-size: 1.35rem;
+  line-height: 1.2;
   color: var(--ei-ink);
   font-variant-numeric: tabular-nums;
 }
 
+.ei-accounts-foot-net strong.ei-accounts-foot-amount,
+.ei-accounts-foot-net strong {
+  font-size: 1.35rem;
+  color: var(--ei-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ei-accounts-foot-hint-quiet {
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: var(--ei-muted);
+  max-width: 28rem;
+}
+
+.ei-accounts-foot-close {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-width: max-content;
+  align-self: center;
+}
+
+.ei-modal-ledger .ei-modal-foot.ei-btn-row {
+  flex-wrap: nowrap;
+  margin-top: 0;
+}
+
 .ei-accounts-foot-hint,
 .ei-finance-cash-hint {
-  margin: 0.35rem 0 0;
-  max-width: 36rem;
+  margin: 0;
+  max-width: none;
   font-size: 0.72rem;
   line-height: 1.35;
+}
+
+.ei-sale-radio-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.ei-sale-radio-row input {
+  margin-top: 0.2rem;
+}
+
+.ei-sale-money-path {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+}
+
+.ei-sale-money-path legend {
+  padding: 0 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 650;
 }
 
 .ei-billing-banner {
@@ -6156,7 +6667,7 @@ button.ei-voice-btn.is-listening {
   background: rgba(12, 10, 9, 0.92) !important;
 }
 
-/* Opaque card — Hub theme must not wash this out */
+/* Opaque card ? Hub theme must not wash this out */
 .ei-force-pwd-modal {
   color: #f5f5f4 !important;
   background: #1c1917 !important;
@@ -6846,8 +7357,25 @@ button.ei-voice-btn.is-listening {
 
 .ei-finance-expense-form {
   display: grid;
+  grid-template-columns: 1fr;
   gap: 0.55rem;
   margin-bottom: 0.85rem;
+}
+
+@media (min-width: 560px) {
+  .ei-ledger-compose .ei-finance-expense-form,
+  .ei-ledger-compose .ei-accounts-form {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 0.75rem;
+    row-gap: 0.55rem;
+  }
+
+  .ei-ledger-compose .ei-finance-expense-form .ei-field-wide,
+  .ei-ledger-compose .ei-finance-expense-form .ei-btn-row,
+  .ei-ledger-compose .ei-accounts-form .ei-field-wide,
+  .ei-ledger-compose .ei-accounts-form .ei-btn-row {
+    grid-column: 1 / -1;
+  }
 }
 
 .ei-finance-expense-list {
@@ -6899,7 +7427,7 @@ button.ei-voice-btn.is-listening {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Mobile-first (phones + tablets) â€” EstateIt is primarily used on devices    */
+/* Mobile-first (phones + tablets) ??? EstateIt is primarily used on devices    */
 /* -------------------------------------------------------------------------- */
 @media (max-width: 1024px) {
   .estate-inventory {
@@ -7621,7 +8149,7 @@ button.ei-voice-btn.is-listening {
   white-space: pre-line;
 }
 
-/* PR Home — how Estate Vault works (collapsed by default) */
+/* PR Home ? how Estate Vault works (collapsed by default) */
 .ei-how-it-works {
   margin: 0;
   padding: 0.65rem 0.75rem;
@@ -8173,20 +8701,17 @@ button.ei-voice-btn.is-listening {
 
 .ei-term-btn {
   flex: 0 0 auto;
-  width: 0.82rem;
-  height: 0.82rem;
   padding: 0;
   border: 1px solid rgba(56, 189, 248, 0.65);
   border-radius: 50%;
   background: rgba(56, 189, 248, 0.14);
   color: #7dd3fc;
-  font-size: 0.55rem;
   font-weight: 700;
-  line-height: 1;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .ei-term-btn:hover,
@@ -8212,17 +8737,26 @@ button.ei-voice-btn.is-listening {
   text-align: left;
   white-space: normal;
   cursor: default;
-}
-
-.ei-term-pop strong {
-  font-size: 0.82rem;
-  color: #e2e8f0;
+  pointer-events: auto;
 }
 
 .ei-term-pop span {
   font-size: 0.78rem;
   line-height: 1.45;
   color: #cbd5e1;
+  white-space: pre-line;
+}
+
+.ei-term-pop--portal {
+  position: fixed;
+  top: auto;
+  left: auto;
+  z-index: 12000;
+}
+
+.ei-term-pop strong {
+  font-size: 0.82rem;
+  color: #e2e8f0;
 }
 
 /* ---- Estate progress timeline ---- */
@@ -9522,7 +10056,7 @@ button.ei-voice-btn.is-listening {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Family / heir portal — warm, calm (gateway brass + teal glass)              */
+/* Family / heir portal ? warm, calm (gateway brass + teal glass)              */
 /* -------------------------------------------------------------------------- */
 
 @keyframes ei-family-drift {
@@ -10072,7 +10606,7 @@ button.ei-voice-btn.is-listening {
   }
 }
 
-/* Family portal — inline coach marks */
+/* Family portal ? inline coach marks */
 .ei-family-tour-link {
   display: inline-flex;
   margin-top: 0.95rem;
@@ -10227,4 +10761,18 @@ button.ei-voice-btn.is-listening {
   .ei-family-coach-card {
     animation: none;
   }
+}
+
+/* Glossary tip buttons ? beat host button { padding/min-height } rules */
+button.ei-term-btn {
+  width: 23px !important;
+  height: 23px !important;
+  min-width: 23px !important;
+  min-height: 23px !important;
+  max-width: 23px !important;
+  max-height: 23px !important;
+  padding: 0 !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  border-radius: 50% !important;
 }

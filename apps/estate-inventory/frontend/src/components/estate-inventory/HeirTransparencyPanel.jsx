@@ -195,7 +195,7 @@ const HeirTransparencyPanel = ({ caseNumber }) => {
                 </li>
                 {Number(summary.undeposited_paid_sales) > 0 ? (
                   <li>
-                    <span>Paid sales not yet deposited</span>
+                    <span>Sold — money not in an estate account yet</span>
                     <strong>{formatMoney(summary.undeposited_paid_sales)}</strong>
                   </li>
                 ) : null}

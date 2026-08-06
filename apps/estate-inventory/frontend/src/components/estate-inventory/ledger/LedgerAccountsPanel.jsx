@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   formatMoney,
@@ -14,6 +14,8 @@ import {
   countsAsFundsDefaultForType
 } from '@shared/utils/estateAccountTypes.js';
 import LedgerAccountDocuments from './LedgerAccountDocuments.jsx';
+import LedgerDebtPayPanel from './LedgerDebtPayPanel.jsx';
+import GlossaryTerm from '../GlossaryTerm.jsx';
 
 const BLANK = {
   kind: 'asset',
@@ -45,6 +47,7 @@ function AccountList({
   onEdit,
   onRemove,
   onStatements,
+  onPay,
   readOnly,
   busy,
   fundsMode
@@ -76,7 +79,7 @@ function AccountList({
                 ) : null}
                 {fundsMode && row.kind !== 'debt' ? (
                   <span className="ei-accounts-row-sub">
-                    Opening {formatMoney(row.opening_balance ?? row.balance)} · balance from
+                    Starting {formatMoney(row.opening_balance ?? row.balance)} · balance from
                     transactions
                   </span>
                 ) : null}
@@ -90,6 +93,16 @@ function AccountList({
               <div className="ei-accounts-row-side">
                 <span className="ei-accounts-amount">{formatMoney(displayBalance(row))}</span>
                 <span className="ei-btn-row">
+                  {!readOnly && onPay && row.kind === 'debt' ? (
+                    <button
+                      type="button"
+                      className="ei-btn ei-btn-small"
+                      onClick={() => onPay(row)}
+                      disabled={busy}
+                    >
+                      Pay
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="ei-btn ei-btn-small ei-btn-secondary"
@@ -135,9 +148,19 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
   const [form, setForm] = useState(BLANK);
   const [editingId, setEditingId] = useState(null);
   const [documentAccount, setDocumentAccount] = useState(null);
+  const [payingDebt, setPayingDebt] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const composeRef = useRef(null);
+  const documentsRef = useRef(null);
+  const payRef = useRef(null);
+
+  const scrollTo = (ref) => {
+    requestAnimationFrame(() => {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   const set = (key) => (ev) => {
     const value = ev.target.type === 'checkbox' ? ev.target.checked : ev.target.value;
@@ -204,7 +227,15 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
     onChanged?.();
   };
 
+  const openStatements = (row) => {
+    setPayingDebt(null);
+    setDocumentAccount(row);
+    scrollTo(documentsRef);
+  };
+
   const startEdit = (row) => {
+    setPayingDebt(null);
+    setDocumentAccount(null);
     setEditingId(row.id);
     setInfo('');
     setError('');
@@ -228,6 +259,16 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
       isPrimary: Boolean(row.is_primary),
       countsAsFunds: accountCountsAsFunds(row)
     });
+    scrollTo(composeRef);
+  };
+
+  const startPay = (row) => {
+    setDocumentAccount(null);
+    resetForm();
+    setPayingDebt(row);
+    setError('');
+    setInfo('');
+    scrollTo(payRef);
   };
 
   const remove = async (row) => {
@@ -240,6 +281,7 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
       return;
     }
     if (editingId === row.id) resetForm();
+    if (payingDebt?.id === row.id) setPayingDebt(null);
     setInfo(`Removed ${row.account_name}.`);
     onChanged?.();
   };
@@ -250,31 +292,51 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
 
   return (
     <>
-      <p className="ei-settings-hint">
-        Add every account the estate cares about — checking and savings for day-to-day money,
-        plus retirement, Social Security, life insurance, brokerage, and debts. Use{' '}
-        <strong>Include in Cash on hand</strong> only for money the estate can actually spend
-        from Estate Funds.
-      </p>
-
       {error ? <div className="ei-error">{error}</div> : null}
       {info ? <p className="ei-status">{info}</p> : null}
 
-      {documentAccount ? (
-        <LedgerAccountDocuments
-          account={documentAccount}
-          caseNumber={caseNumber}
-          readOnly={readOnly}
-          onClose={() => setDocumentAccount(null)}
-          onChanged={onChanged}
-        />
-      ) : null}
+      <div ref={documentsRef}>
+        {documentAccount ? (
+          <LedgerAccountDocuments
+            account={documentAccount}
+            caseNumber={caseNumber}
+            readOnly={readOnly}
+            onClose={() => setDocumentAccount(null)}
+            onChanged={onChanged}
+          />
+        ) : null}
+      </div>
+
+      <div ref={payRef}>
+        {payingDebt && !readOnly ? (
+          <LedgerDebtPayPanel
+            debt={payingDebt}
+            fundAccounts={fundAccounts}
+            caseNumber={caseNumber}
+            onClose={(message) => {
+              setPayingDebt(null);
+              if (message) setInfo(message);
+            }}
+            onChanged={onChanged}
+          />
+        ) : null}
+      </div>
 
       {!readOnly ? (
-        <div className="ei-finance-expense-form ei-accounts-form">
-          <div className="ei-field ei-field-wide">
-            <strong>{editingId ? 'Edit account' : 'Add account'}</strong>
-          </div>
+        <section
+          ref={composeRef}
+          className="ei-ledger-compose"
+          aria-labelledby="ei-accounts-compose-title"
+        >
+          <h4 id="ei-accounts-compose-title" className="ei-ledger-compose-title">
+            {editingId ? (isDebt ? 'Edit debt' : 'Edit account') : 'Add account'}
+          </h4>
+          <p className="ei-settings-hint">
+            {editingId
+              ? 'Update the fields below, then save.'
+              : 'Add spendable bank accounts to Cash on hand; keep retirement, insurance, and debts tracked separately.'}
+          </p>
+          <div className="ei-finance-expense-form ei-accounts-form">
           {!editingId ? (
             <div className="ei-field ei-field-wide">
               <label htmlFor="ei-acct-kind">Category</label>
@@ -328,47 +390,88 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
               }
             />
           </div>
-          <div className="ei-field">
-            <label htmlFor="ei-acct-last4">Last 4 digits (optional)</label>
-            <input
-              id="ei-acct-last4"
-              inputMode="numeric"
-              maxLength={4}
-              value={form.last4}
-              onChange={set('last4')}
-              placeholder="1234"
-            />
-          </div>
           {isDebt || !editingFund ? (
-            <div className="ei-field">
-              <label htmlFor="ei-acct-balance">
-                {isDebt
-                  ? 'Amount owed ($)'
-                  : form.countsAsFunds
-                    ? 'Opening balance ($)'
-                    : 'Value / balance ($)'}
-              </label>
-              <input
-                id="ei-acct-balance"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.balance}
-                onChange={set('balance')}
-              />
+            <div className="ei-field-wide ei-accounts-last4-balance-row">
+              <div className="ei-accounts-last4">
+                <label htmlFor="ei-acct-last4">Last 4 digits (optional)</label>
+                <input
+                  id="ei-acct-last4"
+                  inputMode="numeric"
+                  maxLength={4}
+                  size={4}
+                  value={form.last4}
+                  onChange={set('last4')}
+                  placeholder="1234"
+                  autoComplete="off"
+                  style={{ width: '5.5rem', maxWidth: '5.5rem', minWidth: '5.5rem' }}
+                />
+              </div>
+              <div className="ei-accounts-balance">
+                <label htmlFor="ei-acct-balance">
+                  {isDebt
+                    ? 'Amount owed ($)'
+                    : form.countsAsFunds
+                      ? 'Starting balance ($)'
+                      : 'Starting value ($)'}
+                </label>
+                <input
+                  id="ei-acct-balance"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.balance}
+                  onChange={set('balance')}
+                />
+              </div>
+              <div className="ei-accounts-asof">
+                <label htmlFor="ei-acct-date">{isDebt ? 'As of' : 'Starting as of'}</label>
+                <input
+                  id="ei-acct-date"
+                  type="date"
+                  value={form.asOfDate}
+                  onChange={set('asOfDate')}
+                />
+              </div>
             </div>
           ) : (
-            <div className="ei-field ei-field-wide">
-              <p className="ei-settings-hint" style={{ margin: 0 }}>
-                Current balance is calculated from opening balance plus transactions. To correct a
-                mistake, record an Adjustment under Transactions — do not edit the balance here.
-                Opening: {formatMoney(editingRow?.opening_balance ?? 0)} · Current:{' '}
-                {formatMoney(displayBalance(editingRow))}
-              </p>
-            </div>
+            <>
+              <div className="ei-field-wide ei-accounts-last4-balance-row">
+                <div className="ei-accounts-last4">
+                  <label htmlFor="ei-acct-last4">Last 4 digits (optional)</label>
+                  <input
+                    id="ei-acct-last4"
+                    inputMode="numeric"
+                    maxLength={4}
+                    size={4}
+                    value={form.last4}
+                    onChange={set('last4')}
+                    placeholder="1234"
+                    autoComplete="off"
+                    style={{ width: '5.5rem', maxWidth: '5.5rem', minWidth: '5.5rem' }}
+                  />
+                </div>
+                <div className="ei-accounts-asof">
+                  <label htmlFor="ei-acct-date">Starting as of</label>
+                  <input
+                    id="ei-acct-date"
+                    type="date"
+                    value={form.asOfDate}
+                    onChange={set('asOfDate')}
+                  />
+                </div>
+              </div>
+              <div className="ei-field ei-field-wide">
+                <p className="ei-settings-hint" style={{ margin: 0 }}>
+                  Current balance is calculated from the starting balance plus transactions. To
+                  correct a mistake, record an Adjustment under Money in/out — do not edit the
+                  balance here. Starting: {formatMoney(editingRow?.opening_balance ?? 0)} ·
+                  Current: {formatMoney(displayBalance(editingRow))}
+                </p>
+              </div>
+            </>
           )}
           {!isDebt ? (
-            <div className="ei-field ei-field-wide">
+            <div className="ei-field ei-field-wide ei-accounts-funds-toggle">
               <label className="ei-check-label">
                 <input
                   type="checkbox"
@@ -377,30 +480,22 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
                 />
                 Include in Cash on hand / Estate Funds
               </label>
-              <p className="ei-settings-hint" style={{ margin: '0.25rem 0 0' }}>
-                Turn this on for checking, savings, and other spendable estate money. Leave off
-                for retirement, Social Security, life insurance, and similar until that money is
-                actually available to the estate.
+              <p className="ei-settings-hint">
+                Turn this on for checking, savings, and other spendable estate money.<br />
+                Leave off for retirement, Social Security, life insurance, and similar accounts
+                <br /> until that money is actually available to the estate.
               </p>
             </div>
           ) : null}
           {!isDebt && form.countsAsFunds && !editingId ? (
-            <div className="ei-field ei-field-wide">
+            <div className="ei-field ei-field-wide ei-accounts-funds-toggle">
               <label className="ei-check-label">
                 <input type="checkbox" checked={form.isPrimary} onChange={set('isPrimary')} />
-                Primary fund account (default for expenses and deposits)
+                <span>Primary fund account</span>
+                <GlossaryTerm termKey="primary_fund_account" iconOnly />
               </label>
             </div>
           ) : null}
-          <div className="ei-field">
-            <label htmlFor="ei-acct-date">{isDebt ? 'As of' : 'Opening / value as of'}</label>
-            <input
-              id="ei-acct-date"
-              type="date"
-              value={form.asOfDate}
-              onChange={set('asOfDate')}
-            />
-          </div>
           <div className="ei-field ei-field-wide">
             <label htmlFor="ei-acct-notes">Notes (optional)</label>
             <input
@@ -425,11 +520,13 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
               </button>
             ) : null}
           </div>
-        </div>
+          </div>
+        </section>
       ) : (
         <p className="ei-settings-hint">This estate is closed for records, so this is view-only.</p>
       )}
 
+      <div className="ei-ledger-history">
       <AccountList
         rows={fundAccounts}
         title="Cash on hand (Estate Funds)"
@@ -437,7 +534,7 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
         total={sumFundsAvailable(rows)}
         onEdit={startEdit}
         onRemove={remove}
-        onStatements={setDocumentAccount}
+        onStatements={openStatements}
         readOnly={readOnly}
         busy={busy}
         fundsMode
@@ -449,7 +546,7 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
         total={sumTrackedNonFundAssets(rows)}
         onEdit={startEdit}
         onRemove={remove}
-        onStatements={setDocumentAccount}
+        onStatements={openStatements}
         readOnly={readOnly}
         busy={busy}
         fundsMode={false}
@@ -461,11 +558,13 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
         total={sumAccountDebts(rows)}
         onEdit={startEdit}
         onRemove={remove}
-        onStatements={setDocumentAccount}
+        onStatements={openStatements}
+        onPay={startPay}
         readOnly={readOnly}
         busy={busy}
         fundsMode={false}
       />
+      </div>
     </>
   );
 };

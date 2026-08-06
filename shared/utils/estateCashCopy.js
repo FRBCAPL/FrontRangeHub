@@ -1,9 +1,12 @@
 /**
  * Shared Cash available reconciliation copy — one source for UI + printable reports.
+ * Use \n for line breaks; UI and HTML helpers honor them.
  */
 
 export const CASH_AVAILABLE_RECONCILIATION =
-  'Cash available is Estate Vault’s operational estimate from recorded fund accounts plus paid auction proceeds not yet deposited. Verify against current bank statements, including distributions recorded outside the funds-transaction list.';
+  'Cash available is money in your estate checking or savings accounts\n' +
+  '(ones marked Include in Cash on hand).\n' +
+  'Sales and auction bids are tracked separately — \nthey only change Cash available after you deposit the money into one of those accounts.';
 
 export function escapeHtmlCash(value) {
   return String(value ?? '')
@@ -17,5 +20,6 @@ export function escapeHtmlCash(value) {
 export function cashAvailableHintHtml(className = 'muted') {
   const cls = String(className || '').trim();
   const attr = cls ? ` class="${escapeHtmlCash(cls)}"` : '';
-  return `<p${attr}>${escapeHtmlCash(CASH_AVAILABLE_RECONCILIATION)}</p>`;
+  const body = escapeHtmlCash(CASH_AVAILABLE_RECONCILIATION).replace(/\n/g, '<br />');
+  return `<p${attr}>${body}</p>`;
 }

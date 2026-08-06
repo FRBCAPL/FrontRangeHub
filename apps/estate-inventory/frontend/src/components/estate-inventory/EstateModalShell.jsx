@@ -56,9 +56,7 @@ const EstateModalShell = ({
             className="ei-modal-close"
             onClick={onClose}
             aria-label="Close"
-          >
-            ×
-          </button>
+          />
         </div>
         <div className="ei-modal-body">{children}</div>
         <div className="ei-modal-foot ei-btn-row">

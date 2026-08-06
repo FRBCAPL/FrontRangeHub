@@ -128,7 +128,10 @@ const EditAssetProfileModal = ({
   const [descendantsInterestPct, setDescendantsInterestPct] = useState(null);
   const [approvedForSale, setApprovedForSale] = useState(false);
   const [auctionPaid, setAuctionPaid] = useState(false);
+  const [moneyPath, setMoneyPath] = useState(''); // '' | 'deposited' | 'elsewhere'
   const [depositAccountId, setDepositAccountId] = useState('');
+  const [proceedsWhere, setProceedsWhere] = useState('');
+  const [saleProceedsDeposited, setSaleProceedsDeposited] = useState(false);
   const [fundAccounts, setFundAccounts] = useState([]);
   const [collectionId, setCollectionId] = useState('');
   const [saving, setSaving] = useState(false);
@@ -157,7 +160,10 @@ const EditAssetProfileModal = ({
     );
     setApprovedForSale(Boolean(item.approved_for_sale));
     setAuctionPaid(Boolean(item.auction_paid_at));
+    setProceedsWhere(item.auction_proceeds_where || '');
     setDepositAccountId('');
+    setMoneyPath('');
+    setSaleProceedsDeposited(false);
     setCollectionId(item.collection_id || '');
     setSaving(false);
     setError('');
@@ -172,6 +178,15 @@ const EditAssetProfileModal = ({
       setFundAccounts(funds);
       setDepositAccountId(funds.find((a) => a.is_primary)?.id || funds[0]?.id || '');
     });
+    if (item.auction_paid_at) {
+      estateInventoryService.itemHasSaleProceedsDeposit(item.id, caseNumber).then((result) => {
+        const deposited = Boolean(result.success && result.data);
+        setSaleProceedsDeposited(deposited);
+        if (deposited) setMoneyPath('deposited');
+        else if (item.auction_proceeds_where) setMoneyPath('elsewhere');
+        else setMoneyPath('elsewhere');
+      });
+    }
   }, [open, item?.id, caseNumber]);
 
   const photos = useMemo(() => (item ? getPhotoEntries(item) : []), [item]);
@@ -205,6 +220,24 @@ const EditAssetProfileModal = ({
       setError('Choose a beneficiary for memorandum items.');
       return;
     }
+    const hasBid = Number(item.highest_bid) > 0;
+    if (hasBid && auctionPaid) {
+      if (!moneyPath) {
+        setSection('sale');
+        setError('Buyer paid — choose whether the money is in an estate account, or say where it is.');
+        return;
+      }
+      if (moneyPath === 'deposited' && !saleProceedsDeposited && !depositAccountId) {
+        setSection('sale');
+        setError('Pick the estate account where you deposited the sale proceeds.');
+        return;
+      }
+      if (moneyPath === 'elsewhere' && String(proceedsWhere || '').trim().length < 3) {
+        setSection('sale');
+        setError('Say where the money is for now (e.g. check on desk, paid funeral home).');
+        return;
+      }
+    }
     setSaving(true);
     setError('');
     const result = await onSave?.(item.id, {
@@ -222,11 +255,17 @@ const EditAssetProfileModal = ({
       assignedBeneficiary: isMemorandum ? beneficiary : null,
       descendantsInterestPct,
       approvedForSale: canSell ? approvedForSale : false,
-      auctionPaid: Number(item.highest_bid) > 0 ? auctionPaid : false,
+      auctionPaid: hasBid ? auctionPaid : false,
       depositAccountId:
-        Number(item.highest_bid) > 0 && auctionPaid && !item.auction_paid_at
+        hasBid && auctionPaid && moneyPath === 'deposited' && !saleProceedsDeposited
           ? depositAccountId || undefined
           : undefined,
+      auctionProceedsWhere:
+        hasBid && auctionPaid && moneyPath === 'elsewhere'
+          ? proceedsWhere.trim()
+          : hasBid && auctionPaid && moneyPath === 'deposited'
+            ? ''
+            : undefined,
       collectionId: collectionId || item.collection_id
     });
     setSaving(false);
@@ -573,45 +612,98 @@ const EditAssetProfileModal = ({
                   <>
                     <div className="ei-toggle-row">
                       <label htmlFor="ei-edit-paid">
-                        Sale/auction paid / deposited ({formatMoneyHint(item.highest_bid)})
+                        Buyer paid ({formatMoneyHint(item.highest_bid)})
                       </label>
                       <input
                         id="ei-edit-paid"
                         type="checkbox"
                         checked={auctionPaid}
                         disabled={readOnly}
-                        onChange={(e) => setAuctionPaid(e.target.checked)}
+                        onChange={(e) => {
+                          const on = e.target.checked;
+                          setAuctionPaid(on);
+                          if (!on) {
+                            setMoneyPath('');
+                            setProceedsWhere('');
+                          } else if (!moneyPath) {
+                            setMoneyPath('');
+                          }
+                        }}
                       />
                     </div>
-                    {auctionPaid && !item.auction_paid_at ? (
-                      <div className="ei-field">
-                        <label htmlFor="ei-edit-deposit-acct">
-                          Deposit proceeds into fund account
+                    <p className="ei-settings-hint">
+                      Sales stay separate from Cash available until you deposit into an estate
+                      account.
+                    </p>
+                    {auctionPaid ? (
+                      <fieldset className="ei-field ei-sale-money-path">
+                        <legend>Where is the money?</legend>
+                        <label className="ei-sale-radio-row">
+                          <input
+                            type="radio"
+                            name="ei-sale-money-path"
+                            checked={moneyPath === 'deposited'}
+                            disabled={readOnly}
+                            onChange={() => setMoneyPath('deposited')}
+                          />
+                          <span>Deposited into an estate account</span>
                         </label>
-                        <select
-                          id="ei-edit-deposit-acct"
-                          value={depositAccountId}
-                          onChange={(e) => setDepositAccountId(e.target.value)}
-                          disabled={readOnly}
-                        >
-                          <option value="">Don’t update Funds yet</option>
-                          {fundAccounts.map((a) => (
-                            <option key={a.id} value={a.id}>
-                              {a.account_name}
-                              {a.is_primary ? ' (primary)' : ''}
-                            </option>
-                          ))}
-                        </select>
-                        <p className="ei-settings-hint">
-                          Marks the sale paid and deposits proceeds into Estate Funds in one step.
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="ei-settings-hint">
-                        When checked with a fund account, proceeds deposit into Estate Funds
-                        automatically.
-                      </p>
-                    )}
+                        {moneyPath === 'deposited' ? (
+                          saleProceedsDeposited ? (
+                            <p className="ei-settings-hint">
+                              Already recorded as a deposit into Estate Funds.
+                            </p>
+                          ) : (
+                            <div className="ei-field">
+                              <label htmlFor="ei-edit-deposit-acct">Estate account</label>
+                              <select
+                                id="ei-edit-deposit-acct"
+                                value={depositAccountId}
+                                onChange={(e) => setDepositAccountId(e.target.value)}
+                                disabled={readOnly}
+                                required
+                              >
+                                <option value="">Select account…</option>
+                                {fundAccounts.map((a) => (
+                                  <option key={a.id} value={a.id}>
+                                    {a.account_name}
+                                    {a.is_primary ? ' (primary)' : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )
+                        ) : null}
+                        <label className="ei-sale-radio-row">
+                          <input
+                            type="radio"
+                            name="ei-sale-money-path"
+                            checked={moneyPath === 'elsewhere'}
+                            disabled={readOnly || saleProceedsDeposited}
+                            onChange={() => setMoneyPath('elsewhere')}
+                          />
+                          <span>Not in an estate account yet</span>
+                        </label>
+                        {moneyPath === 'elsewhere' && !saleProceedsDeposited ? (
+                          <div className="ei-field">
+                            <label htmlFor="ei-edit-proceeds-where">Where is it?</label>
+                            <input
+                              id="ei-edit-proceeds-where"
+                              value={proceedsWhere}
+                              onChange={(e) => setProceedsWhere(e.target.value)}
+                              placeholder="e.g. Check on desk · paid funeral home · held as cash"
+                              disabled={readOnly}
+                              maxLength={400}
+                              required
+                            />
+                            <p className="ei-settings-hint">
+                              Does not change Cash available. Deposit later when the money hits the
+                              bank.
+                            </p>
+                          </div>
+                        ) : null}
+                      </fieldset>
+                    ) : null}
                   </>
                 ) : (
                   <p className="ei-settings-hint">No bids on this item yet.</p>

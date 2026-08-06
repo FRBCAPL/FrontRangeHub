@@ -180,16 +180,18 @@ const LedgerExpensesPanel = ({
 
   return (
     <>
-      <p className="ei-settings-hint">
-        Paid a funeral bill, utility, or filing fee from estate cash? Record it here and choose
-        which bank account paid. The cash balance drops in the same step.
-      </p>
-
       {error ? <div className="ei-error">{error}</div> : null}
       {info ? <p className="ei-status">{info}</p> : null}
 
       {!readOnly ? (
-        <form className="ei-finance-expense-form" onSubmit={saveExpense}>
+        <section className="ei-ledger-compose" aria-labelledby="ei-expense-compose-title">
+          <h4 id="ei-expense-compose-title" className="ei-ledger-compose-title">
+            {editingId ? 'Edit bill' : 'Record a bill'}
+          </h4>
+          <p className="ei-settings-hint">
+            Log what the estate paid and which fund account paid — cash updates in the same step.
+          </p>
+          <form className="ei-finance-expense-form" onSubmit={saveExpense}>
           <div className="ei-field">
             <label htmlFor="ei-card-exp-name">Expense name</label>
             <input
@@ -245,8 +247,8 @@ const LedgerExpensesPanel = ({
               Receipt photo (needed for a complete supporting record)
             </span>
             <p className="ei-settings-hint" style={{ margin: '0.25rem 0 0.5rem' }}>
-              Attach an invoice/receipt for every expense. Blank receipts show as gaps on home and
-              on supporting exports used with counsel.
+              Attach an invoice/receipt for every expense. <br />
+              Blank receipts show as gaps on home and on supporting exports used with counsel.
             </p>
             {receiptPreview ? (
               <div className="ei-photo-grid-mini">
@@ -317,29 +319,32 @@ const LedgerExpensesPanel = ({
             />
           </div>
 
-          <button
-            type="submit"
-            className="ei-btn ei-btn-small ei-field-wide"
-            disabled={busy || !expenseName.trim() || !expenseAmount}
-          >
-            {busy ? 'Saving…' : editingId ? 'Save expense changes' : 'Add expense'}
-          </button>
-          {editingId ? (
+          <div className="ei-btn-row ei-field-wide">
             <button
-              type="button"
-              className="ei-btn ei-btn-small ei-btn-secondary ei-field-wide"
-              onClick={resetForm}
-              disabled={busy}
+              type="submit"
+              className="ei-btn ei-btn-small"
+              disabled={busy || !expenseName.trim() || !expenseAmount}
             >
-              Cancel edit
+              {busy ? 'Saving…' : editingId ? 'Save expense changes' : 'Add expense'}
             </button>
-          ) : null}
-        </form>
+            {editingId ? (
+              <button
+                type="button"
+                className="ei-btn ei-btn-small ei-btn-secondary"
+                onClick={resetForm}
+                disabled={busy}
+              >
+                Cancel edit
+              </button>
+            ) : null}
+          </div>
+          </form>
+        </section>
       ) : (
         <p className="ei-settings-hint">This estate is closed for records, so this is view-only.</p>
       )}
 
-      <section className="ei-pr-loan-ledger">
+      <section className="ei-ledger-history ei-pr-loan-ledger">
         <div className="ei-accounts-section-head">
           <h4>Expense history</h4>
           <span className="ei-accounts-total">{formatMoney(sumExpenses(rows))}</span>

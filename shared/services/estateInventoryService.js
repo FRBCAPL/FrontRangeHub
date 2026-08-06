@@ -51,7 +51,7 @@ const MAX_IMAGE_EDGE = 1600;
 const JPEG_QUALITY = 0.82;
 
 const ITEM_SELECT =
-  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, item_condition, condition_notes, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
+  'id, collection_id, owner_id, estate_id, name, notes, photo_url, photo_urls, legal_status, value_tier, item_condition, condition_notes, estimated_value, valuation_date, valuation_source, valuation_notes, is_memorandum_asset, assigned_beneficiary, descendants_interest, descendants_interest_pct, photo_captured_at, photo_received_at, photo_gps_lat, photo_gps_lng, disputed_at, distributed_at, sibling_claims, family_releases, approved_for_sale, highest_bid, highest_bidder_name, highest_bidder_email, highest_bidder_phone, bid_updated_at, auction_paid_at, auction_proceeds_where, review_status, created_by_role, created_by_name, reviewed_at, is_approved_by_pr, change_history, created_at, updated_at';
 
 const SETTINGS_SELECT =
   'id, owner_id, owner_email, case_number, estate_name, court_case_number, letters_issued_at, probate_window_mode, probate_window_amount, probate_window_unit, probate_window_end_date, auction_start_date, auction_end_date, auction_pickup_window, pr_auction_block_emails, pr_loans_total, estate_cash_on_hand, accounting_method, family_financial_visibility, will_reference, memorandum_reference, residual_notes, equalization_notes, inventory_completed_at, inventory_completed_by, inventory_reopened_at, inventory_reopen_reason, closed_at, closed_by, close_reason, reopened_at, reopen_reason, created_at, updated_at';
@@ -955,14 +955,41 @@ export async function updateItem(itemId, patch, caseNumber) {
   if (patch.auctionPaid != null) {
     let priorQ = supabase
       .from('estate_items')
-      .select('auction_paid_at')
+      .select('auction_paid_at, auction_proceeds_where')
       .eq('id', itemId)
       .eq('owner_id', auth.userId);
     if (estate.estateId) priorQ = priorQ.eq('estate_id', estate.estateId);
     const prior = await priorQ.maybeSingle();
     priorAuctionPaidAt = prior.data?.auction_paid_at || null;
     updates.auction_paid_at = patch.auctionPaid ? new Date().toISOString() : null;
+    if (!patch.auctionPaid) {
+      updates.auction_proceeds_where = null;
+    }
   }
+
+  if (patch.auctionProceedsWhere !== undefined) {
+    const where = String(patch.auctionProceedsWhere || '').trim();
+    updates.auction_proceeds_where = where ? where.slice(0, 400) : null;
+  }
+
+  // Newly marking sold/paid: require either a deposit account or “where the money is.”
+  if (patch.auctionPaid && !priorAuctionPaidAt) {
+    const depositAccountIdEarly = String(patch.depositAccountId || patch.accountId || '').trim();
+    const whereEarly = String(
+      patch.auctionProceedsWhere != null
+        ? patch.auctionProceedsWhere
+        : updates.auction_proceeds_where || ''
+    ).trim();
+    if (!depositAccountIdEarly && whereEarly.length < 3) {
+      return fail(
+        'Buyer paid — pick the estate account you deposited into, or say where the money is for now.'
+      );
+    }
+    if (depositAccountIdEarly) {
+      updates.auction_proceeds_where = null;
+    }
+  }
+
   if (patch.reviewStatus != null) {
     updates.review_status = patch.reviewStatus;
     if (patch.reviewStatus === 'approved') {
@@ -1006,6 +1033,11 @@ export async function updateItem(itemId, patch, caseNumber) {
         'Item condition needs a database update. Run supabase-migrations/estate-item-condition-2026-08.sql in Supabase, then try again.'
       );
     }
+    if (isMissingColumnError(error, 'auction_proceeds_where')) {
+      return fail(
+        'Sale proceeds tracking needs a database update. Run supabase-migrations/estate-sale-proceeds-where-2026-08.sql in Supabase, then try again.'
+      );
+    }
     return fail(error);
   }
 
@@ -1015,17 +1047,39 @@ export async function updateItem(itemId, patch, caseNumber) {
   if (patch.auctionPaid && depositAccountId && data) {
     const proceeds = Number(data.highest_bid);
     if (Number.isFinite(proceeds) && proceeds > 0) {
-      const txn = await addAccountTransaction(estate, {
-        accountId: depositAccountId,
-        amount: proceeds,
-        category: 'sale_proceeds',
-        memo: `Sale proceeds — ${data.name || 'item'}`,
-        itemId: data.id
-      });
-      if (!txn.success) {
-        warning =
-          txn.error ||
-          'Item marked paid, but Funds deposit failed. Record a deposit from Estate Funds.';
+      let alreadyDeposited = false;
+      if (priorAuctionPaidAt) {
+        let depQ = supabase
+          .from('estate_account_transactions')
+          .select('id')
+          .eq('item_id', data.id)
+          .eq('category', 'sale_proceeds')
+          .limit(1);
+        if (estate.estateId) depQ = depQ.eq('estate_id', estate.estateId);
+        const { data: existingDep } = await depQ.maybeSingle();
+        alreadyDeposited = Boolean(existingDep?.id);
+      }
+      if (!alreadyDeposited) {
+        const txn = await addAccountTransaction(estate, {
+          accountId: depositAccountId,
+          amount: proceeds,
+          category: 'sale_proceeds',
+          memo: `Sale proceeds — ${data.name || 'item'}`,
+          itemId: data.id
+        });
+        if (!txn.success) {
+          warning =
+            txn.error ||
+            'Sale marked paid, but the estate-account deposit failed. Record money coming in under Estate Funds.';
+        } else {
+          // Deposited — clear any temporary “where” note.
+          await supabase
+            .from('estate_items')
+            .update({ auction_proceeds_where: null, updated_at: new Date().toISOString() })
+            .eq('id', data.id)
+            .eq('owner_id', auth.userId);
+          data.auction_proceeds_where = null;
+        }
       }
     }
   }
@@ -1061,6 +1115,25 @@ export async function updateItem(itemId, patch, caseNumber) {
 
   if (warning) return { success: true, data, warning };
   return ok(data);
+}
+
+/** True when this item already has a sale_proceeds Funds deposit. */
+export async function itemHasSaleProceedsDeposit(itemId, caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  const id = String(itemId || '').trim();
+  if (!id) return fail('Missing item.');
+  let q = supabase
+    .from('estate_account_transactions')
+    .select('id')
+    .eq('item_id', id)
+    .eq('category', 'sale_proceeds')
+    .limit(1);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+  const { data, error } = await q.maybeSingle();
+  if (error) return fail(error);
+  return ok(Boolean(data?.id));
 }
 
 /**
@@ -6155,6 +6228,7 @@ const estateInventoryService = {
   rejectPendingItem,
   createItem,
   updateItem,
+  itemHasSaleProceedsDeposit,
   replaceItemPhoto,
   replaceItemPhotoTransformed,
   downloadItemPhotoForEdit,

@@ -42,14 +42,14 @@ export function mapSqlFinanceSnapshot(sql = {}) {
   const fundsAvailable = roundMoney(
     sql.funds_available != null
       ? sql.funds_available
-      : accountAssetsTotal + otherCashOnHand + undepositedPaidSales
+      : accountAssetsTotal + otherCashOnHand
   );
   const outstandingBids = roundMoney(sql.outstanding_bids);
   const unsoldInventoryValue = roundMoney(sql.unsold_inventory);
   const nonCashAssets = roundMoney(
     sql.non_cash_assets != null
       ? sql.non_cash_assets
-      : outstandingBids + unsoldInventoryValue + trackedNonFundAssets
+      : outstandingBids + unsoldInventoryValue + trackedNonFundAssets + undepositedPaidSales
   );
   const paidAuctionSales = roundMoney(sql.paid_auction_sales);
   const expensesTotal = roundMoney(sql.expenses_total);
@@ -217,9 +217,9 @@ export function sumUnsoldInventoryValue(items) {
  * Live estates must use SQL estate_compute_finance_snapshot via getFinanceSummary.
  *
  * Estate Funds (cash available) =
- *   listed fund account balances + other cash + paid sales not yet deposited.
- * Non-cash assets (estimates / outstanding bids) are shown separately and do
- * not change Funds until money is received.
+ *   listed fund account balances + other cash.
+ * Paid sales not yet deposited, outstanding bids, and inventory estimates are
+ * non-cash until money is recorded in a fund account.
  *
  * Paid sales that already have a sale_proceeds Funds txn must NOT also be
  * passed as undepositedPaidSales (that would double-count).
@@ -250,8 +250,8 @@ export function computeFinanceSnapshot({
   const inventoryValue = roundMoney(unsoldInventoryValue);
   const estateCashOnHand = roundMoney(paid + other);
   const netCashRemaining = roundMoney(paid - expenses);
-  const fundsAvailable = roundMoney(other + accountAssets + undeposited);
-  const nonCashAssets = roundMoney(outstanding + inventoryValue);
+  const fundsAvailable = roundMoney(other + accountAssets);
+  const nonCashAssets = roundMoney(outstanding + inventoryValue + undeposited);
   const grossEstateValue = roundMoney(fundsAvailable + nonCashAssets);
   const totalLiabilities = roundMoney(accountDebts + loans);
   return {

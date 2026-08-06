@@ -76,22 +76,6 @@ const LedgerSummaryPanel = ({
 
   return (
     <div className="ei-ledger-summary ei-ledger-summary-simple">
-      <div className="ei-money-teach">
-        <p className="ei-money-teach-lead">
-          Think of estate money in two boxes:
-        </p>
-        <ol className="ei-money-teach-list">
-          <li>
-            <strong>Cash</strong> — money in estate bank accounts. You pay bills and heirs from
-            here. The balance updates when you record money in or out — you don’t type it.
-          </li>
-          <li>
-            <strong>Property</strong> — house, car, furniture estimates. Useful for the big
-            picture, but <em>not</em> spending money until sold and deposited.
-          </li>
-        </ol>
-      </div>
-
       <div className="ei-money-picture" aria-label="Simple money picture">
         <button type="button" className="ei-money-picture-card" onClick={() => onGoTo('accounts')}>
           <span className="ei-money-picture-label">Cash available</span>
@@ -171,7 +155,7 @@ const LedgerSummaryPanel = ({
           <Line
             label="Bank accounts"
             amount={summary.accountAssetsTotal}
-            sub="Opening balance + money in − money out"
+            sub="Starting balance + money in − money out"
             onJump={() => onGoTo('accounts')}
             jumpLabel="Accounts"
           />
@@ -219,9 +203,9 @@ const LedgerSummaryPanel = ({
           />
           {summary.undepositedPaidSales > 0 ? (
             <Line
-              label="Paid sales not yet in a bank account"
+              label="Sold — money not in an estate account yet"
               amount={summary.undepositedPaidSales}
-              sub="Marked paid — deposit into Estate Funds so the cash account matches"
+              sub="Buyer paid; deposit into Cash on hand when the money hits the bank"
               onJump={() => onGoTo('auction')}
               jumpLabel="Sale / Auction"
             />

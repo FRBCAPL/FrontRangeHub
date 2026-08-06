@@ -235,8 +235,10 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           ? result.warning
             ? result.warning
             : patch.depositAccountId || patch.accountId
-              ? 'Item updated — sale marked paid and proceeds deposited into Estate Funds.'
-              : 'Item updated — auction marked paid. Deposit proceeds under Estate Money → Transactions if not linked to a fund account.'
+              ? 'Sale paid and deposited into Cash on hand.'
+              : patch.auctionProceedsWhere
+                ? 'Sale paid. Noted where the money is — not in Cash available until you deposit it.'
+                : 'Item updated.'
           : 'Item updated (change logged).'
     );
     setRequestsRefreshKey((n) => n + 1);

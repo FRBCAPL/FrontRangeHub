@@ -118,118 +118,120 @@ const LedgerFundsTransactionsPanel = ({
 
   return (
     <>
-      <p className="ei-settings-hint">
-        Every time money moves, add it here (or use Pay a bill / Give to heirs, which do this for
-        you). Opening balance was set on the bank account — you never type a new current balance.
-      </p>
-
       {error ? <div className="ei-error">{error}</div> : null}
       {info ? <p className="ei-status">{info}</p> : null}
 
       {!readOnly && fundAccounts.length ? (
-        <form className="ei-finance-expense-form" onSubmit={saveDeposit}>
-          <div className="ei-field">
-            <label htmlFor="ei-funds-mode">Record</label>
-            <select
-              id="ei-funds-mode"
-              value={mode}
-              onChange={(e) => setMode(e.target.value)}
-            >
-              <option value="deposit">Deposit / income</option>
-              <option value="adjustment">Adjustment (correction)</option>
-            </select>
-          </div>
-          <div className="ei-field">
-            <label htmlFor="ei-funds-acct">Fund account</label>
-            <select
-              id="ei-funds-acct"
-              value={accountId}
-              onChange={(e) => setAccountId(e.target.value)}
-              required
-            >
-              {fundAccounts.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.account_name}
-                  {a.is_primary ? ' (primary)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="ei-field">
-            <label htmlFor="ei-funds-amt">
-              {mode === 'adjustment' ? 'Amount (+ in / − out)' : 'Amount ($)'}
-            </label>
-            <input
-              id="ei-funds-amt"
-              type="number"
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              placeholder={mode === 'adjustment' ? 'e.g. -25.00' : 'e.g. 1200'}
-            />
-          </div>
-          <div className="ei-field">
-            <label htmlFor="ei-funds-date">Date</label>
-            <input
-              id="ei-funds-date"
-              type="date"
-              value={txnDate}
-              onChange={(e) => setTxnDate(e.target.value)}
-              required
-            />
-          </div>
-          <div className="ei-field ei-field-wide">
-            <label htmlFor="ei-funds-memo">
-              {mode === 'adjustment' ? 'Why (required)' : 'Description'}
-            </label>
-            <input
-              id="ei-funds-memo"
-              value={memo}
-              onChange={(e) => setMemo(e.target.value)}
-              placeholder={
-                mode === 'adjustment'
-                  ? 'e.g. Corrected duplicate entry'
-                  : 'e.g. Insurance refund'
-              }
-              required={mode === 'adjustment'}
-            />
-          </div>
-          <div className="ei-btn-row ei-field-wide">
-            <button type="submit" className="ei-btn ei-btn-small" disabled={busy}>
-              {busy ? 'Saving…' : mode === 'adjustment' ? 'Record adjustment' : 'Record deposit'}
-            </button>
-          </div>
-        </form>
+        <section className="ei-ledger-compose" aria-labelledby="ei-funds-compose-title">
+          <h4 id="ei-funds-compose-title" className="ei-ledger-compose-title">
+            Add money movement
+          </h4>
+          <p className="ei-settings-hint">
+            Record deposits and corrections here. Starting balance was set when you added the
+            account.
+          </p>
+          <form className="ei-finance-expense-form" onSubmit={saveDeposit}>
+            <div className="ei-field">
+              <label htmlFor="ei-funds-mode">Record</label>
+              <select
+                id="ei-funds-mode"
+                value={mode}
+                onChange={(e) => setMode(e.target.value)}
+              >
+                <option value="deposit">Deposit / income</option>
+                <option value="adjustment">Adjustment (correction)</option>
+              </select>
+            </div>
+            <div className="ei-field">
+              <label htmlFor="ei-funds-acct">Fund account</label>
+              <select
+                id="ei-funds-acct"
+                value={accountId}
+                onChange={(e) => setAccountId(e.target.value)}
+                required
+              >
+                {fundAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.account_name}
+                    {a.is_primary ? ' (primary)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="ei-field">
+              <label htmlFor="ei-funds-amt">
+                {mode === 'adjustment' ? 'Amount (+ in / − out)' : 'Amount ($)'}
+              </label>
+              <input
+                id="ei-funds-amt"
+                type="number"
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                placeholder={mode === 'adjustment' ? 'e.g. -25.00' : 'e.g. 1200'}
+              />
+            </div>
+            <div className="ei-field">
+              <label htmlFor="ei-funds-date">Date</label>
+              <input
+                id="ei-funds-date"
+                type="date"
+                value={txnDate}
+                onChange={(e) => setTxnDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="ei-field ei-field-wide">
+              <label htmlFor="ei-funds-memo">
+                {mode === 'adjustment' ? 'Why (required)' : 'Description'}
+              </label>
+              <input
+                id="ei-funds-memo"
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                placeholder={
+                  mode === 'adjustment'
+                    ? 'e.g. Corrected duplicate entry'
+                    : 'e.g. Insurance refund'
+                }
+                required={mode === 'adjustment'}
+              />
+            </div>
+            <div className="ei-btn-row ei-field-wide">
+              <button type="submit" className="ei-btn ei-btn-small" disabled={busy}>
+                {busy ? 'Saving…' : mode === 'adjustment' ? 'Record adjustment' : 'Record deposit'}
+              </button>
+            </div>
+          </form>
+        </section>
       ) : null}
 
       {!fundAccounts.length ? (
         <p className="ei-settings-hint">
-          Add a fund account under Accounts &amp; debts first. That sets the opening balance; then
-          every change is a transaction.
+          Add a fund account under Accounts first, then record money coming in here.
         </p>
       ) : null}
 
-      <div className="ei-field" style={{ maxWidth: '16rem', marginTop: '0.75rem' }}>
-        <label htmlFor="ei-funds-filter">Show</label>
-        <select
-          id="ei-funds-filter"
-          value={filterAccountId}
-          onChange={(e) => setFilterAccountId(e.target.value)}
-        >
-          <option value="">All fund accounts</option>
-          {fundAccounts.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.account_name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <section className="ei-accounts-section" style={{ marginTop: '1rem' }}>
+      <section className="ei-ledger-history ei-accounts-section">
         <div className="ei-accounts-section-head">
           <h4>Recent transactions</h4>
           <span className="ei-accounts-total">{visible.length}</span>
+        </div>
+        <div className="ei-field" style={{ maxWidth: '16rem', marginBottom: '0.65rem' }}>
+          <label htmlFor="ei-funds-filter">Show</label>
+          <select
+            id="ei-funds-filter"
+            value={filterAccountId}
+            onChange={(e) => setFilterAccountId(e.target.value)}
+          >
+            <option value="">All fund accounts</option>
+            {fundAccounts.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.account_name}
+              </option>
+            ))}
+          </select>
         </div>
         {visible.length ? (
           <ul className="ei-accounts-list">

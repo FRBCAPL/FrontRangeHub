@@ -1,7 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { formatMoney } from '@shared/utils/estateFinance.js';
+import {
+  hasSeenMoneyGuide,
+  markMoneyGuideSeen
+} from '@shared/utils/estateMoneyGuide.js';
 import EstateModalShell from './EstateModalShell.jsx';
 import { useEstateCase } from './EstateCaseContext';
+import GlossaryTerm from './GlossaryTerm.jsx';
 import LedgerSummaryPanel from './ledger/LedgerSummaryPanel.jsx';
 import LedgerAccountsPanel from './ledger/LedgerAccountsPanel.jsx';
 import LedgerFundsTransactionsPanel from './ledger/LedgerFundsTransactionsPanel.jsx';
@@ -11,26 +16,26 @@ import LedgerAuctionPanel from './ledger/LedgerAuctionPanel.jsx';
 import LedgerDistributionsPanel from './ledger/LedgerDistributionsPanel.jsx';
 import LedgerInventoryReconPanel from './ledger/LedgerInventoryReconPanel.jsx';
 import LedgerClaimsPanel from './ledger/LedgerClaimsPanel.jsx';
-import CashAvailableHint from './CashAvailableHint.jsx';
+import LedgerMoneyGuide from './ledger/LedgerMoneyGuide.jsx';
 
 /** Everyday tasks — shown first for a new PR. */
 const PRIMARY_TABS = [
   { id: 'summary', label: 'Overview', hint: 'Simple picture of cash, property, and debts' },
   { id: 'accounts', label: 'Accounts', hint: 'Bank, retirement, SS, insurance, debts' },
-  { id: 'claims', label: 'Creditor claims', hint: 'Who claimed money against the estate' },
   { id: 'expenses', label: 'Pay a bill', hint: 'Record a cost paid from estate cash' },
-  { id: 'transactions', label: 'Money in & out', hint: 'Running list of deposits and payments' },
+  { id: 'transactions', label: 'Money in/out', hint: 'Running list of deposits and payments' },
   { id: 'distributions', label: 'Give to heirs', hint: 'Cash or property delivered to beneficiaries' }
 ];
 
-/** Less common — tucked under “More”. */
-const MORE_TABS = [
+/** Secondary tools — always shown under the primary strip. */
+const SECONDARY_TABS = [
+  { id: 'claims', label: 'Creditor claims', hint: 'Who claimed money against the estate' },
   { id: 'loans', label: 'Money I advanced', hint: 'Personal money you paid for the estate' },
   { id: 'auction', label: 'Sale/auction sales', hint: 'Bids collected and still outstanding' },
   { id: 'inventory', label: 'Inventory check', hint: 'Make sure every item has one status' }
 ];
 
-const ALL_TABS = [...PRIMARY_TABS, ...MORE_TABS];
+const ALL_TABS = [...PRIMARY_TABS, ...SECONDARY_TABS];
 
 function tabCount(id, summary) {
   if (id === 'accounts') return summary.accounts?.length || 0;
@@ -56,19 +61,67 @@ const EstateLedgerModal = ({
 }) => {
   const { caseNumber } = useEstateCase();
   const [tab, setTab] = useState(initialTab);
-  const [showMore, setShowMore] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [showTourBanner, setShowTourBanner] = useState(false);
+  const [canScrollTabs, setCanScrollTabs] = useState(false);
+  const tabScrollRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
     setTab(initialTab);
-    setShowMore(MORE_TABS.some((t) => t.id === initialTab));
+    setShowGuide(false);
+    setShowTourBanner(!hasSeenMoneyGuide());
   }, [open, initialTab]);
+
+  useEffect(() => {
+    if (!open) return;
+    const el = tabScrollRef.current;
+    if (!el) return;
+
+    const updateOverflow = () => {
+      const remaining = el.scrollWidth - el.clientWidth - el.scrollLeft;
+      setCanScrollTabs(remaining > 10);
+    };
+    updateOverflow();
+    el.addEventListener('scroll', updateOverflow, { passive: true });
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateOverflow) : null;
+    ro?.observe(el);
+    window.addEventListener('resize', updateOverflow);
+    return () => {
+      el.removeEventListener('scroll', updateOverflow);
+      ro?.disconnect();
+      window.removeEventListener('resize', updateOverflow);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const root = tabScrollRef.current;
+    if (!root) return;
+    const activeBtn = root.querySelector('.ei-ledger-tab.is-active');
+    activeBtn?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+  }, [open, tab]);
 
   if (!open || !summary) return null;
 
   const cash =
     summary.fundsAvailable != null ? summary.fundsAvailable : summary.accountAssetsTotal;
-  const activeHint = ALL_TABS.find((t) => t.id === tab)?.hint;
+  const active = ALL_TABS.find((t) => t.id === tab) || PRIMARY_TABS[0];
+
+  const goToTab = (id) => {
+    setTab(id);
+    setShowGuide(false);
+  };
+
+  const openGuide = () => {
+    setShowTourBanner(false);
+    setShowGuide(true);
+  };
+
+  const dismissTourBanner = () => {
+    markMoneyGuideSeen();
+    setShowTourBanner(false);
+  };
 
   const renderTab = (entry) => {
     const count = tabCount(entry.id, summary);
@@ -80,7 +133,7 @@ const EstateLedgerModal = ({
         aria-selected={tab === entry.id}
         title={entry.hint}
         className={`ei-ledger-tab${tab === entry.id ? ' is-active' : ''}`}
-        onClick={() => setTab(entry.id)}
+        onClick={() => goToTab(entry.id)}
       >
         {entry.label}
         {count ? <span className="ei-ledger-tab-count">{count}</span> : null}
@@ -91,55 +144,131 @@ const EstateLedgerModal = ({
   return (
     <EstateModalShell
       title="Estate money"
-      subtitle={activeHint}
+      subtitle={active.hint}
       onClose={onClose}
       className="ei-modal-ledger"
       foot={
         <div className="ei-accounts-foot">
-          <div className="ei-accounts-foot-net">
-            <span>Cash available</span>
-            <strong>{formatMoney(cash)}</strong>
-            <CashAvailableHint className="ei-settings-hint ei-accounts-foot-hint" />
+          <div className="ei-accounts-foot-row">
+            <div className="ei-accounts-foot-net">
+              <span className="ei-accounts-foot-label">
+                <GlossaryTerm termKey="cash_available" iconOnly />
+                Cash available
+              </span>
+              <strong className="ei-accounts-foot-amount">{formatMoney(cash)}</strong>
+              <span className="ei-accounts-foot-hint-quiet">
+                Fund accounts only · sales stay separate until deposited
+              </span>
+            </div>
+            <button type="button" className="ei-btn ei-btn-secondary ei-accounts-foot-close" onClick={onClose}>
+              Close
+            </button>
           </div>
-          <button type="button" className="ei-btn ei-btn-secondary" onClick={onClose}>
-            Close
-          </button>
         </div>
       }
     >
-      <div className="ei-ledger-tabs" role="tablist" aria-label="Everyday money tasks">
-        {PRIMARY_TABS.map(renderTab)}
+      <div className="ei-ledger-nav">
+        <div className="ei-ledger-nav-row">
+          <div className="ei-ledger-nav-scroll-wrap">
+            <div
+              ref={tabScrollRef}
+              className="ei-ledger-nav-scroll"
+              role="tablist"
+              aria-label="Everyday money tasks"
+            >
+              {PRIMARY_TABS.map(renderTab)}
+            </div>
+            {canScrollTabs ? (
+              <button
+                type="button"
+                className="ei-ledger-nav-peek"
+                aria-label="Show more tabs"
+                onClick={() => {
+                  const el = tabScrollRef.current;
+                  if (!el) return;
+                  el.scrollBy({ left: Math.max(140, el.clientWidth * 0.55), behavior: 'smooth' });
+                }}
+              >
+                ›
+              </button>
+            ) : null}
+          </div>
+          <div className="ei-ledger-nav-aside">
+            <button
+              type="button"
+              className="ei-ledger-help-link"
+              aria-expanded={showGuide}
+              title="How money works"
+              onClick={() => {
+                if (showGuide) setShowGuide(false);
+                else openGuide();
+              }}
+            >
+              <span className="ei-ledger-help-full">
+                {showGuide ? 'Hide guide' : 'How money works'}
+              </span>
+              <span className="ei-ledger-help-short" aria-hidden="true">
+                {showGuide ? 'Hide' : 'Guide'}
+              </span>
+            </button>
+          </div>
+        </div>
+        <div className="ei-ledger-nav-more" role="tablist" aria-label="Additional money tools">
+          {SECONDARY_TABS.map(renderTab)}
+        </div>
       </div>
 
-      <div className="ei-ledger-more-wrap">
-        <button
-          type="button"
-          className="ei-link-btn ei-ledger-more-toggle"
-          aria-expanded={showMore}
-          onClick={() => setShowMore((on) => !on)}
-        >
-          {showMore ? 'Hide less-common tools' : 'More tools (loans, auction, inventory)'}
-        </button>
-        {showMore ? (
-          <div className="ei-ledger-tabs ei-ledger-tabs-more" role="tablist" aria-label="More money tools">
-            {MORE_TABS.map(renderTab)}
+      {showTourBanner && !showGuide ? (
+        <div className="ei-money-tour-banner" role="status">
+          <p>
+            <strong>New here?</strong> A one-minute tour of cash, sales, and bills.
+          </p>
+          <div className="ei-money-tour-actions">
+            <button type="button" className="ei-btn ei-btn-small" onClick={openGuide}>
+              How money works
+            </button>
+            <button type="button" className="ei-link-btn" onClick={dismissTourBanner}>
+              Dismiss
+            </button>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
+
+      {showGuide ? (
+        <LedgerMoneyGuide
+          firstVisit={showTourBanner}
+          onGoTo={goToTab}
+          onClose={() => {
+            markMoneyGuideSeen();
+            setShowGuide(false);
+            setShowTourBanner(false);
+          }}
+        />
+      ) : null}
 
       {readOnly ? (
-        <p className="ei-settings-hint">
+        <p className="ei-ledger-readonly">
           This estate is closed for records. Money records are view-only.
         </p>
       ) : null}
 
       <div className="ei-ledger-panel" role="tabpanel">
+        <header className="ei-ledger-page-head">
+          <h3>
+            {active.label}
+            {tab === 'summary' ? (
+              <GlossaryTerm termKey="estate_money_model" iconOnly className="ei-ledger-page-tip" />
+            ) : null}
+          </h3>
+          <p>{active.hint}</p>
+        </header>
+
         {tab === 'summary' ? (
           <LedgerSummaryPanel
             summary={summary}
             caseNumber={caseNumber}
             readOnly={readOnly}
-            onGoTo={setTab}
+            onGoTo={goToTab}
             onChanged={onChanged}
             onSettingsSaved={onSettingsSaved}
           />
