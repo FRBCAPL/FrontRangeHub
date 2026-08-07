@@ -54,10 +54,10 @@ const LedgerClaimsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => {
       return;
     }
     const wasEditing = Boolean(editingId);
+    setInfo(wasEditing ? 'Claim updated.' : 'Claim recorded.');
     resetForm();
     try {
       await onChanged?.();
-      setInfo(wasEditing ? 'Claim updated.' : 'Claim recorded.');
     } finally {
       setBusy(false);
     }

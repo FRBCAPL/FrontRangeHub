@@ -540,6 +540,88 @@ a:hover {
   }
 }
 
+/* Legal / policy document pages */
+.ev-legal {
+  margin: 0 0 1.5rem;
+  padding: 1.35rem 1.4rem 1.5rem;
+  border: 1px solid var(--ev-line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ev-panel) 88%, transparent);
+}
+
+.ev-legal-updated {
+  margin: 0 0 1.25rem;
+  color: var(--ev-muted);
+  font-size: 0.88rem;
+}
+
+.ev-legal h2 {
+  margin: 1.35rem 0 0.55rem;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--ev-ink);
+}
+
+.ev-legal h2:first-of-type {
+  margin-top: 0;
+}
+
+.ev-legal p,
+.ev-legal li {
+  color: var(--ev-muted);
+  font-size: 0.98rem;
+}
+
+.ev-legal p {
+  margin: 0 0 0.85rem;
+}
+
+.ev-legal ul {
+  margin: 0 0 0.95rem;
+  padding-left: 1.2rem;
+}
+
+.ev-legal li {
+  margin: 0.35rem 0;
+}
+
+.ev-legal strong {
+  color: var(--ev-ink);
+  font-weight: 600;
+}
+
+.ev-legal-callout {
+  margin: 1rem 0 1.15rem;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--ev-accent);
+  border-radius: 0 10px 10px 0;
+  background: color-mix(in srgb, var(--ev-accent-soft) 45%, var(--ev-panel));
+  color: var(--ev-ink);
+  font-size: 0.95rem;
+}
+
+.ev-pricing-legal {
+  margin-top: 0.75rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--ev-line);
+  border-radius: 12px;
+  background: var(--ev-panel);
+}
+
+.ev-pricing-legal p {
+  margin: 0 0 0.55rem;
+  color: var(--ev-muted);
+  font-size: 0.95rem;
+}
+
+.ev-pricing-legal nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+}
+
 .ev-footer {
   margin-top: 2.5rem;
   padding-top: 1.25rem;

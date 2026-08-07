@@ -7,11 +7,11 @@ export function EstateAutofillTrap() {
   return (
     <div className="ei-autofill-trap" aria-hidden="true">
       <label>
-        Email
-        <input type="text" name="email" autoComplete="username" tabIndex={-1} defaultValue="" />
+        Username
+        <input type="text" name="username" autoComplete="username" tabIndex={-1} defaultValue="" />
       </label>
       <label>
-        Password
+        Current password
         <input
           type="password"
           name="password"
@@ -36,13 +36,15 @@ function useDelayedUnlock(autoFocus) {
   const [locked, setLocked] = useState(true);
 
   useEffect(() => {
-    if (!autoFocus) return undefined;
-    // Stay locked briefly so Chrome's autofill pass skips this field, then focus for typing.
+    // Always unlock after a short delay so autofill skips the first pass,
+    // but Playwright / real typing can still edit fields that are not autoFocused.
     const t = window.setTimeout(() => {
       setLocked(false);
-      window.requestAnimationFrame(() => {
-        ref.current?.focus({ preventScroll: true });
-      });
+      if (autoFocus) {
+        window.requestAnimationFrame(() => {
+          ref.current?.focus({ preventScroll: true });
+        });
+      }
     }, 400);
     return () => window.clearTimeout(t);
   }, [autoFocus]);
