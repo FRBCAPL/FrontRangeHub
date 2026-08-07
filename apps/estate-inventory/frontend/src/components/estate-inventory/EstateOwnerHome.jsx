@@ -28,6 +28,7 @@ import EstatePrLegalNameModal from './EstatePrLegalNameModal';
 import EstatePrIdentityRequestModal from './EstatePrIdentityRequestModal';
 import GlossaryTerm from './GlossaryTerm';
 import EstateBrandTitle from './EstateBrandTitle';
+import { requestPrCoachOnEnter } from '@shared/utils/estatePrCoach.js';
 import './EstateInventoryApp.css';
 
 /**
@@ -350,6 +351,7 @@ const EstateOwnerHome = () => {
           load();
           const cn = data?.case_number;
           if (cn) {
+            requestPrCoachOnEnter(cn);
             estateInventoryService.setActiveEstateCase(cn);
             navigate(estateitCasePath(cn, 'admin'));
           }

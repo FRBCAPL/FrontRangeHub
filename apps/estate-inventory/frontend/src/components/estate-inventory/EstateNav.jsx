@@ -44,6 +44,7 @@ const EstateNav = ({
   onOpenLegalDisclaimer = null,
   onOpenFaq = null,
   onOpenPageTour = null,
+  onOpenAdminHelp = null,
   roleGuide = null,
   onLeaveEstate = null,
   onSignOutApp = null,
@@ -286,6 +287,8 @@ const EstateNav = ({
 
   const helpItems = (
     <>
+      {isPrMenu ? menuAction('tour', 'Tour this page', onOpenPageTour) : null}
+      {isPrMenu ? menuAction('admin-help', 'Admin help guide', onOpenAdminHelp) : null}
       {menuAction('what-is', 'What is Estate Vault?', onOpenWhatIsVault)}
       {menuAction('faq', 'FAQ', onOpenFaq)}
       {ESTATEIT_WHATS_NEW_ENABLED
@@ -339,7 +342,8 @@ const EstateNav = ({
           {showSettings && onOpenSettings ? (
             <button
               type="button"
-              className="ei-nav-icon-btn ei-nav-settings-btn"
+              id="ei-pr-coach-settings"
+              className="ei-nav-icon-btn ei-nav-settings-btn ei-pr-coach-target"
               onClick={onOpenSettings}
               aria-label="Estate Settings"
               title="Estate Settings"
@@ -350,7 +354,8 @@ const EstateNav = ({
           {showMenu ? (
             <button
               type="button"
-              className="ei-nav-icon-btn ei-nav-menu-btn"
+              id="ei-pr-coach-menu"
+              className="ei-nav-icon-btn ei-nav-menu-btn ei-pr-coach-target"
               aria-expanded={menuOpen}
               aria-haspopup="true"
               onClick={() => setMenuOpen((o) => !o)}

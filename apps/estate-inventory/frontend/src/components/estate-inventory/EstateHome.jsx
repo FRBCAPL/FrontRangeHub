@@ -33,7 +33,9 @@ const EstateHome = ({
   pendingRefreshKey = 0,
   financeRefreshKey = 0,
   requestsRefreshKey = 0,
-  messagesRefreshKey = 0
+  messagesRefreshKey = 0,
+  onStartPageTour = null,
+  showPageTourLink = false
 }) => {
   const [localRefresh, setLocalRefresh] = useState(0);
   const [ledgerRequestKey, setLedgerRequestKey] = useState(0);
@@ -65,63 +67,81 @@ const EstateHome = ({
         onStatus={onBillingStatus}
       />
 
-      <EstateHomeStatusStrip
-        settings={settings}
-        inventoryCount={inventoryCount}
-        refreshKey={pendingRefreshKey + localRefresh}
-        onOpenSettings={onOpenSettings}
-        onOpenProgress={openProgress}
-      />
+      <div
+        id="ei-pr-coach-status"
+        className="ei-pr-coach-target ei-pr-coach-status-wrap"
+      >
+        <EstateHomeStatusStrip
+          settings={settings}
+          inventoryCount={inventoryCount}
+          refreshKey={pendingRefreshKey + localRefresh}
+          onOpenSettings={onOpenSettings}
+          onOpenProgress={openProgress}
+        />
+        {showPageTourLink && onStartPageTour ? (
+          <button type="button" className="ei-pr-tour-link" onClick={onStartPageTour}>
+            Show me around
+          </button>
+        ) : null}
+      </div>
 
       <div className="ei-home-alerts" aria-label="Attention and next steps">
-        <EstateNeedsAttentionPanel
-          settings={settings}
-          inventoryCount={inventoryCount}
-          isClosed={isClosed}
-          refreshKey={gapsRefreshKey}
-          onOpenPendingReview={() => {
-            setLocalRefresh((n) => n + 1);
-            onOpenPendingReview?.();
-          }}
-          onOpenHeirRequests={() => {
-            setLocalRefresh((n) => n + 1);
-            onOpenHeirRequests?.();
-          }}
-          onOpenMessages={() => {
-            setLocalRefresh((n) => n + 1);
-            onOpenMessages?.();
-          }}
-          onOpenLedger={openLedger}
-          onOpenScenes={onOpenScenes}
-          onOpenReports={onOpenReports}
-          onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
-          onSeeCollections={onSeeCollections}
-          onCreateCollection={onCreateCollection}
-          onAddItem={onAddItem}
-          onLogLocksmith={onLogLocksmith}
-          onOpenClosing={onOpenClosing}
-          onMessage={onMessage}
-        />
+        <div id="ei-pr-coach-attention" className="ei-pr-coach-target">
+          <EstateNeedsAttentionPanel
+            settings={settings}
+            inventoryCount={inventoryCount}
+            isClosed={isClosed}
+            refreshKey={gapsRefreshKey}
+            onOpenPendingReview={() => {
+              setLocalRefresh((n) => n + 1);
+              onOpenPendingReview?.();
+            }}
+            onOpenHeirRequests={() => {
+              setLocalRefresh((n) => n + 1);
+              onOpenHeirRequests?.();
+            }}
+            onOpenMessages={() => {
+              setLocalRefresh((n) => n + 1);
+              onOpenMessages?.();
+            }}
+            onOpenLedger={openLedger}
+            onOpenScenes={onOpenScenes}
+            onOpenReports={onOpenReports}
+            onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
+            onSeeCollections={onSeeCollections}
+            onCreateCollection={onCreateCollection}
+            onAddItem={onAddItem}
+            onLogLocksmith={onLogLocksmith}
+            onOpenClosing={onOpenClosing}
+            onMessage={onMessage}
+          />
+        </div>
 
-        <EstateNextStepsPanel
-          settings={settings}
-          inventoryCount={inventoryCount}
-          isClosed={isClosed}
-          onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
-          onCreateCollection={onCreateCollection}
-          onAddItem={onAddItem}
-          onOpenScenes={onOpenScenes}
-          onOpenLedger={openLedger}
-          onLogLocksmith={onLogLocksmith}
-          onOpenClosing={onOpenClosing}
-          onOpenReports={onOpenReports}
-          onMessage={onMessage}
-          refreshKey={gapsRefreshKey}
-        />
+        <div id="ei-pr-coach-next" className="ei-pr-coach-target">
+          <EstateNextStepsPanel
+            settings={settings}
+            inventoryCount={inventoryCount}
+            isClosed={isClosed}
+            onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
+            onCreateCollection={onCreateCollection}
+            onAddItem={onAddItem}
+            onOpenScenes={onOpenScenes}
+            onOpenLedger={openLedger}
+            onLogLocksmith={onLogLocksmith}
+            onOpenClosing={onOpenClosing}
+            onOpenReports={onOpenReports}
+            onMessage={onMessage}
+            refreshKey={gapsRefreshKey}
+          />
+        </div>
       </div>
 
       <div className="ei-home-workbench">
-        <section className="ei-home-inventory" aria-label="Inventory workbench">
+        <section
+          id="ei-pr-coach-inventory"
+          className="ei-home-inventory ei-pr-coach-target"
+          aria-label="Inventory workbench"
+        >
           <h2 className="ei-home-workbench-title">Inventory</h2>
           <div className="ei-actions ei-actions--workbench">
             <button
@@ -163,7 +183,11 @@ const EstateHome = ({
           </div>
         </section>
 
-        <section className="ei-home-money" aria-label="Money workbench">
+        <section
+          id="ei-pr-coach-money"
+          className="ei-home-money ei-pr-coach-target"
+          aria-label="Money workbench"
+        >
           <h2 className="ei-home-workbench-title">Money</h2>
           <p className="ei-home-workbench-sub">
     

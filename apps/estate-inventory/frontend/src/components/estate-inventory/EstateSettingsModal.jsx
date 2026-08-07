@@ -24,14 +24,14 @@ const SETTINGS_GROUPS = [
         hint: 'Name, court case number, probate clock, family disclosure'
       },
       {
-        id: 'auction',
-        label: 'Sale / Auction',
-        hint: 'Dates, pickup window, PR bid-block emails'
-      },
-      {
         id: 'contacts',
         label: 'Contacts',
         hint: 'Attorneys, CPA, banks, utilities, and more'
+      },
+      {
+        id: 'auction',
+        label: 'Sale / Auction',
+        hint: 'Dates, pickup window, PR bid-block emails'
       }
     ]
   },

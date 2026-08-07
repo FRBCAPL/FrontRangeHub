@@ -689,7 +689,7 @@ export const PR_ROLE_GUIDE = {
       body: 'Use Reports for the court evidence pack, printable catalog, read-only snapshot, or JSON backup. Close the estate in Settings → Records only after the work is finished.'
     }
   ],
-  notes: 'Use the Estate progress timeline and Next steps panel as your checklist. Open Menu → Your role anytime for guidance.'
+  notes: 'Use What’s next and Needs attention as your checklist. Open EV Menu → Admin help guide anytime for section-by-section how-tos.'
 };
 
 export const HELPER_ROLE_GUIDE = {

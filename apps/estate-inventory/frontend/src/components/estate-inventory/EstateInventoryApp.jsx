@@ -19,6 +19,7 @@ import EstateWhatsNewModal from './EstateWhatsNewModal';
 import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
+import EstateAdminHelpGuideModal from './EstateAdminHelpGuideModal';
 import EstateReportsModal from './EstateReportsModal';
 import EstateClosingWizard from './EstateClosingWizard';
 import EstateBillingBanner from './EstateBillingBanner';
@@ -33,6 +34,13 @@ import PendingReviewPanel from './PendingReviewPanel';
 import AdminHeirRequestsPanel from './AdminHeirRequestsPanel';
 import AdminMessagesPanel from './AdminMessagesPanel';
 import AdminSceneEvidencePanel from './AdminSceneEvidencePanel';
+import HeirFamilyCoachMarks from './HeirFamilyCoachMarks';
+import {
+  PR_COACH_STEPS,
+  hasSeenPrCoach,
+  markPrCoachSeen,
+  consumePrCoachPending
+} from '@shared/utils/estatePrCoach.js';
 import './EstateInventoryApp.css';
 
 const VIEW = {
@@ -82,11 +90,26 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [showWhatIsVault, setShowWhatIsVault] = useState(false);
   const [showLegalDisclaimer, setShowLegalDisclaimer] = useState(false);
   const [showFaq, setShowFaq] = useState(false);
+  const [showAdminHelp, setShowAdminHelp] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showClosing, setShowClosing] = useState(false);
   const [billingAccess, setBillingAccess] = useState(null);
+  const [showCoach, setShowCoach] = useState(false);
+  const [coachStep, setCoachStep] = useState(0);
   const isClosed = Boolean(settings?.closed_at);
   const billingLocked = isBillingLocked(billingAccess);
+
+  const startCoach = () => {
+    setView(VIEW.HOME);
+    setCoachStep(0);
+    setShowCoach(true);
+  };
+
+  const finishCoach = (markSeen = true) => {
+    if (markSeen) markPrCoachSeen(routeCase);
+    setShowCoach(false);
+    setCoachStep(0);
+  };
 
   const openAddItem = (collection = null, preset = null) => {
     if (billingLocked) {
@@ -149,6 +172,8 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     setActiveCollection(null);
     setItems([]);
     setView(VIEW.HOME);
+    setShowCoach(false);
+    setCoachStep(0);
     setSettings((prev) => ({ ...prev, case_number: routeCase || '' }));
     refreshCollections();
     refreshSettings().then(() => estateInventoryService.ensureCaseSettings(routeCase));
@@ -157,6 +182,17 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
       setBillingAccess(billing.success ? billing.data : null);
     })();
   }, [routeCase, refreshCollections, refreshSettings]);
+
+  useEffect(() => {
+    if (!routeCase || view !== VIEW.HOME || showCoach) return undefined;
+    const pending = consumePrCoachPending(routeCase);
+    if (!pending && hasSeenPrCoach(routeCase)) return undefined;
+    const t = window.setTimeout(() => {
+      setCoachStep(0);
+      setShowCoach(true);
+    }, 700);
+    return () => window.clearTimeout(t);
+  }, [routeCase, view, showCoach]);
 
   const handleCreateCollection = async (name) => {
     if (billingLocked) {
@@ -355,7 +391,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     view === VIEW.HOME ? 'Home' : view === VIEW.DETAIL ? 'Collections' : 'Admin';
 
   return (
-    <div className="estate-inventory">
+    <div className={`estate-inventory ei-portal--admin${showCoach ? ' is-coaching' : ''}`}>
       <EstateNav
         title={navTitle}
         roleGuide={PR_ROLE_GUIDE}
@@ -376,6 +412,8 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         onOpenWhatIsVault={() => setShowWhatIsVault(true)}
         onOpenLegalDisclaimer={() => setShowLegalDisclaimer(true)}
         onOpenFaq={() => setShowFaq(true)}
+        onOpenPageTour={startCoach}
+        onOpenAdminHelp={() => setShowAdminHelp(true)}
         onOpenReports={() => setShowReports(true)}
         onLockAdmin={onLock || null}
         onLeaveEstate={onLeaveEstate}
@@ -448,6 +486,8 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           financeRefreshKey={financeRefreshKey}
           requestsRefreshKey={requestsRefreshKey}
           messagesRefreshKey={messagesRefreshKey}
+          onStartPageTour={startCoach}
+          showPageTourLink={!showCoach}
         />
       ) : null}
 
@@ -590,6 +630,10 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         onClose={() => setShowLegalDisclaimer(false)}
       />
       <EstateFaqModal open={showFaq} onClose={() => setShowFaq(false)} />
+      <EstateAdminHelpGuideModal
+        open={showAdminHelp}
+        onClose={() => setShowAdminHelp(false)}
+      />
 
       <EstateReportsModal
         open={showReports}
@@ -610,6 +654,15 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           await refreshSettings();
           setFinanceRefreshKey((n) => n + 1);
         }}
+      />
+
+      <HeirFamilyCoachMarks
+        open={showCoach}
+        stepIndex={coachStep}
+        steps={PR_COACH_STEPS}
+        onStepChange={setCoachStep}
+        onSkip={() => finishCoach(true)}
+        onDone={() => finishCoach(true)}
       />
     </div>
   );
