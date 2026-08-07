@@ -180,7 +180,7 @@ const EstateNeedsAttentionPanel = ({
     ]
   );
 
-  const loading = Boolean(homeLoading && !homeData);
+  const loading = Boolean(homeLoading);
 
   const runAction = (row) => {
     setOpen(false);

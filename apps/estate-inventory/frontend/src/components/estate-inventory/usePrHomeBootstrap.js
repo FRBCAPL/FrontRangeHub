@@ -36,6 +36,7 @@ export default function usePrHomeBootstrap({
 
     let cancelled = false;
     const seq = ++seqRef.current;
+    setData(null);
     setLoading(true);
     setFinanceLoading(true);
     setError('');

@@ -1,4 +1,5 @@
 import {
+  listCollections,
   listAllItemsWithRooms,
   countUnreadHeirMessages,
   listSiblingAccounts,
@@ -27,6 +28,7 @@ function fail(error) {
 function assembleHomePayload({
   settings,
   items,
+  collections = null,
   unreadMessages,
   heirs,
   helpers,
@@ -65,8 +67,20 @@ function assembleHomePayload({
     return Number.isFinite(t) && t > max ? t : max;
   }, 0);
 
+  const roomList = Array.isArray(collections) ? collections : null;
+  const roomCountFromCollections =
+    roomList != null ? roomList.length : null;
+  const roomIdsFromItems = new Set(
+    (items || []).map((item) => item.collection_id).filter(Boolean)
+  );
+
   return {
     items,
+    collections: roomList,
+    roomCount:
+      roomCountFromCollections != null
+        ? roomCountFromCollections
+        : roomIdsFromItems.size,
     pendingReviewCount: Math.max(pendingFromItems.length, itemSummary.pendingReviewCount || 0),
     unreadMessages: Number(unreadMessages) || 0,
     heirs,
@@ -111,6 +125,10 @@ function assembleHomePayload({
 export async function loadPrHomeCore(caseNumber, settings = {}) {
   if (!caseNumber) return fail('Missing estate case.');
 
+  // Collections first so items mapping can reuse the same list (no double fetch).
+  const collectionsResult = await listCollections(caseNumber);
+  const collections = collectionsResult.success ? collectionsResult.data || [] : [];
+
   const [
     itemsResult,
     unreadResult,
@@ -120,7 +138,7 @@ export async function loadPrHomeCore(caseNumber, settings = {}) {
     scenesResult,
     updatesResult
   ] = await Promise.all([
-    listAllItemsWithRooms(caseNumber),
+    listAllItemsWithRooms(caseNumber, { collections }),
     countUnreadHeirMessages(caseNumber),
     listSiblingAccounts(caseNumber),
     listHelpers(caseNumber),
@@ -129,14 +147,25 @@ export async function loadPrHomeCore(caseNumber, settings = {}) {
     listOwnerFamilyUpdates(caseNumber)
   ]);
 
-  if (!itemsResult.success && !heirsResult.success && !distResult.success) {
-    return fail(itemsResult.error || heirsResult.error || 'Could not load PR home data.');
+  if (
+    !collectionsResult.success &&
+    !itemsResult.success &&
+    !heirsResult.success &&
+    !distResult.success
+  ) {
+    return fail(
+      collectionsResult.error ||
+        itemsResult.error ||
+        heirsResult.error ||
+        'Could not load PR home data.'
+    );
   }
 
   return ok(
     assembleHomePayload({
       settings,
       items: itemsResult.success ? itemsResult.data || [] : [],
+      collections: collectionsResult.success ? collections : null,
       unreadMessages: unreadResult.success ? unreadResult.data?.total_unread : 0,
       heirs: heirsResult.success ? heirsResult.data || [] : [],
       helpers: helpersResult.success ? helpersResult.data || [] : [],
@@ -159,6 +188,7 @@ export async function loadPrHomeFinance(caseNumber, coreData, settings = {}) {
     assembleHomePayload({
       settings,
       items: base.items || [],
+      collections: base.collections ?? null,
       unreadMessages: base.unreadMessages || 0,
       heirs: base.heirs || [],
       helpers: base.helpers || [],
@@ -186,6 +216,7 @@ export function reassemblePrHomeWithSettings(homeData, settings) {
   return assembleHomePayload({
     settings: settings || {},
     items: homeData.items || [],
+    collections: homeData.collections ?? null,
     unreadMessages: homeData.unreadMessages || 0,
     heirs: homeData.heirs || [],
     helpers: homeData.helpers || [],

@@ -714,12 +714,19 @@ export async function listItems(collectionId, caseNumber) {
   return ok(data || []);
 }
 
-export async function listAllItemsWithRooms(caseNumber) {
+/**
+ * @param {string} caseNumber
+ * @param {{ collections?: Array<{ id: string, name?: string }> }} [opts]
+ *        Pass preloaded collections to skip a duplicate listCollections round-trip.
+ */
+export async function listAllItemsWithRooms(caseNumber, opts = {}) {
   const estate = await resolveOwnedEstate(caseNumber);
   const scoped = assertEstateScoped(estate);
   if (!scoped.ok) return fail(scoped.error);
 
-  const collectionsResult = await listCollections(caseNumber);
+  const collectionsResult = Array.isArray(opts.collections)
+    ? { success: true, data: opts.collections }
+    : await listCollections(caseNumber);
   if (!collectionsResult.success) return collectionsResult;
   const roomById = Object.fromEntries((collectionsResult.data || []).map((c) => [c.id, c.name]));
 

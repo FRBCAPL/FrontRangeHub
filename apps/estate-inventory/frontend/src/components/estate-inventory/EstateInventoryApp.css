@@ -519,6 +519,17 @@ button.ei-nav-menu-btn-item {
   color: var(--ei-muted);
 }
 
+.ei-status-chip-spinner {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin-left: 0.35rem;
+}
+
+.ei-status-chip.is-loading .ei-status-chip-value {
+  color: var(--ei-muted);
+  font-weight: 650;
+}
+
 .ei-needs-attention {
   padding: 0.65rem 0.75rem;
   border: 1px solid rgba(251, 146, 60, 0.4);

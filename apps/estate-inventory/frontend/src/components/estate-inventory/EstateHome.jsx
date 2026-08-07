@@ -35,12 +35,14 @@ const EstateHome = ({
   onBillingStatus,
   billingAccess = null,
   inventoryCount = 0,
+  inventoryLoading = false,
   pendingRefreshKey = 0,
   financeRefreshKey = 0,
   requestsRefreshKey = 0,
   messagesRefreshKey = 0,
   onStartPageTour = null,
-  showPageTourLink = false
+  showPageTourLink = false,
+  onBootstrapCollections = null
 }) => {
   const [localRefresh, setLocalRefresh] = useState(0);
   const [ledgerRequestKey, setLedgerRequestKey] = useState(0);
@@ -57,16 +59,38 @@ const EstateHome = ({
   const {
     data: homeData,
     loading: homeLoading,
-    financeLoading
+    financeLoading,
+    error: homeError
   } = usePrHomeBootstrap({
     caseNumber: settings?.case_number,
     settings,
     refreshKey: homeRefreshKey
   });
 
+  const caseReady = Boolean(settings?.case_number);
+  // Never show “No rooms yet” until home core finishes (authoritative roomCount).
+  const roomsLoading = caseReady && !homeError && (homeLoading || !homeData);
+  // Money stays in loading until finance attaches (or core/finance errors out).
+  const moneyLoading =
+    caseReady &&
+    !homeError &&
+    (homeLoading ||
+      financeLoading ||
+      (Boolean(homeData) && homeData.finance == null && !homeData.financeError));
+  const displayRoomCount =
+    homeData?.roomCount != null
+      ? Number(homeData.roomCount) || 0
+      : Number(inventoryCount) || 0;
+  const alertsLoading = roomsLoading;
+
   useEffect(() => {
     setLocksmithNotNeeded(isLocksmithMarkedNotNeeded(settings?.case_number));
   }, [settings?.case_number, localRefresh, pendingRefreshKey]);
+
+  useEffect(() => {
+    if (!onBootstrapCollections || !Array.isArray(homeData?.collections)) return;
+    onBootstrapCollections(homeData.collections);
+  }, [homeData?.collections, onBootstrapCollections]);
 
   const openLocksmith = () => {
     // Keep “not needed” status until PR activates it inside the modal.
@@ -101,7 +125,8 @@ const EstateHome = ({
       >
         <EstateHomeStatusStrip
           settings={settings}
-          inventoryCount={inventoryCount}
+          inventoryCount={displayRoomCount}
+          inventoryLoading={roomsLoading}
           homeData={homeData}
           refreshKey={pendingRefreshKey + localRefresh}
           onOpenSettings={onOpenSettings}
@@ -120,10 +145,10 @@ const EstateHome = ({
         <div id="ei-pr-coach-attention" className="ei-pr-coach-target">
           <EstateNeedsAttentionPanel
             settings={settings}
-            inventoryCount={inventoryCount}
+            inventoryCount={displayRoomCount}
             isClosed={isClosed}
             homeData={homeData}
-            homeLoading={homeLoading}
+            homeLoading={alertsLoading}
             onOpenPendingReview={() => {
               setLocalRefresh((n) => n + 1);
               onOpenPendingReview?.();
@@ -152,10 +177,11 @@ const EstateHome = ({
         <div id="ei-pr-coach-next" className="ei-pr-coach-target">
           <EstateNextStepsPanel
             settings={settings}
-            inventoryCount={inventoryCount}
+            inventoryCount={displayRoomCount}
+            inventoryLoading={roomsLoading}
             isClosed={isClosed}
             homeData={homeData}
-            homeLoading={homeLoading}
+            homeLoading={alertsLoading}
             onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
             onCreateCollection={onCreateCollection}
             onAddItem={onAddItem}
@@ -253,10 +279,9 @@ const EstateHome = ({
             onSettingsSaved={onFinanceSettingsSaved}
             onChanged={onFinanceChanged}
             isClosed={isClosed}
-            sharedSummary={
-              homeLoading || homeData ? homeData?.finance ?? null : undefined
-            }
-            sharedLoading={homeLoading || financeLoading}
+            sharedSummary={caseReady ? homeData?.finance ?? null : undefined}
+            sharedLoading={moneyLoading}
+            sharedError={homeData?.financeError || homeError || ''}
           />
         </section>
       </div>
@@ -272,7 +297,7 @@ const EstateHome = ({
           {progressOpen ? (
             <EstateTimeline
               settings={settings}
-              roomCount={inventoryCount}
+              roomCount={displayRoomCount}
               refreshKey={pendingRefreshKey + localRefresh}
               onSettingsSaved={onFinanceSettingsSaved}
               sharedStats={homeData?.itemSummary || null}

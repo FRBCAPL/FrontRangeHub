@@ -9,6 +9,7 @@ import {
   isLocksmithMarkedNotNeeded
 } from '@shared/utils/estateLocksmithPref.js';
 import EstateModalShell from './EstateModalShell';
+import EstateInlineLoading from './EstateInlineLoading';
 
 /** Re-export for any older imports that expected buildSteps here. */
 export { buildWhatsNextSteps as buildSteps } from '@shared/utils/estatePrWorkflow.js';
@@ -16,6 +17,7 @@ export { buildWhatsNextSteps as buildSteps } from '@shared/utils/estatePrWorkflo
 const EstateNextStepsPanel = ({
   settings,
   inventoryCount = 0,
+  inventoryLoading = false,
   isClosed = false,
   homeData = null,
   homeLoading = false,
@@ -42,14 +44,12 @@ const EstateNextStepsPanel = ({
     setLocksmithNotNeeded(isLocksmithMarkedNotNeeded(settings?.case_number));
   }, [settings?.case_number, refreshKey]);
 
+  const waiting = Boolean(homeLoading || inventoryLoading);
+
   const heirCount = Number(homeData?.heirCount) || 0;
   const helperCount = Number(homeData?.helperCount) || 0;
   const itemCount = homeData?.itemSummary?.itemCount ?? homeData?.items?.length ?? 0;
-  const sceneCount = homeData
-    ? Number(homeData.activeSceneCount) || 0
-    : homeLoading
-      ? null
-      : 0;
+  const sceneCount = homeData ? Number(homeData.activeSceneCount) || 0 : 0;
   const needsFamilyUpdate = Boolean(homeData?.needsFamilyUpdate);
   const familyUpdateStale = Boolean(homeData?.familyUpdateStale);
 
@@ -69,27 +69,29 @@ const EstateNextStepsPanel = ({
     setBusyInvite(false);
   };
 
-  const steps = buildWhatsNextSteps({
-    settings,
-    inventoryCount,
-    itemCount,
-    heirCount,
-    helperCount,
-    sceneCount,
-    isClosed,
-    onOpenSettingsSection,
-    onCreateCollection,
-    onAddItem,
-    onOpenScenes,
-    onOpenLedger,
-    onLogLocksmith,
-    onCopyInvite: copyInvite,
-    onOpenClosing,
-    onOpenReports,
-    needsFamilyUpdate,
-    familyUpdateStale,
-    locksmithNotNeeded
-  });
+  const steps = waiting
+    ? []
+    : buildWhatsNextSteps({
+        settings,
+        inventoryCount,
+        itemCount,
+        heirCount,
+        helperCount,
+        sceneCount,
+        isClosed,
+        onOpenSettingsSection,
+        onCreateCollection,
+        onAddItem,
+        onOpenScenes,
+        onOpenLedger,
+        onLogLocksmith,
+        onCopyInvite: copyInvite,
+        onOpenClosing,
+        onOpenReports,
+        needsFamilyUpdate,
+        familyUpdateStale,
+        locksmithNotNeeded
+      });
 
   const doneBasics =
     Boolean(settings?.letters_issued_at) &&
@@ -134,6 +136,19 @@ const EstateNextStepsPanel = ({
   useEffect(() => {
     setItemIndex(0);
   }, [page]);
+
+  if (waiting) {
+    return (
+      <section className="ei-next-steps ei-next-steps-launch" aria-labelledby="ei-next-steps-title">
+        <div className="ei-next-steps-head">
+          <h2 id="ei-next-steps-title" className="ei-next-steps-title">
+            What&apos;s next
+          </h2>
+        </div>
+        <EstateInlineLoading label="Loading next steps…" />
+      </section>
+    );
+  }
 
   const selectPage = (id) => {
     setPage(id);

@@ -12,6 +12,7 @@ import ProbateCountdown from './ProbateCountdown';
 const EstateHomeStatusStrip = ({
   settings,
   inventoryCount = 0,
+  inventoryLoading = false,
   homeData = null,
   refreshKey = 0,
   onOpenSettings,
@@ -64,35 +65,41 @@ const EstateHomeStatusStrip = ({
     };
   }, [homeData]);
 
+  const inventoryReady = !inventoryLoading;
+  const roomCount = inventoryReady ? Number(inventoryCount) || 0 : null;
+  const itemCount = homeData ? Number(itemStats.itemCount) || 0 : inventoryReady ? 0 : null;
+
   const { steps, completedCount, totalCount } = useMemo(
     () =>
       buildEstateTimeline({
         settings: settings || {},
-        roomCount: inventoryCount || 0,
-        itemCount: itemStats.itemCount,
+        roomCount: roomCount || 0,
+        itemCount: itemCount || 0,
         pendingReviewCount: itemStats.pendingReviewCount,
         approvedForSaleCount: itemStats.approvedForSaleCount,
         distributionCount: itemStats.distributionCount,
         pendingAcknowledgementCount: itemStats.pendingAcknowledgementCount,
         hasAuctionActivity: false
       }),
-    [settings, inventoryCount, itemStats]
+    [settings, roomCount, itemCount, itemStats]
   );
 
   const current = steps.find((s) => s.status === 'active') || steps.find((s) => s.status !== 'done');
   const progressLabel = current?.title || 'Getting started';
-  const roomCount = Number(inventoryCount) || 0;
-  const itemCount = Number(itemStats.itemCount) || 0;
-  const inventoryValue =
-    roomCount <= 0
+  const inventoryValue = !inventoryReady
+    ? 'Loading…'
+    : roomCount <= 0
       ? 'No rooms yet'
-      : itemCount <= 0
-        ? `${roomCount} room${roomCount === 1 ? '' : 's'} · no items`
-        : `${roomCount} room${roomCount === 1 ? '' : 's'} · ${itemCount} item${
-            itemCount === 1 ? '' : 's'
-          }`;
-  const inventoryAction =
-    roomCount <= 0
+      : itemCount == null
+        ? `${roomCount} room${roomCount === 1 ? '' : 's'} · …`
+        : itemCount <= 0
+          ? `${roomCount} room${roomCount === 1 ? '' : 's'} · no items`
+          : `${roomCount} room${roomCount === 1 ? '' : 's'} · ${itemCount} item${
+              itemCount === 1 ? '' : 's'
+            }`;
+  const inventoryAction = !inventoryReady
+    ? { label: '…', onClick: null }
+    : roomCount <= 0
       ? { label: 'Create room', onClick: onCreateCollection }
       : { label: 'Rooms', onClick: onSeeCollections };
 
@@ -124,16 +131,18 @@ const EstateHomeStatusStrip = ({
       </section>
       <section
         className={`ei-status-chip ei-status-chip--inventory${
-          roomCount <= 0 ? ' ei-status-chip--setup' : ''
-        }`}
+          inventoryReady && roomCount <= 0 ? ' ei-status-chip--setup' : ''
+        }${inventoryReady ? '' : ' is-loading'}`}
       >
         <div className="ei-status-chip-body">
           <span className="ei-status-chip-label">Inventory</span>
           <strong className="ei-status-chip-value">{inventoryValue}</strong>
           <span className="ei-status-chip-meta">
-            {roomCount <= 0
-              ? 'Start with a room, then add photos'
-              : 'Open rooms to review or add items'}
+            {!inventoryReady
+              ? 'Loading rooms and items…'
+              : roomCount <= 0
+                ? 'Start with a room, then add photos'
+                : 'Open rooms to review or add items'}
           </span>
         </div>
         {inventoryAction.onClick ? (
@@ -144,6 +153,8 @@ const EstateHomeStatusStrip = ({
           >
             {inventoryAction.label}
           </button>
+        ) : !inventoryReady ? (
+          <span className="ei-inline-spinner ei-status-chip-spinner" aria-hidden="true" />
         ) : null}
       </section>
     </div>

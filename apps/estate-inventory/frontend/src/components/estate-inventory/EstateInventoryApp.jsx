@@ -58,7 +58,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const { caseNumber: routeCase } = useEstateCase();
   const [view, setView] = useState(VIEW.HOME);
   const [collections, setCollections] = useState([]);
-  const [collectionsLoading, setCollectionsLoading] = useState(false);
+  const [collectionsLoading, setCollectionsLoading] = useState(true);
   const [collectionsError, setCollectionsError] = useState('');
   const [activeCollection, setActiveCollection] = useState(null);
   const [items, setItems] = useState([]);
@@ -98,6 +98,12 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [coachStep, setCoachStep] = useState(0);
   const isClosed = Boolean(settings?.closed_at);
   const billingLocked = isBillingLocked(billingAccess);
+
+  const handleBootstrapCollections = useCallback((rows) => {
+    setCollections(rows || []);
+    setCollectionsLoading(false);
+    setCollectionsError('');
+  }, []);
 
   const startCoach = () => {
     setView(VIEW.HOME);
@@ -169,6 +175,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   useEffect(() => {
     estateInventoryService.setActiveEstateCase(routeCase);
     setCollections([]);
+    setCollectionsLoading(true);
     setActiveCollection(null);
     setItems([]);
     setView(VIEW.HOME);
@@ -462,6 +469,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           settings={settings}
           isClosed={isClosed}
           inventoryCount={collections.length}
+          inventoryLoading={collectionsLoading}
           onOpenSettings={() => {
             setSettingsSection(null);
             setShowSettings(true);
@@ -489,6 +497,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           messagesRefreshKey={messagesRefreshKey}
           onStartPageTour={startCoach}
           showPageTourLink={!showCoach}
+          onBootstrapCollections={handleBootstrapCollections}
         />
       ) : null}
 

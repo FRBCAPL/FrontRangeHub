@@ -42,7 +42,8 @@ const EstateFinanceDashboard = ({
   onChanged,
   isClosed = false,
   sharedSummary = undefined,
-  sharedLoading = false
+  sharedLoading = false,
+  sharedError = ''
 }) => {
   const { caseNumber } = useEstateCase();
   const [summary, setSummary] = useState(null);
@@ -82,8 +83,13 @@ const EstateFinanceDashboard = ({
         setRefreshing(false);
       } else if (sharedLoading) {
         if (!hasSummaryRef.current) setLoading(true);
-      } else if (!sharedLoading && !sharedSummary) {
+      } else if (sharedError) {
+        setError(sharedError);
         setLoading(false);
+        setRefreshing(false);
+      } else if (!sharedLoading && !sharedSummary) {
+        // Shared path finished with no payload — keep spinner off but don't invent empty money.
+        if (!hasSummaryRef.current) setLoading(false);
       }
       return;
     }
@@ -92,7 +98,17 @@ const EstateFinanceDashboard = ({
       return;
     }
     load();
-  }, [useShared, sharedSummary, sharedLoading, load, refreshKey]);
+  }, [useShared, sharedSummary, sharedLoading, sharedError, load, refreshKey]);
+
+  // When shared loading flips on (new estate / refresh), clear stale empty summary.
+  useEffect(() => {
+    if (!useShared) return;
+    if (sharedLoading && !sharedSummary) {
+      setSummary(null);
+      setLoading(true);
+      setError('');
+    }
+  }, [useShared, sharedLoading, sharedSummary]);
 
   useEffect(() => {
     if (ledgerRequestKey > 0) setLedgerTab(ledgerRequestTab || 'summary');
@@ -124,7 +140,7 @@ const EstateFinanceDashboard = ({
     });
   };
 
-  if (loading && !summary) {
+  if ((loading || sharedLoading) && !summary) {
     return (
       <section className="ei-finance-snapshot ei-finance-snapshot-simple" aria-label="Money overview">
         <div className="ei-finance-head">
@@ -160,7 +176,19 @@ const EstateFinanceDashboard = ({
     );
   }
 
-  if (!summary) return null;
+  // Shared bootstrap still pending — never flash an empty money card.
+  if (!summary) {
+    return (
+      <section className="ei-finance-snapshot ei-finance-snapshot-simple" aria-label="Money overview">
+        <div className="ei-finance-head">
+          <div>
+            <h2 className="ei-finance-title">Money overview</h2>
+          </div>
+        </div>
+        <EstateInlineLoading label="Loading money overview…" />
+      </section>
+    );
+  }
 
   const cash =
     summary.fundsAvailable != null ? summary.fundsAvailable : summary.accountAssetsTotal;
