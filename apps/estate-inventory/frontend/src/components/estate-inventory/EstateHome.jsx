@@ -5,6 +5,7 @@ import EstateFinanceDashboard from './EstateFinanceDashboard';
 import EstateHomeStatusStrip from './EstateHomeStatusStrip';
 import EstateNeedsAttentionPanel from './EstateNeedsAttentionPanel';
 import EstateBillingBanner from './EstateBillingBanner';
+import usePrHomeBootstrap from './usePrHomeBootstrap.js';
 import {
   isLocksmithMarkedNotNeeded
 } from '@shared/utils/estateLocksmithPref.js';
@@ -49,6 +50,18 @@ const EstateHome = ({
   );
   const progressRef = useRef(null);
 
+  const homeRefreshKey =
+    pendingRefreshKey + financeRefreshKey + localRefresh + requestsRefreshKey + messagesRefreshKey;
+
+  const {
+    data: homeData,
+    loading: homeLoading
+  } = usePrHomeBootstrap({
+    caseNumber: settings?.case_number,
+    settings,
+    refreshKey: homeRefreshKey
+  });
+
   useEffect(() => {
     setLocksmithNotNeeded(isLocksmithMarkedNotNeeded(settings?.case_number));
   }, [settings?.case_number, localRefresh, pendingRefreshKey]);
@@ -62,9 +75,6 @@ const EstateHome = ({
     setLedgerRequestTab(tab);
     setLedgerRequestKey((n) => n + 1);
   };
-
-  const gapsRefreshKey =
-    pendingRefreshKey + financeRefreshKey + localRefresh + requestsRefreshKey + messagesRefreshKey;
 
   const openProgress = () => {
     setProgressOpen(true);
@@ -89,6 +99,7 @@ const EstateHome = ({
         <EstateHomeStatusStrip
           settings={settings}
           inventoryCount={inventoryCount}
+          homeData={homeData}
           refreshKey={pendingRefreshKey + localRefresh}
           onOpenSettings={onOpenSettings}
           onOpenProgress={openProgress}
@@ -108,7 +119,8 @@ const EstateHome = ({
             settings={settings}
             inventoryCount={inventoryCount}
             isClosed={isClosed}
-            refreshKey={gapsRefreshKey}
+            homeData={homeData}
+            homeLoading={homeLoading}
             onOpenPendingReview={() => {
               setLocalRefresh((n) => n + 1);
               onOpenPendingReview?.();
@@ -139,6 +151,8 @@ const EstateHome = ({
             settings={settings}
             inventoryCount={inventoryCount}
             isClosed={isClosed}
+            homeData={homeData}
+            homeLoading={homeLoading}
             onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
             onCreateCollection={onCreateCollection}
             onAddItem={onAddItem}
@@ -148,7 +162,7 @@ const EstateHome = ({
             onOpenClosing={onOpenClosing}
             onOpenReports={onOpenReports}
             onMessage={onMessage}
-            refreshKey={gapsRefreshKey}
+            refreshKey={homeRefreshKey}
           />
         </div>
       </div>
@@ -236,6 +250,10 @@ const EstateHome = ({
             onSettingsSaved={onFinanceSettingsSaved}
             onChanged={onFinanceChanged}
             isClosed={isClosed}
+            sharedSummary={
+              homeLoading || homeData ? homeData?.finance ?? null : undefined
+            }
+            sharedLoading={homeLoading}
           />
         </section>
       </div>

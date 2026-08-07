@@ -1345,6 +1345,91 @@ button.ei-nav-menu-btn-item {
   gap: 0.75rem;
 }
 
+.ei-list--rooms {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.ei-list--rooms .ei-list-item--room {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 0.75rem;
+  cursor: pointer;
+}
+
+.ei-list--rooms .ei-list-item--room:focus-visible {
+  outline: 2px solid var(--ei-accent, #0d7377);
+  outline-offset: 2px;
+}
+
+.ei-list-room-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-self: start;
+  gap: 0.1rem;
+  min-width: 0;
+  text-align: left;
+  pointer-events: none;
+}
+
+.ei-list--rooms .ei-list-room-num {
+  grid-column: auto;
+  justify-self: start;
+}
+
+.ei-list--rooms .ei-list-room-name {
+  grid-column: auto;
+  display: block;
+  justify-self: center;
+  max-width: 100%;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.ei-list--rooms .ei-list-room-count {
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+.ei-list-room-add {
+  justify-self: end;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 8px;
+  background: var(--ei-elevated);
+  color: var(--ei-ink);
+  -webkit-text-fill-color: var(--ei-ink);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ei-list-room-add:hover,
+.ei-list-room-add:focus-visible {
+  border-color: var(--ei-accent, #0d7377);
+  color: var(--ei-accent, #0d7377);
+  -webkit-text-fill-color: var(--ei-accent, #0d7377);
+}
+
+.ei-list-room-add:focus-visible {
+  outline: 2px solid var(--ei-accent, #0d7377);
+  outline-offset: 2px;
+}
+
 .ei-list-row {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -1449,6 +1534,15 @@ button.ei-nav-menu-btn-item {
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.ei-room-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-shrink: 0;
 }
 
 .ei-room-detail-title {
@@ -6612,6 +6706,10 @@ button.ei-helper-photo-remove {
 @media (max-width: 640px) {
   .estate-inventory {
     padding: 0.55rem 0.75rem calc(1.25rem + env(safe-area-inset-bottom));
+  }
+
+  .ei-list--rooms {
+    grid-template-columns: 1fr;
   }
 
   .ei-list-row {

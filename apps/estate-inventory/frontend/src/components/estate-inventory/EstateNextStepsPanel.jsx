@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   buildNoticeOfInventoryPortalSms,
   defaultFamilyPortalUrl
@@ -18,6 +17,8 @@ const EstateNextStepsPanel = ({
   settings,
   inventoryCount = 0,
   isClosed = false,
+  homeData = null,
+  homeLoading = false,
   onOpenSettingsSection,
   onCreateCollection,
   onAddItem,
@@ -29,13 +30,7 @@ const EstateNextStepsPanel = ({
   onMessage,
   refreshKey = 0
 }) => {
-  const [heirCount, setHeirCount] = useState(0);
-  const [helperCount, setHelperCount] = useState(0);
-  const [itemCount, setItemCount] = useState(0);
-  const [sceneCount, setSceneCount] = useState(null);
   const [busyInvite, setBusyInvite] = useState(false);
-  const [needsFamilyUpdate, setNeedsFamilyUpdate] = useState(false);
-  const [familyUpdateStale, setFamilyUpdateStale] = useState(false);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState('now'); // 'now' | 'later'
   const [itemIndex, setItemIndex] = useState(0);
@@ -47,60 +42,16 @@ const EstateNextStepsPanel = ({
     setLocksmithNotNeeded(isLocksmithMarkedNotNeeded(settings?.case_number));
   }, [settings?.case_number, refreshKey]);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const caseNumber = settings?.case_number;
-      if (!caseNumber) {
-        setHeirCount(0);
-        setHelperCount(0);
-        setItemCount(0);
-        setSceneCount(null);
-        setNeedsFamilyUpdate(false);
-        setFamilyUpdateStale(false);
-        return;
-      }
-      const [heirsResult, helpersResult, itemsResult, updatesResult, distResult, scenesResult] =
-        await Promise.all([
-          estateInventoryService.listSiblingAccounts(caseNumber),
-          estateInventoryService.listHelpers(caseNumber),
-          estateInventoryService.listAllItemsWithRooms(caseNumber),
-          estateInventoryService.listOwnerFamilyUpdates(caseNumber),
-          estateInventoryService.listEstateDistributions(caseNumber),
-          estateInventoryService.listSceneCaptures(caseNumber)
-        ]);
-      if (cancelled) return;
-      if (heirsResult.success) setHeirCount((heirsResult.data || []).length);
-      else setHeirCount(0);
-      if (helpersResult.success) setHelperCount((helpersResult.data || []).length);
-      else setHelperCount(0);
-      if (itemsResult.success) setItemCount((itemsResult.data || []).length);
-      else setItemCount(0);
-      if (scenesResult.success) setSceneCount((scenesResult.data || []).length);
-      else setSceneCount(null);
-
-      const updates = updatesResult.success ? updatesResult.data || [] : [];
-      const dists = (distResult.success ? distResult.data || [] : []).filter(
-        (row) => row.status === 'finalized'
-      );
-      const latestUpdateAt = updates[0]?.published_at
-        ? new Date(updates[0].published_at).getTime()
-        : 0;
-      const latestDistAt = dists.reduce((max, row) => {
-        const t = new Date(row.finalized_at || row.distribution_date || 0).getTime();
-        return Number.isFinite(t) && t > max ? t : max;
-      }, 0);
-      setNeedsFamilyUpdate(
-        updates.length === 0 && (dists.length > 0 || Boolean(settings?.inventory_completed_at))
-      );
-      setFamilyUpdateStale(
-        updates.length > 0 && latestDistAt > 0 && latestDistAt > latestUpdateAt
-      );
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [settings?.case_number, settings?.updated_at, settings?.inventory_completed_at, refreshKey]);
+  const heirCount = Number(homeData?.heirCount) || 0;
+  const helperCount = Number(homeData?.helperCount) || 0;
+  const itemCount = homeData?.itemSummary?.itemCount ?? homeData?.items?.length ?? 0;
+  const sceneCount = homeData
+    ? Number(homeData.activeSceneCount) || 0
+    : homeLoading
+      ? null
+      : 0;
+  const needsFamilyUpdate = Boolean(homeData?.needsFamilyUpdate);
+  const familyUpdateStale = Boolean(homeData?.familyUpdateStale);
 
   const copyInvite = async () => {
     setBusyInvite(true);

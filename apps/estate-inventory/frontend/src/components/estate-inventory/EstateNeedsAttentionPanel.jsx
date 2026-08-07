@@ -1,12 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { normalizeSiblingClaims } from '@shared/utils/estateInventoryConstants.js';
 import {
   filterAttentionCompletenessGaps,
   sortAttentionCompletenessGaps
 } from '@shared/utils/estatePrWorkflow.js';
-import { useEstateCase } from './EstateCaseContext';
 import EstateModalShell from './EstateModalShell';
 
 const GAP_ACTION = {
@@ -26,15 +24,109 @@ const GAP_ACTION = {
 
 const MAX_ITEMS = 8;
 
+function buildAttentionItems({
+  homeData,
+  settings,
+  inventoryCount,
+  actions
+}) {
+  if (!homeData) return [];
+
+  const next = [];
+  const seen = new Set();
+  const push = (row) => {
+    if (!row?.key || seen.has(row.key) || next.length >= MAX_ITEMS) return;
+    seen.add(row.key);
+    next.push(row);
+  };
+
+  const pendingCount = Number(homeData.pendingReviewCount) || 0;
+  if (pendingCount > 0) {
+    push({
+      key: 'inbox_pending',
+      tone: 'block',
+      title: 'Pending PR review',
+      detail: `${pendingCount} item${pendingCount === 1 ? '' : 's'} waiting for classification.`,
+      actionLabel: `Review queue (${pendingCount})`,
+      onAction: () => actions.onOpenPendingReview?.()
+    });
+  }
+
+  const allItems = homeData.items || [];
+  const itemCount = allItems.length;
+  const requested = allItems.filter(
+    (item) => normalizeSiblingClaims(item.sibling_claims).length > 0
+  );
+  if (requested.length > 0) {
+    push({
+      key: 'inbox_heirs',
+      tone: 'block',
+      title: 'Heir requests',
+      detail: `${requested.length} item${requested.length === 1 ? '' : 's'} with requests on file.`,
+      actionLabel: `View requests (${requested.length})`,
+      onAction: () => actions.onOpenHeirRequests?.()
+    });
+  }
+
+  const unread = Number(homeData.unreadMessages) || 0;
+  if (unread > 0) {
+    push({
+      key: 'inbox_messages',
+      tone: 'block',
+      title: 'Unread messages',
+      detail: `${unread} unread message${unread === 1 ? '' : 's'} from heirs.`,
+      actionLabel: `View messages (${unread})`,
+      onAction: () => actions.onOpenMessages?.()
+    });
+  }
+
+  const heirCount = Number(homeData.heirCount) || 0;
+  const dists = (homeData.distributions || []).filter((row) => row.status === 'finalized');
+  const rawExceptions = homeData.completeness?.exceptions || [];
+  const filtered = filterAttentionCompletenessGaps(rawExceptions, {
+    inventoryCount,
+    itemCount,
+    heirCount,
+    hasFinalizedDistributions: dists.length > 0,
+    inventoryCompleted: Boolean(settings?.inventory_completed_at),
+    skipPendingReviewGap: pendingCount > 0
+  });
+  const exceptions = sortAttentionCompletenessGaps(filtered);
+
+  for (const row of exceptions) {
+    const meta = GAP_ACTION[row.key] || {};
+    push({
+      key: `gap_${row.key}`,
+      tone: row.severity === 'block' ? 'block' : 'warn',
+      title: row.label,
+      detail: row.detail,
+      samples: row.samples || [],
+      samplesTotal: Number(row.samplesTotal) || (row.samples || []).length,
+      actionLabel: meta.label || null,
+      onAction: () => {
+        if (meta.tab) actions.onOpenLedger?.(meta.tab);
+        else if (meta.kind === 'scenes') actions.onOpenScenes?.();
+        else if (meta.kind === 'reports') actions.onOpenReports?.();
+        else if (meta.kind === 'pending') actions.onOpenPendingReview?.();
+        else if (meta.kind === 'settings_case') actions.onOpenSettingsSection?.('case');
+        else if (meta.kind === 'collections') actions.onSeeCollections?.();
+      }
+    });
+  }
+
+  return next;
+}
+
 /**
  * Home panel: interruptive inbox + phased completeness gaps.
- * Setup coaching lives in What's next — not here.
+ * Uses shared PR home bootstrap (no nested completeness/finance fetch).
  */
 const EstateNeedsAttentionPanel = ({
   settings,
   inventoryCount = 0,
   isClosed = false,
-  refreshKey = 0,
+  homeData = null,
+  homeLoading = false,
   onOpenPendingReview,
   onOpenHeirRequests,
   onOpenMessages,
@@ -49,14 +141,10 @@ const EstateNeedsAttentionPanel = ({
   onOpenClosing,
   onMessage
 }) => {
-  const { caseNumber } = useEstateCase();
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState('urgent'); // 'urgent' | 'followup'
+  const [page, setPage] = useState('urgent');
   const [itemIndex, setItemIndex] = useState(0);
 
-  /** Keep action handlers out of the load effect deps — parent re-renders (billing, etc.) were restarting the load forever. */
   const actionsRef = useRef({});
   actionsRef.current = {
     onOpenPendingReview,
@@ -74,117 +162,24 @@ const EstateNeedsAttentionPanel = ({
     onMessage
   };
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const actions = actionsRef.current;
-      const [pendingResult, itemsResult, threadsResult, certResult, heirsResult, distResult] =
-        await Promise.all([
-          estateInventoryService.listPendingReviewItems(caseNumber),
-          estateInventoryService.listAllItemsWithRooms(caseNumber),
-          estateInventoryService.listMessageThreads(caseNumber),
-          estateInventoryService.getCompletenessCertificate(),
-          estateInventoryService.listSiblingAccounts(caseNumber),
-          estateInventoryService.listEstateDistributions(caseNumber)
-        ]);
-      if (cancelled) return;
-
-      const next = [];
-      const seen = new Set();
-
-      const push = (row) => {
-        if (!row?.key || seen.has(row.key) || next.length >= MAX_ITEMS) return;
-        seen.add(row.key);
-        next.push(row);
-      };
-
-      const pendingCount = pendingResult.success ? (pendingResult.data || []).length : 0;
-      if (pendingCount > 0) {
-        push({
-          key: 'inbox_pending',
-          tone: 'block',
-          title: 'Pending PR review',
-          detail: `${pendingCount} item${pendingCount === 1 ? '' : 's'} waiting for classification.`,
-          actionLabel: `Review queue (${pendingCount})`,
-          onAction: () => actions.onOpenPendingReview?.()
-        });
-      }
-
-      const allItems = itemsResult.success ? itemsResult.data || [] : [];
-      const itemCount = allItems.length;
-      const requested = allItems.filter(
-        (item) => normalizeSiblingClaims(item.sibling_claims).length > 0
-      );
-      if (requested.length > 0) {
-        push({
-          key: 'inbox_heirs',
-          tone: 'block',
-          title: 'Heir requests',
-          detail: `${requested.length} item${requested.length === 1 ? '' : 's'} with requests on file.`,
-          actionLabel: `View requests (${requested.length})`,
-          onAction: () => actions.onOpenHeirRequests?.()
-        });
-      }
-
-      const unread = threadsResult.success
-        ? Number(threadsResult.data?.total_unread) || 0
-        : 0;
-      if (unread > 0) {
-        push({
-          key: 'inbox_messages',
-          tone: 'block',
-          title: 'Unread messages',
-          detail: `${unread} unread message${unread === 1 ? '' : 's'} from heirs.`,
-          actionLabel: `View messages (${unread})`,
-          onAction: () => actions.onOpenMessages?.()
-        });
-      }
-
-      const heirCount = heirsResult.success ? (heirsResult.data || []).length : 0;
-      const dists = (distResult.success ? distResult.data || [] : []).filter(
-        (row) => row.status === 'finalized'
-      );
-      const rawExceptions =
-        certResult.success && certResult.data ? certResult.data.exceptions || [] : [];
-      const filtered = filterAttentionCompletenessGaps(rawExceptions, {
+  const items = useMemo(
+    () =>
+      buildAttentionItems({
+        homeData,
+        settings,
         inventoryCount,
-        itemCount,
-        heirCount,
-        hasFinalizedDistributions: dists.length > 0,
-        inventoryCompleted: Boolean(settings?.inventory_completed_at),
-        skipPendingReviewGap: pendingCount > 0
-      });
-      const exceptions = sortAttentionCompletenessGaps(filtered);
+        actions: actionsRef.current
+      }),
+    [
+      homeData,
+      inventoryCount,
+      settings?.inventory_completed_at,
+      settings?.case_number,
+      isClosed
+    ]
+  );
 
-      for (const row of exceptions) {
-        const meta = GAP_ACTION[row.key] || {};
-        push({
-          key: `gap_${row.key}`,
-          tone: row.severity === 'block' ? 'block' : 'warn',
-          title: row.label,
-          detail: row.detail,
-          samples: row.samples || [],
-          samplesTotal: Number(row.samplesTotal) || (row.samples || []).length,
-          actionLabel: meta.label || null,
-          onAction: () => {
-            if (meta.tab) actions.onOpenLedger?.(meta.tab);
-            else if (meta.kind === 'scenes') actions.onOpenScenes?.();
-            else if (meta.kind === 'reports') actions.onOpenReports?.();
-            else if (meta.kind === 'pending') actions.onOpenPendingReview?.();
-            else if (meta.kind === 'settings_case') actions.onOpenSettingsSection?.('case');
-            else if (meta.kind === 'collections') actions.onSeeCollections?.();
-          }
-        });
-      }
-
-      setItems(next);
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [caseNumber, settings, inventoryCount, isClosed, refreshKey]);
+  const loading = Boolean(homeLoading && !homeData);
 
   const runAction = (row) => {
     setOpen(false);
@@ -226,7 +221,6 @@ const EstateNeedsAttentionPanel = ({
     if (!open) return;
     setPage(urgent.length ? 'urgent' : 'followup');
     setItemIndex(0);
-    // Only reset when the modal opens
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 

@@ -39,7 +39,9 @@ const EstateFinanceDashboard = ({
   settings,
   onSettingsSaved,
   onChanged,
-  isClosed = false
+  isClosed = false,
+  sharedSummary = undefined,
+  sharedLoading = false
 }) => {
   const { caseNumber } = useEstateCase();
   const [summary, setSummary] = useState(null);
@@ -50,6 +52,7 @@ const EstateFinanceDashboard = ({
   const loadSeqRef = useRef(0);
   const hasSummaryRef = useRef(false);
   const skipNextExternalKeyRef = useRef(false);
+  const useShared = sharedSummary !== undefined;
   hasSummaryRef.current = Boolean(summary);
 
   const load = useCallback(async () => {
@@ -70,12 +73,25 @@ const EstateFinanceDashboard = ({
   }, [caseNumber]);
 
   useEffect(() => {
+    if (useShared) {
+      if (sharedSummary) {
+        setSummary((prev) => mergeFinanceSummary(prev, sharedSummary));
+        setError('');
+        setLoading(false);
+        setRefreshing(false);
+      } else if (sharedLoading) {
+        if (!hasSummaryRef.current) setLoading(true);
+      } else if (!sharedLoading && !sharedSummary) {
+        setLoading(false);
+      }
+      return;
+    }
     if (skipNextExternalKeyRef.current) {
       skipNextExternalKeyRef.current = false;
       return;
     }
     load();
-  }, [load, refreshKey]);
+  }, [useShared, sharedSummary, sharedLoading, load, refreshKey]);
 
   useEffect(() => {
     if (ledgerRequestKey > 0) setLedgerTab(ledgerRequestTab || 'summary');

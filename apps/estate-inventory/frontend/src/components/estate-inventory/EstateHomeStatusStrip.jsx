@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import estateInventoryService from '@shared/services/estateInventoryService.js';
+import React, { useMemo } from 'react';
 import {
   buildEstateTimeline,
   summarizeTimelineItems
@@ -8,47 +7,42 @@ import ProbateCountdown from './ProbateCountdown';
 
 /**
  * Compact top strip: probate + progress + inventory snapshot.
+ * Prefers shared PR home bootstrap when provided.
  */
 const EstateHomeStatusStrip = ({
   settings,
   inventoryCount = 0,
+  homeData = null,
   refreshKey = 0,
   onOpenSettings,
   onOpenProgress,
   onSeeCollections = null,
   onCreateCollection = null
 }) => {
-  const [itemStats, setItemStats] = useState({
-    itemCount: 0,
-    pendingReviewCount: 0,
-    approvedForSaleCount: 0,
-    distributionCount: 0,
-    pendingAcknowledgementCount: 0
-  });
+  void refreshKey;
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const caseNumber = settings?.case_number;
-      if (!caseNumber) return;
-      const [pendingResult, itemsResult, distributionsResult] = await Promise.all([
-        estateInventoryService.listPendingReviewItems(caseNumber),
-        estateInventoryService.listAllItemsWithRooms(caseNumber),
-        estateInventoryService.listEstateDistributions(caseNumber)
-      ]);
-      if (cancelled) return;
-      const pendingReviewCount = pendingResult.success
-        ? (pendingResult.data || []).length
-        : 0;
-      const summary = summarizeTimelineItems(
-        itemsResult.success ? itemsResult.data || [] : []
+  const itemStats = useMemo(() => {
+    if (homeData?.itemSummary) {
+      return {
+        itemCount: homeData.itemSummary.itemCount || 0,
+        pendingReviewCount: homeData.itemSummary.pendingReviewCount || 0,
+        approvedForSaleCount: homeData.itemSummary.approvedForSaleCount || 0,
+        distributionCount: homeData.itemSummary.distributionCount || 0,
+        pendingAcknowledgementCount:
+          homeData.itemSummary.pendingAcknowledgementCount || 0
+      };
+    }
+    if (homeData?.items) {
+      const summary = summarizeTimelineItems(homeData.items);
+      const finalized = (homeData.distributions || []).filter(
+        (row) => row.status === 'finalized'
       );
-      const finalized = distributionsResult.success
-        ? (distributionsResult.data || []).filter((row) => row.status === 'finalized')
-        : [];
-      setItemStats({
+      return {
         itemCount: summary.itemCount,
-        pendingReviewCount: Math.max(pendingReviewCount, summary.pendingReviewCount),
+        pendingReviewCount: Math.max(
+          homeData.pendingReviewCount || 0,
+          summary.pendingReviewCount || 0
+        ),
         approvedForSaleCount: summary.approvedForSaleCount,
         distributionCount: finalized.length,
         pendingAcknowledgementCount: finalized.reduce(
@@ -59,12 +53,16 @@ const EstateHomeStatusStrip = ({
             ).length,
           0
         )
-      });
-    })();
-    return () => {
-      cancelled = true;
+      };
+    }
+    return {
+      itemCount: 0,
+      pendingReviewCount: 0,
+      approvedForSaleCount: 0,
+      distributionCount: 0,
+      pendingAcknowledgementCount: 0
     };
-  }, [settings?.case_number, settings?.updated_at, refreshKey]);
+  }, [homeData]);
 
   const { steps, completedCount, totalCount } = useMemo(
     () =>

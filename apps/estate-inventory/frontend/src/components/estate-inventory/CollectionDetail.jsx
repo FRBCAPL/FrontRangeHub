@@ -79,18 +79,29 @@ const CollectionDetail = ({
               <h2 className="ei-room-detail-title">{roomName}</h2>
               {roomLabel ? <p className="ei-room-detail-code">{roomLabel}</p> : null}
             </div>
-            {allowClaimedFilter ? (
-              <button
-                type="button"
-                className={`ei-btn ei-btn-small ei-room-filter-btn${showClaimedOnly ? ' is-active' : ''}`}
-                onClick={() => setShowClaimedOnly((v) => !v)}
-                aria-pressed={showClaimedOnly}
-              >
-                {showClaimedOnly
-                  ? 'Back to room inventory'
-                  : `Claimed / memo / disputed${claimedCount ? ` (${claimedCount})` : ''}`}
-              </button>
-            ) : null}
+            <div className="ei-room-detail-actions">
+              {onBackToRooms ? (
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-small ei-btn-secondary"
+                  onClick={onBackToRooms}
+                >
+                  Back to rooms
+                </button>
+              ) : null}
+              {allowClaimedFilter ? (
+                <button
+                  type="button"
+                  className={`ei-btn ei-btn-small ei-room-filter-btn${showClaimedOnly ? ' is-active' : ''}`}
+                  onClick={() => setShowClaimedOnly((v) => !v)}
+                  aria-pressed={showClaimedOnly}
+                >
+                  {showClaimedOnly
+                    ? 'Back to room inventory'
+                    : `Claimed / memo / disputed${claimedCount ? ` (${claimedCount})` : ''}`}
+                </button>
+              ) : null}
+            </div>
           </div>
           {allowClaimedFilter && showClaimedOnly ? (
             <p className="ei-room-filter-hint">
