@@ -20,8 +20,13 @@ import {
   isMemorandumOnlyHeir,
   ESTATEIT_PATH
 } from '@shared/utils/estateInventoryConstants.js';
+import {
+  normalizeVisibilitySections,
+  visibilitySectionsForPreset
+} from '@shared/utils/estateVisibilitySections.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
 import GlossaryTerm from './GlossaryTerm';
+import HeirVisibilitySectionsEditor from './HeirVisibilitySectionsEditor';
 
 const CASE_STEPS = [
   { id: 'estate', label: 'Estate' },
@@ -189,6 +194,31 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
     setStep((s) => Math.max(s - 1, 0));
   };
 
+  const applyHeirVisibilityResult = (siblingKey, result, fallbackVis) => {
+    const saved = normalizeFamilyFinancialVisibility(
+      result.data?.financial_visibility || fallbackVis
+    );
+    const sections = normalizeVisibilitySections(result.data?.visibility_sections, {
+      tier: saved,
+      accessTier: result.data?.access_tier
+    });
+    setHeirAccounts((prev) =>
+      prev.map((h) =>
+        h.sibling_key === siblingKey
+          ? {
+              ...h,
+              financial_visibility: saved,
+              visibility_sections: sections,
+              can_browse_rooms:
+                result.data?.can_browse_rooms != null
+                  ? Boolean(result.data.can_browse_rooms)
+                  : Boolean(sections.rooms_inventory)
+            }
+          : h
+      )
+    );
+  };
+
   const handleHeirVisibilityChange = async (siblingKey, label, nextVisibility, memoOnly) => {
     if (memoOnly) return;
     setError('');
@@ -205,15 +235,28 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
       await refreshHeirs();
       return;
     }
-    const saved = normalizeFamilyFinancialVisibility(
-      result.data?.financial_visibility || nextVisibility
+    applyHeirVisibilityResult(siblingKey, result, nextVisibility);
+    setInfo(`Updated disclosure preset for ${label}.`);
+  };
+
+  const handleHeirSectionsChange = async (siblingKey, label, nextSections, financialVisibility, accessTier) => {
+    setError('');
+    setInfo('');
+    setHeirVisSavingKey(siblingKey);
+    const result = await estateInventoryService.setHeirVisibilitySections(
+      siblingKey,
+      nextSections,
+      portalKey,
+      financialVisibility
     );
-    setHeirAccounts((prev) =>
-      prev.map((h) =>
-        h.sibling_key === siblingKey ? { ...h, financial_visibility: saved } : h
-      )
-    );
-    setInfo(`Updated financial disclosure for ${label}.`);
+    setHeirVisSavingKey('');
+    if (!result.success) {
+      setError(result.error || `Could not update sections for ${label}.`);
+      await refreshHeirs();
+      return;
+    }
+    applyHeirVisibilityResult(siblingKey, result, financialVisibility);
+    setInfo(`Updated sections for ${label}.`);
   };
 
   const defaultVisibilityHint = FAMILY_FINANCIAL_VISIBILITY_OPTIONS.find(
@@ -440,7 +483,10 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
                 Who can see finances
               </h4>
               <p className="ei-settings-hint ei-case-section-hint">
-                Set disclosure per person. Specific Gift Recipients stay on Minimal.
+                Choose a{' '}
+                <GlossaryTerm termKey="family_financial_visibility">preset</GlossaryTerm>, then
+                turn individual sections on or off for each person. Specific Gift Recipients stay
+                on Minimal finance.
               </p>
 
               <div className="ei-field">
@@ -480,41 +526,63 @@ const EstateSettingsCaseModal = ({ open, onClose, initialSettings, onSaved }) =>
                     const vis = memoOnly
                       ? 'minimal'
                       : normalizeFamilyFinancialVisibility(h.financial_visibility);
+                    const sections =
+                      h.visibility_sections ||
+                      visibilitySectionsForPreset(vis, tier);
                     return (
-                      <li key={h.sibling_key} className="ei-case-heir-vis-row">
-                        <div className="ei-case-heir-vis-meta">
-                          <span className="ei-case-heir-vis-name">{label}</span>
-                          {memoOnly ? (
-                            <span className="ei-settings-hint">
-                              Specific Gift — Minimal only
-                            </span>
-                          ) : null}
-                        </div>
-                        <label
-                          className="ei-case-heir-vis-label"
-                          htmlFor={`ei-vis-${h.sibling_key}`}
-                        >
-                          <span className="ei-sr-only">Financial disclosure for {label}</span>
-                          <select
-                            id={`ei-vis-${h.sibling_key}`}
-                            value={vis}
-                            disabled={memoOnly || heirVisSavingKey === h.sibling_key}
-                            onChange={(e) =>
-                              handleHeirVisibilityChange(
-                                h.sibling_key,
-                                label,
-                                e.target.value,
-                                memoOnly
-                              )
-                            }
+                      <li key={h.sibling_key} className="ei-case-heir-vis-row ei-case-heir-vis-row--stack">
+                        <div className="ei-case-heir-vis-top">
+                          <div className="ei-case-heir-vis-meta">
+                            <span className="ei-case-heir-vis-name">{label}</span>
+                            {memoOnly ? (
+                              <span className="ei-settings-hint">
+                                Specific Gift — Minimal finance
+                              </span>
+                            ) : null}
+                          </div>
+                          <label
+                            className="ei-case-heir-vis-label"
+                            htmlFor={`ei-vis-${h.sibling_key}`}
                           >
-                            {FAMILY_FINANCIAL_VISIBILITY_OPTIONS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                            <span className="ei-sr-only">Disclosure preset for {label}</span>
+                            <select
+                              id={`ei-vis-${h.sibling_key}`}
+                              value={vis}
+                              disabled={memoOnly || heirVisSavingKey === h.sibling_key}
+                              onChange={(e) =>
+                                handleHeirVisibilityChange(
+                                  h.sibling_key,
+                                  label,
+                                  e.target.value,
+                                  memoOnly
+                                )
+                              }
+                            >
+                              {FAMILY_FINANCIAL_VISIBILITY_OPTIONS.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                        <HeirVisibilitySectionsEditor
+                          siblingKey={h.sibling_key}
+                          sections={sections}
+                          accessTier={tier}
+                          financialVisibility={vis}
+                          memoOnly={memoOnly}
+                          disabled={heirVisSavingKey === h.sibling_key}
+                          onChange={(next) =>
+                            handleHeirSectionsChange(
+                              h.sibling_key,
+                              label,
+                              next,
+                              vis,
+                              tier
+                            )
+                          }
+                        />
                       </li>
                     );
                   })}

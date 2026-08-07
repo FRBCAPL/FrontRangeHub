@@ -40,6 +40,7 @@ export const ESTATE_WHAT_IS_VAULT = {
       'Inventory property (with photos) and track Funds, expenses, and debts with one shared money picture',
       'Distributions with receipts + optional sales/auctions. ',
       'Update beneficiaries with staged Family Updates',
+      'Invite counsel or a CPA to a read-only Advisor portal when you want them to review updates and formal accounting',
       'Export court-supporting reports for counsel to review'
     ],
     recordNote: ESTATE_DATA_TRUST_NOTE,
@@ -105,8 +106,8 @@ export const ESTATE_WHAT_IS_VAULT = {
       },
       {
         number: '6',
-        title: 'Communicate with beneficiaries',
-        body: 'Invite heirs and publish Family Updates when something material changes.'
+        title: 'Communicate with beneficiaries and advisors',
+        body: 'Invite heirs and publish Family Updates when something material changes. Optionally invite an attorney or CPA to the read-only Advisor portal (Settings → Contacts) so they can review Family Updates, overview, and formal accounting.'
       },
       {
         number: '7',

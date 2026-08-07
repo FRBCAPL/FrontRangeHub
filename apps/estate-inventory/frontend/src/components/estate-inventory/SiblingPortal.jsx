@@ -24,6 +24,10 @@ import {
   canAccessClaimedInventoryFilter
 } from '@shared/utils/estateInventoryConstants.js';
 import { formatItemRefLabel, roomTitleWithCode } from '@shared/utils/estateInventoryRefCode.js';
+import {
+  normalizeVisibilitySections,
+  visibilitySectionEnabled
+} from '@shared/utils/estateVisibilitySections.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import HeirPreferredNameModal from './HeirPreferredNameModal';
@@ -203,7 +207,11 @@ const SiblingPortal = () => {
         can_browse_rooms:
           result.data.can_browse_rooms != null
             ? Boolean(result.data.can_browse_rooms)
-            : prev.can_browse_rooms
+            : prev.can_browse_rooms,
+        financial_visibility:
+          result.data.financial_visibility || prev.financial_visibility,
+        visibility_sections:
+          result.data.visibility_sections || prev.visibility_sections
       };
     });
     applySessionFlags(activeSession, result.data);
@@ -791,16 +799,41 @@ const SiblingPortal = () => {
   const canRequestItems = heirCanRequestItems(session?.access_tier);
   const canBrowseFullRooms = heirCanBrowseRooms(session);
   const memorandumOnly = isMemorandumOnlyHeir(session?.access_tier);
-  const showRoomsTile = canBrowseFullRooms || items.length > 0;
+  const visibilitySections = normalizeVisibilitySections(session?.visibility_sections, {
+    tier: session?.financial_visibility,
+    accessTier: session?.access_tier
+  });
+  const sectionOn = (key) => visibilitySectionEnabled(visibilitySections, key);
+  const showRoomsTile =
+    sectionOn('rooms_inventory') && (canBrowseFullRooms || items.length > 0);
   const familyCoachSteps = useMemo(
-    () =>
-      buildFamilyCoachSteps({
+    () => {
+      const sections = normalizeVisibilitySections(session?.visibility_sections, {
+        tier: session?.financial_visibility,
+        accessTier: session?.access_tier
+      });
+      const on = (key) => visibilitySectionEnabled(sections, key);
+      return buildFamilyCoachSteps({
         accessTier: session?.access_tier,
         canBrowseRooms: session?.can_browse_rooms,
-        showRooms: showRoomsTile,
-        showRequests: canRequestItems
-      }),
-    [session?.access_tier, session?.can_browse_rooms, showRoomsTile, canRequestItems]
+        showRooms: on('rooms_inventory') && (canBrowseFullRooms || items.length > 0),
+        showRequests: canRequestItems && on('my_requests'),
+        showMessages: on('messages'),
+        showUpdates: on('family_updates'),
+        showOverview: on('estate_overview'),
+        showInheritance: on('my_inheritance'),
+        showAuction: on('sale_auction')
+      });
+    },
+    [
+      session?.access_tier,
+      session?.can_browse_rooms,
+      session?.financial_visibility,
+      session?.visibility_sections,
+      canBrowseFullRooms,
+      items.length,
+      canRequestItems
+    ]
   );
   const coachTargetId = showCoach ? familyCoachSteps[coachStep]?.targetId || '' : '';
 
@@ -881,6 +914,7 @@ const SiblingPortal = () => {
         aria-label="Family portal menu"
       >
         <div className="ei-family-action-grid" role="group" aria-label="Open a section">
+          {sectionOn('messages') ? (
           <button
             type="button"
             id="ei-family-coach-messages"
@@ -896,15 +930,18 @@ const SiblingPortal = () => {
                 : 'Talk with the Personal Representative'}
             </span>
           </button>
+          ) : null}
 
+          {sectionOn('my_inheritance') ? (
           <HeirInheritancePanel
             asMenuTile
             caseNumber={caseNumber}
             estateName={estateLabel}
             recipientName={helloName}
           />
+          ) : null}
 
-          {canRequestItems ? (
+          {canRequestItems && sectionOn('my_requests') ? (
             <button
               type="button"
               id="ei-family-coach-requests"
@@ -922,8 +959,12 @@ const SiblingPortal = () => {
             </button>
           ) : null}
 
-          <HeirFamilyUpdatesPanel asMenuTile caseNumber={caseNumber} />
-          <HeirTransparencyPanel asMenuTile caseNumber={caseNumber} />
+          {sectionOn('family_updates') ? (
+            <HeirFamilyUpdatesPanel asMenuTile caseNumber={caseNumber} />
+          ) : null}
+          {sectionOn('estate_overview') ? (
+            <HeirTransparencyPanel asMenuTile caseNumber={caseNumber} />
+          ) : null}
 
           {showRoomsTile ? (
             <button
@@ -964,6 +1005,7 @@ const SiblingPortal = () => {
             distributions={inheritanceRows}
           />
 
+          {sectionOn('sale_auction') ? (
           <Link
             id="ei-family-coach-auction"
             to={estateitCasePath(routeCase, 'auction')}
@@ -974,6 +1016,7 @@ const SiblingPortal = () => {
             <span className="ei-family-action-label">Sale & auction</span>
             <span className="ei-family-action-meta">Follow items headed to sale</span>
           </Link>
+          ) : null}
 
           <button
             type="button"

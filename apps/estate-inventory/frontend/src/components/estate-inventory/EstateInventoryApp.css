@@ -559,6 +559,46 @@ button.ei-nav-menu-btn-item {
   text-align: center;
 }
 
+.ei-inline-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin: 0.35rem 0 0;
+  min-height: 1.75rem;
+}
+
+.ei-inline-loading-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ei-muted);
+}
+
+.ei-inline-spinner {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  border: 2px solid rgba(94, 234, 212, 0.22);
+  border-top-color: #5eead4;
+  animation: ei-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes ei-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ei-finance-snapshot .ei-inline-loading {
+  margin: 0.85rem 0 0.25rem;
+  justify-content: flex-start;
+}
+
+.ei-finance-snapshot .ei-inline-loading.ei-finance-refreshing {
+  margin: 0.35rem 0 0.55rem;
+}
+
 .ei-needs-attention-head {
   display: flex;
   align-items: center;
@@ -2198,6 +2238,41 @@ button.ei-nav-menu-btn-item {
   line-height: 1.35;
 }
 
+.ei-settings-hub-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.ei-settings-hub-intro .ei-settings-intro {
+  margin: 0;
+  flex: 1 1 16rem;
+}
+
+.ei-settings-admin-guide-link {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0.15rem 0;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ei-accent, #5eead4);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ei-settings-admin-guide-link:hover,
+.ei-settings-admin-guide-link:focus-visible {
+  color: #99f6e4;
+  outline: none;
+}
+
 /* —— Create estate (first-run) —— */
 .ei-create-estate-modal.ei-modal-settings {
   position: relative;
@@ -3575,6 +3650,85 @@ button.ei-helper-photo-remove {
   background: var(--ei-surface);
 }
 
+.ei-case-heir-vis-row--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+}
+
+.ei-case-heir-vis-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8.5rem, 11rem);
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.ei-vis-sections {
+  width: 100%;
+}
+
+.ei-vis-sections-toggle {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ei-accent, #2f5d50);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.ei-vis-sections-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--ei-line);
+}
+
+.ei-vis-sections-group {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.ei-vis-sections-group legend {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ei-ink);
+  margin-bottom: 0.25rem;
+}
+
+.ei-vis-sections-list {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.25rem 0.75rem;
+}
+
+.ei-vis-sections-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.84rem;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.ei-vis-sections-check input {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
 .ei-case-heir-vis-meta {
   display: flex;
   flex-direction: column;
@@ -3616,6 +3770,10 @@ button.ei-helper-photo-remove {
   }
 
   .ei-case-heir-vis-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ei-case-heir-vis-top {
     grid-template-columns: 1fr;
   }
 }
@@ -4782,12 +4940,158 @@ button.ei-helper-photo-remove {
   font-size: 0.85rem;
 }
 
-.ei-heir-ul {
+.ei-vis-sections-heading {
+  margin: 0 0 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ei-ink);
+}
+
+.ei-vis-sections-body.is-always-open {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.ei-heir-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ei-heir-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.ei-heir-list-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ei-heir-list-head .ei-settings-subhead {
+  margin: 0;
+}
+
+.ei-heir-list-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ei-muted);
+}
+
+.ei-heir-pick-list {
   list-style: none;
-  margin: 0 0 0.75rem;
+  margin: 0;
   padding: 0;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.45rem;
+}
+
+.ei-heir-pick-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 0.75rem;
+  row-gap: 0.2rem;
+  align-items: center;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 10px;
+  background: var(--ei-panel, var(--ei-surface));
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.ei-heir-pick-card:hover,
+.ei-heir-pick-card:focus-visible {
+  border-color: var(--ei-accent, #2f5d50);
+  outline: none;
+}
+
+.ei-heir-pick-name {
+  grid-column: 1;
+  grid-row: 1;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.ei-heir-pick-meta {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ei-muted);
+}
+
+.ei-heir-pick-cta {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ei-accent, #2f5d50);
+}
+
+.ei-heir-person-pager {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ei-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ei-heir-person-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 12px;
+  background: var(--ei-surface);
+}
+
+.ei-heir-person-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--ei-line);
+}
+
+.ei-heir-person-card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.ei-heir-person-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ei-heir-person-card-actions {
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--ei-line);
+  flex-wrap: wrap;
+}
+
+.ei-heir-add-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ei-modal-heirs-paged .ei-modal-foot {
+  flex-wrap: wrap;
 }
 
 .ei-heir-row {

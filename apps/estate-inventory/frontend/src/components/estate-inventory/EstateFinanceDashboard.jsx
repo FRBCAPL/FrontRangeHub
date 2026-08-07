@@ -4,6 +4,7 @@ import { estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.
 import { formatMoney, sumExpenses } from '@shared/utils/estateFinance.js';
 import EstateLedgerModal from './EstateLedgerModal.jsx';
 import CashOnHandHelp from './CashOnHandHelp.jsx';
+import EstateInlineLoading from './EstateInlineLoading.jsx';
 import { useEstateCase } from './EstateCaseContext';
 
 /** Keep prior list data when a soft-failed sub-query returns empty. */
@@ -125,10 +126,15 @@ const EstateFinanceDashboard = ({
 
   if (loading && !summary) {
     return (
-      <div>
-        <p className="ei-status">Loading money overview…</p>
+      <section className="ei-finance-snapshot ei-finance-snapshot-simple" aria-label="Money overview">
+        <div className="ei-finance-head">
+          <div>
+            <h2 className="ei-finance-title">Money overview</h2>
+          </div>
+        </div>
+        <EstateInlineLoading label="Loading money overview…" />
         {error ? (
-          <div className="ei-error" style={{ marginTop: '0.5rem' }}>
+          <div className="ei-error" style={{ marginTop: '0.65rem' }}>
             {error}
             <div className="ei-btn-row" style={{ marginTop: '0.5rem' }}>
               <button type="button" className="ei-btn ei-btn-small" onClick={() => load()}>
@@ -137,7 +143,7 @@ const EstateFinanceDashboard = ({
             </div>
           </div>
         ) : null}
-      </div>
+      </section>
     );
   }
 
@@ -179,9 +185,10 @@ const EstateFinanceDashboard = ({
         </div>
 
         {refreshing ? (
-          <p className="ei-status ei-finance-refreshing" aria-live="polite">
-            Updating money lists…
-          </p>
+          <EstateInlineLoading
+            className="ei-finance-refreshing"
+            label="Updating money lists…"
+          />
         ) : null}
 
         <div className="ei-finance-balance-label-row ei-finance-balance-label-row--always">

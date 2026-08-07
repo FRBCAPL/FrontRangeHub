@@ -96,8 +96,8 @@ export const ESTATE_GLOSSARY = {
   },
   family_financial_visibility: {
     term: 'Family financial visibility',
-    short: 'How much estate money detail residual beneficiaries can see.',
-    full: 'The Personal Representative chooses Minimal (own receipts only), Standard (category assets, debts, expenses, distributions, remaining balance), or Full (adds receipt links and sale/auction lot detail). Specific Gift Recipients always stay on Minimal.'
+    short: 'Preset disclosure level, plus optional per-section checkboxes per person.',
+    full: 'The Personal Representative chooses a Minimal, Standard, or Full preset for each residual beneficiary (and a case default for new people). That preset fills portal tiles and estate overview blocks; the PR can then turn individual sections on or off per person. Specific Gift Recipients stay on Minimal finance sections. Help / FAQ stays available for everyone.'
   },
   family_update: {
     term: 'Family Update',

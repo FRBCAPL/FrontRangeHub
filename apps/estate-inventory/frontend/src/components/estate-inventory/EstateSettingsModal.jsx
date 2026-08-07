@@ -10,6 +10,7 @@ import EstateSettingsActivityModal from './EstateSettingsActivityModal';
 import EstateSettingsRecordsModal from './EstateSettingsRecordsModal';
 import EstateSettingsBillingModal from './EstateSettingsBillingModal';
 import EstateSettingsContactsModal from './EstateSettingsContactsModal';
+import EstateAdminHelpGuideModal from './EstateAdminHelpGuideModal';
 import { EstateSettingsShell } from './EstateSettingsShell';
 
 /** Settings hub — grouped cards in a multi-column layout (not one long list). */
@@ -93,10 +94,12 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
   const [section, setSection] = useState(null);
   const [settings, setSettings] = useState(initialSettings || null);
   const [passwordRefreshKey, setPasswordRefreshKey] = useState(0);
+  const [showAdminGuide, setShowAdminGuide] = useState(false);
 
   React.useEffect(() => {
     if (!open) {
       setSection(null);
+      setShowAdminGuide(false);
       return;
     }
     setSettings(initialSettings || null);
@@ -132,15 +135,24 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
           wide
           extraClass="ei-settings-hub-modal"
           foot={
-            <button type="button" className="ei-btn" onClick={onClose}>
-              Close
-            </button>
+            <>
+              <button
+                type="button"
+                className="ei-btn ei-btn-secondary"
+                onClick={() => setShowAdminGuide(true)}
+              >
+                Admin guide
+              </button>
+              <button type="button" className="ei-btn" onClick={onClose}>
+                Close
+              </button>
+            </>
           }
         >
           <div className="ei-modal-body">
             <p className="ei-settings-intro">
               Choose a section. Each area saves on its own — money cards still edit from Financial
-              Health on the admin home.
+              Health on the admin home. Need a walkthrough? Use <strong>Admin guide</strong> below.
             </p>
             <div className="ei-settings-menu-columns" role="navigation" aria-label="Settings sections">
               {SETTINGS_GROUPS.map((group) => (
@@ -167,6 +179,11 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
           </div>
         </EstateSettingsShell>
       ) : null}
+
+      <EstateAdminHelpGuideModal
+        open={showAdminGuide}
+        onClose={() => setShowAdminGuide(false)}
+      />
 
       <EstateSettingsContactsModal open={section === 'contacts'} onClose={closeSection} />
       <EstateSettingsViewPasswordsModal

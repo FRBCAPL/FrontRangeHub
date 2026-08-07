@@ -26,6 +26,12 @@ export const ESTATE_ROLES_OVERVIEW = {
         'Photo, title, description, and room only. Items wait in pending review until the Personal Representative finishes legal status and values. Each helper signs in with the name and PIN the PR set.'
     },
     {
+      eyebrow: 'Professionals',
+      title: 'Advisor (read-only)',
+      body:
+        'For an invited attorney, CPA, or other contact. First visit uses an invite PIN from Settings → Contacts, then they set a personal password. Later visits use that password. Read-only: Family Updates, estate overview, and formal accounting — no inventory edits or money changes. Optionally mark Advisor for (heir) when they represent one person.'
+    },
+    {
       eyebrow: 'Public & follow-along',
       title: 'Sale / Auction',
       body:

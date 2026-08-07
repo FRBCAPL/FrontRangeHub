@@ -6,6 +6,7 @@ import {
   sortAttentionCompletenessGaps
 } from '@shared/utils/estatePrWorkflow.js';
 import EstateModalShell from './EstateModalShell';
+import EstateInlineLoading from './EstateInlineLoading';
 
 const GAP_ACTION = {
   stale_balances: { label: 'Update accounts', tab: 'accounts' },
@@ -296,7 +297,14 @@ const EstateNeedsAttentionPanel = ({
       aria-labelledby="ei-needs-attention-title"
     >
       {loading ? (
-        <p className="ei-needs-attention-launch-status">Checking what needs you…</p>
+        <>
+          <div className="ei-needs-attention-head">
+            <h2 id="ei-needs-attention-title" className="ei-needs-attention-title">
+              Needs attention
+            </h2>
+          </div>
+          <EstateInlineLoading label="Checking what needs you…" />
+        </>
       ) : (
         <>
           <div className="ei-needs-attention-head">

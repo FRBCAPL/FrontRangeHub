@@ -18,7 +18,12 @@ export function buildFamilyCoachSteps({
   accessTier,
   canBrowseRooms = false,
   showRooms = false,
-  showRequests = false
+  showRequests = false,
+  showMessages = true,
+  showUpdates = true,
+  showOverview = true,
+  showInheritance = true,
+  showAuction = true
 } = {}) {
   const tier = normalizeHeirAccessTier(accessTier);
   const memo = isMemorandumOnlyHeir(tier);
@@ -56,22 +61,26 @@ export function buildFamilyCoachSteps({
     }
   ];
 
-  steps.push({
-    targetId: 'ei-family-coach-messages',
-    kicker: 'Messages',
-    title: 'Message the Personal Representative',
-    body:
-      'Open a private, saved conversation with the Personal Representative.\nAsk questions and keep the thread in the estate record.'
-  });
+  if (showMessages) {
+    steps.push({
+      targetId: 'ei-family-coach-messages',
+      kicker: 'Messages',
+      title: 'Message the Personal Representative',
+      body:
+        'Open a private, saved conversation with the Personal Representative.\nAsk questions and keep the thread in the estate record.'
+    });
+  }
 
-  steps.push({
-    targetId: 'ei-family-coach-inheritance',
-    kicker: 'Inheritance',
-    title: 'My inheritance',
-    body: memo
-      ? 'See cash or property already recorded for you, plus receipts.\nAcknowledge receipt here when you are ready to confirm.'
-      : 'See distributions recorded for you — cash, property, receipts, and acknowledgements.\nConfirm receipt here when you are ready so it is dated in the estate record.'
-  });
+  if (showInheritance) {
+    steps.push({
+      targetId: 'ei-family-coach-inheritance',
+      kicker: 'Inheritance',
+      title: 'My inheritance',
+      body: memo
+        ? 'See cash or property already recorded for you, plus receipts.\nAcknowledge receipt here when you are ready to confirm.'
+        : 'See distributions recorded for you — cash, property, receipts, and acknowledgements.\nConfirm receipt here when you are ready so it is dated in the estate record.'
+    });
+  }
 
   if (showRequests) {
     steps.push({
@@ -83,22 +92,26 @@ export function buildFamilyCoachSteps({
     });
   }
 
-  steps.push({
-    targetId: 'ei-family-coach-updates',
-    kicker: 'Updates',
-    title: 'Family updates',
-    body:
-      'Numbered reports the Personal Representative publishes for the family.\nOpen them here when new updates appear — unread counts show on the button.'
-  });
+  if (showUpdates) {
+    steps.push({
+      targetId: 'ei-family-coach-updates',
+      kicker: 'Updates',
+      title: 'Family updates',
+      body:
+        'Numbered reports the Personal Representative publishes for the family.\nOpen them here when new updates appear — unread counts show on the button.'
+    });
+  }
 
-  steps.push({
-    targetId: 'ei-family-coach-overview',
-    kicker: 'Overview',
-    title: memo ? 'Estate status' : 'Estate overview',
-    body: memo
-      ? 'A clear look at how inventory and gift status are progressing for your role.\nOpen it when you want the bigger picture in plain terms.'
-      : 'Numbers and status shared with family — inventory, cash picture, and sale progress when available.\nOpen it anytime for the estate snapshot your access includes.'
-  });
+  if (showOverview) {
+    steps.push({
+      targetId: 'ei-family-coach-overview',
+      kicker: 'Overview',
+      title: memo ? 'Estate status' : 'Estate overview',
+      body: memo
+        ? 'A clear look at how inventory and gift status are progressing for your role.\nOpen it when you want the bigger picture in plain terms.'
+        : 'Numbers and status shared with family — inventory, cash picture, and sale progress when available.\nOpen it anytime for the estate snapshot your access includes.'
+    });
+  }
 
   if (showRooms) {
     steps.push({
@@ -121,14 +134,16 @@ export function buildFamilyCoachSteps({
       'Milestones for this estate — such as inventory progress and distributions — as things move forward.\nTap a milestone for a plain-language explanation.'
   });
 
-  steps.push({
-    targetId: 'ei-family-coach-auction',
-    kicker: 'Sale',
-    title: 'Sale & auction',
-    body: memo
-      ? 'Follow public sale / auction lots when items are approved for sale.\nUse this when you want to watch public listings.'
-      : 'Follow items headed to public sale or auction once they are approved.\nA good next step after you finish requesting or releasing rooms you care about.'
-  });
+  if (showAuction) {
+    steps.push({
+      targetId: 'ei-family-coach-auction',
+      kicker: 'Sale',
+      title: 'Sale & auction',
+      body: memo
+        ? 'Follow public sale / auction lots when items are approved for sale.\nUse this when you want to watch public listings.'
+        : 'Follow items headed to public sale or auction once they are approved.\nA good next step after you finish requesting or releasing rooms you care about.'
+    });
+  }
 
   steps.push({
     targetId: 'ei-family-coach-help',

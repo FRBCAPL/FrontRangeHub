@@ -3,16 +3,22 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   HEIR_ACCESS_TIER,
   HEIR_ACCESS_TIER_OPTIONS,
-  FAMILY_FINANCIAL_VISIBILITY_OPTIONS,
   generateHeirInviteCode,
   normalizeHeirAccessTier,
   normalizeFamilyFinancialVisibility,
   heirAdminLabel,
-  heirPublicName,
   isMemorandumOnlyHeir
 } from '@shared/utils/estateInventoryConstants.js';
+import { normalizeVisibilitySections } from '@shared/utils/estateVisibilitySections.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
 import { useEstateCase } from './EstateCaseContext';
+import EstateSettingsHeirPersonPage from './EstateSettingsHeirPersonPage';
+
+const PAGE = {
+  list: 'list',
+  person: 'person',
+  add: 'add'
+};
 
 const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
   const { caseNumber } = useEstateCase();
@@ -27,6 +33,8 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [lastIssued, setLastIssued] = useState(null);
+  const [page, setPage] = useState(PAGE.list);
+  const [personIndex, setPersonIndex] = useState(0);
 
   const refreshHeirs = async () => {
     const [listResult, passResult, contactsResult] = await Promise.all([
@@ -34,7 +42,8 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
       estateInventoryService.getAccessPasswords(caseNumber),
       estateInventoryService.listEstateContacts(caseNumber)
     ]);
-    if (listResult.success) setHeirAccounts(listResult.data || []);
+    const list = listResult.success ? listResult.data || [] : null;
+    if (list) setHeirAccounts(list);
     if (passResult.success) {
       const map = {};
       (passResult.data?.heirs || []).forEach((h) => {
@@ -43,6 +52,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
       setInviteByKey(map);
     }
     if (contactsResult.success) setContacts(contactsResult.data || []);
+    return list;
   };
 
   useEffect(() => {
@@ -55,8 +65,46 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     setError('');
     setInfo('');
     setLastIssued(null);
+    setPage(PAGE.list);
+    setPersonIndex(0);
     refreshHeirs();
   }, [open]);
+
+  useEffect(() => {
+    if (page !== PAGE.person) return;
+    if (heirAccounts.length === 0) {
+      setPage(PAGE.list);
+      setPersonIndex(0);
+      return;
+    }
+    if (personIndex > heirAccounts.length - 1) {
+      setPersonIndex(heirAccounts.length - 1);
+    }
+  }, [heirAccounts, page, personIndex]);
+
+  const goList = () => {
+    setError('');
+    setPage(PAGE.list);
+  };
+
+  const openPerson = (index) => {
+    setError('');
+    setInfo('');
+    setPersonIndex(index);
+    setPage(PAGE.person);
+  };
+
+  const goPrevPerson = () => {
+    setError('');
+    setInfo('');
+    setPersonIndex((i) => Math.max(0, i - 1));
+  };
+
+  const goNextPerson = () => {
+    setError('');
+    setInfo('');
+    setPersonIndex((i) => Math.min(heirAccounts.length - 1, i + 1));
+  };
 
   const handleAddHeir = async (e) => {
     e?.preventDefault?.();
@@ -74,34 +122,20 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     }
     const display = result.data?.display_name || name;
     const siblingKey = String(result.data?.sibling_key || '').trim();
-    if (siblingKey) {
-      const optimistic = {
-        sibling_key: siblingKey,
-        display_name: display,
-        preferred_name: result.data?.preferred_name || null,
-        access_tier: result.data?.access_tier || newHeirTier,
-        updated_at: result.data?.updated_at || new Date().toISOString()
-      };
-      setHeirAccounts((prev) => {
-        if (prev.some((h) => h.sibling_key === siblingKey)) return prev;
-        return [...prev, optimistic];
-      });
-      setInviteByKey((prev) => ({
-        ...prev,
-        [siblingKey]: {
-          ...(prev[siblingKey] || {}),
-          sibling_key: siblingKey,
-          invite_password: invite
-        }
-      }));
-    }
     setLastIssued({ name: display, code: invite });
     setNewHeirName('');
     setNewHeirTier(HEIR_ACCESS_TIER.residual);
     setNewHeirInvite(generateHeirInviteCode());
     setInfo(`Added ${display}. PIN: ${invite}`);
     onInvitePasswordSaved?.();
-    await refreshHeirs();
+    const list = await refreshHeirs();
+    const idx = (list || []).findIndex((h) => h.sibling_key === siblingKey);
+    if (idx >= 0) {
+      setPersonIndex(idx);
+      setPage(PAGE.person);
+      return;
+    }
+    setPage(PAGE.list);
   };
 
   const handleResetInvite = async (siblingKey, label) => {
@@ -159,12 +193,48 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                   (normalizeHeirAccessTier(nextTier) === HEIR_ACCESS_TIER.memorandum
                     ? 'minimal'
                     : h.financial_visibility)
+              ),
+              visibility_sections: normalizeVisibilitySections(
+                result.data?.visibility_sections ?? null,
+                {
+                  tier:
+                    result.data?.financial_visibility ||
+                    (normalizeHeirAccessTier(nextTier) === HEIR_ACCESS_TIER.memorandum
+                      ? 'minimal'
+                      : h.financial_visibility),
+                  accessTier: nextTier
+                }
               )
             }
           : h
       )
     );
     setInfo(`Updated access for ${label}.`);
+  };
+
+  const applyHeirVisibilityResult = (siblingKey, result, fallbackVis, accessTier) => {
+    const saved = normalizeFamilyFinancialVisibility(
+      result.data?.financial_visibility || fallbackVis
+    );
+    const sections = normalizeVisibilitySections(result.data?.visibility_sections, {
+      tier: saved,
+      accessTier: result.data?.access_tier || accessTier
+    });
+    setHeirAccounts((prev) =>
+      prev.map((h) =>
+        h.sibling_key === siblingKey
+          ? {
+              ...h,
+              financial_visibility: saved,
+              visibility_sections: sections,
+              can_browse_rooms:
+                result.data?.can_browse_rooms != null
+                  ? Boolean(result.data.can_browse_rooms)
+                  : Boolean(sections.rooms_inventory)
+            }
+          : h
+      )
+    );
   };
 
   const handleFinancialVisibilityChange = async (siblingKey, label, nextVisibility, memoOnly) => {
@@ -181,15 +251,32 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
       await refreshHeirs();
       return;
     }
-    const saved = normalizeFamilyFinancialVisibility(
-      result.data?.financial_visibility || nextVisibility
+    applyHeirVisibilityResult(siblingKey, result, nextVisibility);
+    setInfo(`Updated disclosure preset for ${label}.`);
+  };
+
+  const handleVisibilitySectionsChange = async (
+    siblingKey,
+    label,
+    nextSections,
+    financialVisibility,
+    accessTier
+  ) => {
+    setError('');
+    setInfo('');
+    const result = await estateInventoryService.setHeirVisibilitySections(
+      siblingKey,
+      nextSections,
+      caseNumber,
+      financialVisibility
     );
-    setHeirAccounts((prev) =>
-      prev.map((h) =>
-        h.sibling_key === siblingKey ? { ...h, financial_visibility: saved } : h
-      )
-    );
-    setInfo(`Updated financial disclosure for ${label}.`);
+    if (!result.success) {
+      setError(result.error || `Could not update sections for ${label}.`);
+      await refreshHeirs();
+      return;
+    }
+    applyHeirVisibilityResult(siblingKey, result, financialVisibility, accessTier);
+    setInfo(`Updated sections for ${label}.`);
   };
 
   const handleBrowseRoomsChange = async (siblingKey, label, checked) => {
@@ -245,6 +332,8 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
   };
 
   const handleRemoveHeir = async (siblingKey, label) => {
+    const ok = window.confirm(`Remove ${label} from the family portal?`);
+    if (!ok) return;
     setError('');
     setInfo('');
     const result = await estateInventoryService.removeHeir(siblingKey, caseNumber);
@@ -254,6 +343,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     }
     setInfo(`Removed ${label}.`);
     await refreshHeirs();
+    setPage(PAGE.list);
   };
 
   const inviteStatus = (siblingKey) => {
@@ -266,241 +356,235 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
   const advisorsForHeir = (siblingKey) =>
     (contacts || []).filter((c) => c.linked_sibling_key === siblingKey);
 
+  const activeHeir = page === PAGE.person ? heirAccounts[personIndex] : null;
+  const personCount = heirAccounts.length;
+  const personLabel = activeHeir ? heirAdminLabel(activeHeir) : '';
+
+  const foot =
+    page === PAGE.person && activeHeir ? (
+      <>
+        <button type="button" className="ei-btn ei-btn-secondary" onClick={goList}>
+          All people
+        </button>
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
+          onClick={goPrevPerson}
+          disabled={personIndex <= 0}
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          className="ei-btn ei-btn-secondary"
+          onClick={goNextPerson}
+          disabled={personIndex >= personCount - 1}
+        >
+          Next
+        </button>
+        <button type="button" className="ei-btn" onClick={onClose}>
+          Done
+        </button>
+      </>
+    ) : page === PAGE.add ? (
+      <>
+        <button type="button" className="ei-btn ei-btn-secondary" onClick={goList}>
+          Cancel
+        </button>
+        <button
+          type="submit"
+          form="ei-heir-add-form"
+          className="ei-btn"
+          disabled={addingHeir || newHeirName.trim().length < 2}
+        >
+          {addingHeir ? 'Adding…' : 'Add person'}
+        </button>
+      </>
+    ) : (
+      <>
+        <button type="button" className="ei-btn ei-btn-secondary" onClick={onClose}>
+          Close
+        </button>
+        <button
+          type="button"
+          className="ei-btn"
+          onClick={() => {
+            setError('');
+            setInfo('');
+            setPage(PAGE.add);
+          }}
+        >
+          Add person
+        </button>
+      </>
+    );
+
   return (
     <EstateSettingsShell
       open={open}
       onClose={onClose}
-      title="Family / heirs"
+      title={
+        page === PAGE.person && personLabel
+          ? `Family / heirs · ${personLabel}`
+          : page === PAGE.add
+            ? 'Family / heirs · Add person'
+            : 'Family / heirs'
+      }
       titleId="ei-settings-heirs-title"
       wide
-      foot={
-        <button type="button" className="ei-btn" onClick={onClose}>
-          Back
-        </button>
-      }
+      extraClass="ei-modal-heirs-paged"
+      foot={foot}
     >
-      <div className="ei-modal-body">
-        <p className="ei-settings-hint">
-          Add each person with an <strong>admin label</strong> (your record / memorandum name) and a
-          unique 6-digit <strong>PIN</strong>. They sign in with that PIN only (they cannot change
-          it), then choose the name family sees in the app. If they lose their PIN, use{' '}
-          <strong>New PIN</strong> here and share the new one.
-        </p>
-
-        {lastIssued ? (
-          <div className="ei-heir-issued" role="status">
-            <strong>{lastIssued.name}</strong>
-            <span className="ei-heir-issued-label">PIN</span>
-            <code className="ei-heir-issued-code">{lastIssued.code}</code>
-            <p className="ei-settings-hint" style={{ margin: '0.35rem 0 0' }}>
-              Share this PIN with them only. You can also find it later under View passwords.
+      <div className="ei-modal-body ei-heir-modal-body">
+        {page === PAGE.list ? (
+          <section className="ei-heir-page" aria-labelledby="ei-heir-list-heading">
+            <p className="ei-settings-hint">
+              Open one person at a time to set access, disclosure, and portal sections. Each person
+              signs in with a unique 6-digit PIN, then chooses the name family sees.
             </p>
-          </div>
+
+            {lastIssued ? (
+              <div className="ei-heir-issued" role="status">
+                <strong>{lastIssued.name}</strong>
+                <span className="ei-heir-issued-label">PIN</span>
+                <code className="ei-heir-issued-code">{lastIssued.code}</code>
+                <p className="ei-settings-hint" style={{ margin: '0.35rem 0 0' }}>
+                  Share this PIN with them only. You can also find it later under View passwords.
+                </p>
+              </div>
+            ) : null}
+
+            <div className="ei-heir-list-head">
+              <h4 id="ei-heir-list-heading" className="ei-settings-subhead">
+                People
+              </h4>
+              {personCount > 0 ? (
+                <span className="ei-heir-list-count">
+                  {personCount} person{personCount === 1 ? '' : 's'}
+                </span>
+              ) : null}
+            </div>
+
+            {personCount === 0 ? (
+              <p className="ei-settings-hint">No people yet. Tap Add person to invite the first.</p>
+            ) : (
+              <ul className="ei-heir-pick-list" aria-label="People — open to edit">
+                {heirAccounts.map((h, index) => {
+                  const label = heirAdminLabel(h);
+                  const tier = normalizeHeirAccessTier(h.access_tier);
+                  const tierLabel =
+                    HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === tier)?.label || tier;
+                  const memoOnly = isMemorandumOnlyHeir(tier);
+                  const vis = memoOnly
+                    ? 'minimal'
+                    : normalizeFamilyFinancialVisibility(h.financial_visibility);
+                  const visLabel = vis.charAt(0).toUpperCase() + vis.slice(1);
+                  return (
+                    <li key={h.sibling_key}>
+                      <button
+                        type="button"
+                        className="ei-heir-pick-card"
+                        onClick={() => openPerson(index)}
+                      >
+                        <span className="ei-heir-pick-name">{label}</span>
+                        <span className="ei-heir-pick-meta">
+                          {tierLabel} · {visLabel} · {inviteStatus(h.sibling_key)}
+                        </span>
+                        <span className="ei-heir-pick-cta">Open</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
         ) : null}
 
-        <h4 className="ei-settings-subhead">People</h4>
-        <div className="ei-heir-list" aria-label="People allowed in family portal">
-          {heirAccounts.length === 0 ? (
-            <p className="ei-settings-hint">No people added yet.</p>
-          ) : (
-            <ul className="ei-heir-ul">
-              {heirAccounts.map((h) => {
-                const adminLabel = heirAdminLabel(h);
-                const publicName = heirPublicName(h);
-                const preferred = String(h.preferred_name || '').trim();
-                const tier = normalizeHeirAccessTier(h.access_tier);
-                const memoOnly = isMemorandumOnlyHeir(tier);
-                const browseOn = memoOnly
-                  ? Boolean(h.can_browse_rooms)
-                  : true;
-                const financialVis = memoOnly
-                  ? 'minimal'
-                  : normalizeFamilyFinancialVisibility(h.financial_visibility);
-                return (
-                  <li key={h.sibling_key} className="ei-heir-row">
-                    <div className="ei-heir-row-main">
-                      <span className="ei-heir-name">{adminLabel}</span>
-                      <span className="ei-heir-invite-status">
-                        App name: {preferred ? preferred : 'Not set yet'}
-                        {preferred && preferred !== adminLabel ? ` · shows as ${publicName}` : ''}
-                      </span>
-                      <span className="ei-heir-invite-status">{inviteStatus(h.sibling_key)}</span>
-                      {advisorsForHeir(h.sibling_key).length ? (
-                        <span className="ei-heir-invite-status">
-                          Advisor
-                          {advisorsForHeir(h.sibling_key).length > 1 ? 's' : ''}:{' '}
-                          {advisorsForHeir(h.sibling_key)
-                            .map((c) => c.display_name)
-                            .join(', ')}
-                        </span>
-                      ) : null}
-                      <label className="ei-heir-tier-label" htmlFor={`ei-tier-${h.sibling_key}`}>
-                        Access
-                        <select
-                          id={`ei-tier-${h.sibling_key}`}
-                          className="ei-heir-tier-select"
-                          value={tier}
-                          onChange={(e) =>
-                            handleHeirTierChange(h.sibling_key, adminLabel, e.target.value)
-                          }
-                        >
-                          {HEIR_ACCESS_TIER_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value} title={opt.hint}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <span className="ei-settings-hint ei-heir-tier-hint">
-                        {HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === tier)?.hint}
-                      </span>
-                      <label
-                        className="ei-heir-tier-label"
-                        htmlFor={`ei-fin-vis-${h.sibling_key}`}
-                      >
-                        Financial disclosure
-                        <select
-                          id={`ei-fin-vis-${h.sibling_key}`}
-                          className="ei-heir-tier-select"
-                          value={financialVis}
-                          disabled={memoOnly}
-                          onChange={(e) =>
-                            handleFinancialVisibilityChange(
-                              h.sibling_key,
-                              adminLabel,
-                              e.target.value,
-                              memoOnly
-                            )
-                          }
-                        >
-                          {FAMILY_FINANCIAL_VISIBILITY_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value} title={opt.hint}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <span className="ei-settings-hint ei-heir-tier-hint">
-                        {memoOnly
-                          ? 'Specific Gift Recipients stay on Minimal.'
-                          : FAMILY_FINANCIAL_VISIBILITY_OPTIONS.find(
-                              (o) => o.value === financialVis
-                            )?.hint}
-                      </span>
-                      {memoOnly ? (
-                        <label
-                          className="ei-heir-browse-toggle"
-                          htmlFor={`ei-browse-${h.sibling_key}`}
-                        >
-                          <input
-                            id={`ei-browse-${h.sibling_key}`}
-                            type="checkbox"
-                            checked={browseOn}
-                            onChange={(e) =>
-                              handleBrowseRoomsChange(
-                                h.sibling_key,
-                                adminLabel,
-                                e.target.checked
-                              )
-                            }
-                          />
-                          <span>
-                            Allow browsing rooms / collections
-                            <em> (view only — cannot request items)</em>
-                          </span>
-                        </label>
-                      ) : (
-                        <span className="ei-settings-hint ei-heir-browse-always">
-                          Rooms / collections: always available for this access type
-                        </span>
-                      )}
-                    </div>
-                    <span className="ei-heir-row-actions">
-                      <button
-                        type="button"
-                        className="ei-btn ei-btn-secondary ei-btn-small"
-                        disabled={resettingKey === h.sibling_key}
-                        onClick={() => handleResetInvite(h.sibling_key, adminLabel)}
-                      >
-                        {resettingKey === h.sibling_key ? 'Saving…' : 'New PIN'}
-                      </button>
-                      <button
-                        type="button"
-                        className="ei-btn ei-btn-secondary ei-btn-small"
-                        onClick={() => handleRenameHeir(h.sibling_key, adminLabel)}
-                      >
-                        Edit label
-                      </button>
-                      <button
-                        type="button"
-                        className="ei-btn ei-btn-secondary ei-btn-small"
-                        onClick={() => handleRemoveHeir(h.sibling_key, adminLabel)}
-                      >
-                        Remove
-                      </button>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        <form className="ei-field ei-heir-add" onSubmit={handleAddHeir}>
-          <h4 className="ei-settings-subhead">Add person</h4>
-          <div className="ei-heir-add-row">
-            <input
-              id="ei-new-heir"
-              value={newHeirName}
-              onChange={(e) => setNewHeirName(e.target.value)}
-              placeholder="Admin label (e.g. Alex Rivera)"
-              autoComplete="off"
-              aria-label="Admin label"
+        {page === PAGE.person && activeHeir ? (
+          <section className="ei-heir-page" aria-label={`Settings for ${personLabel}`}>
+            <p className="ei-heir-person-pager" aria-live="polite">
+              Person {personIndex + 1} of {personCount}
+            </p>
+            {lastIssued && lastIssued.name === personLabel ? (
+              <div className="ei-heir-issued" role="status">
+                <strong>{lastIssued.name}</strong>
+                <span className="ei-heir-issued-label">PIN</span>
+                <code className="ei-heir-issued-code">{lastIssued.code}</code>
+              </div>
+            ) : null}
+            <EstateSettingsHeirPersonPage
+              heir={activeHeir}
+              inviteStatusLabel={inviteStatus(activeHeir.sibling_key)}
+              advisors={advisorsForHeir(activeHeir.sibling_key)}
+              resettingPin={resettingKey === activeHeir.sibling_key}
+              onTierChange={handleHeirTierChange}
+              onFinancialVisibilityChange={handleFinancialVisibilityChange}
+              onVisibilitySectionsChange={handleVisibilitySectionsChange}
+              onBrowseRoomsChange={handleBrowseRoomsChange}
+              onResetInvite={handleResetInvite}
+              onRename={handleRenameHeir}
+              onRemove={handleRemoveHeir}
             />
-            <select
-              id="ei-new-heir-tier"
-              aria-label="Access type"
-              value={newHeirTier}
-              onChange={(e) => setNewHeirTier(e.target.value)}
-            >
-              {HEIR_ACCESS_TIER_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value} title={opt.hint}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
-            {
-              HEIR_ACCESS_TIER_OPTIONS.find((o) => o.value === normalizeHeirAccessTier(newHeirTier))
-                ?.hint
-            }
-          </p>
-          <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
-            Admin label is only for your records (and memorandum matching). They choose their app
-            name after signing in with the PIN.
-          </p>
-          <div className="ei-heir-code-row">
-            <div className="ei-heir-code-preview">
-              <span className="ei-heir-code-label">PIN (auto)</span>
-              <code className="ei-heir-issued-code">{newHeirInvite}</code>
-            </div>
-            <button
-              type="button"
-              className="ei-btn ei-btn-secondary ei-btn-small"
-              onClick={() => setNewHeirInvite(generateHeirInviteCode())}
-            >
-              New PIN
-            </button>
-          </div>
-          <button
-            type="submit"
-            className="ei-btn ei-btn-secondary ei-btn-small"
-            disabled={addingHeir || newHeirName.trim().length < 2}
-          >
-            {addingHeir ? 'Adding…' : 'Add'}
-          </button>
-        </form>
+          </section>
+        ) : null}
+
+        {page === PAGE.add ? (
+          <section className="ei-heir-page" aria-labelledby="ei-heir-add-heading">
+            <h4 id="ei-heir-add-heading" className="ei-settings-subhead">
+              Add person
+            </h4>
+            <p className="ei-settings-hint">
+              Admin label is only for your records (and memorandum matching). They choose their app
+              name after signing in with the PIN.
+            </p>
+            <form id="ei-heir-add-form" className="ei-heir-add-page" onSubmit={handleAddHeir}>
+              <div className="ei-field">
+                <label htmlFor="ei-new-heir">Admin label</label>
+                <input
+                  id="ei-new-heir"
+                  value={newHeirName}
+                  onChange={(e) => setNewHeirName(e.target.value)}
+                  placeholder="e.g. Alex Rivera"
+                  autoComplete="off"
+                />
+              </div>
+              <div className="ei-field">
+                <label htmlFor="ei-new-heir-tier">Access type</label>
+                <select
+                  id="ei-new-heir-tier"
+                  value={newHeirTier}
+                  onChange={(e) => setNewHeirTier(e.target.value)}
+                >
+                  {HEIR_ACCESS_TIER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value} title={opt.hint}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="ei-field-hint">
+                  {
+                    HEIR_ACCESS_TIER_OPTIONS.find(
+                      (o) => o.value === normalizeHeirAccessTier(newHeirTier)
+                    )?.hint
+                  }
+                </p>
+              </div>
+              <div className="ei-heir-code-row">
+                <div className="ei-heir-code-preview">
+                  <span className="ei-heir-code-label">PIN (auto)</span>
+                  <code className="ei-heir-issued-code">{newHeirInvite}</code>
+                </div>
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-secondary ei-btn-small"
+                  onClick={() => setNewHeirInvite(generateHeirInviteCode())}
+                >
+                  New PIN
+                </button>
+              </div>
+            </form>
+          </section>
+        ) : null}
 
         {error ? <div className="ei-error">{error}</div> : null}
         {info ? <p className="ei-status">{info}</p> : null}

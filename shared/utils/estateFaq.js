@@ -52,7 +52,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'Is billing per estate or per person?',
-          a: `Per estate (per case). Heirs, helpers, and Specific Gift Recipients do not pay separately. One Personal Representative can manage several estates; each estate has its own subscription. Only the first estate includes a free trial.`
+          a: `Per estate (per case). Heirs, helpers, Specific Gift Recipients, and advisors do not pay separately. One Personal Representative can manage several estates; each estate has its own subscription. Only the first estate includes a free trial.`
         },
         {
           q: 'Do I get a free trial on every estate?',
@@ -60,7 +60,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'What happens when the trial ends?',
-          a: `After the ${ESTATE_BILLING_PLAN.trialDays}-day trial on your first estate, renew for ${formatBillingMoney()}/month to keep that estate open. During a ${ESTATE_BILLING_PLAN.graceDays}-day grace period you will see reminders. If it is not renewed, access for that estate pauses for the PR, family, helpers, and public sale until billing is restored. Settings → Billing shows status and Subscribe / Manage billing.`
+          a: `After the ${ESTATE_BILLING_PLAN.trialDays}-day trial on your first estate, renew for ${formatBillingMoney()}/month to keep that estate open. During a ${ESTATE_BILLING_PLAN.graceDays}-day grace period you will see reminders. If it is not renewed, access for that estate pauses for the PR, family, helpers, advisors, and public sale until billing is restored. Settings → Billing shows status and Subscribe / Manage billing.`
         },
         {
           q: 'Can I cancel when the estate is closed?',
@@ -116,11 +116,11 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'Who uses Estate Vault?',
-          a: 'Most often: the Personal Representative (PR / executor), heirs / beneficiaries, and helpers who help document property. Each role has its own sign-in path and limited permissions. Public auctions are optional and unused by many estates.'
+          a: 'Most often: the Personal Representative (PR / executor), heirs / beneficiaries, helpers who help document property, and optional advisors (attorney, CPA, or other invited contacts) on a read-only portal. Each role has its own sign-in path and limited permissions. Public auctions are optional and unused by many estates.'
         },
         {
           q: 'What can the Personal Representative do?',
-          a: 'The PR runs the estate workspace: inventory and rooms, scene photos, accounts and expenses, distributions and receipts, family invites/updates, and supporting reports.'
+          a: 'The PR runs the estate workspace: inventory and rooms, scene photos, accounts and expenses, distributions and receipts, family invites/updates, contact/advisor invites, and supporting reports.'
         },
         {
           q: 'What can heirs do?',
@@ -131,12 +131,16 @@ export const ESTATE_FAQ = {
           a: 'Helpers document rooms and items (photo, title, description, room). Submissions wait for PR review before they become part of the approved inventory. Helpers do not manage money, distributions, or heir invites.'
         },
         {
+          q: 'What can advisors do?',
+          a: 'Advisors are invited contacts (often an attorney or CPA) on a read-only Advisor portal. They can open published Family Updates, an estate overview, and formal accounting. They cannot edit inventory, change money records, or use heir/helper tools. The PR invites them under Settings → Contacts with an invite PIN; after first login they set a personal password. Optionally mark Advisor for (heir) when that contact represents one family member — that is a directory label only and does not share the heir’s PIN.'
+        },
+        {
           q: 'How do people sign in?',
-          a: 'The PR creates an Estate Vault account (Google or email/password), then unlocks each estate with an admin PIN. Heirs use the estate name plus their PIN. Helpers use the name and PIN the PR set under Settings → Helpers. They do not use the PR’s account login.'
+          a: 'The PR creates an Estate Vault account (Google or email/password), then unlocks each estate with an admin PIN. Heirs use the estate name plus their PIN. Helpers use the name and PIN the PR set under Settings → Helpers. Advisors use the invite PIN from Settings → Contacts the first time, then their personal password. They do not use the PR’s account login.'
         },
         {
           q: 'I lost my invite code or do not know my role',
-          a: 'Ask the Personal Representative. They can issue a new heir PIN or helper PIN and confirm whether your role is residual beneficiary, specific-gift recipient, or helper.'
+          a: 'Ask the Personal Representative. They can issue a new heir PIN, helper PIN, or advisor invite PIN and confirm whether your role is residual beneficiary, specific-gift recipient, helper, or advisor.'
         }
       ]
     },
@@ -202,11 +206,11 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'Admin PIN vs passwords — what are the credentials?',
-          a: 'Three different things: (1) PR account login — Google or email/password for Fiduciarylog / Estate Vault. (2) Estate admin PIN — unlocks that one estate on a device (sometimes labeled “admin password” in older wording; it is the same PIN). (3) Heir PIN / helper name+PIN — invite credentials the PR gives family or helpers for that estate only.'
+          a: 'Three different things: (1) PR account login — Google or email/password for Fiduciarylog / Estate Vault. (2) Estate admin PIN — unlocks that one estate on a device (sometimes labeled “admin password” in older wording; it is the same PIN). (3) Invite credentials — heir PIN, helper name+PIN, or advisor invite PIN / personal password that the PR issues for that estate only.'
         },
         {
           q: 'Why can the PR re-show helper and heir access codes?',
-          a: 'Helper PINs and heir invite PINs are estate invite credentials, not the PR’s Google/email login. Reminder copies are stored so the PR can re-share a code after confirming the admin PIN. Treat them like door codes: anyone who sees them can use that portal. If a code may have leaked, issue a new helper PIN under Settings → Helpers or a new heir PIN under Family / heirs. The admin PIN itself is never shown back — you type it to unlock reminders.'
+          a: 'Helper PINs, heir invite PINs, and advisor invite PINs are estate invite credentials, not the PR’s Google/email login. Reminder copies for helpers and heirs are stored so the PR can re-share a code after confirming the admin PIN. Advisor invites are managed under Settings → Contacts (regenerating an advisor invite PIN clears their personal password). Treat invite codes like door codes: anyone who sees them can use that portal. If a code may have leaked, issue a new helper PIN under Settings → Helpers, a new heir PIN under Family / heirs, or a new advisor invite under Contacts. The admin PIN itself is never shown back — you type it to unlock reminders.'
         }
       ]
     },

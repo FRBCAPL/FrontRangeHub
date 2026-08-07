@@ -8,6 +8,10 @@ import {
   isMemorandumOnlyHeir,
   formatEstateDisplayDate
 } from '@shared/utils/estateInventoryConstants.js';
+import {
+  normalizeVisibilitySections,
+  visibilitySectionEnabled
+} from '@shared/utils/estateVisibilitySections.js';
 import EstateModalShell from './EstateModalShell';
 
 /**
@@ -67,7 +71,15 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
     return null;
   }
 
-  const visibility = data?.visibility || 'Limited';
+  const visibility = data?.visibility || 'minimal';
+  const sections = normalizeVisibilitySections(data?.visibility_sections, {
+    tier: visibility,
+    accessTier: data?.access_tier
+  });
+  const sectionOn = (key) => visibilitySectionEnabled(sections, key);
+  if (asMenuTile && !sectionOn('estate_overview')) {
+    return null;
+  }
   const summary = data?.summary || {};
   const residualCount = Number(summary.residual_beneficiary_count) || 0;
   const projectedShare =
@@ -88,6 +100,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
           : `${roleLabel} · tap to open`;
 
   const forYouBlock =
+    sectionOn('your_distributions') &&
     viewer &&
     (Number(viewer.cash_received) > 0 || Number(viewer.property_received) > 0 || isMemo) ? (
       <div className="ei-transparency-section">
@@ -111,7 +124,8 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
       </div>
     ) : null;
 
-  const inventoryBlock = data?.inventory ? (
+  const inventoryBlock =
+    sectionOn('inventory_status') && data?.inventory ? (
     <div className="ei-transparency-section">
       <h4>{isMemo ? 'How the property list is going' : 'Inventory status'}</h4>
       <ul className="ei-transparency-lines">
@@ -131,7 +145,8 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
     </div>
   ) : null;
 
-  const auctionBlock = data?.auction_breakdown ? (
+  const auctionBlock =
+    sectionOn('auction_status') && data?.auction_breakdown ? (
     <div className="ei-transparency-section">
       <h4>{isMemo ? 'Items going to sale' : 'Sale/auction status'}</h4>
       <ul className="ei-transparency-lines">
@@ -187,7 +202,12 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
       {auctionBlock}
       {!isMemo ? forYouBlock : null}
 
-      {visibility === 'minimal' ? (
+      {!sectionOn('estate_holds') &&
+      !sectionOn('estate_owes') &&
+      !sectionOn('accounts_list') &&
+      !sectionOn('distribution_summary') &&
+      !sectionOn('expenses_list') &&
+      !sectionOn('auction_proceeds') ? (
         <p className="ei-settings-hint">
           {isMemo
             ? 'Your access shows your recorded gifts plus these progress counts. Named gifts live under Browse property.'
@@ -195,9 +215,17 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
         </p>
       ) : null}
 
-      {visibility !== 'minimal' && summary ? (
+      {(sectionOn('estate_holds') ||
+        sectionOn('estate_owes') ||
+        sectionOn('accounts_list') ||
+        sectionOn('distribution_summary') ||
+        sectionOn('expenses_list') ||
+        sectionOn('auction_proceeds')) &&
+      summary ? (
         <>
+          {(sectionOn('estate_holds') || sectionOn('estate_owes')) ? (
           <div className="ei-transparency-grid">
+            {sectionOn('estate_holds') ? (
             <article>
               <h4>{isMemo ? 'Money & property on hand' : 'What the estate holds'}</h4>
               <ul className="ei-transparency-lines">
@@ -244,6 +272,8 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
                 </li>
               </ul>
             </article>
+            ) : null}
+            {sectionOn('estate_owes') ? (
             <article>
               <h4>{isMemo ? 'Bills & debts' : 'What the estate owes'}</h4>
               <ul className="ei-transparency-lines">
@@ -286,9 +316,11 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
                 </p>
               ) : null}
             </article>
+            ) : null}
           </div>
+          ) : null}
 
-          {(data.accounts || []).length ? (
+          {sectionOn('accounts_list') && (data.accounts || []).length ? (
             <div className="ei-transparency-section">
               <h4>Accounts &amp; debts</h4>
               <ul className="ei-transparency-list">
@@ -306,7 +338,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
             </div>
           ) : null}
 
-          {(data.distributions || []).length ? (
+          {sectionOn('distribution_summary') && (data.distributions || []).length ? (
             <div className="ei-transparency-section">
               <h4>{isMemo ? 'Distributions recorded' : 'Distribution summary'}</h4>
               <ul className="ei-transparency-list">
@@ -332,7 +364,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
             </div>
           ) : null}
 
-          {(data.expenses || []).length ? (
+          {sectionOn('expenses_list') && (data.expenses || []).length ? (
             <div className="ei-transparency-section">
               <h4>Expenses</h4>
               <ul className="ei-transparency-list">
@@ -343,7 +375,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
                       {row.date_paid
                         ? ` · ${formatEstateDisplayDate(row.date_paid) || row.date_paid}`
                         : ''}
-                      {visibility === 'full' && row.receipt_url ? (
+                      {sectionOn('expense_receipts') && row.receipt_url ? (
                         <>
                           {' · '}
                           <a href={row.receipt_url} target="_blank" rel="noreferrer">
@@ -359,7 +391,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
             </div>
           ) : null}
 
-          {data.auction ? (
+          {sectionOn('auction_proceeds') && data.auction ? (
             <div className="ei-transparency-section">
               <h4>{isMemo ? 'Sale proceeds (shared picture)' : 'Sale/auction proceeds'}</h4>
               <ul className="ei-transparency-lines">
@@ -376,7 +408,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
                   <strong>{formatMoney(data.auction.outstanding_total)}</strong>
                 </li>
               </ul>
-              {visibility === 'full' && (data.auction.lots || []).length ? (
+              {sectionOn('auction_lots') && (data.auction.lots || []).length ? (
                 <ul className="ei-transparency-list">
                   {data.auction.lots.map((lot, index) => (
                     <li key={`${lot.name}-${index}`}>

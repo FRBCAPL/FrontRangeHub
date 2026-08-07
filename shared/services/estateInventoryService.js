@@ -12,6 +12,7 @@ import {
   familyFinancialVisibilityLabel,
   normalizeItemCondition
 } from '../utils/estateInventoryConstants.js';
+import { normalizeVisibilitySections } from '../utils/estateVisibilitySections.js';
 import { estateBackendBase } from '../utils/estateBackend.js';
 import {
   extractPhotoMetadata,
@@ -1666,7 +1667,7 @@ export async function listSiblingAccounts(caseNumber) {
   let q = supabase
     .from('estate_sibling_accounts')
     .select(
-      'sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, financial_visibility, updated_at'
+      'sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, financial_visibility, visibility_sections, updated_at'
     )
     .eq('owner_id', estate.userId)
     .order('display_name', { ascending: true });
@@ -1674,66 +1675,92 @@ export async function listSiblingAccounts(caseNumber) {
   const { data, error } = await q;
   if (error) {
     // Older DBs without newer columns — step down
-    if (/financial_visibility|can_browse_rooms|preferred_name/i.test(error.message || '')) {
+    if (/visibility_sections|financial_visibility|can_browse_rooms|preferred_name/i.test(error.message || '')) {
       let q2 = supabase
         .from('estate_sibling_accounts')
-        .select('sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, updated_at')
+        .select('sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, financial_visibility, updated_at')
         .eq('owner_id', estate.userId)
         .order('display_name', { ascending: true });
       if (estate.estateId) q2 = q2.eq('estate_id', estate.estateId);
       let retry = await q2;
-      if (retry.error && /can_browse_rooms|preferred_name/i.test(retry.error.message || '')) {
+      if (retry.error && /financial_visibility|can_browse_rooms|preferred_name/i.test(retry.error.message || '')) {
         let q3 = supabase
           .from('estate_sibling_accounts')
-          .select('sibling_key, display_name, preferred_name, access_tier, updated_at')
+          .select('sibling_key, display_name, preferred_name, access_tier, can_browse_rooms, updated_at')
           .eq('owner_id', estate.userId)
           .order('display_name', { ascending: true });
         if (estate.estateId) q3 = q3.eq('estate_id', estate.estateId);
         retry = await q3;
-        if (retry.error && /preferred_name/i.test(retry.error.message || '')) {
+        if (retry.error && /can_browse_rooms|preferred_name/i.test(retry.error.message || '')) {
           let q4 = supabase
             .from('estate_sibling_accounts')
-            .select('sibling_key, display_name, access_tier, updated_at')
+            .select('sibling_key, display_name, preferred_name, access_tier, updated_at')
             .eq('owner_id', estate.userId)
             .order('display_name', { ascending: true });
           if (estate.estateId) q4 = q4.eq('estate_id', estate.estateId);
           retry = await q4;
+          if (retry.error && /preferred_name/i.test(retry.error.message || '')) {
+            let q5 = supabase
+              .from('estate_sibling_accounts')
+              .select('sibling_key, display_name, access_tier, updated_at')
+              .eq('owner_id', estate.userId)
+              .order('display_name', { ascending: true });
+            if (estate.estateId) q5 = q5.eq('estate_id', estate.estateId);
+            retry = await q5;
+          }
         }
       }
       if (retry.error) return fail(retry.error);
       return ok(
-        (retry.data || []).map((row) => ({
-          ...row,
-          preferred_name: row.preferred_name ?? null,
-          can_browse_rooms:
-            row.can_browse_rooms != null
-              ? Boolean(row.can_browse_rooms)
-              : ['residual', 'both'].includes(String(row.access_tier || 'residual').toLowerCase()),
-          financial_visibility: normalizeFamilyFinancialVisibility(
-            row.financial_visibility ||
-              (String(row.access_tier || '').toLowerCase() === 'memorandum' ? 'minimal' : 'minimal')
-          ),
-          admin_label: row.display_name
-        }))
+        (retry.data || []).map((row) => {
+          const financial_visibility = normalizeFamilyFinancialVisibility(
+            String(row.access_tier || '').toLowerCase() === 'memorandum'
+              ? 'minimal'
+              : row.financial_visibility
+          );
+          return {
+            ...row,
+            preferred_name: row.preferred_name ?? null,
+            can_browse_rooms:
+              row.can_browse_rooms != null
+                ? Boolean(row.can_browse_rooms)
+                : ['residual', 'both'].includes(String(row.access_tier || 'residual').toLowerCase()),
+            financial_visibility,
+            visibility_sections: normalizeVisibilitySections(row.visibility_sections, {
+              tier: financial_visibility,
+              accessTier: row.access_tier,
+              canBrowseRooms: row.can_browse_rooms
+            }),
+            admin_label: row.display_name
+          };
+        })
       );
     }
     return fail(error);
   }
   return ok(
-    (data || []).map((row) => ({
-      ...row,
-      can_browse_rooms:
-        row.can_browse_rooms != null
-          ? Boolean(row.can_browse_rooms)
-          : ['residual', 'both'].includes(String(row.access_tier || 'residual').toLowerCase()),
-      financial_visibility: normalizeFamilyFinancialVisibility(
+    (data || []).map((row) => {
+      const financial_visibility = normalizeFamilyFinancialVisibility(
         String(row.access_tier || '').toLowerCase() === 'memorandum'
           ? 'minimal'
           : row.financial_visibility
-      ),
-      admin_label: row.display_name,
-      preferred_name: row.preferred_name || null
-    }))
+      );
+      return {
+        ...row,
+        can_browse_rooms:
+          row.can_browse_rooms != null
+            ? Boolean(row.can_browse_rooms)
+            : ['residual', 'both'].includes(String(row.access_tier || 'residual').toLowerCase()),
+        financial_visibility,
+        visibility_sections: normalizeVisibilitySections(row.visibility_sections, {
+          tier: financial_visibility,
+          accessTier: row.access_tier,
+          canBrowseRooms: row.can_browse_rooms
+        }),
+        admin_label: row.display_name,
+        preferred_name: row.preferred_name || null
+      };
+    })
   );
 }
 
@@ -1745,6 +1772,16 @@ function buildSiblingSessionFromPayload(data, caseFallback) {
     data.needs_preferred_name != null
       ? Boolean(data.needs_preferred_name)
       : !preferred;
+  const accessTier = data.access_tier || 'residual';
+  const financialVisibility = normalizeFamilyFinancialVisibility(
+    String(accessTier).toLowerCase() === 'memorandum'
+      ? 'minimal'
+      : data.financial_visibility
+  );
+  const visibilitySections = normalizeVisibilitySections(data.visibility_sections, {
+    tier: financialVisibility,
+    accessTier
+  });
   return {
     token: data.token,
     sibling_key: data.sibling_key,
@@ -1755,7 +1792,13 @@ function buildSiblingSessionFromPayload(data, caseFallback) {
     case_number: data.case_number || caseFallback,
     expires_at: data.expires_at,
     must_change_password: Boolean(data.must_change_password),
-    access_tier: data.access_tier || 'residual'
+    access_tier: accessTier,
+    financial_visibility: financialVisibility,
+    visibility_sections: visibilitySections,
+    can_browse_rooms:
+      data.can_browse_rooms != null
+        ? Boolean(data.can_browse_rooms)
+        : Boolean(visibilitySections.rooms_inventory)
   };
 }
 
@@ -1864,6 +1907,44 @@ export async function setHeirFinancialVisibility(siblingKey, visibility, caseNum
   });
   const failed = rpcFail(data, error);
   if (failed) return failed;
+  if (data?.visibility_sections) {
+    data.visibility_sections = normalizeVisibilitySections(data.visibility_sections, {
+      tier: data.financial_visibility,
+      accessTier: data.access_tier
+    });
+  }
+  return ok(data);
+}
+
+export async function setHeirVisibilitySections(
+  siblingKey,
+  sections,
+  caseNumber,
+  visibility = null
+) {
+  const key = String(siblingKey || '').trim();
+  if (!key) return fail('Missing heir key');
+  const { data, error } = await supabase.rpc('estate_set_heir_visibility_sections', {
+    p_sibling_key: key,
+    p_case_number: resolveCaseArg(caseNumber),
+    p_sections: sections && typeof sections === 'object' ? sections : {},
+    p_visibility: visibility != null ? normalizeFamilyFinancialVisibility(visibility) : null
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_set_heir_visibility_sections|schema cache|does not exist/i.test(failed.error || '')) {
+      return fail(
+        'Per-section visibility needs supabase-migrations/estate-heir-visibility-sections-2026-08.sql.'
+      );
+    }
+    return failed;
+  }
+  if (data?.visibility_sections) {
+    data.visibility_sections = normalizeVisibilitySections(data.visibility_sections, {
+      tier: data.financial_visibility,
+      accessTier: data.access_tier
+    });
+  }
   return ok(data);
 }
 
@@ -2223,14 +2304,28 @@ export async function siblingListItems(token) {
     data.preferred_name != null ? String(data.preferred_name).trim() || null : null;
   const adminLabel = String(data.admin_label || data.display_name || '').trim();
   const publicName = preferred || adminLabel || data.display_name;
+  const accessTier = data.access_tier || 'residual';
+  const financialVisibility = normalizeFamilyFinancialVisibility(
+    String(accessTier).toLowerCase() === 'memorandum'
+      ? 'minimal'
+      : data.financial_visibility
+  );
+  const visibilitySections = normalizeVisibilitySections(data.visibility_sections, {
+    tier: financialVisibility,
+    accessTier
+  });
+  const canBrowseRooms =
+    data.can_browse_rooms != null
+      ? Boolean(data.can_browse_rooms)
+      : Boolean(visibilitySections.rooms_inventory);
   try {
     const raw = localStorage.getItem(SIBLING_SESSION_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (data.access_tier) parsed.access_tier = data.access_tier || 'residual';
-      if (data.can_browse_rooms != null) {
-        parsed.can_browse_rooms = Boolean(data.can_browse_rooms);
-      }
+      if (data.access_tier) parsed.access_tier = accessTier;
+      parsed.can_browse_rooms = canBrowseRooms;
+      parsed.financial_visibility = financialVisibility;
+      parsed.visibility_sections = visibilitySections;
       if (data.display_name || preferred) parsed.display_name = publicName;
       if (adminLabel) parsed.admin_label = adminLabel;
       parsed.preferred_name = preferred;
@@ -2249,11 +2344,10 @@ export async function siblingListItems(token) {
     preferred_name: preferred,
     needs_preferred_name:
       data.needs_preferred_name != null ? Boolean(data.needs_preferred_name) : !preferred,
-    access_tier: data.access_tier || 'residual',
-    can_browse_rooms:
-      data.can_browse_rooms != null
-        ? Boolean(data.can_browse_rooms)
-        : !['memorandum'].includes(String(data.access_tier || 'residual').toLowerCase()),
+    access_tier: accessTier,
+    financial_visibility: financialVisibility,
+    visibility_sections: visibilitySections,
+    can_browse_rooms: canBrowseRooms,
     letters_issued_at: data.letters_issued_at || null,
     case_number: data.case_number || '',
     probate_window_mode: data.probate_window_mode || 'duration',
@@ -6149,10 +6243,15 @@ export async function getHeirTransparencySummary(caseNumber) {
     }
     return failed;
   }
-  return ok(data);
+  return ok({
+    ...data,
+    visibility: normalizeFamilyFinancialVisibility(data?.visibility),
+    visibility_sections: normalizeVisibilitySections(data?.visibility_sections, {
+      tier: data?.visibility,
+      accessTier: data?.access_tier || session?.access_tier
+    })
+  });
 }
-
-/** Estate-wide vs heir-included finalized distribution batch counts. */
 export async function getHeirDistributionBatchCounts(caseNumber) {
   const session = getStoredSiblingSession(caseNumber);
   if (!session?.token) return fail('Sign in to the family portal again.');
@@ -7084,6 +7183,7 @@ const estateInventoryService = {
   setHeirAccessTier,
   setHeirCanBrowseRooms,
   setHeirFinancialVisibility,
+  setHeirVisibilitySections,
   renameHeir,
   listHeirNamesForCase,
   removeHeir,
