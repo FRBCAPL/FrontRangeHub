@@ -7,14 +7,16 @@ import {
 import ProbateCountdown from './ProbateCountdown';
 
 /**
- * Compact top strip: probate status chip + current milestone progress.
+ * Compact top strip: probate + progress + inventory snapshot.
  */
 const EstateHomeStatusStrip = ({
   settings,
   inventoryCount = 0,
   refreshKey = 0,
   onOpenSettings,
-  onOpenProgress
+  onOpenProgress,
+  onSeeCollections = null,
+  onCreateCollection = null
 }) => {
   const [itemStats, setItemStats] = useState({
     itemCount: 0,
@@ -81,6 +83,20 @@ const EstateHomeStatusStrip = ({
 
   const current = steps.find((s) => s.status === 'active') || steps.find((s) => s.status !== 'done');
   const progressLabel = current?.title || 'Getting started';
+  const roomCount = Number(inventoryCount) || 0;
+  const itemCount = Number(itemStats.itemCount) || 0;
+  const inventoryValue =
+    roomCount <= 0
+      ? 'No rooms yet'
+      : itemCount <= 0
+        ? `${roomCount} room${roomCount === 1 ? '' : 's'} · no items`
+        : `${roomCount} room${roomCount === 1 ? '' : 's'} · ${itemCount} item${
+            itemCount === 1 ? '' : 's'
+          }`;
+  const inventoryAction =
+    roomCount <= 0
+      ? { label: 'Create room', onClick: onCreateCollection }
+      : { label: 'Rooms', onClick: onSeeCollections };
 
   return (
     <div className="ei-home-status-strip" aria-label="Estate status">
@@ -105,6 +121,30 @@ const EstateHomeStatusStrip = ({
         {onOpenProgress ? (
           <button type="button" className="ei-btn ei-btn-secondary ei-btn-small" onClick={onOpenProgress}>
             Timeline
+          </button>
+        ) : null}
+      </section>
+      <section
+        className={`ei-status-chip ei-status-chip--inventory${
+          roomCount <= 0 ? ' ei-status-chip--setup' : ''
+        }`}
+      >
+        <div className="ei-status-chip-body">
+          <span className="ei-status-chip-label">Inventory</span>
+          <strong className="ei-status-chip-value">{inventoryValue}</strong>
+          <span className="ei-status-chip-meta">
+            {roomCount <= 0
+              ? 'Start with a room, then add photos'
+              : 'Open rooms to review or add items'}
+          </span>
+        </div>
+        {inventoryAction.onClick ? (
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary ei-btn-small"
+            onClick={inventoryAction.onClick}
+          >
+            {inventoryAction.label}
           </button>
         ) : null}
       </section>

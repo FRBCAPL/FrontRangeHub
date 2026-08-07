@@ -3,7 +3,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
 import { formatMoney, sumExpenses } from '@shared/utils/estateFinance.js';
 import EstateLedgerModal from './EstateLedgerModal.jsx';
-import CashAvailableHint from './CashAvailableHint.jsx';
+import CashOnHandHelp from './CashOnHandHelp.jsx';
 import { useEstateCase } from './EstateCaseContext';
 
 /** Keep prior list data when a soft-failed sub-query returns empty. */
@@ -154,10 +154,10 @@ const EstateFinanceDashboard = ({
 
   return (
     <>
-      <section className="ei-finance-snapshot ei-finance-snapshot-simple" aria-label="Estate money">
+      <section className="ei-finance-snapshot ei-finance-snapshot-simple" aria-label="Money overview">
         <div className="ei-finance-head">
           <div>
-            <h2 className="ei-finance-title">Cash on hand</h2>
+            <h2 className="ei-finance-title">Money overview</h2>
             <p className="ei-finance-case">Case {caseLabel}</p>
           </div>
         </div>
@@ -168,11 +168,9 @@ const EstateFinanceDashboard = ({
           </p>
         ) : null}
 
-        <p className="ei-finance-plain">
-          This is <strong>spendable estate money</strong> (accounts you mark as Cash on hand).<br />{' '}
-          Retirement, Social Security, insurance, and furniture estimates stay in Accounts /
-          inventory until that money is actually available.
-        </p>
+        <div className="ei-finance-balance-label-row ei-finance-balance-label-row--always">
+          <CashOnHandHelp />
+        </div>
 
         {!hasFundAccount && !isClosed ? (
           <div className="ei-finance-empty-guide">
@@ -191,21 +189,21 @@ const EstateFinanceDashboard = ({
           </div>
         ) : (
           <>
-            <button
-              type="button"
-              className="ei-finance-balance-card"
-              onClick={() => setLedgerTab('summary')}
-              title="Open estate money overview"
-            >
-              <span className="ei-finance-balance-label">Available</span>
-              <span className="ei-finance-balance-amount">{formatMoney(cash)}</span>
-              <span className="ei-finance-note">
-                {isClosed
-                  ? 'Closed record · view only'
-                  : 'Amount available for Estate expenses'}
-              </span>
-            </button>
-            <CashAvailableHint className="ei-settings-hint ei-finance-cash-hint" />
+            <div className="ei-finance-balance-block">
+              <button
+                type="button"
+                className="ei-finance-balance-card"
+                onClick={() => setLedgerTab('summary')}
+                title="Open estate money overview"
+              >
+                <span className="ei-finance-balance-amount">{formatMoney(cash)}</span>
+                <span className="ei-finance-note">
+                  {isClosed
+                    ? 'Closed record · view only'
+                    : 'In estate accounts · for proper estate obligations'}
+                </span>
+              </button>
+            </div>
 
             {!isClosed ? (
               <div className="ei-finance-simple-actions" role="group" aria-label="Common money tasks">

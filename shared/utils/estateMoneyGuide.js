@@ -7,12 +7,12 @@ const STORAGE_KEY = 'ei-money-guide-v1';
 export const ESTATE_MONEY_GUIDE = {
   title: 'How Estate money works',
   intro:
-    'This workspace tracks spendable cash separately from sales, property estimates, and what the estate owes.',
+    'This workspace tracks estate bank funds separately from sales, property estimates, and what the estate owes. Cash on hand is for proper estate administration — not personal spending.',
   tips: [
     {
       id: 'cash',
-      title: 'Cash available',
-      body: 'Money in checking or savings you marked Include in Cash on hand. Match this to your bank statement.',
+      title: 'Cash on hand',
+      body: 'Estate money in checking or savings you marked Include in Cash on hand. Match this to your bank statement. Use it for proper estate bills, claims, and distributions.',
       tab: 'accounts'
     },
     {

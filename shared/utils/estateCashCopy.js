@@ -4,9 +4,10 @@
  */
 
 export const CASH_AVAILABLE_RECONCILIATION =
-  'Cash available is money in your estate checking or savings accounts\n' +
+  'Cash on hand is estate money in checking or savings accounts\n' +
   '(ones marked Include in Cash on hand).\n' +
-  'Sales and auction bids are tracked separately — \nthey only change Cash available after you deposit the money into one of those accounts.';
+  'It is held for proper estate administration — bills, claims, and distributions — not personal use.\n' +
+  'Sales and auction bids are tracked separately — \nthey only change Cash on hand after you deposit the money into one of those accounts.';
 
 export function escapeHtmlCash(value) {
   return String(value ?? '')

@@ -576,12 +576,25 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         open={showLocksmith}
         onClose={() => setShowLocksmith(false)}
         caseNumber={routeCase}
+        onNotNeeded={() => {
+          setBanner(
+            'Locksmith marked not needed. You can still open Locksmith / first entry from Action center anytime.'
+          );
+          setPendingRefreshKey((n) => n + 1);
+        }}
+        onActivated={() => {
+          setBanner(
+            'Locksmith entry activated. What’s next can offer it again until you finish or mark Not needed.'
+          );
+          setPendingRefreshKey((n) => n + 1);
+        }}
         onSaved={(result) => {
           setBanner(
             result?.warning
               ? `Locksmith photo saved. ${result.warning}`
               : 'Locksmith photo saved to Scene documentation (admin only).'
           );
+          setPendingRefreshKey((n) => n + 1);
         }}
       />
 

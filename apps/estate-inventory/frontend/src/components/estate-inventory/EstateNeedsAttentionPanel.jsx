@@ -3,11 +3,10 @@ import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { normalizeSiblingClaims } from '@shared/utils/estateInventoryConstants.js';
 import {
-  buildNoticeOfInventoryPortalSms,
-  defaultFamilyPortalUrl
-} from '@shared/utils/estateLegalOps.js';
+  filterAttentionCompletenessGaps,
+  sortAttentionCompletenessGaps
+} from '@shared/utils/estatePrWorkflow.js';
 import { useEstateCase } from './EstateCaseContext';
-import { buildSteps } from './EstateNextStepsPanel';
 import EstateModalShell from './EstateModalShell';
 
 const GAP_ACTION = {
@@ -28,8 +27,8 @@ const GAP_ACTION = {
 const MAX_ITEMS = 8;
 
 /**
- * Home panel: centered title + count, plain category text in a compact grid.
- * Click anywhere on the section to open the detail modal.
+ * Home panel: interruptive inbox + phased completeness gaps.
+ * Setup coaching lives in What's next — not here.
  */
 const EstateNeedsAttentionPanel = ({
   settings,
@@ -54,6 +53,8 @@ const EstateNeedsAttentionPanel = ({
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
+  const [page, setPage] = useState('urgent'); // 'urgent' | 'followup'
+  const [itemIndex, setItemIndex] = useState(0);
 
   /** Keep action handlers out of the load effect deps — parent re-renders (billing, etc.) were restarting the load forever. */
   const actionsRef = useRef({});
@@ -78,23 +79,15 @@ const EstateNeedsAttentionPanel = ({
     (async () => {
       setLoading(true);
       const actions = actionsRef.current;
-      const [
-        pendingResult,
-        itemsResult,
-        threadsResult,
-        certResult,
-        heirsResult,
-        updatesResult,
-        distResult
-      ] = await Promise.all([
-        estateInventoryService.listPendingReviewItems(caseNumber),
-        estateInventoryService.listAllItemsWithRooms(caseNumber),
-        estateInventoryService.listMessageThreads(caseNumber),
-        estateInventoryService.getCompletenessCertificate(),
-        estateInventoryService.listSiblingAccounts(caseNumber),
-        estateInventoryService.listOwnerFamilyUpdates(caseNumber),
-        estateInventoryService.listEstateDistributions(caseNumber)
-      ]);
+      const [pendingResult, itemsResult, threadsResult, certResult, heirsResult, distResult] =
+        await Promise.all([
+          estateInventoryService.listPendingReviewItems(caseNumber),
+          estateInventoryService.listAllItemsWithRooms(caseNumber),
+          estateInventoryService.listMessageThreads(caseNumber),
+          estateInventoryService.getCompletenessCertificate(),
+          estateInventoryService.listSiblingAccounts(caseNumber),
+          estateInventoryService.listEstateDistributions(caseNumber)
+        ]);
       if (cancelled) return;
 
       const next = [];
@@ -118,11 +111,11 @@ const EstateNeedsAttentionPanel = ({
         });
       }
 
-      const requested = itemsResult.success
-        ? (itemsResult.data || []).filter(
-            (item) => normalizeSiblingClaims(item.sibling_claims).length > 0
-          )
-        : [];
+      const allItems = itemsResult.success ? itemsResult.data || [] : [];
+      const itemCount = allItems.length;
+      const requested = allItems.filter(
+        (item) => normalizeSiblingClaims(item.sibling_claims).length > 0
+      );
       if (requested.length > 0) {
         push({
           key: 'inbox_heirs',
@@ -140,7 +133,7 @@ const EstateNeedsAttentionPanel = ({
       if (unread > 0) {
         push({
           key: 'inbox_messages',
-          tone: 'warn',
+          tone: 'block',
           title: 'Unread messages',
           detail: `${unread} unread message${unread === 1 ? '' : 's'} from heirs.`,
           actionLabel: `View messages (${unread})`,
@@ -148,8 +141,22 @@ const EstateNeedsAttentionPanel = ({
         });
       }
 
-      const exceptions =
+      const heirCount = heirsResult.success ? (heirsResult.data || []).length : 0;
+      const dists = (distResult.success ? distResult.data || [] : []).filter(
+        (row) => row.status === 'finalized'
+      );
+      const rawExceptions =
         certResult.success && certResult.data ? certResult.data.exceptions || [] : [];
+      const filtered = filterAttentionCompletenessGaps(rawExceptions, {
+        inventoryCount,
+        itemCount,
+        heirCount,
+        hasFinalizedDistributions: dists.length > 0,
+        inventoryCompleted: Boolean(settings?.inventory_completed_at),
+        skipPendingReviewGap: pendingCount > 0
+      });
+      const exceptions = sortAttentionCompletenessGaps(filtered);
+
       for (const row of exceptions) {
         const meta = GAP_ACTION[row.key] || {};
         push({
@@ -171,71 +178,6 @@ const EstateNeedsAttentionPanel = ({
         });
       }
 
-      const updates = updatesResult.success ? updatesResult.data || [] : [];
-      const dists = (distResult.success ? distResult.data || [] : []).filter(
-        (row) => row.status === 'finalized'
-      );
-      const latestUpdateAt = updates[0]?.published_at
-        ? new Date(updates[0].published_at).getTime()
-        : 0;
-      const latestDistAt = dists.reduce((max, row) => {
-        const t = new Date(row.finalized_at || row.distribution_date || 0).getTime();
-        return Number.isFinite(t) && t > max ? t : max;
-      }, 0);
-      const needsFamilyUpdate =
-        updates.length === 0 &&
-        (dists.length > 0 || Boolean(settings?.inventory_completed_at));
-      const familyUpdateStale =
-        updates.length > 0 && latestDistAt > 0 && latestDistAt > latestUpdateAt;
-      const heirCount = heirsResult.success ? (heirsResult.data || []).length : 0;
-
-      const copyInvite = async () => {
-        try {
-          const notice = buildNoticeOfInventoryPortalSms(
-            defaultFamilyPortalUrl(settings?.case_number || caseNumber),
-            settings?.case_number || caseNumber
-          );
-          await navigator.clipboard.writeText(notice);
-          actions.onMessage?.('Invite notice copied — paste into a text or email to family.');
-        } catch {
-          actions.onMessage?.(
-            'Could not copy automatically. Open Family / heirs in Settings to share PINs.'
-          );
-        }
-      };
-
-      const steps = buildSteps({
-        settings,
-        inventoryCount,
-        heirCount,
-        isClosed,
-        onOpenSettingsSection: actions.onOpenSettingsSection,
-        onCreateCollection: actions.onCreateCollection,
-        onAddItem: actions.onAddItem,
-        onOpenScenes: actions.onOpenScenes,
-        onOpenLedger: actions.onOpenLedger,
-        onLogLocksmith: actions.onLogLocksmith,
-        onCopyInvite: copyInvite,
-        onOpenClosing: actions.onOpenClosing,
-        onOpenReports: actions.onOpenReports,
-        needsFamilyUpdate,
-        familyUpdateStale
-      });
-
-      for (const step of steps.filter((s) => s.status === 'active')) {
-        if (step.key === 'add_item' || step.key === 'scenes' || step.key === 'ledger') continue;
-        if (step.key === 'family_update' && seen.has('gap_family_update')) continue;
-        if (step.key === 'letters' && seen.has('gap_letters')) continue;
-        push({
-          key: `step_${step.key}`,
-          tone: 'warn',
-          title: step.title,
-          detail: step.hint,
-          actionLabel: step.actionLabel,
-          onAction: step.onAction
-        });
-      }
-
       setItems(next);
       setLoading(false);
     })();
@@ -251,6 +193,108 @@ const EstateNeedsAttentionPanel = ({
 
   const count = items.length;
   const isClear = !loading && count === 0;
+  const urgent = items.filter((row) => row.tone === 'block');
+  const sooner = items.filter((row) => row.tone !== 'block');
+  const pages = [
+    urgent.length
+      ? {
+          id: 'urgent',
+          label: 'Urgent',
+          rows: urgent,
+          primary: true,
+          blurb: 'Handle these first — they usually block someone else.'
+        }
+      : null,
+    sooner.length
+      ? {
+          id: 'followup',
+          label: 'Follow up',
+          rows: sooner,
+          primary: !urgent.length,
+          blurb: 'Important, but usually not blocking right this minute.'
+        }
+      : null
+  ].filter(Boolean);
+  const activePage = pages.find((p) => p.id === page) || pages[0] || null;
+  const hasMultiPages = pages.length > 1;
+  const pageRows = activePage?.rows || [];
+  const safeItemIndex = Math.min(itemIndex, Math.max(0, pageRows.length - 1));
+  const activeItem = pageRows[safeItemIndex] || null;
+  const hasMultiItems = pageRows.length > 1;
+
+  useEffect(() => {
+    if (!open) return;
+    setPage(urgent.length ? 'urgent' : 'followup');
+    setItemIndex(0);
+    // Only reset when the modal opens
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    setItemIndex(0);
+  }, [page]);
+
+  const selectPage = (id) => {
+    setPage(id);
+    setItemIndex(0);
+  };
+
+  const openModal = () => {
+    setPage(urgent.length ? 'urgent' : 'followup');
+    setItemIndex(0);
+    setOpen(true);
+  };
+
+  const renderFocusCard = (row) => {
+    if (!row) return null;
+    const canAct = !isClosed && row.actionLabel && typeof row.onAction === 'function';
+    return (
+      <article
+        className={`ei-guide-focus ei-guide-card ei-guide-card--attention is-${row.tone} is-primary`}
+      >
+        <div className="ei-guide-focus-meta">
+          <span className={`ei-guide-card-badge is-${row.tone}`}>
+            {row.tone === 'block' ? 'Urgent' : 'Follow up'}
+          </span>
+          {hasMultiItems ? (
+            <span className="ei-guide-card-step">
+              {safeItemIndex + 1} of {pageRows.length}
+            </span>
+          ) : null}
+        </div>
+        <h4 className="ei-guide-card-title">{row.title}</h4>
+        {row.detail ? <p className="ei-guide-card-body">{row.detail}</p> : null}
+        {row.samples?.length ? (
+          <ul className="ei-gap-samples ei-gap-samples--chips">
+            {row.samples.map((sample) => (
+              <li key={`${row.key}-${sample.id || sample.name}`}>
+                <span className="ei-gap-sample-name">{sample.name}</span>
+                {sample.id ? (
+                  <span className="ei-gap-sample-id" title={sample.id}>
+                    {sample.id.length > 10 ? `${sample.id.slice(0, 8)}…` : sample.id}
+                  </span>
+                ) : null}
+              </li>
+            ))}
+            {row.samplesTotal > row.samples.length ? (
+              <li className="ei-gap-samples-more">
+                +{row.samplesTotal - row.samples.length} more
+              </li>
+            ) : null}
+          </ul>
+        ) : null}
+        {canAct ? (
+          <button
+            type="button"
+            className="ei-btn ei-guide-card-action"
+            onClick={() => runAction(row)}
+          >
+            {row.actionLabel}
+          </button>
+        ) : null}
+      </article>
+    );
+  };
 
   const opener = isClear || loading ? (
     <section
@@ -278,11 +322,11 @@ const EstateNeedsAttentionPanel = ({
       tabIndex={0}
       aria-haspopup="dialog"
       aria-label={`Needs attention — ${count} items. Open list.`}
-      onClick={() => setOpen(true)}
+      onClick={openModal}
       onKeyDown={(ev) => {
         if (ev.key === 'Enter' || ev.key === ' ') {
           ev.preventDefault();
-          setOpen(true);
+          openModal();
         }
       }}
     >
@@ -305,58 +349,93 @@ const EstateNeedsAttentionPanel = ({
   );
 
   const modal =
-    open && !isClear ? (
+    open && !isClear && activePage ? (
       <EstateModalShell
         title="Needs attention"
         subtitle={
           count === 1
-            ? '1 item waiting for you'
-            : `${count} items waiting for you — handle what you can, then close`
+            ? '1 item waiting for you — tap to handle it'
+            : `${count} items · one category at a time`
         }
         onClose={() => setOpen(false)}
         className="ei-modal-needs-attention"
-      >
-        <ul className="ei-needs-attention-list">
-          {items.map((row, index) => (
-            <li key={row.key} className={`ei-needs-attention-item is-${row.tone}`}>
-              <span className="ei-needs-attention-num" aria-hidden="true">
-                {index + 1}
-              </span>
-              <div className="ei-needs-attention-body">
-                <strong>{row.title}</strong>
-                {row.detail ? <span>{row.detail}</span> : null}
-                {row.samples?.length ? (
-                  <ul className="ei-gap-samples">
-                    {row.samples.map((sample) => (
-                      <li key={`${row.key}-${sample.id || sample.name}`}>
-                        <span className="ei-gap-sample-name">{sample.name}</span>
-                        {sample.id ? (
-                          <span className="ei-gap-sample-id" title={sample.id}>
-                            {sample.id.length > 10 ? `${sample.id.slice(0, 8)}…` : sample.id}
-                          </span>
-                        ) : null}
-                      </li>
-                    ))}
-                    {row.samplesTotal > row.samples.length ? (
-                      <li className="ei-gap-samples-more">
-                        +{row.samplesTotal - row.samples.length} more
-                      </li>
-                    ) : null}
-                  </ul>
-                ) : null}
-              </div>
-              {!isClosed && row.actionLabel && row.onAction ? (
+        foot={
+          <div className="ei-guide-page-foot">
+            {hasMultiItems ? (
+              <div className="ei-guide-page-nav" role="navigation" aria-label="Items in category">
                 <button
                   type="button"
-                  className={`ei-btn ei-btn-small${index === 0 ? '' : ' ei-btn-secondary'}`}
-                  onClick={() => runAction(row)}
+                  className="ei-btn ei-btn-secondary ei-btn-small"
+                  disabled={safeItemIndex <= 0}
+                  onClick={() => setItemIndex((n) => Math.max(0, n - 1))}
                 >
-                  {row.actionLabel}
+                  Previous
                 </button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+                <span className="ei-guide-page-indicator">
+                  {safeItemIndex + 1} / {pageRows.length}
+                </span>
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-small"
+                  disabled={safeItemIndex >= pageRows.length - 1}
+                  onClick={() => setItemIndex((n) => Math.min(pageRows.length - 1, n + 1))}
+                >
+                  Next item
+                </button>
+              </div>
+            ) : null}
+            <button type="button" className="ei-btn ei-btn-secondary" onClick={() => setOpen(false)}>
+              Close
+            </button>
+          </div>
+        }
+      >
+        {hasMultiPages ? (
+          <div className="ei-guide-tabs" role="tablist" aria-label="Attention categories">
+            {pages.map((p) => {
+              const selected = p.id === activePage.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  className={`ei-guide-tab${selected ? ' is-active' : ''}${
+                    p.id === 'urgent' ? ' is-urgent' : ''
+                  }`}
+                  onClick={() => selectPage(p.id)}
+                >
+                  <span>{p.label}</span>
+                  <span className="ei-guide-tab-count">{p.rows.length}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        <div className="ei-guide-stack ei-guide-stack--paged" role="tabpanel">
+          <section className="ei-guide-group" aria-label={activePage.label}>
+            <p className="ei-guide-page-blurb">{activePage.blurb}</p>
+
+            {hasMultiItems ? (
+              <div className="ei-guide-dots" aria-hidden="true">
+                {pageRows.map((row, i) => (
+                  <button
+                    key={row.key}
+                    type="button"
+                    className={`ei-guide-dot${i === safeItemIndex ? ' is-active' : ''}${
+                      row.tone === 'block' ? ' is-urgent' : ''
+                    }`}
+                    aria-label={`Show item ${i + 1}`}
+                    onClick={() => setItemIndex(i)}
+                  />
+                ))}
+              </div>
+            ) : null}
+
+            {renderFocusCard(activeItem)}
+          </section>
+        </div>
       </EstateModalShell>
     ) : null;
 

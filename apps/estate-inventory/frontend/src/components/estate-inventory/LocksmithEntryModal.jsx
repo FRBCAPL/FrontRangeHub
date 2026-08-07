@@ -2,6 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { LOCKSMITH_ITEM_PRESET } from '@shared/utils/estateLegalOps.js';
 import { requestDeviceGeolocation } from '@shared/utils/estatePhotoMeta.js';
+import {
+  clearLocksmithNotNeeded,
+  isLocksmithMarkedNotNeeded,
+  markLocksmithNotNeeded
+} from '@shared/utils/estateLocksmithPref.js';
 
 const LOCKSMITH_AREA = LOCKSMITH_ITEM_PRESET.newCollectionName || 'Perimeter / Security';
 
@@ -9,7 +14,14 @@ const LOCKSMITH_AREA = LOCKSMITH_ITEM_PRESET.newCollectionName || 'Perimeter / S
  * Locksmith / rekey documentation — admin scene evidence only.
  * Not an inventory item (no heir portal, no auction).
  */
-const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
+const LocksmithEntryModal = ({
+  open,
+  onClose,
+  onSaved,
+  onNotNeeded = null,
+  onActivated = null,
+  caseNumber = null
+}) => {
   const cameraInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const pickingFileRef = useRef(false);
@@ -21,6 +33,7 @@ const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [skipped, setSkipped] = useState(false);
 
   useEffect(() => {
     const justOpened = open && !wasOpenRef.current;
@@ -32,10 +45,11 @@ const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
     setNotes(LOCKSMITH_ITEM_PRESET.notes || '');
     setSaving(false);
     setError('');
+    setSkipped(isLocksmithMarkedNotNeeded(caseNumber));
     pickingFileRef.current = false;
     if (cameraInputRef.current) cameraInputRef.current.value = '';
     if (galleryInputRef.current) galleryInputRef.current.value = '';
-  }, [open]);
+  }, [open, caseNumber]);
 
   useEffect(() => {
     if (!photoFile) {
@@ -62,6 +76,7 @@ const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
 
   const titleTrimmed = title.trim();
   const canSave = Boolean(photoFile && titleTrimmed);
+  const formActive = !skipped;
 
   const setPhotoFromList = (fileList) => {
     const next = Array.from(fileList || []).find((f) => f?.type?.startsWith('image/'));
@@ -102,9 +117,25 @@ const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
     onClose?.();
   };
 
+  const handleNotNeeded = () => {
+    if (saving) return;
+    markLocksmithNotNeeded(caseNumber);
+    setSkipped(true);
+    onNotNeeded?.();
+    onClose?.();
+  };
+
+  const handleActivate = () => {
+    if (saving) return;
+    clearLocksmithNotNeeded(caseNumber);
+    setSkipped(false);
+    setError('');
+    onActivated?.();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!canSave || saving) return;
+    if (!formActive || !canSave || saving) return;
     setSaving(true);
     setError('');
     const result = await estateInventoryService.createSceneCapture({
@@ -119,6 +150,8 @@ const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
       setError(result.error || 'Could not save locksmith photo.');
       return;
     }
+    clearLocksmithNotNeeded(caseNumber);
+    setSkipped(false);
     onSaved?.(result);
     onClose?.();
   };
@@ -133,7 +166,7 @@ const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="ei-modal-head">
-          <h3 id="ei-locksmith-title">Locksmith entry</h3>
+          <h3 id="ei-locksmith-title">Locksmith / first entry</h3>
           <button
             type="button"
             className="ei-modal-close"
@@ -148,92 +181,131 @@ const LocksmithEntryModal = ({ open, onClose, onSaved, caseNumber = null }) => {
         <form className="ei-modal-form" onSubmit={handleSubmit}>
           <div className="ei-modal-body">
             <p className="ei-settings-hint" style={{ marginTop: 0 }}>
-              Admin scene documentation only — saved under <strong>{LOCKSMITH_AREA}</strong>. Not an
-              inventory item, not shown to heirs, and not available for sale/auction.
+              Optional admin scene documentation — saved under <strong>{LOCKSMITH_AREA}</strong>.
+              Not an inventory item, not shown to heirs, and not available for sale/auction.
             </p>
 
-            <div className="ei-field ei-field-tight">
-              <label htmlFor="ei-locksmith-door-title">Title</label>
-              <input
-                id="ei-locksmith-door-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Front door, Back door, Garage"
-                required
-                autoComplete="off"
-              />
-            </div>
-
-            <div className="ei-add-photo-bar" aria-label="Locksmith photo">
-              {photoPreview ? (
-                <div className="ei-photo-grid-mini">
-                  <img className="ei-photo-preview" src={photoPreview} alt="" />
-                </div>
-              ) : null}
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="ei-file-hidden"
-                aria-hidden="true"
-                tabIndex={-1}
-                onChange={handleCameraChange}
-              />
-              <input
-                ref={galleryInputRef}
-                type="file"
-                accept="image/*"
-                className="ei-file-hidden"
-                aria-hidden="true"
-                tabIndex={-1}
-                onChange={handleGalleryChange}
-              />
-              <div className="ei-photo-actions">
-                <button type="button" className="ei-btn ei-btn-camera" onClick={openCamera}>
-                  Take a picture
+            {skipped ? (
+              <div className="ei-locksmith-skipped-panel" role="status">
+                <p className="ei-locksmith-skipped-title">PR marked this as not needed</p>
+                <p className="ei-locksmith-skipped-body">
+                  Locksmith / first-entry documentation is currently skipped for this estate on this
+                  device. Activate it to add photos, or close to leave it skipped.
+                </p>
+                <button
+                  type="button"
+                  className="ei-btn"
+                  onClick={handleActivate}
+                  disabled={saving}
+                >
+                  Activate locksmith entry
                 </button>
-                <button type="button" className="ei-btn ei-btn-secondary" onClick={openGallery}>
-                  Gallery
-                </button>
-                {photoPreview ? (
-                  <button
-                    type="button"
-                    className="ei-btn ei-btn-secondary"
-                    onClick={() => setPhotoFile(null)}
-                  >
-                    Remove
-                  </button>
-                ) : null}
               </div>
-            </div>
+            ) : (
+              <p className="ei-settings-hint ei-locksmith-optional-note">
+                If you did not rekey or do not need this record, choose <strong>Not needed</strong>{' '}
+                below. You can open this again anytime from Action center.
+              </p>
+            )}
 
-            <div className="ei-field ei-field-tight">
-              <label htmlFor="ei-locksmith-notes">Notes (invoice #, etc.)</label>
-              <textarea
-                id="ei-locksmith-notes"
-                rows={4}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Invoice number and install notes"
-              />
-            </div>
+            {formActive ? (
+              <>
+                <div className="ei-field ei-field-tight">
+                  <label htmlFor="ei-locksmith-door-title">Title</label>
+                  <input
+                    id="ei-locksmith-door-title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Front door, Back door, Garage"
+                    required
+                    autoComplete="off"
+                  />
+                </div>
+
+                <div className="ei-add-photo-bar" aria-label="Locksmith photo">
+                  {photoPreview ? (
+                    <div className="ei-photo-grid-mini">
+                      <img className="ei-photo-preview" src={photoPreview} alt="" />
+                    </div>
+                  ) : null}
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="ei-file-hidden"
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    onChange={handleCameraChange}
+                  />
+                  <input
+                    ref={galleryInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="ei-file-hidden"
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    onChange={handleGalleryChange}
+                  />
+                  <div className="ei-photo-actions">
+                    <button type="button" className="ei-btn ei-btn-camera" onClick={openCamera}>
+                      Take a picture
+                    </button>
+                    <button type="button" className="ei-btn ei-btn-secondary" onClick={openGallery}>
+                      Gallery
+                    </button>
+                    {photoPreview ? (
+                      <button
+                        type="button"
+                        className="ei-btn ei-btn-secondary"
+                        onClick={() => setPhotoFile(null)}
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="ei-field ei-field-tight">
+                  <label htmlFor="ei-locksmith-notes">Notes (invoice #, etc.)</label>
+                  <textarea
+                    id="ei-locksmith-notes"
+                    rows={4}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Invoice number and install notes"
+                  />
+                </div>
+              </>
+            ) : null}
 
             {error ? <div className="ei-error">{error}</div> : null}
           </div>
 
-          <div className="ei-modal-foot ei-btn-row">
+          <div className="ei-modal-foot ei-btn-row ei-locksmith-foot">
             <button
               type="button"
               className="ei-btn ei-btn-secondary"
               onClick={onClose}
               disabled={saving}
             >
-              Cancel
+              {skipped ? 'Close' : 'Cancel'}
             </button>
-            <button type="submit" className="ei-btn" disabled={saving || !canSave}>
-              {saving ? 'Saving…' : 'Save locksmith photo'}
-            </button>
+            {!skipped ? (
+              <button
+                type="button"
+                className="ei-btn ei-btn-secondary"
+                onClick={handleNotNeeded}
+                disabled={saving}
+              >
+                Not needed
+              </button>
+            ) : null}
+            {formActive ? (
+              <button type="submit" className="ei-btn" disabled={saving || !canSave}>
+                {saving ? 'Saving…' : 'Save locksmith photo'}
+              </button>
+            ) : null}
           </div>
         </form>
       </div>

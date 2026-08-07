@@ -1,10 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import EstateTimeline from './EstateTimeline';
 import EstateNextStepsPanel from './EstateNextStepsPanel';
 import EstateFinanceDashboard from './EstateFinanceDashboard';
 import EstateHomeStatusStrip from './EstateHomeStatusStrip';
 import EstateNeedsAttentionPanel from './EstateNeedsAttentionPanel';
 import EstateBillingBanner from './EstateBillingBanner';
+import {
+  isLocksmithMarkedNotNeeded
+} from '@shared/utils/estateLocksmithPref.js';
 
 /**
  * PR admin home — command center:
@@ -41,7 +44,19 @@ const EstateHome = ({
   const [ledgerRequestKey, setLedgerRequestKey] = useState(0);
   const [ledgerRequestTab, setLedgerRequestTab] = useState('summary');
   const [progressOpen, setProgressOpen] = useState(false);
+  const [locksmithNotNeeded, setLocksmithNotNeeded] = useState(() =>
+    isLocksmithMarkedNotNeeded(settings?.case_number)
+  );
   const progressRef = useRef(null);
+
+  useEffect(() => {
+    setLocksmithNotNeeded(isLocksmithMarkedNotNeeded(settings?.case_number));
+  }, [settings?.case_number, localRefresh, pendingRefreshKey]);
+
+  const openLocksmith = () => {
+    // Keep “not needed” status until PR activates it inside the modal.
+    onLogLocksmith?.();
+  };
 
   const openLedger = (tab = 'summary') => {
     setLedgerRequestTab(tab);
@@ -77,6 +92,8 @@ const EstateHome = ({
           refreshKey={pendingRefreshKey + localRefresh}
           onOpenSettings={onOpenSettings}
           onOpenProgress={openProgress}
+          onSeeCollections={onSeeCollections}
+          onCreateCollection={onCreateCollection}
         />
         {showPageTourLink && onStartPageTour ? (
           <button type="button" className="ei-pr-tour-link" onClick={onStartPageTour}>
@@ -140,9 +157,9 @@ const EstateHome = ({
         <section
           id="ei-pr-coach-inventory"
           className="ei-home-inventory ei-pr-coach-target"
-          aria-label="Inventory workbench"
+          aria-label="Action center"
         >
-          <h2 className="ei-home-workbench-title">Inventory</h2>
+          <h2 className="ei-home-workbench-title">Action center</h2>
           <div className="ei-actions ei-actions--workbench">
             <button
               type="button"
@@ -162,6 +179,28 @@ const EstateHome = ({
               <span className="ei-action-label">Scene documentation</span>
               <span className="ei-action-hint">Rooms, boxes, bags</span>
             </button>
+            {onLogLocksmith ? (
+              <button
+                type="button"
+                className="ei-action"
+                onClick={openLocksmith}
+                disabled={isClosed}
+                title={
+                  isClosed
+                    ? 'Estate is closed for records. Reopen it before adding documentation.'
+                    : locksmithNotNeeded
+                      ? 'Previously marked not needed — open to activate or add a record'
+                      : 'Optional perimeter / rekey record — available anytime'
+                }
+              >
+                <span className="ei-action-label">Locksmith / first entry</span>
+                <span className="ei-action-hint">
+                  {locksmithNotNeeded
+                    ? 'Marked not needed — open to activate'
+                    : 'Optional — rekey or first access photos'}
+                </span>
+              </button>
+            ) : null}
             <button
               type="button"
               className="ei-action"
@@ -186,12 +225,9 @@ const EstateHome = ({
         <section
           id="ei-pr-coach-money"
           className="ei-home-money ei-pr-coach-target"
-          aria-label="Money workbench"
+          aria-label="Estate finances"
         >
-          <h2 className="ei-home-workbench-title">Money</h2>
-          <p className="ei-home-workbench-sub">
-    
-          </p>
+          <h2 className="ei-home-workbench-title">Estate Finances</h2>
           <EstateFinanceDashboard
             refreshKey={financeRefreshKey}
             ledgerRequestKey={ledgerRequestKey}

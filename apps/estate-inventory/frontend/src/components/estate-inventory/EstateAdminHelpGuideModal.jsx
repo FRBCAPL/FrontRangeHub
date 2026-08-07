@@ -25,6 +25,7 @@ const EstateAdminHelpGuideModal = ({ open, onClose }) => {
       subtitle={content.intro}
       onClose={onClose}
       className="ei-admin-help-modal"
+      compact
       foot={
         <button type="button" className="ei-btn" onClick={onClose}>
           {content.closeLabel || 'Got it'}

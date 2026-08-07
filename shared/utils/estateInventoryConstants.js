@@ -665,27 +665,31 @@ export const PR_ROLE_GUIDE = {
   summary: 'Walk the estate from setup and inventory through ledger, family access, and court reports.',
   steps: [
     {
-      heading: '1. Set the Letters date',
+      heading: '1. Document what you walked into',
+      body: 'Open Scene documentation and photograph rooms, boxes, and bags as found — before rearranging or listing items for heirs.'
+    },
+    {
+      heading: '2. Set the Letters date',
       body: 'Open Settings → Estate & probate. Enter the Letters issued date and confirm the probate / claims window. That starts the countdown on your dashboard.'
     },
     {
-      heading: '2. Document the house',
-      body: 'Create rooms, add items with photos, and capture Scene documentation for what you walked into. Under Settings → Helpers, add each assistant with the name they will type at login and a unique PIN — their submissions wait in Pending review.'
+      heading: '3. Document the house inventory',
+      body: 'Create rooms, add items with photos, and finish legal status. Under Settings → Helpers, add each assistant with the name they will type at login and a unique PIN — their submissions wait in Pending review.'
     },
     {
-      heading: '3. Invite family',
-      body: 'Open Settings → Family / heirs. Add each person, choose their access tier, and share their PIN. Use Copy invite text from Next steps when you are ready to notify them.'
+      heading: '4. Invite family',
+      body: 'Open Settings → Family / heirs. Add each person, choose their access tier, and share their PIN. Use Copy invite text from What’s next when you are ready to notify them.'
     },
     {
-      heading: '4. Keep the ledger current',
+      heading: '5. Keep the ledger current',
       body: 'Open Estate Ledger. List bank accounts and debts at today’s balances, log expenses and PR loans, and enter estimated values on unsold property. Paid deposits and expenses stay as activity — do not count them again after balances are updated.'
     },
     {
-      heading: '5. Handle requests and sale items',
+      heading: '6. Handle requests and sale items',
       body: 'Review heir requests and helper submissions. Approve items for sale/auction carefully. The Personal Representative may not bid on the public sale/auction.'
     },
     {
-      heading: '6. Export for court',
+      heading: '7. Export for court',
       body: 'Use Reports for the court evidence pack, printable catalog, read-only snapshot, or JSON backup. Close the estate in Settings → Records only after the work is finished.'
     }
   ],

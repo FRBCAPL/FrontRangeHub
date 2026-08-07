@@ -342,7 +342,7 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
           <p className="ei-settings-hint">
             {editingId
               ? 'Update the fields below, then save.'
-              : 'Add spendable bank accounts to Cash on hand; keep retirement, insurance, and debts tracked separately.'}
+              : 'Add estate checking or savings to Cash on hand; keep retirement, insurance, and debts tracked separately.'}
           </p>
           <div className="ei-finance-expense-form ei-accounts-form">
           {!editingId ? (
@@ -489,9 +489,11 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
                 Include in Cash on hand / Estate Funds
               </label>
               <p className="ei-settings-hint">
-                Turn this on for checking, savings, and other spendable estate money.<br />
-                Leave off for retirement, Social Security, life insurance, and similar accounts
-                <br /> until that money is actually available to the estate.
+                Turn this on for checking, savings, and other estate bank funds you hold as PR.
+                <br />
+                Leave it off for retirement, Social Security, life insurance, and similar accounts
+                until that money is actually in an estate account you can draw for proper
+                administration.
               </p>
             </div>
           ) : null}

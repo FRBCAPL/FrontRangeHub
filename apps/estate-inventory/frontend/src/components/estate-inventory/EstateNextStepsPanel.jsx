@@ -5,179 +5,14 @@ import {
   buildNoticeOfInventoryPortalSms,
   defaultFamilyPortalUrl
 } from '@shared/utils/estateLegalOps.js';
-import { resolveProbateWindow } from '@shared/utils/estateInventoryConstants.js';
+import { buildWhatsNextSteps } from '@shared/utils/estatePrWorkflow.js';
+import {
+  isLocksmithMarkedNotNeeded
+} from '@shared/utils/estateLocksmithPref.js';
 import EstateModalShell from './EstateModalShell';
 
-/**
- * First-time executor guidance — replaces the case-specific Tuesday ops panel.
- * Steps are derived from live estate data so the list shrinks as work is done.
- */
-export function buildSteps({
-  settings,
-  inventoryCount,
-  heirCount,
-  isClosed,
-  onOpenSettingsSection,
-  onCreateCollection,
-  onAddItem,
-  onOpenScenes,
-  onOpenLedger,
-  onLogLocksmith,
-  onCopyInvite,
-  onOpenClosing,
-  onOpenReports,
-  needsFamilyUpdate = false,
-  familyUpdateStale = false
-}) {
-  const openLedger = (tab) => {
-    if (typeof onOpenLedger === 'function') onOpenLedger(tab);
-  };
-  const steps = [];
-  if (isClosed) {
-    steps.push({
-      key: 'closed',
-      title: 'Estate is closed for records',
-      hint: 'View and export only. Reopen in Settings → Records if you need to make changes.',
-      actionLabel: 'Open records settings',
-      onAction: () => onOpenSettingsSection?.('records'),
-      status: 'done'
-    });
-    return steps;
-  }
-
-  if (!settings?.letters_issued_at) {
-    steps.push({
-      key: 'letters',
-      title: 'Set the Letters issued date',
-      hint: 'Starts the probate countdown and anchors court deadlines.',
-      actionLabel: 'Set Letters date',
-      onAction: () => onOpenSettingsSection?.('case'),
-      status: 'active'
-    });
-  }
-
-  const probate = resolveProbateWindow(settings || {});
-  if (settings?.letters_issued_at && (probate.needsEndDate || !probate.end)) {
-    steps.push({
-      key: 'probate_end',
-      title: 'Confirm the probate / claims window',
-      hint: 'Set how long creditors have to make claims against the estate.',
-      actionLabel: 'Edit probate window',
-      onAction: () => onOpenSettingsSection?.('case'),
-      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
-    });
-  }
-
-  if (Number(inventoryCount) <= 0) {
-    steps.push({
-      key: 'room',
-      title: 'Create your first room',
-      hint: 'Group items by room or category so the inventory stays organized.',
-      actionLabel: 'Create room',
-      onAction: onCreateCollection,
-      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
-    });
-  } else {
-    steps.push({
-      key: 'add_item',
-      title: 'Keep documenting property',
-      hint: 'Photo, title, room, and legal status for each item.',
-      actionLabel: 'Add item',
-      onAction: onAddItem,
-      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
-    });
-  }
-
-  if (Number(heirCount) <= 0) {
-    steps.push({
-      key: 'heirs',
-      title: 'Add family / heirs',
-      hint: 'Create a PIN for each person so they can view inventory and send requests.',
-      actionLabel: 'Manage family',
-      onAction: () => onOpenSettingsSection?.('heirs'),
-      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
-    });
-  } else {
-    steps.push({
-      key: 'invite',
-      title: 'Share the family portal',
-      hint: 'Copy a notice with the portal link so heirs know how to sign in.',
-      actionLabel: 'Copy invite text',
-      onAction: onCopyInvite,
-      status: 'upcoming'
-    });
-  }
-
-  steps.push({
-    key: 'scenes',
-    title: 'Document what you walked into',
-    hint: 'Scene photos of rooms, boxes, and bags — separate from heir inventory.',
-    actionLabel: 'Scene documentation',
-    onAction: onOpenScenes,
-    status: 'upcoming'
-  });
-
-  steps.push({
-    key: 'ledger',
-    title: 'Review the estate ledger',
-    hint: 'Accounts, expenses, PR loans, distributions, and the estate balance in one place.',
-    actionLabel: 'Open ledger',
-    onAction: () => openLedger('summary'),
-    status: 'upcoming'
-  });
-
-  if (settings?.inventory_completed_at && Number(heirCount) > 0) {
-    steps.push({
-      key: 'distribute',
-      title: 'Distribute cash or property',
-      hint: 'When the estate is ready, record equal/custom cash shares, property transfers, and receipts.',
-      actionLabel: 'Open distributions',
-      onAction: () => openLedger('distributions'),
-      status: steps.some((s) => s.status === 'active') ? 'upcoming' : 'active'
-    });
-  }
-
-  if (needsFamilyUpdate || familyUpdateStale) {
-    steps.push({
-      key: 'family_update',
-      title: familyUpdateStale
-        ? 'Publish an updated Family Update'
-        : 'Publish Family Update #1',
-      hint: familyUpdateStale
-        ? 'Something material changed since the last published update.'
-        : 'Numbered Family Updates give heirs staged process communication.',
-      actionLabel: 'Open Reports',
-      onAction: onOpenReports,
-      status: 'active'
-    });
-  }
-
-  if (settings?.inventory_completed_at && onOpenClosing) {
-    steps.push({
-      key: 'close',
-      title: 'Close the estate',
-      hint: 'Run the closing checklist and generate supporting exports. Review with counsel before filing.',
-      actionLabel: 'Open closing checklist',
-      onAction: onOpenClosing,
-      status: 'upcoming'
-    });
-  }
-
-  if (onLogLocksmith) {
-    steps.push({
-      key: 'locksmith',
-      title: 'Log locksmith / first entry',
-      hint: 'Optional. Records perimeter rekeying under Scene documentation, not heir inventory.',
-      actionLabel: 'Start locksmith entry',
-      onAction: onLogLocksmith,
-      status: 'upcoming'
-    });
-  }
-
-  // Only show the first few actionable items so the panel stays scannable.
-  const priority = steps.filter((s) => s.status === 'active' || s.status === 'upcoming');
-  return priority.slice(0, 5);
-}
+/** Re-export for any older imports that expected buildSteps here. */
+export { buildWhatsNextSteps as buildSteps } from '@shared/utils/estatePrWorkflow.js';
 
 const EstateNextStepsPanel = ({
   settings,
@@ -195,10 +30,22 @@ const EstateNextStepsPanel = ({
   refreshKey = 0
 }) => {
   const [heirCount, setHeirCount] = useState(0);
+  const [helperCount, setHelperCount] = useState(0);
+  const [itemCount, setItemCount] = useState(0);
+  const [sceneCount, setSceneCount] = useState(null);
   const [busyInvite, setBusyInvite] = useState(false);
   const [needsFamilyUpdate, setNeedsFamilyUpdate] = useState(false);
   const [familyUpdateStale, setFamilyUpdateStale] = useState(false);
   const [open, setOpen] = useState(false);
+  const [page, setPage] = useState('now'); // 'now' | 'later'
+  const [itemIndex, setItemIndex] = useState(0);
+  const [locksmithNotNeeded, setLocksmithNotNeeded] = useState(() =>
+    isLocksmithMarkedNotNeeded(settings?.case_number)
+  );
+
+  useEffect(() => {
+    setLocksmithNotNeeded(isLocksmithMarkedNotNeeded(settings?.case_number));
+  }, [settings?.case_number, refreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -206,18 +53,31 @@ const EstateNextStepsPanel = ({
       const caseNumber = settings?.case_number;
       if (!caseNumber) {
         setHeirCount(0);
+        setHelperCount(0);
+        setItemCount(0);
+        setSceneCount(null);
         setNeedsFamilyUpdate(false);
         setFamilyUpdateStale(false);
         return;
       }
-      const [heirsResult, updatesResult, distResult] = await Promise.all([
-        estateInventoryService.listSiblingAccounts(caseNumber),
-        estateInventoryService.listOwnerFamilyUpdates(caseNumber),
-        estateInventoryService.listEstateDistributions(caseNumber)
-      ]);
+      const [heirsResult, helpersResult, itemsResult, updatesResult, distResult, scenesResult] =
+        await Promise.all([
+          estateInventoryService.listSiblingAccounts(caseNumber),
+          estateInventoryService.listHelpers(caseNumber),
+          estateInventoryService.listAllItemsWithRooms(caseNumber),
+          estateInventoryService.listOwnerFamilyUpdates(caseNumber),
+          estateInventoryService.listEstateDistributions(caseNumber),
+          estateInventoryService.listSceneCaptures(caseNumber)
+        ]);
       if (cancelled) return;
       if (heirsResult.success) setHeirCount((heirsResult.data || []).length);
       else setHeirCount(0);
+      if (helpersResult.success) setHelperCount((helpersResult.data || []).length);
+      else setHelperCount(0);
+      if (itemsResult.success) setItemCount((itemsResult.data || []).length);
+      else setItemCount(0);
+      if (scenesResult.success) setSceneCount((scenesResult.data || []).length);
+      else setSceneCount(null);
 
       const updates = updatesResult.success ? updatesResult.data || [] : [];
       const dists = (distResult.success ? distResult.data || [] : []).filter(
@@ -230,8 +90,12 @@ const EstateNextStepsPanel = ({
         const t = new Date(row.finalized_at || row.distribution_date || 0).getTime();
         return Number.isFinite(t) && t > max ? t : max;
       }, 0);
-      setNeedsFamilyUpdate(updates.length === 0 && (dists.length > 0 || Boolean(settings?.inventory_completed_at)));
-      setFamilyUpdateStale(updates.length > 0 && latestDistAt > 0 && latestDistAt > latestUpdateAt);
+      setNeedsFamilyUpdate(
+        updates.length === 0 && (dists.length > 0 || Boolean(settings?.inventory_completed_at))
+      );
+      setFamilyUpdateStale(
+        updates.length > 0 && latestDistAt > 0 && latestDistAt > latestUpdateAt
+      );
     })();
     return () => {
       cancelled = true;
@@ -254,10 +118,13 @@ const EstateNextStepsPanel = ({
     setBusyInvite(false);
   };
 
-  const steps = buildSteps({
+  const steps = buildWhatsNextSteps({
     settings,
     inventoryCount,
+    itemCount,
     heirCount,
+    helperCount,
+    sceneCount,
     isClosed,
     onOpenSettingsSection,
     onCreateCollection,
@@ -269,15 +136,64 @@ const EstateNextStepsPanel = ({
     onOpenClosing,
     onOpenReports,
     needsFamilyUpdate,
-    familyUpdateStale
+    familyUpdateStale,
+    locksmithNotNeeded
   });
 
   const doneBasics =
     Boolean(settings?.letters_issued_at) &&
     Number(inventoryCount) > 0 &&
-    Number(heirCount) > 0;
+    Number(heirCount) > 0 &&
+    Number(sceneCount) > 0;
 
-  const activeCount = steps.filter((s) => s.status === 'active').length;
+  const nowSteps = steps.filter((s) => s.status === 'active');
+  const laterSteps = steps.filter((s) => s.status !== 'active');
+  const pages = [
+    nowSteps.length
+      ? {
+          id: 'now',
+          label: 'Do this now',
+          rows: nowSteps,
+          blurb: 'Best next move for this estate right now.'
+        }
+      : null,
+    laterSteps.length
+      ? {
+          id: 'later',
+          label: 'Coming up',
+          rows: laterSteps,
+          blurb: 'Useful soon — after you clear what’s active.'
+        }
+      : null
+  ].filter(Boolean);
+  const activePage = pages.find((p) => p.id === page) || pages[0] || null;
+  const hasMultiPages = pages.length > 1;
+  const pageRows = activePage?.rows || [];
+  const safeItemIndex = Math.min(itemIndex, Math.max(0, pageRows.length - 1));
+  const activeStep = pageRows[safeItemIndex] || null;
+  const hasMultiItems = pageRows.length > 1;
+
+  useEffect(() => {
+    if (!open) return;
+    setPage(nowSteps.length ? 'now' : 'later');
+    setItemIndex(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    setItemIndex(0);
+  }, [page]);
+
+  const selectPage = (id) => {
+    setPage(id);
+    setItemIndex(0);
+  };
+
+  const openModal = () => {
+    setPage(nowSteps.length ? 'now' : 'later');
+    setItemIndex(0);
+    setOpen(true);
+  };
 
   const runAction = (step) => {
     setOpen(false);
@@ -289,63 +205,158 @@ const EstateNextStepsPanel = ({
       <button
         type="button"
         className="ei-next-steps-open"
-        onClick={() => setOpen(true)}
+        onClick={openModal}
         aria-haspopup="dialog"
       >
-        <h2 id="ei-next-steps-title" className="ei-next-steps-title">
-          What&apos;s next
-        </h2>
-        {activeCount > 0 ? (
-          <span className="ei-next-steps-count" aria-label={`${activeCount} suggested now`}>
-            {activeCount}
-          </span>
-        ) : null}
-        <span className="ei-next-steps-open-hint">Tap to review</span>
+        <div className="ei-next-steps-head">
+          <h2 id="ei-next-steps-title" className="ei-next-steps-title">
+            What&apos;s next
+          </h2>
+          {steps.length > 0 ? (
+            <span className="ei-next-steps-count" aria-label={`${steps.length} suggested`}>
+              {steps.length}
+            </span>
+          ) : null}
+        </div>
+        {steps.length > 0 ? (
+          <ul className="ei-next-steps-cats" aria-hidden="true">
+            {steps.map((step) => (
+              <li
+                key={step.key}
+                className={`ei-next-steps-cat${step.status === 'active' ? ' is-active' : ''}`}
+              >
+                {step.title}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <span className="ei-next-steps-open-hint">Tap to review</span>
+        )}
       </button>
     </section>
   );
 
-  const modal = open ? (
-    <EstateModalShell
-      title="What's next"
-      subtitle={
-        doneBasics
-          ? 'Core setup looks complete. Use these shortcuts as you keep working the estate.'
-          : 'Suggested next actions for this estate — they update as you finish each one.'
-      }
-      onClose={() => setOpen(false)}
-      className="ei-modal-next-steps"
-    >
-      <ul className="ei-next-steps-list">
-        {steps.map((step, index) => (
-          <li
-            key={step.key}
-            className={`ei-next-steps-item${step.status === 'active' ? ' is-active' : ''}`}
-          >
-            <span className="ei-next-steps-num" aria-hidden="true">
-              {index + 1}
-            </span>
-            <div className="ei-next-steps-body">
-              <strong>{step.title}</strong>
-              <span>{step.hint}</span>
-            </div>
-            {step.onAction ? (
-              <button
-                type="button"
-                className={`ei-btn ei-btn-small${
-                  step.status === 'active' ? '' : ' ei-btn-secondary'
-                }`}
-                onClick={() => runAction(step)}
-                disabled={busyInvite && step.key === 'invite'}
-              >
-                {step.actionLabel}
-              </button>
+  const modal =
+    open && activePage && activeStep ? (
+      <EstateModalShell
+        title="What's next"
+        subtitle={
+          doneBasics
+            ? 'Core setup looks complete — one suggestion at a time.'
+            : 'One step at a time — the list updates as you finish each one.'
+        }
+        onClose={() => setOpen(false)}
+        className="ei-modal-next-steps"
+        foot={
+          <div className="ei-guide-page-foot">
+            {hasMultiItems ? (
+              <div className="ei-guide-page-nav" role="navigation" aria-label="Steps in category">
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-secondary ei-btn-small"
+                  disabled={safeItemIndex <= 0}
+                  onClick={() => setItemIndex((n) => Math.max(0, n - 1))}
+                >
+                  Previous
+                </button>
+                <span className="ei-guide-page-indicator">
+                  {safeItemIndex + 1} / {pageRows.length}
+                </span>
+                <button
+                  type="button"
+                  className="ei-btn ei-btn-small"
+                  disabled={safeItemIndex >= pageRows.length - 1}
+                  onClick={() => setItemIndex((n) => Math.min(pageRows.length - 1, n + 1))}
+                >
+                  Next step
+                </button>
+              </div>
             ) : null}
-          </li>
-        ))}
-      </ul>
-    </EstateModalShell>
-  ) : null;
+            <button type="button" className="ei-btn ei-btn-secondary" onClick={() => setOpen(false)}>
+              Close
+            </button>
+          </div>
+        }
+      >
+        {hasMultiPages ? (
+          <div className="ei-guide-tabs" role="tablist" aria-label="Next step categories">
+            {pages.map((p) => {
+              const selected = p.id === activePage.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  className={`ei-guide-tab${selected ? ' is-active' : ''}`}
+                  onClick={() => selectPage(p.id)}
+                >
+                  <span>{p.label}</span>
+                  <span className="ei-guide-tab-count">{p.rows.length}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+
+        <div className="ei-guide-stack ei-guide-stack--paged" role="tabpanel">
+          <section className="ei-guide-group" aria-label={activePage.label}>
+            <p className="ei-guide-page-blurb">{activePage.blurb}</p>
+
+            {hasMultiItems ? (
+              <div className="ei-guide-dots" aria-hidden="true">
+                {pageRows.map((step, i) => (
+                  <button
+                    key={step.key}
+                    type="button"
+                    className={`ei-guide-dot${i === safeItemIndex ? ' is-active' : ''}`}
+                    aria-label={`Show step ${i + 1}`}
+                    onClick={() => setItemIndex(i)}
+                  />
+                ))}
+              </div>
+            ) : null}
+
+            <article
+              className={`ei-guide-focus ei-guide-card ei-guide-card--next is-featured${
+                activeStep.status === 'active' ? ' is-active' : ''
+              }`}
+            >
+              <div className="ei-guide-focus-meta">
+                <span
+                  className={`ei-guide-card-badge${
+                    activeStep.status === 'active' ? ' is-now' : ' is-later'
+                  }`}
+                >
+                  {activeStep.status === 'active' ? 'Do this now' : 'Coming up'}
+                </span>
+                {hasMultiItems ? (
+                  <span className="ei-guide-card-step">
+                    {safeItemIndex + 1} of {pageRows.length}
+                  </span>
+                ) : null}
+              </div>
+              <h4 className="ei-guide-card-title">{activeStep.title}</h4>
+              <p className="ei-guide-card-body">{activeStep.hint}</p>
+              {activeStep.onAction || activeStep.dismissLabel ? (
+                <div className="ei-guide-card-actions">
+                  {activeStep.onAction ? (
+                    <button
+                      type="button"
+                      className="ei-btn ei-guide-card-action"
+                      onClick={() => runAction(activeStep)}
+                      disabled={busyInvite && activeStep.key === 'invite'}
+                    >
+                      {activeStep.actionLabel}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </article>
+          </section>
+        </div>
+      </EstateModalShell>
+    ) : null;
 
   if (typeof document !== 'undefined' && document.body && modal) {
     return (

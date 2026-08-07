@@ -28,17 +28,17 @@ export const PR_COACH_STEPS = [
   },
   {
     targetId: 'ei-pr-coach-inventory',
-    kicker: 'Inventory',
-    title: 'Document the property',
+    kicker: 'Action center',
+    title: 'Your admin shortcuts',
     body:
-      'Add items, create rooms, and capture scene photos from this workbench.\nHelpers can submit too — you approve in Pending review.'
+      'Add items, create rooms, capture scene photos, log locksmith entry, and open contacts from here.\nHelpers can submit too — you approve in Pending review.'
   },
   {
     targetId: 'ei-pr-coach-money',
-    kicker: 'Money',
+    kicker: 'Estate Finances',
     title: 'Keep the ledger current',
     body:
-      'Accounts, expenses, PR loans, and distributions stay in Money.\nOpen the ledger anytime to record cash in and out.'
+      'Accounts, expenses, PR loans, and distributions live under Estate Finances.\nOpen the ledger anytime to record cash in and out.'
   },
   {
     targetId: 'ei-pr-coach-settings',

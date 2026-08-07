@@ -50,8 +50,13 @@ export const ESTATE_GLOSSARY = {
     full: 'Estate balance is Cash available plus non-cash holdings (such as outstanding bids and unsold inventory estimates), minus debts and PR advances. It is a supporting ledger total from what you recorded in Estate Vault — not a live bank balance.'
   },
   cash_available: {
-    term: 'Cash available',
-    short: 'Operational cash estimate from Funds.',
+    term: 'Cash on hand',
+    short: 'Estate bank funds held for proper administration.',
+    full: CASH_AVAILABLE_RECONCILIATION
+  },
+  cash_on_hand: {
+    term: 'Cash on hand',
+    short: 'Estate bank funds held for proper administration.',
     full: CASH_AVAILABLE_RECONCILIATION
   },
   estate_money_model: {
