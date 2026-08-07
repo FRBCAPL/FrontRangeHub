@@ -5,6 +5,8 @@ import EstateFinanceDashboard from './EstateFinanceDashboard';
 import EstateHomeStatusStrip from './EstateHomeStatusStrip';
 import EstateNeedsAttentionPanel from './EstateNeedsAttentionPanel';
 import EstateBillingBanner from './EstateBillingBanner';
+import EstateInlineLoading from './EstateInlineLoading';
+import { useEstateCase } from './EstateCaseContext';
 import usePrHomeBootstrap from './usePrHomeBootstrap.js';
 import {
   isLocksmithMarkedNotNeeded
@@ -35,7 +37,7 @@ const EstateHome = ({
   onBillingStatus,
   billingAccess = null,
   inventoryCount = 0,
-  inventoryLoading = false,
+  inventoryLoading: _collectionsListLoading = false,
   pendingRefreshKey = 0,
   financeRefreshKey = 0,
   requestsRefreshKey = 0,
@@ -44,15 +46,17 @@ const EstateHome = ({
   showPageTourLink = false,
   onBootstrapCollections = null
 }) => {
+  const { caseNumber: routeCase } = useEstateCase();
   const [localRefresh, setLocalRefresh] = useState(0);
   const [ledgerRequestKey, setLedgerRequestKey] = useState(0);
   const [ledgerRequestTab, setLedgerRequestTab] = useState('summary');
   const [progressOpen, setProgressOpen] = useState(false);
   const [locksmithNotNeeded, setLocksmithNotNeeded] = useState(() =>
-    isLocksmithMarkedNotNeeded(settings?.case_number)
+    isLocksmithMarkedNotNeeded(settings?.case_number || routeCase)
   );
   const progressRef = useRef(null);
 
+  const activeCase = settings?.case_number || routeCase || '';
   const homeRefreshKey =
     pendingRefreshKey + financeRefreshKey + localRefresh + requestsRefreshKey + messagesRefreshKey;
 
@@ -62,30 +66,32 @@ const EstateHome = ({
     financeLoading,
     error: homeError
   } = usePrHomeBootstrap({
-    caseNumber: settings?.case_number,
+    caseNumber: activeCase,
     settings,
     refreshKey: homeRefreshKey
   });
 
-  const caseReady = Boolean(settings?.case_number);
-  // Never show “No rooms yet” until home core finishes (authoritative roomCount).
+  const caseReady = Boolean(activeCase);
+  // Rooms ready only after home core returns (authoritative roomCount).
+  // Do not wait on the separate collections list fetch — that raced and flashed empty.
   const roomsLoading = caseReady && !homeError && (homeLoading || !homeData);
-  // Money stays in loading until finance attaches (or core/finance errors out).
+  // Money ready only after finance attaches (or reports financeError).
   const moneyLoading =
     caseReady &&
     !homeError &&
     (homeLoading ||
       financeLoading ||
       (Boolean(homeData) && homeData.finance == null && !homeData.financeError));
+  // Full shell gate — never paint empty rooms / empty money / “caught up” mid-load.
+  const dashboardBooting = caseReady && !homeError && (roomsLoading || moneyLoading);
   const displayRoomCount =
     homeData?.roomCount != null
       ? Number(homeData.roomCount) || 0
       : Number(inventoryCount) || 0;
-  const alertsLoading = roomsLoading;
 
   useEffect(() => {
-    setLocksmithNotNeeded(isLocksmithMarkedNotNeeded(settings?.case_number));
-  }, [settings?.case_number, localRefresh, pendingRefreshKey]);
+    setLocksmithNotNeeded(isLocksmithMarkedNotNeeded(activeCase));
+  }, [activeCase, localRefresh, pendingRefreshKey]);
 
   useEffect(() => {
     if (!onBootstrapCollections || !Array.isArray(homeData?.collections)) return;
@@ -109,10 +115,62 @@ const EstateHome = ({
     });
   };
 
+  if (!caseReady) {
+    return (
+      <section className="ei-home ei-home--command ei-home--booting" aria-busy="true">
+        <div className="ei-home-boot">
+          <h2 className="ei-home-boot-title">Loading estate dashboard</h2>
+          <EstateInlineLoading label="Opening estate…" />
+        </div>
+      </section>
+    );
+  }
+
+  if (dashboardBooting) {
+    return (
+      <section className="ei-home ei-home--command ei-home--booting" aria-busy="true">
+        <EstateBillingBanner
+          caseNumber={activeCase}
+          refreshKey={pendingRefreshKey + localRefresh}
+          sharedAccess={billingAccess}
+          onMessage={onMessage}
+          onStatus={onBillingStatus}
+        />
+        <div className="ei-home-boot">
+          <h2 className="ei-home-boot-title">Loading estate dashboard</h2>
+          <p className="ei-home-boot-copy">
+           Retrieving estate data... this may take a few seconds.
+           <br /> <br />
+           <center>Thank you for your patience.</center>
+          </p>
+          <EstateInlineLoading
+            label={
+              roomsLoading && moneyLoading
+                ? 'Loading rooms and money…'
+                : roomsLoading
+                  ? 'Loading rooms and items…'
+                  : 'Loading money overview…'
+            }
+          />
+        </div>
+      </section>
+    );
+  }
+
+  if (homeError && !homeData) {
+    return (
+      <section className="ei-home ei-home--command">
+        <div className="ei-error" role="alert">
+          {homeError}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="ei-home ei-home--command">
       <EstateBillingBanner
-        caseNumber={settings?.case_number}
+        caseNumber={activeCase}
         refreshKey={pendingRefreshKey + localRefresh}
         sharedAccess={billingAccess}
         onMessage={onMessage}
@@ -126,7 +184,7 @@ const EstateHome = ({
         <EstateHomeStatusStrip
           settings={settings}
           inventoryCount={displayRoomCount}
-          inventoryLoading={roomsLoading}
+          inventoryLoading={false}
           homeData={homeData}
           refreshKey={pendingRefreshKey + localRefresh}
           onOpenSettings={onOpenSettings}
@@ -148,7 +206,7 @@ const EstateHome = ({
             inventoryCount={displayRoomCount}
             isClosed={isClosed}
             homeData={homeData}
-            homeLoading={alertsLoading}
+            homeLoading={false}
             onOpenPendingReview={() => {
               setLocalRefresh((n) => n + 1);
               onOpenPendingReview?.();
@@ -178,10 +236,10 @@ const EstateHome = ({
           <EstateNextStepsPanel
             settings={settings}
             inventoryCount={displayRoomCount}
-            inventoryLoading={roomsLoading}
+            inventoryLoading={false}
             isClosed={isClosed}
             homeData={homeData}
-            homeLoading={alertsLoading}
+            homeLoading={false}
             onOpenSettingsSection={onOpenSettingsSection || onOpenSettings}
             onCreateCollection={onCreateCollection}
             onAddItem={onAddItem}
@@ -280,7 +338,7 @@ const EstateHome = ({
             onChanged={onFinanceChanged}
             isClosed={isClosed}
             sharedSummary={caseReady ? homeData?.finance ?? null : undefined}
-            sharedLoading={moneyLoading}
+            sharedLoading={false}
             sharedError={homeData?.financeError || homeError || ''}
           />
         </section>

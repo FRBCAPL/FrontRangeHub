@@ -120,16 +120,14 @@ function assembleHomePayload({
 }
 
 /**
- * Core PR home fan-out (no finance) — paints Needs Attention / Next Steps sooner.
+ * Core PR home fan-out (no finance).
+ * Collections + items + related lists run in parallel (collections also used for roomCount).
  */
 export async function loadPrHomeCore(caseNumber, settings = {}) {
   if (!caseNumber) return fail('Missing estate case.');
 
-  // Collections first so items mapping can reuse the same list (no double fetch).
-  const collectionsResult = await listCollections(caseNumber);
-  const collections = collectionsResult.success ? collectionsResult.data || [] : [];
-
   const [
+    collectionsResult,
     itemsResult,
     unreadResult,
     heirsResult,
@@ -138,7 +136,8 @@ export async function loadPrHomeCore(caseNumber, settings = {}) {
     scenesResult,
     updatesResult
   ] = await Promise.all([
-    listAllItemsWithRooms(caseNumber, { collections }),
+    listCollections(caseNumber),
+    listAllItemsWithRooms(caseNumber),
     countUnreadHeirMessages(caseNumber),
     listSiblingAccounts(caseNumber),
     listHelpers(caseNumber),
@@ -165,7 +164,7 @@ export async function loadPrHomeCore(caseNumber, settings = {}) {
     assembleHomePayload({
       settings,
       items: itemsResult.success ? itemsResult.data || [] : [],
-      collections: collectionsResult.success ? collections : null,
+      collections: collectionsResult.success ? collectionsResult.data || [] : null,
       unreadMessages: unreadResult.success ? unreadResult.data?.total_unread : 0,
       heirs: heirsResult.success ? heirsResult.data || [] : [],
       helpers: helpersResult.success ? helpersResult.data || [] : [],

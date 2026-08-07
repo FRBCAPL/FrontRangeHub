@@ -364,6 +364,43 @@ button.ei-nav-menu-btn-item {
   gap: 0.75rem;
 }
 
+.ei-home--booting {
+  min-height: 14rem;
+}
+
+.ei-home-boot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.55rem;
+  padding: 1.15rem 1rem 1.25rem;
+  border: 1px solid var(--ei-line);
+  border-radius: 12px;
+  background: var(--ei-panel);
+  min-height: 12rem;
+}
+
+.ei-home-boot-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ei-ink);
+}
+
+.ei-home-boot-copy {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ei-muted);
+  max-width: 36rem;
+}
+
+.ei-home-boot .ei-inline-loading {
+  justify-content: center;
+}
+
 .ei-home-status,
 .ei-home-workbench,
 .ei-home-inbox {
