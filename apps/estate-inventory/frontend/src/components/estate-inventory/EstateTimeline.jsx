@@ -15,19 +15,32 @@ const EstateTimeline = ({
   inventoryCount = 0,
   refreshKey = 0,
   hasAuctionActivity = false,
-  onSettingsSaved
+  onSettingsSaved,
+  sharedStats = null
 }) => {
-  const [itemStats, setItemStats] = useState({
-    itemCount: 0,
-    pendingReviewCount: 0,
-    approvedForSaleCount: 0,
-    distributionCount: 0,
-    pendingAcknowledgementCount: 0
-  });
+  const [itemStats, setItemStats] = useState(() => ({
+    itemCount: Number(sharedStats?.itemCount) || 0,
+    pendingReviewCount: Number(sharedStats?.pendingReviewCount) || 0,
+    approvedForSaleCount: Number(sharedStats?.approvedForSaleCount) || 0,
+    distributionCount: Number(sharedStats?.distributionCount) || 0,
+    pendingAcknowledgementCount: Number(sharedStats?.pendingAcknowledgementCount) || 0
+  }));
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusError, setStatusError] = useState('');
 
   useEffect(() => {
+    if (sharedStats) {
+      setItemStats({
+        itemCount: Number(sharedStats.itemCount) || 0,
+        pendingReviewCount: Number(sharedStats.pendingReviewCount) || 0,
+        approvedForSaleCount: Number(sharedStats.approvedForSaleCount) || 0,
+        distributionCount: Number(sharedStats.distributionCount) || 0,
+        pendingAcknowledgementCount:
+          Number(sharedStats.pendingAcknowledgementCount) || 0
+      });
+      return undefined;
+    }
+
     let cancelled = false;
     (async () => {
       const caseNumber = settings?.case_number;
@@ -65,7 +78,7 @@ const EstateTimeline = ({
     return () => {
       cancelled = true;
     };
-  }, [settings?.case_number, settings?.updated_at, refreshKey]);
+  }, [settings?.case_number, settings?.updated_at, refreshKey, sharedStats]);
 
   const { steps, completedCount, totalCount, estimatedCompletion, remainingClaimsDays } =
     useMemo(

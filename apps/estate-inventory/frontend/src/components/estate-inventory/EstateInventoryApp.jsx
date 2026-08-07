@@ -474,6 +474,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           onOpenClosing={() => setShowClosing(true)}
           onOpenReports={() => setShowReports(true)}
           onBillingStatus={setBillingAccess}
+          billingAccess={billingAccess}
           onFinanceSettingsSaved={(data) => {
             setSettings(data);
             setFinanceRefreshKey((n) => n + 1);

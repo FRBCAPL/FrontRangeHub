@@ -26,10 +26,13 @@ const EstateBillingBanner = ({
   refreshKey = 0,
   compact = false,
   forceShow = false,
+  sharedAccess = undefined,
   onStatus,
   onMessage
 }) => {
-  const [access, setAccess] = useState(null);
+  const [access, setAccess] = useState(
+    sharedAccess !== undefined ? sharedAccess : null
+  );
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
 
@@ -48,9 +51,13 @@ const EstateBillingBanner = ({
   };
 
   useEffect(() => {
+    if (sharedAccess !== undefined) {
+      setAccess(sharedAccess);
+      return;
+    }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseNumber, refreshKey]);
+  }, [caseNumber, refreshKey, sharedAccess]);
 
   useEffect(() => {
     if (!caseNumber || typeof window === 'undefined') return;

@@ -33,6 +33,7 @@ const EstateHome = ({
   onFinanceSettingsSaved,
   onFinanceChanged,
   onBillingStatus,
+  billingAccess = null,
   inventoryCount = 0,
   pendingRefreshKey = 0,
   financeRefreshKey = 0,
@@ -55,7 +56,8 @@ const EstateHome = ({
 
   const {
     data: homeData,
-    loading: homeLoading
+    loading: homeLoading,
+    financeLoading
   } = usePrHomeBootstrap({
     caseNumber: settings?.case_number,
     settings,
@@ -88,6 +90,7 @@ const EstateHome = ({
       <EstateBillingBanner
         caseNumber={settings?.case_number}
         refreshKey={pendingRefreshKey + localRefresh}
+        sharedAccess={billingAccess}
         onMessage={onMessage}
         onStatus={onBillingStatus}
       />
@@ -253,7 +256,7 @@ const EstateHome = ({
             sharedSummary={
               homeLoading || homeData ? homeData?.finance ?? null : undefined
             }
-            sharedLoading={homeLoading}
+            sharedLoading={homeLoading || financeLoading}
           />
         </section>
       </div>
@@ -266,12 +269,15 @@ const EstateHome = ({
           onToggle={(ev) => setProgressOpen(ev.currentTarget.open)}
         >
           <summary>Estate progress timeline</summary>
-          <EstateTimeline
-            settings={settings}
-            roomCount={inventoryCount}
-            refreshKey={pendingRefreshKey + localRefresh}
-            onSettingsSaved={onFinanceSettingsSaved}
-          />
+          {progressOpen ? (
+            <EstateTimeline
+              settings={settings}
+              roomCount={inventoryCount}
+              refreshKey={pendingRefreshKey + localRefresh}
+              onSettingsSaved={onFinanceSettingsSaved}
+              sharedStats={homeData?.itemSummary || null}
+            />
+          ) : null}
         </details>
       </div>
     </section>

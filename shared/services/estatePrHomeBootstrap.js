@@ -1,6 +1,6 @@
 import {
   listAllItemsWithRooms,
-  listMessageThreads,
+  countUnreadHeirMessages,
   listSiblingAccounts,
   listHelpers,
   listEstateDistributions,
@@ -24,47 +24,19 @@ function fail(error) {
   return { success: false, error: message };
 }
 
-/**
- * One shared fan-out for PR command-center panels.
- * Replaces parallel getCompletenessCertificate + per-panel listAllItemsWithRooms
- * + duplicate getFinanceSummary on first paint.
- */
-export async function loadPrHomeBootstrap(caseNumber, settings = {}) {
-  if (!caseNumber) return fail('Missing estate case.');
-
-  const [
-    itemsResult,
-    threadsResult,
-    heirsResult,
-    helpersResult,
-    distResult,
-    scenesResult,
-    updatesResult,
-    financeResult
-  ] = await Promise.all([
-    listAllItemsWithRooms(caseNumber),
-    listMessageThreads(caseNumber),
-    listSiblingAccounts(caseNumber),
-    listHelpers(caseNumber),
-    listEstateDistributions(caseNumber),
-    listSceneCaptures(caseNumber, { includeArchived: true }),
-    listOwnerFamilyUpdates(caseNumber),
-    getFinanceSummary(caseNumber)
-  ]);
-
-  if (!itemsResult.success && !financeResult.success) {
-    return fail(itemsResult.error || financeResult.error || 'Could not load PR home data.');
-  }
-
-  const items = itemsResult.success ? itemsResult.data || [] : [];
-  const distributions = distResult.success ? distResult.data || [] : [];
-  const scenes = scenesResult.success ? scenesResult.data || [] : [];
-  const familyUpdates = updatesResult.success ? updatesResult.data || [] : [];
-  const finance = financeResult.success ? financeResult.data || {} : null;
+function assembleHomePayload({
+  settings,
+  items,
+  unreadMessages,
+  heirs,
+  helpers,
+  distributions,
+  scenes,
+  familyUpdates,
+  finance,
+  financeError
+}) {
   const expenses = finance?.expenses || [];
-  const heirs = heirsResult.success ? heirsResult.data || [] : [];
-  const helpers = helpersResult.success ? helpersResult.data || [] : [];
-
   const pendingFromItems = items.filter(
     (item) => item.review_status === 'pending_pr_review'
   );
@@ -93,10 +65,10 @@ export async function loadPrHomeBootstrap(caseNumber, settings = {}) {
     return Number.isFinite(t) && t > max ? t : max;
   }, 0);
 
-  return ok({
+  return {
     items,
     pendingReviewCount: Math.max(pendingFromItems.length, itemSummary.pendingReviewCount || 0),
-    unreadMessages: Number(threadsResult.success ? threadsResult.data?.total_unread : 0) || 0,
+    unreadMessages: Number(unreadMessages) || 0,
     heirs,
     helpers,
     heirCount: heirs.length,
@@ -105,8 +77,8 @@ export async function loadPrHomeBootstrap(caseNumber, settings = {}) {
     scenes,
     activeSceneCount: activeScenes.length,
     familyUpdates,
-    finance,
-    financeError: financeResult.success ? null : financeResult.error || null,
+    finance: finance || null,
+    financeError: financeError || null,
     completeness,
     itemSummary: {
       itemCount: itemSummary.itemCount,
@@ -130,9 +102,104 @@ export async function loadPrHomeBootstrap(caseNumber, settings = {}) {
       (finalized.length > 0 || Boolean(settings?.inventory_completed_at)),
     familyUpdateStale:
       familyUpdates.length > 0 && latestDistAt > 0 && latestDistAt > latestUpdateAt
+  };
+}
+
+/**
+ * Core PR home fan-out (no finance) — paints Needs Attention / Next Steps sooner.
+ */
+export async function loadPrHomeCore(caseNumber, settings = {}) {
+  if (!caseNumber) return fail('Missing estate case.');
+
+  const [
+    itemsResult,
+    unreadResult,
+    heirsResult,
+    helpersResult,
+    distResult,
+    scenesResult,
+    updatesResult
+  ] = await Promise.all([
+    listAllItemsWithRooms(caseNumber),
+    countUnreadHeirMessages(caseNumber),
+    listSiblingAccounts(caseNumber),
+    listHelpers(caseNumber),
+    listEstateDistributions(caseNumber),
+    listSceneCaptures(caseNumber, { includeArchived: true }),
+    listOwnerFamilyUpdates(caseNumber)
+  ]);
+
+  if (!itemsResult.success && !heirsResult.success && !distResult.success) {
+    return fail(itemsResult.error || heirsResult.error || 'Could not load PR home data.');
+  }
+
+  return ok(
+    assembleHomePayload({
+      settings,
+      items: itemsResult.success ? itemsResult.data || [] : [],
+      unreadMessages: unreadResult.success ? unreadResult.data?.total_unread : 0,
+      heirs: heirsResult.success ? heirsResult.data || [] : [],
+      helpers: helpersResult.success ? helpersResult.data || [] : [],
+      distributions: distResult.success ? distResult.data || [] : [],
+      scenes: scenesResult.success ? scenesResult.data || [] : [],
+      familyUpdates: updatesResult.success ? updatesResult.data || [] : [],
+      finance: null,
+      financeError: null
+    })
+  );
+}
+
+/** Attach finance summary onto an existing core home payload. */
+export async function loadPrHomeFinance(caseNumber, coreData, settings = {}) {
+  if (!caseNumber) return fail('Missing estate case.');
+  const financeResult = await getFinanceSummary(caseNumber);
+  const finance = financeResult.success ? financeResult.data || {} : null;
+  const base = coreData || {};
+  return ok(
+    assembleHomePayload({
+      settings,
+      items: base.items || [],
+      unreadMessages: base.unreadMessages || 0,
+      heirs: base.heirs || [],
+      helpers: base.helpers || [],
+      distributions: base.distributions || [],
+      scenes: base.scenes || [],
+      familyUpdates: base.familyUpdates || [],
+      finance,
+      financeError: financeResult.success ? null : financeResult.error || null
+    })
+  );
+}
+
+/**
+ * Full bootstrap (core + finance). Prefer staged loading via loadPrHomeCore / loadPrHomeFinance.
+ */
+export async function loadPrHomeBootstrap(caseNumber, settings = {}) {
+  const core = await loadPrHomeCore(caseNumber, settings);
+  if (!core.success) return core;
+  return loadPrHomeFinance(caseNumber, core.data, settings);
+}
+
+/** Rebuild completeness locally when settings hydrate (no network). */
+export function reassemblePrHomeWithSettings(homeData, settings) {
+  if (!homeData) return null;
+  return assembleHomePayload({
+    settings: settings || {},
+    items: homeData.items || [],
+    unreadMessages: homeData.unreadMessages || 0,
+    heirs: homeData.heirs || [],
+    helpers: homeData.helpers || [],
+    distributions: homeData.distributions || [],
+    scenes: homeData.scenes || [],
+    familyUpdates: homeData.familyUpdates || [],
+    finance: homeData.finance || null,
+    financeError: homeData.financeError || null
   });
 }
 
 export default {
-  loadPrHomeBootstrap
+  loadPrHomeBootstrap,
+  loadPrHomeCore,
+  loadPrHomeFinance,
+  reassemblePrHomeWithSettings
 };

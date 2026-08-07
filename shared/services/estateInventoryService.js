@@ -256,6 +256,7 @@ export function setActiveEstateCase(caseNumber) {
   const next = normalizeEstateCaseNumber(caseNumber) || '';
   const prev = activeEstateCase;
   activeEstateCase = next;
+  clearOwnedEstateCache();
   if (next && prev && next !== prev) {
     try {
       const sibling = getStoredSiblingSession();
@@ -338,6 +339,21 @@ async function requireUserId() {
   return { ok: true, userId: data.user.id };
 }
 
+/** Short-lived cache — collapses auth/settings round-trips during home fan-out. */
+const ownedEstateCache = new Map();
+const OWNED_ESTATE_TTL_MS = 5000;
+
+export function clearOwnedEstateCache(caseNumber) {
+  if (!caseNumber) {
+    ownedEstateCache.clear();
+    return;
+  }
+  const cn = normalizeEstateCaseNumber(caseNumber);
+  for (const key of [...ownedEstateCache.keys()]) {
+    if (key.endsWith(`:${cn}`)) ownedEstateCache.delete(key);
+  }
+}
+
 function fail(error) {
   const raw = typeof error === 'string' ? error : error?.message || 'Something went wrong.';
   const missingTable =
@@ -369,6 +385,12 @@ async function resolveOwnedEstate(caseNumber) {
     return { ok: false, error: 'Estate case number is required.' };
   }
 
+  const cacheKey = `${auth.userId}:${cn}`;
+  const cached = ownedEstateCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < OWNED_ESTATE_TTL_MS) {
+    return cached.value;
+  }
+
   const { data: existing, error: findErr } = await selectSettings((q) =>
     q.eq('owner_id', auth.userId).ilike('case_number', cn).maybeSingle()
   );
@@ -390,7 +412,7 @@ async function resolveOwnedEstate(caseNumber) {
   }
 
   if (existing?.id) {
-    return {
+    const hit = {
       ok: true,
       userId: auth.userId,
       estateId: existing.id,
@@ -398,6 +420,8 @@ async function resolveOwnedEstate(caseNumber) {
       settings: existing,
       legacy: false
     };
+    ownedEstateCache.set(cacheKey, { at: Date.now(), value: hit });
+    return hit;
   }
 
   // Also allow lookup by court case number owned by this PR (display identity)
@@ -406,7 +430,7 @@ async function resolveOwnedEstate(caseNumber) {
   );
   if (courtErr) return { ok: false, error: courtErr.message || String(courtErr) };
   if (byCourt?.id) {
-    return {
+    const hit = {
       ok: true,
       userId: auth.userId,
       estateId: byCourt.id,
@@ -414,6 +438,8 @@ async function resolveOwnedEstate(caseNumber) {
       settings: byCourt,
       legacy: false
     };
+    ownedEstateCache.set(cacheKey, { at: Date.now(), value: hit });
+    return hit;
   }
 
   // Do not auto-create empty estates — prevents identity pollution across cases
@@ -441,7 +467,7 @@ async function resolveOwnedEstate(caseNumber) {
   const { data: row, error: rowErr } = await selectSettings((q) => q.eq('id', estateId).maybeSingle());
   if (rowErr) return { ok: false, error: rowErr.message || String(rowErr) };
 
-  return {
+  const hit = {
     ok: true,
     userId: auth.userId,
     estateId,
@@ -449,6 +475,8 @@ async function resolveOwnedEstate(caseNumber) {
     settings: row,
     legacy: false
   };
+  ownedEstateCache.set(cacheKey, { at: Date.now(), value: hit });
+  return hit;
 }
 
 function randomToken() {
@@ -2547,6 +2575,27 @@ export async function listMessageThreads(caseNumber) {
 
   const totalUnread = threads.reduce((n, t) => n + (t.unread_count || 0), 0);
   return ok({ threads, total_unread: totalUnread });
+}
+
+/** Light unread count for PR home — avoids nested heir list. */
+export async function countUnreadHeirMessages(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber || getActiveEstateCase());
+  if (!estate.ok) return fail(estate.error);
+  if (!estate.estateId) {
+    return fail('Could not resolve estate for messages.');
+  }
+
+  const { count, error } = await supabase
+    .from('estate_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('estate_id', estate.estateId)
+    .eq('sender_role', 'heir')
+    .is('read_at', null);
+
+  if (error) {
+    return messagingMigrationHint(fail(error)) || fail(error);
+  }
+  return ok({ total_unread: Number(count) || 0 });
 }
 
 /** Admin: messages for one heir thread. */
@@ -7216,6 +7265,7 @@ const estateInventoryService = {
   siblingSendMessage,
   siblingMarkMessagesRead,
   listMessageThreads,
+  countUnreadHeirMessages,
   listMessagesForHeir,
   sendAdminMessage,
   markAdminMessagesRead,
