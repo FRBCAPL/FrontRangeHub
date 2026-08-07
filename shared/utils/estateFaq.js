@@ -69,6 +69,10 @@ export const ESTATE_FAQ = {
         {
           q: 'Why does Checkout say FRPL or FRUSAPL?',
           a: 'Payment is processed through the business Stripe account. The product line and price still show Estate Vault Standard. The merchant name on Checkout is the Stripe business profile for that account.'
+        },
+        {
+          q: 'Where are the Terms, Privacy, and refund policies?',
+          a: 'They are published on the marketing site: Terms of Service, Privacy Policy, Refund & Cancellation, and Security & Retention at fiduciarylog.com/estate-vault/ (linked from Pricing and from Settings → Billing before you subscribe).'
         }
       ]
     },

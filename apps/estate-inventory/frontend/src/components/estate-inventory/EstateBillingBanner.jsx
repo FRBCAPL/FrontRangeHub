@@ -15,6 +15,7 @@ import {
   shouldShowHomeBillingBanner,
   frozenEstateBannerMessage
 } from '@shared/utils/estateBilling.js';
+import { ESTATE_LEGAL_PAGES } from '@shared/utils/estateLegalPages.js';
 
 /**
  * PR billing status + renew CTAs.
@@ -162,6 +163,26 @@ const EstateBillingBanner = ({
           {!locked && days ? ` · ${days}` : ''}
         </strong>
         <p>{bodyCopy}</p>
+        {(phase === 'trial' || phase === 'grace' || locked) && access.checkoutReady !== false ? (
+          <p className="ei-billing-legal-links">
+            By subscribing you agree to the{' '}
+            <a href={ESTATE_LEGAL_PAGES.terms.path} target="_blank" rel="noopener noreferrer">
+              {ESTATE_LEGAL_PAGES.terms.shortLabel}
+            </a>{' '}
+            and{' '}
+            <a href={ESTATE_LEGAL_PAGES.privacy.path} target="_blank" rel="noopener noreferrer">
+              {ESTATE_LEGAL_PAGES.privacy.shortLabel}
+            </a>
+            .{' '}
+            <a href={ESTATE_LEGAL_PAGES.refund.path} target="_blank" rel="noopener noreferrer">
+              {ESTATE_LEGAL_PAGES.refund.shortLabel}
+            </a>
+            {' · '}
+            <a href={ESTATE_LEGAL_PAGES.security.path} target="_blank" rel="noopener noreferrer">
+              {ESTATE_LEGAL_PAGES.security.shortLabel}
+            </a>
+          </p>
+        ) : null}
         {error ? <div className="ei-error">{error}</div> : null}
       </div>
       <div className="ei-billing-banner-actions">

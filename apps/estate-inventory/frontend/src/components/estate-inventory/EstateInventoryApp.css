@@ -8529,6 +8529,19 @@ button.ei-cash-help-btn:focus-visible {
   color: rgba(245, 245, 244, 0.88);
 }
 
+.ei-billing-legal-links {
+  margin: 0.45rem 0 0 !important;
+  font-size: 0.78rem !important;
+  line-height: 1.45 !important;
+  color: rgba(245, 245, 244, 0.72) !important;
+}
+
+.ei-billing-legal-links a {
+  color: var(--ei-accent, #2dd4bf);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .ei-billing-banner.is-info .ei-billing-banner-copy strong {
   color: #5eead4;
 }

@@ -201,6 +201,22 @@ const EstateCaseEntry = () => {
           <a className="ei-link-btn" href="/estate-vault/pricing.html">
             Pricing
           </a>
+          <span> · </span>
+          <a className="ei-link-btn" href="/estate-vault/terms.html">
+            Terms
+          </a>
+          <span> · </span>
+          <a className="ei-link-btn" href="/estate-vault/privacy.html">
+            Privacy
+          </a>
+          <span> · </span>
+          <a className="ei-link-btn" href="/estate-vault/refund.html">
+            Refunds
+          </a>
+          <span> · </span>
+          <a className="ei-link-btn" href="/estate-vault/security.html">
+            Security
+          </a>
         </p>
 
         <EstateSystemDisclaimer generic />
