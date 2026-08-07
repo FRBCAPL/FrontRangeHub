@@ -21,6 +21,7 @@ function roleLabel(role) {
   if (r === 'admin') return 'Admin';
   if (r === 'heir' || r === 'family') return 'Heir';
   if (r === 'helper') return 'Helper';
+  if (r === 'advisor' || r === 'contact') return 'Advisor';
   if (r === 'bidder') return 'Bidder';
   if (r === 'authenticated') return 'Signed-in user';
   if (r === 'anonymous') return 'Visitor';
@@ -35,23 +36,41 @@ function eventLabel(type) {
     admin_unlock: 'Admin unlocked',
     heir_login: 'Heir signed in',
     helper_login: 'Helper signed in',
+    advisor_login: 'Advisor signed in',
     estate_open: 'Opened estate',
     estate_create: 'Created estate',
     estate_claim: 'Claimed estate',
     item_create: 'Added item',
+    item_photo_append: 'Added item photo(s)',
     helper_item_create: 'Helper added item',
     helper_scene_create: 'Helper added scene photo',
     heir_request_item: 'Heir requested item',
     auction_bid: 'Auction bid',
     settings_save: 'Saved settings',
     admin_password_changed: 'Admin PIN changed',
-    court_pack_exported: 'Exported court evidence pack',
-    estate_closed: 'Closed estate for records',
-    estate_reopened: 'Reopened estate for work',
     admin_password_reset: 'Admin PIN reset by the executor',
     account_add: 'Added an account or debt',
     account_update: 'Updated an account or debt',
-    account_delete: 'Removed an account or debt'
+    account_delete: 'Removed an account or debt',
+    creditor_claim_add: 'Added creditor claim',
+    creditor_claim_update: 'Updated creditor claim',
+    creditor_claim_delete: 'Removed creditor claim',
+    contact_add: 'Added contact',
+    contact_update: 'Updated contact',
+    contact_delete: 'Removed contact',
+    date_correction: 'Corrected a governing date',
+    decision_note: 'Decision note',
+    distribution_finalize: 'Finalized distribution',
+    distribution_void: 'Voided distribution',
+    family_update_publish: 'Published Family Update',
+    acknowledgement_update: 'Updated acknowledgement',
+    inventory_marked_complete: 'Marked inventory complete',
+    inventory_reopened: 'Reopened inventory',
+    court_pack_export: 'Exported court evidence pack',
+    court_pack_exported: 'Exported court evidence pack',
+    formal_accounting_export: 'Exported formal accounting',
+    estate_closed: 'Closed estate for records',
+    estate_reopened: 'Reopened estate for work'
   };
   return map[t] || t.replace(/_/g, ' ');
 }
