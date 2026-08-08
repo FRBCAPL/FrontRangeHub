@@ -12,13 +12,15 @@ import {
 export default function usePrHomeBootstrap({
   caseNumber,
   settings,
-  refreshKey = 0
+  refreshKey = 0,
+  financeRefreshKey = 0
 }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(Boolean(caseNumber));
   const [financeLoading, setFinanceLoading] = useState(Boolean(caseNumber));
   const [error, setError] = useState('');
   const seqRef = useRef(0);
+  const financeSeqRef = useRef(0);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const dataRef = useRef(data);
@@ -79,6 +81,42 @@ export default function usePrHomeBootstrap({
       cancelled = true;
     };
   }, [caseNumber, refreshKey]);
+
+  // Soft finance refresh — keep rooms/alerts mounted (ledger saves must not remount home).
+  useEffect(() => {
+    if (!caseNumber || !financeRefreshKey) return undefined;
+    if (!dataRef.current) return undefined;
+
+    let cancelled = false;
+    const seq = ++financeSeqRef.current;
+    setFinanceLoading(true);
+
+    (async () => {
+      const withFinance = await loadPrHomeFinance(
+        caseNumber,
+        dataRef.current,
+        settingsRef.current || {}
+      );
+      if (cancelled || seq !== financeSeqRef.current) return;
+      if (withFinance.success) {
+        setData(withFinance.data);
+      } else {
+        setData((prev) =>
+          prev
+            ? {
+                ...prev,
+                financeError: withFinance.error || 'Could not load money overview.'
+              }
+            : prev
+        );
+      }
+      setFinanceLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [caseNumber, financeRefreshKey]);
 
   // Settings hydrate / Letters / inventory flags — rebuild completeness locally.
   useEffect(() => {

@@ -711,6 +711,56 @@ const SiblingPortal = () => {
     );
   };
 
+  const helloName = heirPublicName(session) || session?.display_name || 'Heir';
+  const roleLabel = heirAccessTierLabel(session?.access_tier);
+  const canRequestItems = heirCanRequestItems(session?.access_tier);
+  const canBrowseFullRooms = heirCanBrowseRooms(session);
+  const memorandumOnly = isMemorandumOnlyHeir(session?.access_tier);
+  const visibilitySections = normalizeVisibilitySections(session?.visibility_sections, {
+    tier: session?.financial_visibility,
+    accessTier: session?.access_tier
+  });
+  const sectionOn = (key) => visibilitySectionEnabled(visibilitySections, key);
+  const showRoomsTile =
+    sectionOn('rooms_inventory') && (canBrowseFullRooms || items.length > 0);
+
+  // Must stay above the !session early return — otherwise first login trips React #310
+  // ("Rendered more hooks than during the previous render").
+  const familyCoachSteps = useMemo(() => {
+    const sections = normalizeVisibilitySections(session?.visibility_sections, {
+      tier: session?.financial_visibility,
+      accessTier: session?.access_tier
+    });
+    const on = (key) => visibilitySectionEnabled(sections, key);
+    return buildFamilyCoachSteps({
+      accessTier: session?.access_tier,
+      canBrowseRooms: session?.can_browse_rooms,
+      showRooms: on('rooms_inventory') && (canBrowseFullRooms || items.length > 0),
+      showRequests: canRequestItems && on('my_requests'),
+      showMessages: on('messages'),
+      showUpdates: on('family_updates'),
+      showOverview: on('estate_overview'),
+      showInheritance: on('my_inheritance'),
+      showAuction: on('sale_auction')
+    });
+  }, [
+    session?.access_tier,
+    session?.can_browse_rooms,
+    session?.financial_visibility,
+    session?.visibility_sections,
+    canBrowseFullRooms,
+    items.length,
+    canRequestItems
+  ]);
+  const coachTargetId = showCoach ? familyCoachSteps[coachStep]?.targetId || '' : '';
+
+  useEffect(() => {
+    if (!showCoach) return;
+    if (coachStep > familyCoachSteps.length - 1) {
+      setCoachStep(Math.max(0, familyCoachSteps.length - 1));
+    }
+  }, [showCoach, coachStep, familyCoachSteps.length]);
+
   if (!session) {
     return (
       <EstateBillingLockedGate caseNumber={routeCase || caseNumber} roleLabel="The family portal">
@@ -793,56 +843,6 @@ const SiblingPortal = () => {
       </EstateBillingLockedGate>
     );
   }
-
-  const helloName = heirPublicName(session) || session.display_name || 'Heir';
-  const roleLabel = heirAccessTierLabel(session?.access_tier);
-  const canRequestItems = heirCanRequestItems(session?.access_tier);
-  const canBrowseFullRooms = heirCanBrowseRooms(session);
-  const memorandumOnly = isMemorandumOnlyHeir(session?.access_tier);
-  const visibilitySections = normalizeVisibilitySections(session?.visibility_sections, {
-    tier: session?.financial_visibility,
-    accessTier: session?.access_tier
-  });
-  const sectionOn = (key) => visibilitySectionEnabled(visibilitySections, key);
-  const showRoomsTile =
-    sectionOn('rooms_inventory') && (canBrowseFullRooms || items.length > 0);
-  const familyCoachSteps = useMemo(
-    () => {
-      const sections = normalizeVisibilitySections(session?.visibility_sections, {
-        tier: session?.financial_visibility,
-        accessTier: session?.access_tier
-      });
-      const on = (key) => visibilitySectionEnabled(sections, key);
-      return buildFamilyCoachSteps({
-        accessTier: session?.access_tier,
-        canBrowseRooms: session?.can_browse_rooms,
-        showRooms: on('rooms_inventory') && (canBrowseFullRooms || items.length > 0),
-        showRequests: canRequestItems && on('my_requests'),
-        showMessages: on('messages'),
-        showUpdates: on('family_updates'),
-        showOverview: on('estate_overview'),
-        showInheritance: on('my_inheritance'),
-        showAuction: on('sale_auction')
-      });
-    },
-    [
-      session?.access_tier,
-      session?.can_browse_rooms,
-      session?.financial_visibility,
-      session?.visibility_sections,
-      canBrowseFullRooms,
-      items.length,
-      canRequestItems
-    ]
-  );
-  const coachTargetId = showCoach ? familyCoachSteps[coachStep]?.targetId || '' : '';
-
-  useEffect(() => {
-    if (!showCoach) return;
-    if (coachStep > familyCoachSteps.length - 1) {
-      setCoachStep(Math.max(0, familyCoachSteps.length - 1));
-    }
-  }, [showCoach, coachStep, familyCoachSteps.length]);
 
   return (
     <EstatePanelErrorBoundary title="Family portal failed to render." label="family">

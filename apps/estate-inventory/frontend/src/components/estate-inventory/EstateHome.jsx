@@ -58,7 +58,9 @@ const EstateHome = ({
 
   const activeCase = settings?.case_number || routeCase || '';
   const homeRefreshKey =
-    pendingRefreshKey + financeRefreshKey + localRefresh + requestsRefreshKey + messagesRefreshKey;
+    pendingRefreshKey + localRefresh + requestsRefreshKey + messagesRefreshKey;
+  // financeRefreshKey is intentionally NOT in homeRefreshKey — a full home remount
+  // while the ledger is open wiped account/claim rows mid-save.
 
   const {
     data: homeData,
@@ -68,20 +70,22 @@ const EstateHome = ({
   } = usePrHomeBootstrap({
     caseNumber: activeCase,
     settings,
-    refreshKey: homeRefreshKey
+    refreshKey: homeRefreshKey,
+    financeRefreshKey
   });
 
   const caseReady = Boolean(activeCase);
   // Rooms ready only after home core returns (authoritative roomCount).
   // Do not wait on the separate collections list fetch — that raced and flashed empty.
   const roomsLoading = caseReady && !homeError && (homeLoading || !homeData);
-  // Money ready only after finance attaches (or reports financeError).
+  // Money stays in loading until finance attaches (or reports financeError).
+  // Soft finance refresh (financeLoading with existing finance) must NOT blank the dashboard.
   const moneyLoading =
     caseReady &&
     !homeError &&
     (homeLoading ||
-      financeLoading ||
-      (Boolean(homeData) && homeData.finance == null && !homeData.financeError));
+      (!homeData && financeLoading) ||
+      (Boolean(homeData) && homeData.finance == null && !homeData.financeError && financeLoading));
   // Full shell gate — never paint empty rooms / empty money / “caught up” mid-load.
   const dashboardBooting = caseReady && !homeError && (roomsLoading || moneyLoading);
   const displayRoomCount =

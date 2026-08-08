@@ -210,7 +210,9 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
       !sectionOn('auction_proceeds') ? (
         <p className="ei-settings-hint">
           {isMemo
-            ? 'Your access shows your recorded gifts plus these progress counts. Named gifts live under Browse property.'
+            ? sectionOn('rooms_inventory')
+              ? 'Your access shows your recorded gifts plus these progress counts. Named gifts appear under Rooms & inventory (or My gifts) when that tile is on your home screen.'
+              : 'Your access shows your recorded gifts plus these progress counts. Open My inheritance for gifts already recorded for you.'
             : 'Your access allows you to see your own distribution receipts, plus inventory and sale/auction status counts.'}
         </p>
       ) : null}
