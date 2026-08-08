@@ -7,7 +7,7 @@ import {
   leaveCurrentEstateDestination,
   signOutEstateVault
 } from '@shared/services/estateVaultSession.js';
-import { ESTATEIT_PATH, estateDisplayCaseNumber, estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import { ESTATEIT_PATH, estateDisplayCaseNumber, estateitCasePath, estateitPortalHomePath } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import EstateInventoryApp from './EstateInventoryApp';

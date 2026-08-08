@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   estateitCasePath,
+  estateitPortalHomePath,
   resolveAuctionWindow,
   valueTierLabel,
   AUCTION_ROLE_GUIDE,
   auctionFamilyFollowGuide
 } from '@shared/utils/estateInventoryConstants.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
+import saleAuctionCopy from '@shared/utils/estateSaleAuctionCopy.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import ProbateCountdown from './ProbateCountdown';
@@ -40,6 +42,13 @@ function isFamilyFollower(caseNumber) {
 const AuctionPortal = () => {
   const { caseNumber } = useEstateCase();
   const caseHome = estateitCasePath(caseNumber);
+  const portalHome = estateInventoryService.isAdminUnlocked(caseNumber)
+    ? estateitPortalHomePath(caseNumber, 'admin')
+    : estateInventoryService.getStoredSiblingSession(caseNumber)?.token
+      ? estateitPortalHomePath(caseNumber, 'family')
+      : estateInventoryService.getStoredHelperSession(caseNumber)?.token
+        ? estateitPortalHomePath(caseNumber, 'helper')
+        : caseHome;
   const [bidder, setBidder] = useState(() => null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -71,10 +80,11 @@ const AuctionPortal = () => {
     : isPreview
       ? {
           ...AUCTION_ROLE_GUIDE,
-          title: 'Sale/auction preview guide',
-          summary: 'Browse lots when listed; bidding stays closed until the sale/auction start date.',
+          title: saleAuctionCopy.previewGuide,
+          summary:
+            'Browse items when listed; optional bidding stays closed until the sale listing start date.',
           notes:
-            'This auction is not public yet — you may be previewing with estate access. ' +
+            'This sale inventory is not public yet — you may be previewing with estate access. ' +
             (AUCTION_ROLE_GUIDE.notes || '')
         }
       : AUCTION_ROLE_GUIDE;
@@ -137,7 +147,7 @@ const AuctionPortal = () => {
         (ownerCheck.success && ownerCheck.data === true)
     );
     if (!catalog.success) {
-      setError(catalog.error || 'Could not load auction items.');
+      setError(catalog.error || 'Could not load sale inventory items.');
       return;
     }
     setItems(catalog.data || []);
@@ -156,8 +166,8 @@ const AuctionPortal = () => {
     if (!biddingOpen) {
       setError(
         auctionWindow.phase === 'ended'
-          ? 'This auction has ended. Bidding is closed.'
-          : 'Sale/auction has not opened yet. You can preview lots, but bidding is closed until the start date.'
+          ? 'This sale listing window has ended. Bidding is closed.'
+          : 'The sale listing window has not opened yet. You can preview items, but optional bidding is closed until the listing start date.'
       );
       return;
     }
@@ -179,7 +189,7 @@ const AuctionPortal = () => {
     setBidder(session);
     setError('');
     setMessage(
-      `Registered as ${session.name}. Card ending ${session.cardLast4 || '••••'} verified — you can place bids.`
+      `Registered as ${session.name}. Card ending ${session.cardLast4 || '••••'} verified — optional bidding tools are ready.`
     );
     if (pendingBidItemId) {
       setActiveItemId(pendingBidItemId);
@@ -193,7 +203,7 @@ const AuctionPortal = () => {
     if (!activeItemId || !activeBidder?.sessionToken) return;
     if (!biddingOpen) {
       setActiveItemId(null);
-      setError('Bidding is not open for this auction.');
+      setError('Bidding is not open for this sale inventory.');
       return;
     }
     if (prBidBlocked) {
@@ -224,20 +234,20 @@ const AuctionPortal = () => {
     estateInventoryService.clearAuctionBidder();
     setBidder(null);
     setActiveItemId(null);
-    setMessage('Bidder session cleared. Register again (with card) to place a bid.');
+    setMessage('Bidder session cleared. Register again (with card) if you want to place an optional bid.');
   };
 
   if (!loading && !allowed) {
     return (
-      <EstateBillingLockedGate caseNumber={caseNumber} roleLabel="The public sale / auction">
+      <EstateBillingLockedGate caseNumber={caseNumber} roleLabel={`The public ${saleAuctionCopy.catalog.toLowerCase()}`}>
       <div className="estate-inventory ei-portal ei-auction">
         <EstateNav
           variant="auction"
           roleGuide={familyFollowGuide}
-          title="Sale / Auction"
+          title={saleAuctionCopy.catalog}
           crumbs={[
-            { label: 'Home', to: '/estateit' },
-            { label: 'Sale / Auction' }
+            { label: 'Home', to: portalHome },
+            { label: saleAuctionCopy.title }
           ]}
           onOpenWhatsNew={() => setShowWhatsNew(true)}
           onOpenWhatIsVault={() => setShowWhatIsVault(true)}
@@ -248,11 +258,12 @@ const AuctionPortal = () => {
           <h2 style={{ marginTop: 0 }}>Not open to the public yet</h2>
           <p className="ei-settings-hint">
             {auctionWindow.label}. Family and heirs can follow along after signing into this estate —
-            open Sale / Auction from the family portal or roles page. Public listing begins on the start date.
+            open {saleAuctionCopy.title} from the family portal or roles page. The public catalog opens on
+            the sale listing start date.
           </p>
           <div className="ei-btn-row">
-            <Link to={caseHome} className="ei-btn">
-              Back to roles
+            <Link to={portalHome} className="ei-btn">
+              {portalHome === caseHome ? 'Back to roles' : 'Back to portal home'}
             </Link>
             <Link to="/estateit" className="ei-btn ei-btn-secondary">
               Estate Vault home
@@ -280,7 +291,7 @@ const AuctionPortal = () => {
   }
 
   return (
-    <EstateBillingLockedGate caseNumber={caseNumber} roleLabel="The public sale / auction">
+    <EstateBillingLockedGate caseNumber={caseNumber} roleLabel={`The public ${saleAuctionCopy.catalog.toLowerCase()}`}>
     <div className="estate-inventory ei-portal ei-auction">
       <EstateNav
         variant={familyFollower ? 'heir' : 'auction'}
@@ -288,19 +299,19 @@ const AuctionPortal = () => {
         title={
           familyFollower
             ? isPreview
-              ? 'Sale/auction — follow along'
-              : 'Sale / Auction'
+              ? saleAuctionCopy.followAlong
+              : saleAuctionCopy.title
             : isPreview
-              ? 'Sale/auction preview'
-              : 'Public sale / auction'
+              ? `${saleAuctionCopy.title} preview`
+              : saleAuctionCopy.catalog
         }
         crumbs={[
-          { label: 'Home', to: caseHome },
+          { label: 'Home', to: portalHome },
           ...(familyFollower
             ? [{ label: 'Heir portal', to: estateitCasePath(caseNumber, 'family') }]
             : []),
-          { label: 'Sale / Auction' },
-          { label: biddingOpen ? 'Browse & bid' : 'Browse' }
+          { label: saleAuctionCopy.title },
+          { label: 'Browse' }
         ]}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
           onOpenWhatIsVault={() => setShowWhatIsVault(true)}
@@ -326,6 +337,7 @@ const AuctionPortal = () => {
                 <button
                   type="button"
                   className="ei-nav-icon-btn"
+                  title={saleAuctionCopy.bidToolsOptional}
                   onClick={() => {
                     if (prBidBlocked) {
                       setShowRules(true);
@@ -335,7 +347,7 @@ const AuctionPortal = () => {
                     setShowRegister(true);
                   }}
                 >
-                  Register
+                  {saleAuctionCopy.bidToolsOptional}
                 </button>
               )
             ) : null}
@@ -354,31 +366,44 @@ const AuctionPortal = () => {
           roleGuide={familyFollowGuide}
         />
       ) : (
-        <section className="ei-countdown ei-countdown--guide-only" aria-label="Sale/auction capabilities">
+        <section className="ei-countdown ei-countdown--guide-only" aria-label="Sale inventory capabilities">
           <EstateRoleGuide guide={familyFollowGuide} />
         </section>
       )}
       <p className="ei-lede" style={{ marginBottom: '0.65rem' }}>
         {familyFollower && isPreview
-          ? 'Follow along — lots approved for sale appear here as the estate process continues. Bidding opens on the sale/auction start date.'
+          ? 'Follow along — items approved for sale appear here as the estate process continues. The public catalog opens on the sale listing start date.'
           : isPreview
-            ? 'Family preview — browse lots now. Bidding opens on the sale/auction start date.'
+            ? 'Family preview — browse items listed for sale. The sale listing window opens on the start date.'
             : biddingOpen
-              ? 'Browse freely. Bidding requires registration, a verified payment card, and acceptance of the Terms of Estate Sale.'
-              : 'This auction has ended. You can still browse lots; bidding is closed.'}
+              ? 'Browse items listed for sale. Optional bidding requires registration, a verified payment card, and acceptance of the Terms of Estate Sale.'
+              : 'This sale listing window has ended. You can still browse items; optional bidding is closed.'}
       </p>
       <p className="ei-status" style={{ marginBottom: '0.65rem' }}>
         {auctionWindow.label}
       </p>
       <div className="ei-heir-toolbar ei-heir-toolbar--center" style={{ marginBottom: '0.75rem' }}>
         <button type="button" className="ei-btn ei-btn-secondary" onClick={() => setShowRules(true)}>
-          Sale/auction rules
+          {saleAuctionCopy.rules}
         </button>
+        {biddingOpen && !bidder && !prBidBlocked ? (
+          <button
+            type="button"
+            className="ei-btn ei-btn-secondary"
+            onClick={() => {
+              setPendingBidItemId(null);
+              setShowRegister(true);
+            }}
+            disabled={!stripeConfigured}
+          >
+            {saleAuctionCopy.registerBidSecondary}
+          </button>
+        ) : null}
       </div>
       {!stripeConfigured && biddingOpen ? (
         <p className="ei-status">
-          Card verification is not online yet — browsing works; bidding opens after Estate Stripe is
-          connected.
+          Card verification is not online yet — browsing the catalog works; optional bidding is available
+          after Estate Stripe is connected.
         </p>
       ) : null}
       {bidder && biddingOpen ? (
@@ -390,11 +415,11 @@ const AuctionPortal = () => {
 
       {message ? <p className="ei-status">{message}</p> : null}
       {error && !showRegister && !activeItemId ? <div className="ei-error">{error}</div> : null}
-      {loading ? <p className="ei-status">Loading auction…</p> : null}
+      {loading ? <p className="ei-status">Loading sale inventory…</p> : null}
 
       {!loading && items.length === 0 ? (
         <div className="ei-empty">
-          <p>No items are currently approved for public sale.</p>
+          <p>No items are currently listed in the sale inventory.</p>
         </div>
       ) : null}
 
@@ -410,7 +435,7 @@ const AuctionPortal = () => {
               <p className="ei-card-status-tag">
                 {item.highest_bid != null
                   ? `Leading bid: ${formatMoney(item.highest_bid)}`
-                  : 'No bids yet'}
+                  : saleAuctionCopy.forSale}
               </p>
               {item.highest_bidder_name ? (
                 <p className="ei-card-meta">Leader: {item.highest_bidder_name}</p>
@@ -418,16 +443,18 @@ const AuctionPortal = () => {
               {biddingOpen ? (
                 <button
                   type="button"
-                  className="ei-btn ei-btn-small"
+                  className="ei-btn ei-btn-secondary ei-btn-small"
                   style={{ marginTop: '0.55rem', width: '100%' }}
                   onClick={() => openBid(item)}
                   disabled={!prBidBlocked && !stripeConfigured && !bidder}
                 >
-                  {bidder ? 'Place bid' : 'Register & bid'}
+                  {bidder ? saleAuctionCopy.placeBidSecondary : saleAuctionCopy.registerBidSecondary}
                 </button>
               ) : (
                 <p className="ei-settings-hint" style={{ marginTop: '0.55rem' }}>
-                  {auctionWindow.phase === 'ended' ? 'Bidding closed' : 'Bidding not open yet'}
+                  {auctionWindow.phase === 'ended'
+                    ? 'Sale listing window ended'
+                    : 'Sale listing window not open yet'}
                 </p>
               )}
             </div>
@@ -458,7 +485,7 @@ const AuctionPortal = () => {
             aria-modal="true"
             onClick={(ev) => ev.stopPropagation()}
           >
-            <h3>Place a bid</h3>
+            <h3>{saleAuctionCopy.placeBidSecondary}</h3>
             <p>
               Bidding as <strong>{bidder?.name}</strong>. Your bid must beat the current leading
               price. Submitting is a binding offer under the Terms of Estate Sale.

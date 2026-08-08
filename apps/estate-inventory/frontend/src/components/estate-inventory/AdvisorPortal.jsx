@@ -5,6 +5,7 @@ import { leaveCurrentEstateDestination } from '@shared/services/estateVaultSessi
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import {
   estateitCasePath,
+  estateitPortalHomePath,
   formatEstateDisplayDate
 } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
@@ -66,7 +67,7 @@ function buildAdvisorFormalHtml(pack) {
     ['PR advances / loans', summary.pr_loans_total],
     ['Total liabilities', summary.total_liabilities],
     ['Estate balance', summary.estate_balance],
-    ['Paid auction sales', summary.paid_auction_sales],
+    ['Paid sale proceeds', summary.paid_auction_sales],
     ['Outstanding bids', summary.outstanding_bids]
   ];
   const body = rows
@@ -109,6 +110,7 @@ const AdvisorPortal = () => {
   const navigate = useNavigate();
   const { caseNumber } = useEstateCase();
   const caseHome = estateitCasePath(caseNumber);
+  const advisorHome = estateitPortalHomePath(caseNumber, 'advisor');
   const [session, setSession] = useState(() =>
     estateInventoryService.getStoredAdvisorSession(caseNumber)
   );
@@ -253,7 +255,7 @@ const AdvisorPortal = () => {
             roleGuide={ADVISOR_ROLE_GUIDE}
             title="Advisor login"
             crumbs={[
-              { label: 'Home', to: caseHome },
+              { label: 'Home', to: advisorHome },
               { label: 'Advisor' }
             ]}
             onOpenWhatsNew={() => setShowWhatsNew(true)}
@@ -332,7 +334,7 @@ const AdvisorPortal = () => {
             roleGuide={ADVISOR_ROLE_GUIDE}
             title="Advisor setup"
             crumbs={[
-              { label: 'Home', to: caseHome },
+              { label: 'Home', to: advisorHome },
               { label: 'Advisor' }
             ]}
             onLeaveEstate={handleLogout}
@@ -363,7 +365,7 @@ const AdvisorPortal = () => {
           roleGuide={ADVISOR_ROLE_GUIDE}
           title="Advisor"
           crumbs={[
-            { label: 'Home', to: caseHome },
+            { label: 'Home', to: advisorHome },
             { label: 'Advisor' }
           ]}
           onLeaveEstate={handleLogout}

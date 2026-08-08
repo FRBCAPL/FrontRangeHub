@@ -74,31 +74,28 @@ const EstateFinanceDashboard = ({
     setSummary((prev) => mergeFinanceSummary(prev, result.data));
   }, [caseNumber]);
 
+  // Shared home bootstrap finance — only react to the payload itself.
+  // Do NOT also depend on financeRefreshKey: ledger refresh() loads fresh data first,
+  // then bumps that key; re-merging the still-stale sharedSummary wiped balances and
+  // skipped the over-spend confirm on the next bill in the same sitting.
   useEffect(() => {
-    if (useShared) {
-      if (sharedSummary) {
-        setSummary((prev) => mergeFinanceSummary(prev, sharedSummary));
-        setError('');
-        setLoading(false);
-        setRefreshing(false);
-      } else if (sharedLoading) {
-        if (!hasSummaryRef.current) setLoading(true);
-      } else if (sharedError) {
-        setError(sharedError);
-        setLoading(false);
-        setRefreshing(false);
-      } else if (!sharedLoading && !sharedSummary) {
-        // Shared path finished with no payload — keep spinner off but don't invent empty money.
-        if (!hasSummaryRef.current) setLoading(false);
-      }
-      return;
+    if (!useShared) return;
+    if (sharedSummary) {
+      setSummary((prev) => mergeFinanceSummary(prev, sharedSummary));
+      setError('');
+      setLoading(false);
+      setRefreshing(false);
+    } else if (sharedLoading) {
+      if (!hasSummaryRef.current) setLoading(true);
+    } else if (sharedError) {
+      setError(sharedError);
+      setLoading(false);
+      setRefreshing(false);
+    } else if (!sharedLoading && !sharedSummary) {
+      // Shared path finished with no payload — keep spinner off but don't invent empty money.
+      if (!hasSummaryRef.current) setLoading(false);
     }
-    if (skipNextExternalKeyRef.current) {
-      skipNextExternalKeyRef.current = false;
-      return;
-    }
-    load();
-  }, [useShared, sharedSummary, sharedLoading, sharedError, load, refreshKey]);
+  }, [useShared, sharedSummary, sharedLoading, sharedError]);
 
   // When shared loading flips on (new estate / refresh), clear stale empty summary.
   useEffect(() => {
@@ -110,20 +107,34 @@ const EstateFinanceDashboard = ({
     }
   }, [useShared, sharedLoading, sharedSummary]);
 
+  // Standalone finance load (no shared home bootstrap).
+  useEffect(() => {
+    if (useShared) return;
+    if (skipNextExternalKeyRef.current) {
+      skipNextExternalKeyRef.current = false;
+      return;
+    }
+    load();
+  }, [useShared, load, refreshKey]);
+
   useEffect(() => {
     if (ledgerRequestKey > 0) setLedgerTab(ledgerRequestTab || 'summary');
   }, [ledgerRequestKey, ledgerRequestTab]);
 
-  /** Awaitable refresh so ledger saves can wait until lists show new rows. */
+  /** Awaitable refresh so ledger saves wait until lists + cash reflect the write. */
   const refresh = useCallback(async () => {
+    // Always re-read finance here so over-spend confirm / account lists use fresh balances
+    // before the parent soft-refresh finishes updating sharedSummary.
     await load();
-    skipNextExternalKeyRef.current = true;
+    if (!useShared) {
+      skipNextExternalKeyRef.current = true;
+    }
     try {
       await onChanged?.();
     } catch {
       /* parent notify should not break save UX */
     }
-  }, [load, onChanged]);
+  }, [load, onChanged, useShared]);
 
   const applyExpenseRow = (row, { editing = false } = {}) => {
     if (!row?.id) return;

@@ -10,6 +10,7 @@ import { formatMoney, sumOutstandingBids, sumPaidAuctionSales } from './estateFi
 import { buildDisclosureTimeline } from './estateDisclosureTimeline.js';
 import { buildInventoryReconciliation } from './estateInventoryReconciliation.js';
 import { buildSimpleTextPdf, downloadPdfBytes } from './estateSimplePdf.js';
+import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
 
 function esc(value) {
   return String(value ?? '')
@@ -64,7 +65,7 @@ export function buildFamilyUpdatePackage({
   if (!timeline.inventoryComplete) nextSteps.push('Complete and certify the inventory.');
   if (!timeline.probateEnded) nextSteps.push('Wait for the claims / probate window to close before final accounting.');
   if ((auction?.outstanding || []).length) {
-    nextSteps.push('Collect outstanding sale/auction payments and update account balances.');
+    nextSteps.push('Collect outstanding sale payments and update account balances.');
   }
   if (!finalized.length) nextSteps.push('Record distributions when the estate is ready.');
   if (!settings.closed_at) {
@@ -256,7 +257,7 @@ ${
   <div><strong>Inventory:</strong> ${esc(p.digest.inventory?.total || 0)} recorded · ${esc(
         p.digest.inventory?.distributed || 0
       )} distributed · ${esc(p.digest.inventory?.disputed || 0)} disputed</div>
-  <div><strong>Sale/auction:</strong> ${esc(p.digest.auction?.paid || 0)} paid · ${esc(
+  <div><strong>${esc(saleAuctionCopy.shortCap)}:</strong> ${esc(p.digest.auction?.paid || 0)} paid · ${esc(
         p.digest.auction?.pendingPayment || 0
       )} pending payment · ${esc(p.digest.auction?.notListed || 0)} approved not listed</div>
   <div><strong>Claims window:</strong> ${esc(
@@ -307,18 +308,18 @@ ${
 <h2>Inventory summary</h2>
 <div class="grid">
   <div><strong>Total items:</strong> ${esc(p.reconciliation?.total || 0)}</div>
-  <div><strong>Sale/auction lots:</strong> ${esc(p.reconciliation?.auctionLotCount || 0)}</div>
+  <div><strong>${esc(saleAuctionCopy.lots)}:</strong> ${esc(p.reconciliation?.auctionLotCount || 0)}</div>
   <div><strong>Distributed:</strong> ${esc(p.reconciliation?.distributedCount || 0)}</div>
   <div><strong>Held / remaining:</strong> ${esc(p.reconciliation?.heldCount || 0)}</div>
 </div>
 <table><thead><tr><th>Disposition</th><th>Count</th></tr></thead>
 <tbody>${reconRows || '<tr><td colspan="2">No items</td></tr>'}</tbody></table>
 
-<h2>Sale/auction status</h2>
+<h2>${esc(saleAuctionCopy.status)}</h2>
 <div class="grid">
-  <div><strong>Approved for sale/auction:</strong> ${esc(p.auction?.approvedCount || p.auction?.lotCount || 0)}</div>
-  <div><strong>On sale/auction catalog:</strong> ${esc(p.auction?.listedCount || 0)}</div>
-  <div><strong>Approved but not listed:</strong> ${esc(p.auction?.notListedCount || 0)}</div>
+  <div><strong>${esc(saleAuctionCopy.approvedFor)}:</strong> ${esc(p.auction?.approvedCount || p.auction?.lotCount || 0)}</div>
+  <div><strong>${esc(saleAuctionCopy.onCatalog)}:</strong> ${esc(p.auction?.listedCount || 0)}</div>
+  <div><strong>${esc(saleAuctionCopy.approvedNotListed)}:</strong> ${esc(p.auction?.notListedCount || 0)}</div>
   <div><strong>Expected proceeds:</strong> ${formatMoney(p.auction?.expectedTotal)}</div>
   <div><strong>Collected:</strong> ${formatMoney(p.auction?.paidTotal)}</div>
   <div><strong>Outstanding:</strong> ${formatMoney(p.auction?.outstandingTotal)}</div>
@@ -327,7 +328,7 @@ ${p.auction?.summaryLabel ? `<p class="muted">${esc(p.auction.summaryLabel)}</p>
 <table><thead><tr><th>Approved but not listed</th><th>Reason</th></tr></thead>
 <tbody>${
     notListedRows ||
-    '<tr><td colspan="2">None — approved lots match the public sale/auction catalog</td></tr>'
+    `<tr><td colspan="2">None — approved items match the ${esc(saleAuctionCopy.catalog.toLowerCase())}</td></tr>`
   }</tbody></table>
 
 <h2>Distributions recorded</h2>
@@ -404,7 +405,7 @@ export function buildFamilyUpdatePdfLines(pack) {
       `Inventory: ${p.digest.inventory?.total || 0} recorded · ${
         p.digest.inventory?.distributed || 0
       } distributed · ${p.digest.inventory?.disputed || 0} disputed`,
-      `Sale/auction: ${p.digest.auction?.paid || 0} paid · ${
+      `${saleAuctionCopy.shortCap}: ${p.digest.auction?.paid || 0} paid · ${
         p.digest.auction?.pendingPayment || 0
       } pending · ${p.digest.auction?.notListed || 0} approved not listed`,
       `Claims: ${
@@ -456,7 +457,7 @@ export function buildFamilyUpdatePdfLines(pack) {
     'Inventory summary',
     '----------------------------------------',
     `Total items: ${p.reconciliation?.total || 0}`,
-    `Sale/auction lots: ${p.reconciliation?.auctionLotCount || 0}`,
+    `${saleAuctionCopy.lots}: ${p.reconciliation?.auctionLotCount || 0}`,
     `Distributed: ${p.reconciliation?.distributedCount || 0}`,
     `Held / remaining: ${p.reconciliation?.heldCount || 0}`
   );
@@ -467,7 +468,7 @@ export function buildFamilyUpdatePdfLines(pack) {
   lines.push('');
 
   lines.push(
-    'Sale/auction status',
+    saleAuctionCopy.status,
     '----------------------------------------',
     `Approved: ${p.auction?.approvedCount || p.auction?.lotCount || 0}`,
     `On catalog: ${p.auction?.listedCount || 0}`,

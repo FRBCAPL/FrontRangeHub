@@ -4,11 +4,13 @@ import {
   leaveCurrentEstateDestination,
   signOutEstateVault
 } from '@shared/services/estateVaultSession.js';
+import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   APP_NAME,
   ESTATEIT_PATH,
   estateDisplayCaseNumber,
-  estateitCasePath
+  estateitCasePath,
+  estateitPortalHomePath
 } from '@shared/utils/estateInventoryConstants.js';
 import { ESTATE_BETA_BLURB, ESTATE_BETA_LABEL } from '@shared/utils/estateBeta.js';
 import { ESTATEIT_WHATS_NEW_ENABLED } from '@shared/utils/estateWhatsNew.js';
@@ -16,6 +18,31 @@ import { useEstateCase } from './EstateCaseContext';
 import EstateRoleGuideModal from './EstateRoleGuideModal';
 import EstateRolesOverviewModal from './EstateRolesOverviewModal';
 import EstateBrandLogo from './EstateBrandLogo';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
+
+/** Resolve which portal “Home” should open for this nav variant / active session. */
+function resolveNavPortalHome(activeCase, variant) {
+  if (variant === 'heir') return estateitPortalHomePath(activeCase, 'family');
+  if (variant === 'helper') return estateitPortalHomePath(activeCase, 'helper');
+  if (variant === 'full') return estateitPortalHomePath(activeCase, 'admin');
+  if (variant === 'auction') {
+    if (estateInventoryService.isAdminUnlocked(activeCase)) {
+      return estateitPortalHomePath(activeCase, 'admin');
+    }
+    if (estateInventoryService.getStoredSiblingSession(activeCase)?.token) {
+      return estateitPortalHomePath(activeCase, 'family');
+    }
+    if (estateInventoryService.getStoredHelperSession(activeCase)?.token) {
+      return estateitPortalHomePath(activeCase, 'helper');
+    }
+    if (estateInventoryService.getStoredAdvisorSession(activeCase)?.token) {
+      return estateitPortalHomePath(activeCase, 'advisor');
+    }
+    // Anonymous public browse — roles picker is the best “home” for the case.
+    return estateitCasePath(activeCase);
+  }
+  return estateitPortalHomePath(activeCase, 'admin');
+}
 
 /**
  * Shared EstateIt navigation: back, breadcrumbs, and section menu.
@@ -63,6 +90,7 @@ const EstateNav = ({
     activeCase
   );
   const caseHome = estateitCasePath(activeCase);
+  const portalHome = resolveNavPortalHome(activeCase, variant);
   const [menuOpen, setMenuOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [rolesOverviewOpen, setRolesOverviewOpen] = useState(false);
@@ -132,7 +160,7 @@ const EstateNav = ({
     },
     {
       to: estateitCasePath(activeCase, 'auction'),
-      label: 'Public auction',
+      label: saleAuctionCopy.navPublic,
       active: path.includes('/auction'),
       kind: 'auction'
     },
@@ -146,10 +174,16 @@ const EstateNav = ({
 
   const limitedHome = [
     {
-      to: caseHome,
+      to: portalHome,
       label: 'Home',
-      active: path === caseHome || path === `${caseHome}/`,
+      active: path === portalHome || path === `${portalHome}/`,
       kind: 'other'
+    },
+    {
+      to: caseHome,
+      label: 'Roles / portals',
+      active: path === caseHome || path === `${caseHome}/`,
+      kind: 'roles'
     },
     {
       to: ESTATEIT_PATH,
@@ -161,7 +195,7 @@ const EstateNav = ({
 
   const heirNavLinks = [
     {
-      to: estateitCasePath(activeCase, 'family'),
+      to: estateitPortalHomePath(activeCase, 'family'),
       label: 'Family portal',
       active: path.includes('/family'),
       kind: 'home'
@@ -174,7 +208,7 @@ const EstateNav = ({
     },
     {
       to: estateitCasePath(activeCase, 'auction'),
-      label: 'Sale/auction',
+      label: saleAuctionCopy.navFollow,
       active: path.includes('/auction'),
       kind: 'auction'
     }
@@ -308,7 +342,7 @@ const EstateNav = ({
               <span>{backLabel}</span>
             </button>
           ) : (
-            <Link className="ei-nav-back" to={caseHome}>
+            <Link className="ei-nav-back" to={portalHome}>
               <span aria-hidden="true">←</span>
               <span>Home</span>
             </Link>

@@ -12,6 +12,7 @@ import {
   formatEstateDisplayDate,
   parseEstateLocalDate
 } from './estateInventoryConstants.js';
+import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
 
 function toDate(value) {
   if (!value) return null;
@@ -143,26 +144,26 @@ export function buildEstateTimeline({
     }
   }
 
-  // Sale/auction is optional. Unscheduled with nothing for sale does not block closure.
-  let auctionTitle = 'Sale / Auction';
-  let auctionNote = 'Optional — set sale/auction dates if you will sell items';
+  // Sale inventory is optional. Unscheduled with nothing for sale does not block closure.
+  let auctionTitle = saleAuctionCopy.shortCap;
+  let auctionNote = `Optional — set ${saleAuctionCopy.listingWindow} dates if you will sell items`;
   let auctionDone = false;
   if (auction.phase === 'ended') {
-    auctionTitle = 'Sale/auction complete';
+    auctionTitle = `${saleAuctionCopy.shortCap} complete`;
     auctionNote = auction.label;
     auctionDone = true;
   } else if (auction.phase === 'open') {
-    auctionTitle = 'Sale/auction open';
+    auctionTitle = saleAuctionCopy.open;
     auctionNote = auction.label;
   } else if (auction.phase === 'upcoming') {
-    auctionTitle = 'Sale/auction scheduled';
+    auctionTitle = saleAuctionCopy.scheduled;
     auctionNote = auction.label;
   } else if (approvedForSale > 0 || hasAuctionActivity) {
-    auctionTitle = 'Sale / Auction';
+    auctionTitle = saleAuctionCopy.shortCap;
     auctionNote =
       approvedForSale > 0
-        ? `${approvedForSale} item(s) approved for sale — set sale/auction dates`
-        : 'Bids recorded — set or confirm sale/auction dates';
+        ? `${approvedForSale} item(s) approved for sale — set ${saleAuctionCopy.listingWindow} dates`
+        : `Offers recorded — set or confirm ${saleAuctionCopy.listingWindow} dates`;
   } else {
     // Nothing to sell / no dates → treat as complete so the timeline can move on.
     auctionDone = true;

@@ -1,6 +1,6 @@
 /**
  * Estate Vault FAQ — security, roles, abilities, vocabulary, and how-it-works.
- * Getting started first for new PRs; auctions kept as optional later features.
+ * Getting started first for new PRs; sale inventory kept as optional later features.
  */
 
 import { APP_NAME } from './estateInventoryConstants.js';
@@ -10,11 +10,12 @@ import {
   estatePricingFaqAnswer,
   formatBillingMoney
 } from './estateBilling.js';
+import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
 
 export const ESTATE_FAQ = {
   title: 'Frequently asked questions',
   eyebrow: 'Help',
-  intro: `Quick answers for getting started with ${APP_NAME}. Start with Getting started if you are new — auctions and advanced features are optional.`,
+  intro: `Quick answers for getting started with ${APP_NAME}. Start with Getting started if you are new — sale inventory and advanced features are optional.`,
   categories: [
     {
       id: 'getting-started',
@@ -60,7 +61,7 @@ export const ESTATE_FAQ = {
         },
         {
           q: 'What happens when the trial ends?',
-          a: `After the ${ESTATE_BILLING_PLAN.trialDays}-day trial on your first estate, renew for ${formatBillingMoney()}/month to keep that estate open. During a ${ESTATE_BILLING_PLAN.graceDays}-day grace period you will see reminders. If it is not renewed, access for that estate pauses for the PR, family, helpers, advisors, and public sale until billing is restored. Settings → Billing shows status and Subscribe / Manage billing.`
+          a: `After the ${ESTATE_BILLING_PLAN.trialDays}-day trial on your first estate, renew for ${formatBillingMoney()}/month to keep that estate open. During a ${ESTATE_BILLING_PLAN.graceDays}-day grace period you will see reminders. If it is not renewed, access for that estate pauses for the PR, family, helpers, advisors, and sale inventory until billing is restored. Settings → Billing shows status and Subscribe / Manage billing.`
         },
         {
           q: 'Can I cancel when the estate is closed?',
@@ -120,7 +121,7 @@ export const ESTATE_FAQ = {
       items: [
         {
           q: 'Who uses Estate Vault?',
-          a: 'Most often: the Personal Representative (PR / executor), heirs / beneficiaries, helpers who help document property, and optional advisors (attorney, CPA, or other invited contacts) on a read-only portal. Each role has its own sign-in path and limited permissions. Public auctions are optional and unused by many estates.'
+          a: `Most often: the Personal Representative (PR / executor), heirs / beneficiaries, helpers who help document property, and optional advisors (attorney, CPA, or other invited contacts) on a read-only portal. Each role has its own sign-in path and limited permissions. ${saleAuctionCopy.shortCap} is optional and unused by many estates.`
         },
         {
           q: 'What can the Personal Representative do?',
@@ -223,12 +224,12 @@ export const ESTATE_FAQ = {
       title: 'Optional later features',
       items: [
         {
-          q: 'Do I have to use the auction?',
-          a: 'No. Many estates never open a public sale/auction. Inventory, money tracking, family communication, and distributions work without it. Sale/auction is available later if you choose to sell remaining items that way.'
+          q: 'Do I have to use sale inventory?',
+          a: `No. Many estates never open a public sale catalog. Inventory, money tracking, family communication, and distributions work without it. ${saleAuctionCopy.shortCap} is available later if you choose to list remaining items for sale. Live online bidding is not required and is not the default product yet.`
         },
         {
-          q: 'What can auction visitors do if I open one?',
-          a: 'During an open auction window, public bidders can browse approved lots and place bids. Family can follow sale/auction status from the heir portal. Preview periods may allow browsing without bidding.'
+          q: 'What can visitors do if I open a sale catalog?',
+          a: `During an open ${saleAuctionCopy.listingWindow}, visitors can browse approved items on the ${saleAuctionCopy.catalog.toLowerCase()}. Family can follow ${saleAuctionCopy.status.toLowerCase()} from the heir portal. Preview periods may allow browsing without purchasing.`
         }
       ]
     }

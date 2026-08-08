@@ -163,8 +163,8 @@ export function buildCompletenessCertificate({
     push(
       'warn',
       'auction_not_listed',
-      'Approved sale/auction lots not on the public catalog',
-      `${auction.notListedCount} approved lot(s) are not listed.`,
+      'Approved sale inventory items not on the estate sale catalog',
+      `${auction.notListedCount} approved item(s) are not listed.`,
       false,
       samples,
       auction.notListedCount
@@ -194,7 +194,7 @@ export function buildCompletenessCertificate({
       'block',
       'high_value_photos',
       'High-risk items missing photographs',
-      `${highRiskMissingPhoto.length} high-value / sale/auction / $500+ item(s) have no photo.`,
+      `${highRiskMissingPhoto.length} high-value / for sale / $500+ item(s) have no photo.`,
       true,
       samples,
       highRiskMissingPhoto.length

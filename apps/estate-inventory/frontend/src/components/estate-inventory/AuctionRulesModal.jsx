@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { auctionTermsLines } from '@shared/utils/estateInventoryConstants.js';
 import { PR_AUCTION_BID_BLOCK_MESSAGE } from '@shared/utils/estateLegalOps.js';
+import saleAuctionCopy from '@shared/utils/estateSaleAuctionCopy.js';
 
 /**
- * Public auction rules — terms + PR / estate-owner bid restriction.
+ * Estate sale terms — terms + PR / estate-owner bid restriction.
  */
 const AuctionRulesModal = ({ open, onClose, pickupWindow = '' }) => {
   const terms = useMemo(() => auctionTermsLines(pickupWindow), [pickupWindow]);
@@ -20,13 +21,17 @@ const AuctionRulesModal = ({ open, onClose, pickupWindow = '' }) => {
         onClick={(ev) => ev.stopPropagation()}
       >
         <div className="ei-modal-head">
-          <h3 id="ei-auction-rules-title">Sale/auction rules</h3>
+          <h3 id="ei-auction-rules-title">{saleAuctionCopy.rules}</h3>
           <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
             ×
           </button>
         </div>
         <div className="ei-modal-body">
           <h4 className="ei-settings-subhead">Terms of Estate Sale</h4>
+          <p className="ei-settings-hint" style={{ marginTop: 0 }}>
+            These terms cover the {saleAuctionCopy.short} catalog. Optional bidding, when offered, follows
+            the same rules.
+          </p>
           <ol className="ei-terms-list" style={{ paddingLeft: '1.15rem', margin: '0 0 1rem' }}>
             {terms.map((line) => (
               <li key={line} className="ei-settings-hint" style={{ marginBottom: '0.45rem' }}>

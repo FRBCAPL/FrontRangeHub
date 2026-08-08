@@ -138,10 +138,10 @@ export function buildFamilyCoachSteps({
     steps.push({
       targetId: 'ei-family-coach-auction',
       kicker: 'Sale',
-      title: 'Sale & auction',
+      title: 'Sale inventory',
       body: memo
-        ? 'Follow public sale / auction lots when items are approved for sale.\nUse this when you want to watch public listings.'
-        : 'Follow items headed to public sale or auction once they are approved.\nA good next step after you finish requesting or releasing rooms you care about.'
+        ? 'Follow the sale inventory when items are approved for sale.\nUse this when you want to see what is listed for sale.'
+        : 'Follow items headed to the sale inventory once they are approved.\nA good next step after you finish requesting or releasing rooms you care about.'
     });
   }
 

@@ -213,7 +213,7 @@ export function buildAuctionStatusBreakdown(items = []) {
       } else {
         notListed.push({
           ...item,
-          not_listed_reason: auctionListingBlockReason(item) || 'Not on public sale/auction catalog'
+          not_listed_reason: auctionListingBlockReason(item) || 'Not on sale inventory catalog'
         });
       }
     }
@@ -235,8 +235,8 @@ export function buildAuctionStatusBreakdown(items = []) {
     soldPaid,
     summaryLabel:
       notListed.length > 0
-        ? `${approved.length} approved · ${listed.length} on sale/auction catalog · ${notListed.length} approved but not listed`
-        : `${approved.length} approved sale/auction lot(s) · ${soldPaid.length} paid · ${soldPending.length} pending payment`
+        ? `${approved.length} approved · ${listed.length} on sale inventory · ${notListed.length} approved but not listed`
+        : `${approved.length} approved sale inventory lot(s) · ${soldPaid.length} paid · ${soldPending.length} pending payment`
   };
 }
 
@@ -360,7 +360,7 @@ th,td{border:1px solid #d6d3d1;padding:.4rem;text-align:left;font-size:.84rem}th
   <strong>Every item has exactly one disposition.</strong>
   Total items: <strong>${esc(r.total)}</strong>
   · Distributed: <strong>${esc(r.distributedCount)}</strong>
-  · Sale/auction pipeline: <strong>${esc(r.auctionLotCount)}</strong>
+  · Sale inventory pipeline: <strong>${esc(r.auctionLotCount)}</strong>
 </div>
 <div class="notice">
   <strong>Auction catalog reconciliation:</strong>
@@ -369,7 +369,7 @@ th,td{border:1px solid #d6d3d1;padding:.4rem;text-align:left;font-size:.84rem}th
   ${esc(auction.notListedCount)} approved but not listed ·
   ${esc(auction.soldPaidCount)} paid ·
   ${esc(auction.soldPendingCount)} payment pending.
-  “Listed” matches the public sale/auction catalog rules (approved, review cleared, not disputed/claimed/distributed).
+  “Listed” matches the sale inventory catalog rules (approved, review cleared, not disputed/claimed/distributed).
 </div>
 <table><thead><tr><th>Disposition</th><th>Count</th></tr></thead>
 <tbody>${summaryRows}</tbody></table>

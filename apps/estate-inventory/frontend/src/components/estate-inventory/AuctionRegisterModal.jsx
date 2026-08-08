@@ -5,6 +5,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   auctionTermsLines
 } from '@shared/utils/estateInventoryConstants.js';
+import saleAuctionCopy from '@shared/utils/estateSaleAuctionCopy.js';
 import { useEstateCase } from './EstateCaseContext';
 
 const emptyForm = { name: '', email: '', phone: '' };
@@ -172,7 +173,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
         }
       } else {
         setStripeConfigured(false);
-        setError(cfg.error || 'Sale/auction payment server unavailable.');
+        setError(cfg.error || 'Sale inventory payment server unavailable.');
       }
     })();
   }, [open, caseNumber]);
@@ -226,7 +227,7 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
       >
         <div className="ei-modal-head">
           <h3 id="auction-reg-title">
-            {step === 'card' ? 'Verify card' : 'Register to bid'}
+            {step === 'card' ? 'Verify card' : saleAuctionCopy.registerBidSecondary}
           </h3>
           <button type="button" className="ei-modal-close" onClick={onClose} aria-label="Close">
             ×
@@ -237,13 +238,14 @@ const AuctionRegisterModal = ({ open, onClose, onRegistered }) => {
           {step === 'details' ? (
             <form className="ei-auction-reg-form" onSubmit={startCardStep}>
               <p className="ei-settings-hint" style={{ marginTop: 0 }}>
-                Step 1 of 2 — your contact info. Next you’ll add a card (no charge yet) and accept
-                the Terms.
+                Optional — only needed if you want to place a bid. Step 1 of 2: your contact info.
+                Next you’ll add a card (no charge yet) and accept the Terms. You can keep browsing the{' '}
+                {saleAuctionCopy.short} without registering.
               </p>
               {!stripeConfigured ? (
                 <div className="ei-error">
-                  Card verification is not online yet. Bidding opens after Estate Stripe keys are set
-                  on the server.
+                  Card verification is not online yet. Optional bidding is available after Estate Stripe
+                  keys are set on the server. You can still browse the catalog.
                 </div>
               ) : null}
               <div className="ei-field ei-field-tight">

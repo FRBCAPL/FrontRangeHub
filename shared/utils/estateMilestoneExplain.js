@@ -3,6 +3,8 @@
  * Pure copy helpers for family portal timeline clicks.
  */
 
+import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
+
 export function milestoneExplanation(event = {}, context = {}) {
   const key = event.key;
   const inventory = context.inventory || {};
@@ -40,7 +42,7 @@ export function milestoneExplanation(event = {}, context = {}) {
           ? `Letters date recorded${event.dateLabel ? ` (${event.dateLabel})` : ''}.`
           : 'Letters date not set yet.',
         whatsNext: event.status === 'done'
-          ? 'Inventory, sale/auction planning, and claims countdown can proceed.'
+          ? 'Inventory, sale inventory planning, and claims countdown can proceed.'
           : 'Ask the PR to enter the Letters issued date in Settings.'
       };
     case 'inventory_shared':
@@ -61,14 +63,14 @@ export function milestoneExplanation(event = {}, context = {}) {
       return {
         ...base,
         whatItMeans:
-          'Approved lots may be offered publicly. Not every approved item appears on the catalog the same day.',
+          'Approved items may be listed on the estate sale catalog. Not every approved item appears the same day.',
         whyItMatters:
-          'Sale/auction proceeds fund expenses and residual distributions; mismatches without reasons look like missing property.',
-        whatsComplete: auctionStatus.summaryLabel || event.detail || 'Sale/auction status recorded.',
+          `${saleAuctionCopy.proceeds} fund expenses and residual distributions; mismatches without reasons look like missing property.`,
+        whatsComplete: auctionStatus.summaryLabel || event.detail || `${saleAuctionCopy.status} recorded.`,
         whatsNext:
           auctionStatus.notListedCount > 0
-            ? 'Approved-but-not-listed lots have stated reasons (review, dispute, claim, etc.).'
-            : 'Collect payments and update account balances as lots settle.'
+            ? 'Approved-but-not-listed items have stated reasons (review, dispute, claim, etc.).'
+            : 'Collect payments and update account balances as items settle.'
       };
     case 'claims':
       return {
@@ -116,7 +118,7 @@ export function milestoneExplanation(event = {}, context = {}) {
         whatsComplete: event.status === 'done' ? event.detail : 'Estate not closed for records yet.',
         whatsNext: event.status === 'done'
           ? 'Final figures are preserved in formal accounting / court pack.'
-          : 'Expect this after claims close, sale/auction settlement, and remaining distributions.'
+          : 'Expect this after claims close, sale inventory settlement, and remaining distributions.'
       };
     default:
       return {

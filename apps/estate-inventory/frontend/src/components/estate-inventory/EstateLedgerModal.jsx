@@ -17,6 +17,7 @@ import LedgerDistributionsPanel from './ledger/LedgerDistributionsPanel.jsx';
 import LedgerInventoryReconPanel from './ledger/LedgerInventoryReconPanel.jsx';
 import LedgerClaimsPanel from './ledger/LedgerClaimsPanel.jsx';
 import LedgerMoneyGuide from './ledger/LedgerMoneyGuide.jsx';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 
 /** Everyday tasks — shown first for a new PR. */
 const PRIMARY_TABS = [
@@ -31,7 +32,7 @@ const PRIMARY_TABS = [
 const SECONDARY_TABS = [
   { id: 'claims', label: 'Creditor claims', hint: 'Who claimed money against the estate' },
   { id: 'loans', label: 'Money I advanced', hint: 'Personal money you paid for the estate' },
-  { id: 'auction', label: 'Sale/auction sales', hint: 'Bids collected and still outstanding' },
+  { id: 'auction', label: saleAuctionCopy.ledgerTab, hint: saleAuctionCopy.ledgerHint },
   { id: 'inventory', label: 'Inventory check', hint: 'Make sure every item has one status' }
 ];
 

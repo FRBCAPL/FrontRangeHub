@@ -1,40 +1,65 @@
 /**
- * User-facing sale/auction wording.
- * Estates may sell through private sale, public auction, or both — keep UI
- * language inclusive. Code/API identifiers may still say "auction".
+ * User-facing Sale inventory wording.
+ * Items released by heirs (or flagged by the PR) go into a sale catalog —
+ * not an implied live auction. Code/API/route identifiers may still say "auction".
+ * Live online bidding is deferred for a later opt-in SaaS revamp.
  */
-export const SALE_AUCTION = 'sale/auction';
-export const SALE_AUCTION_CAP = 'Sale/auction';
-export const SALE_AUCTION_TITLE = 'Sale / Auction';
+export const SALE_AUCTION = 'sale inventory';
+export const SALE_AUCTION_CAP = 'Sale inventory';
+export const SALE_AUCTION_TITLE = 'Sale inventory';
 
 export const saleAuctionCopy = {
   short: SALE_AUCTION,
   shortCap: SALE_AUCTION_CAP,
   title: SALE_AUCTION_TITLE,
-  status: 'Sale/auction status',
-  proceeds: 'Sale/auction proceeds',
-  sales: 'Sale/auction sales',
-  lots: 'Sale/auction lots',
-  guide: 'Sale/auction guide',
-  rules: 'Sale/auction rules',
-  follow: 'Follow sale/auction',
-  followAlong: 'Sale/auction — follow along',
-  followGuide: 'Sale/auction follow-along guide',
-  previewGuide: 'Sale/auction preview guide',
-  scheduled: 'Sale/auction scheduled',
-  open: 'Sale/auction open',
-  ended: 'Sale/auction window ended',
-  datesNotSet: 'Sale/auction dates not set',
-  approvedFor: 'Approved for sale/auction',
-  itemsApproved: 'Items approved for sale/auction',
-  onCatalog: 'On sale/auction catalog',
-  approvedNotListed: 'Approved but not listed',
-  outstandingBids: 'Outstanding sale/auction bids',
-  pipeline: 'Sale/auction pipeline',
-  publicList: 'Sales / auctions',
-  navFollow: 'Sale/auction (follow along)',
-  startDate: 'sale/auction start date',
-  window: 'sale/auction window'
+  forSale: 'For sale',
+  catalog: 'Estate sale catalog',
+  catalogShort: 'Sale catalog',
+  status: 'Sale inventory status',
+  proceeds: 'Sale proceeds',
+  sales: 'Sale inventory sales',
+  lots: 'Sale inventory lots',
+  guide: 'Sale inventory guide',
+  rules: 'Estate sale terms',
+  follow: 'Follow sale inventory',
+  followAlong: 'Sale inventory — follow along',
+  followGuide: 'Sale inventory follow-along guide',
+  previewGuide: 'Sale inventory preview guide',
+  scheduled: 'Sale listing scheduled',
+  open: 'Sale inventory open',
+  ended: 'Sale listing window ended',
+  datesNotSet: 'Sale listing dates not set',
+  approvedFor: 'Approved for sale',
+  approvedForPublic: 'Approved for sale',
+  itemsApproved: 'Items approved for sale',
+  onCatalog: 'On sale inventory',
+  approvedNotListed: 'Approved but not listed yet',
+  outstandingBids: 'Outstanding sale bids',
+  pipeline: 'Sale inventory pipeline',
+  publicList: 'Estate sales',
+  viewPublic: 'View sale inventory',
+  navFollow: 'Sale inventory',
+  navPublic: 'Sale inventory',
+  settingsTitle: 'Sale inventory',
+  settingsHint:
+    'List items for sale after heirs release them. Live online bidding is optional and not required to keep a sale catalog.',
+  listingWindow: 'sale listing window',
+  startDate: 'sale listing start date',
+  endDate: 'sale listing end date',
+  pickupWindow: 'Pickup window',
+  window: 'sale listing window',
+  releaseAction: 'No interest / approve for sale',
+  releaseTitle: 'No interest / for sale',
+  releaseConfirm: 'public sale inventory',
+  bidToolsOptional: 'Bidding tools (optional)',
+  registerBidSecondary: 'Register to bid (optional)',
+  placeBidSecondary: 'Place bid (optional)',
+  ledgerTab: 'Sale proceeds',
+  ledgerHint: 'Items sold from the sale inventory and amounts still outstanding',
+  reconciliation: 'Sale inventory reconciliation',
+  paidSales: 'Paid sale proceeds',
+  roleTile: 'Sale inventory',
+  roleHint: 'Browse items listed for sale'
 };
 
 export default saleAuctionCopy;

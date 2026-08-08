@@ -10,6 +10,7 @@ import {
   youReleasedItem,
   normalizeFamilyReleases,
   estateitCasePath,
+  estateitPortalHomePath,
   estateDisplayName,
   normalizeEstateCaseNumber,
   heirCanBrowseRooms,
@@ -70,6 +71,7 @@ const SiblingPortal = () => {
   const navigate = useNavigate();
   const { caseNumber: routeCase } = useEstateCase();
   const caseHome = estateitCasePath(routeCase);
+  const familyHome = estateitPortalHomePath(routeCase, 'family');
   const [session, setSession] = useState(() =>
     estateInventoryService.getStoredSiblingSession(routeCase)
   );
@@ -418,7 +420,7 @@ const SiblingPortal = () => {
     setReleaseTarget(null);
     setMessage(
       result.data?.unanimous
-        ? 'Recorded. All heirs released interest — item is now flagged for public sale.'
+        ? 'Recorded. All heirs released interest — item is now flagged for the sale inventory.'
         : 'Recorded. Family early-release needs every named heir before it auto-flags for sale. The Personal Representative can still approve unclaimed items later.'
     );
     await loadItems();
@@ -687,12 +689,12 @@ const SiblingPortal = () => {
             <>
               {item.approved_for_sale ? (
                 <p className="ei-card-meta" style={{ marginTop: '0.45rem' }}>
-                  Approved for public sale (family release complete or PR flagged).
+                  Approved for sale (family release complete or PR flagged).
                 </p>
               ) : null}
               {youReleased(item) ? (
                 <p className="ei-card-meta" style={{ marginTop: '0.45rem' }}>
-                  You marked no interest / approved for public sale
+                  You marked no interest / approved for sale
                   {normalizeFamilyReleases(item.family_releases).length
                     ? ` (${normalizeFamilyReleases(item.family_releases).length} heir release${
                         normalizeFamilyReleases(item.family_releases).length === 1 ? '' : 's'
@@ -741,7 +743,7 @@ const SiblingPortal = () => {
                   >
                     {releaseBusyId === item.id
                       ? 'Saving…'
-                      : 'No Interest / Approve for Public Sale'}
+                      : 'No Interest / Approve for Sale'}
                   </button>
                 </div>
               ) : null}
@@ -814,7 +816,7 @@ const SiblingPortal = () => {
           variant="heir"
           title="Family portal"
           crumbs={[
-            { label: 'Home', to: caseHome },
+            { label: 'Home', to: familyHome },
             { label: 'Sign in' }
           ]}
           onOpenWhatsNew={() => setShowWhatsNew(true)}
@@ -903,7 +905,7 @@ const SiblingPortal = () => {
         estateName={estateLabel}
         displayCaseNumber={estateSettings?.court_case_number || null}
         crumbs={[
-          { label: 'Home', to: caseHome },
+          { label: 'Home', to: familyHome },
           { label: 'Family' }
         ]}
         onOpenWhatsNew={() => setShowWhatsNew(true)}
@@ -1055,8 +1057,8 @@ const SiblingPortal = () => {
               coachTargetId === 'ei-family-coach-auction' ? ' is-coach-spotlight' : ''
             }`}
           >
-            <span className="ei-family-action-label">Sale & auction</span>
-            <span className="ei-family-action-meta">Follow items headed to sale</span>
+            <span className="ei-family-action-label">Sale inventory</span>
+            <span className="ei-family-action-meta">Browse items listed for sale</span>
           </Link>
           ) : null}
 

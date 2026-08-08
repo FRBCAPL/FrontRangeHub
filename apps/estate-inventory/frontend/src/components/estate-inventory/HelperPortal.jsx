@@ -4,6 +4,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { leaveCurrentEstateDestination } from '@shared/services/estateVaultSession.js';
 import {
   estateitCasePath,
+  estateitPortalHomePath,
   HELPER_ROLE_GUIDE
 } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
@@ -29,6 +30,7 @@ const HelperPortal = () => {
   const navigate = useNavigate();
   const { caseNumber } = useEstateCase();
   const caseHome = estateitCasePath(caseNumber);
+  const helperHome = estateitPortalHomePath(caseNumber, 'helper');
   const [session, setSession] = useState(() =>
     estateInventoryService.getStoredHelperSession(caseNumber)
   );
@@ -142,7 +144,7 @@ const HelperPortal = () => {
           roleGuide={HELPER_ROLE_GUIDE}
           title="Helper login"
           crumbs={[
-            { label: 'Home', to: caseHome },
+            { label: 'Home', to: helperHome },
             { label: 'Helper' }
           ]}
           onOpenWhatsNew={() => setShowWhatsNew(true)}
@@ -201,7 +203,7 @@ const HelperPortal = () => {
             {busy ? 'Signing in…' : 'Sign in'}
           </button>
           <p className="ei-settings-hint" style={{ marginTop: '0.85rem' }}>
-            <Link to={caseHome}>Back to role home</Link>
+            <Link to={helperHome}>Back to helper home</Link>
           </p>
         </form>
         <EstateWhatsNewModal

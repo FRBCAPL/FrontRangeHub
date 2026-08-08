@@ -31,8 +31,8 @@ const SETTINGS_GROUPS = [
       },
       {
         id: 'auction',
-        label: 'Sale / Auction',
-        hint: 'Dates, pickup window, PR bid-block emails'
+        label: 'Sale inventory',
+        hint: 'Listing window, pickup, PR bid-block emails'
       }
     ]
   },

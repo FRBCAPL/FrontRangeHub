@@ -52,7 +52,7 @@ const HeirBulkNoInterestModal = ({
             <p className="ei-settings-intro">
               Mark <strong>{remainingCount}</strong> remaining item
               {remainingCount === 1 ? '' : 's'} in <strong>{roomLabel}</strong> as no interest /
-              approve for public sale?
+              approve for sale inventory?
             </p>
             {keptClaimCount > 0 ? (
               <p className="ei-settings-hint" style={{ marginTop: '0.65rem' }}>
@@ -66,8 +66,8 @@ const HeirBulkNoInterestModal = ({
               </p>
             )}
             <p className="ei-settings-hint" style={{ marginTop: '0.45rem' }}>
-              Only this room is affected. Other rooms are unchanged. This does not automatically list
-              anything for public sale until other named heirs also release (or the Personal
+              Only this room is affected. Other rooms are unchanged. This does not automatically add
+              anything to the sale inventory until other named heirs also release (or the Personal
               Representative acts). Memorandum gifts and items already settled are skipped.
             </p>
             {busy && progressText ? (

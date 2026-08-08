@@ -26,7 +26,7 @@ const SECTIONS = [
   { id: 'room', label: 'Room', hint: 'Which collection / room this item belongs in' },
   { id: 'status', label: 'Status', hint: 'Legal & memorandum' },
   { id: 'value', label: 'Value', hint: 'Court inventory estimate' },
-  { id: 'sale', label: 'Sale', hint: 'Auction & proceeds' },
+  { id: 'sale', label: 'Sale', hint: 'Sale inventory & proceeds' },
   { id: 'record', label: 'Record', hint: 'Requests & history' }
 ];
 
@@ -591,7 +591,7 @@ const EditAssetProfileModal = ({
             {section === 'sale' ? (
               <>
                 <div className="ei-toggle-row">
-                  <label htmlFor="ei-edit-sale">Approved for public sale / auction</label>
+                  <label htmlFor="ei-edit-sale">Approved for sale</label>
                   <input
                     id="ei-edit-sale"
                     type="checkbox"
@@ -602,12 +602,12 @@ const EditAssetProfileModal = ({
                 </div>
                 {!canSell ? (
                   <p className="ei-settings-hint">
-                    Sale/auction is blocked while status is {legalStatusLabel(legalStatus)}
+                    Sale inventory is blocked while status is {legalStatusLabel(legalStatus)}
                     {isMemorandum ? ' or memorandum' : ''}.
                   </p>
                 ) : (
                   <p className="ei-settings-hint">
-                    When approved, this item can appear on the public sale / auction list.
+                    When approved, this item can appear on the estate sale catalog.
                   </p>
                 )}
 
@@ -746,7 +746,7 @@ const EditAssetProfileModal = ({
 
                 {releaseCount ? (
                   <div className="ei-claims">
-                    <p className="ei-inline-label">Family releases (no interest / public sale)</p>
+                    <p className="ei-inline-label">Family releases (no interest / for sale)</p>
                     <ul>
                       {item.family_releases.map((r) => (
                         <li key={`${r.sibling_key}-${r.released_at}`}>

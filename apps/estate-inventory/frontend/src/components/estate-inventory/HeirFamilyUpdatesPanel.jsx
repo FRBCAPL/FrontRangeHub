@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
 import { formatEstateDisplayDate } from '@shared/utils/estateInventoryConstants.js';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 import EstateModalShell from './EstateModalShell';
 import FamilyUpdatePreviewModal from './FamilyUpdatePreviewModal';
 
@@ -252,7 +253,7 @@ const HeirFamilyUpdatesPanel = ({ caseNumber, asMenuTile = false }) => {
                           digest.inventory.distributed || 0
                         } distributed`
                       : ''}
-                    {digest.auction ? ` · ${digest.auction.paid || 0} auction paid` : ''}
+                    {digest.auction ? ` · ${digest.auction.paid || 0} sale paid` : ''}
                   </span>
                 </button>
               </li>
@@ -297,7 +298,7 @@ const HeirFamilyUpdatesPanel = ({ caseNumber, asMenuTile = false }) => {
               </strong>
             </li>
             <li>
-              <span>Sale / Auction</span>
+              <span>{saleAuctionCopy.shortCap}</span>
               <strong>
                 {active.package.digest.auction?.paid || 0} paid ·{' '}
                 {active.package.digest.auction?.pendingPayment || 0} pending

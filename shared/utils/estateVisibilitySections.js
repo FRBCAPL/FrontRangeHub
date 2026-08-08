@@ -19,21 +19,21 @@ export const VISIBILITY_PORTAL_SECTIONS = [
   { key: 'estate_overview', label: 'Estate overview' },
   { key: 'rooms_inventory', label: 'Rooms & inventory' },
   { key: 'my_inheritance', label: 'My inheritance' },
-  { key: 'sale_auction', label: 'Sale & auction' }
+  { key: 'sale_auction', label: 'Sale inventory' }
 ];
 
 export const VISIBILITY_OVERVIEW_SECTIONS = [
   { key: 'inventory_status', label: 'Inventory status' },
-  { key: 'auction_status', label: 'Sale/auction status counts' },
+  { key: 'auction_status', label: 'Sale inventory status counts' },
   { key: 'your_distributions', label: 'Your distributions' },
   { key: 'estate_holds', label: 'What the estate holds' },
   { key: 'estate_owes', label: 'What the estate owes' },
   { key: 'accounts_list', label: 'Accounts & debts list' },
   { key: 'distribution_summary', label: 'Distribution summary' },
   { key: 'expenses_list', label: 'Expenses list' },
-  { key: 'auction_proceeds', label: 'Sale/auction proceeds' },
+  { key: 'auction_proceeds', label: 'Sale proceeds' },
   { key: 'expense_receipts', label: 'Expense receipt links' },
-  { key: 'auction_lots', label: 'Sale/auction lot detail' }
+  { key: 'auction_lots', label: 'Sale inventory lot detail' }
 ];
 
 export const VISIBILITY_SECTION_KEYS = [

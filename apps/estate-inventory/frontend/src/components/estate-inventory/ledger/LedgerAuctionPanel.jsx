@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney, sumOutstandingBids, sumPaidAuctionSales } from '@shared/utils/estateFinance.js';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 
 function ItemList({ title, note, rows, emptyText, total }) {
   return (
@@ -30,7 +31,7 @@ function ItemList({ title, note, rows, emptyText, total }) {
   );
 }
 
-/** Sale/auction money in two states: collected, and won but not yet collected. */
+/** Sale inventory money in two states: collected, and sold but not yet collected. */
 const LedgerAuctionPanel = ({ caseNumber, refreshKey }) => {
   const [data, setData] = useState({ paid: [], outstanding: [] });
   const [loading, setLoading] = useState(true);
@@ -45,7 +46,7 @@ const LedgerAuctionPanel = ({ caseNumber, refreshKey }) => {
       if (cancelled) return;
       setLoading(false);
       if (!result.success) {
-        setError(result.error || 'Could not load auction items.');
+        setError(result.error || 'Could not load sale inventory items.');
         setData({ paid: [], outstanding: [] });
         return;
       }
@@ -59,9 +60,9 @@ const LedgerAuctionPanel = ({ caseNumber, refreshKey }) => {
   return (
     <>
       <p className="ei-settings-hint">
-        Mark a sale paid from <strong>Edit asset profile</strong> once the money is actually in
-        hand. Choose a Funds account to deposit it into the bank balance. Paid-but-not-deposited
-        amounts still count in Cash available until you deposit them.
+        {saleAuctionCopy.ledgerHint}. Mark a sale paid from <strong>Edit asset profile</strong> once
+        the money is actually in hand. Choose a Funds account to deposit it into the bank balance.
+        Paid-but-not-deposited amounts still count in Cash available until you deposit them.
       </p>
       {loading ? <p className="ei-status">Loading…</p> : null}
       {error ? <div className="ei-error">{error}</div> : null}
@@ -72,14 +73,14 @@ const LedgerAuctionPanel = ({ caseNumber, refreshKey }) => {
             note="Marked paid. Deposit into Estate Funds so the bank account line matches the cash."
             rows={data.paid}
             total={sumPaidAuctionSales(data.paid)}
-            emptyText="No auction sales marked paid yet."
+            emptyText="No sale proceeds marked paid yet."
           />
           <ItemList
-            title="Outstanding bids"
-            note="Won but not yet collected. Counted as property (not cash) until paid."
+            title={saleAuctionCopy.outstandingBids}
+            note="Sold or offered but not yet collected. Counted as property (not cash) until paid."
             rows={data.outstanding}
             total={sumOutstandingBids(data.outstanding)}
-            emptyText="No outstanding bids right now."
+            emptyText="No outstanding sale amounts right now."
           />
         </>
       ) : null}

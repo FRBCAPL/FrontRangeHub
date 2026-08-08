@@ -190,7 +190,7 @@ const CollectionDetail = ({
                 ) : null}
 
                 {item.approved_for_sale ? (
-                  <p className="ei-card-meta">Approved for public sale</p>
+                  <p className="ei-card-meta">Approved for sale</p>
                 ) : null}
 
                 {claims.length ? (
@@ -212,7 +212,7 @@ const CollectionDetail = ({
 
                 {item.highest_bid != null ? (
                   <p className="ei-card-meta">
-                    Leading bid: {formatMoney(item.highest_bid)}
+                    Recorded offer: {formatMoney(item.highest_bid)}
                     {item.highest_bidder_name ? ` (${item.highest_bidder_name})` : ''}
                   </p>
                 ) : null}

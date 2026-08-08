@@ -15,6 +15,7 @@ import {
   buildAuctionStatusBreakdown,
   buildConsistentInventoryCounts
 } from './estateInventoryReconciliation.js';
+import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
 
 function fmt(value) {
   return formatEstateDisplayDate(value);
@@ -130,18 +131,18 @@ export function buildDisclosureTimeline({
     auctionStatus.approvedCount > 0
   ) {
     let auctionEventStatus = 'upcoming';
-    let auctionTitle = 'Sale/auction scheduled';
+    let auctionTitle = saleAuctionCopy.scheduled;
     let auctionDetail = auctionStatus.summaryLabel || auction.label;
 
     if (auction.phase === 'open') {
       auctionEventStatus = 'active';
-      auctionTitle = 'Sale/auction open';
+      auctionTitle = saleAuctionCopy.open;
     } else if (auction.phase === 'ended') {
       auctionEventStatus = 'done';
-      auctionTitle = 'Sale/auction window ended';
+      auctionTitle = saleAuctionCopy.ended;
     } else if (!auction.startDate && auctionStatus.approvedCount > 0) {
       auctionEventStatus = 'active';
-      auctionTitle = 'Items approved for sale/auction';
+      auctionTitle = saleAuctionCopy.itemsApproved;
     }
 
     if (auctionStatus.notListedCount > 0) {
@@ -211,7 +212,7 @@ export function buildDisclosureTimeline({
     title: 'Preliminary / staged accounting',
     detail: probateEnded
       ? 'Claims window has closed — family update and formal accounting can proceed.'
-      : 'Final numbers are not expected while the claims window is still open or inventory/sale/auction work remains.',
+      : 'Final numbers are not expected while the claims window is still open or inventory or sale catalog work remains.',
     status: estateClosed ? 'done' : probateEnded && inventoryComplete ? 'active' : 'upcoming'
   });
 
@@ -222,7 +223,7 @@ export function buildDisclosureTimeline({
     title: estateClosed ? 'Estate closed for records' : 'Final accounting & residual close',
     detail: estateClosed
       ? `Closed ${fmt(settings.closed_at)}${settings.close_reason ? ` · ${settings.close_reason}` : ''}`
-      : 'Target after claims close, sale/auction settlement, distributions, and formal accounting.',
+      : 'Target after claims close, sale inventory settlement, distributions, and formal accounting.',
     status: estateClosed ? 'done' : 'upcoming'
   });
 
@@ -234,7 +235,7 @@ export function buildDisclosureTimeline({
       : !inventoryComplete
         ? 'Inventory has not been certified complete by the Personal Representative.'
         : auction.phase === 'open'
-          ? 'The sale/auction is still open — expected proceeds are not fully settled.'
+          ? 'The sale inventory listing window is still open — expected proceeds are not fully settled.'
           : 'The estate is past the claims window; ask the PR for a Family Update or formal accounting if you need the current staged numbers.';
 
   return {

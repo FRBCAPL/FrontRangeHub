@@ -1,8 +1,9 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 
 /**
- * Confirm heir “no interest / approve for public sale” without a browser alert.
+ * Confirm heir “no interest / approve for sale” without a browser alert.
  * Portaled above room browse when opened from a room’s item list.
  */
 const HeirNoInterestModal = ({ open, itemName, onClose, onConfirm, busy }) => {
@@ -26,7 +27,7 @@ const HeirNoInterestModal = ({ open, itemName, onClose, onConfirm, busy }) => {
           style={{ height: 'auto', maxHeight: 'min(88vh, 88dvh)' }}
         >
           <div className="ei-modal-head">
-            <h3 id="ei-no-interest-title">No interest / public sale</h3>
+            <h3 id="ei-no-interest-title">{saleAuctionCopy.releaseTitle}</h3>
             <button
               type="button"
               className="ei-modal-close"
@@ -41,19 +42,20 @@ const HeirNoInterestModal = ({ open, itemName, onClose, onConfirm, busy }) => {
             <p className="ei-settings-intro">
               {itemName ? (
                 <>
-                  Mark <strong>{itemName}</strong> as no interest and approve it for public sale?
+                  Mark <strong>{itemName}</strong> as no interest and approve it for the sale
+                  inventory?
                 </>
               ) : (
-                'Mark this item as no interest and approve it for public sale?'
+                'Mark this item as no interest and approve it for the sale inventory?'
               )}
             </p>
             <p className="ei-settings-hint" style={{ marginTop: '0.65rem' }}>
               This means you do not wish to retain it for personal use and authorize the estate to
-              liquidate it to fund estate expenses.
+              list it for sale to help cover estate expenses.
             </p>
             <p className="ei-settings-hint" style={{ marginTop: '0.45rem' }}>
-              It lists for public sale only after all named heirs also approve. Unclaimed items may
-              still be added to public sale after the probate end date.
+              It joins the sale inventory only after all named heirs also approve. Unclaimed items may
+              still be added after the probate end date.
             </p>
           </div>
           <div className="ei-modal-foot ei-btn-row">

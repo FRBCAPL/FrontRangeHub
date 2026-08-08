@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
 import { useEstateCase } from './EstateCaseContext';
 
@@ -50,10 +51,10 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
     });
     setSaving(false);
     if (!result.success) {
-      setError(result.error || 'Could not save auction settings.');
+      setError(result.error || 'Could not save sale inventory settings.');
       return;
     }
-    setInfo('Sale/auction settings saved.');
+    setInfo(`${saleAuctionCopy.settingsTitle} settings saved.`);
     onSaved?.(result.data);
   };
 
@@ -61,7 +62,7 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
     <EstateSettingsShell
       open={open}
       onClose={onClose}
-      title="Sale/auction settings"
+      title={`${saleAuctionCopy.settingsTitle} settings`}
       titleId="ei-settings-auction-title"
       foot={
         <>
@@ -76,14 +77,16 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
     >
       <form id="ei-settings-auction-form" className="ei-modal-form" onSubmit={handleSubmit}>
         <div className="ei-modal-body">
+          <p className="ei-settings-hint">{saleAuctionCopy.settingsHint}</p>
           <p className="ei-settings-hint">
-            Before the start date, the sale/auction stays off the public View sales / auctions list. It still
-            appears on this estate’s roles page so invited family can preview lots (no bidding until
-            open).
+            Before the start date, the {saleAuctionCopy.catalogShort.toLowerCase()} stays off the public{' '}
+            {saleAuctionCopy.publicList} list. It still appears on this estate’s roles page so invited
+            family can preview items. Live online bidding is not required and is not the default product
+            yet.
           </p>
           <div className="ei-duration-row">
             <div className="ei-field">
-              <label htmlFor="ei-auction-start">Sale/auction start date</label>
+              <label htmlFor="ei-auction-start">Sale listing start date</label>
               <input
                 id="ei-auction-start"
                 type="date"
@@ -92,7 +95,7 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
               />
             </div>
             <div className="ei-field">
-              <label htmlFor="ei-auction-end">Sale/auction end date</label>
+              <label htmlFor="ei-auction-end">Sale listing end date</label>
               <input
                 id="ei-auction-end"
                 type="date"
@@ -102,11 +105,11 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
             </div>
           </div>
           <p className="ei-settings-hint" style={{ marginTop: '-0.35rem' }}>
-            Start is required for public listing and bidding. End is optional (last day bids are
-            accepted).
+            These dates define the {saleAuctionCopy.listingWindow}. Start is required for public listing.
+            End is optional (last day the listing window is open).
           </p>
           <div className="ei-field">
-            <label htmlFor="ei-pickup-window">Auction pickup window</label>
+            <label htmlFor="ei-pickup-window">{saleAuctionCopy.pickupWindow}</label>
             <input
               id="ei-pickup-window"
               value={auctionPickupWindow}
@@ -114,11 +117,11 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
               placeholder="e.g. May 15–18, 2026 (weekends only)"
             />
             <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
-              Shown in the public sale/auction Terms of Sale. Leave blank until dates are set.
+              Shown in the public {saleAuctionCopy.rules}. Leave blank until dates are set.
             </p>
           </div>
           <div className="ei-field">
-            <label htmlFor="ei-pr-block-emails">PR auction block emails</label>
+            <label htmlFor="ei-pr-block-emails">PR bid-block emails</label>
             <textarea
               id="ei-pr-block-emails"
               rows={3}
@@ -127,8 +130,8 @@ const EstateSettingsAuctionModal = ({ open, onClose, initialSettings, onSaved })
               placeholder="Your aliases, one per line (estate owner email is always blocked)"
             />
             <p className="ei-settings-hint" style={{ marginTop: '0.25rem' }}>
-              Extra emails that must never register or bid. The estate owner email is blocked
-              automatically.
+              Extra emails that must never register or bid if bidding tools are used later. The estate
+              owner email is blocked automatically.
             </p>
           </div>
           {error ? <div className="ei-error">{error}</div> : null}

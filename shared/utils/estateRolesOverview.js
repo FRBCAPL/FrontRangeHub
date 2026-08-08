@@ -2,6 +2,8 @@
  * Roles / portals explainer — who uses which door in Estate Vault.
  */
 
+import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
+
 export const ESTATE_ROLES_OVERVIEW = {
   title: 'Roles / portals',
   intro:
@@ -11,7 +13,7 @@ export const ESTATE_ROLES_OVERVIEW = {
       eyebrow: 'Estate management',
       title: 'Executor / Personal Representative',
       body:
-        'Runs the estate workspace: inventory review, money, distributions, family settings, sale/auction approval, and exportable records. Requires the admin PIN.'
+        'Runs the estate workspace: inventory review, money, distributions, family settings, sale inventory approval, and exportable records. Requires the admin PIN.'
     },
     {
       eyebrow: 'Family',
@@ -33,9 +35,9 @@ export const ESTATE_ROLES_OVERVIEW = {
     },
     {
       eyebrow: 'Public & follow-along',
-      title: 'Sale / Auction',
+      title: saleAuctionCopy.roleTile,
       body:
-        'Lots approved for public sale appear here. Family can follow along after signing into the estate; public bidding follows the posted sale window. The Personal Representative does not bid on this estate’s public sale.'
+        `${saleAuctionCopy.roleHint}. Family can follow along after signing into the estate; the listing follows the posted sale listing window. Live online bidding is not required. The Personal Representative does not bid on this estate’s sale catalog.`
     }
   ],
   notes:

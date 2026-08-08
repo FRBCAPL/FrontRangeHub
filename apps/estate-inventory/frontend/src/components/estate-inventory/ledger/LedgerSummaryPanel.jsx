@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { formatMoney } from '@shared/utils/estateFinance.js';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 import GlossaryTerm from '../GlossaryTerm';
 import CashAvailableHint from '../CashAvailableHint';
 
@@ -97,7 +98,7 @@ const LedgerSummaryPanel = ({
         <button type="button" className="ei-money-picture-card" onClick={() => onGoTo('inventory')}>
           <span className="ei-money-picture-label">Property (not cash)</span>
           <span className="ei-money-picture-amount">{formatMoney(propertyNotCash)}</span>
-          <span className="ei-money-picture-hint">Estimates &amp; unpaid auction bids</span>
+          <span className="ei-money-picture-hint">Estimates &amp; unpaid sale amounts</span>
         </button>
         <button type="button" className="ei-money-picture-card" onClick={() => onGoTo('accounts')}>
           <span className="ei-money-picture-label">Debts owed</span>
@@ -200,10 +201,10 @@ const LedgerSummaryPanel = ({
         <section className="ei-ledger-group">
           <h4>Property (not cash)</h4>
           <Line
-            label="Sale/auction bids not collected yet"
+            label="Sale amounts not collected yet"
             amount={summary.outstandingBids}
             onJump={() => onGoTo('auction')}
-            jumpLabel="Sale / Auction"
+            jumpLabel={saleAuctionCopy.ledgerTab}
           />
           {summary.undepositedPaidSales > 0 ? (
             <Line
@@ -211,7 +212,7 @@ const LedgerSummaryPanel = ({
               amount={summary.undepositedPaidSales}
               sub="Buyer paid; deposit into Cash on hand when the money hits the bank"
               onJump={() => onGoTo('auction')}
-              jumpLabel="Sale / Auction"
+              jumpLabel={saleAuctionCopy.ledgerTab}
             />
           ) : null}
           <Line

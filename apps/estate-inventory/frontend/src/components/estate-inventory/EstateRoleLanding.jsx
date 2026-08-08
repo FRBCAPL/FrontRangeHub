@@ -11,6 +11,7 @@ import {
   estateitCasePath,
   resolveAuctionWindow
 } from '@shared/utils/estateInventoryConstants.js';
+import saleAuctionCopy from '@shared/utils/estateSaleAuctionCopy.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
@@ -74,10 +75,10 @@ const EstateRoleLanding = () => {
 
   const auctionHint =
     auctionWindow.phase === 'upcoming' || auctionWindow.phase === 'unscheduled'
-      ? `Family preview only until open. ${auctionWindow.label}. Bidding opens on the start date.`
+      ? `Family preview of the catalog until open. ${auctionWindow.label}. The public listing window starts on the listing start date.`
       : auctionWindow.phase === 'ended'
-        ? `${auctionWindow.label}. Browse lots; bidding is closed.`
-        : `Sale/auction open. ${auctionWindow.label}. Register to bid.`;
+        ? `${auctionWindow.label}. Browse the catalog; the listing window has ended.`
+        : `${saleAuctionCopy.open}. ${auctionWindow.label}. ${saleAuctionCopy.roleHint}.`;
 
   const roles = [
     {
@@ -116,7 +117,7 @@ const EstateRoleLanding = () => {
           : auctionWindow.phase === 'ended'
             ? 'Closed'
             : 'Preview',
-      title: 'Sale / Auction',
+      title: saleAuctionCopy.roleTile,
       hint: auctionHint,
       primary: false
     }

@@ -4,6 +4,7 @@ import {
   buildInventoryReconciliation,
   openInventoryReconciliation
 } from '@shared/utils/estateInventoryReconciliation.js';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 
 /**
  * PR inventory disposition board — every item in exactly one bucket.
@@ -43,7 +44,7 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
   return (
     <>
       <p className="ei-settings-hint">
-        Every inventory item has exactly one disposition. Use this to catch auction lot
+        Every inventory item has exactly one disposition. Use this to catch sale inventory
         mismatches (approved vs listed vs sold) before family questions turn into conflict.
       </p>
       {error ? <div className="ei-error">{error}</div> : null}
@@ -57,7 +58,7 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
           <strong>{reconciliation.total}</strong>
         </div>
         <div>
-          <span>On sale/auction catalog</span>
+          <span>{saleAuctionCopy.onCatalog}</span>
           <strong>{reconciliation.auctionBreakdown?.listedCount || 0}</strong>
         </div>
         <div>
@@ -94,11 +95,11 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
       </ul>
 
       <p className="ei-settings-hint">
-        Sale/auction pipeline: {reconciliation.auctionLotCount} approved (
+        {saleAuctionCopy.pipeline}: {reconciliation.auctionLotCount} approved (
         {reconciliation.auctionApprovedOnlyCount} open ·{' '}
         {reconciliation.auctionPendingCount} pending payment ·{' '}
         {reconciliation.auctionPaidCount} paid). Catalog match:{' '}
-        {reconciliation.auctionBreakdown?.listedCount || 0} on public catalog ·{' '}
+        {reconciliation.auctionBreakdown?.listedCount || 0} on {saleAuctionCopy.catalog.toLowerCase()} ·{' '}
         {reconciliation.auctionBreakdown?.notListedCount || 0} approved but not listed
         {reconciliation.auctionBreakdown?.notListedCount
           ? ` — ${(reconciliation.auctionBreakdown.notListed || [])
@@ -110,7 +111,7 @@ const LedgerInventoryReconPanel = ({ caseNumber, estateName }) => {
                 : ''
             }`
           : ''}
-        . Listed uses the same catalog gates as the public sale/auction page.
+        . Listed uses the same catalog gates as the public sale inventory page.
       </p>
     </>
   );

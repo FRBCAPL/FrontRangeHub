@@ -12,6 +12,7 @@ import {
   normalizeVisibilitySections,
   visibilitySectionEnabled
 } from '@shared/utils/estateVisibilitySections.js';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 import EstateModalShell from './EstateModalShell';
 
 /**
@@ -148,14 +149,14 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
   const auctionBlock =
     sectionOn('auction_status') && data?.auction_breakdown ? (
     <div className="ei-transparency-section">
-      <h4>{isMemo ? 'Items going to sale' : 'Sale/auction status'}</h4>
+      <h4>{isMemo ? 'Items going to sale' : saleAuctionCopy.status}</h4>
       <ul className="ei-transparency-lines">
         <li>
-          <span>{isMemo ? 'Cleared for sale' : 'Approved for sale/auction'}</span>
+          <span>{isMemo ? 'Cleared for sale' : saleAuctionCopy.approvedFor}</span>
           <strong>{data.auction_breakdown.approved_count}</strong>
         </li>
         <li>
-          <span>{isMemo ? 'On the sale list' : 'On sale/auction catalog'}</span>
+          <span>{isMemo ? 'On the sale list' : saleAuctionCopy.onCatalog}</span>
           <strong>{data.auction_breakdown.listed_count}</strong>
         </li>
         <li>
@@ -213,7 +214,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
             ? sectionOn('rooms_inventory')
               ? 'Your access shows your recorded gifts plus these progress counts. Named gifts appear under Rooms & inventory (or My gifts) when that tile is on your home screen.'
               : 'Your access shows your recorded gifts plus these progress counts. Open My inheritance for gifts already recorded for you.'
-            : 'Your access allows you to see your own distribution receipts, plus inventory and sale/auction status counts.'}
+            : `Your access allows you to see your own distribution receipts, plus inventory and ${saleAuctionCopy.status.toLowerCase()} counts.`}
         </p>
       ) : null}
 
@@ -261,7 +262,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
                   </>
                 ) : null}
                 <li>
-                  <span>Outstanding sale/auction bids</span>
+                  <span>{saleAuctionCopy.outstandingBids}</span>
                   <strong>{formatMoney(summary.outstanding_bids)}</strong>
                 </li>
                 <li>
@@ -395,7 +396,7 @@ const HeirTransparencyPanel = ({ caseNumber, asMenuTile = false }) => {
 
           {sectionOn('auction_proceeds') && data.auction ? (
             <div className="ei-transparency-section">
-              <h4>{isMemo ? 'Sale proceeds (shared picture)' : 'Sale/auction proceeds'}</h4>
+              <h4>{isMemo ? 'Sale proceeds (shared picture)' : saleAuctionCopy.proceeds}</h4>
               <ul className="ei-transparency-lines">
                 <li>
                   <span>Expected proceeds</span>

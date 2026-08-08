@@ -315,7 +315,7 @@ export function buildCourtPackHtml(pack) {
     <div><strong>Other / starting cash:</strong> ${formatMoney(finance.otherCashOnHand)}</div>
     ${Number(finance.undepositedPaidSales) > 0 ? `<div><strong>Paid sales not yet deposited:</strong> ${formatMoney(finance.undepositedPaidSales)}</div>` : ''}
     <div><strong>Approved expenses:</strong> ${formatMoney(finance.expensesTotal)}</div>
-    <div><strong>Paid sale/auction sales:</strong> ${formatMoney(finance.paidAuctionSales)}</div>
+    <div><strong>Paid sale proceeds:</strong> ${formatMoney(finance.paidAuctionSales)}</div>
     <div><strong>Outstanding bids:</strong> ${formatMoney(finance.outstandingBids)}</div>
     <div><strong>Listed accounts:</strong> ${formatMoney(finance.accountAssetsTotal)}</div>
     <div><strong>Listed debts:</strong> ${formatMoney(finance.accountDebtsTotal)}</div>
@@ -333,7 +333,7 @@ export function buildCourtPackHtml(pack) {
 
   ${section('Supporting account statements', `<table><thead><tr><th>Account / debt</th><th>Statement date</th><th>File</th><th>Type</th><th>Bytes</th><th>SHA-256 fingerprint</th></tr></thead><tbody>${accountDocumentRows(finance.accountDocuments, finance.accounts) || '<tr><td colspan="6">No account statements attached</td></tr>'}</tbody></table><p class="muted">Statements are stored privately. This evidence pack records their file metadata and cryptographic fingerprints; obtain the original private files from the Estate Vault account.</p>`)}
 
-  ${section('Sale/auction payment state', `<table><thead><tr><th>Item</th><th>Highest bid</th><th>Payment state</th></tr></thead><tbody>${auctionRows(auction) || '<tr><td colspan="3">No sale/auction bid lines</td></tr>'}</tbody></table>`)}
+  ${section('Sale inventory payment state', `<table><thead><tr><th>Item</th><th>Highest bid</th><th>Payment state</th></tr></thead><tbody>${auctionRows(auction) || '<tr><td colspan="3">No sale inventory bid lines</td></tr>'}</tbody></table>`)}
 
   ${section('Distribution accounting', `<div class="grid">
     <div><strong>Finalized cash distributions:</strong> ${formatMoney(distributedCash)}</div>
@@ -354,7 +354,7 @@ export function buildCourtPackHtml(pack) {
   ${section(
     'Manifest (integrity fingerprint — not a court seal)',
     `<p><strong>Generated:</strong> ${escapeHtml(new Date(pack.generated_at).toLocaleString())}</p>
-  <p><strong>Included in this pack:</strong> estate identity, inventory schedule, scene metadata reference, finance snapshot, accounts/debts, statement fingerprints, sale/auction payment state, distributions, formal-accounting figures when present, heirs, activity trail, and completeness / Needs attention status.</p>
+  <p><strong>Included in this pack:</strong> estate identity, inventory schedule, scene metadata reference, finance snapshot, accounts/debts, statement fingerprints, sale inventory payment state, distributions, formal-accounting figures when present, heirs, activity trail, and completeness / Needs attention status.</p>
   <p><strong>Completeness gaps on this export:</strong> ${
     pack.completeness
       ? `${Number(pack.completeness.blockingCount || 0)} blocking · ${Number(pack.completeness.warningCount || 0)} warning`

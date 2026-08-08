@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import EstateTimeline from './EstateTimeline';
 import EstateNextStepsPanel from './EstateNextStepsPanel';
 import EstateFinanceDashboard from './EstateFinanceDashboard';
@@ -11,6 +12,8 @@ import usePrHomeBootstrap from './usePrHomeBootstrap.js';
 import {
   isLocksmithMarkedNotNeeded
 } from '@shared/utils/estateLocksmithPref.js';
+import { estateitCasePath } from '@shared/utils/estateInventoryConstants.js';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 
 /**
  * PR admin home — command center:
@@ -322,8 +325,17 @@ const EstateHome = ({
               onClick={() => onOpenSettingsSection?.('contacts')}
             >
               <span className="ei-action-label">Contacts</span>
-              <span className="ei-action-hint">Attorney, CPA, banks, utilities, auction…</span>
+              <span className="ei-action-hint">Attorney, CPA, banks, utilities…</span>
             </button>
+            <Link
+              className="ei-action"
+              to={estateitCasePath(activeCase || routeCase, 'auction')}
+            >
+              <span className="ei-action-label">{saleAuctionCopy.viewPublic}</span>
+              <span className="ei-action-hint">
+                Browse items approved for sale · {saleAuctionCopy.catalogShort.toLowerCase()}
+              </span>
+            </Link>
           </div>
         </section>
 

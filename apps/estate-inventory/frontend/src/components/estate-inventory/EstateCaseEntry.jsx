@@ -5,6 +5,7 @@ import {
   ESTATEIT_PATH
 } from '@shared/utils/estateInventoryConstants.js';
 import { ESTATE_BETA_BLURB, ESTATE_BETA_LABEL } from '@shared/utils/estateBeta.js';
+import saleAuctionCopy from '@shared/utils/estateSaleAuctionCopy.js';
 import EstateBrandLogo from './EstateBrandLogo';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateViewAuctionsModal from './EstateViewAuctionsModal';
@@ -172,9 +173,9 @@ const EstateCaseEntry = () => {
         {hasLiveAuctions ? (
           <p className="ei-gateway-auctions">
             <button type="button" className="ei-link-btn" onClick={() => setShowAuctions(true)}>
-              View public sales / auctions
+              {saleAuctionCopy.viewPublic}
             </button>
-            <span> — browse without signing in</span>
+            <span> — browse the catalog without signing in</span>
           </p>
         ) : null}
 

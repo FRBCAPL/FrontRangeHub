@@ -13,6 +13,7 @@ import {
   buildAuctionReconciliation,
   buildAuctionReconciliationHtml
 } from '@shared/utils/estateAuctionReconciliation.js';
+import { saleAuctionCopy } from '@shared/utils/estateSaleAuctionCopy.js';
 import {
   buildInventoryReconciliation,
   buildInventoryReconciliationHtml
@@ -186,14 +187,14 @@ const EstateReportsModal = ({
   };
 
   const handleAuctionReconciliation = async () => {
-    setBusyLabel('Building sale/auction reconciliation…');
+    setBusyLabel(`Building ${saleAuctionCopy.reconciliation.toLowerCase()}…`);
     try {
       const [settingsResult, auctionResult] = await Promise.all([
         estateInventoryService.getSettings(caseNumber),
         estateInventoryService.listFinanceAuctionItems(caseNumber)
       ]);
       if (!auctionResult.success) {
-        onMessage?.(auctionResult.error || 'Could not load auction lots.');
+        onMessage?.(auctionResult.error || 'Could not load sale inventory lots.');
         return;
       }
       const report = buildAuctionReconciliation({
@@ -204,12 +205,12 @@ const EstateReportsModal = ({
         caseNumber: caseLabel
       });
       openReportPreview({
-        title: 'Sale/auction reconciliation',
+        title: saleAuctionCopy.reconciliation,
         html: buildAuctionReconciliationHtml(report),
         filenameBase: `auction-reconciliation-${caseLabel}`
       });
     } catch (err) {
-      onMessage?.(err?.message || 'Auction reconciliation failed.');
+      onMessage?.(err?.message || `${saleAuctionCopy.reconciliation} failed.`);
     } finally {
       setBusyLabel('');
     }
@@ -443,7 +444,7 @@ const EstateReportsModal = ({
               disabled={busy}
               onClick={handleAuctionReconciliation}
             >
-              <span className="ei-action-label">Sale/auction reconciliation</span>
+              <span className="ei-action-label">{saleAuctionCopy.reconciliation}</span>
               <span className="ei-action-hint">
                 {previewHint} — sold, pending, and unsold lots
               </span>

@@ -4,6 +4,7 @@ import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
   estateDisplayName,
   estateitCasePath,
+  estateitPortalHomePath,
   PR_ROLE_GUIDE
 } from '@shared/utils/estateInventoryConstants.js';
 import { useEstateCase } from './EstateCaseContext';
@@ -338,45 +339,46 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
                 : 'Admin dashboard';
 
   const caseHome = estateitCasePath(routeCase || '');
+  const adminHome = estateitPortalHomePath(routeCase || '', 'admin');
 
   const crumbs =
     view === VIEW.HOME
       ? [
-          { label: 'Home', to: caseHome },
+          { label: 'Home', to: adminHome },
           { label: 'Admin' }
         ]
       : view === VIEW.PENDING
         ? [
-            { label: 'Home', to: caseHome },
+            { label: 'Home', to: adminHome },
             { label: 'Admin', onClick: goHome },
             { label: 'Pending review' }
           ]
         : view === VIEW.REQUESTS
           ? [
-              { label: 'Home', to: caseHome },
+              { label: 'Home', to: adminHome },
               { label: 'Admin', onClick: goHome },
               { label: 'Heir requests' }
             ]
           : view === VIEW.MESSAGES
             ? [
-                { label: 'Home', to: caseHome },
+                { label: 'Home', to: adminHome },
                 { label: 'Admin', onClick: goHome },
                 { label: 'Messages' }
               ]
             : view === VIEW.SCENES
               ? [
-                  { label: 'Home', to: caseHome },
+                  { label: 'Home', to: adminHome },
                   { label: 'Admin', onClick: goHome },
                   { label: 'Scenes' }
                 ]
               : view === VIEW.COLLECTIONS
                 ? [
-                    { label: 'Home', to: caseHome },
+                    { label: 'Home', to: adminHome },
                     { label: 'Admin', onClick: goHome },
                     { label: 'Collections' }
                   ]
                 : [
-                    { label: 'Home', to: caseHome },
+                    { label: 'Home', to: adminHome },
                     { label: 'Admin', onClick: goHome },
                     { label: 'Collections', onClick: goCollections },
                     {
@@ -389,7 +391,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
 
   const backHandler =
     view === VIEW.HOME
-      ? () => navigate(caseHome)
+      ? () => navigate(adminHome)
       : view === VIEW.DETAIL
         ? goCollections
         : goHome;

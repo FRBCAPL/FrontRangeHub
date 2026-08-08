@@ -251,7 +251,7 @@ export function resolveAuctionWindow(settings = {}, now = new Date()) {
       biddingOpen: false,
       startDate,
       endDate,
-      label: 'Sale/auction dates not set'
+      label: 'Sale listing dates not set'
     };
   }
   if (today < start) {
@@ -280,7 +280,7 @@ export function resolveAuctionWindow(settings = {}, now = new Date()) {
     biddingOpen: true,
     startDate,
     endDate,
-    label: endDate ? `Open through ${endDate}` : 'Sale/auction open'
+    label: endDate ? `Open through ${endDate}` : 'Sale inventory open'
   };
 }
 
@@ -301,6 +301,21 @@ export function estateitCasePath(caseNumber, suffix = '') {
   const base = `${ESTATEIT_PATH}/${encodeURIComponent(cn)}`;
   const clean = String(suffix || '').replace(/^\/+/, '');
   return clean ? `${base}/${clean}` : base;
+}
+
+/**
+ * Portal homepage for a role — not the case roles picker (`/estateit/:case`).
+ * @param {string} caseNumber
+ * @param {'admin'|'family'|'helper'|'advisor'|'auction'|'roles'|string} role
+ */
+export function estateitPortalHomePath(caseNumber, role = 'roles') {
+  const r = String(role || 'roles').toLowerCase();
+  if (r === 'admin' || r === 'full' || r === 'pr') return estateitCasePath(caseNumber, 'admin');
+  if (r === 'heir' || r === 'family' || r === 'sibling') return estateitCasePath(caseNumber, 'family');
+  if (r === 'helper') return estateitCasePath(caseNumber, 'helper');
+  if (r === 'advisor') return estateitCasePath(caseNumber, 'advisor');
+  if (r === 'auction') return estateitCasePath(caseNumber, 'auction');
+  return estateitCasePath(caseNumber);
 }
 
 /** @deprecated Prefer loading heirs from Settings / estate_list_heir_names — kept empty for SaaS readiness */
@@ -367,7 +382,7 @@ export const FAMILY_FINANCIAL_VISIBILITY_OPTIONS = [
   {
     value: FAMILY_FINANCIAL_VISIBILITY.full,
     label: 'Full accounting',
-    hint: 'Standard plus expense receipts and sale/auction lot detail'
+    hint: 'Standard plus expense receipts and sale inventory lot detail'
   }
 ];
 
@@ -514,8 +529,8 @@ export function heirRoleMeaning(accessTier, options = {}) {
     tip: 'Open Messages for a private, saved conversation with the Personal Representative. Questions and answers stay with the estate record.'
   };
   const tipAuction = {
-    label: 'Follow sale / auction listings',
-    tip: 'Open Sale & auction to watch lots approved for public sale. Useful when you want to see what is headed to the public listing.'
+    label: 'Follow sale inventory listings',
+    tip: 'Open Sale inventory to watch items approved for sale. Useful when you want to see what is headed to the estate sale catalog.'
   };
   const tipHelp = {
     label: 'Open Help / FAQ anytime',
@@ -612,7 +627,7 @@ export function heirRoleGuide(accessTier, options = {}) {
         },
         {
           heading: '3. Track and follow up',
-          body: 'Use My requests, Messages, and Sale & auction to track claims and public lots.'
+          body: 'Use My requests, Messages, and Sale inventory to track claims and sale listings.'
         }
       ],
       notes: ''
@@ -632,7 +647,7 @@ export function heirRoleGuide(accessTier, options = {}) {
       },
       {
         heading: '3. Track and stay in touch',
-        body: 'Use My requests, Messages, Inheritance, and Sale & auction as the estate moves forward.'
+        body: 'Use My requests, Messages, Inheritance, and Sale inventory as the estate moves forward.'
       }
     ],
     notes: ''
@@ -686,7 +701,7 @@ export const PR_ROLE_GUIDE = {
     },
     {
       heading: '6. Handle requests and sale items',
-      body: 'Review heir requests and helper submissions. Approve items for sale/auction carefully. The Personal Representative may not bid on the public sale/auction.'
+      body: 'Review heir requests and helper submissions. Approve items for the sale inventory carefully. The Personal Representative may not bid if live bidding is later enabled.'
     },
     {
       heading: '7. Export for court',
@@ -721,55 +736,55 @@ export const HELPER_ROLE_GUIDE = {
       body: 'Work one area at a time. If you leave, sign back in later with the same name and PIN.'
     }
   ],
-  notes: 'Helpers cannot set legal status, value tier, or approve items for sale/auction.'
+  notes: 'Helpers cannot set legal status, value tier, or approve items for sale.'
 };
 
 export const AUCTION_ROLE_GUIDE = {
-  title: 'Sale/auction guide',
-  summary: 'Browse approved lots, register when bidding opens, then follow pickup instructions.',
+  title: 'Estate sale catalog guide',
+  summary: 'Browse items listed for sale. Optional bidding tools may appear when a listing window is open.',
   steps: [
     {
-      heading: '1. Browse the lots',
-      body: 'Only items the Personal Representative approved for public sale appear here. Read descriptions and photos before bidding.'
+      heading: '1. Browse the sale inventory',
+      body: 'Only items the Personal Representative approved for sale appear here. Read descriptions and photos.'
     },
     {
-      heading: '2. Wait for the open window',
-      body: 'Before the start date you may browse, but bidding stays closed. The page shows when the sale/auction opens and ends.'
+      heading: '2. Check the listing window',
+      body: 'Before the start date you may browse a preview. The page shows when the sale listing opens and ends.'
     },
     {
-      heading: '3. Register to bid',
-      body: 'When bidding is open, register with your name, contact info, and a verified payment card, and accept the Terms of Estate Sale.'
+      heading: '3. Optional bidding tools',
+      body: 'If the estate offers live bidding, you can register and place bids when that window is open. Bidding is optional — this catalog is the main sale inventory.'
     },
     {
-      heading: '4. Place bids',
-      body: 'Enter your bid on a lot. Leading bids update live. You are responsible for bids placed under your registration.'
+      heading: '4. Follow estate instructions',
+      body: 'If you purchase an item, follow pickup or payment instructions from the Personal Representative.'
     },
     {
       heading: '5. Arrange pickup',
-      body: 'If you win, follow the estate pickup window set by the Personal Representative. Uncollected items may be handled under the estate rules.'
+      body: 'Winning or purchased items follow the estate pickup window set by the Personal Representative. Uncollected items may be handled under the estate rules.'
     }
   ],
-  notes: 'The Personal Representative and estate managers may not register or bid on this public sale/auction.'
+  notes: 'The Personal Representative and estate managers may not register or bid when live bidding is offered.'
 };
 
-/** Family follow-along auction guide (heir signed in, before public open). */
+/** Family follow-along sale inventory guide (heir signed in, before public open). */
 export function auctionFamilyFollowGuide({ isPreview = false } = {}) {
   if (isPreview) {
     return {
-      title: 'Sale/auction follow-along guide',
-      summary: 'Watch lots as they are approved — bidding stays closed until the start date.',
+      title: 'Sale inventory follow-along guide',
+      summary: 'Watch items as they are approved for sale — the public catalog opens on the listing start date.',
       steps: [
         {
           heading: '1. Follow along early',
-          body: 'As a signed-in heir, you can see this sale/auction before it is public.'
+          body: 'As a signed-in heir, you can see the sale inventory before it is public.'
         },
         {
-          heading: '2. Watch approved lots appear',
-          body: 'Lots show up here after the Personal Representative approves them for public sale.'
+          heading: '2. Watch approved items appear',
+          body: 'Lots show up here after the Personal Representative approves them for sale.'
         },
         {
-          heading: '3. Wait for bidding to open',
-          body: 'Bidding stays closed until the sale/auction start date. Return then if you want to register and bid.'
+          heading: '3. Wait for the listing window',
+          body: 'The public catalog opens on the sale listing start date. Optional bidding tools, if offered, wait until then as well.'
         },
         {
           heading: '4. Return to inventory anytime',
@@ -903,7 +918,7 @@ export const REVIEW_STATUS = {
 };
 
 /**
- * Helper submissions stay out of heir and sale/auction views until the PR approves
+ * Helper submissions stay out of heir and sale inventory views until the PR approves
  * them, but they do appear in the PR's own room lists — so those lists have to
  * say which ones are still unreviewed.
  */
@@ -1108,7 +1123,7 @@ export function claimCount(item) {
   return normalizeSiblingClaims(item?.sibling_claims).length;
 }
 
-/** Sale/auction Terms of Estate Sale — estate-agnostic version string (not a court case). */
+/** Sale inventory Terms of Estate Sale — estate-agnostic version string (not a court case). */
 export const AUCTION_TERMS_VERSION = 'estate-auction-terms-v2';
 
 export function auctionTermsLines(pickupWindow) {
@@ -1116,8 +1131,8 @@ export function auctionTermsLines(pickupWindow) {
     String(pickupWindow || '').trim() ||
     'dates posted by the Personal Representative';
   return [
-    'You may browse lots before bidding opens. When the sale/auction start date arrives, use Register (top right) to create a bidder account with your name, email, and phone.',
-    'Registration requires a verified payment card and your acceptance of these Terms of Estate Sale. After you are registered, open any lot and submit a bid amount.',
+    'You may browse the sale inventory before any optional bidding opens. When the sale listing start date arrives, use Register (top right) only if you need optional bidding tools — with your name, email, and phone.',
+    'Registration for optional bidding requires a verified payment card and your acceptance of these Terms of Estate Sale. After you are registered, open any lot and submit a bid amount if bidding is offered.',
     'By submitting a bid, you are entering into a legally binding contract to purchase if you win.',
     'All items are sold strictly AS-IS, WHERE-IS, with no refunds, guarantees, or warranties.',
     `Winning bidders are solely responsible for picking up their items at the designated pickup location on ${pickup}.`,

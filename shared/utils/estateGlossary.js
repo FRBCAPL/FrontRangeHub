@@ -32,7 +32,7 @@ export const ESTATE_GLOSSARY = {
   residual_beneficiary: {
     term: 'Heir / Residual Beneficiary',
     short: 'Receives a share of what is left after debts, expenses, and specific gifts.',
-    full: 'A residuary (or residual) beneficiary receives the residue of the estate \u2014 whatever remains after debts, taxes, expenses, and specific gifts are handled. In Estate Vault this person can browse the remaining inventory, request items, or release items for public sale.'
+    full: 'A residuary (or residual) beneficiary receives the residue of the estate \u2014 whatever remains after debts, taxes, expenses, and specific gifts are handled. In Estate Vault this person can browse the remaining inventory, request items, or release items for sale.'
   },
   specific_gift_recipient: {
     term: 'Specific Gift Recipient',
@@ -76,8 +76,8 @@ export const ESTATE_GLOSSARY = {
   },
   outstanding_bid: {
     term: 'Outstanding bid',
-    short: 'A winning sale/auction bid that hasn\u2019t been collected yet.',
-    full: 'An outstanding bid is the highest bid on an item that has been won but not yet paid or collected. It counts toward what the estate is owed until you mark it paid.'
+    short: 'A sale amount that hasn\u2019t been collected yet.',
+    full: 'An outstanding bid is a recorded sale amount on an item that has not yet been paid or collected. It counts toward what the estate is owed until you mark it paid.'
   },
   current_balances: {
     term: 'Funds accounting',
@@ -102,12 +102,12 @@ export const ESTATE_GLOSSARY = {
   family_update: {
     term: 'Family Update',
     short: 'A numbered beneficiary report the PR publishes for staged communication.',
-    full: 'A Family Update is a printable beneficiary report: disclosure timeline, inventory dispositions, sale/auction status, recorded distributions, and next steps. When the Personal Representative publishes one, heirs can open it in the family portal. It is staged transparency, not continuous live bank access and not the sealed court evidence pack.'
+    full: 'A Family Update is a printable beneficiary report: disclosure timeline, inventory dispositions, sale inventory status, recorded distributions, and next steps. When the Personal Representative publishes one, heirs can open it in the family portal. It is staged transparency, not continuous live bank access and not the sealed court evidence pack.'
   },
   disclosure_timeline: {
     term: 'Disclosure timeline',
     short: 'What has been disclosed and what stage comes next.',
-    full: 'The disclosure timeline shows estate milestones (Letters, inventory, sale/auction, claims window, distributions, final accounting) so beneficiaries understand why final numbers may not appear yet. It supports staged transparency rather than continuous live financial access.'
+    full: 'The disclosure timeline shows estate milestones (Letters, inventory, sale inventory, claims window, distributions, final accounting) so beneficiaries understand why final numbers may not appear yet. It supports staged transparency rather than continuous live financial access.'
   },
   contact_advisor_portal: {
     term: 'Advisor portal',

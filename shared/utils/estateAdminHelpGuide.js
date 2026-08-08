@@ -4,6 +4,8 @@
  * Prefer exact button / menu labels from EstateHome, Settings hub, and EV Menu.
  */
 
+import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
+
 export const ESTATE_ADMIN_HELP_GUIDE = {
   title: 'Admin help guide',
   eyebrow: 'Personal Representative',
@@ -90,7 +92,7 @@ export const ESTATE_ADMIN_HELP_GUIDE = {
         'Open from Needs attention → Review queue (N), or go to Pending PR review after helpers have been working.',
         'Filter by Room or Search. Use Previous / Next to move through the queue one submission at a time.',
         'Check photo and description. Set the legal fields only you control (legal status, value tier, sale-related approvals), then Approve or Reject / Archive (include a reason when rejecting).',
-        'Helpers cannot finalize legal status, value tier, or approve items for public sale — that stays with the Personal Representative.',
+        'Helpers cannot finalize legal status, value tier, or approve items for sale — that stays with the Personal Representative.',
         'After approve, the item joins the normal collections. After reject/archive, the record keeps an audit trail; helpers can recapture if needed.'
       ],
       tip: 'Add helpers under Settings → Helpers with the exact login name they will type and a unique PIN. Remind them to describe facts, not guess values.'
@@ -102,12 +104,12 @@ export const ESTATE_ADMIN_HELP_GUIDE = {
         'Manual cash picture and estate ledger: accounts, bills, money in/out, PR advances, and distributions.',
       howTo: [
         'On home, Estate Finances shows a Money overview card. Empty estates start with Add accounts. With cash, shortcuts include Pay a bill, Money came in, Give to heirs, and See full overview (closed estates: View money records).',
-        'See full overview opens Estate money. Primary tabs: Overview, Accounts, Pay a bill, Money in/out, Give to heirs. Secondary: Creditor claims, Money I advanced, Sale/auction sales, Inventory check.',
+        `See full overview opens Estate money. Primary tabs: Overview, Accounts, Pay a bill, Money in/out, Give to heirs. Secondary: Creditor claims, Money I advanced, ${saleAuctionCopy.ledgerTab}, Inventory check.`,
         'Under Accounts, list bank and cash accounts and mark Include in Cash on hand for balances that should drive the snapshot. Log debts and Property & other (not cash) so the picture stays honest.',
         'Pay a bill and Money came in record real-world moves. Money I advanced tracks PR loans to the estate. Give to heirs records distributions — keep receipts / acknowledgements with Distribution tools when you use them.',
-        'Open How money works inside the ledger for definitions. This is not a live bank feed — update balances after statements or transfers so you do not double-count deposits or unpaid auction bids.'
+        'Open How money works inside the ledger for definitions. This is not a live bank feed — update balances after statements or transfers so you do not double-count deposits or unpaid sale amounts.'
       ],
-      tip: 'Winning bids and sale activity are not cash until money is actually deposited. Reconcile Sale/auction sales back into the ledger when lots settle.'
+      tip: `Sale activity is not cash until money is actually deposited. Reconcile ${saleAuctionCopy.ledgerTab} back into the ledger when items settle.`
     },
     {
       id: 'family',
@@ -181,17 +183,17 @@ export const ESTATE_ADMIN_HELP_GUIDE = {
     },
     {
       id: 'sale',
-      label: 'Sale / auction',
+      label: saleAuctionCopy.shortCap,
       summary:
-        'Optional public sale window, lots, pickup, and PR bid blocking — skip until inventory and family decisions are further along.',
+        'Optional sale listing window, catalog items, pickup, and PR bid blocking — skip until inventory and family decisions are further along. Live online bidding is not required.',
       howTo: [
-        'Open Estate Settings → Sale / Auction to set schedule, pickup window, rules, and extra PR auction block emails (owner email is always blocked from bidding).',
-        'Only approve items for sale after legal status and family decisions are clear. Public lots come from approved inventory — not from unreviewed helper drafts.',
-        'Use EV Menu → Public auction (when relevant) to check the public-facing sale. Personal Representatives may not bid on the public sale.',
-        'When lots sell, reconcile under Estate money → Sale/auction sales and deposit proceeds into Accounts / Money came in so Cash on hand stays accurate.',
-        'Reports & exports → Sale/auction reconciliation builds a pack when you need a sale summary for counsel or records.'
+        `Open Estate Settings → ${saleAuctionCopy.settingsTitle} to set the sale listing window, pickup window, terms, and extra PR bid-block emails (owner email is always blocked from bidding).`,
+        'Only approve items for sale after legal status and family decisions are clear. Catalog items come from approved inventory — not from unreviewed helper drafts.',
+        `Use EV Menu → ${saleAuctionCopy.navPublic} (when relevant) to check the public-facing sale catalog. Personal Representatives may not bid on this estate’s sale catalog.`,
+        `When items sell, reconcile under Estate money → ${saleAuctionCopy.ledgerTab} and deposit proceeds into Accounts / Money came in so Cash on hand stays accurate.`,
+        `Reports & exports → ${saleAuctionCopy.reconciliation} builds a pack when you need a sale summary for counsel or records.`
       ],
-      tip: 'Sale tools are optional. Many estates never open a public auction — distribute privately or sell outside the portal and still log money in the ledger.'
+      tip: 'Sale inventory tools are optional. Many estates never open a public catalog — distribute privately or sell outside the portal and still log money in the ledger.'
     },
     {
       id: 'reports',
@@ -200,7 +202,7 @@ export const ESTATE_ADMIN_HELP_GUIDE = {
         'Court-supporting packs, catalogs, Family Updates, share links, and JSON backup — not e-filing.',
       howTo: [
         'Open EV Menu → Reports & exports (also from What’s next / Needs attention when Open Reports appears).',
-        'Choose a pack: Evidence pack (supporting), Formal accounting, Sale/auction reconciliation, Inventory reconciliation, Administration chronology, Gift & residual schedule, Decision / explanation notes, or Inventory catalog.',
+        `Choose a pack: Evidence pack (supporting), Formal accounting, ${saleAuctionCopy.reconciliation}, Inventory reconciliation, Administration chronology, Gift & residual schedule, Decision / explanation notes, or Inventory catalog.`,
         'Use Family Update to draft and publish a numbered update heirs can read in their portal. Use Share read-only for a limited share link when appropriate.',
         'Preview before export (PDF/HTML). Address completeness warnings — missing Letters, photos, accounts, or receipts — before relying on a pack with counsel.',
         'Download JSON (catalog backup) for an offline inventory backup. Exports support counsel and your records; Estate Vault does not file with the court.'

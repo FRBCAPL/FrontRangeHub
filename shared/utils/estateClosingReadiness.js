@@ -174,12 +174,12 @@ export function buildClosingChecklist({
     },
     {
       key: 'auction',
-      label: 'Sale/auction money settled',
+      label: 'Sale proceeds settled',
       status: outstandingBids > 0 ? 'warn' : 'done',
       detail:
         outstandingBids > 0
-          ? `${finance.outstandingBids ? formatMoney(finance.outstandingBids) : ''} in winning bids not yet collected.`
-          : 'No outstanding auction bids.'
+          ? `${finance.outstandingBids ? formatMoney(finance.outstandingBids) : ''} in sale amounts not yet collected.`
+          : 'No outstanding sale amounts.'
     },
     {
       key: 'distributions',
