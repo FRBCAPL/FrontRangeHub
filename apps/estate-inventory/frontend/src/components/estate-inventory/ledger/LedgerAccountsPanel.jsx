@@ -276,6 +276,22 @@ const LedgerAccountsPanel = ({ rows = [], caseNumber, readOnly, onChanged }) => 
   };
 
   const remove = async (row) => {
+    const name = String(row.account_name || '').trim() || 'this account';
+    const isDebt = row.kind === 'debt';
+    const balanceNum = Number(
+      row.computed_balance != null ? row.computed_balance : row.balance
+    );
+    const balanceBit =
+      Number.isFinite(balanceNum) && balanceNum !== 0
+        ? `\n\nCurrent balance on record: ${formatMoney(balanceNum)}.`
+        : '';
+    const ok = window.confirm(
+      isDebt
+        ? `Remove “${name}” from this estate’s debts?${balanceBit}`
+        : `Remove “${name}” from this estate’s accounts?${balanceBit}`
+    );
+    if (!ok) return;
+
     setBusy(true);
     setError('');
     const result = await estateInventoryService.deleteEstateAccount(row.id, caseNumber);

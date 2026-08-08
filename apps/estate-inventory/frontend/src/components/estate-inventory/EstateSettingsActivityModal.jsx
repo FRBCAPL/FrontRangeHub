@@ -28,6 +28,19 @@ function roleLabel(role) {
   return role || '—';
 }
 
+/** Avoid "PR · email · email" when name and email are the same value. */
+function actorIdentityBits(ev) {
+  const name = String(ev?.actor_name || '').trim();
+  const email = String(ev?.actor_email || '').trim();
+  if (name && email && name.toLowerCase() === email.toLowerCase()) {
+    return [email];
+  }
+  const bits = [];
+  if (name) bits.push(name);
+  if (email) bits.push(email);
+  return bits;
+}
+
 function eventLabel(type) {
   const t = String(type || '').toLowerCase();
   const map = {
@@ -139,8 +152,9 @@ const EstateSettingsActivityModal = ({ open, onClose }) => {
                 </div>
                 <div className="ei-activity-meta">
                   <span>{roleLabel(ev.actor_role)}</span>
-                  {ev.actor_name ? <span>· {ev.actor_name}</span> : null}
-                  {ev.actor_email ? <span>· {ev.actor_email}</span> : null}
+                  {actorIdentityBits(ev).map((bit) => (
+                    <span key={bit}>· {bit}</span>
+                  ))}
                 </div>
                 {ev.summary ? <p className="ei-activity-summary">{ev.summary}</p> : null}
               </li>
