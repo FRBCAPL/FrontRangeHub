@@ -17,11 +17,18 @@ import {
   EstateAuthTextInput,
   EstateAutofillTrap
 } from './EstateAuthField';
+import {
+  isCommonEstatePassword,
+  commonEstatePasswordMessage
+} from '@shared/utils/estatePasswordPolicy.js';
 import './EstateInventoryApp.css';
 
 function signupPasswordIssue({ password, confirmPassword }) {
   if (!password) return '';
   if (password.length < 8) return 'Password must be at least 8 characters.';
+  if (isCommonEstatePassword(password)) {
+    return commonEstatePasswordMessage();
+  }
   if (confirmPassword && password !== confirmPassword) {
     return 'Passwords do not match.';
   }
@@ -347,7 +354,7 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
                 </p>
               ) : (
                 <p id="ei-pr-password-help" className="ei-field-hint">
-                  At least 8 characters. Separate from each estate’s admin PIN.
+                  At least 8 characters. Avoid common codes like password or 12345678.
                 </p>
               )
             ) : null}

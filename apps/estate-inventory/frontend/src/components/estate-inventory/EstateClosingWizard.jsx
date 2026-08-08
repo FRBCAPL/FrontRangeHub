@@ -286,12 +286,27 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
                 id="ei-closing-reason"
                 rows={3}
                 value={reason}
-                onChange={(event) => setReason(event.target.value)}
+                onChange={(event) => {
+                  setReason(event.target.value);
+                  if (error) setError('');
+                }}
                 placeholder="e.g. Distribution complete; preserving final estate record"
+                aria-invalid={
+                  Boolean(error) || (reason.length > 0 && reason.trim().length < 8)
+                    ? true
+                    : undefined
+                }
+                aria-describedby="ei-closing-reason-help"
               />
-              <p className="ei-field-hint">
-                Your email, reason, and time are saved in the activity and settings histories.
-              </p>
+              {reason.length > 0 && reason.trim().length < 8 ? (
+                <p id="ei-closing-reason-help" className="ei-field-hint ei-field-hint--warn">
+                  Enter a reason of at least 8 characters.
+                </p>
+              ) : (
+                <p id="ei-closing-reason-help" className="ei-field-hint">
+                  Your email, reason, and time are saved in the activity and settings histories.
+                </p>
+              )}
             </div>
           ) : null}
         </>

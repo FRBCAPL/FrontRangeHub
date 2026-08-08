@@ -77,16 +77,31 @@ const EstateSettingsRecordsModal = ({ open, onClose, settings, onChanged }) => {
             id="ei-record-status-reason"
             rows={3}
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={(e) => {
+              setReason(e.target.value);
+              if (error) setError('');
+            }}
             placeholder={
               isClosed
                 ? 'e.g. Newly discovered property requires additional inventory work'
                 : 'e.g. Distribution complete; preserving final estate record'
             }
+            aria-invalid={
+              Boolean(error) || (reason.length > 0 && reason.trim().length < 8)
+                ? true
+                : undefined
+            }
+            aria-describedby="ei-record-status-reason-help"
           />
-          <p className="ei-field-hint">
-            Your email, reason, and time are saved in the activity and settings histories.
-          </p>
+          {reason.length > 0 && reason.trim().length < 8 ? (
+            <p id="ei-record-status-reason-help" className="ei-field-hint ei-field-hint--warn">
+              Enter a reason of at least 8 characters.
+            </p>
+          ) : (
+            <p id="ei-record-status-reason-help" className="ei-field-hint">
+              Your email, reason, and time are saved in the activity and settings histories.
+            </p>
+          )}
         </div>
 
         {error ? <div className="ei-error">{error}</div> : null}

@@ -2,24 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import { estateDisplayCaseNumber } from '@shared/utils/estateInventoryConstants.js';
+import {
+  isCommonEstatePassword,
+  commonEstatePasswordMessage
+} from '@shared/utils/estatePasswordPolicy.js';
 import { useEstateCase } from './EstateCaseContext';
 import './EstateInventoryApp.css';
-
-// Mirror of the server-side common-password rejection (F-06) so the user learns
-// the reason here instead of only after a round-trip.
-const COMMON_PASSWORDS = [
-  '123456',
-  '000000',
-  '111111',
-  '654321',
-  '777777',
-  '123123',
-  '121212',
-  '112233',
-  'password',
-  'abc123',
-  'qwerty'
-];
 
 /**
  * Returns the first reason the new password can't be saved yet, or '' when ready.
@@ -28,8 +16,8 @@ const COMMON_PASSWORDS = [
 function newPasswordIssue({ current, next, confirm }) {
   if (!next) return '';
   if (next.length < 6) return 'New password must be at least 6 characters.';
-  if (COMMON_PASSWORDS.includes(next.toLowerCase())) {
-    return 'That password is too common. Choose something only you would know.';
+  if (isCommonEstatePassword(next)) {
+    return commonEstatePasswordMessage();
   }
   if (current && next === current) {
     return 'Choose a password different from the starter PIN.';
