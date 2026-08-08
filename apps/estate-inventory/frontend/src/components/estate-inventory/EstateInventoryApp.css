@@ -11309,6 +11309,17 @@ button.ei-voice-btn.is-listening {
   background: #22c55e;
 }
 
+.ei-timeline-step.is-optional .ei-timeline-dot {
+  border-style: dashed;
+  background: transparent;
+  color: var(--ei-muted, #93a3ba);
+}
+
+.ei-timeline-step.is-optional .ei-timeline-title {
+  color: var(--ei-muted, #93a3ba);
+  font-weight: 500;
+}
+
 .ei-timeline-step.is-active .ei-timeline-dot {
   border-color: #38bdf8;
   background: #0f172a;

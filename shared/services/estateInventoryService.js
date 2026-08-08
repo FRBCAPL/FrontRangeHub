@@ -31,6 +31,7 @@ import {
   countsAsFundsDefaultForType
 } from '../utils/estateAccountTypes.js';
 import { isKnownContactCategory } from '../utils/estateContactTypes.js';
+import { roomTitleWithCode } from '../utils/estateInventoryRefCode.js';
 import { logEstateActivity, listEstateActivityEvents, writeEstateActivity } from './estateActivityLog.js';
 import { notifyEstateOperator } from './estateVaultAuth.js';
 import {
@@ -728,7 +729,14 @@ export async function listAllItemsWithRooms(caseNumber, opts = {}) {
     ? { success: true, data: opts.collections }
     : await listCollections(caseNumber);
   if (!collectionsResult.success) return collectionsResult;
-  const roomById = Object.fromEntries((collectionsResult.data || []).map((c) => [c.id, c.name]));
+  const roomById = Object.fromEntries(
+    (collectionsResult.data || []).map((c) => {
+      const name = c.name || 'Room';
+      const number = c.collection_number ?? c.collectionNumber;
+      const label = roomTitleWithCode(name, number);
+      return [c.id, { name, label }];
+    })
+  );
 
   const { data, error } = await selectItems((q) => {
     let next = q.eq('owner_id', estate.userId).order('created_at', { ascending: false });
@@ -739,10 +747,16 @@ export async function listAllItemsWithRooms(caseNumber, opts = {}) {
   if (error) return fail(error);
 
   return ok(
-    (data || []).map((item) => ({
-      ...item,
-      room: roomById[item.collection_id] || 'Unassigned'
-    }))
+    (data || []).map((item) => {
+      const room = roomById[item.collection_id];
+      const label = room?.label || room?.name || 'Unassigned';
+      return {
+        ...item,
+        room: label,
+        room_name: room ? label : null,
+        collection_name: room?.name || null
+      };
+    })
   );
 }
 

@@ -90,6 +90,7 @@ function buildAttentionItems({
     heirCount,
     hasFinalizedDistributions: dists.length > 0,
     inventoryCompleted: Boolean(settings?.inventory_completed_at),
+    lettersIssued: Boolean(settings?.letters_issued_at),
     skipPendingReviewGap: pendingCount > 0
   });
   const exceptions = sortAttentionCompletenessGaps(filtered);
@@ -175,6 +176,7 @@ const EstateNeedsAttentionPanel = ({
       homeData,
       inventoryCount,
       settings?.inventory_completed_at,
+      settings?.letters_issued_at,
       settings?.case_number,
       isClosed
     ]

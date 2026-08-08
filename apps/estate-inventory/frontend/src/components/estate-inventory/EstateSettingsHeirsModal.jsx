@@ -20,7 +20,7 @@ const PAGE = {
   add: 'add'
 };
 
-const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
+const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved, onChanged }) => {
   const { caseNumber } = useEstateCase();
   const [heirAccounts, setHeirAccounts] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -128,7 +128,16 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     setNewHeirInvite(generateHeirInviteCode());
     setInfo(`Added ${display}. PIN: ${invite}`);
     onInvitePasswordSaved?.();
+    onChanged?.();
     const list = await refreshHeirs();
+    setInviteByKey((prev) => ({
+      ...prev,
+      [siblingKey]: {
+        ...(prev[siblingKey] || {}),
+        sibling_key: siblingKey,
+        invite_configured: true
+      }
+    }));
     const idx = (list || []).findIndex((h) => h.sibling_key === siblingKey);
     if (idx >= 0) {
       setPersonIndex(idx);
@@ -163,6 +172,14 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     setInfo(`PIN updated for ${label}. New PIN: ${code}`);
     onInvitePasswordSaved?.();
     await refreshHeirs();
+    setInviteByKey((prev) => ({
+      ...prev,
+      [siblingKey]: {
+        ...(prev[siblingKey] || {}),
+        sibling_key: siblingKey,
+        invite_configured: true
+      }
+    }));
   };
 
   const handleHeirTierChange = async (siblingKey, label, nextTier) => {
@@ -343,14 +360,16 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
     }
     setInfo(`Removed ${label}.`);
     await refreshHeirs();
+    onChanged?.();
     setPage(PAGE.list);
   };
 
   const inviteStatus = (siblingKey) => {
     const row = inviteByKey[siblingKey];
-    if (!row) return 'PIN not loaded';
-    if (row.invite_configured) return 'PIN ready';
-    return 'Needs PIN';
+    if (row?.invite_configured) return 'PIN ready';
+    if (row && row.invite_configured === false) return 'Needs PIN';
+    // getAccessPasswords needs admin unlock — don't contradict a just-shown PIN.
+    return null;
   };
 
   const advisorsForHeir = (siblingKey) =>
@@ -479,6 +498,7 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                     ? 'minimal'
                     : normalizeFamilyFinancialVisibility(h.financial_visibility);
                   const visLabel = vis.charAt(0).toUpperCase() + vis.slice(1);
+                  const pinStatus = inviteStatus(h.sibling_key);
                   return (
                     <li key={h.sibling_key}>
                       <button
@@ -488,7 +508,8 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
                       >
                         <span className="ei-heir-pick-name">{label}</span>
                         <span className="ei-heir-pick-meta">
-                          {tierLabel} · {visLabel} · {inviteStatus(h.sibling_key)}
+                          {tierLabel} · {visLabel}
+                          {pinStatus ? ` · ${pinStatus}` : ''}
                         </span>
                         <span className="ei-heir-pick-cta">Open</span>
                       </button>
@@ -514,7 +535,12 @@ const EstateSettingsHeirsModal = ({ open, onClose, onInvitePasswordSaved }) => {
             ) : null}
             <EstateSettingsHeirPersonPage
               heir={activeHeir}
-              inviteStatusLabel={inviteStatus(activeHeir.sibling_key)}
+              inviteStatusLabel={
+                inviteStatus(activeHeir.sibling_key) ||
+                (lastIssued && lastIssued.name === personLabel
+                  ? 'PIN ready'
+                  : 'PIN status: open View passwords to confirm')
+              }
               advisors={advisorsForHeir(activeHeir.sibling_key)}
               resettingPin={resettingKey === activeHeir.sibling_key}
               onTierChange={handleHeirTierChange}

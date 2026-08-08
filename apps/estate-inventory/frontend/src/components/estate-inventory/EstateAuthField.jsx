@@ -68,7 +68,9 @@ export function EstateAuthTextInput({
   disabled,
   type = 'text',
   inputMode,
-  className = ''
+  className = '',
+  'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy
 }) {
   const { ref, locked, setLocked } = useDelayedUnlock(autoFocus);
 
@@ -90,6 +92,8 @@ export function EstateAuthTextInput({
       minLength={minLength}
       disabled={disabled}
       className={className}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
       autoComplete="off"
       autoCorrect="off"
       autoCapitalize="off"
@@ -116,7 +120,9 @@ export function EstateAuthPinInput({
   disabled,
   revealed = false,
   inputMode = 'text',
-  className = ''
+  className = '',
+  'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy
 }) {
   const { ref, locked, setLocked } = useDelayedUnlock(autoFocus);
 
@@ -138,6 +144,8 @@ export function EstateAuthPinInput({
       minLength={minLength}
       disabled={disabled}
       className={`ei-auth-pin${revealed ? ' is-revealed' : ''}${className ? ` ${className}` : ''}`}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
       autoComplete="one-time-code"
       autoCorrect="off"
       autoCapitalize="off"

@@ -53,17 +53,24 @@ export default function usePrHomeBootstrap({
         setFinanceLoading(false);
         return;
       }
-      setData(core.data);
+      // Reassemble with latest settings — settings may have hydrated while core loaded.
+      const coreFresh = reassemblePrHomeWithSettings(
+        core.data,
+        settingsRef.current || {}
+      );
+      setData(coreFresh);
       setLoading(false);
 
       const withFinance = await loadPrHomeFinance(
         caseNumber,
-        core.data,
+        coreFresh,
         settingsRef.current || {}
       );
       if (cancelled || seq !== seqRef.current) return;
       if (withFinance.success) {
-        setData(withFinance.data);
+        setData(
+          reassemblePrHomeWithSettings(withFinance.data, settingsRef.current || {})
+        );
       } else {
         setData((prev) =>
           prev
@@ -99,7 +106,9 @@ export default function usePrHomeBootstrap({
       );
       if (cancelled || seq !== financeSeqRef.current) return;
       if (withFinance.success) {
-        setData(withFinance.data);
+        setData(
+          reassemblePrHomeWithSettings(withFinance.data, settingsRef.current || {})
+        );
       } else {
         setData((prev) =>
           prev
@@ -119,10 +128,12 @@ export default function usePrHomeBootstrap({
   }, [caseNumber, financeRefreshKey]);
 
   // Settings hydrate / Letters / inventory flags — rebuild completeness locally.
+  // Also re-run when home data first lands (settings may already be ready).
   useEffect(() => {
-    if (!dataRef.current || !settings) return;
+    if (!data || !settings) return;
     setData((prev) => (prev ? reassemblePrHomeWithSettings(prev, settings) : prev));
   }, [
+    data != null,
     settings?.updated_at,
     settings?.inventory_completed_at,
     settings?.letters_issued_at,

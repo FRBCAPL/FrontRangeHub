@@ -7,7 +7,7 @@ import { useEstateCase } from './EstateCaseContext';
 /**
  * PR-managed helpers — each person gets a login name and unique 6-digit PIN.
  */
-const EstateSettingsHelpersModal = ({ open, onClose, onSaved }) => {
+const EstateSettingsHelpersModal = ({ open, onClose, onSaved, onChanged }) => {
   const { caseNumber } = useEstateCase();
   const [helpers, setHelpers] = useState([]);
   const [pinByKey, setPinByKey] = useState({});
@@ -88,6 +88,7 @@ const EstateSettingsHelpersModal = ({ open, onClose, onSaved }) => {
     setNewPin(generateHelperPin());
     setInfo(`Added ${display}. PIN: ${pin}`);
     onSaved?.();
+    onChanged?.();
     await refresh();
   };
 
@@ -139,6 +140,7 @@ const EstateSettingsHelpersModal = ({ open, onClose, onSaved }) => {
     setHelpers((prev) => prev.filter((h) => h.helper_key !== helperKey));
     setInfo(`Removed ${label}.`);
     onSaved?.();
+    onChanged?.();
     await refresh();
   };
 

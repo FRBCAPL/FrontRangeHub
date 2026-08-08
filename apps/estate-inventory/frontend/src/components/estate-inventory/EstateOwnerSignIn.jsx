@@ -19,6 +19,15 @@ import {
 } from './EstateAuthField';
 import './EstateInventoryApp.css';
 
+function signupPasswordIssue({ password, confirmPassword }) {
+  if (!password) return '';
+  if (password.length < 8) return 'Password must be at least 8 characters.';
+  if (confirmPassword && password !== confirmPassword) {
+    return 'Passwords do not match.';
+  }
+  return '';
+}
+
 /**
  * PR identity gate — Google or email/password (create account / sign in).
  */
@@ -167,10 +176,13 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
   const disabled = busy || googleBusy || resendBusy || inviteBlocked;
   const leaveDisabled = busy || googleBusy || resendBusy;
   const showResend = !isSignup && Boolean(pendingConfirmEmail);
+  const liveIssue = isSignup
+    ? signupPasswordIssue({ password, confirmPassword })
+    : '';
   const canSubmit =
     email.trim() &&
     password &&
-    (!isSignup || (confirmPassword && password === confirmPassword && password.length >= 8));
+    (!isSignup || (Boolean(confirmPassword) && !liveIssue));
 
   return (
     <EstateLegalDisclaimerGate>
@@ -316,6 +328,8 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
                 required
                 minLength={isSignup ? 8 : 1}
                 disabled={disabled}
+                aria-invalid={isSignup ? Boolean(liveIssue) : undefined}
+                aria-describedby={isSignup ? 'ei-pr-password-help' : undefined}
               />
               <button
                 type="button"
@@ -327,9 +341,15 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
               </button>
             </div>
             {isSignup ? (
-              <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
-                At least 8 characters. Separate from each estate’s admin PIN.
-              </p>
+              liveIssue ? (
+                <p id="ei-pr-password-help" className="ei-field-hint ei-field-hint--warn">
+                  {liveIssue}
+                </p>
+              ) : (
+                <p id="ei-pr-password-help" className="ei-field-hint">
+                  At least 8 characters. Separate from each estate’s admin PIN.
+                </p>
+              )
             ) : null}
           </div>
 
@@ -345,6 +365,8 @@ const EstateOwnerSignIn = ({ onSignedIn }) => {
                 required
                 minLength={8}
                 disabled={disabled}
+                aria-invalid={Boolean(liveIssue)}
+                aria-describedby="ei-pr-password-help"
               />
             </div>
           ) : null}

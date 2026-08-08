@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
 import {
-  BENEFICIARY_OPTIONS,
   ITEM_CONDITION,
   LEGAL_STATUS,
   LEGAL_STATUS_EDIT_OPTIONS,
@@ -14,6 +13,7 @@ import { roomTitleWithCode } from '@shared/utils/estateInventoryRefCode.js';
 import VoiceNotesButton from './VoiceNotesButton';
 import ItemConditionFields from './ItemConditionFields';
 import DescendantsInterestField from './DescendantsInterestField';
+import BeneficiarySelect from './BeneficiarySelect';
 import { useEstateCase } from './EstateCaseContext';
 
 const STEPS = [
@@ -685,19 +685,13 @@ const AddItemFlow = ({
                 {isMemorandumAsset ? (
                   <div className="ei-field ei-field-tight" style={{ marginTop: '0.75rem' }}>
                     <label htmlFor="ei-add-beneficiary">Assigned beneficiary</label>
-                    <select
+                    <BeneficiarySelect
                       id="ei-add-beneficiary"
                       value={assignedBeneficiary}
-                      onChange={(e) => setAssignedBeneficiary(e.target.value)}
+                      onChange={setAssignedBeneficiary}
+                      caseNumber={caseLabel}
                       required
-                    >
-                      <option value="">Select…</option>
-                      {BENEFICIARY_OPTIONS.map((nameOpt) => (
-                        <option key={nameOpt} value={nameOpt}>
-                          {nameOpt}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 ) : null}
               </div>

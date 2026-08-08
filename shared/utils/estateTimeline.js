@@ -10,7 +10,9 @@ import {
   resolveProbateWindow,
   resolveAuctionWindow,
   formatEstateDisplayDate,
-  parseEstateLocalDate
+  parseEstateLocalDate,
+  estateCalendarDaysRemaining,
+  estateCalendarDatePassed
 } from './estateInventoryConstants.js';
 import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
 
@@ -24,23 +26,6 @@ function toDate(value) {
 
 function fmt(value) {
   return formatEstateDisplayDate(value);
-}
-
-function daysRemaining(end, now) {
-  const endDate = toDate(end);
-  if (!endDate) return null;
-  const endMs = new Date(
-    endDate.getFullYear(),
-    endDate.getMonth(),
-    endDate.getDate(),
-    23,
-    59,
-    59,
-    999
-  ).getTime();
-  const diff = endMs - now.getTime();
-  if (diff <= 0) return 0;
-  return Math.ceil(diff / 86400000);
 }
 
 function formatMonthYear(value) {
@@ -115,8 +100,10 @@ export function buildEstateTimeline({
   const probate = resolveProbateWindow(settings);
   const auction = resolveAuctionWindow(settings, now);
   const lettersDate = fmt(settings.letters_issued_at);
-  const probateEnded = probate.end ? now > probate.end : false;
-  const remainingDays = probate.end && !probateEnded ? daysRemaining(probate.end, now) : null;
+  const lettersDone = Boolean(settings.letters_issued_at);
+  const probateEnded = probate.end ? estateCalendarDatePassed(probate.end, now) : false;
+  const remainingDays =
+    probate.end && !probateEnded ? estateCalendarDaysRemaining(probate.end, now) : null;
   const closedDate = fmt(settings.closed_at);
   const estateClosed = Boolean(settings.closed_at);
 
@@ -144,10 +131,12 @@ export function buildEstateTimeline({
     }
   }
 
-  // Sale inventory is optional. Unscheduled with nothing for sale does not block closure.
+  // Sale inventory is optional. Unscheduled with nothing for sale does not block
+  // progress — but it must not count as a completed milestone (CS-03 / CS-10).
   let auctionTitle = saleAuctionCopy.shortCap;
   let auctionNote = `Optional — set ${saleAuctionCopy.listingWindow} dates if you will sell items`;
   let auctionDone = false;
+  let auctionOptional = false;
   if (auction.phase === 'ended') {
     auctionTitle = `${saleAuctionCopy.shortCap} complete`;
     auctionNote = auction.label;
@@ -165,8 +154,7 @@ export function buildEstateTimeline({
         ? `${approvedForSale} item(s) approved for sale — set ${saleAuctionCopy.listingWindow} dates`
         : `Offers recorded — set or confirm ${saleAuctionCopy.listingWindow} dates`;
   } else {
-    // Nothing to sell / no dates → treat as complete so the timeline can move on.
-    auctionDone = true;
+    auctionOptional = true;
     auctionNote = 'Not scheduled (optional)';
   }
 
@@ -180,6 +168,9 @@ export function buildEstateTimeline({
     if (probateEnded) {
       claimsTitle = 'Claims period ended';
       claimsNote = `Closed ${fmt(probate.end)}`;
+    } else if (remainingDays === 0) {
+      claimsTitle = 'Claims period open';
+      claimsNote = `Ends today · ${fmt(probate.end)}`;
     } else if (remainingDays != null) {
       claimsTitle = 'Claims period open';
       claimsNote =
@@ -200,8 +191,8 @@ export function buildEstateTimeline({
     },
     {
       key: 'letters',
-      title: 'Letters received',
-      done: Boolean(settings.letters_issued_at),
+      title: lettersDone ? 'Letters received' : 'Letters',
+      done: lettersDone,
       note: lettersDate
         ? `Issued ${lettersDate}`
         : 'Add the date the court issued your Letters'
@@ -222,6 +213,7 @@ export function buildEstateTimeline({
       key: 'auction',
       title: auctionTitle,
       done: auctionDone || estateClosed,
+      optional: auctionOptional && !estateClosed,
       note: auctionNote
     },
     {
@@ -242,18 +234,26 @@ export function buildEstateTimeline({
     },
     {
       key: 'closed',
-      title: 'Estate closed',
+      title: estateClosed ? 'Estate closed' : 'Close estate',
       done: estateClosed,
       note: closedDate ? `Closed ${closedDate}` : 'Final step once everything is distributed'
     }
   ];
 
-  const firstOpen = defs.findIndex((s) => !s.done);
+  // Optional unscheduled steps do not block “You are here” and do not count as done.
+  const firstOpen = defs.findIndex((s) => !s.done && !s.optional);
   const steps = defs.map((s, i) => ({
     key: s.key,
     title: s.title,
     note: s.note,
-    status: s.done ? 'done' : i === firstOpen ? 'active' : 'upcoming'
+    optional: Boolean(s.optional),
+    status: s.done
+      ? 'done'
+      : s.optional
+        ? 'optional'
+        : i === firstOpen
+          ? 'active'
+          : 'upcoming'
   }));
 
   // Expectation setter — not legal advice. Prefer the later of claims end / auction end.

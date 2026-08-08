@@ -133,7 +133,8 @@ export function buildFormalAccountingStatement({
       name: row.account_name || row.label || row.name || 'Account',
       institution: row.institution || '',
       balance: money(row.balance),
-      asOf: row.as_of_date || row.updated_at
+      // Ending Schedule C uses statement period end — not opening as_of_date (CS-13).
+      asOf: periodEnd
     }));
 
   const accountDebtRows = (finance.accounts || [])
@@ -143,7 +144,7 @@ export function buildFormalAccountingStatement({
       name: row.account_name || row.label || row.name || 'Debt',
       institution: row.institution || row.creditor || '',
       balance: money(row.balance),
-      asOf: row.as_of_date || row.updated_at
+      asOf: periodEnd
     }));
 
   const prLoanRows = (finance.prLoans || []).map((row) => ({
@@ -408,11 +409,11 @@ ${warningList ? `<ul class="muted">${warningList}</ul>` : ''}
 <tbody>${distributionRows || '<tr><td colspan="6">No finalized distributions</td></tr>'}</tbody></table>
 
 <h2>Schedule C — Accounts the estate holds (ending)</h2>
-<table class="detail"><thead><tr><th>Account</th><th>Institution</th><th>Balance</th><th>As of</th></tr></thead>
+<table class="detail"><thead><tr><th>Account</th><th>Institution</th><th>Balance</th><th>Balance as of</th></tr></thead>
 <tbody>${assetRows || '<tr><td colspan="4">No accounts listed</td></tr>'}</tbody></table>
 
 <h2>Schedule D — Debts the estate owes (ending)</h2>
-<table class="detail"><thead><tr><th>Debt</th><th>Creditor</th><th>Amount</th><th>As of</th></tr></thead>
+<table class="detail"><thead><tr><th>Debt</th><th>Creditor</th><th>Amount</th><th>Balance as of</th></tr></thead>
 <tbody>${debtRows || '<tr><td colspan="4">No debts listed</td></tr>'}</tbody></table>
 
 <h2>Schedule E — PR loans to the estate</h2>

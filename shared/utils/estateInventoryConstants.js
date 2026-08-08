@@ -64,6 +64,35 @@ export function parseEstateLocalDate(value) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/**
+ * Whole calendar days from today to an end date (local).
+ * Same number everywhere — header “days left” and timeline “days remaining”.
+ * On the end date returns 0; after the end date returns 0.
+ */
+export function estateCalendarDaysRemaining(end, now = new Date()) {
+  const endDay =
+    end instanceof Date && !Number.isNaN(end.getTime())
+      ? new Date(end.getFullYear(), end.getMonth(), end.getDate())
+      : parseEstateLocalDate(end);
+  if (!endDay) return null;
+  const n = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  const diff = Math.round((endDay.getTime() - today.getTime()) / 86400000);
+  return Math.max(0, diff);
+}
+
+/** True when today's local calendar date is strictly after the end date. */
+export function estateCalendarDatePassed(end, now = new Date()) {
+  const endDay =
+    end instanceof Date && !Number.isNaN(end.getTime())
+      ? new Date(end.getFullYear(), end.getMonth(), end.getDate())
+      : parseEstateLocalDate(end);
+  if (!endDay) return false;
+  const n = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+  const today = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  return today.getTime() > endDay.getTime();
+}
+
 export function formatEstateLocalDate(date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
   const y = date.getFullYear();
@@ -885,7 +914,7 @@ export function descendantsInterestLabel(pctOrFlag) {
   return null;
 }
 
-/** Memorandum beneficiary presets — estate-agnostic. Add named heirs in Settings. */
+/** Memorandum beneficiary presets — estate people load live in BeneficiarySelect. */
 export const BENEFICIARY_OPTIONS = ['Other'];
 
 export function legalStatusLabel(value) {

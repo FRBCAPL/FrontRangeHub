@@ -18,25 +18,31 @@ export function formatBillingMoney(cents = ESTATE_BILLING_PLAN.amountCents) {
   return `$${(Number(cents) / 100).toFixed(Number(cents) % 100 === 0 ? 0 : 2)}`;
 }
 
+/** Marketing price phrase from plan SOT (ignore API round cents that show as $29). */
+export function billingPricePhrase({ compact = false } = {}) {
+  const price = formatBillingMoney(ESTATE_BILLING_PLAN.amountCents);
+  return compact ? `${price}/mo` : `${price}/month`;
+}
+
 /** One-line soft pricing for landings / create / What is Vault. */
 export function estatePricingBlurbShort() {
-  const price = formatBillingMoney();
+  const price = billingPricePhrase();
   return (
     `Your first estate includes a ${ESTATE_BILLING_PLAN.trialDays}-day free trial.` + 
-     `\nBilled at ${price}/month after the ${ESTATE_BILLING_PLAN.trialDays}-day trial.` +
-    `\nAdditional estates start at ${price}/month. ` +
+     `\nBilled at ${price} after the ${ESTATE_BILLING_PLAN.trialDays}-day trial.` +
+    `\nAdditional estates start at ${price}. ` +
     `\nFamily, helpers, and the public sale are always free with paid PR access.`
   );
 }
 
 /** Slightly longer FAQ-style answer. */
 export function estatePricingFaqAnswer() {
-  const price = formatBillingMoney();
+  const price = billingPricePhrase();
   return (
     `Estate Vault is billed per estate (per case), not per heir or helper. ` +
     `Only your first estate as Personal Representative includes a ${ESTATE_BILLING_PLAN.trialDays}-day free trial. ` +
-    `After that first trial, ${price}/month keeps that estate open. ` +
-    `If you open another estate, it starts at ${price}/month with a ${ESTATE_BILLING_PLAN.graceDays}-day grace period to subscribe — no second free trial. ` +
+    `After that first trial, ${price} keeps that estate open. ` +
+    `If you open another estate, it starts at ${price} with a ${ESTATE_BILLING_PLAN.graceDays}-day grace period to subscribe — no second free trial. ` +
     `You can cancel in the Stripe customer portal when an estate is finished. ` +
     `If a subscription lapses, there is a ${ESTATE_BILLING_PLAN.graceDays}-day grace period with warnings; ` +
     `then Personal Representative, family, helper, and auction access for that estate pause until renewed. ` +
@@ -121,15 +127,15 @@ export function lockedPortalMessage(access) {
 
 /** Clear copy when the estate is frozen after trial/grace without payment. */
 export function frozenEstateBannerMessage(access, priceLabel) {
-  const price = priceLabel || formatBillingMoney(access?.amount_cents);
+  const price = priceLabel || billingPricePhrase({ compact: true });
   if (access?.needs_subscribe_no_trial) {
     return (
       access.message ||
-      `This additional estate is frozen. Subscribe at ${price}/mo to reopen Personal Representative, family, helper, and auction access.`
+      `This additional estate is frozen. Subscribe at ${price} to reopen Personal Representative, family, helper, and auction access.`
     );
   }
   return (
     access?.message ||
-    `This estate is frozen — the free trial ended without a subscription. Subscribe at ${price}/mo to reopen Personal Representative, family, helper, and auction access.`
+    `This estate is frozen — the free trial ended without a subscription. Subscribe at ${price} to reopen Personal Representative, family, helper, and auction access.`
   );
 }

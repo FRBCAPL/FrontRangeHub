@@ -1,6 +1,6 @@
 import React from 'react';
-import { BENEFICIARY_OPTIONS } from '@shared/utils/estateInventoryConstants.js';
 import DescendantsInterestField from './DescendantsInterestField';
+import BeneficiarySelect from './BeneficiarySelect';
 
 /**
  * Clear PR choice: memorandum gift vs residual descendants' interest %.
@@ -13,9 +13,11 @@ const MemorandumInterestSection = ({
   onMemorandumChange,
   assignedBeneficiary = '',
   onBeneficiaryChange,
+  onPersonAdded,
   descendantsInterestPct = null,
   onDescendantsInterestPctChange,
-  compact = false
+  compact = false,
+  caseNumber = null
 }) => {
   const memoId = `${idPrefix}-memo`;
   const residualId = `${idPrefix}-residual`;
@@ -73,20 +75,15 @@ const MemorandumInterestSection = ({
         <div className="ei-ownership-followup">
           <div className="ei-field ei-field-tight">
             <label htmlFor={benId}>Assigned beneficiary</label>
-            <select
+            <BeneficiarySelect
               id={benId}
               className={compact ? 'ei-inline-select' : undefined}
               value={assignedBeneficiary || ''}
-              onChange={(e) => onBeneficiaryChange?.(e.target.value)}
+              onChange={onBeneficiaryChange}
+              onPersonAdded={onPersonAdded}
+              caseNumber={caseNumber}
               required
-            >
-              <option value="">Select…</option>
-              {BENEFICIARY_OPTIONS.map((nameOpt) => (
-                <option key={nameOpt} value={nameOpt}>
-                  {nameOpt}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <DescendantsInterestField
             id={`${idPrefix}-memo-pct`}

@@ -253,6 +253,9 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
       const match = list.find((c) => c.id === activeCollection.id) || activeCollection;
       await openCollection(match);
     }
+    // Home tiles / What’s next / status strip read homeData — bump so counts update without nav.
+    setPendingRefreshKey((n) => n + 1);
+    setFinanceRefreshKey((n) => n + 1);
   };
 
   const handleCollectionCreatedFromItem = (collection) => {
@@ -260,6 +263,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
       if (prev.some((c) => c.id === collection.id)) return prev;
       return [collection, ...prev];
     });
+    setPendingRefreshKey((n) => n + 1);
   };
 
   const handleUpdateItem = async (itemId, patch) => {
@@ -639,6 +643,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
           setBanner('Settings saved.');
           setFinanceRefreshKey((n) => n + 1);
         }}
+        onPeopleChanged={() => setPendingRefreshKey((n) => n + 1)}
       />
 
       <EstateWhatsNewModal

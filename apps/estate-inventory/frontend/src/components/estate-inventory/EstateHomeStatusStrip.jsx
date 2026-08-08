@@ -84,7 +84,9 @@ const EstateHomeStatusStrip = ({
     [settings, roomCount, itemCount, itemStats]
   );
 
-  const current = steps.find((s) => s.status === 'active') || steps.find((s) => s.status !== 'done');
+  const current =
+    steps.find((s) => s.status === 'active') ||
+    steps.find((s) => s.status !== 'done' && s.status !== 'optional');
   const progressLabel = current?.title || 'Getting started';
   const inventoryValue = !inventoryReady
     ? 'Loading…'

@@ -430,7 +430,7 @@ const DistributionWizard = ({ open, readiness, accounts = [], caseNumber, onClos
                   <div>
                     <strong>{item.name}</strong>
                     <span>
-                      {item.room_name || item.collection_name || 'Room not recorded'}
+                      {item.room || item.room_name || item.collection_name || 'Room not recorded'}
                       {item.estimated_value != null
                         ? ` · ${formatMoney(item.estimated_value)}`
                         : ''}

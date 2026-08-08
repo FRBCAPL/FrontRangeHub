@@ -10,7 +10,7 @@ import {
   billingPhaseLabel,
   billingBannerTone,
   billingDaysPhrase,
-  formatBillingMoney,
+  billingPricePhrase,
   isBillingLocked,
   shouldShowHomeBillingBanner,
   frozenEstateBannerMessage
@@ -106,7 +106,8 @@ const EstateBillingBanner = ({
 
   const days = billingDaysPhrase(access.days_remaining);
   const locked = isBillingLocked(access);
-  const price = formatBillingMoney(access.amount_cents || ESTATE_BILLING_PLAN.amountCents);
+  const price = billingPricePhrase({ compact: true });
+  const priceMonth = billingPricePhrase();
 
   const renew = async () => {
     setBusy('checkout');
@@ -144,13 +145,13 @@ const EstateBillingBanner = ({
     ? frozenEstateBannerMessage(access, price)
     : phase === 'grace'
       ? access.message ||
-        `Renew now (${price}/mo) to avoid freezing this estate — family, helpers, and the public sale will pause.`
+        `Renew now (${price}) to avoid freezing this estate — family, helpers, and the public sale will pause.`
       : phase === 'trial'
-        ? `Free trial · first estate only. After trial: ${price}/mo. Extra estates bill from day one.`
+        ? `Free trial · first estate only. After trial: ${price}. Extra estates bill from day one.`
         : access.cancel_at_period_end
           ? `Subscription cancels at period end. You can resume anytime from Manage subscription in the Menu, or renew below.`
           : access.message ||
-            `${ESTATE_BILLING_PLAN.name} · ${price}/${access.interval || 'month'}`;
+            `${ESTATE_BILLING_PLAN.name} · ${priceMonth}`;
 
   return (
     <section
@@ -193,7 +194,7 @@ const EstateBillingBanner = ({
             disabled={Boolean(busy)}
             onClick={renew}
           >
-            {busy === 'checkout' || busy === 'confirm' ? 'Working…' : `Subscribe · ${price}/mo`}
+            {busy === 'checkout' || busy === 'confirm' ? 'Working…' : `Subscribe · ${price}`}
           </button>
         ) : null}
         {/* Manage lives in Menu once subscribed; keep on banner for Settings / canceling. */}

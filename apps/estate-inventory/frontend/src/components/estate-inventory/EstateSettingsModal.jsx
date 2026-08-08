@@ -90,7 +90,14 @@ const ALL_SECTION_IDS = SETTINGS_GROUPS.flatMap((g) => g.items.map((s) => s.id))
 /**
  * Settings menu — opens one focused section modal at a time.
  */
-const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialSection = null }) => {
+const EstateSettingsModal = ({
+  open,
+  onClose,
+  initialSettings,
+  onSaved,
+  onPeopleChanged,
+  initialSection = null
+}) => {
   const [section, setSection] = useState(null);
   const [settings, setSettings] = useState(initialSettings || null);
   const [passwordRefreshKey, setPasswordRefreshKey] = useState(0);
@@ -226,11 +233,13 @@ const EstateSettingsModal = ({ open, onClose, initialSettings, onSaved, initialS
         open={section === 'helper'}
         onClose={closeSection}
         onSaved={handlePasswordSaved}
+        onChanged={onPeopleChanged}
       />
       <EstateSettingsHeirsModal
         open={section === 'heirs'}
         onClose={closeSection}
         onInvitePasswordSaved={handlePasswordSaved}
+        onChanged={onPeopleChanged}
       />
     </>
   );

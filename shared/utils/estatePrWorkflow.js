@@ -249,6 +249,8 @@ export function buildWhatsNextSteps({
 /**
  * Filter export-completeness gaps for the Needs attention home panel.
  * Keeps day-one noise down; export certificate still shows the full list.
+ * Resolved Letters / inventory-complete must never stay as false positives —
+ * use live settings flags (same truth as the accounting export).
  */
 export function filterAttentionCompletenessGaps(exceptions = [], ctx = {}) {
   const {
@@ -257,6 +259,7 @@ export function filterAttentionCompletenessGaps(exceptions = [], ctx = {}) {
     heirCount = 0,
     hasFinalizedDistributions = false,
     inventoryCompleted = false,
+    lettersIssued = false,
     skipPendingReviewGap = false
   } = ctx;
 
@@ -270,6 +273,9 @@ export function filterAttentionCompletenessGaps(exceptions = [], ctx = {}) {
   return (exceptions || []).filter((row) => {
     const key = row?.key;
     if (!key) return false;
+    // Drop gaps that live settings already satisfy (stale home bootstrap certificate).
+    if (key === 'letters' && lettersIssued) return false;
+    if (key === 'inventory_complete' && inventoryCompleted) return false;
     if (key === 'pending_review' && skipPendingReviewGap) return false;
     if (key === 'family_update' && !disclosureReady) return false;
     if (key === 'inventory_complete' && !inventoryStarted) return false;

@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { resolveProbateWindow } from '@shared/utils/estateInventoryConstants.js';
+import {
+  resolveProbateWindow,
+  estateCalendarDaysRemaining
+} from '@shared/utils/estateInventoryConstants.js';
 import EstateRoleGuide from './EstateRoleGuide';
 import GlossaryTerm from './GlossaryTerm';
 
@@ -87,11 +90,15 @@ const ProbateCountdown = ({
       statusText = 'Probate window ended';
       tone = 'warn';
     } else {
-      const days = Math.floor(remainingMs / 86400000);
+      const days = estateCalendarDaysRemaining(windowInfo.end) ?? 0;
       const endsOn = formatEndsOnShort(windowInfo.end);
-      statusText = endsOn
-        ? `${days} day${days === 1 ? '' : 's'} left · ends ${endsOn}`
-        : `${days} day${days === 1 ? '' : 's'} left`;
+      if (days === 0) {
+        statusText = endsOn ? `Ends today · ${endsOn}` : 'Ends today';
+      } else {
+        statusText = endsOn
+          ? `${days} day${days === 1 ? '' : 's'} left · ends ${endsOn}`
+          : `${days} day${days === 1 ? '' : 's'} left`;
+      }
       tone = 'probate';
     }
 
@@ -141,7 +148,8 @@ const ProbateCountdown = ({
     body = <p className="ei-countdown-expired">Probate window has ended.</p>;
   } else {
     const totalSec = Math.floor(remainingMs / 1000);
-    const days = Math.floor(totalSec / 86400);
+    // Day digit matches header/timeline; hours/min/sec keep live EOD countdown.
+    const days = estateCalendarDaysRemaining(windowInfo.end) ?? Math.floor(totalSec / 86400);
     const hours = Math.floor((totalSec % 86400) / 3600);
     const minutes = Math.floor((totalSec % 3600) / 60);
     const seconds = totalSec % 60;

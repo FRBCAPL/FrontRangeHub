@@ -36,12 +36,14 @@ const LedgerDistributionsPanel = ({
   const [receipt, setReceipt] = useState(null);
   const [reloadToken, setReloadToken] = useState(0);
 
-  const load = async () => {
+  const load = async ({ forceFreshFinance = false } = {}) => {
     setBusy(true);
     setError('');
     try {
+      // After finalize, never reuse cached finance — withdrawals just posted and a
+      // stale fundTransactions list falsely triggers "missing Funds withdrawal".
       const result = await estateInventoryService.getDistributionReadiness(caseNumber, {
-        finance: financeSummary || undefined
+        finance: forceFreshFinance ? undefined : financeSummary || undefined
       });
       if (!result.success) {
         setError(result.error || 'Could not load distributions.');
@@ -64,10 +66,11 @@ const LedgerDistributionsPanel = ({
   const finishDistribution = async (data) => {
     setShowWizard(false);
     setInfo(
-      'Distribution finalized. Add a short decision note while it’s fresh, update account balances if cash left the estate, then publish a Family Update from Reports.'
+      'Distribution finalized. Add a short decision note while it’s fresh, then publish a Family Update from Reports.'
     );
-    await load();
+    // Refresh parent finance first, then reload readiness without the pre-finalize cache.
     await onChanged?.();
+    await load({ forceFreshFinance: true });
     setDecisionContext({
       defaultTopic:
         data?.classification === 'interim'
@@ -139,8 +142,8 @@ const LedgerDistributionsPanel = ({
         ? `Distribution reversed. ${result.warning}`
         : 'Distribution reversed. Original record kept; Estate Funds restored with a compensating adjustment.'
     );
-    await load();
     await onChanged?.();
+    await load({ forceFreshFinance: true });
   };
 
   const receiptPayload = (distribution, recipient) => ({
