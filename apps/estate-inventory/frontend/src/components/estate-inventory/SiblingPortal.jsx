@@ -11,6 +11,7 @@ import {
   normalizeFamilyReleases,
   estateitCasePath,
   estateDisplayName,
+  normalizeEstateCaseNumber,
   heirCanBrowseRooms,
   heirCanRequestItems,
   heirPublicName,
@@ -117,14 +118,48 @@ const SiblingPortal = () => {
   const [estateSettings, setEstateSettings] = useState({});
   const [inheritanceRows, setInheritanceRows] = useState([]);
 
-  const loadEstateLabel = async () => {
+  const loadEstateLabel = async (activeSession = null) => {
+    const sess =
+      activeSession ||
+      session ||
+      estateInventoryService.getStoredSiblingSession(routeCase);
+
+    // Heirs cannot use PR getSettings — resolve the friendly name from the sibling session.
+    if (sess?.token) {
+      const labelResult = await estateInventoryService.getSiblingEstateLabel(sess.token);
+      if (labelResult.success) {
+        setEstateLabel(estateDisplayName(labelResult.data, routeCase));
+        setEstateSettings((prev) => ({
+          ...prev,
+          estate_name: labelResult.data?.estate_name || prev.estate_name,
+          case_number: labelResult.data?.case_number || prev.case_number || routeCase,
+          court_case_number:
+            labelResult.data?.court_case_number ?? prev.court_case_number
+        }));
+        return;
+      }
+    }
+
     const result = await estateInventoryService.getSettings(routeCase);
     if (result.success) {
       setEstateLabel(estateDisplayName(result.data, routeCase));
       setEstateSettings(result.data || {});
-    } else {
-      setEstateLabel(routeCase);
+      return;
     }
+
+    const listed = await estateInventoryService.listPublicEstates();
+    if (listed.success) {
+      const want = normalizeEstateCaseNumber(routeCase);
+      const match = (listed.data || []).find(
+        (e) => normalizeEstateCaseNumber(e.caseNumber) === want
+      );
+      if (match?.estateName) {
+        setEstateLabel(estateDisplayName(match.estateName, routeCase));
+        return;
+      }
+    }
+
+    setEstateLabel(routeCase);
   };
 
   const loadInheritance = async () => {
@@ -193,8 +228,14 @@ const SiblingPortal = () => {
         result.data.inventory_completed_at ?? prev.inventory_completed_at,
       closed_at: result.data.closed_at ?? prev.closed_at,
       created_at: result.data.created_at ?? prev.created_at,
-      estate_name: result.data.estate_name || prev.estate_name
+      estate_name: result.data.estate_name || prev.estate_name,
+      court_case_number: result.data.court_case_number ?? prev.court_case_number
     }));
+    if (result.data.estate_name) {
+      setEstateLabel(estateDisplayName(result.data, routeCase));
+    } else {
+      void loadEstateLabel(activeSession);
+    }
     setSession((prev) => {
       if (!prev) return prev;
       return {
@@ -222,8 +263,8 @@ const SiblingPortal = () => {
   useEffect(() => {
     setCaseNumber(routeCase);
     setEstateLabel(routeCase);
-    loadEstateLabel();
     const stored = estateInventoryService.getStoredSiblingSession(routeCase);
+    void loadEstateLabel(stored);
     if (stored?.token) {
       setSession(stored);
       setNeedsPreferredName(Boolean(stored.needs_preferred_name));
@@ -860,6 +901,7 @@ const SiblingPortal = () => {
         title="Family portal"
         subtitle={estateLabel}
         estateName={estateLabel}
+        displayCaseNumber={estateSettings?.court_case_number || null}
         crumbs={[
           { label: 'Home', to: caseHome },
           { label: 'Family' }

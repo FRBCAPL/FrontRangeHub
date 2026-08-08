@@ -2385,11 +2385,47 @@ export async function siblingListItems(token) {
     can_browse_rooms: canBrowseRooms,
     letters_issued_at: data.letters_issued_at || null,
     case_number: data.case_number || '',
+    estate_name: data.estate_name != null ? String(data.estate_name).trim() || null : null,
+    court_case_number:
+      data.court_case_number != null ? String(data.court_case_number).trim() || null : null,
     probate_window_mode: data.probate_window_mode || 'duration',
     probate_window_amount: data.probate_window_amount ?? 90,
     probate_window_unit: data.probate_window_unit || 'days',
     probate_window_end_date: data.probate_window_end_date || null,
     items: data.items || []
+  });
+}
+
+/** Friendly estate name for a signed-in heir (PR getSettings is not available). */
+export async function getSiblingEstateLabel(token) {
+  const sessionToken = token || getStoredSiblingSession()?.token;
+  if (!sessionToken) return fail('Please sign in.');
+  const { data, error } = await supabase.rpc('estate_sibling_estate_label', {
+    p_token: sessionToken
+  });
+  const failed = rpcFail(data, error);
+  if (failed) {
+    if (/estate_sibling_estate_label|schema cache|does not exist/i.test(failed.error || '')) {
+      // Deployed builds before this RPC: transparency summary already returns estate_name.
+      const transparency = await getHeirTransparencySummary();
+      if (transparency.success) {
+        return ok({
+          estate_name: transparency.data?.estate_name || null,
+          case_number: transparency.data?.case_number || null,
+          court_case_number: transparency.data?.court_case_number || null
+        });
+      }
+      return fail(
+        'Estate label needs supabase-migrations/estate-sibling-estate-label-2026-08.sql in Supabase.'
+      );
+    }
+    return failed;
+  }
+  return ok({
+    estate_name: data?.estate_name != null ? String(data.estate_name).trim() || null : null,
+    case_number: data?.case_number || null,
+    court_case_number:
+      data?.court_case_number != null ? String(data.court_case_number).trim() || null : null
   });
 }
 
@@ -7265,6 +7301,7 @@ const estateInventoryService = {
   setPreferredName,
   heirChangePassword,
   siblingListItems,
+  getSiblingEstateLabel,
   siblingRequestItem,
   siblingCancelRequest,
   siblingReleaseForSale,
