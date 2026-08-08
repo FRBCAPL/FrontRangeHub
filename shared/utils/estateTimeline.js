@@ -112,19 +112,19 @@ export function buildEstateTimeline({
   // Inventory completion is an explicit PR certification — never infer it from
   // item count or an empty helper review queue.
   const inventoryCompleted = Boolean(settings.inventory_completed_at);
+  const afterCert = Number(postCertificationItemCount) || 0;
+  const inventoryNeedsUpdate = inventoryCompleted && afterCert > 0;
   let inventoryTitle = 'Inventory';
   let inventoryNote = 'Add rooms and items to build the inventory';
-  if (inventoryCompleted) {
+  if (inventoryNeedsUpdate) {
+    inventoryTitle = 'Inventory needs update';
+    inventoryNote =
+      afterCert === 1
+        ? `Certified ${fmt(settings.inventory_completed_at)} · 1 item added since — reopen or note supplemental inventory`
+        : `Certified ${fmt(settings.inventory_completed_at)} · ${afterCert} items added since — reopen or note supplemental inventory`;
+  } else if (inventoryCompleted) {
     inventoryTitle = 'Inventory complete';
     inventoryNote = `Marked complete ${fmt(settings.inventory_completed_at)}`;
-    const afterCert = Number(postCertificationItemCount) || 0;
-    if (afterCert > 0) {
-      inventoryTitle = 'Inventory needs update';
-      inventoryNote =
-        afterCert === 1
-          ? `Certified ${fmt(settings.inventory_completed_at)} · 1 item added since — reopen or note supplemental inventory`
-          : `Certified ${fmt(settings.inventory_completed_at)} · ${afterCert} items added since — reopen or note supplemental inventory`;
-    }
   } else if (items > 0 || rooms > 0) {
     if (pending > 0) {
       inventoryTitle = 'Inventory in progress';
@@ -210,7 +210,9 @@ export function buildEstateTimeline({
     {
       key: 'inventory',
       title: inventoryTitle,
-      done: inventoryCompleted,
+      // Post-cert additions: not “done” for milestone count / checkmark (report retest).
+      done: inventoryCompleted && !inventoryNeedsUpdate,
+      attention: inventoryNeedsUpdate,
       note: inventoryNote
     },
     {
@@ -259,11 +261,13 @@ export function buildEstateTimeline({
     optional: Boolean(s.optional),
     status: s.done
       ? 'done'
-      : s.optional
-        ? 'optional'
-        : i === firstOpen
-          ? 'active'
-          : 'upcoming'
+      : s.attention
+        ? 'attention'
+        : s.optional
+          ? 'optional'
+          : i === firstOpen
+            ? 'active'
+            : 'upcoming'
   }));
 
   // Expectation setter — not legal advice. Prefer the later of claims end / auction end.

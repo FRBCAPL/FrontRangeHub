@@ -11320,6 +11320,24 @@ button.ei-voice-btn.is-listening {
   font-weight: 500;
 }
 
+.ei-timeline-step.is-attention .ei-timeline-dot {
+  border-color: #d97706;
+  background: #d97706;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.ei-timeline-step.is-attention .ei-timeline-title {
+  color: #b45309;
+}
+
+.ei-timeline-badge--attention {
+  background: rgba(217, 119, 6, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(217, 119, 6, 0.35);
+}
+
 .ei-timeline-step.is-active .ei-timeline-dot {
   border-color: #38bdf8;
   background: #0f172a;

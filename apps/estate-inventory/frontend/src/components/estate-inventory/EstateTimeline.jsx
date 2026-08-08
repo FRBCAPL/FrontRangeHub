@@ -206,13 +206,18 @@ const EstateTimeline = ({
         {steps.map((step) => (
           <li key={step.key} className={`ei-timeline-step is-${step.status}`}>
             <div className="ei-timeline-marker" aria-hidden="true">
-              <span className="ei-timeline-dot">{step.status === 'done' ? '\u2713' : ''}</span>
+              <span className="ei-timeline-dot">
+                {step.status === 'done' ? '\u2713' : step.status === 'attention' ? '!' : ''}
+              </span>
             </div>
             <div className="ei-timeline-body">
               <span className="ei-timeline-title">{step.title}</span>
               {step.note ? <span className="ei-timeline-note">{step.note}</span> : null}
               {step.status === 'active' ? (
                 <span className="ei-timeline-badge">You are here</span>
+              ) : null}
+              {step.status === 'attention' ? (
+                <span className="ei-timeline-badge ei-timeline-badge--attention">Needs update</span>
               ) : null}
             </div>
           </li>
