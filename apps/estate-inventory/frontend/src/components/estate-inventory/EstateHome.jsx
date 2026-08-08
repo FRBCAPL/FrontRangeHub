@@ -235,6 +235,7 @@ const EstateHome = ({
             onAddItem={onAddItem}
             onLogLocksmith={onLogLocksmith}
             onOpenClosing={onOpenClosing}
+            onOpenProgress={openProgress}
             onMessage={onMessage}
           />
         </div>

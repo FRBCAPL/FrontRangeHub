@@ -9,7 +9,10 @@ import {
   listOwnerFamilyUpdates,
   getFinanceSummary
 } from './estateInventoryService.js';
-import { buildCompletenessCertificate } from '../utils/estateCompleteness.js';
+import {
+  buildCompletenessCertificate,
+  itemsAddedAfterInventoryCertification
+} from '../utils/estateCompleteness.js';
 import { resolveProbateWindow } from '../utils/estateInventoryConstants.js';
 import { summarizeTimelineItems } from '../utils/estateTimeline.js';
 
@@ -57,6 +60,7 @@ function assembleHomePayload({
 
   const itemSummary = summarizeTimelineItems(items);
   const finalized = distributions.filter((row) => row.status === 'finalized');
+  const afterCertCount = itemsAddedAfterInventoryCertification(items, settings).length;
   const activeScenes = scenes.filter((row) => !row.archived_at);
 
   const latestUpdateAt = familyUpdates[0]?.published_at
@@ -109,7 +113,8 @@ function assembleHomePayload({
             (recipient) => recipient.acknowledgement_status !== 'acknowledged'
           ).length,
         0
-      )
+      ),
+      postCertificationItemCount: afterCertCount
     },
     needsFamilyUpdate:
       familyUpdates.length === 0 &&

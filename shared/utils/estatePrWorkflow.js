@@ -13,7 +13,8 @@ const LATE_ATTENTION_GAPS = new Set([
   'interim_distributions',
   'auction_not_listed',
   'family_update',
-  'inventory_complete'
+  'inventory_complete',
+  'inventory_changed_after_cert'
 ]);
 
 const ATTENTION_GAP_ORDER = [
@@ -28,6 +29,7 @@ const ATTENTION_GAP_ORDER = [
   'auction_not_listed',
   'family_update',
   'inventory_complete',
+  'inventory_changed_after_cert',
   'pending_review'
 ];
 
@@ -281,8 +283,14 @@ export function filterAttentionCompletenessGaps(exceptions = [], ctx = {}) {
     if (key === 'inventory_complete' && !inventoryStarted) return false;
     if (LATE_ATTENTION_GAPS.has(key)) {
       // Money / closing gaps only after inventory work has begun,
-      // except family_update / inventory_complete which have their own gates above.
-      if (key === 'family_update' || key === 'inventory_complete') return true;
+      // except family_update / inventory flags which have their own gates above.
+      if (
+        key === 'family_update' ||
+        key === 'inventory_complete' ||
+        key === 'inventory_changed_after_cert'
+      ) {
+        return true;
+      }
       if (!inventoryStarted && !inventoryCompleted && !hasFinalizedDistributions) {
         return false;
       }

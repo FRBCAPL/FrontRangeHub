@@ -3,6 +3,7 @@ import {
   buildEstateTimeline,
   summarizeTimelineItems
 } from '@shared/utils/estateTimeline.js';
+import { itemsAddedAfterInventoryCertification } from '@shared/utils/estateCompleteness.js';
 import ProbateCountdown from './ProbateCountdown';
 
 /**
@@ -30,7 +31,9 @@ const EstateHomeStatusStrip = ({
         approvedForSaleCount: homeData.itemSummary.approvedForSaleCount || 0,
         distributionCount: homeData.itemSummary.distributionCount || 0,
         pendingAcknowledgementCount:
-          homeData.itemSummary.pendingAcknowledgementCount || 0
+          homeData.itemSummary.pendingAcknowledgementCount || 0,
+        postCertificationItemCount:
+          homeData.itemSummary.postCertificationItemCount || 0
       };
     }
     if (homeData?.items) {
@@ -53,7 +56,11 @@ const EstateHomeStatusStrip = ({
               (recipient) => recipient.acknowledgement_status !== 'acknowledged'
             ).length,
           0
-        )
+        ),
+        postCertificationItemCount: itemsAddedAfterInventoryCertification(
+          homeData.items,
+          settings
+        ).length
       };
     }
     return {
@@ -61,7 +68,8 @@ const EstateHomeStatusStrip = ({
       pendingReviewCount: 0,
       approvedForSaleCount: 0,
       distributionCount: 0,
-      pendingAcknowledgementCount: 0
+      pendingAcknowledgementCount: 0,
+      postCertificationItemCount: 0
     };
   }, [homeData]);
 
@@ -79,6 +87,7 @@ const EstateHomeStatusStrip = ({
         approvedForSaleCount: itemStats.approvedForSaleCount,
         distributionCount: itemStats.distributionCount,
         pendingAcknowledgementCount: itemStats.pendingAcknowledgementCount,
+        postCertificationItemCount: itemStats.postCertificationItemCount || 0,
         hasAuctionActivity: false
       }),
     [settings, roomCount, itemCount, itemStats]

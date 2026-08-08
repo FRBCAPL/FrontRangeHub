@@ -20,6 +20,7 @@ const GAP_ACTION = {
   family_update: { label: 'Open Reports', kind: 'reports' },
   pending_review: { label: 'Review queue', kind: 'pending' },
   inventory_complete: { label: 'Progress / inventory', kind: 'settings_case' },
+  inventory_changed_after_cert: { label: 'Reopen inventory', kind: 'progress' },
   letters: { label: 'Set Letters', kind: 'settings_case' }
 };
 
@@ -111,6 +112,7 @@ function buildAttentionItems({
         else if (meta.kind === 'reports') actions.onOpenReports?.();
         else if (meta.kind === 'pending') actions.onOpenPendingReview?.();
         else if (meta.kind === 'settings_case') actions.onOpenSettingsSection?.('case');
+        else if (meta.kind === 'progress') actions.onOpenProgress?.();
         else if (meta.kind === 'collections') actions.onSeeCollections?.();
       }
     });
@@ -141,6 +143,7 @@ const EstateNeedsAttentionPanel = ({
   onAddItem,
   onLogLocksmith,
   onOpenClosing,
+  onOpenProgress,
   onMessage
 }) => {
   const [open, setOpen] = useState(false);
@@ -161,6 +164,7 @@ const EstateNeedsAttentionPanel = ({
     onAddItem,
     onLogLocksmith,
     onOpenClosing,
+    onOpenProgress,
     onMessage
   };
 

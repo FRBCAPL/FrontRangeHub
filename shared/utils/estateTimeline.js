@@ -75,6 +75,7 @@ export function summarizeTimelineItems(items = []) {
  * @param {boolean} [params.hasAuctionActivity]
  * @param {number} [params.distributionCount]
  * @param {number} [params.pendingAcknowledgementCount]
+ * @param {number} [params.postCertificationItemCount] items added after inventory certified
  * @param {Date}   [params.now]
  */
 export function buildEstateTimeline({
@@ -86,6 +87,7 @@ export function buildEstateTimeline({
   hasAuctionActivity = false,
   distributionCount = 0,
   pendingAcknowledgementCount = 0,
+  postCertificationItemCount = 0,
   // Back-compat with earlier callers that passed inventoryCount as room count
   inventoryCount,
   now = new Date()
@@ -115,6 +117,14 @@ export function buildEstateTimeline({
   if (inventoryCompleted) {
     inventoryTitle = 'Inventory complete';
     inventoryNote = `Marked complete ${fmt(settings.inventory_completed_at)}`;
+    const afterCert = Number(postCertificationItemCount) || 0;
+    if (afterCert > 0) {
+      inventoryTitle = 'Inventory needs update';
+      inventoryNote =
+        afterCert === 1
+          ? `Certified ${fmt(settings.inventory_completed_at)} · 1 item added since — reopen or note supplemental inventory`
+          : `Certified ${fmt(settings.inventory_completed_at)} · ${afterCert} items added since — reopen or note supplemental inventory`;
+    }
   } else if (items > 0 || rooms > 0) {
     if (pending > 0) {
       inventoryTitle = 'Inventory in progress';

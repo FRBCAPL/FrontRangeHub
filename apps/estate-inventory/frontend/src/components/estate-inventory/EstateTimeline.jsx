@@ -4,6 +4,7 @@ import {
   buildEstateTimeline,
   summarizeTimelineItems
 } from '@shared/utils/estateTimeline.js';
+import { itemsAddedAfterInventoryCertification } from '@shared/utils/estateCompleteness.js';
 
 /**
  * "Where am I in the process?" checklist for the executor. Read-only and
@@ -23,7 +24,8 @@ const EstateTimeline = ({
     pendingReviewCount: Number(sharedStats?.pendingReviewCount) || 0,
     approvedForSaleCount: Number(sharedStats?.approvedForSaleCount) || 0,
     distributionCount: Number(sharedStats?.distributionCount) || 0,
-    pendingAcknowledgementCount: Number(sharedStats?.pendingAcknowledgementCount) || 0
+    pendingAcknowledgementCount: Number(sharedStats?.pendingAcknowledgementCount) || 0,
+    postCertificationItemCount: Number(sharedStats?.postCertificationItemCount) || 0
   }));
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusError, setStatusError] = useState('');
@@ -36,7 +38,8 @@ const EstateTimeline = ({
         approvedForSaleCount: Number(sharedStats.approvedForSaleCount) || 0,
         distributionCount: Number(sharedStats.distributionCount) || 0,
         pendingAcknowledgementCount:
-          Number(sharedStats.pendingAcknowledgementCount) || 0
+          Number(sharedStats.pendingAcknowledgementCount) || 0,
+        postCertificationItemCount: Number(sharedStats.postCertificationItemCount) || 0
       });
       return undefined;
     }
@@ -54,9 +57,8 @@ const EstateTimeline = ({
       const pendingReviewCount = pendingResult.success
         ? (pendingResult.data || []).length
         : 0;
-      const summary = summarizeTimelineItems(
-        itemsResult.success ? itemsResult.data || [] : []
-      );
+      const rows = itemsResult.success ? itemsResult.data || [] : [];
+      const summary = summarizeTimelineItems(rows);
       const finalized = distributionsResult.success
         ? (distributionsResult.data || []).filter((row) => row.status === 'finalized')
         : [];
@@ -72,13 +74,15 @@ const EstateTimeline = ({
               (recipient) => recipient.acknowledgement_status !== 'acknowledged'
             ).length,
           0
-        )
+        ),
+        postCertificationItemCount: itemsAddedAfterInventoryCertification(rows, settings)
+          .length
       });
     })();
     return () => {
       cancelled = true;
     };
-  }, [settings?.case_number, settings?.updated_at, refreshKey, sharedStats]);
+  }, [settings?.case_number, settings?.updated_at, settings?.inventory_completed_at, refreshKey, sharedStats]);
 
   const { steps, completedCount, totalCount, estimatedCompletion, remainingClaimsDays } =
     useMemo(
@@ -91,6 +95,7 @@ const EstateTimeline = ({
           approvedForSaleCount: itemStats.approvedForSaleCount,
           distributionCount: itemStats.distributionCount,
           pendingAcknowledgementCount: itemStats.pendingAcknowledgementCount,
+          postCertificationItemCount: itemStats.postCertificationItemCount,
           hasAuctionActivity
         }),
       [

@@ -4,17 +4,18 @@
  * This is a court-oriented fiduciary schedule built ON TOP of the live
  * current-balances snapshot. It does NOT change netDistributable math.
  *
- * Under current-balances accounting, paid auction deposits, expenses, and cash
- * distributions are activity records whose effect should already be reflected
- * in today's account balances. The "beginning" figures below are therefore
- * reconstructed from ending balances + activity (an aid for the period story),
- * not a separately entered opening balance book.
- *
- * Always label reconstructed beginning figures clearly so a reviewer knows
- * they are derived, not independently certified opening balances.
+ * Beginning assets prefer recorded account opening balances (plus inventory
+ * still on hand / distributed during the period). Receipts include auction
+ * proceeds and Deposit / income fund transactions dated in the period —
+ * not only auction sales (FR-01).
  */
 
-import { APP_NAME, distributionClassificationLabel, formatEstateDisplayDate } from './estateInventoryConstants.js';
+import {
+  APP_NAME,
+  distributionClassificationLabel,
+  formatEstateDisplayDate,
+  parseEstateLocalDate
+} from './estateInventoryConstants.js';
 import { formatMoney } from './estateFinance.js';
 import {
   finalizedDistributions,
@@ -25,6 +26,7 @@ import { formatCompletenessBannerHtml, ESTATE_SUPPORTING_DOCS_LABEL } from './es
 import { distributionsNeedBalanceUpdate } from './estateClosingReadiness.js';
 import { acknowledgementStatusLabel } from './estateAcknowledgement.js';
 import { cashAvailableHintHtml } from './estateCashCopy.js';
+import { fundsCategoryLabel } from './estateFunds.js';
 
 function esc(value) {
   return String(value ?? '')
@@ -41,6 +43,79 @@ function money(value) {
 
 function toDateLabel(value) {
   return formatEstateDisplayDate(value);
+}
+
+function toDayMs(value) {
+  const d = parseEstateLocalDate(value);
+  if (d) return d.getTime();
+  if (!value) return null;
+  const raw = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(raw.getTime())) return null;
+  return new Date(raw.getFullYear(), raw.getMonth(), raw.getDate()).getTime();
+}
+
+/** Inclusive calendar-day window for period activity. */
+function isDateInPeriod(value, periodStart, periodEnd) {
+  const day = toDayMs(value);
+  if (day == null) return false;
+  const start = toDayMs(periodStart);
+  const end = toDayMs(periodEnd);
+  if (start != null && day < start) return false;
+  if (end != null && day > end) return false;
+  return true;
+}
+
+function accountOpeningAmount(account, fundTransactions = []) {
+  if (!account || account.kind === 'debt') return 0;
+  if (account.opening_balance != null && account.opening_balance !== '') {
+    return money(account.opening_balance);
+  }
+  const current = money(
+    account.computed_balance != null ? account.computed_balance : account.balance
+  );
+  const netTxns = (fundTransactions || [])
+    .filter((txn) => txn?.account_id && txn.account_id === account.id)
+    .reduce((sum, txn) => sum + money(txn.amount), 0);
+  return current - netTxns;
+}
+
+function buildPeriodReceiptRows({
+  fundTransactions = [],
+  accounts = [],
+  periodStart,
+  periodEnd
+}) {
+  const accountNameById = Object.fromEntries(
+    (accounts || []).map((row) => [
+      row.id,
+      row.account_name || row.label || row.name || 'Account'
+    ])
+  );
+  const rows = [];
+  for (const txn of fundTransactions || []) {
+    const category = String(txn?.category || '').toLowerCase();
+    if (category !== 'deposit' && category !== 'sale_proceeds') continue;
+    const amount = money(txn.amount);
+    if (amount <= 0) continue;
+    if (!isDateInPeriod(txn.txn_date || txn.created_at, periodStart, periodEnd)) {
+      continue;
+    }
+    rows.push({
+      id: txn.id,
+      date: txn.txn_date || txn.created_at,
+      category,
+      categoryLabel: fundsCategoryLabel(category),
+      memo: String(txn.memo || '').trim() || fundsCategoryLabel(category),
+      accountName: accountNameById[txn.account_id] || 'Account',
+      amount
+    });
+  }
+  rows.sort((a, b) => {
+    const da = toDayMs(a.date) || 0;
+    const db = toDayMs(b.date) || 0;
+    return da - db;
+  });
+  return rows;
 }
 
 /**
@@ -67,11 +142,31 @@ export function buildFormalAccountingStatement({
   const endingGross = money(finance.grossEstateValue);
   const endingLiabilities = money(finance.totalLiabilities);
   const endingBalance = money(finance.netDistributable);
+  const unsoldInventory = money(finance.unsoldInventoryValue);
 
-  const receiptsAuction = money(finance.paidAuctionSales);
-  // Other/starting cash is a balance line, not period income. Treat auction
-  // proceeds as the primary receipt activity Estate Vault tracks.
-  const totalReceipts = receiptsAuction;
+  const fundTransactions = Array.isArray(finance.fundTransactions)
+    ? finance.fundTransactions
+    : [];
+  const accounts = finance.accounts || [];
+
+  const receiptRows = buildPeriodReceiptRows({
+    fundTransactions,
+    accounts,
+    periodStart,
+    periodEnd
+  });
+  const otherDeposits = receiptRows
+    .filter((row) => row.category === 'deposit')
+    .reduce((sum, row) => sum + row.amount, 0);
+  const saleProceedsPosted = receiptRows
+    .filter((row) => row.category === 'sale_proceeds')
+    .reduce((sum, row) => sum + row.amount, 0);
+
+  // Item-level paid sales (may include undeposited). Prefer the larger of
+  // posted sale_proceeds vs paid auction so undeposited sales still appear.
+  const paidAuctionSales = money(finance.paidAuctionSales);
+  const receiptsAuction = Math.max(paidAuctionSales, saleProceedsPosted);
+  const totalReceipts = receiptsAuction + otherDeposits;
 
   const disbursementsExpenses = money(finance.expensesTotal);
   const totalDisbursements = disbursementsExpenses;
@@ -83,18 +178,17 @@ export function buildFormalAccountingStatement({
   const prLoans = money(finance.prLoansTotal);
   const accountDebts = money(finance.accountDebtsTotal);
 
-  // Reconstruct a beginning gross estate figure as an aid:
-  // ending gross already excludes distributed property and reflects cash that
-  // left for expenses/distributions (when the PR updated balances) and cash
-  // that entered from auction deposits.
-  const reconstructedBeginningGross =
-    endingGross +
-    disbursementsExpenses +
-    cashDistributed +
-    propertyDistributed -
-    receiptsAuction;
-
-  const reconstructedBeginningNet = reconstructedBeginningGross - endingLiabilities;
+  // True opening from recorded account openings (not back-solved from ending).
+  const openingAccountAssets = (accounts || [])
+    .filter((row) => row?.kind !== 'debt')
+    .reduce((sum, row) => sum + accountOpeningAmount(row, fundTransactions), 0);
+  // Inventory proxy at period start: still on hand + transferred during period.
+  const beginningInventory = unsoldInventory + propertyDistributed;
+  const beginningGross = openingAccountAssets + beginningInventory;
+  const beginningNet = beginningGross - endingLiabilities;
+  const beginningFromOpenings = (accounts || []).some(
+    (row) => row?.kind !== 'debt' && row?.opening_balance != null && row.opening_balance !== ''
+  );
 
   const valueAccountedFor = endingBalance + cashDistributed + propertyDistributed;
 
@@ -126,18 +220,19 @@ export function buildFormalAccountingStatement({
     receiptUrl: row.receipt_url || null
   }));
 
-  const accountAssetRows = (finance.accounts || [])
+  const accountAssetRows = (accounts || [])
     .filter((row) => row.kind !== 'debt')
     .map((row) => ({
       id: row.id,
       name: row.account_name || row.label || row.name || 'Account',
       institution: row.institution || '',
       balance: money(row.balance),
+      openingBalance: accountOpeningAmount(row, fundTransactions),
       // Ending Schedule C uses statement period end — not opening as_of_date (CS-13).
       asOf: periodEnd
     }));
 
-  const accountDebtRows = (finance.accounts || [])
+  const accountDebtRows = (accounts || [])
     .filter((row) => row.kind === 'debt')
     .map((row) => ({
       id: row.id,
@@ -155,7 +250,7 @@ export function buildFormalAccountingStatement({
   }));
 
   return {
-    version: 1,
+    version: 2,
     accountingMethod: 'current_balances',
     estateName: settings.estate_name || finance.estateName || 'Estate',
     caseNumber: settings.case_number || finance.caseNumber || null,
@@ -165,13 +260,18 @@ export function buildFormalAccountingStatement({
     periodStartLabel: toDateLabel(periodStart) || 'Not set',
     periodEndLabel: toDateLabel(periodEnd) || new Date().toLocaleDateString(),
     beginning: {
-      reconstructed: true,
-      grossAssets: reconstructedBeginningGross,
-      netEstate: reconstructedBeginningNet
+      reconstructed: !beginningFromOpenings,
+      fromOpenings: beginningFromOpenings,
+      openingAccountAssets,
+      inventoryAtStart: beginningInventory,
+      grossAssets: beginningGross,
+      netEstate: beginningNet
     },
     receipts: {
       paidAuctionSales: receiptsAuction,
-      total: totalReceipts
+      otherDeposits,
+      total: totalReceipts,
+      lines: receiptRows
     },
     disbursements: {
       expenses: disbursementsExpenses,
@@ -194,7 +294,7 @@ export function buildFormalAccountingStatement({
       otherCash: money(finance.otherCashOnHand),
       undepositedPaidSales: money(finance.undepositedPaidSales),
       outstandingBids: money(finance.outstandingBids),
-      unsoldInventory: money(finance.unsoldInventoryValue),
+      unsoldInventory,
       fundsAvailable: money(finance.fundsAvailable),
       nonCashAssets: money(finance.nonCashAssets),
       grossAssets: endingGross,
@@ -207,6 +307,7 @@ export function buildFormalAccountingStatement({
         'Value accounted for = ending estate balance + finalized cash distributions + transferred property at recorded value. Cash distributions are not subtracted again from the live estate balance; update account balances after payment.'
     },
     schedules: {
+      receipts: receiptRows,
       expenses: expenseRows,
       accountAssets: accountAssetRows,
       accountDebts: accountDebtRows,
@@ -217,7 +318,9 @@ export function buildFormalAccountingStatement({
       distributions,
       cashDistributed,
       disbursementsExpenses,
-      receiptsAuction
+      receiptsAuction,
+      otherDeposits,
+      beginningFromOpenings
     })
   };
 }
@@ -227,12 +330,19 @@ function buildWarnings({
   distributions,
   cashDistributed,
   disbursementsExpenses,
-  receiptsAuction
+  receiptsAuction,
+  otherDeposits,
+  beginningFromOpenings
 }) {
   const warnings = [];
-  if (cashDistributed > 0 || disbursementsExpenses > 0 || receiptsAuction > 0) {
+  if (!beginningFromOpenings) {
     warnings.push(
-      'Beginning figures are reconstructed from today’s balances plus activity. They are a reconciliation aid, not a separately entered opening balance.'
+      'Account opening balances were not recorded separately; beginning cash is inferred from today’s balance minus Funds activity.'
+    );
+  }
+  if (cashDistributed > 0 || disbursementsExpenses > 0 || receiptsAuction > 0 || otherDeposits > 0) {
+    warnings.push(
+      'Beginning inventory is estimated as unsold inventory still on hand plus property transferred during the period. Review with counsel before filing.'
     );
   }
   if (!finance?.accounts?.length && money(finance?.accountAssetsTotal) === 0) {
@@ -261,6 +371,18 @@ function buildWarnings({
 export function buildFormalAccountingHtml(statement) {
   const s = statement || {};
   const caseLabel = s.courtCaseNumber || s.caseNumber || 'estate';
+  const receiptDetailRows = (s.schedules?.receipts || s.receipts?.lines || [])
+    .map(
+      (row) => `<tr>
+      <td>${esc(toDateLabel(row.date) || '—')}</td>
+      <td>${esc(row.categoryLabel || row.category || 'Receipt')}</td>
+      <td>${esc(row.memo)}</td>
+      <td>${esc(row.accountName)}</td>
+      <td>${formatMoney(row.amount)}</td>
+    </tr>`
+    )
+    .join('');
+
   const expenseRows = (s.schedules?.expenses || [])
     .map(
       (row) => `<tr>
@@ -322,6 +444,15 @@ export function buildFormalAccountingHtml(statement) {
     .join('');
 
   const warningList = (s.warnings || []).map((w) => `<li>${esc(w)}</li>`).join('');
+  const beginningLabel = s.beginning?.fromOpenings
+    ? 'from recorded openings'
+    : 'inferred openings';
+  const beginningGrossLabel = s.beginning?.fromOpenings
+    ? 'Beginning gross assets'
+    : 'Beginning gross assets (inferred)';
+  const beginningNetLabel = s.beginning?.fromOpenings
+    ? 'Beginning net estate'
+    : 'Beginning net estate (inferred)';
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" />
@@ -352,10 +483,10 @@ table.detail th{background:#f5f5f4;font-family:system-ui,sans-serif}
   <strong>Fiduciary period schedule — supporting documentation, not a tax return or court filing.</strong>
   ${esc(ESTATE_SUPPORTING_DOCS_LABEL)}
   Supporting documentation — not a court filing. Account balances are the source of truth for the ending estate balance.
-  Paid auction deposits, expenses, and cash distributions are activity records;
-  they are listed here for the court story and are <em>not</em> subtracted again
-  from today’s estate balance. Beginning figures are reconstructed from ending
-  balances plus that activity.
+  Receipts (including Deposit / income), expenses, and cash distributions are activity records for the court story
+  and are <em>not</em> subtracted again from today’s estate balance.
+  Beginning cash uses recorded account opening balances (${esc(beginningLabel)});
+  beginning inventory is estimated from property still on hand plus transfers during the period.
   ${cashAvailableHintHtml('')}
 </div>
 
@@ -365,13 +496,16 @@ ${warningList ? `<ul class="muted">${warningList}</ul>` : ''}
 
 <h2>Summary of the accounting period</h2>
 <table class="summary">
-  <tr class="section"><th colspan="2">I. Assets on hand at beginning of period (reconstructed)</th></tr>
-  <tr><th>Reconstructed beginning gross assets</th><td class="amt">${formatMoney(s.beginning?.grossAssets)}</td></tr>
+  <tr class="section"><th colspan="2">I. Assets on hand at beginning of period (${esc(beginningLabel)})</th></tr>
+  <tr><th>Opening account balances</th><td class="amt">${formatMoney(s.beginning?.openingAccountAssets)}</td></tr>
+  <tr><th>Inventory at start (on hand + transferred in period)</th><td class="amt">${formatMoney(s.beginning?.inventoryAtStart)}</td></tr>
+  <tr><th>${esc(beginningGrossLabel)}</th><td class="amt">${formatMoney(s.beginning?.grossAssets)}</td></tr>
   <tr><th>Less liabilities carried at end of period</th><td class="amt">${formatMoney(s.liabilities?.total)}</td></tr>
-  <tr class="total"><th>Reconstructed beginning net estate</th><td class="amt">${formatMoney(s.beginning?.netEstate)}</td></tr>
+  <tr class="total"><th>${esc(beginningNetLabel)}</th><td class="amt">${formatMoney(s.beginning?.netEstate)}</td></tr>
 
   <tr class="section"><th colspan="2">II. Receipts during period (activity)</th></tr>
   <tr><th>Paid / deposited auction sales</th><td class="amt">${formatMoney(s.receipts?.paidAuctionSales)}</td></tr>
+  <tr><th>Other deposits / income</th><td class="amt">${formatMoney(s.receipts?.otherDeposits)}</td></tr>
   <tr class="total"><th>Total receipts</th><td class="amt">${formatMoney(s.receipts?.total)}</td></tr>
 
   <tr class="section"><th colspan="2">III. Disbursements during period (activity)</th></tr>
@@ -399,6 +533,10 @@ ${warningList ? `<ul class="muted">${warningList}</ul>` : ''}
   <tr class="total"><th>Value accounted for (ending balance + distributions)</th><td class="amt">${formatMoney(s.reconciliation?.valueAccountedFor)}</td></tr>
 </table>
 <p class="muted">${esc(s.reconciliation?.note)}</p>
+
+<h2>Schedule of Receipts — Money received during period</h2>
+<table class="detail"><thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Account</th><th>Amount</th></tr></thead>
+<tbody>${receiptDetailRows || '<tr><td colspan="5">No deposits or sale proceeds recorded in this period</td></tr>'}</tbody></table>
 
 <h2>Schedule A — Estate expenses</h2>
 <table class="detail"><thead><tr><th>Date</th><th>Expense</th><th>Amount</th><th>Receipt</th></tr></thead>

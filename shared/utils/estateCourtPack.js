@@ -257,14 +257,14 @@ export function buildCourtPackHtml(pack) {
         `<div class="grid">
     <div><strong>Period:</strong> ${escapeHtml(formal.periodStartLabel)} — ${escapeHtml(formal.periodEndLabel)}</div>
     <div><strong>Method:</strong> Current balances</div>
-    <div><strong>Beginning net (reconstructed):</strong> ${formatMoney(formal.beginning?.netEstate)}</div>
-    <div><strong>Receipts (auction deposits):</strong> ${formatMoney(formal.receipts?.total)}</div>
+    <div><strong>Beginning net (${formal.beginning?.fromOpenings ? 'from openings' : 'inferred'}):</strong> ${formatMoney(formal.beginning?.netEstate)}</div>
+    <div><strong>Receipts (auction + deposits):</strong> ${formatMoney(formal.receipts?.total)}</div>
     <div><strong>Disbursements (expenses):</strong> ${formatMoney(formal.disbursements?.total)}</div>
     <div><strong>Distributions (cash + property):</strong> ${formatMoney(formal.distributions?.total)}</div>
     <div><strong>Ending estate balance:</strong> ${formatMoney(formal.ending?.estateBalance)}</div>
     <div><strong>Value accounted for:</strong> ${formatMoney(formal.reconciliation?.valueAccountedFor)}</div>
   </div>
-  <p class="muted">Beginning figures are reconstructed from today’s balances plus activity. Full schedules (expenses, distributions, accounts, debts, PR loans) are in the companion JSON under <code>formal_accounting</code>. Print the dedicated Formal Accounting report from Reports for the complete printable statement.</p>`
+  <p class="muted">Beginning cash uses recorded account openings when available. Receipts include Deposit / income as well as auction proceeds. Full schedules are in the companion JSON under <code>formal_accounting</code>. Print the dedicated Formal Accounting report from Reports for the complete printable statement.</p>`
       )
     : '';
 

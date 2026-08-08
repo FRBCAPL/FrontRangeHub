@@ -48,6 +48,19 @@ export function sampleRecords(rows, mapFn, limit = SAMPLE_LIMIT) {
     }));
 }
 
+/** Items created after the PR certified inventory complete (supplemental candidates). */
+export function itemsAddedAfterInventoryCertification(items = [], settings = {}) {
+  const certifiedAt = settings?.inventory_completed_at;
+  if (!certifiedAt) return [];
+  const certMs = new Date(certifiedAt).getTime();
+  if (!Number.isFinite(certMs)) return [];
+  return (items || []).filter((item) => {
+    if (!item || item.legal_status === 'archived') return false;
+    const created = item.created_at ? new Date(item.created_at).getTime() : NaN;
+    return Number.isFinite(created) && created > certMs;
+  });
+}
+
 /**
  * @param {object} params
  * @param {object} [params.settings]
@@ -120,6 +133,7 @@ export function buildCompletenessCertificate({
   const lettersRaw = settings.letters_issued_at
     ? String(settings.letters_issued_at).slice(0, 10)
     : null;
+  const afterCertItems = itemsAddedAfterInventoryCertification(items, settings);
 
   const exceptions = [];
 
@@ -274,6 +288,21 @@ export function buildCompletenessCertificate({
       'Inventory not certified complete',
       'Mark inventory complete when recording is finished.'
     );
+  } else {
+    if (afterCertItems.length > 0) {
+      push(
+        'warn',
+        'inventory_changed_after_cert',
+        'Inventory changed after certification',
+        `${afterCertItems.length} item(s) added after inventory was marked complete. Reopen and re-certify, or note a supplemental inventory for counsel.`,
+        false,
+        sampleRecords(afterCertItems, (item) => ({
+          id: item.id,
+          name: item.name || item.title || 'Item'
+        })),
+        afterCertItems.length
+      );
+    }
   }
   if (!lettersRaw) {
     push(
@@ -315,7 +344,8 @@ export function buildCompletenessCertificate({
       total: recon.total,
       distributed: recon.distributedCount,
       missingPhotos: inventoryMissingPhoto.length,
-      highRiskMissingPhotos: highRiskMissingPhoto.length
+      highRiskMissingPhotos: highRiskMissingPhoto.length,
+      addedAfterCertification: afterCertItems.length
     },
     expensesMissingReceipt: expensesMissingReceipt.length,
     sceneCount: (scenes || []).length,
