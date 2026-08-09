@@ -2426,7 +2426,8 @@ export async function getSiblingEstateLabel(token) {
         return ok({
           estate_name: transparency.data?.estate_name || null,
           case_number: transparency.data?.case_number || null,
-          court_case_number: transparency.data?.court_case_number || null
+          court_case_number: transparency.data?.court_case_number || null,
+          closed_at: transparency.data?.closed_at || null
         });
       }
       return fail(
@@ -2439,7 +2440,8 @@ export async function getSiblingEstateLabel(token) {
     estate_name: data?.estate_name != null ? String(data.estate_name).trim() || null : null,
     case_number: data?.case_number || null,
     court_case_number:
-      data?.court_case_number != null ? String(data.court_case_number).trim() || null : null
+      data?.court_case_number != null ? String(data.court_case_number).trim() || null : null,
+    closed_at: data?.closed_at || null
   });
 }
 

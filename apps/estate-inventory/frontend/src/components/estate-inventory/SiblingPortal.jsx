@@ -138,7 +138,11 @@ const SiblingPortal = () => {
           estate_name: labelResult.data?.estate_name || prev.estate_name,
           case_number: labelResult.data?.case_number || prev.case_number || routeCase,
           court_case_number:
-            labelResult.data?.court_case_number ?? prev.court_case_number
+            labelResult.data?.court_case_number ?? prev.court_case_number,
+          closed_at:
+            labelResult.data?.closed_at !== undefined
+              ? labelResult.data.closed_at
+              : prev.closed_at
         }));
         return;
       }
