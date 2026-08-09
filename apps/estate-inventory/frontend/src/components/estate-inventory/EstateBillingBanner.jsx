@@ -147,11 +147,16 @@ const EstateBillingBanner = ({
       ? access.message ||
         `Renew now (${price}) to avoid freezing this estate — family, helpers, and the public sale will pause.`
       : phase === 'trial'
-        ? `Free trial · first estate only. After trial: ${price}. Extra estates bill from day one.`
+        ? `Free trial · first estate only. Subscribe now to put a card on file — $0 due today through the trial. After trial: ${price}. Extra estates bill from day one.`
         : access.cancel_at_period_end
           ? `Subscription cancels at period end. You can resume anytime from Manage subscription in the Menu, or renew below.`
           : access.message ||
             `${ESTATE_BILLING_PLAN.name} · ${priceMonth}`;
+
+  const subscribeLabel =
+    phase === 'trial'
+      ? `Subscribe · $0 today`
+      : `Subscribe · ${price}`;
 
   return (
     <section
@@ -194,7 +199,7 @@ const EstateBillingBanner = ({
             disabled={Boolean(busy)}
             onClick={renew}
           >
-            {busy === 'checkout' || busy === 'confirm' ? 'Working…' : `Subscribe · ${price}`}
+            {busy === 'checkout' || busy === 'confirm' ? 'Working…' : subscribeLabel}
           </button>
         ) : null}
         {/* Manage lives in Menu once subscribed; keep on banner for Settings / canceling. */}
