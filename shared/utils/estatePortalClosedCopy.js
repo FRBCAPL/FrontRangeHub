@@ -1,6 +1,6 @@
 /**
  * Role-appropriate copy when a non-PR portal hits a closed estate.
- * DB / RPC messages are written for the Personal Representative.
+ * DB returns a short audience-neutral closed message; portals may polish it.
  */
 
 const CLOSED_HINT =

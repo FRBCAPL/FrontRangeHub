@@ -118,6 +118,10 @@ export function buildAdministrationChronology({
     });
   });
 
+  const currentCloseMs = settings.closed_at
+    ? new Date(settings.closed_at).getTime()
+    : NaN;
+
   (activity || []).forEach((row) => {
     const type = String(row.event_type || '').toLowerCase();
     if (
@@ -129,9 +133,13 @@ export function buildAdministrationChronology({
     ) {
       return;
     }
-    // Settings-derived close milestone already carries the reason (CL-07).
-    if (type === 'estate_closed' && settings.closed_at) {
-      return;
+    // Dedupe only the activity row that matches the current settings close
+    // (CL-07). Keep prior close history when the estate is closed again (NEW-01).
+    if (type === 'estate_closed' && Number.isFinite(currentCloseMs)) {
+      const activityMs = new Date(row.created_at || 0).getTime();
+      if (Number.isFinite(activityMs) && Math.abs(activityMs - currentCloseMs) <= 5000) {
+        return;
+      }
     }
     push({
       kind: `activity_${type}`,

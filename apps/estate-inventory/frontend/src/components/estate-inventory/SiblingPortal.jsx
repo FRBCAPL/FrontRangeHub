@@ -60,6 +60,7 @@ import HeirFamilyUpdatesPanel from './HeirFamilyUpdatesPanel';
 import HeirFamilyCoachMarks from './HeirFamilyCoachMarks';
 import EstateRoleGuideModal from './EstateRoleGuideModal';
 import EstateBillingLockedGate from './EstateBillingLockedGate';
+import EstateClosedPortalBanner from './EstateClosedPortalBanner';
 import {
   buildFamilyCoachSteps,
   hasSeenFamilyCoach,
@@ -924,6 +925,8 @@ const SiblingPortal = () => {
           </button>
         }
       />
+
+      {estateSettings?.closed_at ? <EstateClosedPortalBanner role="family" /> : null}
 
       <header
         id="ei-family-coach-welcome"

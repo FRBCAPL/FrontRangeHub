@@ -6738,8 +6738,8 @@ button.ei-helper-photo-remove {
 
 .ei-btn:disabled,
 .ei-btn-requested:disabled {
-  opacity: 0.85;
-  cursor: default;
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .ei-landing {

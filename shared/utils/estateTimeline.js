@@ -253,7 +253,10 @@ export function buildEstateTimeline({
   ];
 
   // Optional / attention steps do not block “You are here” (attention keeps its own ! badge).
-  const firstOpen = defs.findIndex((s) => !s.done && !s.optional && !s.attention);
+  // When the estate is closed, do not point “You are here” at unfinished work (claims, etc.).
+  const firstOpen = estateClosed
+    ? -1
+    : defs.findIndex((s) => !s.done && !s.optional && !s.attention);
   const steps = defs.map((s, i) => ({
     key: s.key,
     title: s.title,

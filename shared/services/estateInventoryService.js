@@ -6382,20 +6382,12 @@ export async function getHeirDistributionBatchCounts(caseNumber) {
 export async function acknowledgeMyDistribution(recipientId, note, caseNumber, status = 'acknowledged') {
   const session = getStoredSiblingSession(caseNumber);
   if (!session?.token) return fail('Sign in to the family portal again.');
-  const payload = {
+  const { data, error } = await supabase.rpc('estate_heir_acknowledge_distribution', {
     p_session_token: session.token,
     p_recipient_id: recipientId,
     p_note: String(note || '').trim() || null,
     p_status: String(status || 'acknowledged').toLowerCase()
-  };
-  let { data, error } = await supabase.rpc('estate_heir_acknowledge_distribution', payload);
-  if (error && /p_status|Could not find|function/i.test(error.message || '')) {
-    ({ data, error } = await supabase.rpc('estate_heir_acknowledge_distribution', {
-      p_session_token: session.token,
-      p_recipient_id: recipientId,
-      p_note: String(note || '').trim() || null
-    }));
-  }
+  });
   const failed = rpcFail(data, error);
   if (failed) return failed;
   return ok(data);

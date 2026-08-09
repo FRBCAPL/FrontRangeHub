@@ -266,7 +266,7 @@ export function buildClosingChecklist({
       label: 'Family / helper / advisor portals',
       status: 'info',
       detail:
-        'Closing locks family, helper, and advisor portals. Only the Personal Representative can still view and export.'
+        'Closing blocks new family, helper, and advisor sign-ins. Existing sessions can still view (read-only) until they leave; writes stay blocked. Only the Personal Representative keeps full view and export.'
     },
     {
       key: 'court_pack',
@@ -324,7 +324,7 @@ export function buildCloseConfirmMessage({
   const lines = [
     'Close this estate for records?',
     '',
-    'Family, helper, and advisor portals will stop working. Only you (the Personal Representative) can still view and export.'
+    'New family, helper, and advisor sign-ins will be blocked. Anyone already signed in can still view (read-only) until they leave — writes stay blocked by the database. Only you (the Personal Representative) keep full view and export.'
   ];
   if (!claimsEnded) {
     lines.push('', 'Warning: The creditor claims window is still open.');

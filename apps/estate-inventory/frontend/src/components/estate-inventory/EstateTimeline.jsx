@@ -194,6 +194,7 @@ const EstateTimeline = ({
             className="ei-btn ei-btn-secondary ei-btn-small"
             onClick={changeInventoryStatus}
             disabled={statusBusy || estateClosed}
+            aria-disabled={statusBusy || estateClosed ? true : undefined}
             title={
               estateClosed
                 ? 'Estate is closed for records. Reopen it before changing inventory status.'

@@ -247,7 +247,7 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
             {alreadyClosed
               ? 'The estate is closed. Reopen it in Settings → Records & retention if you need to make changes.'
               : checklist.canClose
-                ? 'Review each item below. Outstanding acknowledgements must be collected before close. Closing locks family, helper, and advisor portals — only you keep view and export access. It does not delete anything.'
+                ? 'Review each item below. Outstanding acknowledgements must be collected before close. New family, helper, and advisor sign-ins are blocked; existing sessions stay view-only. Only you keep full view and export. It does not delete anything.'
                 : checklist.blockingReasons?.[0] ||
                   'Collect outstanding distribution acknowledgements before closing.'}
           </p>

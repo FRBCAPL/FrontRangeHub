@@ -17,6 +17,7 @@ import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
 import EstateBillingLockedGate from './EstateBillingLockedGate';
+import EstateClosedPortalBanner from './EstateClosedPortalBanner';
 import FamilyUpdatePreviewModal from './FamilyUpdatePreviewModal';
 import EstateReportPreviewModal from './EstateReportPreviewModal';
 import EstateModalShell from './EstateModalShell';
@@ -132,12 +133,22 @@ const AdvisorPortal = () => {
     Boolean(estateInventoryService.getStoredAdvisorSession(caseNumber)?.must_change_password)
   );
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [estateClosedAt, setEstateClosedAt] = useState(null);
 
   useEffect(() => {
     estateInventoryService.setActiveEstateCase(caseNumber);
     const stored = estateInventoryService.getStoredAdvisorSession(caseNumber);
     setSession(stored);
     setMustChangePassword(Boolean(stored?.must_change_password));
+    let cancelled = false;
+    (async () => {
+      const result = await estateInventoryService.getSettings(caseNumber);
+      if (cancelled || !result.success) return;
+      setEstateClosedAt(result.data?.closed_at || null);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [caseNumber]);
 
   const handleLogin = async (e) => {
@@ -391,6 +402,8 @@ const AdvisorPortal = () => {
             </>
           }
         />
+
+        {estateClosedAt ? <EstateClosedPortalBanner role="advisor" /> : null}
 
         <header className="ei-portal-card" style={{ marginBottom: '1rem' }}>
           <p className="ei-eyebrow">Read-only</p>

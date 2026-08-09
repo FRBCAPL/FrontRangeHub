@@ -100,7 +100,7 @@ const EstateSettingsRecordsModal = ({ open, onClose, settings, onChanged }) => {
         <p className="ei-settings-hint">
           {isClosed
             ? `Closed ${new Date(settings.closed_at).toLocaleString()}. Inventory, finance, settings, family, helper, and auction writes are blocked by the database. As Personal Representative, viewing and court exports remain available. Family, helper, and advisor portals cannot sign in while closed.`
-            : 'Closing creates a view-and-export-only record for you (the Personal Representative). Family, helper, and advisor portals stop working until you reopen. It does not hide or delete the estate.'}
+            : 'Closing creates a view-and-export-only record for you (the Personal Representative). New family, helper, and advisor sign-ins are blocked; anyone already signed in can still view (read-only) until they leave. It does not hide or delete the estate.'}
         </p>
 
         {!isClosed && checklist && !checklist.canClose ? (

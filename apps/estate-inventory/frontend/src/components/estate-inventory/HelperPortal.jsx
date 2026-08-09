@@ -20,6 +20,7 @@ import EstateWhatIsVaultModal from './EstateWhatIsVaultModal';
 import EstateLegalDisclaimerModal from './EstateLegalDisclaimerModal';
 import EstateFaqModal from './EstateFaqModal';
 import EstateBillingLockedGate from './EstateBillingLockedGate';
+import EstateClosedPortalBanner from './EstateClosedPortalBanner';
 import {
   EstateAuthPinInput,
   EstateAuthTextInput,
@@ -48,6 +49,7 @@ const HelperPortal = () => {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [probateWindow, setProbateWindow] = useState(null);
+  const [estateClosedAt, setEstateClosedAt] = useState(null);
 
   const loadCollections = async (active = session) => {
     if (!active?.token) return;
@@ -67,8 +69,10 @@ const HelperPortal = () => {
     const result = await estateInventoryService.getSettings(caseNumber);
     if (!result.success) {
       setProbateWindow(null);
+      setEstateClosedAt(null);
       return;
     }
+    setEstateClosedAt(result.data.closed_at || null);
     setProbateWindow({
       lettersIssuedAt: result.data.letters_issued_at || null,
       mode: result.data.probate_window_mode || 'duration',
@@ -250,6 +254,7 @@ const HelperPortal = () => {
           </button>
         }
       />
+      {estateClosedAt ? <EstateClosedPortalBanner role="helper" /> : null}
       {probateWindow ? (
         <ProbateCountdown
           lettersIssuedAt={probateWindow.lettersIssuedAt}
