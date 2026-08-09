@@ -10,6 +10,7 @@ import {
   openFamilyUpdate
 } from '@shared/utils/estateFamilyUpdate.js';
 import { completenessConfirmMessage } from '@shared/utils/estateCompleteness.js';
+import { buildAndDownloadRecordsPack } from '@shared/utils/estateRecordsPack.js';
 import EstateModalShell from './EstateModalShell.jsx';
 
 const STATUS_ICON = { done: '\u2713', warn: '!', block: '!', info: 'i' };
@@ -25,6 +26,7 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
   const [packBusy, setPackBusy] = useState(false);
   const [accountingBusy, setAccountingBusy] = useState(false);
   const [familyBusy, setFamilyBusy] = useState(false);
+  const [recordsPackBusy, setRecordsPackBusy] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
@@ -102,6 +104,40 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
       setError(err?.message || 'Evidence pack failed.');
     } finally {
       setPackBusy(false);
+    }
+  };
+
+  const downloadRecordsPack = async () => {
+    setError('');
+    setInfo('');
+    setRecordsPackBusy(true);
+    try {
+      const cert = await estateInventoryService.getCompletenessCertificate(caseNumber);
+      setRecordsPackBusy(false);
+      if (cert.success && !window.confirm(completenessConfirmMessage(cert.data))) {
+        setInfo('Records pack cancelled.');
+        return;
+      }
+      setRecordsPackBusy(true);
+      const result = await buildAndDownloadRecordsPack({
+        caseNumber,
+        onProgress: (label) => setInfo(label || 'Building pack…')
+      });
+      if (!result.success) {
+        setError(result.error || 'Could not build records pack.');
+        return;
+      }
+      const omitNote =
+        result.omitted?.length > 0
+          ? ` ${result.omitted.length} optional file(s) omitted — see README.txt.`
+          : '';
+      setInfo(
+        `Records pack downloaded (${result.folderName}.zip). Save this ZIP to a USB drive and keep a second copy.${omitNote}`
+      );
+    } catch (err) {
+      setError(err?.message || 'Records pack failed.');
+    } finally {
+      setRecordsPackBusy(false);
     }
   };
 
@@ -270,6 +306,14 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
             <button
               type="button"
               className="ei-btn ei-btn-secondary ei-btn-small"
+              onClick={downloadRecordsPack}
+              disabled={recordsPackBusy || packBusy || accountingBusy || familyBusy}
+            >
+              {recordsPackBusy ? 'Building pack…' : 'Download records pack'}
+            </button>
+            <button
+              type="button"
+              className="ei-btn ei-btn-secondary ei-btn-small"
               onClick={generateFamilyUpdate}
               disabled={familyBusy}
             >
@@ -292,6 +336,9 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
               {packBusy ? 'Preparing…' : 'Generate court evidence pack'}
             </button>
           </div>
+          <p className="ei-field-hint" style={{ marginTop: '0.35rem' }}>
+            Records pack: save the ZIP to a USB drive and keep a second copy.
+          </p>
 
           {!alreadyClosed ? (
             <div className="ei-field">

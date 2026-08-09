@@ -21,6 +21,7 @@ import {
 import { completenessConfirmMessage, formatCompletenessBannerHtml } from '@shared/utils/estateCompleteness.js';
 import { buildAdministrationChronologyHtml } from '@shared/utils/estateAdministrationChronology.js';
 import { buildGiftResidualScheduleHtml } from '@shared/utils/estateGiftResidualSchedule.js';
+import { buildAndDownloadRecordsPack } from '@shared/utils/estateRecordsPack.js';
 import EstateDecisionNotesModal from './EstateDecisionNotesModal.jsx';
 import FamilyUpdatePreviewModal from './FamilyUpdatePreviewModal.jsx';
 import EstateReportPreviewModal from './EstateReportPreviewModal.jsx';
@@ -177,6 +178,35 @@ const EstateReportsModal = ({
     }
   };
 
+  const runRecordsPack = async () => {
+    setBusyLabel('Building pack…');
+    try {
+      const result = await withTimeout(
+        buildAndDownloadRecordsPack({
+          caseNumber,
+          displayCaseNumber: caseLabel,
+          onProgress: (label) => setBusyLabel(label || 'Building pack…')
+        }),
+        'Records pack'
+      );
+      if (!result.success) {
+        onMessage?.(result.error || 'Could not build records pack.');
+        return;
+      }
+      const omitNote =
+        result.omitted?.length > 0
+          ? ` ${result.omitted.length} optional file(s) omitted — see README.txt in the ZIP.`
+          : '';
+      onMessage?.(
+        `Records pack downloaded (${result.folderName}.zip). Save this ZIP to a USB drive and keep a second copy.${omitNote}`
+      );
+    } catch (err) {
+      onMessage?.(err?.message || 'Records pack failed.');
+    } finally {
+      setBusyLabel('');
+    }
+  };
+
   const confirmGate = async () => {
     const next = gate;
     setGate(null);
@@ -184,6 +214,7 @@ const EstateReportsModal = ({
     if (next.action === 'court') await runCourtPack();
     else if (next.action === 'accounting') await runFormalAccounting();
     else if (next.action === 'catalog') await runCatalogPdf(next.certificate);
+    else if (next.action === 'recordsPack') await runRecordsPack();
   };
 
   const handleAuctionReconciliation = async () => {
@@ -372,7 +403,9 @@ const EstateReportsModal = ({
       ? 'Generate formal accounting'
       : gate?.action === 'catalog'
         ? 'Generate catalog'
-        : 'Generate evidence pack';
+        : gate?.action === 'recordsPack'
+          ? 'Download records pack'
+          : 'Generate evidence pack';
 
   const previewHint = 'Opens a preview, then Download PDF or Download HTML';
 
@@ -408,6 +441,18 @@ const EstateReportsModal = ({
             <button
               type="button"
               className="ei-action ei-action-primary"
+              disabled={busy}
+              onClick={() => requestCompletenessGate('recordsPack')}
+            >
+              <span className="ei-action-label">Download records pack</span>
+              <span className="ei-action-hint">
+                One ZIP of supporting HTML/JSON reports. Save this ZIP to a USB
+                drive and keep a second copy.
+              </span>
+            </button>
+            <button
+              type="button"
+              className="ei-action"
               disabled={busy}
               onClick={() => requestCompletenessGate('court')}
             >
