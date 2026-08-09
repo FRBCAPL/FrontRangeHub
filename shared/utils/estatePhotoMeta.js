@@ -190,9 +190,22 @@ export function getPhotoEntries(item) {
       }
       if (!entry || typeof entry !== 'object') return null;
       const url = entry.url || entry.href || '';
-      if (!url) return null;
+      if (!url) {
+        if (!entry.offline_missing) return null;
+        return {
+          url: '',
+          offline_missing: true,
+          remote_url: entry.remote_url || null,
+          taken_by: entry.taken_by || item?.created_by_name || null,
+          captured_at: entry.captured_at || item?.photo_captured_at || null,
+          gps_lat: entry.gps_lat ?? item?.photo_gps_lat ?? null,
+          gps_lng: entry.gps_lng ?? item?.photo_gps_lng ?? null
+        };
+      }
       return {
         url,
+        offline_missing: Boolean(entry.offline_missing),
+        remote_url: entry.remote_url || null,
         taken_by: entry.taken_by || item?.created_by_name || null,
         captured_at: entry.captured_at || item?.photo_captured_at || null,
         gps_lat: entry.gps_lat ?? item?.photo_gps_lat ?? null,

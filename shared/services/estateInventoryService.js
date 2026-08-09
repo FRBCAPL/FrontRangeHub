@@ -591,6 +591,16 @@ async function downloadPhotoBlob(url) {
   return res.blob();
 }
 
+/** Public wrapper for records-pack / offline export photo bundling. */
+export async function downloadEstatePhotoBlob(url) {
+  try {
+    const blob = await downloadPhotoBlob(url);
+    return ok(blob);
+  } catch (err) {
+    return fail(err?.message || 'Could not download photo.');
+  }
+}
+
 export async function listCollections(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
   const scoped = assertEstateScoped(estate);
@@ -7355,7 +7365,8 @@ const estateInventoryService = {
   isAuctionUnlocked,
   clearAuctionUnlock,
   verifyAuctionPassword,
-  compressImageFile
+  compressImageFile,
+  downloadEstatePhotoBlob
 };
 
 export default estateInventoryService;

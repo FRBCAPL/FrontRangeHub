@@ -14,14 +14,20 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;');
 }
 
-function catalogTableHtml(items) {
+function catalogTableHtml(items, { offlinePack = false } = {}) {
   const rows = (items || [])
     .map((item) => {
-      const photos = getPhotoEntries(item);
-      const thumb = photos[0]
-        ? `<img src="${escapeHtml(photos[0].url)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />`
-        : '—';
-      const takenBy = [...new Set(photos.map((p) => p.taken_by).filter(Boolean))].join(', ') || '—';
+      const photos = getPhotoEntries(item).filter((p) => p?.url);
+      const missingOffline = offlinePack && getPhotoEntries(item).some((p) => p?.offline_missing);
+      let thumb = '—';
+      if (photos[0]) {
+        thumb = `<img src="${escapeHtml(photos[0].url)}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:6px;" />`;
+      } else if (missingOffline) {
+        thumb = '<span style="color:#9a3412;font-size:0.8rem">Photo not bundled</span>';
+      }
+      const takenBy =
+        [...new Set(getPhotoEntries(item).map((p) => p.taken_by).filter(Boolean))].join(', ') ||
+        '—';
       return `<tr>
         <td>${thumb}</td>
         <td>${escapeHtml(item.name)}</td>
@@ -68,14 +74,15 @@ const CATALOG_CSS = `
   button { font: inherit; padding: 0.5rem 0.9rem; cursor: pointer; }
 `;
 
-export function buildCatalogJson({ caseNumber, items, generatedAt }) {
+export function buildCatalogJson({ caseNumber, items, generatedAt, offlinePack = false }) {
   return JSON.stringify(
     {
       export_kind: 'inventory_catalog_backup',
-      note:
-        'Catalog-only backup of inventory items. Does not include Needs attention / completeness status — use Evidence Pack or Formal Accounting for supporting exports.',
+      note: offlinePack
+        ? 'Catalog backup for USB/offline use. Photo URLs are relative paths under photos/ when bundled. remote_url retains the original cloud URL when present.'
+        : 'Catalog-only backup of inventory items. Does not include Needs attention / completeness status — use Evidence Pack or Formal Accounting for supporting exports.',
       case_number: caseNumber || 'estate',
-
+      offline_pack: Boolean(offlinePack),
       generated_at: generatedAt,
       read_only: true,
       item_count: (items || []).length,
@@ -132,8 +139,12 @@ export function buildPrintableCatalogHtml({
   caseNumber,
   items,
   generatedAt,
-  certificateHtml = ''
+  certificateHtml = '',
+  offlinePack = false
 }) {
+  const offlineNote = offlinePack
+    ? `<p class="meta">Offline pack copy — photos load from the local <code>photos/</code> folder next to this file.</p>`
+    : '';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -145,8 +156,9 @@ export function buildPrintableCatalogHtml({
 <body>
   <h1>${escapeHtml(APP_NAME)} Catalog</h1>
   <p class="meta">Case ${escapeHtml(caseNumber || 'estate')} · Generated ${escapeHtml(generatedAt || '')} · ${(items || []).length} items · Supporting document — not a filing</p>
+  ${offlineNote}
   ${certificateHtml || ''}
-  ${catalogTableHtml(items)}
+  ${catalogTableHtml(items, { offlinePack })}
 </body>
 </html>`;
 }

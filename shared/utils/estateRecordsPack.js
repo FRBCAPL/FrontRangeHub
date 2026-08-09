@@ -24,6 +24,7 @@ import {
 } from './estateExport.js';
 import { formatCompletenessBannerHtml } from './estateCompleteness.js';
 import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
+import { bundleCatalogPhotos } from './estateRecordsPackPhotos.js';
 
 function safeFilePart(value) {
   return (
@@ -56,6 +57,14 @@ function downloadBlob(blob, filename) {
 async function requireOk(result, label) {
   if (!result?.success) {
     throw new Error(result?.error || `${label} failed.`);
+  }
+  return result.data;
+}
+
+async function downloadPhotoForPack(url) {
+  const result = await estateInventoryService.downloadEstatePhotoBlob(url);
+  if (!result?.success || !result.data) {
+    throw new Error(result?.error || 'photo download failed');
   }
   return result.data;
 }
@@ -133,8 +142,7 @@ export async function buildAndDownloadRecordsPack({
       await estateInventoryService.getCompletenessCertificate(caseNumber),
       'Completeness certificate'
     );
-    folder.file('09-completeness-certificate.json', JSON.stringify(certificate, null, 2));
-    included.push('09-completeness-certificate.json');
+    // Written last (09) after optional reports so ZIP listing stays numbered.
 
     // ——— Optional (omit + note in README on failure) ———
     progress('Building inventory reconciliation…');
@@ -152,20 +160,34 @@ export async function buildAndDownloadRecordsPack({
       folder.file('04-inventory-reconciliation.html', reconHtml);
       included.push('04-inventory-reconciliation.html');
 
+      progress('Bundling catalog photos…');
+      const photoBundle = await bundleCatalogPhotos(items, downloadPhotoForPack, progress);
+      for (const file of photoBundle.files) {
+        folder.file(file.path, file.blob);
+      }
+      if (photoBundle.files.length) {
+        included.push(`photos/ (${photoBundle.files.length} file(s))`);
+      }
+      for (const line of photoBundle.failed) {
+        omitted.push(`photo — ${line}`);
+      }
+
       progress('Building inventory catalog…');
       const catalogHtml = buildPrintableCatalogHtml({
         caseNumber: caseNumber || caseLabel,
-        items,
+        items: photoBundle.rewrittenItems,
         generatedAt: generatedAt.toLocaleString(),
-        certificateHtml: formatCompletenessBannerHtml(certificate)
+        certificateHtml: formatCompletenessBannerHtml(certificate),
+        offlinePack: true
       });
       folder.file('08-inventory-catalog.html', catalogHtml);
       folder.file(
         '08-inventory-catalog.json',
         buildCatalogJson({
           caseNumber: caseNumber || caseLabel,
-          items,
-          generatedAt: generatedIso
+          items: photoBundle.rewrittenItems,
+          generatedAt: generatedIso,
+          offlinePack: true
         })
       );
       included.push('08-inventory-catalog.html', '08-inventory-catalog.json');
@@ -224,6 +246,21 @@ export async function buildAndDownloadRecordsPack({
       omitted.push(`07-family-update.html — ${err?.message || 'failed'}`);
     }
 
+    folder.file('09-completeness-certificate.json', JSON.stringify(certificate, null, 2));
+    included.push('09-completeness-certificate.json');
+
+    const sortedIncluded = [
+      'README.txt',
+      ...included.filter((f) => f !== 'README.txt').sort((a, b) => {
+        const na = parseInt(String(a).slice(0, 2), 10);
+        const nb = parseInt(String(b).slice(0, 2), 10);
+        if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+        if (String(a).startsWith('photos/')) return 1;
+        if (String(b).startsWith('photos/')) return -1;
+        return String(a).localeCompare(String(b));
+      })
+    ];
+
     const readme = [
       'Estate Vault — Records Pack',
       '===========================',
@@ -237,12 +274,17 @@ export async function buildAndDownloadRecordsPack({
       '',
       'Save this ZIP to a USB drive and keep a second copy.',
       '',
+      'Offline notes:',
+      '  - 08-inventory-catalog.html loads thumbs from the local photos/ folder.',
+      '  - Scene-capture binaries and account statement PDFs are not included in this pack.',
+      '  - Keep the ZIP folder intact so relative photo paths keep working.',
+      '',
       'Included files:',
-      ...included.map((f) => `  - ${f}`),
+      ...sortedIncluded.filter((f) => f !== 'README.txt').map((f) => `  - ${f}`),
       '',
       ...(omitted.length
         ? [
-            'Omitted (optional report failed):',
+            'Omitted / failed (optional):',
             ...omitted.map((line) => `  - ${line}`),
             ''
           ]
@@ -251,7 +293,6 @@ export async function buildAndDownloadRecordsPack({
     ].join('\n');
 
     folder.file('README.txt', readme);
-    included.unshift('README.txt');
 
     progress('Assembling ZIP…');
     const blob = await zip.generateAsync({
