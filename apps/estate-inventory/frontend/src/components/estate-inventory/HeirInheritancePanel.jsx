@@ -8,6 +8,7 @@ import {
   formatEstateDisplayDate
 } from '@shared/utils/estateInventoryConstants.js';
 import { acknowledgementStatusLabel } from '@shared/utils/estateAcknowledgement.js';
+import { mapEstatePortalClosedError } from '@shared/utils/estatePortalClosedCopy.js';
 import DistributionReceiptModal from './DistributionReceiptModal.jsx';
 import EstateModalShell from './EstateModalShell';
 
@@ -58,7 +59,11 @@ const HeirInheritancePanel = ({
     );
     setBusyId(null);
     if (!result.success) {
-      setError(result.error || 'Could not save your acknowledgement.');
+      setError(
+        mapEstatePortalClosedError(result.error, 'family') ||
+          result.error ||
+          'Could not save your acknowledgement.'
+      );
       return;
     }
     await load();

@@ -1,29 +1,74 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import estateInventoryService from '@shared/services/estateInventoryService.js';
+import { buildClosingChecklist } from '@shared/utils/estateClosingReadiness.js';
 import { EstateSettingsShell } from './EstateSettingsShell';
 
 const EstateSettingsRecordsModal = ({ open, onClose, settings, onChanged }) => {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [readiness, setReadiness] = useState(null);
+  const [readinessReady, setReadinessReady] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setReason('');
-      setError('');
-      setBusy(false);
-    }
-  }, [open]);
+    if (!open) return;
+    setReason('');
+    setError('');
+    setBusy(false);
+    setReadiness(null);
+    setReadinessReady(Boolean(settings?.closed_at));
+    if (settings?.closed_at) return;
+    let cancelled = false;
+    (async () => {
+      const result = await estateInventoryService.getDistributionReadiness(
+        settings?.case_number
+      );
+      if (cancelled) return;
+      if (result.success) setReadiness(result.data);
+      setReadinessReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, settings?.case_number, settings?.closed_at]);
+
+  const checklist = useMemo(() => {
+    if (!readiness || settings?.closed_at) return null;
+    return buildClosingChecklist({
+      settings: readiness.settings || settings || {},
+      finance: readiness.finance || {},
+      distributions: readiness.existingDistributions || [],
+      pendingReviewCount: readiness.pendingReviewCount || 0,
+      heirCount: (readiness.heirs || []).length,
+      claimsEnded: readiness.claimsEnded,
+      liquidAvailable: readiness.liquidAvailable
+    });
+  }, [readiness, settings]);
 
   if (!open) return null;
 
   const isClosed = Boolean(settings?.closed_at);
+  const closeBlocked = !isClosed && checklist && !checklist.canClose;
+  const closeLoading = !isClosed && !readinessReady;
 
   const submit = async () => {
     setError('');
     if (reason.trim().length < 8) {
       setError('Enter a reason of at least 8 characters.');
       return;
+    }
+    if (!isClosed) {
+      if (checklist && !checklist.canClose) {
+        setError(
+          checklist.blockingReasons?.[0] ||
+            'Collect outstanding distribution acknowledgements before closing.'
+        );
+        return;
+      }
+      const confirmMsg =
+        checklist?.confirmMessage ||
+        'Close this estate for records?\n\nFamily, helper, and advisor portals will stop working. Only you can still view and export.\n\nContinue?';
+      if (!window.confirm(confirmMsg)) return;
     }
     setBusy(true);
     const result = isClosed
@@ -54,9 +99,13 @@ const EstateSettingsRecordsModal = ({ open, onClose, settings, onChanged }) => {
         <h4>{isClosed ? 'Estate is closed for records' : 'Estate is open for work'}</h4>
         <p className="ei-settings-hint">
           {isClosed
-            ? `Closed ${new Date(settings.closed_at).toLocaleString()}. Inventory, finance, settings, family, helper, and auction writes are blocked by the database. Viewing and court exports remain available.`
-            : 'Closing creates a view-and-export-only record. It does not hide or delete the estate.'}
+            ? `Closed ${new Date(settings.closed_at).toLocaleString()}. Inventory, finance, settings, family, helper, and auction writes are blocked by the database. As Personal Representative, viewing and court exports remain available. Family, helper, and advisor portals cannot sign in while closed.`
+            : 'Closing creates a view-and-export-only record for you (the Personal Representative). Family, helper, and advisor portals stop working until you reopen. It does not hide or delete the estate.'}
         </p>
+
+        {!isClosed && checklist && !checklist.canClose ? (
+          <div className="ei-error">{checklist.blockingReasons?.[0]}</div>
+        ) : null}
 
         <div className="ei-portal-card">
           <h4>What Estate Vault keeps</h4>
@@ -109,7 +158,14 @@ const EstateSettingsRecordsModal = ({ open, onClose, settings, onChanged }) => {
         <button
           type="button"
           className={`ei-btn${isClosed ? '' : ' ei-btn-danger'}`}
-          disabled={busy}
+          disabled={busy || closeBlocked || closeLoading}
+          title={
+            !isClosed && checklist && !checklist.canClose
+              ? checklist.blockingReasons?.[0] || 'Outstanding acknowledgements required'
+              : closeLoading
+                ? 'Loading closing checklist…'
+                : ''
+          }
           onClick={submit}
         >
           {busy

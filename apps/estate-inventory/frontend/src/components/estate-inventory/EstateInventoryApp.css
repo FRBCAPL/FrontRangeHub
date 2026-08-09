@@ -1213,6 +1213,23 @@ button.ei-nav-menu-btn-item {
   -webkit-text-fill-color: var(--ei-ink);
 }
 
+.ei-action:disabled,
+.ei-action[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.ei-action:disabled:hover,
+.ei-action:disabled:focus-visible,
+.ei-action[aria-disabled='true']:hover,
+.ei-action[aria-disabled='true']:focus-visible {
+  transform: none;
+  border-color: var(--ei-line);
+  background: var(--ei-panel);
+}
+
 .ei-action-primary {
   background: linear-gradient(160deg, #14b8a6 0%, #0f766e 100%);
   color: #fff !important;
@@ -11669,6 +11686,15 @@ button.ei-voice-btn.is-listening {
 .ei-closing-item.is-warn .ei-closing-icon {
   color: #fde68a;
   background: rgba(245, 158, 11, 0.16);
+}
+
+.ei-closing-item.is-block .ei-closing-icon {
+  color: #fecaca;
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.ei-closing-item.is-block {
+  border-color: rgba(220, 38, 38, 0.45);
 }
 
 .ei-closing-item.is-info .ei-closing-icon {

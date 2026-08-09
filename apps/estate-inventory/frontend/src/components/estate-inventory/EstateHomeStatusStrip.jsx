@@ -97,7 +97,9 @@ const EstateHomeStatusStrip = ({
     steps.find((s) => s.status === 'attention') ||
     steps.find((s) => s.status === 'active') ||
     steps.find((s) => s.status !== 'done' && s.status !== 'optional');
-  const progressLabel = current?.title || 'Getting started';
+  const progressLabel = settings?.closed_at
+    ? 'Closed for records'
+    : current?.title || 'Getting started';
   const inventoryValue = !inventoryReady
     ? 'Loading…'
     : roomCount <= 0

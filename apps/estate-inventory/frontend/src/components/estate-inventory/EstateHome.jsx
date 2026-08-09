@@ -276,6 +276,7 @@ const EstateHome = ({
               onClick={onAddItem}
               disabled={isClosed}
               title={isClosed ? 'Estate is closed for records. Reopen it before adding items.' : ''}
+              aria-disabled={isClosed ? true : undefined}
             >
               <span className="ei-action-label">Add item</span>
               <span className="ei-action-hint">Photo, title, room, legal status</span>
@@ -284,7 +285,18 @@ const EstateHome = ({
               <span className="ei-action-label">See collections</span>
               <span className="ei-action-hint">Rooms list — open one to view items</span>
             </button>
-            <button type="button" className="ei-action" onClick={onOpenScenes}>
+            <button
+              type="button"
+              className="ei-action"
+              onClick={onOpenScenes}
+              disabled={isClosed}
+              title={
+                isClosed
+                  ? 'Estate is closed for records. Reopen it before adding documentation.'
+                  : ''
+              }
+              aria-disabled={isClosed ? true : undefined}
+            >
               <span className="ei-action-label">Scene documentation</span>
               <span className="ei-action-hint">Rooms, boxes, bags</span>
             </button>
@@ -301,6 +313,7 @@ const EstateHome = ({
                       ? 'Previously marked not needed — open to activate or add a record'
                       : 'Optional perimeter / rekey record — available anytime'
                 }
+                aria-disabled={isClosed ? true : undefined}
               >
                 <span className="ei-action-label">Locksmith / first entry</span>
                 <span className="ei-action-hint">
@@ -316,6 +329,7 @@ const EstateHome = ({
               onClick={onCreateCollection}
               disabled={isClosed}
               title={isClosed ? 'Estate is closed for records. Reopen it before creating rooms.' : ''}
+              aria-disabled={isClosed ? true : undefined}
             >
               <span className="ei-action-label">Create room</span>
               <span className="ei-action-hint">Group by room or category</span>

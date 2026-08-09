@@ -5,11 +5,11 @@
  * Personal Representative can review before closing the estate for records.
  * Pure and side-effect free so it can be unit tested and reused in exports.
  *
- * Nothing here blocks closing — a PR keeps authority to close whenever they
- * choose. Items are advisory: `done` (green), `warn` (needs attention), or
- * `info` (optional context).
+ * Outstanding distribution acknowledgements hard-block close (family portals
+ * cannot acknowledge after close). Other items are advisory warnings.
  */
 
+import { acknowledgementIsOpen } from './estateAcknowledgement.js';
 import { formatEstateDisplayDate } from './estateInventoryConstants.js';
 import { formatMoney } from './estateFinance.js';
 
@@ -114,7 +114,21 @@ export function distributionsNeedBalanceUpdate({
  * @param {number} [params.pendingReviewCount]
  * @param {number} [params.heirCount]
  * @param {boolean} [params.claimsEnded]
- * @returns {{ items: Array, readyCount: number, totalCount: number, warnings: number, canClose: boolean, alreadyClosed: boolean, balanceStale: boolean }}
+ * @param {number} [params.liquidAvailable] optional cash still available to distribute
+ * @returns {{
+ *   items: Array,
+ *   readyCount: number,
+ *   totalCount: number,
+ *   warnings: number,
+ *   canClose: boolean,
+ *   alreadyClosed: boolean,
+ *   balanceStale: boolean,
+ *   pendingAcknowledgements: number,
+ *   blockingReasons: string[],
+ *   claimsEnded: boolean,
+ *   cashOnHand: number,
+ *   confirmMessage: string
+ * }}
  */
 export function buildClosingChecklist({
   settings = {},
@@ -122,29 +136,44 @@ export function buildClosingChecklist({
   distributions = [],
   pendingReviewCount = 0,
   heirCount = 0,
-  claimsEnded = false
+  claimsEnded = false,
+  liquidAvailable = null
 } = {}) {
   const alreadyClosed = Boolean(settings.closed_at);
   const inventoryComplete = Boolean(settings.inventory_completed_at);
   const finalized = (distributions || []).filter((row) => row?.status === 'finalized');
   const distributionCount = finalized.length;
-  const pendingAcknowledgements = finalized.reduce(
-    (count, row) =>
-      count +
-      (row.recipients || []).filter(
-        (recipient) => {
-          const s = String(recipient.acknowledgement_status || 'pending').toLowerCase();
-          return s === 'pending' || s === 'noticed' || s === 'reminded';
-        }
-      ).length,
-    0
-  );
+  const pendingRecipients = [];
+  finalized.forEach((row) => {
+    (row.recipients || []).forEach((recipient) => {
+      if (!acknowledgementIsOpen(recipient.acknowledgement_status)) return;
+      const name =
+        String(recipient.recipient_name || recipient.display_name || recipient.sibling_key || '')
+          .trim() || 'Recipient';
+      pendingRecipients.push(name);
+    });
+  });
+  const pendingAcknowledgements = pendingRecipients.length;
   const outstandingBids = Number(finance.outstandingBids || 0);
+  const cashOnHand = Math.max(
+    0,
+    Number(
+      liquidAvailable != null
+        ? liquidAvailable
+        : finance.fundsAvailable != null
+          ? finance.fundsAvailable
+          : finance.estateCashOnHand != null
+            ? finance.estateCashOnHand
+            : 0
+    ) || 0
+  );
   const { stale: balanceStale } = distributionsNeedBalanceUpdate({
     accounts: finance.accounts || [],
     distributions,
     fundTransactions: finance.fundTransactions
   });
+
+  const receiptsBlocking = distributionCount > 0 && pendingAcknowledgements > 0;
 
   const items = [
     {
@@ -198,13 +227,22 @@ export function buildClosingChecklist({
           ? 'info'
           : pendingAcknowledgements === 0
             ? 'done'
-            : 'warn',
+            : 'block',
       detail:
         distributionCount === 0
           ? 'No distributions to acknowledge yet.'
           : pendingAcknowledgements === 0
             ? 'Every recipient acknowledged receipt.'
-            : `${pendingAcknowledgements} recipient acknowledgement(s) still pending.`
+            : `${pendingAcknowledgements} recipient acknowledgement(s) still pending — required before close (family portals lock out and cannot acknowledge after close).`
+    },
+    {
+      key: 'cash',
+      label: 'Cash on hand',
+      status: cashOnHand > 0.005 ? 'warn' : 'done',
+      detail:
+        cashOnHand > 0.005
+          ? `${formatMoney(cashOnHand)} still available — confirm residual cash is handled before closing.`
+          : 'No material cash balance remaining to distribute.'
     },
     {
       key: 'balances',
@@ -224,6 +262,13 @@ export function buildClosingChecklist({
           : 'No heirs were added. That is fine for some estates.'
     },
     {
+      key: 'portal_lockout',
+      label: 'Family / helper / advisor portals',
+      status: 'info',
+      detail:
+        'Closing locks family, helper, and advisor portals. Only the Personal Representative can still view and export.'
+    },
+    {
       key: 'court_pack',
       label: 'Court-supporting pack & formal accounting',
       status: 'info',
@@ -234,14 +279,68 @@ export function buildClosingChecklist({
 
   const readyCount = items.filter((item) => item.status === 'done').length;
   const warnings = items.filter((item) => item.status === 'warn').length;
+  const blockingReasons = [];
+  if (receiptsBlocking) {
+    const uniqueNames = [...new Set(pendingRecipients)];
+    const named =
+      uniqueNames.length <= 4
+        ? uniqueNames.join(', ')
+        : `${uniqueNames.slice(0, 3).join(', ')} and ${uniqueNames.length - 3} more`;
+    blockingReasons.push(
+      `Collect ${pendingAcknowledgements} outstanding acknowledgement(s) before closing (${named}). Family portals cannot acknowledge after the estate is closed.`
+    );
+  }
+
+  const canClose = !alreadyClosed && blockingReasons.length === 0;
 
   return {
     items,
     readyCount,
     totalCount: items.length,
     warnings,
-    canClose: !alreadyClosed,
+    canClose,
     alreadyClosed,
-    balanceStale
+    balanceStale,
+    pendingAcknowledgements,
+    blockingReasons,
+    claimsEnded: Boolean(claimsEnded),
+    cashOnHand,
+    confirmMessage: buildCloseConfirmMessage({
+      claimsEnded: Boolean(claimsEnded),
+      cashOnHand,
+      warnings
+    })
   };
 }
+
+/**
+ * Confirm dialog body for a non-blocked close attempt.
+ */
+export function buildCloseConfirmMessage({
+  claimsEnded = false,
+  cashOnHand = 0,
+  warnings = 0
+} = {}) {
+  const lines = [
+    'Close this estate for records?',
+    '',
+    'Family, helper, and advisor portals will stop working. Only you (the Personal Representative) can still view and export.'
+  ];
+  if (!claimsEnded) {
+    lines.push('', 'Warning: The creditor claims window is still open.');
+  }
+  if (Number(cashOnHand) > 0.005) {
+    lines.push('', `Warning: About ${formatMoney(cashOnHand)} cash is still on hand.`);
+  }
+  if (Number(warnings) > 0) {
+    lines.push('', `${warnings} checklist item(s) still need attention.`);
+  }
+  lines.push('', 'Continue?');
+  return lines.join('\n');
+}
+
+export default {
+  distributionsNeedBalanceUpdate,
+  buildClosingChecklist,
+  buildCloseConfirmMessage
+};

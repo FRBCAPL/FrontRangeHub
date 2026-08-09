@@ -108,11 +108,20 @@ const EstateTimeline = ({
     );
 
   const inventoryComplete = Boolean(settings?.inventory_completed_at);
+  const estateClosed = Boolean(settings?.closed_at);
   const canMarkComplete =
-    itemStats.itemCount > 0 && itemStats.pendingReviewCount === 0;
+    !estateClosed &&
+    itemStats.itemCount > 0 &&
+    itemStats.pendingReviewCount === 0;
 
   const changeInventoryStatus = async () => {
     setStatusError('');
+    if (estateClosed) {
+      setStatusError(
+        'This estate is closed for records. Reopen it in Settings → Records & retention before changing inventory status.'
+      );
+      return;
+    }
     if (inventoryComplete) {
       const reason = window.prompt(
         'Why are you reopening the inventory?\n\nThis reason is kept in the estate audit history.'
@@ -184,13 +193,15 @@ const EstateTimeline = ({
             type="button"
             className="ei-btn ei-btn-secondary ei-btn-small"
             onClick={changeInventoryStatus}
-            disabled={statusBusy}
+            disabled={statusBusy || estateClosed}
             title={
-              !inventoryComplete && !canMarkComplete
-                ? itemStats.itemCount <= 0
-                  ? 'Add an inventory item first'
-                  : 'Review pending items first'
-                : ''
+              estateClosed
+                ? 'Estate is closed for records. Reopen it before changing inventory status.'
+                : !inventoryComplete && !canMarkComplete
+                  ? itemStats.itemCount <= 0
+                    ? 'Add an inventory item first'
+                    : 'Review pending items first'
+                  : ''
             }
           >
             {statusBusy

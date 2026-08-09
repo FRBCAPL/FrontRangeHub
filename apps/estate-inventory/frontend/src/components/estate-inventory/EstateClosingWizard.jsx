@@ -12,12 +12,11 @@ import {
 import { completenessConfirmMessage } from '@shared/utils/estateCompleteness.js';
 import EstateModalShell from './EstateModalShell.jsx';
 
-const STATUS_ICON = { done: '\u2713', warn: '!', info: 'i' };
+const STATUS_ICON = { done: '\u2713', warn: '!', block: '!', info: 'i' };
 
 /**
- * The closing chapter: a single checklist that gathers everything the app
- * already knows about the estate, then lets the PR close for records with a
- * written reason. Advisory only — nothing here blocks a PR from closing.
+ * Closing checklist + close for records. Outstanding acknowledgements hard-block
+ * close; claims / cash / portal lockout are warned in the confirm dialog.
  */
 const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
   const [readiness, setReadiness] = useState(null);
@@ -58,7 +57,8 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
       distributions: readiness.existingDistributions || [],
       pendingReviewCount: readiness.pendingReviewCount || 0,
       heirCount: (readiness.heirs || []).length,
-      claimsEnded: readiness.claimsEnded
+      claimsEnded: readiness.claimsEnded,
+      liquidAvailable: readiness.liquidAvailable
     });
   }, [readiness]);
 
@@ -172,10 +172,14 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
       setError('Enter a reason of at least 8 characters.');
       return;
     }
-    const warnMsg = checklist?.warnings
-      ? `${checklist.warnings} item(s) still need attention. Close the estate anyway?`
-      : 'Close this estate for records? It becomes view-and-export only.';
-    if (!window.confirm(warnMsg)) return;
+    if (!checklist?.canClose) {
+      setError(
+        checklist?.blockingReasons?.[0] ||
+          'Collect outstanding distribution acknowledgements before closing.'
+      );
+      return;
+    }
+    if (!window.confirm(checklist.confirmMessage)) return;
     setBusy(true);
     const result = await estateInventoryService.closeEstateForRecords(
       caseNumber,
@@ -201,7 +205,9 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
         checklist
           ? alreadyClosed
             ? 'This estate is already closed for records'
-            : `${checklist.readyCount} of ${checklist.totalCount} ready · ${checklist.warnings} need attention`
+            : checklist.canClose
+              ? `${checklist.readyCount} of ${checklist.totalCount} ready · ${checklist.warnings} need attention`
+              : 'Cannot close yet — outstanding acknowledgements'
           : 'Reviewing the estate…'
       }
       onClose={onClose}
@@ -216,7 +222,12 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
               type="button"
               className="ei-btn ei-btn-danger"
               onClick={closeEstate}
-              disabled={busy || !readiness}
+              disabled={busy || !readiness || !checklist?.canClose}
+              title={
+                checklist && !checklist.canClose
+                  ? checklist.blockingReasons?.[0] || 'Outstanding acknowledgements required'
+                  : ''
+              }
             >
               {busy ? 'Closing…' : 'Close estate for records'}
             </button>
@@ -235,14 +246,17 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
           <p className="ei-settings-hint">
             {alreadyClosed
               ? 'The estate is closed. Reopen it in Settings → Records & retention if you need to make changes.'
-              : 'Review each item below. These are guidance — you keep authority to close whenever you choose. Closing creates a view-and-export-only record; it does not delete anything.'}
+              : checklist.canClose
+                ? 'Review each item below. Outstanding acknowledgements must be collected before close. Closing locks family, helper, and advisor portals — only you keep view and export access. It does not delete anything.'
+                : checklist.blockingReasons?.[0] ||
+                  'Collect outstanding distribution acknowledgements before closing.'}
           </p>
 
           <ul className="ei-closing-checklist">
             {checklist.items.map((item) => (
               <li key={item.key} className={`ei-closing-item is-${item.status}`}>
                 <span className="ei-closing-icon" aria-hidden="true">
-                  {STATUS_ICON[item.status]}
+                  {STATUS_ICON[item.status] || '!'}
                 </span>
                 <div>
                   <strong>{item.label}</strong>

@@ -218,14 +218,14 @@ export function buildEstateTimeline({
     {
       key: 'claims_window',
       title: claimsTitle,
-      done: probateEnded || estateClosed,
+      done: probateEnded,
       note: claimsNote
     },
     {
       key: 'auction',
       title: auctionTitle,
-      done: auctionDone || estateClosed,
-      optional: auctionOptional && !estateClosed,
+      done: auctionDone,
+      optional: auctionOptional,
       note: auctionNote
     },
     {
@@ -236,7 +236,7 @@ export function buildEstateTimeline({
             ? 'Distributions awaiting receipts'
             : 'Distributions recorded'
           : 'Distributions',
-      done: (distributions > 0 && pendingAcknowledgements === 0) || estateClosed,
+      done: distributions > 0 && pendingAcknowledgements === 0,
       note:
         distributions > 0
           ? pendingAcknowledgements > 0
@@ -252,8 +252,8 @@ export function buildEstateTimeline({
     }
   ];
 
-  // Optional unscheduled steps do not block “You are here” and do not count as done.
-  const firstOpen = defs.findIndex((s) => !s.done && !s.optional);
+  // Optional / attention steps do not block “You are here” (attention keeps its own ! badge).
+  const firstOpen = defs.findIndex((s) => !s.done && !s.optional && !s.attention);
   const steps = defs.map((s, i) => ({
     key: s.key,
     title: s.title,

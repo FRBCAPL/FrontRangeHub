@@ -255,6 +255,8 @@ export function buildFormalAccountingStatement({
     estateName: settings.estate_name || finance.estateName || 'Estate',
     caseNumber: settings.case_number || finance.caseNumber || null,
     courtCaseNumber: settings.court_case_number || finance.courtCaseNumber || null,
+    closedAt: settings.closed_at || null,
+    closeReason: settings.close_reason || null,
     periodStart,
     periodEnd,
     periodStartLabel: toDateLabel(periodStart) || 'Not set',
@@ -478,6 +480,11 @@ table.detail th{background:#f5f5f4;font-family:system-ui,sans-serif}
 <h1>${esc(APP_NAME)} — Formal Accounting Statement</h1>
 <div class="meta">${esc(s.estateName || 'Estate')} · Case ${esc(caseLabel)}</div>
 <div class="meta">Period: ${esc(s.periodStartLabel)} — ${esc(s.periodEndLabel)} · Method: Current balances</div>
+<div class="meta"><strong>Record status:</strong> ${
+  s.closedAt
+    ? `Closed for records · ${esc(toDateLabel(s.closedAt) || s.closedAt)}`
+    : 'Open'
+}</div>
 
 <div class="notice">
   <strong>Fiduciary period schedule — supporting documentation, not a tax return or court filing.</strong>

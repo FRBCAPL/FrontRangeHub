@@ -8,6 +8,7 @@ import {
   estateitPortalHomePath,
   formatEstateDisplayDate
 } from '@shared/utils/estateInventoryConstants.js';
+import { mapEstatePortalClosedError } from '@shared/utils/estatePortalClosedCopy.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
@@ -153,7 +154,9 @@ const AdvisorPortal = () => {
       setError(
         result.data?.role && result.data.role !== 'advisor'
           ? 'That code belongs to another role. Use the matching portal, or ask the PR for your advisor invite PIN.'
-          : result.error || 'Could not sign in.'
+          : mapEstatePortalClosedError(result.error, 'advisor') ||
+              result.error ||
+              'Could not sign in.'
       );
       return;
     }

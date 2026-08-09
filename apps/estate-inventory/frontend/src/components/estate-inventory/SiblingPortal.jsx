@@ -26,6 +26,7 @@ import {
   canAccessClaimedInventoryFilter
 } from '@shared/utils/estateInventoryConstants.js';
 import { formatItemRefLabel, roomTitleWithCode } from '@shared/utils/estateInventoryRefCode.js';
+import { mapEstatePortalClosedError } from '@shared/utils/estatePortalClosedCopy.js';
 import {
   normalizeVisibilitySections,
   visibilitySectionEnabled
@@ -319,7 +320,11 @@ const SiblingPortal = () => {
     });
     setLoading(false);
     if (!result.success) {
-      setError(result.error || 'Login failed.');
+      setError(
+        mapEstatePortalClosedError(result.error, 'family') ||
+          result.error ||
+          'Login failed.'
+      );
       return;
     }
     if (result.data?.role && result.data.role !== 'family') {

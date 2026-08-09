@@ -129,6 +129,10 @@ export function buildAdministrationChronology({
     ) {
       return;
     }
+    // Settings-derived close milestone already carries the reason (CL-07).
+    if (type === 'estate_closed' && settings.closed_at) {
+      return;
+    }
     push({
       kind: `activity_${type}`,
       label: row.summary || type.replace(/_/g, ' '),
@@ -138,7 +142,9 @@ export function buildAdministrationChronology({
           ? String(row.metadata.note)
           : type === 'date_correction'
             ? `${row.metadata?.field || 'date'}: ${row.metadata?.old_value || '—'} → ${row.metadata?.new_value || '—'}`
-            : null,
+            : type === 'estate_closed' && row.metadata?.reason
+              ? String(row.metadata.reason)
+              : null,
       id: `act-${row.id}`
     });
   });

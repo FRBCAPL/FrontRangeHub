@@ -7,6 +7,7 @@ import {
   estateitPortalHomePath,
   HELPER_ROLE_GUIDE
 } from '@shared/utils/estateInventoryConstants.js';
+import { mapEstatePortalClosedError } from '@shared/utils/estatePortalClosedCopy.js';
 import { useEstateCase } from './EstateCaseContext';
 import EstateNav from './EstateNav';
 import ProbateCountdown from './ProbateCountdown';
@@ -100,7 +101,11 @@ const HelperPortal = () => {
     const result = await estateInventoryService.helperLogin(caseNumber, password, displayName.trim());
     setBusy(false);
     if (!result.success) {
-      setError(result.error || 'Login failed.');
+      setError(
+        mapEstatePortalClosedError(result.error, 'helper') ||
+          result.error ||
+          'Login failed.'
+      );
       return;
     }
     setSession(result.data);

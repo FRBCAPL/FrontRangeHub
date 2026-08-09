@@ -8,6 +8,7 @@ import {
   isOpenEstateCase,
   normalizeEstateCaseNumber
 } from '@shared/utils/estateInventoryConstants.js';
+import { mapEstatePortalClosedError } from '@shared/utils/estatePortalClosedCopy.js';
 import EstateBrandTitle from './EstateBrandTitle';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import EstateLegalDisclaimerGate from './EstateLegalDisclaimerGate';
@@ -103,7 +104,11 @@ const EstateFamilySignIn = () => {
     });
     setBusy(false);
     if (!result.success) {
-      setError(result.error || 'Could not sign in.');
+      setError(
+        mapEstatePortalClosedError(result.error, result.data?.role || 'family') ||
+          result.error ||
+          'Could not sign in.'
+      );
       return;
     }
     rememberCase(matchedEstate.caseNumber);
