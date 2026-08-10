@@ -25,6 +25,7 @@ import {
 import { formatCompletenessBannerHtml } from './estateCompleteness.js';
 import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
 import { bundleCatalogPhotos } from './estateRecordsPackPhotos.js';
+import { appendFullDocumentationSections } from './estateRecordsPackFullDocs.js';
 
 function safeFilePart(value) {
   return (
@@ -249,6 +250,20 @@ export async function buildAndDownloadRecordsPack({
     folder.file('09-completeness-certificate.json', JSON.stringify(certificate, null, 2));
     included.push('09-completeness-certificate.json');
 
+    await appendFullDocumentationSections({
+      service: estateInventoryService,
+      folder,
+      caseNumber,
+      caseLabel,
+      estateName,
+      generatedAt,
+      generatedIso,
+      progress,
+      omitted,
+      included,
+      downloadPhoto: downloadPhotoForPack
+    });
+
     const sortedIncluded = [
       'README.txt',
       ...included.filter((f) => f !== 'README.txt').sort((a, b) => {
@@ -262,8 +277,8 @@ export async function buildAndDownloadRecordsPack({
     ];
 
     const readme = [
-      'Estate Vault — Records Pack',
-      '===========================',
+      'Estate Vault — Full documentation records pack',
+      '==============================================',
       '',
       `Estate: ${estateName}`,
       `Case: ${caseLabel}`,
@@ -274,10 +289,19 @@ export async function buildAndDownloadRecordsPack({
       '',
       'Save this ZIP to a USB drive and keep a second copy.',
       '',
+      'Contents overview:',
+      '  01–09  Court-supporting reports, catalog, completeness certificate',
+      '  photos/  Inventory item photos (relative paths in catalog)',
+      '  10      Decision / explanation notes (HTML + JSON)',
+      '  11      Distribution receipts (HTML + PDF per recipient)',
+      '  12      Scene captures (index + local photos)',
+      '  13      Account statement originals (PDF/images)',
+      '  14      Expense receipt photos',
+      '',
       'Offline notes:',
-      '  - 08-inventory-catalog.html loads thumbs from the local photos/ folder.',
-      '  - Scene-capture binaries and account statement PDFs are not included in this pack.',
-      '  - Keep the ZIP folder intact so relative photo paths keep working.',
+      '  - Keep this folder intact so relative media paths keep working.',
+      '  - Open HTML files in a browser without needing an internet connection',
+      '    for bundled photos and statements.',
       '',
       'Included files:',
       ...sortedIncluded.filter((f) => f !== 'README.txt').map((f) => `  - ${f}`),
@@ -289,7 +313,7 @@ export async function buildAndDownloadRecordsPack({
             ''
           ]
         : []),
-      'Folder layout matches the Download records pack export from Reports.'
+      'Generated from Reports → Download records pack (full documentation).'
     ].join('\n');
 
     folder.file('README.txt', readme);

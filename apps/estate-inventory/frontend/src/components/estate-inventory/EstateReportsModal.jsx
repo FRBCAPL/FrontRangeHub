@@ -198,7 +198,7 @@ const EstateReportsModal = ({
           ? ` ${result.omitted.length} optional file(s) omitted — see README.txt in the ZIP.`
           : '';
       onMessage?.(
-        `Records pack downloaded (${result.folderName}.zip). Save this ZIP to a USB drive and keep a second copy.${omitNote}`
+        `Full documentation pack downloaded (${result.folderName}.zip). Save this ZIP to a USB drive and keep a second copy. Larger estates may take longer to build.${omitNote}`
       );
     } catch (err) {
       onMessage?.(err?.message || 'Records pack failed.');
@@ -446,8 +446,10 @@ const EstateReportsModal = ({
             >
               <span className="ei-action-label">Download records pack</span>
               <span className="ei-action-hint">
-                One ZIP of supporting HTML/JSON reports. Save this ZIP to a USB
-                drive and keep a second copy.
+                Full documentation ZIP: reports, decision notes, distribution
+                receipts, scene photos, account statements, and expense receipts.
+                Save this ZIP to a USB drive and keep a second copy. May take
+                longer on large estates.
               </span>
             </button>
             <button

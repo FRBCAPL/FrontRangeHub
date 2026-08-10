@@ -601,6 +601,23 @@ export async function downloadEstatePhotoBlob(url) {
   }
 }
 
+/** Auth download for private account statement PDFs/images (finance bucket). */
+export async function downloadEstateFinanceDocumentBlob(storagePath) {
+  const path = String(storagePath || '').trim();
+  if (!path) return fail('Document path is required.');
+  try {
+    const { data, error } = await supabase.storage
+      .from(FINANCE_DOCUMENT_BUCKET)
+      .download(path);
+    if (error || !data) {
+      return fail(error?.message || 'Could not download finance document.');
+    }
+    return ok(data);
+  } catch (err) {
+    return fail(err?.message || 'Could not download finance document.');
+  }
+}
+
 export async function listCollections(caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
   const scoped = assertEstateScoped(estate);
@@ -5464,6 +5481,25 @@ export async function listEstateAccountDocuments(accountId, caseNumber) {
   return ok(rows);
 }
 
+/** All account statement metadata for an estate (no signed URLs — pack uses storage download). */
+export async function listAllEstateAccountDocuments(caseNumber) {
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+
+  let q = supabase
+    .from('estate_account_documents')
+    .select(ACCOUNT_DOCUMENT_SELECT)
+    .eq('owner_id', estate.userId)
+    .order('statement_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  const { data, error } = await q;
+  if (error) return fail(error);
+  return ok(data || []);
+}
+
 export async function addEstateAccountDocument(
   accountId,
   { file, statementDate, notes, caseNumber } = {}
@@ -7366,7 +7402,9 @@ const estateInventoryService = {
   clearAuctionUnlock,
   verifyAuctionPassword,
   compressImageFile,
-  downloadEstatePhotoBlob
+  downloadEstatePhotoBlob,
+  downloadEstateFinanceDocumentBlob,
+  listAllEstateAccountDocuments
 };
 
 export default estateInventoryService;

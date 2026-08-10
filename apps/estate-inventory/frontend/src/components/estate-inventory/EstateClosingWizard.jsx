@@ -132,7 +132,7 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
           ? ` ${result.omitted.length} optional file(s) omitted — see README.txt.`
           : '';
       setInfo(
-        `Records pack downloaded (${result.folderName}.zip). Save this ZIP to a USB drive and keep a second copy.${omitNote}`
+        `Full documentation pack downloaded (${result.folderName}.zip). Save this ZIP to a USB drive and keep a second copy.${omitNote}`
       );
     } catch (err) {
       setError(err?.message || 'Records pack failed.');
@@ -337,7 +337,8 @@ const EstateClosingWizard = ({ open, caseNumber, onClose, onClosed }) => {
             </button>
           </div>
           <p className="ei-field-hint" style={{ marginTop: '0.35rem' }}>
-            Records pack: save the ZIP to a USB drive and keep a second copy.
+            Records pack is full documentation (reports, scenes, statements,
+            receipts, notes). Save the ZIP to a USB drive and keep a second copy.
           </p>
 
           {!alreadyClosed ? (
