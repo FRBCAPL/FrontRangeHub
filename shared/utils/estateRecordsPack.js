@@ -25,7 +25,14 @@ import {
 import { formatCompletenessBannerHtml } from './estateCompleteness.js';
 import { saleAuctionCopy } from './estateSaleAuctionCopy.js';
 import { bundleCatalogPhotos } from './estateRecordsPackPhotos.js';
-import { appendFullDocumentationSections } from './estateRecordsPackFullDocs.js';
+import {
+  appendFullDocumentationSections,
+  prepareExpenseReceiptBundle
+} from './estateRecordsPackFullDocs.js';
+import {
+  applyOfflineExpenseReceiptUrls,
+  rewriteExpenseUrlsInHtml
+} from './estateRecordsPackOfflineUrls.js';
 
 function safeFilePart(value) {
   return (
@@ -110,21 +117,49 @@ export async function buildAndDownloadRecordsPack({
     const estateName = settings.estate_name || 'Estate';
 
     // ——— Required ———
+    // Bundle expense receipts first so evidence + formal accounting HTML can
+    // link to local 14-expense-receipts/ paths (RP-02).
+    const expenseBundle = await prepareExpenseReceiptBundle({
+      service: estateInventoryService,
+      caseNumber,
+      downloadPhoto: downloadPhotoForPack,
+      progress
+    });
+    if (!expenseBundle.success && expenseBundle.error) {
+      omitted.push(`14-expense-receipts — ${expenseBundle.error}`);
+    }
+
     progress('Building evidence pack…');
-    const courtPack = await requireOk(
+    const courtPackRaw = await requireOk(
       await estateInventoryService.buildCourtEvidencePack(caseNumber),
       'Evidence pack'
     );
-    folder.file('01-evidence-pack.html', buildCourtPackHtml(courtPack));
+    const courtPack = applyOfflineExpenseReceiptUrls(
+      courtPackRaw,
+      expenseBundle.urlToLocal
+    );
+    const courtHtml = rewriteExpenseUrlsInHtml(
+      buildCourtPackHtml(courtPack),
+      expenseBundle.urlToLocal
+    );
+    folder.file('01-evidence-pack.html', courtHtml);
     folder.file('01-evidence-pack.json', JSON.stringify(courtPack, null, 2));
     included.push('01-evidence-pack.html', '01-evidence-pack.json');
 
     progress('Building formal accounting…');
-    const accounting = await requireOk(
+    const accountingRaw = await requireOk(
       await estateInventoryService.getFormalAccountingStatement(caseNumber),
       'Formal accounting'
     );
-    folder.file('02-formal-accounting.html', buildFormalAccountingHtml(accounting));
+    const accounting = applyOfflineExpenseReceiptUrls(
+      accountingRaw,
+      expenseBundle.urlToLocal
+    );
+    const accountingHtml = rewriteExpenseUrlsInHtml(
+      buildFormalAccountingHtml(accounting),
+      expenseBundle.urlToLocal
+    );
+    folder.file('02-formal-accounting.html', accountingHtml);
     included.push('02-formal-accounting.html');
 
     progress('Building administration chronology…');
@@ -261,7 +296,8 @@ export async function buildAndDownloadRecordsPack({
       progress,
       omitted,
       included,
-      downloadPhoto: downloadPhotoForPack
+      downloadPhoto: downloadPhotoForPack,
+      expenseBundle
     });
 
     const sortedIncluded = [
@@ -300,6 +336,8 @@ export async function buildAndDownloadRecordsPack({
       '',
       'Offline notes:',
       '  - Keep this folder intact so relative media paths keep working.',
+      '  - Evidence pack and formal accounting receipt links point at',
+      '    14-expense-receipts/ (local files), not cloud URLs.',
       '  - Open HTML files in a browser without needing an internet connection',
       '    for bundled photos and statements.',
       '',

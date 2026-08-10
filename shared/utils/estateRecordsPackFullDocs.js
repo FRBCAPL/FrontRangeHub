@@ -38,7 +38,127 @@ async function downloadFinanceDoc(service, storagePath) {
 }
 
 /**
+ * Bundle expense receipt photos early so 01/02 reports can use relative links.
+ */
+export async function prepareExpenseReceiptBundle({
+  service,
+  caseNumber,
+  downloadPhoto,
+  progress
+}) {
+  const empty = {
+    success: true,
+    urlToLocal: new Map(),
+    files: [],
+    expenses: [],
+    withReceipts: [],
+    rewritten: [],
+    failed: []
+  };
+  try {
+    progress?.('Bundling expense receipts…');
+    const expensesResult = await service.listEstateExpenses(caseNumber);
+    if (!expensesResult.success) {
+      return {
+        ...empty,
+        success: false,
+        error: expensesResult.error || 'Could not load expenses.'
+      };
+    }
+    const expenses = expensesResult.data || [];
+    const withReceipts = expenses.filter((e) => e.receipt_url);
+    const bundled = await bundleRowPhotos(withReceipts, {
+      folderPrefix: '14-expense-receipts',
+      downloadBlob: downloadPhoto,
+      onProgress: progress,
+      progressLabel: 'Bundling expense receipt',
+      kind: 'expense'
+    });
+    // Paths used from root HTML files (01-, 02-) must include the folder prefix.
+    const urlToLocal = new Map();
+    for (const [remote, relative] of bundled.urlToLocal.entries()) {
+      urlToLocal.set(
+        remote,
+        String(relative).startsWith('14-expense-receipts/')
+          ? relative
+          : `14-expense-receipts/${relative}`
+      );
+    }
+    return {
+      success: true,
+      urlToLocal,
+      files: bundled.files,
+      expenses,
+      withReceipts,
+      rewritten: bundled.rewritten,
+      failed: bundled.failed
+    };
+  } catch (err) {
+    return {
+      ...empty,
+      success: false,
+      error: err?.message || 'Expense receipt bundling failed.'
+    };
+  }
+}
+
+function writeExpenseReceiptIndex({
+  folder,
+  estateName,
+  caseLabel,
+  generatedIso,
+  expenseBundle,
+  omitted,
+  included
+}) {
+  if (!expenseBundle) return;
+  if (!expenseBundle.success && expenseBundle.error) {
+    omitted.push(`14-expense-receipts — ${expenseBundle.error}`);
+    return;
+  }
+  for (const file of expenseBundle.files || []) {
+    folder.file(file.path, file.blob);
+  }
+  for (const line of expenseBundle.failed || []) {
+    omitted.push(`expense receipt — ${line}`);
+  }
+  const index = (expenseBundle.rewritten || []).map((row) => ({
+    id: row.id,
+    expense_name: row.expense_name,
+    amount: row.amount,
+    date_paid: row.date_paid,
+    receipt_file: row.receipt_url
+      ? String(row.receipt_url).startsWith('14-expense-receipts/')
+        ? row.receipt_url
+        : `14-expense-receipts/${row.receipt_url}`
+      : null,
+    remote_receipt_url: row.remote_receipt_url || null,
+    offline_missing: Boolean(row.offline_missing)
+  }));
+  folder.file(
+    '14-expense-receipts/index.json',
+    JSON.stringify(
+      {
+        export_kind: 'expense_receipts',
+        estate_name: estateName,
+        case_number: caseLabel,
+        generated_at: generatedIso,
+        expense_count: (expenseBundle.expenses || []).length,
+        receipt_count: (expenseBundle.files || []).length,
+        receipts: index
+      },
+      null,
+      2
+    )
+  );
+  included.push(
+    `14-expense-receipts/ (${(expenseBundle.files || []).length} of ${(expenseBundle.withReceipts || []).length} receipt(s))`
+  );
+}
+
+/**
  * Append decision notes, distribution receipts, scenes, statements, expense receipts.
+ * Pass expenseBundle from prepareExpenseReceiptBundle to avoid re-downloading.
  */
 export async function appendFullDocumentationSections({
   service,
@@ -51,9 +171,9 @@ export async function appendFullDocumentationSections({
   progress,
   omitted,
   included,
-  downloadPhoto
+  downloadPhoto,
+  expenseBundle = null
 }) {
-  // ——— 10 Decision notes ———
   progress('Building decision notes…');
   try {
     const notesResult = await service.listDecisionNotes(caseNumber, 500);
@@ -84,7 +204,6 @@ export async function appendFullDocumentationSections({
     omitted.push(`10-decision-notes — ${err?.message || 'failed'}`);
   }
 
-  // ——— 11 Distribution receipts ———
   progress('Building distribution receipts…');
   try {
     const distResult = await service.listEstateDistributions(caseNumber);
@@ -149,7 +268,6 @@ export async function appendFullDocumentationSections({
     omitted.push(`11-distribution-receipts — ${err?.message || 'failed'}`);
   }
 
-  // ——— 12 Scene captures ———
   progress('Bundling scene captures…');
   try {
     const scenesResult = await service.listSceneCaptures(caseNumber, {
@@ -197,7 +315,6 @@ export async function appendFullDocumentationSections({
     omitted.push(`12-scene-captures — ${err?.message || 'failed'}`);
   }
 
-  // ——— 13 Account statements ———
   progress('Bundling account statements…');
   try {
     const [docsResult, accountsResult] = await Promise.all([
@@ -272,59 +389,25 @@ export async function appendFullDocumentationSections({
     omitted.push(`13-account-statements — ${err?.message || 'failed'}`);
   }
 
-  // ——— 14 Expense receipts ———
-  progress('Bundling expense receipts…');
-  try {
-    const expensesResult = await service.listEstateExpenses(caseNumber);
-    if (!expensesResult.success) {
-      throw new Error(expensesResult.error || 'Could not load expenses.');
-    }
-    const expenses = expensesResult.data || [];
-    const withReceipts = expenses.filter((e) => e.receipt_url);
-    const bundled = await bundleRowPhotos(withReceipts, {
-      folderPrefix: '14-expense-receipts',
-      downloadBlob: downloadPhoto,
-      onProgress: progress,
-      progressLabel: 'Bundling expense receipt',
-      kind: 'expense'
-    });
-    for (const file of bundled.files) {
-      folder.file(file.path, file.blob);
-    }
-    for (const line of bundled.failed) {
-      omitted.push(`expense receipt — ${line}`);
-    }
-    const index = bundled.rewritten.map((row) => ({
-      id: row.id,
-      expense_name: row.expense_name,
-      amount: row.amount,
-      date_paid: row.date_paid,
-      receipt_file: row.receipt_url || null,
-      remote_receipt_url: row.remote_receipt_url || null,
-      offline_missing: Boolean(row.offline_missing)
-    }));
-    folder.file(
-      '14-expense-receipts/index.json',
-      JSON.stringify(
-        {
-          export_kind: 'expense_receipts',
-          estate_name: estateName,
-          case_number: caseLabel,
-          generated_at: generatedIso,
-          expense_count: expenses.length,
-          receipt_count: bundled.files.length,
-          receipts: index
-        },
-        null,
-        2
-      )
-    );
-    included.push(
-      `14-expense-receipts/ (${bundled.files.length} of ${withReceipts.length} receipt(s))`
-    );
-  } catch (err) {
-    omitted.push(`14-expense-receipts — ${err?.message || 'failed'}`);
-  }
+  writeExpenseReceiptIndex({
+    folder,
+    estateName,
+    caseLabel,
+    generatedIso,
+    expenseBundle:
+      expenseBundle ||
+      (await prepareExpenseReceiptBundle({
+        service,
+        caseNumber,
+        downloadPhoto,
+        progress
+      })),
+    omitted,
+    included
+  });
 }
 
-export default { appendFullDocumentationSections };
+export default {
+  appendFullDocumentationSections,
+  prepareExpenseReceiptBundle
+};
