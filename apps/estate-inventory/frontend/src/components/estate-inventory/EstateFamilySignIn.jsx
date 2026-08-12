@@ -168,7 +168,9 @@ const EstateFamilySignIn = () => {
               minLength={2}
             />
             <p className="ei-settings-hint" style={{ marginTop: '0.35rem' }}>
-              Next you will enter your personal access code for this estate.
+              Use the estate name the Personal Representative set (not case-sensitive).
+              You can omit “Estate of” and punctuation — e.g. Marion Adkins. Case number
+              also works. Next you will enter your personal access code.
             </p>
           </div>
           {error ? <div className="ei-error">{error}</div> : null}
