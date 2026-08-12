@@ -51,6 +51,7 @@ import {
 } from './EstateAuthField';
 import HeirRoomsMenuModal from './HeirRoomsMenuModal';
 import ItemPhotoGallery from './ItemPhotoGallery';
+import ItemQuickViewModal from './ItemQuickViewModal.jsx';
 import StatusPill from './StatusPill';
 import EstateSystemDisclaimer from './EstateSystemDisclaimer';
 import HeirInheritancePanel from './HeirInheritancePanel';
@@ -109,6 +110,7 @@ const SiblingPortal = () => {
   const [roomFilter, setRoomFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [browseOpen, setBrowseOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState(null);
   const [showClaimedOnly, setShowClaimedOnly] = useState(false);
   const [lettersIssuedAt, setLettersIssuedAt] = useState(null);
   const [probateWindow, setProbateWindow] = useState({
@@ -643,6 +645,7 @@ const SiblingPortal = () => {
 
   const closeBrowse = () => {
     setBrowseOpen(false);
+    setViewingItem(null);
     setRoomFilter('');
     setSearchQuery('');
     setShowClaimedOnly(false);
@@ -663,10 +666,21 @@ const SiblingPortal = () => {
     const showDisputed = item.legal_status === 'disputed' && claimers >= 2;
     const myClaim = getClaims(item).find((c) => c.sibling_key === session?.sibling_key);
     const memorandumOnly = !heirCanRequestItems(session?.access_tier);
+    const stop = (ev) => ev.stopPropagation();
     return (
       <article
         key={item.id}
-        className={`ei-card${claimed ? ' ei-card-claimed' : ''}${showDisputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}`}
+        className={`ei-card ei-card--clickable${claimed ? ' ei-card-claimed' : ''}${showDisputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}`}
+        role="button"
+        tabIndex={0}
+        onClick={() => setViewingItem(item)}
+        onKeyDown={(ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            setViewingItem(item);
+          }
+        }}
+        aria-label={`View details for ${item.name || 'item'}`}
       >
         <ItemPhotoGallery item={item} alt={item.name} />
         <div className="ei-card-body">
@@ -677,6 +691,9 @@ const SiblingPortal = () => {
           ) : null}
           <strong>{item.name}</strong>
           <p className="ei-card-meta">{valueTierLabel(item.value_tier)}</p>
+          <p className="ei-settings-hint" style={{ margin: '0.2rem 0 0' }}>
+            Tap photo or card for details
+          </p>
           <StatusPill
             status={item.legal_status}
             heirFacing
@@ -714,7 +731,12 @@ const SiblingPortal = () => {
                 </p>
               ) : null}
               {mine ? (
-                <div className="ei-btn-row" style={{ marginTop: '0.55rem', flexDirection: 'column', gap: '0.4rem' }}>
+                <div
+                  className="ei-btn-row"
+                  style={{ marginTop: '0.55rem', flexDirection: 'column', gap: '0.4rem' }}
+                  onClick={stop}
+                  onKeyDown={stop}
+                >
                   <button type="button" className="ei-btn ei-btn-small ei-btn-requested" disabled>
                     You have requested this item
                   </button>
@@ -737,13 +759,17 @@ const SiblingPortal = () => {
                   className={`ei-btn ei-btn-small${others ? ' ei-btn-requested' : ''}`}
                   style={{ marginTop: '0.55rem', width: '100%' }}
                   disabled={item.legal_status === 'distributed' || needsPreferredName}
-                  onClick={() => handleRequestClick(item)}
+                  onClick={(ev) => {
+                    stop(ev);
+                    handleRequestClick(item);
+                  }}
+                  onKeyDown={stop}
                 >
                   {requestButtonLabel(item)}
                 </button>
               ) : null}
               {!youReleased(item) && !item.is_memorandum_asset && item.legal_status !== 'distributed' ? (
-                <div style={{ marginTop: '0.55rem' }}>
+                <div style={{ marginTop: '0.55rem' }} onClick={stop} onKeyDown={stop}>
                   <button
                     type="button"
                     className="ei-btn ei-btn-small ei-btn-secondary"
@@ -1134,6 +1160,15 @@ const SiblingPortal = () => {
       >
         {browseItems.map((item) => renderHeirItem(item))}
       </HeirRoomBrowseModal>
+
+      <ItemQuickViewModal
+        open={Boolean(viewingItem)}
+        item={viewingItem}
+        roomName={browseTitle}
+        viewerRole="heir"
+        viewerSiblingKey={session?.sibling_key}
+        onClose={() => setViewingItem(null)}
+      />
 
       <HeirMyRequestsModal
         open={showMyRequests}

@@ -20,6 +20,7 @@ import {
 } from '@shared/utils/estateInventoryRefCode.js';
 import StatusPill from './StatusPill';
 import PendingReviewBadge from './PendingReviewBadge';
+import ItemQuickViewModal from './ItemQuickViewModal.jsx';
 
 function itemNumberSortKey(item) {
   const n = Number(item?.item_number);
@@ -39,6 +40,7 @@ const CollectionDetail = ({
   viewerRole = 'admin'
 }) => {
   const [showClaimedOnly, setShowClaimedOnly] = useState(false);
+  const [viewingItem, setViewingItem] = useState(null);
   const allowClaimedFilter = canAccessClaimedInventoryFilter(viewerRole);
 
   const roomName = String(collection?.name || '').trim() || 'Room';
@@ -70,6 +72,8 @@ const CollectionDetail = ({
       : activeItems
     : sortedItems;
 
+  const openQuickView = (item) => setViewingItem(item);
+
   return (
     <section>
       {!loading && !error ? (
@@ -78,23 +82,18 @@ const CollectionDetail = ({
             <div>
               <h2 className="ei-room-detail-title">{roomName}</h2>
               {roomLabel ? <p className="ei-room-detail-code">{roomLabel}</p> : null}
+              <p className="ei-settings-hint" style={{ margin: '0.25rem 0 0' }}>
+                Tap an item to view photos and details.
+              </p>
             </div>
             <div className="ei-room-detail-actions">
-              {onBackToRooms ? (
-                <button
-                  type="button"
-                  className="ei-btn ei-btn-small ei-btn-secondary"
-                  onClick={onBackToRooms}
-                >
-                  Back to rooms
-                </button>
-              ) : null}
               {allowClaimedFilter ? (
                 <button
                   type="button"
-                  className={`ei-btn ei-btn-small ei-room-filter-btn${showClaimedOnly ? ' is-active' : ''}`}
+                  className={`ei-btn ei-btn-secondary ei-btn-small${
+                    showClaimedOnly ? ' is-active' : ''
+                  }`}
                   onClick={() => setShowClaimedOnly((v) => !v)}
-                  aria-pressed={showClaimedOnly}
                 >
                   {showClaimedOnly
                     ? 'Back to room inventory'
@@ -150,7 +149,17 @@ const CollectionDetail = ({
           return (
             <article
               key={item.id}
-              className={`ei-card${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}${item.legal_status === LEGAL_STATUS.archived ? ' ei-card-archived' : ''}${pending ? ' ei-card-pending' : ''}`}
+              className={`ei-card ei-card--clickable${claimed ? ' ei-card-claimed' : ''}${disputed ? ' ei-card-disputed' : ''}${unauthorized ? ' ei-card-unauthorized' : ''}${item.legal_status === LEGAL_STATUS.archived ? ' ei-card-archived' : ''}${pending ? ' ei-card-pending' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => openQuickView(item)}
+              onKeyDown={(ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                  ev.preventDefault();
+                  openQuickView(item);
+                }
+              }}
+              aria-label={`View ${item.name || 'item'}`}
             >
               <div className="ei-card-photo-wrap">
                 {cover ? (
@@ -223,14 +232,20 @@ const CollectionDetail = ({
                   </p>
                 ) : null}
 
-                <button
-                  type="button"
-                  className="ei-btn ei-btn-small"
-                  style={{ marginTop: '0.65rem', width: '100%' }}
-                  onClick={() => onEditItem?.(item)}
-                >
-                  Edit asset profile
-                </button>
+                {onEditItem ? (
+                  <button
+                    type="button"
+                    className="ei-btn ei-btn-small"
+                    style={{ marginTop: '0.65rem', width: '100%' }}
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      onEditItem(item);
+                    }}
+                    onKeyDown={(ev) => ev.stopPropagation()}
+                  >
+                    Edit asset profile
+                  </button>
+                ) : null}
               </div>
             </article>
           );
@@ -247,6 +262,21 @@ const CollectionDetail = ({
           </button>
         ) : null}
       </div>
+
+      <ItemQuickViewModal
+        open={Boolean(viewingItem)}
+        item={viewingItem}
+        roomName={roomName}
+        onClose={() => setViewingItem(null)}
+        onEdit={
+          onEditItem
+            ? (item) => {
+                setViewingItem(null);
+                onEditItem(item);
+              }
+            : null
+        }
+      />
     </section>
   );
 };

@@ -40,7 +40,10 @@ const ItemPhotoGallery = ({
         <button
           type="button"
           className="ei-btn ei-btn-secondary ei-btn-small ei-show-all-photos-btn"
-          onClick={() => setShowAll(true)}
+          onClick={(ev) => {
+            ev.stopPropagation();
+            setShowAll(true);
+          }}
         >
           Show all photos ({extras + 1})
         </button>
