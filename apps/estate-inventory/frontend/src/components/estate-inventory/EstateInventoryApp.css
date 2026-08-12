@@ -1503,10 +1503,19 @@ button.ei-nav-menu-btn-item {
   text-align: left;
 }
 
-.ei-list-room-add {
+.ei-list-room-actions {
   justify-self: end;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
   position: relative;
   z-index: 1;
+}
+
+.ei-list-room-edit,
+.ei-list-room-add {
   flex-shrink: 0;
   margin: 0;
   padding: 0.35rem 0.6rem;
@@ -1523,6 +1532,8 @@ button.ei-nav-menu-btn-item {
   cursor: pointer;
 }
 
+.ei-list-room-edit:hover,
+.ei-list-room-edit:focus-visible,
 .ei-list-room-add:hover,
 .ei-list-room-add:focus-visible {
   border-color: var(--ei-accent, #0d7377);
@@ -1530,9 +1541,21 @@ button.ei-nav-menu-btn-item {
   -webkit-text-fill-color: var(--ei-accent, #0d7377);
 }
 
+.ei-list-room-edit:focus-visible,
 .ei-list-room-add:focus-visible {
   outline: 2px solid var(--ei-accent, #0d7377);
   outline-offset: 2px;
+}
+
+.ei-edit-room-delete {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ei-line);
+}
+
+.ei-edit-room-delete .ei-btn {
+  color: #9a3412;
+  border-color: #fdba74;
 }
 
 .ei-list-row {

@@ -13,6 +13,7 @@ import EstateHome from './EstateHome';
 import CollectionsList from './CollectionsList';
 import CollectionDetail from './CollectionDetail';
 import CreateCollectionModal from './CreateCollectionModal';
+import EditCollectionModal from './EditCollectionModal';
 import AddItemFlow from './AddItemFlow';
 import LocksmithEntryModal from './LocksmithEntryModal';
 import EstateSettingsModal from './EstateSettingsModal';
@@ -66,6 +67,7 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsError, setItemsError] = useState('');
   const [showCreateCollection, setShowCreateCollection] = useState(false);
+  const [editingCollection, setEditingCollection] = useState(null);
   const [showAddItem, setShowAddItem] = useState(false);
   const [addItemCollectionId, setAddItemCollectionId] = useState('');
   const [addItemPreset, setAddItemPreset] = useState(null);
@@ -219,6 +221,73 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
     if (result.success) {
       setCollections((prev) => [result.data, ...prev.filter((c) => c.id !== result.data.id)]);
       setBanner(`Created “${result.data.name}”.`);
+      await refreshCollections();
+      setPendingRefreshKey((n) => n + 1);
+    }
+    return result;
+  };
+
+  const handleRenameCollection = async (collection, name) => {
+    if (billingLocked) {
+      return {
+        success: false,
+        error: 'This estate is paused — renew billing in Settings → Billing.'
+      };
+    }
+    if (isClosed) {
+      return {
+        success: false,
+        error: 'This estate is closed for records. Reopen it before renaming a room.'
+      };
+    }
+    const result = await estateInventoryService.renameCollection(
+      collection?.id,
+      name,
+      routeCase
+    );
+    if (result.success) {
+      setCollections((prev) =>
+        prev.map((c) =>
+          c.id === result.data.id ? { ...c, ...result.data, itemCount: c.itemCount } : c
+        )
+      );
+      if (activeCollection?.id === result.data.id) {
+        setActiveCollection((prev) =>
+          prev ? { ...prev, ...result.data, itemCount: prev.itemCount } : prev
+        );
+      }
+      setBanner(`Renamed room to “${result.data.name}”.`);
+      await refreshCollections();
+      setPendingRefreshKey((n) => n + 1);
+    }
+    return result;
+  };
+
+  const handleDeleteCollection = async (collection) => {
+    if (billingLocked) {
+      return {
+        success: false,
+        error: 'This estate is paused — renew billing in Settings → Billing.'
+      };
+    }
+    if (isClosed) {
+      return {
+        success: false,
+        error: 'This estate is closed for records. Reopen it before deleting a room.'
+      };
+    }
+    const result = await estateInventoryService.deleteCollection(
+      collection?.id,
+      routeCase
+    );
+    if (result.success) {
+      setCollections((prev) => prev.filter((c) => c.id !== collection.id));
+      if (activeCollection?.id === collection.id) {
+        setActiveCollection(null);
+        setItems([]);
+        setView(VIEW.COLLECTIONS);
+      }
+      setBanner(`Deleted empty room “${result.data?.name || collection.name}”.`);
       await refreshCollections();
       setPendingRefreshKey((n) => n + 1);
     }
@@ -554,6 +623,8 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
             error={collectionsError}
             onOpen={openCollection}
             onAddItem={openAddItem}
+            onEdit={setEditingCollection}
+            readOnly={isClosed || billingLocked}
           />
         </>
       ) : null}
@@ -577,6 +648,13 @@ const EstateInventoryApp = ({ onLock, onLeaveEstate = null, onSignOutApp = null 
         onCreated={handleCreateCollection}
       />
 
+      <EditCollectionModal
+        open={Boolean(editingCollection)}
+        collection={editingCollection}
+        onClose={() => setEditingCollection(null)}
+        onRename={handleRenameCollection}
+        onDelete={handleDeleteCollection}
+      />
       <AddItemFlow
         open={showAddItem}
         onClose={closeAddItem}

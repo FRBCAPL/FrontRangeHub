@@ -15,7 +15,15 @@ function compareRooms(a, b) {
   });
 }
 
-const CollectionsList = ({ collections, loading, error, onOpen, onAddItem }) => {
+const CollectionsList = ({
+  collections,
+  loading,
+  error,
+  onOpen,
+  onAddItem,
+  onEdit = null,
+  readOnly = false
+}) => {
   const ordered = useMemo(
     () => [...(collections || [])].sort(compareRooms),
     [collections]
@@ -55,17 +63,34 @@ const CollectionsList = ({ collections, loading, error, onOpen, onAddItem }) => 
                 <span className="ei-list-room-count">{countLabel}</span>
               </div>
               <strong className="ei-list-room-name">{c.name}</strong>
-              <button
-                type="button"
-                className="ei-list-room-add"
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  onAddItem(c);
-                }}
-                onKeyDown={(ev) => ev.stopPropagation()}
-              >
-                Add item
-              </button>
+              <div className="ei-list-room-actions">
+                {!readOnly && onEdit ? (
+                  <button
+                    type="button"
+                    className="ei-list-room-edit"
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      onEdit(c);
+                    }}
+                    onKeyDown={(ev) => ev.stopPropagation()}
+                  >
+                    Edit
+                  </button>
+                ) : null}
+                {!readOnly ? (
+                  <button
+                    type="button"
+                    className="ei-list-room-add"
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      onAddItem(c);
+                    }}
+                    onKeyDown={(ev) => ev.stopPropagation()}
+                  >
+                    Add item
+                  </button>
+                ) : null}
+              </div>
             </div>
           );
         })}

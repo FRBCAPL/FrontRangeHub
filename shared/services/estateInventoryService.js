@@ -697,6 +697,85 @@ export async function createCollection(name, caseNumber) {
   return ok({ ...data, itemCount: 0 });
 }
 
+export async function renameCollection(collectionId, name, caseNumber) {
+  if (!collectionId) return fail('Room id required.');
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (estate.settings?.closed_at) {
+    return fail('This estate is closed for records. Reopen it before renaming a room.');
+  }
+  const trimmed = String(name || '').trim();
+  if (!trimmed) return fail('Room name is required.');
+
+  let q = supabase
+    .from('estate_collections')
+    .update({ name: trimmed, updated_at: new Date().toISOString() })
+    .eq('id', collectionId)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) q = q.eq('estate_id', estate.estateId);
+
+  let { data, error } = await q
+    .select('id, name, collection_number, created_at, updated_at')
+    .maybeSingle();
+
+  if (error && isMissingColumnError(error, 'collection_number')) {
+    let retry = supabase
+      .from('estate_collections')
+      .update({ name: trimmed, updated_at: new Date().toISOString() })
+      .eq('id', collectionId)
+      .eq('owner_id', estate.userId);
+    if (estate.estateId) retry = retry.eq('estate_id', estate.estateId);
+    ({ data, error } = await retry.select('id, name, created_at, updated_at').maybeSingle());
+  }
+
+  if (error) return fail(error);
+  if (!data) return fail('Room not found in this estate.');
+  return ok(data);
+}
+
+export async function deleteCollection(collectionId, caseNumber) {
+  if (!collectionId) return fail('Room id required.');
+  const estate = await resolveOwnedEstate(caseNumber);
+  const scoped = assertEstateScoped(estate);
+  if (!scoped.ok) return fail(scoped.error);
+  if (estate.settings?.closed_at) {
+    return fail('This estate is closed for records. Reopen it before deleting a room.');
+  }
+
+  let ownedQ = supabase
+    .from('estate_collections')
+    .select('id, name')
+    .eq('id', collectionId)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) ownedQ = ownedQ.eq('estate_id', estate.estateId);
+  const { data: owned, error: ownedErr } = await ownedQ.maybeSingle();
+  if (ownedErr) return fail(ownedErr);
+  if (!owned) return fail('Room not found in this estate.');
+
+  let itemsQ = supabase
+    .from('estate_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('collection_id', collectionId)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) itemsQ = itemsQ.eq('estate_id', estate.estateId);
+  const { count, error: countErr } = await itemsQ;
+  if (countErr) return fail(countErr);
+  if ((count || 0) > 0) {
+    return fail('This room still has items. Move or permanently delete them first.');
+  }
+
+  let delQ = supabase
+    .from('estate_collections')
+    .delete()
+    .eq('id', collectionId)
+    .eq('owner_id', estate.userId);
+  if (estate.estateId) delQ = delQ.eq('estate_id', estate.estateId);
+  const { error } = await delQ;
+  if (error) return fail(error);
+  return ok({ id: collectionId, name: owned.name });
+}
+
 export async function getCollection(collectionId, caseNumber) {
   const estate = await resolveOwnedEstate(caseNumber);
   const scoped = assertEstateScoped(estate);
@@ -7236,6 +7315,8 @@ const estateInventoryService = {
   getActiveEstateCase,
   listCollections,
   createCollection,
+  renameCollection,
+  deleteCollection,
   getCollection,
   listItems,
   listAllItemsWithRooms,
