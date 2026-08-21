@@ -124,7 +124,7 @@ class SupabaseDataService {
 
       if (error) throw error;
       const result = { success: true, data };
-      if (cacheTtlMs > 0) this._writeCache(cacheKey, result);
+      if (cacheTtlMs > 0 && Array.isArray(data) && data.length > 0) this._writeCache(cacheKey, result);
       return result;
     } catch (error) {
       console.error('Error fetching ladder players by name:', error);

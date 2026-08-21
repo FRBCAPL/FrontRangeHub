@@ -66,6 +66,7 @@ import UserStatusCard from './UserStatusCard';
 import LadderErrorBoundary from './LadderErrorBoundary';
 import SupabaseSignupModal from '@shared/components/auth/SupabaseSignupModal';
 import { coerceSanctionedFlag, parseSanctionYear, ladderSanctionFieldsFromProfile } from './ladderSanctionDisplay.js';
+import { mapLadderProfiles, attachLastMatches } from './mapLadderProfiles.js';
 
 import LadderChallengeModal from './LadderChallengeModal';
 import LadderChallengeConfirmModal from './LadderChallengeConfirmModal';
@@ -429,59 +430,15 @@ const LadderApp = ({
         console.log('Ladder Supabase response:', result);
         
         if (result.success && Array.isArray(result.data)) {
-          // Transform Supabase data to match expected format and fetch last match data
-          const transformedDataPromises = result.data.map(async (profile) => {
-            const bcaSan = ladderSanctionFieldsFromProfile(profile);
-            // Get last match data and match history for this player
-            let lastMatchData = null;
-            let recentMatchesData = [];
-            if (profile.users?.email) {
-              try {
-                const lastMatchResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
-                if (lastMatchResult.success && lastMatchResult.data) {
-                  lastMatchData = lastMatchResult.data;
-                }
-                
-                const matchHistoryResult = await supabaseDataService.getPlayerMatchHistory(profile.users.email, 5);
-                if (matchHistoryResult.success && matchHistoryResult.data) {
-                  recentMatchesData = matchHistoryResult.data;
-                }
-              } catch (error) {
-                console.log(`Error fetching match data for ${profile.users.email}:`, error);
-              }
-            }
-
-            return {
-              _id: profile.id,
-              userId: profile.user_id || null,
-              email: profile.users?.email || '',
-              firstName: profile.users?.first_name || '',
-              lastName: profile.users?.last_name || '',
-              position: profile.position,
-              ladderName: profile.ladder_name || selectedLadder,
-              fargoRate: profile.fargo_rate || 0,
-              previousFargoRate: profile.previous_fargo_rate ?? null,
-              totalMatches: profile.total_matches || 0,
-              wins: profile.wins || 0,
-              losses: profile.losses || 0,
-              isActive: profile.is_active,
-              immunityUntil: profile.immunity_until,
-              smackbackEligibleUntil: profile.smackback_eligible_until,
-              vacationMode: profile.vacation_mode,
-              vacationUntil: profile.vacation_until,
-              sanctioned: bcaSan.sanctioned,
-              sanctionYear: bcaSan.sanctionYear,
-              lastMatch: lastMatchData,
-              recentMatches: recentMatchesData
-            };
-          });
-          
-          const transformedData = await Promise.all(transformedDataPromises);
+          // Show rankings immediately; last-match is a follow-up so a slow/failed
+          // match lookup cannot wipe the player list (CueSync egress regression).
+          const transformedData = mapLadderProfiles(result.data, selectedLadder);
           setLadderData(transformedData);
-          console.log(`Loaded ${transformedData.length} players from ${selectedLadder} ladder (Supabase) with last match data`);
-          
-          // Update user's wins/losses from the fresh ladder data
           updateUserWinsLosses(transformedData, senderEmail);
+          const withLastMatches = await attachLastMatches(result.data, selectedLadder);
+          setLadderData(withLastMatches);
+          updateUserWinsLosses(withLastMatches, senderEmail);
+          console.log(`Loaded ${withLastMatches.length} players from ${selectedLadder} ladder (Supabase)`);
         } else {
           console.error('Error loading ladder data from Supabase:', result.error);
           setLadderData([]); // Set empty array as fallback
@@ -560,7 +517,8 @@ const LadderApp = ({
       
       } catch (error) {
         console.error('Error loading ladder data:', error);
-        setLadderData([]); // Clear ladder data on error
+        // Keep any players already painted; only start empty if we never got a list.
+        setLadderData(prev => (Array.isArray(prev) && prev.length ? prev : []));
         // Force a re-render by updating a timestamp
         setLastLoadTime(Date.now());
       } finally {
@@ -820,56 +778,12 @@ const LadderApp = ({
           console.log('🔄 Realtime: Result:', result);
           
           if (result.success && Array.isArray(result.data)) {
-            // Transform Supabase data to match expected format and fetch last match data
-            const transformedDataPromises = result.data.map(async (profile) => {
-              const bcaSan = ladderSanctionFieldsFromProfile(profile);
-              // Get last match data and match history for this player
-              let lastMatchData = null;
-              let recentMatchesData = [];
-              if (profile.users?.email) {
-                try {
-                  const lastMatchResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
-                  if (lastMatchResult.success && lastMatchResult.data) {
-                    lastMatchData = lastMatchResult.data;
-                  }
-                  
-                  const matchHistoryResult = await supabaseDataService.getPlayerMatchHistory(profile.users.email, 5);
-                  if (matchHistoryResult.success && matchHistoryResult.data) {
-                    recentMatchesData = matchHistoryResult.data;
-                  }
-                } catch (error) {
-                  console.log(`🔄 Realtime: Error fetching match data for ${profile.users.email}:`, error);
-                }
-              }
-
-              return {
-                _id: profile.id,
-                email: profile.users?.email || '',
-                firstName: profile.users?.first_name || '',
-                lastName: profile.users?.last_name || '',
-                position: profile.position,
-                fargoRate: profile.fargo_rate || 0,
-                previousFargoRate: profile.previous_fargo_rate ?? null,
-                totalMatches: profile.total_matches || 0,
-                wins: profile.wins || 0,
-                losses: profile.losses || 0,
-                isActive: profile.is_active,
-                immunityUntil: profile.immunity_until,
-                vacationMode: profile.vacation_mode,
-                vacationUntil: profile.vacation_until,
-                sanctioned: bcaSan.sanctioned,
-                sanctionYear: bcaSan.sanctionYear,
-                lastMatch: lastMatchData,
-                recentMatches: recentMatchesData
-              };
-            });
-            
-            const transformedData = await Promise.all(transformedDataPromises);
+            const transformedData = mapLadderProfiles(result.data, selectedLadder);
             setLadderData(transformedData);
-            console.log(`🔄 Realtime: Updated ${transformedData.length} players from ${selectedLadder} ladder with last match data`);
-            
-            // Update user's wins/losses from the fresh ladder data
-            updateUserWinsLosses(transformedData, senderEmail);
+            const withLastMatches = await attachLastMatches(result.data, selectedLadder);
+            setLadderData(withLastMatches);
+            console.log(`🔄 Realtime: Updated ${withLastMatches.length} players from ${selectedLadder} ladder`);
+            updateUserWinsLosses(withLastMatches, senderEmail);
           } else {
             console.error('🔄 Realtime: Error loading ladder data:', result.error);
           }
@@ -893,59 +807,15 @@ const LadderApp = ({
         console.log('Ladder Supabase response:', result);
         
         if (result.success && Array.isArray(result.data)) {
-          // Transform Supabase data to match expected format and fetch last match data
-          const transformedDataPromises = result.data.map(async (profile) => {
-            const bcaSan = ladderSanctionFieldsFromProfile(profile);
-            // Get last match data and match history for this player
-            let lastMatchData = null;
-            let recentMatchesData = [];
-            if (profile.users?.email) {
-              try {
-                const lastMatchResult = await supabaseDataService.getPlayerLastMatch(profile.users.email);
-                if (lastMatchResult.success && lastMatchResult.data) {
-                  lastMatchData = lastMatchResult.data;
-                }
-                
-                const matchHistoryResult = await supabaseDataService.getPlayerMatchHistory(profile.users.email, 5);
-                if (matchHistoryResult.success && matchHistoryResult.data) {
-                  recentMatchesData = matchHistoryResult.data;
-                }
-              } catch (error) {
-                console.log(`Error fetching match data for ${profile.users.email}:`, error);
-              }
-            }
-
-            return {
-              _id: profile.id,
-              userId: profile.user_id || null,
-              email: profile.users?.email || '',
-              firstName: profile.users?.first_name || '',
-              lastName: profile.users?.last_name || '',
-              position: profile.position,
-              ladderName: profile.ladder_name || selectedLadder,
-              fargoRate: profile.fargo_rate || 0,
-              previousFargoRate: profile.previous_fargo_rate ?? null,
-              totalMatches: profile.total_matches || 0,
-              wins: profile.wins || 0,
-              losses: profile.losses || 0,
-              isActive: profile.is_active,
-              immunityUntil: profile.immunity_until,
-              smackbackEligibleUntil: profile.smackback_eligible_until,
-              vacationMode: profile.vacation_mode,
-              vacationUntil: profile.vacation_until,
-              sanctioned: bcaSan.sanctioned,
-              sanctionYear: bcaSan.sanctionYear,
-              lastMatch: lastMatchData,
-              recentMatches: recentMatchesData
-            };
-          });
-          
-          const transformedData = await Promise.all(transformedDataPromises);
+          // Show rankings immediately; last-match is a follow-up so a slow/failed
+          // match lookup cannot wipe the player list (CueSync egress regression).
+          const transformedData = mapLadderProfiles(result.data, selectedLadder);
           setLadderData(transformedData);
-          console.log(`Loaded ${transformedData.length} players from ${selectedLadder} ladder (Supabase) with last match data`);
-          
-          // Update user's wins/losses from the fresh ladder data
           updateUserWinsLosses(transformedData, senderEmail);
+          const withLastMatches = await attachLastMatches(result.data, selectedLadder);
+          setLadderData(withLastMatches);
+          updateUserWinsLosses(withLastMatches, senderEmail);
+          console.log(`Loaded ${withLastMatches.length} players from ${selectedLadder} ladder (Supabase)`);
         } else {
           console.error('Error loading ladder data from Supabase:', result.error);
           setLadderData([]); // Set empty array as fallback
@@ -1028,8 +898,8 @@ const LadderApp = ({
       } catch (error) {
         console.error('Error loading ladder data:', error);
         
-        // Set fallback data for graceful degradation
-        setLadderData([]); // Empty ladder data
+        // Keep any players already painted; only start empty if we never got a list.
+        setLadderData(prev => (Array.isArray(prev) && prev.length ? prev : []));
         setUserLadderData({
           playerId: 'guest',
           name: `${playerName} ${playerLastName}`,
