@@ -26,22 +26,6 @@ if (!globalStore[supabaseGlobalKey]) {
 
 export const supabase = globalStore[supabaseGlobalKey];
 
-// Rankings / public ladder reads must not send the logged-in JWT.
-// Authenticated RLS on ladder_profiles is often "own row only", which makes
-// the logged-in ladder show only the current player.
-const supabasePublicGlobalKey = '__FRPH_SUPABASE_PUBLIC_CLIENT__';
-if (!globalStore[supabasePublicGlobalKey]) {
-  globalStore[supabasePublicGlobalKey] = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      storageKey: 'frph-auth-public-noop'
-    }
-  });
-}
-export const supabasePublic = globalStore[supabasePublicGlobalKey];
-
 // Helper functions for common operations
 export const supabaseHelpers = {
   // Get current user

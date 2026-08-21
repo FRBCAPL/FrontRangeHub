@@ -1,4 +1,4 @@
-import { supabase, supabasePublic } from '@shared/config/supabase.js';
+import { supabase } from '@shared/config/supabase.js';
 import { toLocalDateISO, isImmunityActive } from '@shared/utils/utils/dateUtils.js';
 import { clampLadderTvTickerSec } from '@shared/utils/utils/ladderTvTickerStorage.js';
 
@@ -109,49 +109,22 @@ class SupabaseDataService {
       const userFields = lite
         ? 'id, email, first_name, last_name'
         : 'id, email, first_name, last_name, phone';
-      const select = `${profileFields}, users (${userFields})`;
 
-      const fetchRows = (client) =>
-        client
-          .from('ladder_profiles')
-          .select(select)
-          .eq('ladder_name', ladderName)
-          .eq('is_active', true)
-          .order('position');
+      const { data, error } = await supabase
+        .from('ladder_profiles')
+        .select(`
+          ${profileFields},
+          users (
+            ${userFields}
+          )
+        `)
+        .eq('ladder_name', ladderName)
+        .eq('is_active', true)
+        .order('position');
 
-      // Signed-in client keeps names (own-row RLS still returns your users join).
-      // Session-less client can return the rest of the ladder if public read is allowed.
-      const [authRes, publicRes] = await Promise.all([
-        fetchRows(supabase),
-        fetchRows(supabasePublic)
-      ]);
-
-      const authRows = !authRes.error && Array.isArray(authRes.data) ? authRes.data : [];
-      const publicRows = !publicRes.error && Array.isArray(publicRes.data) ? publicRes.data : [];
-
-      if (!authRows.length && !publicRows.length) {
-        const err = authRes.error || publicRes.error;
-        if (err) throw err;
-      }
-
-      const byId = new Map();
-      const mergeRow = (row) => {
-        if (!row?.id) return;
-        const key = String(row.id);
-        const existing = byId.get(key);
-        const rowHasName = !!(row.users?.first_name || row.users?.last_name || row.users?.email);
-        const existingHasName = !!(existing?.users?.first_name || existing?.users?.last_name || existing?.users?.email);
-        if (!existing) byId.set(key, row);
-        else if (rowHasName && !existingHasName) byId.set(key, { ...existing, ...row, users: row.users });
-        else if (rowHasName && existingHasName) byId.set(key, { ...existing, ...row, users: row.users || existing.users });
-        else byId.set(key, { ...row, ...existing, users: existing.users || row.users });
-      };
-      publicRows.forEach(mergeRow);
-      authRows.forEach(mergeRow);
-
-      const data = Array.from(byId.values()).sort((a, b) => (a.position || 0) - (b.position || 0));
+      if (error) throw error;
       const result = { success: true, data };
-      if (cacheTtlMs > 0 && data.length > 0) this._writeCache(cacheKey, result);
+      if (cacheTtlMs > 0 && Array.isArray(data) && data.length > 0) this._writeCache(cacheKey, result);
       return result;
     } catch (error) {
       console.error('Error fetching ladder players by name:', error);
