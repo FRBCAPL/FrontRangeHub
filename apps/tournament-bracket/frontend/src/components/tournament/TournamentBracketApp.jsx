@@ -145,7 +145,7 @@ export default function TournamentBracketApp() {
     <div className="tournament-bracket-app">
       <header className="tb-header">
         <h1>Open Tournament</h1>
-        <p>Run an event that is not tied to the ladder. Ladder tournaments stay on the ladder.</p>
+        <p>Run an event that is not tied to the ladder. No sign-in required — the event stays in this browser. Ladder tournaments stay on the ladder.</p>
       </header>
 
       {(cashClimb || elim) && (

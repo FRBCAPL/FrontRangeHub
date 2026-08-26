@@ -168,6 +168,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/ladder': '#/ladder',
   '/guest/ladder': '#/guest/ladder',
   '/hub': '#/ladder',
+  '/tournament-bracket': '#/tournament-bracket',
   '/league': '#/league',
   '/guest/league': '#/guest/league',
   '/arcade': '#/arcade/kiosk',
@@ -870,19 +871,15 @@ function AppContent() {
               }
             />
 
-            {/* Tournament Bracket Route */}
+            {/* Tournament Bracket Route — open events live in the browser; no ladder login */}
             <Route
               path="/tournament-bracket"
               element={
-                isAuthenticated ? (
-                  <AppRouteWrapper appName="Tournament Bracket">
-                    <main className="main-app-content">
-                      <TournamentBracketApp />
-                    </main>
-                  </AppRouteWrapper>
-                ) : (
-                  <Navigate to="/hub" />
-                )
+                <AppRouteWrapper appName="Tournament Bracket">
+                  <main className="main-app-content">
+                    <TournamentBracketApp />
+                  </main>
+                </AppRouteWrapper>
               }
             />
 

@@ -1,19 +1,34 @@
 import React, { useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
+import { parseOptionalMatchScore } from './cashClimbScore.js';
 
 export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel }) {
   const [winnerId, setWinnerId] = useState('');
   const [score, setScore] = useState('');
+  const [error, setError] = useState('');
 
   if (!match) return null;
+
+  const placeholder = raceTo ? `${raceTo}-${Math.max(0, raceTo - 2)}` : '5-3';
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!winnerId) {
-      alert('Pick a winner.');
+      setError('Pick a winner.');
       return;
     }
-    onSubmit(winnerId, score.trim() || null);
+    const parsed = parseOptionalMatchScore(score, {
+      raceTo,
+      winnerId,
+      player1Id: match.player1_id,
+      player2Id: match.player2_id,
+    });
+    if (!parsed.ok) {
+      setError(parsed.error);
+      return;
+    }
+    setError('');
+    onSubmit(winnerId, parsed.score);
   };
 
   return (
@@ -30,7 +45,10 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
             type="radio"
             name="winner"
             checked={winnerId === match.player1_id}
-            onChange={() => setWinnerId(match.player1_id)}
+            onChange={() => {
+              setWinnerId(match.player1_id);
+              setError('');
+            }}
           />
           {match.player1_name}
         </label>
@@ -39,7 +57,10 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
             type="radio"
             name="winner"
             checked={winnerId === match.player2_id}
-            onChange={() => setWinnerId(match.player2_id)}
+            onChange={() => {
+              setWinnerId(match.player2_id);
+              setError('');
+            }}
           />
           {match.player2_name}
         </label>
@@ -47,10 +68,18 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
           Score (optional)
           <input
             value={score}
-            onChange={(e) => setScore(e.target.value)}
-            placeholder={raceTo ? `${raceTo}-${Math.max(0, raceTo - 2)}` : '5-3'}
+            onChange={(e) => {
+              setScore(e.target.value);
+              setError('');
+            }}
+            placeholder={placeholder}
+            aria-invalid={Boolean(error && score.trim())}
           />
         </label>
+        <p className="cc-score-hint">
+          Leave blank if you are not recording games. If entered, use {match.player1_name} then {match.player2_name}, and the winner must reach {raceTo || 'the race-to'}.
+        </p>
+        {error && <p className="cc-field-error" role="alert">{error}</p>}
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={onCancel}>
             Cancel

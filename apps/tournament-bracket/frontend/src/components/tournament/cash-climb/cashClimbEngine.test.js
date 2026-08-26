@@ -159,6 +159,35 @@ describe('open Cash Climb engine', () => {
     assert.ok(current);
   });
 
+  it('counts King of the Hill wins separately from round-robin wins', () => {
+    const setup = createOpenTournament({
+      roundRobinType: 'triple',
+      players: [{ name: 'Ann' }, { name: 'Ben' }],
+    });
+    let state = startTournament(setup);
+    const first = getRoundMatches(state, getCurrentRound(state).id).find((m) => m.status === 'pending');
+    state = recordMatchResult(state, first.id, first.player1_id);
+    const afterRr = state.stats.find((p) => p.player_id === first.player1_id);
+    assert.equal(afterRr.wins, 1);
+    assert.equal(afterRr.koh_wins, 0);
+    assert.ok(state.rounds.some((r) => r.round_name === 'King of the Hill'));
+
+    state = playPending(state);
+    const winner = state.stats.find((p) => p.player_id === first.player1_id);
+    const kohWins = state.matches.filter((m) => {
+      if (m.status !== 'completed' || m.is_bye || m.winner_id !== winner.player_id) return false;
+      const round = state.rounds.find((r) => r.id === m.round_id);
+      return round?.round_name === 'King of the Hill';
+    }).length;
+    assert.equal(winner.koh_wins, kohWins);
+    assert.equal(winner.wins, 1);
+
+    winner.koh_wins = winner.wins + winner.koh_wins;
+    state = sanitizeCashClimb(state);
+    const repaired = state.stats.find((p) => p.player_id === winner.player_id);
+    assert.equal(repaired.koh_wins, kohWins);
+  });
+
   it('credits a bye as a win only, never a loss', () => {
     const state = startTournament(createOpenTournament({
       roundRobinType: 'single',

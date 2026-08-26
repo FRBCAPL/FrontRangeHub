@@ -23,6 +23,7 @@ export default function CashClimbPrizePreview({ prizePool, firstPlaceAmount, fir
             <th>Round</th>
             <th>Round pool</th>
             <th>Per win</th>
+            <th>This round pays</th>
           </tr>
         </thead>
         <tbody>
@@ -31,12 +32,13 @@ export default function CashClimbPrizePreview({ prizePool, firstPlaceAmount, fir
               <td>Round {r.roundNumber}</td>
               <td>{formatMoney(r.roundPrize)}</td>
               <td>{formatMoney(r.perWin)}</td>
+              <td>{formatMoney(r.paidThisRound)}</td>
             </tr>
           ))}
         </tbody>
       </table>
       <p className="cc-prize-preview-note">
-        Per win is what the match winner earns in that round. King of the Hill uses whatever is left after round-robin payouts and the 1st-place reserve.
+        Per-win amounts are rounded down to the cent, so a round pool may be a few cents larger than what that round actually pays. Leftover cents, and any scheduled rounds that are not played after the field reaches King of the Hill, stay in the pool for later matches and the winner.
       </p>
     </div>
   );

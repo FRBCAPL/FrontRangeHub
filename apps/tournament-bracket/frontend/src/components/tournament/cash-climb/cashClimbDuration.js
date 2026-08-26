@@ -10,7 +10,7 @@ function matchMinutes(raceTo, gameType) {
 
 function estimatedRrRounds(playerCount, threshold) {
   const toDrop = Math.max(0, playerCount - threshold);
-  if (toDrop === 0) return 0;
+  if (toDrop === 0) return 1;
   const lossesPerRound = Math.max(1, playerCount / 2);
   return Math.max(2, Math.ceil((3 * toDrop) / lossesPerRound) + 1);
 }
@@ -77,6 +77,7 @@ export function estimateCashClimbDuration({
     gameType: gameType || '8-Ball',
     tableCount: tables,
     rrRounds,
+    earlyKoh: n <= threshold,
     kohPlayers,
     matchMinutes: Math.round(perMatch),
     minutesLow: Math.round(midpoint * 0.8),

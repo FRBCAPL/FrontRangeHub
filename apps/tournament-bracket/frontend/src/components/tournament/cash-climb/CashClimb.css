@@ -86,6 +86,7 @@
 
 .cc-prize-preview {
   margin: 12px 0 0;
+  overflow-x: auto;
 }
 
 .cc-prize-preview table {
@@ -252,6 +253,18 @@
 .cc-modal-meta {
   color: #86efac;
   margin: 0 0 16px;
+}
+
+.cc-score-hint {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  margin: 6px 0 0;
+}
+
+.cc-field-error {
+  color: #fca5a5;
+  font-size: 0.9rem;
+  margin: 8px 0 0;
 }
 
 .cc-winner-pick {

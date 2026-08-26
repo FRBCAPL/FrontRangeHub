@@ -138,11 +138,15 @@ export function previewPrizeSchedule(players, roundRobinType, prizePool, firstPl
     const byeCount = round.matches.filter((m) => m.isBye).length;
     const regular = round.matches.length - byeCount;
     const payouts = calculateMatchPayouts(prizes[i] || 0, regular, byeCount);
+    const paidThisRound = roundMoney(payouts.perMatch * regular + payouts.perBye * byeCount);
+    const leftover = roundMoney(Math.max(0, (prizes[i] || 0) - paidThisRound));
     return {
       roundNumber: round.roundNumber,
       roundPrize: prizes[i] || 0,
       perWin: payouts.perMatch,
       matchCount: regular,
+      paidThisRound,
+      leftover,
     };
   });
   return { available, rounds };

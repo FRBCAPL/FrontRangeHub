@@ -550,7 +550,7 @@ function startKingOfTheHill(state) {
 
   active.forEach((p) => {
     p.in_koh = true;
-    p.koh_wins = p.wins;
+    p.koh_wins = 0;
     p.koh_losses = 0;
   });
 
@@ -622,6 +622,22 @@ function maybeAdvance(state, depth = 0) {
   return maybeAdvance(state, depth + 1);
 }
 
+function recountKohRecords(state) {
+  (state.stats || []).forEach((p) => {
+    p.koh_wins = 0;
+    p.koh_losses = 0;
+  });
+  (state.matches || []).forEach((match) => {
+    if (match.status !== 'completed' || match.is_bye) return;
+    const round = (state.rounds || []).find((r) => r.id === match.round_id);
+    if (!isKohRound(round)) return;
+    const winner = findStat(state, match.winner_id);
+    const loser = findStat(state, match.loser_id);
+    if (winner) winner.koh_wins = (winner.koh_wins || 0) + 1;
+    if (loser) loser.koh_losses = (loser.koh_losses || 0) + 1;
+  });
+}
+
 function repairByeRecords(state) {
   (state.matches || []).forEach((match) => {
     const bye = isByeMatch(match) || (match.winner_id && match.winner_id === match.loser_id);
@@ -647,6 +663,7 @@ export function sanitizeCashClimb(state) {
   if (!state?.stats || !state.matches) return state;
   const next = clone(state);
   repairByeRecords(next);
+  recountKohRecords(next);
   if (next.status !== 'in-progress') {
     dropGhostMatches(next);
     return next;
