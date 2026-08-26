@@ -2,6 +2,10 @@ import { sanitizeCashClimb } from './cashClimbEngine.js';
 
 const STORAGE_KEY = 'frontrange-open-cash-climb';
 
+export function cashClimbStorageKey() {
+  return STORAGE_KEY;
+}
+
 export function loadCashClimb() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);

@@ -99,6 +99,7 @@ import UserProfileModal from '@shared/components/modal/modal/UserProfileModal';
 import DuesTracker from '@apps/dues-tracker/frontend/src/components/dues/DuesTracker';
 import LegendsPoolLeagueTracker from './components/legends/LegendsPoolLeagueTracker';
 import TournamentBracketApp from '@apps/tournament-bracket/frontend/src/components/tournament/TournamentBracketApp';
+import CashClimbTvView from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbTvView';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
 import EstateFamilySignIn from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateFamilySignIn';
@@ -169,6 +170,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/guest/ladder': '#/guest/ladder',
   '/hub': '#/ladder',
   '/tournament-bracket': '#/tournament-bracket',
+  '/tournament-bracket/tv': '#/tournament-bracket/tv',
   '/league': '#/league',
   '/guest/league': '#/guest/league',
   '/arcade': '#/arcade/kiosk',
@@ -516,6 +518,29 @@ function AppContent() {
         overflow: 'auto'
       }}>
         <PublicLadderEmbed />
+      </div>
+    );
+  }
+
+  // Cash Climb TV: same-browser local event, no hub nav
+  if (location.pathname === '/tournament-bracket/tv') {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        minHeight: '100%',
+        background: '#000',
+        padding: 0,
+        margin: 0,
+        zIndex: 9999,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <CashClimbTvView />
       </div>
     );
   }

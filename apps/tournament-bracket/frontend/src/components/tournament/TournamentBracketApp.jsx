@@ -7,6 +7,7 @@ import CreateTournamentForm from './CreateTournamentForm';
 import CashClimbApp from './cash-climb/CashClimbApp';
 import { loadCashClimb } from './cash-climb/cashClimbStore';
 import { formatTournamentDate } from './cash-climb/cashClimbEngine.js';
+import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
 
@@ -199,6 +200,12 @@ export default function TournamentBracketApp() {
         >
           <strong>Double elimination</strong>
           <span>Winners and losers brackets plus a grand final.</span>
+        </button>
+        <button type="button" className="tb-btn-new" onClick={() => openCashClimbTv('landscape')}>
+          TV wide 16:9
+        </button>
+        <button type="button" className="tb-btn-new" onClick={() => openCashClimbTv('portrait')}>
+          TV tall 9:16
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
           Back to home

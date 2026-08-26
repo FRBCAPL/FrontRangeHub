@@ -5,6 +5,7 @@ import { formatMoney, formatTournamentDate, getCurrentRound, getRoundMatches } f
 import { getFormatDisplay } from './openTournamentStructure.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
+import { openCashClimbTv } from './cashClimbTv.js';
 
 export default function CashClimbPlay({ tournament, onRecord, onNew, onLeave }) {
   const [selected, setSelected] = useState(null);
@@ -59,6 +60,12 @@ export default function CashClimbPlay({ tournament, onRecord, onNew, onLeave }) 
             All formats
           </button>
         )}
+        <button type="button" className="tb-btn-new" onClick={() => openCashClimbTv('landscape')}>
+          TV wide 16:9
+        </button>
+        <button type="button" className="tb-btn-new" onClick={() => openCashClimbTv('portrait')}>
+          TV tall 9:16
+        </button>
         <button type="button" className="tb-btn-new" onClick={onNew}>
           New tournament
         </button>

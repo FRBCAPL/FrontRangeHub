@@ -23,6 +23,7 @@ import {
   CUELESS_FEATURED_FACEBOOK_REEL,
   CUELESS_FULL_MATCH_PLAYLIST_URL,
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
+import { openCashClimbTv } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbTv.js';
 
 const Homepage = () => {
   const navigate = useNavigate();
@@ -494,6 +495,12 @@ const Homepage = () => {
         <div className="legends-tracker-small tournament-bracket-link">
           <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToTournamentBracket}>
             🏆 Tournament Bracket
+          </button>
+          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={() => openCashClimbTv('landscape')}>
+            Tournament TV wide 16:9
+          </button>
+          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={() => openCashClimbTv('portrait')}>
+            Tournament TV tall 9:16
           </button>
         </div>
 

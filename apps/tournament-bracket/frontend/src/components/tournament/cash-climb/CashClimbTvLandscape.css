@@ -1,0 +1,27 @@
+/* Landscape 16:9 (wide TV) — matches left, standings right. */
+.cc-tv-landscape .cc-tv-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+  gap: clamp(12px, 1.6vw, 22px);
+}
+
+.cc-tv-landscape .cc-tv-now {
+  min-height: 0;
+}
+
+.cc-tv-landscape .cc-tv-player {
+  font-size: clamp(1.15rem, 2.6vh, 1.7rem);
+}
+
+.cc-tv-landscape:not(.cc-tv-is-tall) .cc-tv-match-grid {
+  grid-template-columns: repeat(var(--cc-tv-match-cols, 2), minmax(0, 1fr));
+}
+
+.cc-tv-landscape .cc-tv-standings-row {
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto auto auto;
+}
+
+.cc-tv-landscape .cc-tv-standings-name {
+  font-size: clamp(1.35rem, 3.4vh, 2rem);
+  font-weight: 800;
+}

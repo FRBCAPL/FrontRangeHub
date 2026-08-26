@@ -1,0 +1,531 @@
+.cc-tv {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  box-sizing: border-box;
+  height: 100dvh;
+  padding: clamp(38px, 4.4vh, 52px) clamp(16px, 2vw, 36px) clamp(12px, 1.8vh, 28px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.4vh, 18px);
+  background:
+    radial-gradient(90vw 50vh at 8% -8%, rgba(34, 197, 94, 0.2), transparent 58%),
+    radial-gradient(70vw 40vh at 100% 0%, rgba(250, 204, 21, 0.12), transparent 52%),
+    linear-gradient(180deg, #07111c 0%, #05080f 100%);
+  color: #f8fafc;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  overflow: hidden;
+}
+
+.cc-tv-header {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 12px;
+}
+
+.cc-tv-title-block {
+  grid-column: 2;
+  min-width: 0;
+  text-align: center;
+}
+
+.cc-tv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.cc-tv-money {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.cc-tv-brand {
+  margin: 0 0 4px;
+  color: #86efac;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: clamp(0.8rem, 1.6vh, 1.05rem);
+  font-weight: 700;
+}
+
+.cc-tv-header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5.2vh, 3.6rem);
+  line-height: 1;
+}
+
+.cc-tv-chips span {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: #e2e8f0;
+  font-size: clamp(0.8rem, 1.7vh, 1.05rem);
+}
+
+.cc-tv-money div {
+  min-width: 8.5rem;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  text-align: right;
+}
+
+.cc-tv-money span {
+  display: block;
+  color: #86efac;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: clamp(0.7rem, 1.4vh, 0.85rem);
+}
+
+.cc-tv-money strong {
+  display: block;
+  margin-top: 2px;
+  font-size: clamp(1.4rem, 4vh, 2.4rem);
+  line-height: 1.1;
+  color: #fff;
+}
+
+.cc-tv-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.cc-tv-kicker {
+  margin: 0;
+  color: #fbbf24;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: clamp(0.75rem, 1.6vh, 0.95rem);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cc-tv-now,
+.cc-tv-standings {
+  min-height: 0;
+  padding: clamp(14px, 2vh, 22px);
+  border-radius: 20px;
+  background: rgba(8, 17, 30, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  overflow: hidden;
+}
+
+.cc-tv-now {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.cc-tv-match-grid {
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  align-items: stretch;
+  overflow: auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cc-tv-match {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(15, 40, 28, 0.55), rgba(2, 6, 23, 0.7));
+  border: 2px solid rgba(34, 197, 94, 0.45);
+  box-shadow: inset 0 0 40px rgba(34, 197, 94, 0.08);
+}
+
+.cc-tv-now-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.cc-tv-now-round {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: clamp(1rem, 2.2vh, 1.35rem);
+}
+
+.cc-tv-now h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4.4vh, 3rem);
+}
+
+.cc-tv-now-winner {
+  text-align: center;
+  justify-content: center;
+  border-color: rgba(250, 204, 21, 0.6);
+  background: linear-gradient(180deg, rgba(234, 179, 8, 0.22), rgba(15, 23, 42, 0.88));
+}
+
+.cc-tv-now-winner h2 {
+  font-size: clamp(3rem, 9vh, 6.5rem);
+  color: #facc15;
+}
+
+.cc-tv-live-dot {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  background: #f43f5e;
+  box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7);
+  animation: cc-tv-pulse 1.4s ease-out infinite;
+}
+
+.cc-tv-match-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #86efac;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: clamp(0.75rem, 1.6vh, 1rem);
+  font-weight: 700;
+}
+
+.cc-tv-live-tag {
+  color: #fecdd3;
+  background: rgba(244, 63, 94, 0.2);
+  border-radius: 999px;
+  padding: 2px 10px;
+  letter-spacing: 0.14em;
+}
+
+.cc-tv-match-bye {
+  border-color: rgba(250, 204, 21, 0.45);
+  background: linear-gradient(180deg, rgba(66, 48, 12, 0.5), rgba(2, 6, 23, 0.7));
+  box-shadow: inset 0 0 40px rgba(250, 204, 21, 0.08);
+}
+
+.cc-tv-match-bye .cc-tv-match-top {
+  color: #fde68a;
+}
+
+.cc-tv-bye-tag {
+  color: #111827;
+  background: #fbbf24;
+  border-radius: 999px;
+  padding: 2px 10px;
+  letter-spacing: 0.14em;
+}
+
+.cc-tv-score-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.cc-tv-player {
+  margin: 0;
+  line-height: 1.05;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-tv-score-wl {
+  flex-shrink: 0;
+  color: #fde68a;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cc-tv-vs {
+  margin: 0;
+  color: #64748b;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.cc-tv-payout {
+  margin: 4px 0 0;
+  color: #86efac;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cc-tv-round-done {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  color: #cbd5e1;
+  font-size: clamp(1.05rem, 2.4vh, 1.45rem);
+}
+
+.cc-tv-standings {
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-tv-standings-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+}
+
+.cc-tv-standings-row {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.45);
+  font-size: clamp(1rem, 2.4vh, 1.45rem);
+  flex: 0 0 auto;
+}
+
+.cc-tv-standings-row.is-lead {
+  background: linear-gradient(90deg, rgba(250, 204, 21, 0.18), rgba(2, 6, 23, 0.35));
+  border: 1px solid rgba(250, 204, 21, 0.4);
+}
+
+.cc-tv-standings-row.is-koh:not(.is-out) .cc-tv-standings-name {
+  color: #fde68a;
+}
+
+.cc-tv-standings-row.is-out {
+  opacity: 0.55;
+}
+
+.cc-tv-rank {
+  font-weight: 800;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.cc-tv-standings-row.is-lead .cc-tv-rank {
+  color: #facc15;
+}
+
+.cc-tv-standings-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-tv-standings-wl {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+
+.cc-tv-standings-wl small {
+  color: #94a3b8;
+  font-size: 0.65em;
+  letter-spacing: 0.08em;
+}
+
+.cc-tv-standings-paid {
+  color: #86efac;
+  font-weight: 700;
+  min-width: 4.6rem;
+  text-align: right;
+}
+
+.cc-tv-tag {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.72em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.cc-tv-tag-in {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.18);
+}
+
+.cc-tv-tag-koh {
+  color: #fde68a;
+  background: rgba(250, 204, 21, 0.16);
+}
+
+.cc-tv-tag-out {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.cc-tv-ticker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  min-height: 3em;
+  padding: 0 6px 0 0;
+  border-radius: 14px;
+  background: rgba(8, 17, 30, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  overflow: hidden;
+}
+
+.cc-tv-ticker-label {
+  flex-shrink: 0;
+  margin-left: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fbbf24;
+  color: #111827;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: clamp(0.75rem, 1.6vh, 0.95rem);
+}
+
+.cc-tv-ticker-mask {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.cc-tv-ticker-track {
+  display: inline-flex;
+  align-items: baseline;
+  margin: 0;
+  padding-left: 100%;
+  width: max-content;
+  white-space: nowrap;
+  color: #e2e8f0;
+  font-size: clamp(1.05rem, 2.3vh, 1.45rem);
+  animation: cc-tv-crawl linear infinite;
+}
+
+.cc-tv-ticker-group {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.cc-tv-ticker-round-sep {
+  margin: 0 1.15em 0 1.35em;
+  color: #fbbf24;
+  font-weight: 800;
+  opacity: 0.9;
+}
+
+.cc-tv-ticker-item {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.cc-tv-ticker-round {
+  margin-right: 0.55em;
+  color: #fbbf24;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.cc-tv-ticker-sep {
+  margin: 0 1.1em;
+  color: #94a3b8;
+}
+
+.cc-tv-ticker-vs {
+  color: #cbd5e1;
+  font-weight: 700;
+  margin: 0 0.45em;
+}
+
+.cc-tv-ticker-win {
+  color: #4ade80;
+  font-weight: 800;
+}
+
+.cc-tv-ticker-lose {
+  color: #f87171;
+  font-weight: 800;
+}
+
+.cc-tv-empty {
+  max-width: 28rem;
+  margin: auto;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 1.35rem;
+  line-height: 1.5;
+}
+
+.cc-tv-layout-bar {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: auto;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+
+.cc-tv-layout-bar:hover,
+.cc-tv-layout-bar:focus-within {
+  opacity: 1;
+}
+
+.cc-tv-layout-bar button {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(2, 6, 23, 0.75);
+  color: #cbd5e1;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.cc-tv-layout-bar button.is-on {
+  background: #fbbf24;
+  color: #111827;
+  border-color: #fbbf24;
+}
+
+@keyframes cc-tv-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+}
+
+@keyframes cc-tv-crawl {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
