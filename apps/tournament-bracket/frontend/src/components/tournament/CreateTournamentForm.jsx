@@ -5,9 +5,9 @@ import './CreateTournamentForm.css';
 /**
  * Form to create a new tournament: name, type (single/double elim), and players added via Add Player modal.
  */
-export default function CreateTournamentForm({ onSubmit, onCancel }) {
+export default function CreateTournamentForm({ onSubmit, onCancel, defaultType = 'single' }) {
   const [name, setName] = useState('');
-  const [type, setType] = useState('single');
+  const [type, setType] = useState(defaultType);
   const [players, setPlayers] = useState([]);
   const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
 

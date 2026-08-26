@@ -4,22 +4,34 @@ import { buildSingleElimination, buildDoubleElimination } from './bracketLogic';
 import BracketDisplay from './BracketDisplay';
 import DoubleElimDisplay from './DoubleElimDisplay';
 import CreateTournamentForm from './CreateTournamentForm';
+import CashClimbApp from './cash-climb/CashClimbApp';
+import { loadCashClimb } from './cash-climb/cashClimbStore';
+import { formatTournamentDate } from './cash-climb/cashClimbEngine.js';
 import './TournamentBracketApp.css';
+import './cash-climb/CashClimb.css';
 
 const STORAGE_KEY = 'frontrange-tournament-bracket';
 
+function loadElim() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const t = JSON.parse(raw);
+      if (t && t.entrantNames && t.entrantNames.length >= 2) return t;
+    }
+  } catch (_) {}
+  return null;
+}
+
 export default function TournamentBracketApp() {
   const navigate = useNavigate();
-  const [tournament, setTournament] = useState(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const t = JSON.parse(raw);
-        if (t && t.entrantNames && t.entrantNames.length >= 2) return t;
-      }
-    } catch (_) {}
-    return null;
+  const [screen, setScreen] = useState(() => {
+    if (loadCashClimb()) return 'cash-climb';
+    if (loadElim()) return 'elim-play';
+    return 'home';
   });
+  const [elimType, setElimType] = useState('single');
+  const [tournament, setTournament] = useState(loadElim);
 
   const persist = useCallback((t) => {
     setTournament(t);
@@ -51,13 +63,12 @@ export default function TournamentBracketApp() {
         grandFinal,
       });
     }
+    setScreen('elim-play');
   };
 
   const handleBracketUpdate = (rounds) => {
     if (!tournament) return;
-    if (tournament.type === 'single') {
-      persist({ ...tournament, rounds });
-    }
+    if (tournament.type === 'single') persist({ ...tournament, rounds });
   };
 
   const handleDoubleElimUpdate = (data) => {
@@ -65,23 +76,67 @@ export default function TournamentBracketApp() {
     persist({ ...tournament, ...data });
   };
 
-  const handleNewTournament = () => {
+  const handleNewElim = () => {
     persist(null);
+    setScreen('home');
   };
 
-  if (!tournament) {
+  const cashClimb = loadCashClimb();
+  const elim = tournament;
+
+  if (screen === 'cash-climb') {
+    return (
+      <div className="tournament-bracket-app">
+        <CashClimbApp onLeave={() => setScreen('home')} />
+      </div>
+    );
+  }
+
+  if (screen === 'elim-create') {
     return (
       <div className="tournament-bracket-app">
         <header className="tb-header">
-          <h1>Tournament Bracket</h1>
-          <p>Run single or double elimination pool tournaments.</p>
+          <h1>{elimType === 'single' ? 'Single elimination' : 'Double elimination'}</h1>
+          <p>Separate from the Ladder of Legends.</p>
         </header>
         <div className="tb-create">
           <CreateTournamentForm
+            key={elimType}
+            defaultType={elimType}
             onSubmit={handleCreate}
-            onCancel={() => navigate('/')}
+            onCancel={() => setScreen('home')}
           />
         </div>
+      </div>
+    );
+  }
+
+  if (screen === 'elim-play' && elim) {
+    return (
+      <div className="tournament-bracket-app">
+        <header className="tb-header">
+          <h1>{elim.name}</h1>
+          <p>
+            {elim.type === 'single' ? 'Single elimination' : 'Double elimination'} •{' '}
+            {elim.entrantNames?.length || 0} entrants
+          </p>
+          <button type="button" className="tb-btn-new" onClick={handleNewElim}>
+            New tournament
+          </button>
+        </header>
+        {elim.type === 'single' && (
+          <BracketDisplay rounds={elim.rounds} onUpdate={handleBracketUpdate} />
+        )}
+        {elim.type === 'double' && (
+          <DoubleElimDisplay
+            data={{
+              winnersRounds: elim.winnersRounds,
+              loserRounds: elim.loserRounds,
+              grandFinal: elim.grandFinal,
+            }}
+            onUpdate={handleDoubleElimUpdate}
+          />
+        )}
       </div>
     );
   }
@@ -89,32 +144,66 @@ export default function TournamentBracketApp() {
   return (
     <div className="tournament-bracket-app">
       <header className="tb-header">
-        <h1>{tournament.name}</h1>
-        <p>
-          {tournament.type === 'single' ? 'Single elimination' : 'Double elimination'} •{' '}
-          {tournament.entrantNames?.length || 0} entrants
-        </p>
-        <button type="button" className="tb-btn-new" onClick={handleNewTournament}>
-          New tournament
-        </button>
+        <h1>Open Tournament</h1>
+        <p>Run an event that is not tied to the ladder. Ladder tournaments stay on the ladder.</p>
       </header>
 
-      {tournament.type === 'single' && (
-        <BracketDisplay
-          rounds={tournament.rounds}
-          onUpdate={handleBracketUpdate}
-        />
+      {(cashClimb || elim) && (
+        <div className="cc-resume">
+          {cashClimb && (
+            <button type="button" className="cc-format-btn cc-primary" onClick={() => setScreen('cash-climb')}>
+              <strong>Resume Cash Climb: {cashClimb.name}</strong>
+              <span>
+                {cashClimb.status === 'completed' ? 'Completed' : 'In progress'}
+                {cashClimb.tournamentDate ? ` • ${formatTournamentDate(cashClimb.tournamentDate)}` : ''}
+                {' '}• {cashClimb.players?.length || 0} players
+              </span>
+            </button>
+          )}
+          {elim && (
+            <button type="button" className="cc-format-btn" onClick={() => setScreen('elim-play')}>
+              <strong>Resume {elim.name}</strong>
+              <span>{elim.type === 'single' ? 'Single elimination' : 'Double elimination'}</span>
+            </button>
+          )}
+        </div>
       )}
-      {tournament.type === 'double' && (
-        <DoubleElimDisplay
-          data={{
-            winnersRounds: tournament.winnersRounds,
-            loserRounds: tournament.loserRounds,
-            grandFinal: tournament.grandFinal,
+
+      <div className="cc-format-grid">
+        <button
+          type="button"
+          className="cc-format-btn cc-primary"
+          onClick={() => setScreen('cash-climb')}
+        >
+          <strong>Cash Climb</strong>
+          <span>Round robin, 3-loss cut, then King of the Hill — same format as the ladder tournament, separate event.</span>
+        </button>
+        <button
+          type="button"
+          className="cc-format-btn"
+          onClick={() => {
+            setElimType('single');
+            setScreen('elim-create');
           }}
-          onUpdate={handleDoubleElimUpdate}
-        />
-      )}
+        >
+          <strong>Single elimination</strong>
+          <span>Classic bracket. Winner advances, loser is out.</span>
+        </button>
+        <button
+          type="button"
+          className="cc-format-btn"
+          onClick={() => {
+            setElimType('double');
+            setScreen('elim-create');
+          }}
+        >
+          <strong>Double elimination</strong>
+          <span>Winners and losers brackets plus a grand final.</span>
+        </button>
+        <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
+          Back to home
+        </button>
+      </div>
     </div>
   );
 }
