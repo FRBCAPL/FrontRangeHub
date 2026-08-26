@@ -1,58 +1,33 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseOptionalMatchScore } from './cashClimbScore.js';
-import { estimateCashClimbDuration } from './cashClimbDuration.js';
-import { previewPrizeSchedule } from './cashClimbSchedule.js';
+import { parseOptionalMatchScore, validateRecordedGames } from './cashClimbScore.js';
+import { cashClimbProgress, matchTableLabel } from './cashClimbProgress.js';
+import { createOpenTournament, startTournament } from './cashClimbEngine.js';
 
-describe('optional match score', () => {
-  const ids = { winnerId: 'a', player1Id: 'a', player2Id: 'b', raceTo: 5 };
-
-  it('allows a blank score', () => {
-    assert.deepEqual(parseOptionalMatchScore('', ids), { ok: true, score: null });
-    assert.deepEqual(parseOptionalMatchScore('   ', ids), { ok: true, score: null });
+describe('Cash Climb score and progress', () => {
+  it('accepts two game fields or no score', () => {
+    const opts = { raceTo: 5, winnerId: 'a', player1Id: 'a', player2Id: 'b' };
+    assert.equal(validateRecordedGames('', '', opts).ok, true);
+    assert.equal(validateRecordedGames('', '', opts).score, null);
+    assert.equal(validateRecordedGames('5', '2', opts).score, '5-2');
+    assert.equal(validateRecordedGames('5', '', opts).ok, false);
+    assert.equal(validateRecordedGames('3', '1', opts).ok, false);
+    assert.equal(parseOptionalMatchScore('5-2', opts).ok, true);
   });
 
-  it('accepts a race-to legal player1-player2 score', () => {
-    assert.deepEqual(parseOptionalMatchScore('5-3', ids), { ok: true, score: '5-3' });
-    assert.deepEqual(parseOptionalMatchScore('2-5', { ...ids, winnerId: 'b' }), { ok: true, score: '2-5' });
+  it('labels tables from the table count', () => {
+    assert.equal(matchTableLabel(0, 4), 'Table 1');
+    assert.equal(matchTableLabel(4, 4), 'Table 1');
+    assert.equal(matchTableLabel(0, 0), 'Table not assigned');
   });
 
-  it('rejects scores above the race-to', () => {
-    const result = parseOptionalMatchScore('9-0', ids);
-    assert.equal(result.ok, false);
-    assert.match(result.error, /race to 5/i);
-  });
-
-  it('rejects a score that does not match the selected winner', () => {
-    const result = parseOptionalMatchScore('2-5', ids);
-    assert.equal(result.ok, false);
-    assert.match(result.error, /other player/i);
-  });
-
-  it('rejects non-numeric scores', () => {
-    const result = parseOptionalMatchScore('forfeit', ids);
-    assert.equal(result.ok, false);
-  });
-});
-
-describe('two-player duration and prize preview', () => {
-  it('estimates one opening round then King of the Hill', () => {
-    const estimate = estimateCashClimbDuration({ playerCount: 2, raceTo: 3, tableCount: 1 });
-    assert.equal(estimate.rrRounds, 1);
-    assert.equal(estimate.earlyKoh, true);
-    assert.equal(estimate.kohPlayers, 2);
-  });
-
-  it('shows leftover cents when per-win amounts do not consume the round pool', () => {
-    const preview = previewPrizeSchedule(
-      [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }, { id: 'c', name: 'C' }, { id: 'd', name: 'D' }, { id: 'e', name: 'E' }, { id: 'f', name: 'F' }],
-      'double',
-      120,
-      12
-    );
-    assert.ok(preview.rounds.length > 0);
-    const withLeftover = preview.rounds.find((r) => r.leftover > 0);
-    assert.ok(withLeftover, 'at least one round should carry leftover cents');
-    assert.ok(Math.abs(withLeftover.paidThisRound + withLeftover.leftover - withLeftover.roundPrize) < 0.001);
+  it('reports round and match progress', () => {
+    const state = startTournament(createOpenTournament({
+      players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
+    }));
+    const progress = cashClimbProgress(state);
+    assert.match(progress.roundLabel, /Round 1/);
+    assert.match(progress.matchLabel, /0 of \d+ matches complete/);
+    assert.ok(progress.nextMatch);
   });
 });

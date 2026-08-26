@@ -1,15 +1,33 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
-import { parseOptionalMatchScore } from './cashClimbScore.js';
+import { validateRecordedGames } from './cashClimbScore.js';
 
 export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel }) {
   const [winnerId, setWinnerId] = useState('');
-  const [score, setScore] = useState('');
+  const [recordScore, setRecordScore] = useState(false);
+  const [p1Games, setP1Games] = useState('');
+  const [p2Games, setP2Games] = useState('');
   const [error, setError] = useState('');
+  const firstPick = useRef(null);
+
+  useEffect(() => {
+    firstPick.current?.focus();
+  }, [match?.id]);
 
   if (!match) return null;
+  const race = Math.max(1, Number(raceTo) || 0);
 
-  const placeholder = raceTo ? `${raceTo}-${Math.max(0, raceTo - 2)}` : '5-3';
+  const parsed = validateRecordedGames(
+    recordScore ? p1Games : '',
+    recordScore ? p2Games : '',
+    {
+      raceTo,
+      winnerId,
+      player1Id: match.player1_id,
+      player2Id: match.player2_id,
+    }
+  );
+  const liveError = recordScore && (p1Games !== '' || p2Games !== '') && !parsed.ok ? parsed.error : '';
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -17,31 +35,30 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
       setError('Pick a winner.');
       return;
     }
-    const parsed = parseOptionalMatchScore(score, {
-      raceTo,
-      winnerId,
-      player1Id: match.player1_id,
-      player2Id: match.player2_id,
-    });
-    if (!parsed.ok) {
+    if (recordScore && parsed.score == null) {
+      setError('Enter both game counts, or turn off Record game score.');
+      return;
+    }
+    if (recordScore && !parsed.ok) {
       setError(parsed.error);
       return;
     }
     setError('');
-    onSubmit(winnerId, parsed.score);
+    onSubmit(winnerId, recordScore ? parsed.score : null);
   };
 
   return (
-    <div className="cc-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true">
+    <div className="cc-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true" aria-labelledby="cc-result-title">
       <form className="cc-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
-        <h3>Enter result</h3>
+        <h3 id="cc-result-title">Enter result</h3>
         <p className="cc-modal-meta">
           Round {match.round_number} • Match {match.match_number}
-          {raceTo ? ` • Race to ${raceTo}` : ''}
+          {race ? ` • Race to ${race}` : ''}
           {' '}• Win pays {formatMoney(match.payout_amount)}
         </p>
         <label className="cc-winner-pick">
           <input
+            ref={firstPick}
             type="radio"
             name="winner"
             checked={winnerId === match.player1_id}
@@ -64,22 +81,67 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
           />
           {match.player2_name}
         </label>
-        <label>
-          Score (optional)
+
+        <label className="cc-score-toggle">
           <input
-            value={score}
+            type="checkbox"
+            checked={recordScore}
             onChange={(e) => {
-              setScore(e.target.value);
+              setRecordScore(e.target.checked);
               setError('');
+              if (!e.target.checked) {
+                setP1Games('');
+                setP2Games('');
+              }
             }}
-            placeholder={placeholder}
-            aria-invalid={Boolean(error && score.trim())}
           />
+          Record game score
         </label>
-        <p className="cc-score-hint">
-          Leave blank if you are not recording games. If entered, use {match.player1_name} then {match.player2_name}, and the winner must reach {raceTo || 'the race-to'}.
-        </p>
-        {error && <p className="cc-field-error" role="alert">{error}</p>}
+
+        {recordScore ? (
+          <div className="cc-score-fields">
+            <label>
+              {match.player1_name} games
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                max={race || undefined}
+                value={p1Games}
+                onChange={(e) => {
+                  setP1Games(e.target.value);
+                  setError('');
+                }}
+              />
+            </label>
+            <label>
+              {match.player2_name} games
+              <input
+                type="number"
+                inputMode="numeric"
+                min="0"
+                max={race || undefined}
+                value={p2Games}
+                onChange={(e) => {
+                  setP2Games(e.target.value);
+                  setError('');
+                }}
+              />
+            </label>
+          </div>
+        ) : (
+          <p className="cc-score-hint">No score recorded. Winner only.</p>
+        )}
+
+        {recordScore && race ? (
+          <p className="cc-score-hint">
+            Race to {race}: the winner must have {race} games, the other player 0–{race - 1}.
+          </p>
+        ) : null}
+
+        {(error || liveError) && (
+          <p className="cc-field-error" role="alert">{error || liveError}</p>
+        )}
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={onCancel}>
             Cancel

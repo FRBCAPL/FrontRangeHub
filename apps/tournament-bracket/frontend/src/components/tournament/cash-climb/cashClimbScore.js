@@ -42,3 +42,16 @@ export function parseOptionalMatchScore(raw, { raceTo, winnerId, player1Id, play
 
   return { ok: true, score: `${p1}-${p2}` };
 }
+
+export function validateRecordedGames(p1Games, p2Games, opts = {}) {
+  if (p1Games === '' && p2Games === '') return { ok: true, score: null };
+  if (p1Games === '' || p2Games === '') {
+    return { ok: false, error: 'Enter games for both players, or leave both blank.' };
+  }
+  const p1 = Number(p1Games);
+  const p2 = Number(p2Games);
+  if (!Number.isInteger(p1) || !Number.isInteger(p2) || p1 < 0 || p2 < 0) {
+    return { ok: false, error: 'Enter whole-number games for both players.' };
+  }
+  return parseOptionalMatchScore(`${p1}-${p2}`, opts);
+}

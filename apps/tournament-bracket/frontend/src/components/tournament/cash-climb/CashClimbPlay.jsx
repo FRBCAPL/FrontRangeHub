@@ -1,27 +1,22 @@
 import React, { useState } from 'react';
 import CashClimbStandings from './CashClimbStandings.jsx';
 import CashClimbResultModal from './CashClimbResultModal.jsx';
+import CashClimbProgressBar from './CashClimbProgressBar.jsx';
 import { formatMoney, formatTournamentDate, getCurrentRound, getRoundMatches } from './cashClimbEngine.js';
 import { getFormatDisplay } from './openTournamentStructure.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
+import { cashClimbProgress, matchTableLabel, pendingPlayableMatches } from './cashClimbProgress.js';
 import { openCashClimbTv } from './cashClimbTv.js';
 
 export default function CashClimbPlay({ tournament, onRecord, onNew, onLeave }) {
   const [selected, setSelected] = useState(null);
   const round = getCurrentRound(tournament);
   const matches = round ? getRoundMatches(tournament, round.id) : [];
-  const pending = matches.filter((m) => {
-    if (m.status !== 'pending') return false;
-    if (m.is_bye || !m.player2_id) return false;
-    const p1 = tournament.stats.find((p) => p.player_id === m.player1_id);
-    const p2 = m.player2_id ? tournament.stats.find((p) => p.player_id === m.player2_id) : null;
-    if (p1?.eliminated) return false;
-    if (p2?.eliminated) return false;
-    return true;
-  });
+  const pending = pendingPlayableMatches(tournament, round);
   const done = matches.filter((m) => m.status === 'completed');
   const paidOut = tournament.stats.reduce((sum, p) => sum + (p.total_payout || 0), 0);
+  const progress = cashClimbProgress(tournament);
   const durationEstimate = estimateCashClimbDuration({
     playerCount: tournament.players?.length || tournament.stats?.length || 0,
     raceTo: tournament.raceTo,
@@ -72,6 +67,10 @@ export default function CashClimbPlay({ tournament, onRecord, onNew, onLeave }) 
       </header>
 
       {tournament.status !== 'completed' && round && (
+        <CashClimbProgressBar progress={progress} onNextMatch={setSelected} />
+      )}
+
+      {tournament.status !== 'completed' && round && (
         <section className="cc-round">
           <h2>{round.round_name}</h2>
           {pending[0] && (
@@ -79,9 +78,10 @@ export default function CashClimbPlay({ tournament, onRecord, onNew, onLeave }) 
           )}
           {pending.length === 0 && <p>No open matches in this round.</p>}
           <ul className="cc-matches">
-            {pending.map((m) => (
+            {pending.map((m, i) => (
               <li key={m.id}>
                 <button type="button" className="cc-match" onClick={() => setSelected(m)}>
+                  <span className="cc-match-table">{matchTableLabel(i, tournament.tableCount)}</span>
                   <span>{m.player1_name}</span>
                   <em>vs</em>
                   <span>{m.player2_name || 'Bye'}</span>
