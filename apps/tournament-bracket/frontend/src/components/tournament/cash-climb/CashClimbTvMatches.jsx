@@ -1,12 +1,17 @@
 import React from 'react';
 import { formatMoney } from './cashClimbEngine.js';
 import { matchGridColumns, matchResultLine, playerRecord } from './cashClimbTv.js';
+import WinLoss from './WinLoss.jsx';
 
 function PlayerRow({ name, record }) {
   return (
     <div className="cc-tv-score-row">
       <span className="cc-tv-player">{name}</span>
-      {record ? <span className="cc-tv-score-wl">{record}</span> : null}
+      {record ? (
+        <span className="cc-tv-score-wl">
+          <WinLoss wins={record.wins} losses={record.losses} />
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -26,6 +31,23 @@ function LiveMatchCard({ board, match }) {
   );
 }
 
+function UpNextList({ matches }) {
+  if (!matches?.length) return null;
+  return (
+    <div className="cc-tv-up-next">
+      <p className="cc-tv-kicker">Up next</p>
+      <ul className="cc-tv-on-deck">
+        {matches.map((m) => (
+          <li key={m.id}>
+            <span>{m.player1_name}</span>
+            <em>vs</em>
+            <span>{m.player2_name}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 function ByeMatchCard({ board, match }) {
   const name = match.winner_name || match.player1_name;
   return (
@@ -94,6 +116,7 @@ export default function CashClimbTvMatches({ board, layout = 'landscape' }) {
           <ByeMatchCard key={m.id} board={board} match={m} />
         ))}
       </div>
+      <UpNextList matches={board.onDeck} />
     </section>
   );
 }

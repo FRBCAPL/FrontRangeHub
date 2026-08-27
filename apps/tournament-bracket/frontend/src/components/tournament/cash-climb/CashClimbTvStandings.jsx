@@ -1,9 +1,6 @@
 import React from 'react';
 import { formatMoney } from './cashClimbEngine.js';
-
-function record(wins, losses) {
-  return `${wins || 0}–${losses || 0}`;
-}
+import WinLoss from './WinLoss.jsx';
 
 function tag(player) {
   if (player.eliminated) return 'Out';
@@ -24,8 +21,10 @@ export default function CashClimbTvStandings({ board }) {
             <span className="cc-tv-rank">{i + 1}</span>
             <span className="cc-tv-standings-name">{p.player_name}</span>
             <span className="cc-tv-standings-wl">
-              <strong>{record(p.wins, p.losses)}</strong>
-              {board.kohStarted && <small>KOH {record(p.koh_wins, p.koh_losses)}</small>}
+              <strong><WinLoss wins={p.wins} losses={p.losses} /></strong>
+              {board.kohStarted && (
+                <small><WinLoss prefix="KOH" wins={p.koh_wins} losses={p.koh_losses} /></small>
+              )}
             </span>
             <span className="cc-tv-standings-paid">{formatMoney(p.total_payout)}</span>
             <span className={`cc-tv-tag cc-tv-tag-${tag(p).toLowerCase()}`}>{tag(p)}</span>

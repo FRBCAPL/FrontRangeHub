@@ -119,6 +119,10 @@
   font-size: 0.72em;
 }
 
+.cc-tv-portrait .cc-tv-on-deck {
+  font-size: clamp(1.05rem, 4.2vw, 1.35rem);
+}
+
 .cc-tv-portrait .cc-tv-ticker {
   min-height: 3.2em;
   gap: 14px;

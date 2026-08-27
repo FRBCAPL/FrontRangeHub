@@ -6,7 +6,8 @@ import { formatMoney, formatTournamentDate, getCurrentRound, getRoundMatches } f
 import { getFormatDisplay } from './openTournamentStructure.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
-import { cashClimbProgress, matchTableLabel, pendingPlayableMatches } from './cashClimbProgress.js';
+import CashClimbMatchButton from './CashClimbMatchButton.jsx';
+import { cashClimbProgress, matchTableLabel, pendingPlayableMatches, splitByTables } from './cashClimbProgress.js';
 import { openCashClimbTv } from './cashClimbTv.js';
 
 export default function CashClimbPlay({ tournament, onRecord, onNew, onLeave }) {
@@ -14,6 +15,7 @@ export default function CashClimbPlay({ tournament, onRecord, onNew, onLeave }) 
   const round = getCurrentRound(tournament);
   const matches = round ? getRoundMatches(tournament, round.id) : [];
   const pending = pendingPlayableMatches(tournament, round);
+  const { atTable, onDeck } = splitByTables(pending, tournament.tableCount);
   const done = matches.filter((m) => m.status === 'completed');
   const paidOut = tournament.stats.reduce((sum, p) => sum + (p.total_payout || 0), 0);
   const progress = cashClimbProgress(tournament);
@@ -77,19 +79,37 @@ export default function CashClimbPlay({ tournament, onRecord, onNew, onLeave }) 
             <p className="cc-meta">This round: {formatMoney(pending[0].payout_amount)} per win</p>
           )}
           {pending.length === 0 && <p>No open matches in this round.</p>}
-          <ul className="cc-matches">
-            {pending.map((m, i) => (
-              <li key={m.id}>
-                <button type="button" className="cc-match" onClick={() => setSelected(m)}>
-                  <span className="cc-match-table">{matchTableLabel(i, tournament.tableCount)}</span>
-                  <span>{m.player1_name}</span>
-                  <em>vs</em>
-                  <span>{m.player2_name || 'Bye'}</span>
-                  <small>{formatMoney(m.payout_amount)}</small>
-                </button>
-              </li>
-            ))}
-          </ul>
+          {atTable.length > 0 && (
+            <>
+              <p className="cc-meta">On tables ({atTable.length} of {tournament.tableCount || atTable.length})</p>
+              <ul className="cc-matches">
+                {atTable.map((m, i) => (
+                  <CashClimbMatchButton
+                    key={m.id}
+                    match={m}
+                    tableLabel={matchTableLabel(i, tournament.tableCount)}
+                    onPick={setSelected}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
+          {onDeck.length > 0 && (
+            <>
+              <p className="cc-meta">On deck</p>
+              <ul className="cc-matches">
+                {onDeck.map((m) => (
+                  <CashClimbMatchButton
+                    key={m.id}
+                    match={m}
+                    tableLabel="On deck"
+                    onPick={setSelected}
+                    onDeck
+                  />
+                ))}
+              </ul>
+            </>
+          )}
           {done.length > 0 && (
             <div className="cc-done">
               <h3>Completed this round</h3>

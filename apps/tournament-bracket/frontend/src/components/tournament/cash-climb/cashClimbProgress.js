@@ -15,10 +15,22 @@ export function pendingPlayableMatches(tournament, round) {
   });
 }
 
+export function splitByTables(matches, tableCount) {
+  const tables = Math.max(0, Number(tableCount) || 0);
+  const list = matches || [];
+  if (!tables) {
+    return { atTable: list.map((m) => ({ ...m, tableNumber: null })), onDeck: [] };
+  }
+  return {
+    atTable: list.slice(0, tables).map((m, i) => ({ ...m, tableNumber: i + 1 })),
+    onDeck: list.slice(tables).map((m) => ({ ...m, tableNumber: null })),
+  };
+}
+
 export function matchTableLabel(index, tableCount) {
   const tables = Math.max(0, Number(tableCount) || 0);
-  if (!tables) return 'Table not assigned';
-  return `Table ${(index % tables) + 1}`;
+  if (!tables || index >= tables) return 'On deck';
+  return `Table ${index + 1}`;
 }
 
 export function cashClimbProgress(tournament) {

@@ -6,6 +6,7 @@ import {
   getRoundMatches,
   sortStandings,
 } from './cashClimbEngine.js';
+import { splitByTables } from './cashClimbProgress.js';
 
 export const CASH_CLIMB_TV_HASH = '/tournament-bracket/tv';
 export const CASH_CLIMB_TV_LAYOUT_KEY = 'frontrange-cash-climb-tv-layout';
@@ -70,7 +71,8 @@ export function buildCashClimbTvBoard(tournament) {
   const stats = tournament.stats || [];
   const round = getCurrentRound(tournament);
   const roundMatches = round ? getRoundMatches(tournament, round.id) : [];
-  const live = roundMatches.filter((m) => isLiveMatch(m, stats));
+  const liveAll = roundMatches.filter((m) => isLiveMatch(m, stats));
+  const { atTable, onDeck } = splitByTables(liveAll, tournament.tableCount);
   const byes = roundMatches.filter((m) => m.is_bye && m.status !== 'cancelled');
   const roundDone = roundMatches.filter((m) => m.status === 'completed' && !m.is_bye);
   const kohStarted = (tournament.rounds || []).some(
@@ -91,7 +93,8 @@ export function buildCashClimbTvBoard(tournament) {
     winner: tournament.winner || null,
     roundName: round?.round_name || (tournament.status === 'completed' ? 'Final' : 'Standings'),
     kohStarted,
-    live: live.map((m, i) => ({ ...m, tableNumber: i + 1 })),
+    live: atTable,
+    onDeck,
     byes,
     roundDone,
     standings: sortStandings(stats),
@@ -100,8 +103,7 @@ export function buildCashClimbTvBoard(tournament) {
 
 export function playerRecord(board, playerId) {
   const player = (board?.standings || []).find((p) => p.player_id === playerId);
-  if (!player) return '0–0';
-  return `${player.wins || 0}–${player.losses || 0}`;
+  return { wins: player?.wins || 0, losses: player?.losses || 0 };
 }
 
 export function matchGridColumns(layout, matchCount) {

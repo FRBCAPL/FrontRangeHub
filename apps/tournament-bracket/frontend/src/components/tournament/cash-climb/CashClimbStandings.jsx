@@ -1,10 +1,7 @@
 import React from 'react';
 import { OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
 import { formatMoney, sortStandings } from './cashClimbEngine.js';
-
-function record(wins, losses) {
-  return `${wins || 0}–${losses || 0}`;
-}
+import WinLoss from './WinLoss.jsx';
 
 export default function CashClimbStandings({ stats, currentRound }) {
   const rows = sortStandings(stats);
@@ -33,8 +30,8 @@ export default function CashClimbStandings({ stats, currentRound }) {
             <tr key={p.player_id} className={p.eliminated ? 'cc-out' : ''}>
               <td>{i + 1}</td>
               <td>{p.player_name}</td>
-              <td>{record(p.wins, p.losses)}</td>
-              {koh ? <td>{record(p.koh_wins, p.koh_losses)}</td> : null}
+              <td><WinLoss wins={p.wins} losses={p.losses} /></td>
+              {koh ? <td><WinLoss wins={p.koh_wins} losses={p.koh_losses} /></td> : null}
               <td>{formatMoney(p.total_payout)}</td>
               <td>{p.eliminated ? 'Out' : p.in_koh ? 'KOH' : ''}</td>
             </tr>

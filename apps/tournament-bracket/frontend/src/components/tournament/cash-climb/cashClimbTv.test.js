@@ -80,6 +80,20 @@ describe('Cash Climb TV board', () => {
     );
   });
 
+  it('caps live TV matches to the table count', () => {
+    const names = ['Ann', 'Ben', 'Cam', 'Dee', 'Eve', 'Fay', 'Gus', 'Hal', 'Ivy', 'Jen'];
+    const state = startTournament(createOpenTournament({
+      tableCount: 4,
+      players: names.map((name) => ({ name })),
+    }));
+    const board = buildCashClimbTvBoard(state);
+    assert.ok(board.live.length + (board.onDeck || []).length >= 5);
+    assert.equal(board.live.length, 4);
+    assert.equal(board.live[0].tableNumber, 1);
+    assert.equal(board.live[3].tableNumber, 4);
+    assert.ok((board.onDeck || []).length >= 1);
+  });
+
   it('includes a current-round bye card when the field is odd', () => {
     const state = startTournament(createOpenTournament({
       name: 'Odd Night',

@@ -17,8 +17,9 @@ describe('Cash Climb score and progress', () => {
 
   it('labels tables from the table count', () => {
     assert.equal(matchTableLabel(0, 4), 'Table 1');
-    assert.equal(matchTableLabel(4, 4), 'Table 1');
-    assert.equal(matchTableLabel(0, 0), 'Table not assigned');
+    assert.equal(matchTableLabel(3, 4), 'Table 4');
+    assert.equal(matchTableLabel(4, 4), 'On deck');
+    assert.equal(matchTableLabel(0, 0), 'On deck');
   });
 
   it('reports round and match progress', () => {
