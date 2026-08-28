@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
 import { computePlacePrizes, maxPlaceCount, lastStandingSplitNote } from './cashClimbPlacePrizes.js';
 import { cashClimbMoneyLocked } from './cashClimbEdit.js';
+import { isPayoutV2 } from './cashClimbPayoutRuntime.js';
+import { buildPayoutPreview } from './cashClimbPayoutPreview.js';
 
 const RACE_TO_PRESETS = ['1', '2', '3', '4', '5'];
 const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
@@ -26,7 +28,7 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
   const [tableCountMode, setTableCountMode] = useState(tableModeFrom(tournament.tableCount));
   const [otherTableCount, setOtherTableCount] = useState(tableModeFrom(tournament.tableCount) === 'other' ? String(tournament.tableCount || '') : '');
   const [entryFee, setEntryFee] = useState(String(tournament.entryFee ?? ''));
-  const [placeCountMode, setPlaceCountMode] = useState(String(tournament.placeCount || 1));
+  const [placeCountMode, setPlaceCountMode] = useState(String(tournament.placeCount || 3));
   const dateInputRef = useRef(null);
 
   const openDatePicker = () => {
@@ -42,9 +44,15 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
 
   const playerCount = tournament.players?.length || tournament.stats?.length || 0;
   const prizePool = (Number(entryFee) || 0) * playerCount;
+  const v2 = isPayoutV2(tournament);
   const maxPlaces = maxPlaceCount(playerCount);
   const placeCount = Math.min(Number(placeCountMode) || 1, maxPlaces);
-  const places = computePlacePrizes({ prizePool, placeCount, playerCount });
+  const places = v2
+    ? null
+    : computePlacePrizes({ prizePool, placeCount, playerCount });
+  const v2Preview = v2
+    ? buildPayoutPreview({ prizePool, playerCount, tournament })
+    : null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -162,24 +170,32 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
               disabled={moneyLocked}
             />
           </label>
-          <label>
-            Last standing
-            <select
-              value={String(placeCount)}
-              onChange={(e) => setPlaceCountMode(e.target.value)}
-              disabled={moneyLocked}
-            >
-              <option value="1">1st only</option>
-              {maxPlaces >= 2 && <option value="2">1st & 2nd</option>}
-              {maxPlaces >= 3 && <option value="3">Top 3</option>}
-              {maxPlaces >= 4 && <option value="4">Top 4</option>}
-            </select>
-          </label>
+          {!v2 && (
+            <label>
+              Last standing
+              <select
+                value={String(placeCount)}
+                onChange={(e) => setPlaceCountMode(e.target.value)}
+                disabled={moneyLocked}
+              >
+                <option value="1">1st only</option>
+                {maxPlaces >= 2 && <option value="2">1st & 2nd</option>}
+                {maxPlaces >= 3 && <option value="3">Top 3</option>}
+                {maxPlaces >= 4 && <option value="4">Top 4</option>}
+              </select>
+            </label>
+          )}
         </div>
 
         {moneyLocked ? (
           <p className="cc-edit-lock-note">
             Prize money is locked after the first recorded match (or a paid bye). Name, date, game, race, and tables can still change.
+          </p>
+        ) : v2 ? (
+          <p className="players-count">
+            {prizePool
+              ? `RR bank ${formatMoney(v2Preview?.rrBudget || 0)} • KOH bank ${formatMoney(v2Preview?.kohBudget || 0)} • Championship floor ${formatMoney(v2Preview?.championshipFloor || 0)}`
+              : 'Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd.'}
           </p>
         ) : (
           <p className="players-count">

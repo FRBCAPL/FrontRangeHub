@@ -8,9 +8,6 @@ export default function CashClimbPrizePreview({
   preview,
   formatLabel,
 }) {
-  const listed = listedPlacePrizes(placePrizes);
-  const reserved = listed.reduce((sum, row) => sum + row.amount, 0);
-
   if (!preview) {
     return (
       <p className="players-count">
@@ -19,23 +16,29 @@ export default function CashClimbPrizePreview({
     );
   }
 
+  const finishing = listedPlacePrizes(placePrizes);
+  const v2 = preview.rrBudget != null && preview.kohBudget != null;
+
   return (
     <div className="cc-prize-preview">
       <p className="players-count">
         Prize pool {formatMoney(prizePool)}
-        {listed.length ? ` • Last standing leftover ${formatMoney(reserved)}` : ''}
-        {' '}• Match pool {formatMoney(preview.available)}
-        {preview.expectedRounds ? ` • about ${preview.expectedRounds} round${preview.expectedRounds === 1 ? '' : 's'}` : ''}
+        {v2
+          ? ` • RR bank ${formatMoney(preview.rrBudget)} • KOH bank ${formatMoney(preview.kohBudget)}`
+          : finishing.length
+            ? ` • Last standing leftover ${formatMoney(finishing.reduce((sum, row) => sum + row.amount, 0))}`
+            : ''}
+        {preview.expectedRounds ? ` • about ${preview.expectedRounds} RR round${preview.expectedRounds === 1 ? '' : 's'}` : ''}
         {preview.rrRounds || preview.kohRounds
           ? ` (${preview.rrRounds || 0} RR + ${preview.kohRounds || 0} KOH)`
           : ''}
         {formatLabel ? ` • ${formatLabel}` : ''}
       </p>
-      {listed.length > 0 && (
+      {finishing.length > 0 && (
         <ul className="cc-place-list">
-          {listed.map((row) => (
+          {finishing.map((row) => (
             <li key={row.place}>
-              <span>{row.label}</span>
+              <span>{row.place === 1 && v2 ? 'Championship floor' : row.label}</span>
               <strong>{formatMoney(row.amount)}</strong>
             </li>
           ))}
@@ -62,7 +65,9 @@ export default function CashClimbPrizePreview({
         </tbody>
       </table>
       <p className="cc-prize-preview-note">
-        This table is the starting estimate. Match money is funded first so round 1 can pay $2 and later rounds can climb $1. Whatever is left of the prize pool is last standing. Extra rounds can shrink that leftover; a short night can grow it. King of the Hill starts at 3 players. Each win is a whole dollar.
+        {v2
+          ? 'The full entry fee stays in this event. About 75% funds the round-robin climb; about 25% is a protected King of the Hill bank. Match pays are locked at the start. Extra RR rounds hold the last per-win if the RR bank can pay; they never take KOH money. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd. King of the Hill starts at 3 players. Each win is a whole dollar.'
+          : 'This table is the starting estimate. Match wins climb from $2. Last standing leftover is parked so the winner is always awarded. Extra rounds can shrink leftover; a short night can grow it. King of the Hill starts at 3 players. Each win is a whole dollar.'}
       </p>
     </div>
   );

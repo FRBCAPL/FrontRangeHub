@@ -19,23 +19,25 @@ describe('cash climb place prizes', () => {
     assert.equal(listedPlacePrizes(places).length, 1);
   });
 
-  it('splits leftover 40 / 25 / 20 / 15 for top 4', () => {
+  it('gives 2nd the largest leftover share on top 4', () => {
     const places = computePlacePrizes({ prizePool: 320, placeCount: 4, climbNeed: 256 });
-    assert.equal(places.first, 25.6);
-    assert.equal(places.second, 16);
-    assert.equal(places.third, 12.8);
-    assert.equal(places.fourth, 9.6);
+    assert.equal(places.first, 12.8);
+    assert.equal(places.second, 32);
+    assert.equal(places.third, 11.52);
+    assert.equal(places.fourth, 7.68);
     assert.equal(places.reserved, 64);
     assert.equal(places.matchPool, 256);
+    assert.ok(places.second > places.first);
     assert.equal(listedPlacePrizes(places).length, 4);
   });
 
-  it('splits leftover 65 / 35 for 1st and 2nd', () => {
+  it('gives 2nd the larger leftover share when paying 1st and 2nd', () => {
     const places = computePlacePrizes({ prizePool: 320, placeCount: 2, climbNeed: 256 });
-    assert.equal(places.first, 41.6);
-    assert.equal(places.second, 22.4);
+    assert.equal(places.first, 22.4);
+    assert.equal(places.second, 41.6);
     assert.equal(places.reserved, 64);
     assert.equal(places.matchPool, 256);
+    assert.ok(places.second > places.first);
   });
 
   it('reserves nothing for last standing if the climb needs the whole pool', () => {

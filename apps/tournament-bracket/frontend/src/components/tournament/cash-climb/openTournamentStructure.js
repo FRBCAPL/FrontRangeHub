@@ -23,7 +23,7 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
   phase2: {
     name: 'King of the Hill',
     eliminationLosses: 2,
-    description: 'Winner-stays format. Starts when 3 players remain. Last player standing wins remaining pool.',
+    description: 'Winner-stays format. Starts when 3 players remain. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd.',
     thresholds: [
       { maxPlayers: Infinity, threshold: 3 },
     ],
@@ -37,11 +37,15 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
 
   /** Unused for live events. Last standing is leftover after the match climb is funded. */
   placePotPercent: 0,
+  /**
+   * v1 leftover splits only. Live v2 events park unused KOH as championship
+   * and split unused RR 60/40 to 2nd and 3rd.
+   */
   placeSplits: {
     1: [1],
-    2: [0.65, 0.35],
-    3: [0.5, 0.3, 0.2],
-    4: [0.4, 0.25, 0.2, 0.15],
+    2: [0.35, 0.65],
+    3: [0.22, 0.48, 0.3],
+    4: [0.2, 0.5, 0.18, 0.12],
   },
 
   gameRules: {

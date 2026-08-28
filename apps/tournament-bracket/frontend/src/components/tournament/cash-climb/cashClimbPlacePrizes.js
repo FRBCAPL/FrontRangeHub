@@ -28,9 +28,9 @@ export function placeOrdinal(place) {
 export function lastStandingSplitNote(placeCount) {
   const count = parsePlaceCount(placeCount);
   if (count <= 1) return 'all to the winner';
-  if (count === 2) return 'split 65 / 35';
-  if (count === 3) return 'split 50 / 30 / 20';
-  return 'split 40 / 25 / 20 / 15';
+  if (count === 2) return 'split 35 / 65 — 2nd gets the larger leftover share';
+  if (count === 3) return 'split 22 / 48 / 30 — 2nd gets the largest leftover share';
+  return 'split 20 / 50 / 18 / 12 — 2nd gets half the leftover';
 }
 
 /**

@@ -2,9 +2,8 @@ import React, { useMemo, useRef, useState } from 'react';
 import AddPlayerModal from '../AddPlayerModal.jsx';
 import CashClimbPrizePreview from './CashClimbPrizePreview.jsx';
 import { OPEN_TOURNAMENT_STRUCTURE, determineRoundRobinType, getFormatDisplay } from './openTournamentStructure.js';
-import { formatMoney, todayDateInput } from './cashClimbEngine.js';
-import { previewPrizeSchedule } from './cashClimbSchedule.js';
-import { computePlacePrizes, maxPlaceCount, lastStandingSplitNote } from './cashClimbPlacePrizes.js';
+import { todayDateInput } from './cashClimbEngine.js';
+import { buildPayoutPreview } from './cashClimbPayoutPreview.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
 
@@ -20,7 +19,6 @@ export default function CashClimbSetup({ onStart, onCancel }) {
   const [tableCountMode, setTableCountMode] = useState('4');
   const [otherTableCount, setOtherTableCount] = useState('');
   const [entryFee, setEntryFee] = useState(String(OPEN_TOURNAMENT_STRUCTURE.entryFee));
-  const [placeCountMode, setPlaceCountMode] = useState('1');
   const [players, setPlayers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const dateInputRef = useRef(null);
@@ -44,13 +42,15 @@ export default function CashClimbSetup({ onStart, onCancel }) {
     ? Math.max(1, Number(otherTableCount) || 4)
     : Number(tableCountMode) || 4;
   const prizePool = (Number(entryFee) || 0) * players.length;
-  const maxPlaces = maxPlaceCount(players.length);
-  const placeCount = Math.min(Number(placeCountMode) || 1, maxPlaces);
-  const places = computePlacePrizes({ prizePool, placeCount, playerCount: players.length });
+  const previewTournament = { raceTo, gameType, tableCount, roundRobinType: autoType };
 
   const prizePreview = useMemo(
-    () => previewPrizeSchedule(players, autoType, prizePool, places.reserved),
-    [players, autoType, prizePool, places.reserved]
+    () => buildPayoutPreview({
+      prizePool,
+      playerCount: players.length,
+      tournament: previewTournament,
+    }),
+    [players.length, autoType, prizePool, raceTo, gameType, tableCount]
   );
   const durationEstimate = useMemo(
     () => estimateCashClimbDuration({
@@ -92,7 +92,6 @@ export default function CashClimbSetup({ onStart, onCancel }) {
       tableCount: Number(tableCount) || 4,
       roundRobinType: autoType,
       entryFee: Number(entryFee) || 0,
-      placeCount,
       players,
     });
   };
@@ -190,23 +189,9 @@ export default function CashClimbSetup({ onStart, onCancel }) {
               onChange={(e) => setEntryFee(e.target.value)}
             />
           </label>
-          <label>
-            Last standing
-            <select
-              value={String(placeCount)}
-              onChange={(e) => setPlaceCountMode(e.target.value)}
-            >
-              <option value="1">1st only</option>
-              {maxPlaces >= 2 && <option value="2">1st & 2nd</option>}
-              {maxPlaces >= 3 && <option value="3">Top 3</option>}
-              {maxPlaces >= 4 && <option value="4">Top 4</option>}
-            </select>
-          </label>
         </div>
         <p className="players-count">
-          Last standing is leftover after the climb
-          {prizePool ? ` (${formatMoney(places.reserved)} of ${formatMoney(prizePool)})` : ''}
-          {` • ${lastStandingSplitNote(placeCount)}`}
+          Full entry stays in the event. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd.
         </p>
         <label>
           Players
@@ -237,7 +222,14 @@ export default function CashClimbSetup({ onStart, onCancel }) {
         <CashClimbDurationEstimate estimate={durationEstimate} />
         <CashClimbPrizePreview
           prizePool={prizePool}
-          placePrizes={places}
+          placePrizes={prizePreview
+            ? {
+              first: prizePreview.estimatedChampionship,
+              second: prizePreview.estimatedSecond,
+              third: prizePreview.estimatedThird,
+              fourth: 0,
+            }
+            : null}
           preview={prizePreview}
           formatLabel={getFormatDisplay(autoType)}
         />

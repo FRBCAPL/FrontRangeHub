@@ -3,6 +3,7 @@ import { formatMoney, formatTournamentDate } from './cashClimbEngine.js';
 import { getFormatDisplay } from './openTournamentStructure.js';
 import { openCashClimbTv } from './cashClimbTv.js';
 import { listedPlacePrizes, placeOrdinal } from './cashClimbPlacePrizes.js';
+import { isPayoutV2, remainingPhaseBudget } from './cashClimbPayoutRuntime.js';
 
 function Chip({ children }) {
   if (!children) return null;
@@ -77,13 +78,21 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
         <Stat label="Pool" value={formatMoney(tournament.totalPrizePool)} />
         <Stat label="Paid" value={formatMoney(paidOut)} />
         <Stat label="Remaining" value={formatMoney(remaining)} />
-        {listedPlacePrizes(tournament.placePrizes || { first: tournament.firstPlacePrize }).map((row) => (
-          <Stat
-            key={row.place}
-            label={`${row.label} reserved`}
-            value={formatMoney(row.amount)}
-          />
-        ))}
+        {isPayoutV2(tournament) ? (
+          <>
+            <Stat label="RR left" value={formatMoney(remainingPhaseBudget(tournament, false))} />
+            <Stat label="KOH left" value={formatMoney(remainingPhaseBudget(tournament, true))} />
+            <Stat label="Champ floor" value={formatMoney(tournament.championshipFloor)} />
+          </>
+        ) : (
+          listedPlacePrizes(tournament.placePrizes || { first: tournament.firstPlacePrize }).map((row) => (
+            <Stat
+              key={row.place}
+              label={`${row.label} reserved`}
+              value={formatMoney(row.amount)}
+            />
+          ))
+        )}
         {tournament.status !== 'completed' && durationEstimate ? (
           <Stat
             label={durationEstimate.remaining ? 'Time remaining' : 'Estimated time'}

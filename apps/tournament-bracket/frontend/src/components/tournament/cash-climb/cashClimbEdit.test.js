@@ -2,7 +2,6 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createOpenTournament, startTournament, recordMatchResult, getCurrentRound, getRoundMatches } from './cashClimbEngine.js';
 import { cashClimbMoneyLocked, updateOpenTournament } from './cashClimbEdit.js';
-import { computePlacePrizes } from './cashClimbPlacePrizes.js';
 
 describe('edit open Cash Climb', () => {
   it('updates name, date, race, and tables after start', () => {
@@ -47,10 +46,10 @@ describe('edit open Cash Climb', () => {
       placeCount: 1,
     });
     assert.equal(state.totalPrizePool, 100);
-    const places = computePlacePrizes({ prizePool: 100, placeCount: 1, playerCount: 4 });
-    assert.equal(state.firstPlacePrize, places.first);
-    const matchScheduled = state.prizeSchedule.reduce((sum, n) => sum + n, 0);
-    assert.ok(Math.abs(matchScheduled - places.matchPool) < 0.02);
+    assert.equal(Math.round((state.rrBudget + state.kohBudget) * 100) / 100, 100);
+    assert.equal(state.firstPlacePrize, state.championshipFloor);
+    assert.ok(state.rrSchedule.length >= 1);
+    assert.equal(state.kohSchedule.length, 5);
   });
 
   it('does not change prize money after a real match is recorded', () => {

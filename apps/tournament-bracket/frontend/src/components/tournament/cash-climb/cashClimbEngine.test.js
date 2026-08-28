@@ -1,10 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createOpenTournament, startTournament, recordMatchResult, continueCashClimb, getCurrentRound, getRoundMatches, getActivePlayers, sanitizeCashClimb } from './cashClimbEngine.js';
-import { remainingEventRoundsFromState, climbShapeForPayout } from './cashClimbDuration.js';
-import { climbRoundPayouts } from './cashClimbSchedule.js';
-import { computePlacePrizes } from './cashClimbPlacePrizes.js';
+import { remainingEventRoundsFromState } from './cashClimbDuration.js';
 import { getKOHThreshold } from './openTournamentStructure.js';
+import { remainingPhaseBudget } from './cashClimbPayoutRuntime.js';
+import { PAYOUT_MODEL_V2 } from './cashClimbPayoutConfig.js';
 
 function playPending(state) {
   let current = state;
@@ -60,10 +60,10 @@ describe('open Cash Climb engine', () => {
     assert.equal(state.status, 'in-progress');
     assert.ok(state.rounds.length >= 1);
     assert.equal(state.stats.length, 4);
-    const matchScheduled = state.prizeSchedule.reduce((sum, n) => sum + n, 0);
-    const places = computePlacePrizes({ prizePool: 80, placeCount: 1, playerCount: 4 });
-    assert.ok(state.prizeSchedule.length > 1);
-    assert.ok(Math.abs(matchScheduled - places.matchPool) < 0.02);
+    assert.equal(state.payoutModel, PAYOUT_MODEL_V2);
+    assert.equal(Math.round((state.rrBudget + state.kohBudget) * 100) / 100, 80);
+    assert.ok(state.rrSchedule.length >= 1);
+    assert.equal(state.kohSchedule.length, 5);
 
     state = playPending(state);
     assert.equal(state.status, 'completed');
@@ -73,75 +73,61 @@ describe('open Cash Climb engine', () => {
     assert.ok(Math.abs(paid - 80) < 0.02);
   });
 
-  it('recomputes the round pot from remaining match money when a new round starts', () => {
+  it('pays locked RR amounts and does not spend the KOH bank in round robin', () => {
     let state = startTournament(createOpenTournament({
       name: 'Friday Cash Climb',
       entryFee: 20,
-      placeCount: 1,
       roundRobinType: 'single',
       players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
     }));
-    const places = computePlacePrizes({ prizePool: 80, placeCount: 1, playerCount: 4 });
+    const kohBudget = state.kohBudget;
     const round1 = getCurrentRound(state);
-    const expectedRound1 = climbRoundPayouts({
-      remaining: places.matchPool,
-      remainingRounds: remainingEventRoundsFromState(state),
-      numMatches: getRoundMatches(state, round1.id).filter((m) => !m.is_bye && m.player2_id).length,
-      numByes: getRoundMatches(state, round1.id).filter((m) => m.is_bye || !m.player2_id).length,
-      lastPerWin: 0,
-      shape: climbShapeForPayout(
-        state,
-        getRoundMatches(state, round1.id).filter((m) => !m.is_bye && m.player2_id).length,
-        getRoundMatches(state, round1.id).filter((m) => m.is_bye || !m.player2_id).length
-      ),
-    });
-    assert.equal(round1.prize_per_round, expectedRound1.roundPrize);
+    const round1Win = getRoundMatches(state, round1.id).find((m) => !m.is_bye)?.payout_amount || 0;
+    assert.equal(round1Win, state.rrSchedule[0]);
+    assert.equal(remainingPhaseBudget(state, true), kohBudget);
 
     const round1Id = round1.id;
     for (const match of getRoundMatches(state, round1Id).filter((m) => m.status === 'pending')) {
       state = recordMatchResult(state, match.id, match.player1_id);
     }
-    const paid = state.stats.reduce((sum, p) => sum + p.total_payout, 0);
-    const remaining = Math.round((places.matchPool - paid) * 100) / 100;
-    const round1Win = getRoundMatches(state, round1Id).find((m) => !m.is_bye)?.payout_amount || 0;
+    assert.equal(remainingPhaseBudget(state, true), kohBudget);
     state = continueCashClimb(state);
+    if (state.status === 'completed' || getCurrentRound(state)?.round_name === 'King of the Hill') return;
     const round2 = getCurrentRound(state);
     assert.ok(round2.id !== round1Id);
-    const expected = climbRoundPayouts({
-      remaining,
-      remainingRounds: remainingEventRoundsFromState(state),
-      numMatches: getRoundMatches(state, round2.id).filter((m) => !m.is_bye && m.player2_id).length,
-      numByes: getRoundMatches(state, round2.id).filter((m) => m.is_bye || !m.player2_id).length,
-      lastPerWin: round1Win,
-      shape: climbShapeForPayout(
-        state,
-        getRoundMatches(state, round2.id).filter((m) => !m.is_bye && m.player2_id).length,
-        getRoundMatches(state, round2.id).filter((m) => m.is_bye || !m.player2_id).length
-      ),
-    });
-    assert.equal(round2.prize_per_round, expected.roundPrize);
+    const round2Win = getRoundMatches(state, round2.id).find((m) => !m.is_bye)?.payout_amount || 0;
+    const expected = state.rrSchedule[1] ?? state.rrSchedule[state.rrSchedule.length - 1];
+    assert.equal(round2Win, expected);
+    assert.equal(remainingPhaseBudget(state, true), kohBudget);
   });
 
-  it('does not drop the per-win payout through ten rounds including King of the Hill', () => {
+  it('does not drop the planned RR ladder, and extra RR never spends KOH', () => {
     let state = startTournament(createOpenTournament({
       entryFee: 20,
-      placeCount: 1,
       players: Array.from({ length: 13 }, (_, i) => ({ name: `P${i + 1}` })),
     }));
+    const kohBudget = state.kohBudget;
+    const planned = state.rrSchedule || [];
     let lastWin = 0;
     for (let roundNum = 1; roundNum <= 10; roundNum += 1) {
       if (state.status === 'completed') break;
       const round = getCurrentRound(state);
       if (!round) break;
+      if (round.round_name === 'King of the Hill') break;
       const pending = getRoundMatches(state, round.id).filter((m) => m.status === 'pending');
       const win = pending.find((m) => !m.is_bye)?.payout_amount || 0;
       if (pending.some((m) => !m.is_bye)) {
-        assert.ok(win >= lastWin, `round ${roundNum} win ${win} dropped from ${lastWin}`);
+        if (roundNum <= planned.length) {
+          assert.ok(win >= lastWin, `round ${roundNum} win ${win} dropped from ${lastWin}`);
+        } else {
+          assert.ok(win <= lastWin, `extra RR round ${roundNum} climbed above hold ${lastWin}`);
+        }
         lastWin = win;
       }
       for (const match of pending) {
         state = playToKeepField(state, match);
       }
+      assert.equal(remainingPhaseBudget(state, true), kohBudget);
       if (roundNum < 10 && state.status !== 'completed') state = continueCashClimb(state);
     }
   });
@@ -233,20 +219,15 @@ describe('open Cash Climb engine', () => {
     assert.fail('King of the Hill never started');
   });
 
-  it('pays 2nd–4th bonuses to last standing and keeps the rest for the winner', () => {
+  it('pays 2nd and 3rd from unused RR and keeps unused KOH for the winner', () => {
     const setup = createOpenTournament({
       entryFee: 20,
-      placeCount: 4,
       roundRobinType: 'single',
       players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
     });
-    const expected = computePlacePrizes({ prizePool: 80, placeCount: 4, playerCount: 4 });
-    assert.equal(setup.placePrizes.first, expected.first);
-    assert.equal(setup.placePrizes.second, expected.second);
-    assert.equal(setup.placePrizes.third, expected.third);
-    assert.equal(setup.placePrizes.fourth, expected.fourth);
-    assert.ok(expected.reserved >= 0);
-    assert.equal(expected.matchPool + expected.reserved, 80);
+    assert.equal(setup.payoutModel, PAYOUT_MODEL_V2);
+    assert.equal(setup.placeCount, 3);
+    assert.equal(Math.round((setup.rrBudget + setup.kohBudget) * 100) / 100, 80);
 
     const state = playPending(startTournament(setup));
     assert.equal(state.status, 'completed');
@@ -261,10 +242,9 @@ describe('open Cash Climb engine', () => {
       .sort((a, b) => (b.eliminated_order || 0) - (a.eliminated_order || 0));
     assert.equal(byExit[0].finish_place, 2);
     assert.equal(byExit[1].finish_place, 3);
-    assert.equal(byExit[2].finish_place, 4);
     const extras = byExit.reduce((sum, p) => sum + (Number(p.place_bonus) || 0), 0);
     assert.ok(extras >= 0);
-    assert.ok(Math.abs(extras - (state.placePrizes.second + state.placePrizes.third + state.placePrizes.fourth)) < 0.02);
+    assert.ok(Math.abs(extras - (state.placePrizes.second + state.placePrizes.third)) < 0.02);
   });
 
   it('stores the chosen race to', () => {
@@ -362,10 +342,8 @@ describe('open Cash Climb engine', () => {
     });
     let state = startTournament(setup);
     assert.equal(state.totalPrizePool, 120);
-    const places = computePlacePrizes({ prizePool: 120, placeCount: 1, playerCount: 6 });
-    const matchScheduled = state.prizeSchedule.reduce((sum, n) => sum + n, 0);
-    assert.ok(Math.abs(matchScheduled - places.matchPool) < 0.02);
-    assert.ok(state.prizeSchedule.length > 1);
+    assert.equal(Math.round((state.rrBudget + state.kohBudget) * 100) / 100, 120);
+    assert.ok(state.kohSchedule.length === 5);
     for (let i = 0; i < 80; i += 1) {
       if (state.rounds.some((r) => r.round_name === 'King of the Hill')) break;
       const round = getCurrentRound(state);

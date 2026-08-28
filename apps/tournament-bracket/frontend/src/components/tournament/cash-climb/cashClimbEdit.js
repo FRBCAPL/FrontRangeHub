@@ -8,6 +8,7 @@ import {
 } from './cashClimbPlacePrizes.js';
 import { remainingEventRoundsFromState } from './cashClimbDuration.js';
 import { recomputePendingRoundPayouts } from './cashClimbEngine.js';
+import { attachPayoutPlan, isPayoutV2 } from './cashClimbPayoutRuntime.js';
 
 function money(n) {
   return Math.round(Number(n || 0) * 100) / 100;
@@ -73,30 +74,36 @@ export function updateOpenTournament(state, patch = {}) {
     next.entryFee = money(entryFee);
     next.totalPrizePool = money(next.entryFee * (next.players || []).length);
 
-    const placeCount = Math.min(
-      parsePlaceCount(patch.placeCount ?? next.placeCount),
-      maxPlaceCount((next.players || []).length)
-    );
-    const places = computePlacePrizes({
-      prizePool: next.totalPrizePool,
-      placeCount,
-      playerCount: (next.players || []).length,
-      tournament: next,
-    });
-    next.placeCount = places.placeCount;
-    next.firstPlacePrize = places.first;
-    next.firstPlacePercent = places.potPercent;
-    next.placePrizes = {
-      first: places.first,
-      second: places.second,
-      third: places.third,
-      fourth: places.fourth,
-    };
-    next.prizeSchedule = calculatePrizeDistribution(
-      places.matchPool,
-      Math.max(1, remainingEventRoundsFromState(next))
-    );
-    next.prizeRoundsLeft = Math.max(1, next.prizeSchedule.length);
+    if (isPayoutV2(next)) {
+      const plan = attachPayoutPlan(next, (next.players || []).length);
+      next.prizeSchedule = plan.rr.schedule;
+      next.prizeRoundsLeft = Math.max(1, next.prizeSchedule.length);
+    } else {
+      const placeCount = Math.min(
+        parsePlaceCount(patch.placeCount ?? next.placeCount),
+        maxPlaceCount((next.players || []).length)
+      );
+      const places = computePlacePrizes({
+        prizePool: next.totalPrizePool,
+        placeCount,
+        playerCount: (next.players || []).length,
+        tournament: next,
+      });
+      next.placeCount = places.placeCount;
+      next.firstPlacePrize = places.first;
+      next.firstPlacePercent = places.potPercent;
+      next.placePrizes = {
+        first: places.first,
+        second: places.second,
+        third: places.third,
+        fourth: places.fourth,
+      };
+      next.prizeSchedule = calculatePrizeDistribution(
+        places.matchPool,
+        Math.max(1, remainingEventRoundsFromState(next))
+      );
+      next.prizeRoundsLeft = Math.max(1, next.prizeSchedule.length);
+    }
     recomputePendingRoundPayouts(next);
   }
 
