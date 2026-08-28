@@ -1,8 +1,13 @@
 import React from 'react';
 
-export default function CashClimbTvLayoutBar({ layout, onChange }) {
+export default function CashClimbTvLayoutBar({ layout, onChange, onBack }) {
   return (
     <div className="cc-tv-layout-bar" role="group" aria-label="TV layout">
+      {onBack ? (
+        <button type="button" onClick={onBack}>
+          Tournament
+        </button>
+      ) : null}
       <button
         type="button"
         className={layout === 'landscape' ? 'is-on' : ''}

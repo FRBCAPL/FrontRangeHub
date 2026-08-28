@@ -469,6 +469,25 @@ function AppContent() {
     checkAdminStatus();
   }, [isAuthenticated, userEmail, userPin]);
 
+  const isEstateInventory =
+    location.pathname === '/estateit' ||
+    location.pathname.startsWith('/estateit/') ||
+    location.pathname === '/estate-inventory' ||
+    location.pathname.startsWith('/estate-inventory/');
+
+  const isFiduciaryLogHost = (() => {
+    const host = (window.location.hostname || '').toLowerCase();
+    return host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com';
+  })();
+
+  // Must stay above kiosk/TV early returns. Skipping this hook on those routes
+  // throws React #300 (fewer hooks than expected) on client-side navigation.
+  useEffect(() => {
+    if (isFiduciaryLogHost || isEstateInventory) {
+      document.title = APP_NAME;
+    }
+  }, [isFiduciaryLogHost, isEstateInventory, location.pathname]);
+
   // --- Profile modal handler ---
   const handleProfileClick = () => {
     setShowProfileModal(true);
@@ -593,22 +612,6 @@ function AppContent() {
 
   // When ?preview=1 on homepage, show logged-out nav (for embed previews on frusapl.com etc.)
   const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
-  const isEstateInventory =
-    location.pathname === '/estateit' ||
-    location.pathname.startsWith('/estateit/') ||
-    location.pathname === '/estate-inventory' ||
-    location.pathname.startsWith('/estate-inventory/');
-
-  const isFiduciaryLogHost = (() => {
-    const host = (window.location.hostname || '').toLowerCase();
-    return host === 'fiduciarylog.com' || host === 'www.fiduciarylog.com';
-  })();
-
-  useEffect(() => {
-    if (isFiduciaryLogHost || isEstateInventory) {
-      document.title = APP_NAME;
-    }
-  }, [isFiduciaryLogHost, isEstateInventory, location.pathname]);
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
@@ -616,9 +619,9 @@ function AppContent() {
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';
-          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && <FloatingLogos />;
+          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && location.pathname !== '/tournament-bracket/tv' && <FloatingLogos />;
         })()}
-        {!isEstateInventory ? (
+        {!isEstateInventory && location.pathname !== '/tournament-bracket/tv' ? (
                          <HubNavigation 
           currentAppName={currentAppName} 
           isAdmin={isPreviewMode ? false : isAdminState}
@@ -905,6 +908,28 @@ function AppContent() {
                     <TournamentBracketApp />
                   </main>
                 </AppRouteWrapper>
+              }
+            />
+            <Route
+              path="/tournament-bracket/tv"
+              element={
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  minHeight: '100%',
+                  background: '#000',
+                  padding: 0,
+                  margin: 0,
+                  zIndex: 9999,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  <CashClimbTvView />
+                </div>
               }
             />
 

@@ -31,6 +31,7 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
 
   prizeDistribution: {
     baseAmount: 2,
+    /** Live Cash Climb uses a $1 per-win ladder in cashClimbClimb.js, not this weight. */
     scalingFactor: 0,
   },
 

@@ -1,5 +1,8 @@
 import { OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
-import { prizeEventRoundPlan } from './cashClimbDuration.js';
+import { eventRoundPlan } from './cashClimbDuration.js';
+import { climbRoundPayouts } from './cashClimbClimb.js';
+
+export { climbRoundPayouts } from './cashClimbClimb.js';
 
 function roundMoney(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -89,33 +92,6 @@ export function liveRoundPrize(remainingMatchMoney, remainingRounds) {
   return roundMoney(Math.min(schedule[0] || remaining, remaining));
 }
 
-/** Whole-dollar match payouts that never drop below the last same-phase win, while money lasts. */
-export function climbRoundPayouts({
-  remaining,
-  remainingRounds,
-  numMatches,
-  numByes,
-  lastPerWin = 0,
-}) {
-  const left = roundMoney(Math.max(0, Number(remaining) || 0));
-  const matches = Math.max(0, Math.round(Number(numMatches) || 0));
-  const byes = Math.max(0, Math.round(Number(numByes) || 0));
-  const computedPot = liveRoundPrize(left, remainingRounds);
-  const fromPot = calculateMatchPayouts(computedPot, matches, byes);
-  let perMatch = Math.max(fromPot.perMatch, Math.max(0, Math.round(Number(lastPerWin) || 0)));
-  let perBye = Math.floor(perMatch / 2);
-  const costOf = (win, byePay) => win * matches + byePay * byes;
-  if (perMatch > 0 && left + 0.001 < perMatch) {
-    perMatch = Math.max(0, Math.floor(left));
-    perBye = Math.floor(perMatch / 2);
-  }
-  return {
-    perMatch,
-    perBye,
-    roundPrize: roundMoney(Math.min(left, Math.max(computedPot, costOf(perMatch, perBye)))),
-  };
-}
-
 export function calculateMatchPayouts(roundPayout, numMatches, numByeMatches) {
   const totalWeight = numMatches + 0.5 * numByeMatches;
   const regularMatchPayout = totalWeight > 0 ? Math.floor(roundPayout / totalWeight) : 0;
@@ -143,17 +119,32 @@ export function pairOneRound(players, roundOffset = 0) {
 export function previewPrizeSchedule(players, roundRobinType, prizePool, reservedAmount, tournament = null) {
   if (!players || players.length < 2) return null;
   const available = roundMoney(Math.max(0, Number(prizePool || 0) - Number(reservedAmount || 0)));
-  const plan = prizeEventRoundPlan(players.length, tournament);
-  const prizes = calculatePrizeDistribution(available, Math.max(1, plan.length));
+  const plan = eventRoundPlan(players.length, tournament);
+  let leftover = available;
+  let lastPerWin = 0;
   const rounds = plan.map((round, i) => {
-    const payouts = calculateMatchPayouts(prizes[i] || 0, round.matchCount, round.byeCount);
-    const paidThisRound = roundMoney(payouts.perMatch * round.matchCount + payouts.perBye * round.byeCount);
-    const leftover = roundMoney(Math.max(0, (prizes[i] || 0) - paidThisRound));
+    const tail = plan.slice(i).map((row) => ({
+      matchCount: row.matchCount,
+      byeCount: row.byeCount,
+    }));
+    const payouts = climbRoundPayouts({
+      remaining: leftover,
+      remainingRounds: tail.length,
+      numMatches: round.matchCount,
+      numByes: round.byeCount,
+      lastPerWin,
+      shape: tail,
+    });
+    const paidThisRound = roundMoney(
+      payouts.perMatch * round.matchCount + payouts.perBye * round.byeCount
+    );
+    leftover = roundMoney(Math.max(0, leftover - paidThisRound));
+    lastPerWin = payouts.perMatch;
     return {
       roundNumber: round.roundNumber,
       label: round.label,
       phase: round.phase,
-      roundPrize: prizes[i] || 0,
+      roundPrize: payouts.roundPrize,
       perWin: payouts.perMatch,
       matchCount: round.matchCount,
       paidThisRound,

@@ -62,7 +62,7 @@ export default function CashClimbPrizePreview({
         </tbody>
       </table>
       <p className="cc-prize-preview-note">
-        This table is the starting estimate. Each round’s pool is recomputed when that round starts. A later round-robin round will not pay less per win than the one before it, and King of the Hill splits leftover match money across remaining KOH rounds so the first KOH match does not take the whole rest. King of the Hill starts at 3 players. Each win is a whole dollar. Last standing is reserved separately.
+        This table is the starting estimate. Match money is one ladder from round 1 through King of the Hill. Round 1 pays at least $2 per win. Each later round pays $1 more per win when leftover can cover that climb without later rounds dropping. King of the Hill starts at 3 players. Each win is a whole dollar. Last standing is reserved separately.
       </p>
     </div>
   );

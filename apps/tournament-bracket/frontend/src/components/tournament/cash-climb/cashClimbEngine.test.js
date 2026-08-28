@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createOpenTournament, startTournament, recordMatchResult, continueCashClimb, getCurrentRound, getRoundMatches, getActivePlayers, sanitizeCashClimb } from './cashClimbEngine.js';
-import { remainingEventRoundsFromState, maxEventRoundsUntilWinner } from './cashClimbDuration.js';
-import { liveRoundPrize, calculatePrizeDistribution, climbRoundPayouts } from './cashClimbSchedule.js';
+import { remainingEventRoundsFromState, climbShapeForPayout } from './cashClimbDuration.js';
+import { climbRoundPayouts } from './cashClimbSchedule.js';
 import { computePlacePrizes } from './cashClimbPlacePrizes.js';
 import { getKOHThreshold } from './openTournamentStructure.js';
 
@@ -82,10 +82,19 @@ describe('open Cash Climb engine', () => {
     }));
     const places = computePlacePrizes({ prizePool: 80, placeCount: 1 });
     const round1 = getCurrentRound(state);
-    assert.equal(
-      round1.prize_per_round,
-      liveRoundPrize(places.matchPool, remainingEventRoundsFromState(state))
-    );
+    const expectedRound1 = climbRoundPayouts({
+      remaining: places.matchPool,
+      remainingRounds: remainingEventRoundsFromState(state),
+      numMatches: getRoundMatches(state, round1.id).filter((m) => !m.is_bye && m.player2_id).length,
+      numByes: getRoundMatches(state, round1.id).filter((m) => m.is_bye || !m.player2_id).length,
+      lastPerWin: 0,
+      shape: climbShapeForPayout(
+        state,
+        getRoundMatches(state, round1.id).filter((m) => !m.is_bye && m.player2_id).length,
+        getRoundMatches(state, round1.id).filter((m) => m.is_bye || !m.player2_id).length
+      ),
+    });
+    assert.equal(round1.prize_per_round, expectedRound1.roundPrize);
 
     const round1Id = round1.id;
     for (const match of getRoundMatches(state, round1Id).filter((m) => m.status === 'pending')) {
@@ -103,6 +112,11 @@ describe('open Cash Climb engine', () => {
       numMatches: getRoundMatches(state, round2.id).filter((m) => !m.is_bye && m.player2_id).length,
       numByes: getRoundMatches(state, round2.id).filter((m) => m.is_bye || !m.player2_id).length,
       lastPerWin: round1Win,
+      shape: climbShapeForPayout(
+        state,
+        getRoundMatches(state, round2.id).filter((m) => !m.is_bye && m.player2_id).length,
+        getRoundMatches(state, round2.id).filter((m) => m.is_bye || !m.player2_id).length
+      ),
     });
     assert.equal(round2.prize_per_round, expected.roundPrize);
   });
@@ -155,6 +169,7 @@ describe('open Cash Climb engine', () => {
           win >= lastWin,
           `round ${roundNum} win ${win} dropped from ${lastWin} with ${getActivePlayers(state).length} players`
         );
+        if (roundNum === 1) assert.ok(win >= 2, `round 1 win ${win} was below $2`);
         lastWin = win;
       }
       for (const match of pending) {
@@ -176,17 +191,18 @@ describe('open Cash Climb engine', () => {
     assert.equal(getKOHThreshold(24), 3);
   });
 
-  it('pays a larger round-1 pot than the old max-round spread', () => {
+  it('climbs per-win from round 1 on a 13-player event', () => {
     const players = Array.from({ length: 13 }, (_, i) => ({ name: `P${i + 1}` }));
     const state = startTournament(createOpenTournament({
       entryFee: 20,
       placeCount: 1,
       players,
     }));
-    const places = computePlacePrizes({ prizePool: 260, placeCount: 1 });
-    const maxSpread = calculatePrizeDistribution(places.matchPool, maxEventRoundsUntilWinner(13))[0];
     const round1 = getCurrentRound(state);
-    assert.ok(round1.prize_per_round > maxSpread);
+    const win = getRoundMatches(state, round1.id).find((m) => !m.is_bye)?.payout_amount || 0;
+    assert.ok(win >= 2);
+    assert.equal(win, Math.floor(win));
+    assert.ok(remainingEventRoundsFromState(state) > 1);
     assert.equal(getKOHThreshold(13, state), 3);
   });
 
@@ -399,7 +415,7 @@ describe('open Cash Climb engine', () => {
     const koh2 = getRoundMatches(state, getCurrentRound(state).id).find((m) => m.status === 'pending' && !m.is_bye);
     assert.ok(koh2);
     assert.ok(
-      koh2.payout_amount >= firstPay,
+      koh2.payout_amount >= firstPay + 1,
       `KOH 2 paid ${koh2.payout_amount} after KOH 1 paid ${firstPay}`
     );
   });

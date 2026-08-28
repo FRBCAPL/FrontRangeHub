@@ -143,97 +143,54 @@ export function maxEventRoundsUntilWinner(playerCount, tournament = null) {
   return Math.max(1, eventRoundPlan(playerCount, tournament).length);
 }
 
-/** Rounds to reach KOH if each match thins the field — used so more money is paid early. */
-function optimisticThinRounds(activeCount, threshold) {
-  let n = Math.max(0, Math.round(Number(activeCount) || 0));
-  if (n <= threshold) return 0;
-  let rounds = 0;
-  while (n > threshold && rounds < 40) {
-    rounds += 1;
-    n = Math.max(threshold, n - Math.max(1, Math.floor(n / 2)));
-  }
-  return rounds;
-}
-
+/** Prize math uses the longest RR+KOH path so early rounds can pay high and still climb $1 each round. */
 export function prizeEventRoundPlan(playerCount, tournament = null) {
-  const started = Math.max(0, Math.round(Number(playerCount) || 0));
-  if (started < 2) return [];
-  const threshold = getKOHThreshold(started, tournament);
-  const rounds = [];
-  let n = started;
-  if (started <= threshold) {
-    rounds.push({
-      roundNumber: 1,
-      active: n,
-      matchCount: Math.max(1, Math.floor(n / 2)),
-      byeCount: n % 2,
-      phase: 'rr',
-      label: 'Round 1',
-    });
-  } else {
-    const rrN = optimisticThinRounds(started, threshold);
-    for (let i = 0; i < rrN; i += 1) {
-      const matches = Math.max(1, Math.floor(n / 2));
-      rounds.push({
-        roundNumber: i + 1,
-        active: n,
-        matchCount: matches,
-        byeCount: n % 2,
-        phase: 'rr',
-        label: `Round ${i + 1}`,
-      });
-      n = Math.max(threshold, n - matches);
-    }
-  }
-  const kohStart = Math.max(2, Math.min(n, threshold));
-  const koh = simulateKohRounds(kohStart, true);
-  return [
-    ...rounds,
-    ...koh.map((round, i) => ({
-      ...round,
-      phase: 'koh',
-      label: `KOH ${round.roundNumber}`,
-      roundNumber: rounds.length + i + 1,
-    })),
-  ];
+  return eventRoundPlan(playerCount, tournament, false);
 }
 
-/** Remaining rounds for prize math, including the current/next round. */
+function remainingKohShape(lossCounts) {
+  return simulateKohRoundsFromLosses(lossCounts, false).map((round) => ({
+    matchCount: round.matchCount,
+    byeCount: round.byeCount || 0,
+  }));
+}
+
+/** Remaining event rounds from now to a winner, longest likely path (for the $1 climb reserve). */
+export function remainingClimbShape(state) {
+  const stats = state?.stats || [];
+  const started = stats.length || (state?.players || []).length;
+  if (started < 2) return [{ matchCount: 1, byeCount: 0 }];
+
+  const threshold = getKOHThreshold(started, state);
+  const kohStarted = (state?.rounds || []).some(
+    (r) => r?.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName
+  );
+  const active = (stats.length ? stats : []).filter((p) => !p.eliminated);
+  if (active.length < 2) return [{ matchCount: 1, byeCount: 0 }];
+
+  if (kohStarted) {
+    const shape = remainingKohShape(active.map((p) => Math.max(0, Number(p.koh_losses) || 0)));
+    return shape.length ? shape : [{ matchCount: 1, byeCount: 0 }];
+  }
+
+  const rrMaxLosses = OPEN_TOURNAMENT_STRUCTURE.phase1.eliminationLosses;
+  let field = active.map((p) => Math.max(0, Number(p.losses) || 0)).filter((n) => n < rrMaxLosses);
+  const rr = [];
+  while (field.length > threshold && rr.length < 40) {
+    const matches = Math.max(1, Math.floor(field.length / 2));
+    rr.push({ matchCount: matches, byeCount: field.length % 2 });
+    field = addLosses(field, matches, false).filter((n) => n < rrMaxLosses);
+  }
+  const kohStart = Math.max(2, Math.min(field.length || active.length, threshold));
+  const koh = remainingKohShape(Array.from({ length: kohStart }, () => 0));
+  const shape = [...rr, ...koh];
+  return shape.length ? shape : [{ matchCount: Math.max(1, Math.floor(active.length / 2)), byeCount: active.length % 2 }];
+}
+
 function prizeRoundsConsumed(state) {
   const rounds = state?.rounds || [];
   const live = rounds.some((r) => r.status === 'in-progress');
   return Math.max(0, rounds.length - (live ? 1 : 0));
-}
-
-function fieldRemainingRounds(state) {
-  const stats = state?.stats || [];
-  const started = stats.length || (state?.players || []).length;
-  if (started < 2) return 1;
-  if (!stats.length) return Math.max(1, prizeEventRoundPlan(started, state).length);
-
-  const kohStarted = (state?.rounds || []).some(
-    (r) => r?.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName
-  );
-  const active = stats.filter((p) => !p.eliminated);
-  if (active.length < 2) return 1;
-
-  const threshold = getKOHThreshold(started, state);
-  const kohCount = Math.max(2, Math.min(active.length, threshold));
-  if (kohStarted) {
-    const losses = active.map((p) => Math.max(0, Number(p.koh_losses) || 0));
-    return Math.max(1, simulateKohRoundsFromLosses(losses, true).length);
-  }
-  const kohRounds = Math.max(1, simulateKohRoundsFromLosses(Array.from({ length: kohCount }, () => 0), true).length);
-  if (active.length <= threshold) {
-    if (!(state.rounds || []).length) return 1 + kohRounds;
-    return kohRounds;
-  }
-  return Math.max(1, optimisticThinRounds(active.length, threshold) + kohRounds);
-}
-
-function kohRoundBuffer(playerCount) {
-  const n = Math.max(2, Math.round(Number(playerCount) || 0));
-  return Math.max(1, simulateKohRoundsFromLosses(Array.from({ length: n }, () => 0), true).length);
 }
 
 export function remainingEventRoundsFromState(state) {
@@ -241,30 +198,33 @@ export function remainingEventRoundsFromState(state) {
   const started = stats.length || (state?.players || []).length;
   if (started < 2) return 1;
 
-  const planned = (state?.prizeSchedule || []).length || prizeEventRoundPlan(started, state).length;
-  const fromPlan = planned - prizeRoundsConsumed(state);
-  const fromField = fieldRemainingRounds(state);
   const kohStarted = (state?.rounds || []).some(
     (r) => r?.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName
   );
-  const active = (stats.length ? stats : []).filter((p) => !p.eliminated);
-  const threshold = getKOHThreshold(started, state);
-  const enteringKoh = !kohStarted && active.length > 0 && active.length <= threshold && (state?.rounds || []).length > 0;
-
-  if (kohStarted || enteringKoh) {
-    const consumed = (state?.rounds || []).filter(
-      (r) => r.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName && r.status === 'completed'
-    ).length;
-    const plan = Math.max(fromField, Number(state?.kohRoundPlan) || 0);
-    return Math.max(1, plan - consumed);
+  if (kohStarted) {
+    return Math.max(1, remainingClimbShape(state).length);
   }
 
+  const planned = (state?.prizeSchedule || []).length || prizeEventRoundPlan(started, state).length;
+  const fromPlan = Math.max(1, planned - prizeRoundsConsumed(state));
   const stored = Math.round(Number(state?.prizeRoundsLeft));
-  const rrLeft = Number.isFinite(stored) && stored >= 1 ? stored : Math.max(1, fromPlan);
-  if (active.length > threshold) {
-    return Math.max(rrLeft, 1 + kohRoundBuffer(threshold));
-  }
-  return Math.max(1, rrLeft);
+  const left = Number.isFinite(stored) && stored >= 1 ? stored : fromPlan;
+  return Math.max(1, left);
+}
+
+export function climbShapeForPayout(state, numMatches, numByes) {
+  const count = remainingEventRoundsFromState(state);
+  const live = remainingClimbShape(state);
+  const current = {
+    matchCount: Math.max(0, Math.round(Number(numMatches) || 0)),
+    byeCount: Math.max(0, Math.round(Number(numByes) || 0)),
+  };
+  const rest = live.slice(1);
+  const needed = Math.max(1, count);
+  const padded = [current, ...rest];
+  if (padded.length >= needed) return padded.slice(0, needed);
+  const extra = needed - padded.length;
+  return [...padded, ...Array.from({ length: extra }, () => ({ matchCount: 1, byeCount: 0 }))];
 }
 
 function simulateKoh(lossCounts, tables, maxLosses) {

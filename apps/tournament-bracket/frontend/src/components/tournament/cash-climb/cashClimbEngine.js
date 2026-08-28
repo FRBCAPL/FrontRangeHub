@@ -9,7 +9,7 @@ import {
   climbRoundPayouts,
   getRoundGameType,
 } from './cashClimbSchedule.js';
-import { remainingEventRoundsFromState } from './cashClimbDuration.js';
+import { remainingEventRoundsFromState, climbShapeForPayout } from './cashClimbDuration.js';
 import {
   computePlacePrizes,
   lastStandingFinishers,
@@ -167,25 +167,32 @@ export function lastCompletedClimb(state, koh = false) {
   return { perWin, roundPrize: Number(last.prize_per_round) || 0, round: last };
 }
 
-function lastPerWinForPhase(state, koh = false) {
-  const lastRr = Math.max(
+function lastPerWinForPhase(state) {
+  return Math.max(
     Number(state.lastRrPerWin) || 0,
-    lastCompletedClimb(state, false).perWin
-  );
-  const lastKoh = Math.max(
     Number(state.lastKohPerWin) || 0,
+    lastCompletedClimb(state, false).perWin,
     lastCompletedClimb(state, true).perWin
   );
-  return koh ? (lastKoh || lastRr) : lastRr;
+}
+
+function consumePrizeRound(state) {
+  const stored = Math.round(Number(state.prizeRoundsLeft));
+  const current = Number.isFinite(stored) && stored >= 1
+    ? stored
+    : remainingEventRoundsFromState(state);
+  state.prizeRoundsLeft = Math.max(1, current - 1);
 }
 
 function payoutsForNewRound(state, numMatches, numByes, koh = false) {
+  const shape = climbShapeForPayout(state, numMatches, numByes);
   const payouts = climbRoundPayouts({
     remaining: remainingAfterReserved(state),
-    remainingRounds: remainingEventRoundsFromState(state),
+    remainingRounds: Math.max(1, shape.length),
     numMatches,
     numByes,
-    lastPerWin: lastPerWinForPhase(state, koh),
+    lastPerWin: lastPerWinForPhase(state),
+    shape,
   });
   if (koh) state.lastKohPerWin = payouts.perMatch;
   else state.lastRrPerWin = payouts.perMatch;
@@ -202,12 +209,14 @@ export function recomputePendingRoundPayouts(state) {
   const koh = isKohRound(round);
   const regular = pending.filter((m) => !m.is_bye && m.player2_id);
   const byes = pending.filter((m) => m.is_bye || !m.player2_id);
+  const shape = climbShapeForPayout(state, regular.length, byes.length);
   const payouts = climbRoundPayouts({
     remaining: remainingAfterReserved(state),
-    remainingRounds: remainingEventRoundsFromState(state),
+    remainingRounds: Math.max(1, shape.length),
     numMatches: regular.length,
     numByes: byes.length,
-    lastPerWin: lastPerWinForPhase(state, koh),
+    lastPerWin: lastPerWinForPhase(state),
+    shape,
   });
   round.prize_per_round = payouts.roundPrize;
   regular.forEach((m) => {
@@ -368,11 +377,7 @@ function addRoundRobinRound(state) {
   const roundId = uid();
   const gameType = getRoundGameType(roundNumber, state.gameType);
   if (roundNumber > 1) {
-    const stored = Math.round(Number(state.prizeRoundsLeft));
-    const current = Number.isFinite(stored) && stored >= 1
-      ? stored
-      : remainingEventRoundsFromState(state);
-    state.prizeRoundsLeft = Math.max(1, current - 1);
+    consumePrizeRound(state);
   }
   const payouts = payoutsForNewRound(state, regular.length, byePlayers.length, false);
   const roundPrize = payouts.roundPrize;

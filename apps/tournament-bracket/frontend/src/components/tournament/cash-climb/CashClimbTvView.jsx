@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { loadCashClimb, cashClimbStorageKey } from './cashClimbStore.js';
 import { buildCashClimbTvBoard, parseTvLayout, readStoredTvLayout, storeTvLayout } from './cashClimbTv.js';
 import CashClimbTvLayoutBar from './CashClimbTvLayoutBar.jsx';
@@ -14,9 +14,18 @@ import './CashClimbTvPortrait.css';
 const POLL_MS = 1500;
 
 export default function CashClimbTvView() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const layout = parseTvLayout(searchParams.get('layout') || readStoredTvLayout());
   const [tournament, setTournament] = useState(() => loadCashClimb());
+
+  const goToTournament = () => {
+    if (window.opener && !window.opener.closed) {
+      window.close();
+      return;
+    }
+    navigate('/tournament-bracket');
+  };
 
   useEffect(() => {
     document.title = layout === 'portrait' ? 'Cash Climb TV 9:16' : 'Cash Climb TV 16:9';
@@ -52,7 +61,7 @@ export default function CashClimbTvView() {
   if (!board) {
     return (
       <div ref={shellRef} className={shellClass}>
-        <CashClimbTvLayoutBar layout={layout} onChange={setLayout} />
+        <CashClimbTvLayoutBar layout={layout} onChange={setLayout} onBack={goToTournament} />
         <header className="cc-tv-header">
           <div className="cc-tv-title-block">
             <p className="cc-tv-brand">Front Range Pool</p>
@@ -76,7 +85,7 @@ export default function CashClimbTvView() {
 
   return (
     <div ref={shellRef} className={shellClass}>
-      <CashClimbTvLayoutBar layout={layout} onChange={setLayout} />
+      <CashClimbTvLayoutBar layout={layout} onChange={setLayout} onBack={goToTournament} />
       <header className="cc-tv-header">
         <div className="cc-tv-title-block">
           <p className="cc-tv-brand">Front Range Pool • Cash Climb</p>
