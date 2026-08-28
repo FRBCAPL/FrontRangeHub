@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import './AddPlayerModal.css';
 
+function capitalizeName(value) {
+  return String(value || '').replace(/(^|\s)(\S)/g, (_, space, letter) => space + letter.toUpperCase());
+}
+
 /**
  * Modal to add a player with name, email, league, rank, FargoRate.
  */
@@ -26,7 +30,7 @@ export default function AddPlayerModal({ isOpen, onClose, onAdd }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const trimmedName = name.trim();
+    const trimmedName = capitalizeName(name).trim();
     if (!trimmedName) {
       alert('Please enter a name.');
       return;
@@ -45,8 +49,14 @@ export default function AddPlayerModal({ isOpen, onClose, onAdd }) {
   if (!isOpen) return null;
 
   return (
-    <div className="add-player-modal-overlay" onClick={handleClose} role="dialog" aria-modal="true" aria-label="Add player">
-      <div className="add-player-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="add-player-modal-overlay" onClick={handleClose}>
+      <div
+        className="add-player-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add player"
+      >
         <div className="add-player-modal-header">
           <h3>Add Player</h3>
           <button type="button" className="add-player-modal-close" onClick={handleClose} aria-label="Close">
@@ -59,7 +69,7 @@ export default function AddPlayerModal({ isOpen, onClose, onAdd }) {
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(capitalizeName(e.target.value))}
               placeholder="Player name"
               autoFocus
             />

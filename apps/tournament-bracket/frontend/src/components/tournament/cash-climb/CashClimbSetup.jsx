@@ -4,11 +4,11 @@ import CashClimbPrizePreview from './CashClimbPrizePreview.jsx';
 import { OPEN_TOURNAMENT_STRUCTURE, determineRoundRobinType, getFormatDisplay } from './openTournamentStructure.js';
 import { formatMoney, todayDateInput } from './cashClimbEngine.js';
 import { previewPrizeSchedule } from './cashClimbSchedule.js';
+import { computePlacePrizes, maxPlaceCount, placePotPercent } from './cashClimbPlacePrizes.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
 
-const FIRST_PLACE_PERCENTS = Array.from({ length: 20 }, (_, i) => String(i + 1));
-const RACE_TO_PRESETS = ['3', '4', '5', '7', '9'];
+const RACE_TO_PRESETS = ['1', '2', '3', '4', '5'];
 const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 
 export default function CashClimbSetup({ onStart, onCancel }) {
@@ -20,8 +20,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
   const [tableCountMode, setTableCountMode] = useState('4');
   const [otherTableCount, setOtherTableCount] = useState('');
   const [entryFee, setEntryFee] = useState(String(OPEN_TOURNAMENT_STRUCTURE.entryFee));
-  const [firstPlaceMode, setFirstPlaceMode] = useState('10');
-  const [otherPercent, setOtherPercent] = useState('');
+  const [placeCountMode, setPlaceCountMode] = useState('1');
   const [players, setPlayers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const dateInputRef = useRef(null);
@@ -45,14 +44,13 @@ export default function CashClimbSetup({ onStart, onCancel }) {
     ? Math.max(1, Number(otherTableCount) || 4)
     : Number(tableCountMode) || 4;
   const prizePool = (Number(entryFee) || 0) * players.length;
-  const firstPlacePercent = firstPlaceMode === 'other'
-    ? Math.min(100, Math.max(0, Number(otherPercent) || 0))
-    : Number(firstPlaceMode) || 0;
-  const firstPlaceAmount = Math.round(prizePool * firstPlacePercent) / 100;
+  const maxPlaces = maxPlaceCount(players.length);
+  const placeCount = Math.min(Number(placeCountMode) || 1, maxPlaces);
+  const places = computePlacePrizes({ prizePool, placeCount });
 
   const prizePreview = useMemo(
-    () => previewPrizeSchedule(players, autoType, prizePool, firstPlaceAmount),
-    [players, autoType, prizePool, firstPlaceAmount]
+    () => previewPrizeSchedule(players, autoType, prizePool, places.reserved),
+    [players, autoType, prizePool, places.reserved]
   );
   const durationEstimate = useMemo(
     () => estimateCashClimbDuration({
@@ -68,10 +66,6 @@ export default function CashClimbSetup({ onStart, onCancel }) {
     e.preventDefault();
     if (!tournamentDate) {
       alert('Pick the tournament date.');
-      return;
-    }
-    if (firstPlaceMode === 'other' && otherPercent === '') {
-      alert('Enter a 1st-place percent.');
       return;
     }
     const raceTo = raceToMode === 'other' ? Number(otherRaceTo) : Number(raceToMode);
@@ -98,7 +92,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
       tableCount: Number(tableCount) || 4,
       roundRobinType: autoType,
       entryFee: Number(entryFee) || 0,
-      firstPlacePercent,
+      placeCount,
       players,
     });
   };
@@ -109,7 +103,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
         <h3>New Cash Climb</h3>
         <p className="cc-setup-note">
          Cash Climb Tournament. <br />
-         Round Robin format followed by a King of the Hill championship. <br /><br /><br />
+         Round robin, 3-loss cut, then King of the Hill when 3 players remain.
         </p>
         <div className="cc-field-row">
           <label>
@@ -197,38 +191,28 @@ export default function CashClimbSetup({ onStart, onCancel }) {
             />
           </label>
           <label>
-            1st place
+            Last standing
             <select
-              value={firstPlaceMode}
-              onChange={(e) => setFirstPlaceMode(e.target.value)}
+              value={String(placeCount)}
+              onChange={(e) => setPlaceCountMode(e.target.value)}
             >
-              {FIRST_PLACE_PERCENTS.map((pct) => {
-                const amt = Math.round(prizePool * Number(pct)) / 100;
-                const label = players.length
-                  ? `${pct}% (${formatMoney(amt)})`
-                  : `${pct}%`;
-                return <option key={pct} value={pct}>{label}</option>;
-              })}
-              <option value="other">Other…</option>
+              <option value="1">1st only</option>
+              {maxPlaces >= 2 && <option value="2">1st & 2nd</option>}
+              {maxPlaces >= 3 && <option value="3">Top 3</option>}
+              {maxPlaces >= 4 && <option value="4">Top 4</option>}
             </select>
           </label>
         </div>
-        {firstPlaceMode === 'other' && (
-          <label>
-            Other 1st-place percent
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="1"
-              value={otherPercent}
-              onChange={(e) => setOtherPercent(e.target.value)}
-              placeholder="0–100"
-            />
-          </label>
-        )}
         <p className="players-count">
-          1st reserved: {firstPlacePercent}%{players.length ? ` (${formatMoney(firstPlaceAmount)})` : ''}
+          Last standing {placePotPercent()}%
+          {prizePool ? ` (${formatMoney(places.reserved)} of ${formatMoney(prizePool)})` : ''}
+          {placeCount === 1
+            ? ' • all to the winner'
+            : placeCount === 2
+              ? ' • split 65 / 35'
+              : placeCount === 3
+                ? ' • split 50 / 30 / 20'
+                : ' • split 40 / 25 / 20 / 15'}
         </p>
         <label>
           Players
@@ -259,8 +243,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
         <CashClimbDurationEstimate estimate={durationEstimate} />
         <CashClimbPrizePreview
           prizePool={prizePool}
-          firstPlaceAmount={firstPlaceAmount}
-          firstPlacePercent={firstPlacePercent}
+          placePrizes={places}
           preview={prizePreview}
           formatLabel={getFormatDisplay(autoType)}
         />

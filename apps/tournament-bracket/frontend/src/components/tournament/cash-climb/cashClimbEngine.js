@@ -4,13 +4,18 @@ import {
   getKOHThreshold,
 } from './openTournamentStructure.js';
 import {
-  generateRoundRobin,
   pairOneRound,
   calculatePrizeDistribution,
-  calculateMatchPayouts,
-  buildKohPayouts,
+  climbRoundPayouts,
   getRoundGameType,
 } from './cashClimbSchedule.js';
+import { remainingEventRoundsFromState } from './cashClimbDuration.js';
+import {
+  computePlacePrizes,
+  lastStandingFinishers,
+  parsePlaceCount,
+  reservedPlaceTotal,
+} from './cashClimbPlacePrizes.js';
 
 function uid() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -64,10 +69,10 @@ export function createOpenTournament(config) {
   const entryFee = Number(config.entryFee ?? OPEN_TOURNAMENT_STRUCTURE.entryFee) || 0;
   const roundRobinType = config.roundRobinType || determineRoundRobinType(players.length);
   const totalPrizePool = money(entryFee * players.length);
-  const firstPlacePercent = Number(config.firstPlacePercent);
-  const firstPlacePrize = Number.isFinite(firstPlacePercent)
-    ? money(totalPrizePool * firstPlacePercent / 100)
-    : Number(config.firstPlacePrize || 0) || 0;
+  const places = computePlacePrizes({
+    prizePool: totalPrizePool,
+    placeCount: parsePlaceCount(config.placeCount),
+  });
 
   return {
     id: uid(),
@@ -78,8 +83,15 @@ export function createOpenTournament(config) {
     gameType: config.gameType || OPEN_TOURNAMENT_STRUCTURE.gameRules.gameType,
     roundRobinType,
     entryFee,
-    firstPlacePercent: Number.isFinite(firstPlacePercent) ? firstPlacePercent : null,
-    firstPlacePrize,
+    firstPlacePercent: places.potPercent,
+    firstPlacePrize: places.first,
+    placeCount: places.placeCount,
+    placePrizes: {
+      first: places.first,
+      second: places.second,
+      third: places.third,
+      fourth: places.fourth,
+    },
     raceTo: parseRaceTo(config.raceTo),
     tableCount: parseTableCount(config.tableCount),
     callShots: config.callShots ?? OPEN_TOURNAMENT_STRUCTURE.gameRules.callShots,
@@ -95,6 +107,7 @@ export function createOpenTournament(config) {
     kohPayouts: [],
     prizeSchedule: [],
     pairingOffset: 0,
+    eliminationSeq: 0,
     winner: null,
     createdAt: new Date().toISOString(),
     completedAt: null,
@@ -136,13 +149,81 @@ function remainingUnpaid(state) {
   return Math.max(0, money((state.totalPrizePool || 0) - paidOutTotal(state)));
 }
 
-function remainingAfterFirstPlace(state) {
-  return Math.max(0, money((state.totalPrizePool || 0) - (state.firstPlacePrize || 0) - paidOutTotal(state)));
+function remainingAfterReserved(state) {
+  return Math.max(0, money((state.totalPrizePool || 0) - reservedPlaceTotal(state) - paidOutTotal(state)));
 }
 
-function creditPayout(state, player, amount) {
+export function lastCompletedClimb(state, koh = false) {
+  const rounds = [...(state.rounds || [])].reverse();
+  const last = rounds.find((r) => {
+    if (r.status !== 'completed') return false;
+    return Boolean(r.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName) === Boolean(koh);
+  });
+  if (!last) return { perWin: 0, roundPrize: 0, round: null };
+  const perWin = (state.matches || []).reduce((max, m) => {
+    if (m.round_id !== last.id || m.is_bye || m.status === 'cancelled') return max;
+    return Math.max(max, Math.round(Number(m.payout_amount) || 0));
+  }, 0);
+  return { perWin, roundPrize: Number(last.prize_per_round) || 0, round: last };
+}
+
+function lastPerWinForPhase(state, koh = false) {
+  const lastRr = Math.max(
+    Number(state.lastRrPerWin) || 0,
+    lastCompletedClimb(state, false).perWin
+  );
+  const lastKoh = Math.max(
+    Number(state.lastKohPerWin) || 0,
+    lastCompletedClimb(state, true).perWin
+  );
+  return koh ? (lastKoh || lastRr) : lastRr;
+}
+
+function payoutsForNewRound(state, numMatches, numByes, koh = false) {
+  const payouts = climbRoundPayouts({
+    remaining: remainingAfterReserved(state),
+    remainingRounds: remainingEventRoundsFromState(state),
+    numMatches,
+    numByes,
+    lastPerWin: lastPerWinForPhase(state, koh),
+  });
+  if (koh) state.lastKohPerWin = payouts.perMatch;
+  else state.lastRrPerWin = payouts.perMatch;
+  return payouts;
+}
+
+export function recomputePendingRoundPayouts(state) {
+  const round = getCurrentRound(state);
+  if (!round) return;
+  const matches = getRoundMatches(state, round.id);
+  const pending = matches.filter((m) => m.status === 'pending');
+  if (!pending.length) return;
+  if (matches.some((m) => m.status === 'completed' && !m.is_bye && m.player2_id)) return;
+  const koh = isKohRound(round);
+  const regular = pending.filter((m) => !m.is_bye && m.player2_id);
+  const byes = pending.filter((m) => m.is_bye || !m.player2_id);
+  const payouts = climbRoundPayouts({
+    remaining: remainingAfterReserved(state),
+    remainingRounds: remainingEventRoundsFromState(state),
+    numMatches: regular.length,
+    numByes: byes.length,
+    lastPerWin: lastPerWinForPhase(state, koh),
+  });
+  round.prize_per_round = payouts.roundPrize;
+  regular.forEach((m) => {
+    m.payout_amount = payouts.perMatch;
+  });
+  byes.forEach((m) => {
+    m.payout_amount = payouts.perBye;
+  });
+  if (koh) state.lastKohPerWin = payouts.perMatch;
+  else state.lastRrPerWin = payouts.perMatch;
+}
+
+function creditPayout(state, player, amount, allowReserved = false) {
   if (!player) return 0;
-  const amt = money(Math.min(Math.max(0, Number(amount) || 0), remainingUnpaid(state)));
+  const cap = allowReserved ? remainingUnpaid(state) : remainingAfterReserved(state);
+  const amt = money(Math.min(Math.max(0, Number(amount) || 0), cap));
   if (amt <= 0) return 0;
   player.total_payout = money((player.total_payout || 0) + amt);
   return amt;
@@ -208,10 +289,21 @@ export function startTournament(state) {
   }
 
   next.totalPrizePool = money(next.entryFee * next.players.length);
-  const available = Math.max(0, money(next.totalPrizePool - (next.firstPlacePrize || 0)));
-  const expectedRounds = generateRoundRobin(next.players, next.roundRobinType).length;
-  next.prizeSchedule = calculatePrizeDistribution(available, Math.max(1, expectedRounds));
+  const places = computePlacePrizes({
+    prizePool: next.totalPrizePool,
+    placeCount: next.placeCount,
+  });
+  next.placeCount = places.placeCount;
+  next.placePrizes = {
+    first: places.first,
+    second: places.second,
+    third: places.third,
+    fourth: places.fourth,
+  };
+  next.firstPlacePrize = places.first;
+  next.firstPlacePercent = places.potPercent;
   next.pairingOffset = 0;
+  next.eliminationSeq = 0;
 
   next.stats = next.players.map((p) => ({
     player_id: p.id,
@@ -221,13 +313,21 @@ export function startTournament(state) {
     koh_wins: 0,
     koh_losses: 0,
     total_payout: 0,
+    place_bonus: 0,
+    finish_place: null,
     eliminated: false,
     eliminated_at: null,
+    eliminated_order: null,
     in_koh: false,
   }));
 
   next.rounds = [];
   next.matches = [];
+  next.prizeSchedule = calculatePrizeDistribution(
+    places.matchPool,
+    Math.max(1, remainingEventRoundsFromState(next))
+  );
+  next.prizeRoundsLeft = Math.max(1, next.prizeSchedule.length);
   addRoundRobinRound(next);
   next.status = 'in-progress';
   next.message = 'Round 1 — all players in.';
@@ -267,10 +367,15 @@ function addRoundRobinRound(state) {
 
   const roundId = uid();
   const gameType = getRoundGameType(roundNumber, state.gameType);
-  const prizeIndex = roundNumber - 1;
-  const scheduled = Number(state.prizeSchedule?.[prizeIndex] || 0);
-  const roundPrize = money(Math.min(scheduled, remainingAfterFirstPlace(state)));
-  const payouts = calculateMatchPayouts(roundPrize, regular.length, byePlayers.length);
+  if (roundNumber > 1) {
+    const stored = Math.round(Number(state.prizeRoundsLeft));
+    const current = Number.isFinite(stored) && stored >= 1
+      ? stored
+      : remainingEventRoundsFromState(state);
+    state.prizeRoundsLeft = Math.max(1, current - 1);
+  }
+  const payouts = payoutsForNewRound(state, regular.length, byePlayers.length, false);
+  const roundPrize = payouts.roundPrize;
 
   state.rounds.push({
     id: roundId,
@@ -377,33 +482,59 @@ function eliminatePlayer(state, player, reasonLosses) {
   if (player.eliminated) return;
   player.eliminated = true;
   player.eliminated_at = new Date().toISOString();
+  state.eliminationSeq = (state.eliminationSeq || 0) + 1;
+  player.eliminated_order = state.eliminationSeq;
   player.elimination_losses = reasonLosses;
   dropGhostMatches(state);
 }
 
-function isKohRound(round) {
-  return round && round.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName;
+function clearEliminationIfUnderLimit(player, losses, limit) {
+  if (!player?.eliminated) return;
+  if ((Number(losses) || 0) >= (Number(limit) || 0)) return;
+  player.eliminated = false;
+  player.eliminated_at = null;
+  player.eliminated_order = null;
+  player.elimination_losses = null;
 }
 
-export function recordMatchResult(state, matchId, winnerId, score = null) {
-  const next = clone(state);
-  const match = next.matches.find((m) => m.id === matchId);
-  if (!match) throw new Error('Match not found');
-  if (match.status === 'completed') return next;
-  if (isByeMatch(match) || !match.player2_id || match.player1_id === match.player2_id) {
-    applyByeWin(next, match);
-    dropGhostMatches(next);
-    return maybeAdvance(next);
+function reverseMatchResult(state, match) {
+  if (!match || match.status !== 'completed' || isByeMatch(match)) return;
+  const round = state.rounds.find((r) => r.id === match.round_id);
+  const koh = isKohRound(round);
+  const winner = findStat(state, match.winner_id);
+  const loser = findStat(state, match.loser_id);
+  const paid = money(match.payout_amount);
+  if (winner) {
+    if (koh) winner.koh_wins = Math.max(0, (winner.koh_wins || 0) - 1);
+    else winner.wins = Math.max(0, (winner.wins || 0) - 1);
+    winner.total_payout = money(Math.max(0, (winner.total_payout || 0) - paid));
   }
+  if (loser) {
+    if (koh) {
+      loser.koh_losses = Math.max(0, (loser.koh_losses || 0) - 1);
+      clearEliminationIfUnderLimit(loser, loser.koh_losses, state.phase2EliminationLosses);
+    } else {
+      loser.losses = Math.max(0, (loser.losses || 0) - 1);
+      clearEliminationIfUnderLimit(loser, loser.losses, state.phase1EliminationLosses);
+    }
+  }
+  match.status = 'pending';
+  match.winner_id = null;
+  match.winner_name = null;
+  match.loser_id = null;
+  match.loser_name = null;
+  match.score = null;
+  match.completed_at = null;
+}
 
+function applyMatchWinner(state, match, winnerId, score) {
   const winnerIsP1 = winnerId === match.player1_id;
   const winnerName = winnerIsP1 ? match.player1_name : match.player2_name;
   const loserId = winnerIsP1 ? match.player2_id : match.player1_id;
   const loserName = winnerIsP1 ? match.player2_name : match.player1_name;
   if (!loserId || loserId === winnerId || isByeName(loserName)) {
-    applyByeWin(next, match);
-    dropGhostMatches(next);
-    return maybeAdvance(next);
+    applyByeWin(state, match);
+    return;
   }
 
   match.status = 'completed';
@@ -414,32 +545,71 @@ export function recordMatchResult(state, matchId, winnerId, score = null) {
   match.score = score;
   match.completed_at = new Date().toISOString();
 
-  const round = next.rounds.find((r) => r.id === match.round_id);
+  const round = state.rounds.find((r) => r.id === match.round_id);
   const koh = isKohRound(round);
-  const winner = findStat(next, winnerId);
-  const loser = findStat(next, loserId);
+  const winner = findStat(state, winnerId);
+  const loser = findStat(state, loserId);
 
   if (winner) {
     if (koh) winner.koh_wins = (winner.koh_wins || 0) + 1;
     else winner.wins += 1;
-    match.payout_amount = creditPayout(next, winner, match.payout_amount);
+    match.payout_amount = creditPayout(state, winner, match.payout_amount);
   }
   if (loser && loser.player_id && loser.player_id !== winnerId) {
     if (koh) {
       loser.koh_losses = (loser.koh_losses || 0) + 1;
-      if (loser.koh_losses >= next.phase2EliminationLosses) {
-        eliminatePlayer(next, loser, loser.koh_losses);
+      if (loser.koh_losses >= state.phase2EliminationLosses) {
+        eliminatePlayer(state, loser, loser.koh_losses);
       }
     } else {
       loser.losses += 1;
-      if (loser.losses >= next.phase1EliminationLosses) {
-        eliminatePlayer(next, loser, loser.losses);
+      if (loser.losses >= state.phase1EliminationLosses) {
+        eliminatePlayer(state, loser, loser.losses);
       }
     }
   }
+}
 
+export function recordMatchResult(state, matchId, winnerId, score = null) {
+  const next = clone(state);
+  const match = next.matches.find((m) => m.id === matchId);
+  if (!match) throw new Error('Match not found');
+  if (next.status === 'completed') throw new Error('This tournament is already complete.');
+  const current = getCurrentRound(next);
+  if (!current || match.round_id !== current.id) {
+    throw new Error('Only matches in the current round can be entered or edited.');
+  }
+  if (match.status === 'cancelled') throw new Error('That match is no longer open.');
+  if (isByeMatch(match) || !match.player2_id || match.player1_id === match.player2_id) {
+    applyByeWin(next, match);
+    dropGhostMatches(next);
+    return next;
+  }
+  if (match.status === 'completed') reverseMatchResult(next, match);
+  applyMatchWinner(next, match, winnerId, score);
   dropGhostMatches(next);
+  return next;
+}
+
+export function roundReadyToContinue(state) {
+  if (!state || state.status === 'completed') return false;
+  const current = getCurrentRound(state);
+  if (!current) return false;
+  return roundComplete(state, current);
+}
+
+export function continueCashClimb(state) {
+  if (!state) throw new Error('No tournament to continue.');
+  if (state.status === 'completed') throw new Error('This tournament is already complete.');
+  const next = clone(state);
+  if (!roundReadyToContinue(next)) {
+    throw new Error('Finish every match in this round before continuing.');
+  }
   return maybeAdvance(next);
+}
+
+function isKohRound(round) {
+  return round && round.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName;
 }
 
 function roundComplete(state, round) {
@@ -448,7 +618,22 @@ function roundComplete(state, round) {
 }
 
 function completeTournament(state, winner) {
-  if (winner) creditPayout(state, winner, remainingUnpaid(state));
+  const prizes = state.placePrizes || {};
+  const finishers = lastStandingFinishers(state.stats, winner);
+  const placeCount = parsePlaceCount(state.placeCount);
+  finishers.forEach((player, index) => {
+    const place = index + 1;
+    if (place > placeCount) return;
+    player.finish_place = place;
+    if (place === 1) return;
+    const amount = place === 2 ? prizes.second : place === 3 ? prizes.third : prizes.fourth;
+    const paid = creditPayout(state, player, amount, true);
+    player.place_bonus = money((player.place_bonus || 0) + paid);
+  });
+  if (winner) {
+    winner.finish_place = 1;
+    creditPayout(state, winner, remainingUnpaid(state), true);
+  }
   state.status = 'completed';
   state.completedAt = new Date().toISOString();
   state.winner = winner
@@ -463,48 +648,17 @@ function completeTournament(state, winner) {
   return state;
 }
 
-function kohPayoutForNextMatch(state) {
-  const completedKoh = state.matches.filter(
-    (m) => m.status === 'completed' && state.rounds.find((r) => r.id === m.round_id && isKohRound(r)) && !m.is_bye
-  ).length;
-  const table = state.kohPayouts || [];
-  return table[completedKoh] ?? table[table.length - 1] ?? 0;
-}
-
 function pairKohMatches(state, round, activePlayers) {
   const active = (activePlayers || []).filter((p) => !p.eliminated);
   if (active.length < 2) return;
-  const payout = kohPayoutForNextMatch(state);
   const lastKoh = [...state.matches]
     .filter((m) => m.status === 'completed' && !m.is_bye && state.rounds.find((r) => r.id === m.round_id && isKohRound(r)))
     .sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)))[0];
 
-  const makeMatch = (p1, p2, number) => ({
-    id: uid(),
-    round_id: round.id,
-    round_number: round.round_number,
-    match_number: number,
-    player1_id: p1.player_id,
-    player1_name: p1.player_name,
-    player2_id: p2.player_id,
-    player2_name: p2.player_name,
-    is_bye: false,
-    winner_id: null,
-    winner_name: null,
-    loser_id: null,
-    loser_name: null,
-    score: null,
-    payout_amount: payout,
-    status: 'pending',
-    completed_at: null,
-  });
-
+  const pairs = [];
   if (active.length === 2) {
-    state.matches.push(makeMatch(active[0], active[1], 1));
-    return;
-  }
-
-  if (active.length === 3) {
+    pairs.push([active[0], active[1]]);
+  } else if (active.length === 3) {
     let p1 = active[0];
     let p2 = active[1];
     if (lastKoh) {
@@ -517,16 +671,36 @@ function pairKohMatches(state, round, activePlayers) {
         p2 = sitting;
       }
     }
-    state.matches.push(makeMatch(p1, p2, 1));
-    return;
-  }
-
-  let number = 1;
-  for (let i = 0; i < active.length; i += 2) {
-    if (i + 1 < active.length) {
-      state.matches.push(makeMatch(active[i], active[i + 1], number++));
+    pairs.push([p1, p2]);
+  } else {
+    for (let i = 0; i < active.length; i += 2) {
+      if (i + 1 < active.length) pairs.push([active[i], active[i + 1]]);
     }
   }
+
+  const payouts = payoutsForNewRound(state, pairs.length, 0, true);
+  round.prize_per_round = payouts.roundPrize;
+  pairs.forEach(([p1, p2], index) => {
+    state.matches.push({
+      id: uid(),
+      round_id: round.id,
+      round_number: round.round_number,
+      match_number: index + 1,
+      player1_id: p1.player_id,
+      player1_name: p1.player_name,
+      player2_id: p2.player_id,
+      player2_name: p2.player_name,
+      is_bye: false,
+      winner_id: null,
+      winner_name: null,
+      loser_id: null,
+      loser_name: null,
+      score: null,
+      payout_amount: payouts.perMatch,
+      status: 'pending',
+      completed_at: null,
+    });
+  });
 }
 
 function startKingOfTheHill(state) {
@@ -543,23 +717,22 @@ function startKingOfTheHill(state) {
     if (!isKohRound(r) && r.status !== 'completed') r.status = 'completed';
   });
 
-  const paidOut = state.stats.reduce((sum, p) => sum + (p.total_payout || 0), 0);
-  const kohPool = Math.max(0, money(state.totalPrizePool - paidOut - (state.firstPlacePrize || 0)));
-  state.kohPrizePool = kohPool;
-  state.kohPayouts = buildKohPayouts(kohPool, active.length);
+  state.kohPrizePool = remainingAfterReserved(state);
+  state.kohPayouts = [];
 
   active.forEach((p) => {
     p.in_koh = true;
     p.koh_wins = 0;
     p.koh_losses = 0;
   });
+  state.kohRoundPlan = Math.max(1, remainingEventRoundsFromState(state));
 
   const kohRound = {
     id: uid(),
     round_number: 999,
     round_name: OPEN_TOURNAMENT_STRUCTURE.finalStageName,
     game_type: state.gameType === 'mixed' ? '8-Ball' : state.gameType,
-    prize_per_round: kohPool,
+    prize_per_round: 0,
     status: 'in-progress',
     koh_round_number: 1,
   };
@@ -582,7 +755,7 @@ function continueKingOfTheHill(state, currentRound) {
     round_number: currentRound.round_number + 1,
     round_name: OPEN_TOURNAMENT_STRUCTURE.finalStageName,
     game_type: currentRound.game_type,
-    prize_per_round: state.kohPrizePool,
+    prize_per_round: 0,
     status: 'in-progress',
     koh_round_number: (currentRound.koh_round_number || 1) + 1,
   };
@@ -650,6 +823,7 @@ function repairByeRecords(state) {
       if (creditedLoser.eliminated && creditedLoser.losses < (state.phase1EliminationLosses || 3)) {
         creditedLoser.eliminated = false;
         creditedLoser.eliminated_at = null;
+        creditedLoser.eliminated_order = null;
       }
     }
     match.player2_id = null;
@@ -675,7 +849,20 @@ export function sanitizeCashClimb(state) {
       if (match.status === 'pending' && !isKohRound(round)) match.status = 'cancelled';
     });
   }
-  return maybeAdvance(next);
+  dropGhostMatches(next);
+  if (!next.lastRrPerWin) {
+    next.lastRrPerWin = lastCompletedClimb(next, false).perWin;
+  }
+  if (!next.lastKohPerWin) {
+    next.lastKohPerWin = lastCompletedClimb(next, true).perWin;
+  }
+  if (next.prizeRoundsLeft == null) {
+    const planned = Math.max(1, (next.prizeSchedule || []).length);
+    const completedRr = (next.rounds || []).filter((r) => !isKohRound(r) && r.status === 'completed').length;
+    next.prizeRoundsLeft = Math.max(1, planned - completedRr);
+  }
+  recomputePendingRoundPayouts(next);
+  return next;
 }
 
 export function formatMoney(amount) {

@@ -13,6 +13,10 @@
   font-size: clamp(1.15rem, 2.6vh, 1.7rem);
 }
 
+.cc-tv-landscape .cc-tv-payout {
+  font-size: clamp(1.3rem, 3.4vh, 2.05rem);
+}
+
 .cc-tv-landscape:not(.cc-tv-is-tall) .cc-tv-match-grid {
   grid-template-columns: repeat(var(--cc-tv-match-cols, 2), minmax(0, 1fr));
 }

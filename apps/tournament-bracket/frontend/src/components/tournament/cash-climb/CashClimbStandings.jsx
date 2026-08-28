@@ -1,7 +1,15 @@
 import React from 'react';
 import { OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
 import { formatMoney, sortStandings } from './cashClimbEngine.js';
+import { placeOrdinal } from './cashClimbPlacePrizes.js';
 import WinLoss from './WinLoss.jsx';
+
+function standingTag(player) {
+  if (player.finish_place) return placeOrdinal(player.finish_place);
+  if (player.eliminated) return 'Out';
+  if (player.in_koh) return 'KOH';
+  return '';
+}
 
 export default function CashClimbStandings({ stats, currentRound }) {
   const rows = sortStandings(stats);
@@ -12,7 +20,7 @@ export default function CashClimbStandings({ stats, currentRound }) {
     <div className="cc-standings">
       <h3>{koh ? 'King of the Hill' : 'Standings'}</h3>
       <p className="cc-standings-note">
-        Paid includes round-robin wins, King of the Hill awards, and any leftover pool for the winner.
+        Ranked by money earned. Paid includes match wins, King of the Hill awards, leftover pool for the winner, and any 2nd–4th last-standing bonuses.
       </p>
       <table>
         <thead>
@@ -33,7 +41,7 @@ export default function CashClimbStandings({ stats, currentRound }) {
               <td><WinLoss wins={p.wins} losses={p.losses} /></td>
               {koh ? <td><WinLoss wins={p.koh_wins} losses={p.koh_losses} /></td> : null}
               <td>{formatMoney(p.total_payout)}</td>
-              <td>{p.eliminated ? 'Out' : p.in_koh ? 'KOH' : ''}</td>
+              <td>{standingTag(p)}</td>
             </tr>
           ))}
         </tbody>

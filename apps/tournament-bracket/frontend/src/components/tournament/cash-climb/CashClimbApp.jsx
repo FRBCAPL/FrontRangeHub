@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 import CashClimbSetup from './CashClimbSetup.jsx';
 import CashClimbPlay from './CashClimbPlay.jsx';
-import { createOpenTournament, startTournament, recordMatchResult } from './cashClimbEngine.js';
+import { createOpenTournament, startTournament, recordMatchResult, continueCashClimb } from './cashClimbEngine.js';
+import { updateOpenTournament } from './cashClimbEdit.js';
 import { loadCashClimb, saveCashClimb, clearCashClimb } from './cashClimbStore.js';
 import './CashClimb.css';
 
@@ -30,6 +31,24 @@ export default function CashClimbApp({ onLeave }) {
     }
   };
 
+  const handleContinue = () => {
+    try {
+      persist(continueCashClimb(tournament));
+    } catch (err) {
+      alert(err.message || 'Could not continue');
+    }
+  };
+
+  const handleEdit = (patch) => {
+    try {
+      persist(updateOpenTournament(tournament, patch));
+      return true;
+    } catch (err) {
+      alert(err.message || 'Could not update tournament');
+      return false;
+    }
+  };
+
   const handleNew = () => {
     if (tournament && tournament.status !== 'completed') {
       const ok = window.confirm('Start a new Cash Climb? The current event on this device will be cleared.');
@@ -47,7 +66,9 @@ export default function CashClimbApp({ onLeave }) {
     <CashClimbPlay
       tournament={tournament}
       onRecord={handleRecord}
+      onContinue={handleContinue}
       onNew={handleNew}
+      onEdit={handleEdit}
       onLeave={onLeave}
     />
   );

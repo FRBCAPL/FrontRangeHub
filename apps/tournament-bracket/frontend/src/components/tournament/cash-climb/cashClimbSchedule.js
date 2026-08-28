@@ -1,4 +1,5 @@
 import { OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
+import { prizeEventRoundPlan } from './cashClimbDuration.js';
 
 function roundMoney(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -65,51 +66,61 @@ export function calculatePrizeDistribution(totalPrizePool, numRounds) {
   if (numRounds <= 0) return [];
   if (numRounds === 1) return [pool];
 
-  const { baseAmount, scalingFactor, finalRoundPercent } = OPEN_TOURNAMENT_STRUCTURE.prizeDistribution;
-  const finalRoundPayout = roundMoney(pool * finalRoundPercent);
-  const remainingPool = roundMoney(pool - finalRoundPayout);
-
-  if (numRounds === 2) {
-    const first = remainingPool;
-    return [first, roundMoney(pool - first)];
-  }
-
+  const { baseAmount, scalingFactor } = OPEN_TOURNAMENT_STRUCTURE.prizeDistribution;
   const payouts = [];
   let totalWeight = 0;
-  for (let i = 1; i < numRounds; i++) {
-    const weight = baseAmount + ((i - 1) / (numRounds - 2)) * scalingFactor;
+  for (let i = 0; i < numRounds; i++) {
+    const weight = baseAmount + (i / (numRounds - 1)) * scalingFactor;
     payouts.push(weight);
     totalWeight += weight;
   }
 
-  const scaled = payouts.map((weight) => roundMoney((weight / totalWeight) * remainingPool));
-  scaled.push(finalRoundPayout);
+  const scaled = payouts.map((weight) => roundMoney((weight / totalWeight) * pool));
   const totalDistributed = scaled.reduce((sum, val) => sum + val, 0);
   scaled[scaled.length - 1] = roundMoney(scaled[scaled.length - 1] + (pool - totalDistributed));
   return scaled;
 }
 
-export function calculateMatchPayouts(roundPayout, numMatches, numByeMatches) {
-  const totalWeight = numMatches + 0.5 * numByeMatches;
-  const regularMatchPayout = totalWeight > 0 ? Math.floor((roundPayout / totalWeight) * 100) / 100 : 0;
-  const byePayout = Math.floor((regularMatchPayout / 2) * 100) / 100;
-  return { perMatch: regularMatchPayout, perBye: byePayout };
+/** This round's pot: remaining match money respread across remaining expected rounds. */
+export function liveRoundPrize(remainingMatchMoney, remainingRounds) {
+  const remaining = roundMoney(Math.max(0, Number(remainingMatchMoney) || 0));
+  const rounds = Math.max(1, Math.round(Number(remainingRounds) || 1));
+  const schedule = calculatePrizeDistribution(remaining, rounds);
+  return roundMoney(Math.min(schedule[0] || remaining, remaining));
 }
 
-export function buildKohPayouts(kohPrizePool, playerCount) {
-  const pool = roundMoney(kohPrizePool);
-  const maxMatches = Math.max(1, playerCount * 2);
-  const weights = [];
-  let totalWeight = 0;
-  for (let i = 1; i <= maxMatches; i++) {
-    const weight = 1 + ((i - 1) / Math.max(1, maxMatches - 1)) * 0.5;
-    weights.push(weight);
-    totalWeight += weight;
+/** Whole-dollar match payouts that never drop below the last same-phase win, while money lasts. */
+export function climbRoundPayouts({
+  remaining,
+  remainingRounds,
+  numMatches,
+  numByes,
+  lastPerWin = 0,
+}) {
+  const left = roundMoney(Math.max(0, Number(remaining) || 0));
+  const matches = Math.max(0, Math.round(Number(numMatches) || 0));
+  const byes = Math.max(0, Math.round(Number(numByes) || 0));
+  const computedPot = liveRoundPrize(left, remainingRounds);
+  const fromPot = calculateMatchPayouts(computedPot, matches, byes);
+  let perMatch = Math.max(fromPot.perMatch, Math.max(0, Math.round(Number(lastPerWin) || 0)));
+  let perBye = Math.floor(perMatch / 2);
+  const costOf = (win, byePay) => win * matches + byePay * byes;
+  if (perMatch > 0 && left + 0.001 < perMatch) {
+    perMatch = Math.max(0, Math.floor(left));
+    perBye = Math.floor(perMatch / 2);
   }
-  const scaled = weights.map((weight) => roundMoney((weight / totalWeight) * pool));
-  const total = scaled.reduce((sum, val) => sum + val, 0);
-  scaled[scaled.length - 1] = roundMoney(scaled[scaled.length - 1] + (pool - total));
-  return scaled;
+  return {
+    perMatch,
+    perBye,
+    roundPrize: roundMoney(Math.min(left, Math.max(computedPot, costOf(perMatch, perBye)))),
+  };
+}
+
+export function calculateMatchPayouts(roundPayout, numMatches, numByeMatches) {
+  const totalWeight = numMatches + 0.5 * numByeMatches;
+  const regularMatchPayout = totalWeight > 0 ? Math.floor(roundPayout / totalWeight) : 0;
+  const byePayout = Math.floor(regularMatchPayout / 2);
+  return { perMatch: regularMatchPayout, perBye: byePayout };
 }
 
 export function getRoundGameType(roundNumber, gameType) {
@@ -129,25 +140,27 @@ export function pairOneRound(players, roundOffset = 0) {
   return schedule[index];
 }
 
-export function previewPrizeSchedule(players, roundRobinType, prizePool, firstPlacePrize) {
+export function previewPrizeSchedule(players, roundRobinType, prizePool, reservedAmount, tournament = null) {
   if (!players || players.length < 2) return null;
-  const available = roundMoney(Math.max(0, Number(prizePool || 0) - Number(firstPlacePrize || 0)));
-  const schedule = generateRoundRobin(players, roundRobinType);
-  const prizes = calculatePrizeDistribution(available, schedule.length);
-  const rounds = schedule.map((round, i) => {
-    const byeCount = round.matches.filter((m) => m.isBye).length;
-    const regular = round.matches.length - byeCount;
-    const payouts = calculateMatchPayouts(prizes[i] || 0, regular, byeCount);
-    const paidThisRound = roundMoney(payouts.perMatch * regular + payouts.perBye * byeCount);
+  const available = roundMoney(Math.max(0, Number(prizePool || 0) - Number(reservedAmount || 0)));
+  const plan = prizeEventRoundPlan(players.length, tournament);
+  const prizes = calculatePrizeDistribution(available, Math.max(1, plan.length));
+  const rounds = plan.map((round, i) => {
+    const payouts = calculateMatchPayouts(prizes[i] || 0, round.matchCount, round.byeCount);
+    const paidThisRound = roundMoney(payouts.perMatch * round.matchCount + payouts.perBye * round.byeCount);
     const leftover = roundMoney(Math.max(0, (prizes[i] || 0) - paidThisRound));
     return {
       roundNumber: round.roundNumber,
+      label: round.label,
+      phase: round.phase,
       roundPrize: prizes[i] || 0,
       perWin: payouts.perMatch,
-      matchCount: regular,
+      matchCount: round.matchCount,
       paidThisRound,
       leftover,
     };
   });
-  return { available, rounds };
+  const rrRounds = rounds.filter((r) => r.phase === 'rr').length;
+  const kohRounds = rounds.filter((r) => r.phase === 'koh').length;
+  return { available, rounds, expectedRounds: plan.length, rrRounds, kohRounds };
 }

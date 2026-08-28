@@ -84,8 +84,9 @@
 }
 
 .cc-tv-portrait .cc-tv-payout {
-  margin: 4px 0 0;
-  font-size: 0.8rem;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  font-size: clamp(1.45rem, 6.2vw, 2.15rem);
 }
 
 .cc-tv-portrait .cc-tv-standings-list {

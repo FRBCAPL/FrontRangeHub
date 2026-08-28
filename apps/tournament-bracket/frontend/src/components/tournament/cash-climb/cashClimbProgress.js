@@ -1,8 +1,12 @@
-import { OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
-import { getCurrentRound, getRoundMatches } from './cashClimbEngine.js';
+import { OPEN_TOURNAMENT_STRUCTURE, getKOHThreshold } from './openTournamentStructure.js';
+import { getActivePlayers, getCurrentRound, getRoundMatches, roundReadyToContinue } from './cashClimbEngine.js';
 
 export function playableRoundMatches(matches) {
   return (matches || []).filter((m) => !m.is_bye && m.player2_id && m.status !== 'cancelled');
+}
+
+export function roundByeMatches(matches) {
+  return (matches || []).filter((m) => (m.is_bye || !m.player2_id) && m.status !== 'cancelled');
 }
 
 export function pendingPlayableMatches(tournament, round) {
@@ -66,4 +70,15 @@ export function cashClimbProgress(tournament) {
     nextMatch,
     nextLabel: nextMatch ? `${nextMatch.player1_name} vs ${nextMatch.player2_name}` : '',
   };
+}
+
+export function cashClimbContinueLabel(tournament) {
+  if (!roundReadyToContinue(tournament)) return '';
+  const active = getActivePlayers(tournament).length;
+  if (active <= 1) return 'Complete tournament';
+  const round = getCurrentRound(tournament);
+  if (round?.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName) return 'Continue King of the Hill';
+  const started = (tournament.stats || []).length;
+  if (active <= getKOHThreshold(started, tournament)) return 'Start King of the Hill';
+  return 'Continue to next round';
 }

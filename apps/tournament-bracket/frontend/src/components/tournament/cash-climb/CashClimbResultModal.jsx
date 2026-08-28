@@ -3,16 +3,23 @@ import { formatMoney } from './cashClimbEngine.js';
 import { validateRecordedGames } from './cashClimbScore.js';
 
 export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel }) {
-  const [winnerId, setWinnerId] = useState('');
-  const [recordScore, setRecordScore] = useState(false);
+  const editing = match?.status === 'completed';
+  const [winnerId, setWinnerId] = useState(match?.winner_id || '');
+  const [recordScore, setRecordScore] = useState(Boolean(match?.score));
   const [p1Games, setP1Games] = useState('');
   const [p2Games, setP2Games] = useState('');
   const [error, setError] = useState('');
   const firstPick = useRef(null);
 
   useEffect(() => {
+    const scoreParts = String(match?.score || '').split(/\s*[-–]\s*/);
+    setWinnerId(match?.winner_id || '');
+    setRecordScore(Boolean(match?.score));
+    setP1Games(scoreParts.length === 2 ? scoreParts[0] : '');
+    setP2Games(scoreParts.length === 2 ? scoreParts[1] : '');
+    setError('');
     firstPick.current?.focus();
-  }, [match?.id]);
+  }, [match?.id, match?.winner_id, match?.score]);
 
   if (!match) return null;
   const race = Math.max(1, Number(raceTo) || 0);
@@ -50,7 +57,7 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
   return (
     <div className="cc-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true" aria-labelledby="cc-result-title">
       <form className="cc-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
-        <h3 id="cc-result-title">Enter result</h3>
+        <h3 id="cc-result-title">{editing ? 'Edit result' : 'Enter result'}</h3>
         <p className="cc-modal-meta">
           Round {match.round_number} • Match {match.match_number}
           {race ? ` • Race to ${race}` : ''}
@@ -147,7 +154,7 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
             Cancel
           </button>
           <button type="submit" className="btn-primary">
-            Save result
+            {editing ? 'Save changes' : 'Save result'}
           </button>
         </div>
       </form>

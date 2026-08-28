@@ -16,6 +16,15 @@ function PlayerRow({ name, record }) {
   );
 }
 
+function MatchPayout({ amount, label = 'Win pays' }) {
+  return (
+    <p className="cc-tv-payout">
+      <span>{label}</span>
+      <strong>{formatMoney(amount)}</strong>
+    </p>
+  );
+}
+
 function LiveMatchCard({ board, match }) {
   return (
     <article className="cc-tv-match">
@@ -26,7 +35,7 @@ function LiveMatchCard({ board, match }) {
       <PlayerRow name={match.player1_name} record={playerRecord(board, match.player1_id)} />
       <p className="cc-tv-vs">vs</p>
       <PlayerRow name={match.player2_name} record={playerRecord(board, match.player2_id)} />
-      <p className="cc-tv-payout">Win pays {formatMoney(match.payout_amount)}</p>
+      <MatchPayout amount={match.payout_amount} />
     </article>
   );
 }
@@ -42,12 +51,14 @@ function UpNextList({ matches }) {
             <span>{m.player1_name}</span>
             <em>vs</em>
             <span>{m.player2_name}</span>
+            <strong className="cc-tv-on-deck-pay">{formatMoney(m.payout_amount)}</strong>
           </li>
         ))}
       </ul>
     </div>
   );
 }
+
 function ByeMatchCard({ board, match }) {
   const name = match.winner_name || match.player1_name;
   return (
@@ -59,7 +70,7 @@ function ByeMatchCard({ board, match }) {
       <PlayerRow name={name} record={playerRecord(board, match.player1_id || match.winner_id)} />
       <p className="cc-tv-vs">vs</p>
       <PlayerRow name="Bye" />
-      <p className="cc-tv-payout">Bye pays {formatMoney(match.payout_amount)}</p>
+      <MatchPayout amount={match.payout_amount} label="Bye pays" />
     </article>
   );
 }
@@ -72,7 +83,9 @@ export default function CashClimbTvMatches({ board, layout = 'landscape' }) {
       <section className="cc-tv-now cc-tv-now-winner" aria-live="polite">
         <p className="cc-tv-kicker">Champion</p>
         <h2>{board.winner.player_name}</h2>
-        <p className="cc-tv-payout">{formatMoney(board.winner.total_payout)}</p>
+        <p className="cc-tv-payout cc-tv-payout-champion">
+          <strong>{formatMoney(board.winner.total_payout)}</strong>
+        </p>
       </section>
     );
   }

@@ -109,6 +109,37 @@
   margin: 8px 0 0;
 }
 
+.cc-place-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.cc-place-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #fde68a;
+  font-size: 0.85rem;
+}
+
+.cc-place-list strong {
+  color: #fff;
+}
+
+.cc-setup-warn {
+  color: #fbbf24;
+  font-size: 0.85rem;
+  margin: 4px 0 12px;
+}
+
 .cc-duration {
   margin: 12px 0 4px;
   padding: 10px 12px;
@@ -134,8 +165,104 @@
 }
 
 .cc-play {
-  max-width: 960px;
+  max-width: 1280px;
   margin: 0 auto;
+}
+
+.cc-play-header {
+  margin-bottom: 20px;
+}
+
+.cc-play-header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.cc-play-kicker {
+  margin: 0 0 4px;
+  color: #86efac;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cc-play-title h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: #fff;
+}
+
+.cc-play-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.cc-play-header .tb-btn-new {
+  margin-top: 0;
+}
+
+.cc-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cc-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: #e2e8f0;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.cc-stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.cc-stat {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+}
+
+.cc-stat span {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cc-play-header .cc-banner,
+.cc-play-header .cc-winner {
+  margin-top: 12px;
+}
+
+.cc-play-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.cc-play-board.is-complete {
+  grid-template-columns: 1fr;
 }
 
 .cc-round {
@@ -143,7 +270,8 @@
   border: 1px solid rgba(99, 102, 241, 0.35);
   border-radius: 12px;
   padding: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
+  min-width: 0;
 }
 
 .cc-round h2 {
@@ -200,12 +328,101 @@
   color: #94a3b8;
 }
 
-.cc-match:hover {
+.cc-match:hover:not(.is-bye) {
   background: rgba(22, 163, 74, 0.22);
 }
 
-.cc-match.is-deck:hover {
-  background: rgba(51, 65, 85, 0.45);
+.cc-match.is-bye {
+  cursor: default;
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 0.65);
+}
+
+.cc-match.is-bye .cc-match-table {
+  color: #cbd5e1;
+}
+
+.cc-match.is-bye em,
+.cc-match.is-bye small {
+  color: #94a3b8;
+}
+
+.cc-completed-block {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(69, 26, 3, 0.28);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+.cc-completed-block h3 {
+  margin: 0 0 4px;
+  color: #fde68a;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cc-completed-block .cc-meta {
+  color: #fcd34d;
+  margin-bottom: 10px;
+}
+
+.cc-completed-block .cc-matches {
+  margin-top: 4px;
+}
+
+.cc-play button.cc-match.is-done {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+}
+
+.cc-play button.cc-match.is-done .cc-match-table {
+  color: #fbbf24;
+}
+
+.cc-play button.cc-match.is-done em,
+.cc-play button.cc-match.is-done small {
+  color: #fcd34d;
+}
+
+.cc-play button.cc-match.is-done:hover {
+  background: rgba(120, 53, 15, 0.45);
+  border-color: rgba(251, 191, 36, 0.7);
+}
+
+.cc-continue-row {
+  margin-top: 16px;
+}
+
+.cc-play button.cc-continue-btn,
+.cc-play button.cc-continue-btn:hover,
+.cc-play button.cc-continue-btn:focus-visible {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 12rem;
+  min-height: 48px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid #16a34a;
+  background: #16a34a;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.cc-continue-row .cc-continue-btn {
+  width: 100%;
+}
+
+.cc-play button.cc-continue-btn:hover,
+.cc-play button.cc-continue-btn:focus-visible {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #fff;
 }
 
 .cc-done {
@@ -225,6 +442,13 @@
   border: 1px solid rgba(99, 102, 241, 0.35);
   border-radius: 12px;
   padding: 16px;
+  min-width: 0;
+}
+
+@media (max-width: 860px) {
+  .cc-play-board {
+    grid-template-columns: 1fr;
+  }
 }
 
 .cc-standings h3 {
@@ -270,6 +494,70 @@
   border: 1px solid rgba(34, 197, 94, 0.45);
   border-radius: 12px;
   padding: 20px;
+  color: #e0e7ff;
+}
+
+.cc-edit-modal {
+  width: min(34rem, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.cc-edit-modal label {
+  display: block;
+  margin-bottom: 12px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.cc-edit-modal input,
+.cc-edit-modal select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #e0e7ff;
+  font-size: 1rem;
+}
+
+.cc-edit-modal input:disabled,
+.cc-edit-modal select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cc-edit-lock-note {
+  color: #fbbf24;
+  font-size: 0.85rem;
+  margin: 4px 0 12px;
+}
+
+.cc-edit-modal .form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cc-edit-modal .btn-primary,
+.cc-edit-modal .btn-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.cc-edit-modal .btn-primary {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+}
+
+.cc-edit-modal .btn-secondary {
+  background: rgba(100, 116, 139, 0.3);
   color: #e0e7ff;
 }
 

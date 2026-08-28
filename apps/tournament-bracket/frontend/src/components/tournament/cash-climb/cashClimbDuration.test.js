@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { estimateCashClimbDuration } from './cashClimbDuration.js';
+import { estimateCashClimbDuration, maxEventRoundsUntilWinner, maxRoundRobinRoundsUntilKoh } from './cashClimbDuration.js';
+import { generateRoundRobin } from './cashClimbSchedule.js';
 
 describe('Cash Climb duration estimate', () => {
   it('returns null until there are two players', () => {
@@ -32,5 +33,15 @@ describe('Cash Climb duration estimate', () => {
     });
     assert.equal(fourTables.tableCount, 4);
     assert.ok(oneTable.minutesLow > fourTables.minutesLow);
+  });
+
+  it('counts fewer 12-player RR rounds than a full single robin', () => {
+    const players = Array.from({ length: 12 }, (_, i) => ({ name: `P${i + 1}` }));
+    const fullRr = generateRoundRobin(players, 'single').length;
+    const untilKoh = maxRoundRobinRoundsUntilKoh(12);
+    assert.equal(fullRr, 11);
+    assert.ok(untilKoh < fullRr);
+    assert.ok(untilKoh >= 2);
+    assert.ok(maxEventRoundsUntilWinner(12) > untilKoh);
   });
 });

@@ -23,19 +23,24 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
   phase2: {
     name: 'King of the Hill',
     eliminationLosses: 2,
-    description: 'Winner-stays format with escalating payouts. Last player standing wins remaining pool.',
+    description: 'Winner-stays format. Starts when 3 players remain. Last player standing wins remaining pool.',
     thresholds: [
-      { maxPlayers: 6, threshold: 3 },
-      { maxPlayers: 10, threshold: 4 },
-      { maxPlayers: 15, threshold: 4 },
-      { maxPlayers: Infinity, threshold: 6 },
+      { maxPlayers: Infinity, threshold: 3 },
     ],
   },
 
   prizeDistribution: {
-    finalRoundPercent: 0.2,
     baseAmount: 2,
-    scalingFactor: 1.5,
+    scalingFactor: 0,
+  },
+
+  /** Share of the prize pool held for last-standing place bonuses. */
+  placePotPercent: 20,
+  placeSplits: {
+    1: [1],
+    2: [0.65, 0.35],
+    3: [0.5, 0.3, 0.2],
+    4: [0.4, 0.25, 0.2, 0.15],
   },
 
   gameRules: {
@@ -59,7 +64,7 @@ export function getKOHThreshold(playerCount, tournament = null) {
   for (const t of thresholds) {
     if (playerCount <= t.maxPlayers) return t.threshold;
   }
-  return 6;
+  return 3;
 }
 
 export function determineRoundRobinType(playerCount) {

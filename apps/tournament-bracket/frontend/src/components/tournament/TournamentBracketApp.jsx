@@ -177,7 +177,7 @@ export default function TournamentBracketApp() {
           onClick={() => setScreen('cash-climb')}
         >
           <strong>Cash Climb</strong>
-          <span>Round robin, 3-loss cut, then King of the Hill — same format as the ladder tournament, separate event.</span>
+          <span>Round robin, 3-loss cut, then King of the Hill at 3 players.</span>
         </button>
         <button
           type="button"

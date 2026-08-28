@@ -1,8 +1,10 @@
 import React from 'react';
 import { formatMoney } from './cashClimbEngine.js';
+import { placeOrdinal } from './cashClimbPlacePrizes.js';
 import WinLoss from './WinLoss.jsx';
 
 function tag(player) {
+  if (player.finish_place) return placeOrdinal(player.finish_place);
   if (player.eliminated) return 'Out';
   if (player.in_koh) return 'KOH';
   return 'In';
@@ -27,7 +29,7 @@ export default function CashClimbTvStandings({ board }) {
               )}
             </span>
             <span className="cc-tv-standings-paid">{formatMoney(p.total_payout)}</span>
-            <span className={`cc-tv-tag cc-tv-tag-${tag(p).toLowerCase()}`}>{tag(p)}</span>
+            <span className={`cc-tv-tag ${p.finish_place ? 'cc-tv-tag-place' : `cc-tv-tag-${tag(p).toLowerCase()}`}`}>{tag(p)}</span>
           </li>
         ))}
       </ol>
