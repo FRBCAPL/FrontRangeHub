@@ -4,7 +4,7 @@ import CashClimbPrizePreview from './CashClimbPrizePreview.jsx';
 import { OPEN_TOURNAMENT_STRUCTURE, determineRoundRobinType, getFormatDisplay } from './openTournamentStructure.js';
 import { formatMoney, todayDateInput } from './cashClimbEngine.js';
 import { previewPrizeSchedule } from './cashClimbSchedule.js';
-import { computePlacePrizes, maxPlaceCount, placePotPercent } from './cashClimbPlacePrizes.js';
+import { computePlacePrizes, maxPlaceCount, lastStandingSplitNote } from './cashClimbPlacePrizes.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
 
@@ -46,7 +46,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
   const prizePool = (Number(entryFee) || 0) * players.length;
   const maxPlaces = maxPlaceCount(players.length);
   const placeCount = Math.min(Number(placeCountMode) || 1, maxPlaces);
-  const places = computePlacePrizes({ prizePool, placeCount });
+  const places = computePlacePrizes({ prizePool, placeCount, playerCount: players.length });
 
   const prizePreview = useMemo(
     () => previewPrizeSchedule(players, autoType, prizePool, places.reserved),
@@ -204,15 +204,9 @@ export default function CashClimbSetup({ onStart, onCancel }) {
           </label>
         </div>
         <p className="players-count">
-          Last standing {placePotPercent()}%
+          Last standing is leftover after the climb
           {prizePool ? ` (${formatMoney(places.reserved)} of ${formatMoney(prizePool)})` : ''}
-          {placeCount === 1
-            ? ' • all to the winner'
-            : placeCount === 2
-              ? ' • split 65 / 35'
-              : placeCount === 3
-                ? ' • split 50 / 30 / 20'
-                : ' • split 40 / 25 / 20 / 15'}
+          {` • ${lastStandingSplitNote(placeCount)}`}
         </p>
         <label>
           Players

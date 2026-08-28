@@ -1,8 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { climbRoundPayouts, futureClimbReserve, roundWinCost } from './cashClimbClimb.js';
+import { climbRoundPayouts, futureClimbReserve, roundWinCost, minimumClimbCost } from './cashClimbClimb.js';
 import { previewPrizeSchedule } from './cashClimbSchedule.js';
 import { computePlacePrizes } from './cashClimbPlacePrizes.js';
+import { eventRoundPlan, climbNeedForField } from './cashClimbDuration.js';
 
 describe('Cash Climb $1 ladder', () => {
   it('parks a one-match $1 climb for later rounds', () => {
@@ -95,20 +96,33 @@ describe('Cash Climb $1 ladder', () => {
     assert.equal(held.perMatch, 14);
   });
 
+  it('parks leftover after the $2 climb as last standing', () => {
+    const need = climbNeedForField(13);
+    const places = computePlacePrizes({ prizePool: 260, placeCount: 1, climbNeed: need });
+    const plan = eventRoundPlan(13).map((round) => ({
+      matchCount: round.matchCount,
+      byeCount: round.byeCount || 0,
+    }));
+    assert.equal(need, minimumClimbCost(plan, 0));
+    assert.ok(need >= 2);
+    assert.equal(places.matchPool, Math.min(260, need));
+    assert.equal(places.first, Math.max(0, 260 - places.matchPool));
+    assert.equal(places.reserved, places.first);
+  });
+
   it('previews a 13-player ladder that opens at $2 and climbs into King of the Hill', () => {
     const players = Array.from({ length: 13 }, (_, i) => ({ name: `P${i + 1}` }));
-    const places = computePlacePrizes({ prizePool: 260, placeCount: 1 });
+    const places = computePlacePrizes({ prizePool: 260, placeCount: 1, playerCount: 13 });
     const preview = previewPrizeSchedule(players, 'single', 260, places.reserved);
     assert.ok(preview.rrRounds >= 1);
     assert.ok(preview.kohRounds >= 1);
+    assert.equal(preview.available, places.matchPool);
     const paid = preview.rounds.filter((round) => round.perWin > 0);
     assert.ok(paid[0].perWin >= 2);
-    assert.ok(paid[1].perWin >= paid[0].perWin + 1);
-    let last = 0;
+    let last = 1;
     paid.forEach((round) => {
-      assert.ok(round.perWin >= last, `${round.label} per-win ${round.perWin} dropped from ${last}`);
+      assert.ok(round.perWin >= last + 1, `${round.label} per-win ${round.perWin} did not climb from ${last}`);
       last = round.perWin;
     });
-    assert.ok(last > paid[0].perWin);
   });
 });

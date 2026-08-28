@@ -1,4 +1,5 @@
 import { getKOHThreshold, OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
+import { minimumClimbCost } from './cashClimbClimb.js';
 
 function matchMinutes(raceTo, gameType) {
   const race = Math.max(1, Number(raceTo) || 5);
@@ -146,6 +147,14 @@ export function maxEventRoundsUntilWinner(playerCount, tournament = null) {
 /** Prize math uses the longest RR+KOH path so early rounds can pay high and still climb $1 each round. */
 export function prizeEventRoundPlan(playerCount, tournament = null) {
   return eventRoundPlan(playerCount, tournament, false);
+}
+
+export function climbNeedForField(playerCount, tournament = null, lastPerWin = 0) {
+  const plan = eventRoundPlan(playerCount, tournament);
+  return minimumClimbCost(
+    plan.map((round) => ({ matchCount: round.matchCount, byeCount: round.byeCount || 0 })),
+    lastPerWin
+  );
 }
 
 function remainingKohShape(lossCounts) {

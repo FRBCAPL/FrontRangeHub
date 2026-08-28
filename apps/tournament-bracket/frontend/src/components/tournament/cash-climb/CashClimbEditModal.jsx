@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
-import { computePlacePrizes, maxPlaceCount, placePotPercent } from './cashClimbPlacePrizes.js';
+import { computePlacePrizes, maxPlaceCount, lastStandingSplitNote } from './cashClimbPlacePrizes.js';
 import { cashClimbMoneyLocked } from './cashClimbEdit.js';
 
 const RACE_TO_PRESETS = ['1', '2', '3', '4', '5'];
@@ -44,7 +44,7 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
   const prizePool = (Number(entryFee) || 0) * playerCount;
   const maxPlaces = maxPlaceCount(playerCount);
   const placeCount = Math.min(Number(placeCountMode) || 1, maxPlaces);
-  const places = computePlacePrizes({ prizePool, placeCount });
+  const places = computePlacePrizes({ prizePool, placeCount, playerCount });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -183,15 +183,9 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
           </p>
         ) : (
           <p className="players-count">
-            Last standing {placePotPercent()}%
+            Last standing is leftover after the climb
             {prizePool ? ` (${formatMoney(places.reserved)} of ${formatMoney(prizePool)})` : ''}
-            {placeCount === 1
-              ? ' • all to the winner'
-              : placeCount === 2
-                ? ' • split 65 / 35'
-                : placeCount === 3
-                  ? ' • split 50 / 30 / 20'
-                  : ' • split 40 / 25 / 20 / 15'}
+            {` • ${lastStandingSplitNote(placeCount)}`}
           </p>
         )}
 

@@ -80,6 +80,8 @@ export function updateOpenTournament(state, patch = {}) {
     const places = computePlacePrizes({
       prizePool: next.totalPrizePool,
       placeCount,
+      playerCount: (next.players || []).length,
+      tournament: next,
     });
     next.placeCount = places.placeCount;
     next.firstPlacePrize = places.first;

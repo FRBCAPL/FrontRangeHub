@@ -61,8 +61,9 @@ describe('open Cash Climb engine', () => {
     assert.ok(state.rounds.length >= 1);
     assert.equal(state.stats.length, 4);
     const matchScheduled = state.prizeSchedule.reduce((sum, n) => sum + n, 0);
+    const places = computePlacePrizes({ prizePool: 80, placeCount: 1, playerCount: 4 });
     assert.ok(state.prizeSchedule.length > 1);
-    assert.ok(Math.abs(matchScheduled - 64) < 0.02);
+    assert.ok(Math.abs(matchScheduled - places.matchPool) < 0.02);
 
     state = playPending(state);
     assert.equal(state.status, 'completed');
@@ -80,7 +81,7 @@ describe('open Cash Climb engine', () => {
       roundRobinType: 'single',
       players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
     }));
-    const places = computePlacePrizes({ prizePool: 80, placeCount: 1 });
+    const places = computePlacePrizes({ prizePool: 80, placeCount: 1, playerCount: 4 });
     const round1 = getCurrentRound(state);
     const expectedRound1 = climbRoundPayouts({
       remaining: places.matchPool,
@@ -239,10 +240,13 @@ describe('open Cash Climb engine', () => {
       roundRobinType: 'single',
       players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
     });
-    assert.equal(setup.placePrizes.first, 6.4);
-    assert.equal(setup.placePrizes.second, 4);
-    assert.equal(setup.placePrizes.third, 3.2);
-    assert.equal(setup.placePrizes.fourth, 2.4);
+    const expected = computePlacePrizes({ prizePool: 80, placeCount: 4, playerCount: 4 });
+    assert.equal(setup.placePrizes.first, expected.first);
+    assert.equal(setup.placePrizes.second, expected.second);
+    assert.equal(setup.placePrizes.third, expected.third);
+    assert.equal(setup.placePrizes.fourth, expected.fourth);
+    assert.ok(expected.reserved >= 0);
+    assert.equal(expected.matchPool + expected.reserved, 80);
 
     const state = playPending(startTournament(setup));
     assert.equal(state.status, 'completed');
@@ -256,11 +260,11 @@ describe('open Cash Climb engine', () => {
       .filter((p) => p.player_id !== winner.player_id)
       .sort((a, b) => (b.eliminated_order || 0) - (a.eliminated_order || 0));
     assert.equal(byExit[0].finish_place, 2);
-    assert.equal(byExit[0].place_bonus, 4);
     assert.equal(byExit[1].finish_place, 3);
-    assert.equal(byExit[1].place_bonus, 3.2);
     assert.equal(byExit[2].finish_place, 4);
-    assert.equal(byExit[2].place_bonus, 2.4);
+    const extras = byExit.reduce((sum, p) => sum + (Number(p.place_bonus) || 0), 0);
+    assert.ok(extras >= 0);
+    assert.ok(Math.abs(extras - (state.placePrizes.second + state.placePrizes.third + state.placePrizes.fourth)) < 0.02);
   });
 
   it('stores the chosen race to', () => {
@@ -358,8 +362,9 @@ describe('open Cash Climb engine', () => {
     });
     let state = startTournament(setup);
     assert.equal(state.totalPrizePool, 120);
+    const places = computePlacePrizes({ prizePool: 120, placeCount: 1, playerCount: 6 });
     const matchScheduled = state.prizeSchedule.reduce((sum, n) => sum + n, 0);
-    assert.ok(Math.abs(matchScheduled - 96) < 0.02);
+    assert.ok(Math.abs(matchScheduled - places.matchPool) < 0.02);
     assert.ok(state.prizeSchedule.length > 1);
     for (let i = 0; i < 80; i += 1) {
       if (state.rounds.some((r) => r.round_name === 'King of the Hill')) break;

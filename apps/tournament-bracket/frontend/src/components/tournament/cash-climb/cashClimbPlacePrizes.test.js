@@ -8,20 +8,19 @@ import {
 } from './cashClimbPlacePrizes.js';
 
 describe('cash climb place prizes', () => {
-  it('gives the full 20% pot to 1st when paying 1st only', () => {
-    const places = computePlacePrizes({ prizePool: 320, placeCount: 1 });
+  it('parks leftover after the climb as 1st when paying 1st only', () => {
+    const places = computePlacePrizes({ prizePool: 320, placeCount: 1, climbNeed: 256 });
     assert.equal(places.first, 64);
     assert.equal(places.second, 0);
     assert.equal(places.third, 0);
     assert.equal(places.fourth, 0);
     assert.equal(places.reserved, 64);
     assert.equal(places.matchPool, 256);
-    assert.equal(places.potPercent, 20);
     assert.equal(listedPlacePrizes(places).length, 1);
   });
 
-  it('splits the 20% pot 40 / 25 / 20 / 15 for top 4', () => {
-    const places = computePlacePrizes({ prizePool: 320, placeCount: 4 });
+  it('splits leftover 40 / 25 / 20 / 15 for top 4', () => {
+    const places = computePlacePrizes({ prizePool: 320, placeCount: 4, climbNeed: 256 });
     assert.equal(places.first, 25.6);
     assert.equal(places.second, 16);
     assert.equal(places.third, 12.8);
@@ -31,12 +30,19 @@ describe('cash climb place prizes', () => {
     assert.equal(listedPlacePrizes(places).length, 4);
   });
 
-  it('splits the 20% pot 65 / 35 for 1st and 2nd', () => {
-    const places = computePlacePrizes({ prizePool: 320, placeCount: 2 });
+  it('splits leftover 65 / 35 for 1st and 2nd', () => {
+    const places = computePlacePrizes({ prizePool: 320, placeCount: 2, climbNeed: 256 });
     assert.equal(places.first, 41.6);
     assert.equal(places.second, 22.4);
     assert.equal(places.reserved, 64);
     assert.equal(places.matchPool, 256);
+  });
+
+  it('reserves nothing for last standing if the climb needs the whole pool', () => {
+    const places = computePlacePrizes({ prizePool: 100, placeCount: 1, climbNeed: 140 });
+    assert.equal(places.matchPool, 100);
+    assert.equal(places.first, 0);
+    assert.equal(places.reserved, 0);
   });
 
   it('orders last standing as winner then most recently eliminated', () => {

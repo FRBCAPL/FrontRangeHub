@@ -9,7 +9,8 @@ import {
   climbRoundPayouts,
   getRoundGameType,
 } from './cashClimbSchedule.js';
-import { remainingEventRoundsFromState, climbShapeForPayout } from './cashClimbDuration.js';
+import { remainingEventRoundsFromState, climbShapeForPayout, remainingClimbShape } from './cashClimbDuration.js';
+import { minimumClimbCost } from './cashClimbClimb.js';
 import {
   computePlacePrizes,
   lastStandingFinishers,
@@ -72,6 +73,7 @@ export function createOpenTournament(config) {
   const places = computePlacePrizes({
     prizePool: totalPrizePool,
     placeCount: parsePlaceCount(config.placeCount),
+    playerCount: players.length,
   });
 
   return {
@@ -153,6 +155,27 @@ function remainingAfterReserved(state) {
   return Math.max(0, money((state.totalPrizePool || 0) - reservedPlaceTotal(state) - paidOutTotal(state)));
 }
 
+function assignPlacePrizes(state, places) {
+  state.placeCount = places.placeCount;
+  state.placePrizes = {
+    first: places.first,
+    second: places.second,
+    third: places.third,
+    fourth: places.fourth,
+  };
+  state.firstPlacePrize = places.first;
+  state.firstPlacePercent = places.potPercent;
+  return places;
+}
+
+function syncPlacePrizesForShape(state, shape, lastPerWin) {
+  return assignPlacePrizes(state, computePlacePrizes({
+    prizePool: remainingUnpaid(state),
+    placeCount: state.placeCount,
+    climbNeed: minimumClimbCost(shape, lastPerWin),
+  }));
+}
+
 export function lastCompletedClimb(state, koh = false) {
   const rounds = [...(state.rounds || [])].reverse();
   const last = rounds.find((r) => {
@@ -169,8 +192,6 @@ export function lastCompletedClimb(state, koh = false) {
 
 function lastPerWinForPhase(state) {
   return Math.max(
-    Number(state.lastRrPerWin) || 0,
-    Number(state.lastKohPerWin) || 0,
     lastCompletedClimb(state, false).perWin,
     lastCompletedClimb(state, true).perWin
   );
@@ -184,14 +205,26 @@ function consumePrizeRound(state) {
   state.prizeRoundsLeft = Math.max(1, current - 1);
 }
 
+function climbNeedShape(state, numMatches, numByes) {
+  const live = remainingClimbShape(state);
+  const current = {
+    matchCount: Math.max(0, Math.round(Number(numMatches) || 0)),
+    byeCount: Math.max(0, Math.round(Number(numByes) || 0)),
+  };
+  if (!live.length) return [current];
+  return [current, ...live.slice(1)];
+}
+
 function payoutsForNewRound(state, numMatches, numByes, koh = false) {
   const shape = climbShapeForPayout(state, numMatches, numByes);
+  const lastPerWin = lastPerWinForPhase(state);
+  syncPlacePrizesForShape(state, climbNeedShape(state, numMatches, numByes), lastPerWin);
   const payouts = climbRoundPayouts({
     remaining: remainingAfterReserved(state),
     remainingRounds: Math.max(1, shape.length),
     numMatches,
     numByes,
-    lastPerWin: lastPerWinForPhase(state),
+    lastPerWin,
     shape,
   });
   if (koh) state.lastKohPerWin = payouts.perMatch;
@@ -210,12 +243,14 @@ export function recomputePendingRoundPayouts(state) {
   const regular = pending.filter((m) => !m.is_bye && m.player2_id);
   const byes = pending.filter((m) => m.is_bye || !m.player2_id);
   const shape = climbShapeForPayout(state, regular.length, byes.length);
+  const lastPerWin = lastPerWinForPhase(state);
+  syncPlacePrizesForShape(state, climbNeedShape(state, regular.length, byes.length), lastPerWin);
   const payouts = climbRoundPayouts({
     remaining: remainingAfterReserved(state),
     remainingRounds: Math.max(1, shape.length),
     numMatches: regular.length,
     numByes: byes.length,
-    lastPerWin: lastPerWinForPhase(state),
+    lastPerWin,
     shape,
   });
   round.prize_per_round = payouts.roundPrize;
@@ -298,19 +333,12 @@ export function startTournament(state) {
   }
 
   next.totalPrizePool = money(next.entryFee * next.players.length);
-  const places = computePlacePrizes({
+  const places = assignPlacePrizes(next, computePlacePrizes({
     prizePool: next.totalPrizePool,
     placeCount: next.placeCount,
-  });
-  next.placeCount = places.placeCount;
-  next.placePrizes = {
-    first: places.first,
-    second: places.second,
-    third: places.third,
-    fourth: places.fourth,
-  };
-  next.firstPlacePrize = places.first;
-  next.firstPlacePercent = places.potPercent;
+    playerCount: next.players.length,
+    tournament: next,
+  }));
   next.pairingOffset = 0;
   next.eliminationSeq = 0;
 
@@ -623,6 +651,11 @@ function roundComplete(state, round) {
 }
 
 function completeTournament(state, winner) {
+  assignPlacePrizes(state, computePlacePrizes({
+    prizePool: remainingUnpaid(state),
+    placeCount: state.placeCount,
+    climbNeed: 0,
+  }));
   const prizes = state.placePrizes || {};
   const finishers = lastStandingFinishers(state.stats, winner);
   const placeCount = parsePlaceCount(state.placeCount);

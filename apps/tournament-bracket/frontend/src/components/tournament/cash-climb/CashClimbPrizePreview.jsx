@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatMoney } from './cashClimbEngine.js';
-import { listedPlacePrizes, placePotPercent } from './cashClimbPlacePrizes.js';
+import { listedPlacePrizes } from './cashClimbPlacePrizes.js';
 
 export default function CashClimbPrizePreview({
   prizePool,
@@ -23,7 +23,7 @@ export default function CashClimbPrizePreview({
     <div className="cc-prize-preview">
       <p className="players-count">
         Prize pool {formatMoney(prizePool)}
-        {listed.length ? ` • Last standing ${placePotPercent()}% (${formatMoney(reserved)})` : ''}
+        {listed.length ? ` • Last standing leftover ${formatMoney(reserved)}` : ''}
         {' '}• Match pool {formatMoney(preview.available)}
         {preview.expectedRounds ? ` • about ${preview.expectedRounds} round${preview.expectedRounds === 1 ? '' : 's'}` : ''}
         {preview.rrRounds || preview.kohRounds
@@ -62,7 +62,7 @@ export default function CashClimbPrizePreview({
         </tbody>
       </table>
       <p className="cc-prize-preview-note">
-        This table is the starting estimate. Match money is one ladder from round 1 through King of the Hill. Round 1 pays at least $2 per win. Each later round pays $1 more per win when leftover can cover that climb without later rounds dropping. King of the Hill starts at 3 players. Each win is a whole dollar. Last standing is reserved separately.
+        This table is the starting estimate. Match money is funded first so round 1 can pay $2 and later rounds can climb $1. Whatever is left of the prize pool is last standing. Extra rounds can shrink that leftover; a short night can grow it. King of the Hill starts at 3 players. Each win is a whole dollar.
       </p>
     </div>
   );

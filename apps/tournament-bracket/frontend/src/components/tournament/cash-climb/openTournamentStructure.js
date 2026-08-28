@@ -35,8 +35,8 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
     scalingFactor: 0,
   },
 
-  /** Share of the prize pool held for last-standing place bonuses. */
-  placePotPercent: 20,
+  /** Unused for live events. Last standing is leftover after the match climb is funded. */
+  placePotPercent: 0,
   placeSplits: {
     1: [1],
     2: [0.65, 0.35],

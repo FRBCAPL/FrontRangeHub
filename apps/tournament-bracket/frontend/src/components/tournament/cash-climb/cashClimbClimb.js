@@ -37,6 +37,18 @@ function holdCost(win, shape) {
   );
 }
 
+/** Dollars needed to open at $2 (or last+$1) and climb $1 on every round in `shape`. */
+export function minimumClimbCost(shape, lastPerWin = 0) {
+  const last = Math.max(0, Math.round(Number(lastPerWin) || 0));
+  const start = last > 0 ? last + CLIMB_STEP : MIN_OPENING_WIN;
+  const rounds = (shape || []).map((round) => ({
+    matchCount: Math.max(0, Math.round(Number(round.matchCount) || 0)),
+    byeCount: Math.max(0, Math.round(Number(round.byeCount) || 0)),
+  }));
+  if (!rounds.length) return 0;
+  return shapeCost(start, rounds);
+}
+
 function asShape(numMatches, numByes, remainingRounds, shape) {
   const current = {
     matchCount: Math.max(0, Math.round(Number(numMatches) || 0)),

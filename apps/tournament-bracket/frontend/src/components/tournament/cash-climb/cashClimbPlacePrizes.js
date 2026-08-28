@@ -1,4 +1,5 @@
 import { OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
+import { climbNeedForField } from './cashClimbDuration.js';
 
 function money(n) {
   return Math.round(Number(n || 0) * 100) / 100;
@@ -24,21 +25,40 @@ export function placeOrdinal(place) {
   return String(place);
 }
 
-export function placePotPercent() {
-  return Number(OPEN_TOURNAMENT_STRUCTURE.placePotPercent) || 20;
+export function lastStandingSplitNote(placeCount) {
+  const count = parsePlaceCount(placeCount);
+  if (count <= 1) return 'all to the winner';
+  if (count === 2) return 'split 65 / 35';
+  if (count === 3) return 'split 50 / 30 / 20';
+  return 'split 40 / 25 / 20 / 15';
 }
 
-export function computePlacePrizes({ prizePool, placeCount }) {
+/**
+ * Fund the $2 + $1 climb first. Leftover after that climb is last standing.
+ * Pass `climbNeed` for a live remaining path, or `playerCount` for the start-of-event plan.
+ */
+export function computePlacePrizes({
+  prizePool,
+  placeCount,
+  climbNeed = null,
+  playerCount = 0,
+  tournament = null,
+  lastPerWin = 0,
+} = {}) {
   const pool = money(prizePool);
   const count = parsePlaceCount(placeCount);
-  const pot = money(pool * placePotPercent() / 100);
+  const need = climbNeed != null && Number.isFinite(Number(climbNeed))
+    ? Math.max(0, Math.round(Number(climbNeed) || 0))
+    : climbNeedForField(playerCount, tournament, lastPerWin);
+  const matchPool = money(Math.min(pool, need));
+  const leftover = money(Math.max(0, pool - matchPool));
   const splits = OPEN_TOURNAMENT_STRUCTURE.placeSplits?.[count] || OPEN_TOURNAMENT_STRUCTURE.placeSplits[1];
-  let first = money(pot * (splits[0] || 1));
-  let second = count >= 2 ? money(pot * (splits[1] || 0)) : 0;
-  let third = count >= 3 ? money(pot * (splits[2] || 0)) : 0;
-  let fourth = count >= 4 ? money(pot * (splits[3] || 0)) : 0;
+  let first = money(leftover * (splits[0] || 1));
+  let second = count >= 2 ? money(leftover * (splits[1] || 0)) : 0;
+  let third = count >= 3 ? money(leftover * (splits[2] || 0)) : 0;
+  let fourth = count >= 4 ? money(leftover * (splits[3] || 0)) : 0;
   const reserved = money(first + second + third + fourth);
-  const drift = money(pot - reserved);
+  const drift = money(leftover - reserved);
   if (drift) first = money(first + drift);
 
   return {
@@ -49,7 +69,8 @@ export function computePlacePrizes({ prizePool, placeCount }) {
     fourth,
     reserved: money(first + second + third + fourth),
     matchPool: money(Math.max(0, pool - first - second - third - fourth)),
-    potPercent: placePotPercent(),
+    potPercent: pool > 0 ? money((money(first + second + third + fourth) / pool) * 100) : 0,
+    climbNeed: need,
     extrasScaled: false,
   };
 }

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { createOpenTournament, startTournament, recordMatchResult, getCurrentRound, getRoundMatches } from './cashClimbEngine.js';
+import { createOpenTournament, startTournament, recordMatchResult, continueCashClimb, getCurrentRound, getRoundMatches } from './cashClimbEngine.js';
 import { buildCashClimbTvBoard, matchGridColumns, matchResultLine, parseTvLayout, cashClimbTvHref, tickerCopy, tickerResultLines, tickerRoundLabel } from './cashClimbTv.js';
 
 describe('Cash Climb TV board', () => {
@@ -110,6 +110,7 @@ describe('Cash Climb TV board', () => {
     }));
     const first = getRoundMatches(state, getCurrentRound(state).id).find((m) => m.status === 'pending');
     state = recordMatchResult(state, first.id, first.player1_id);
+    state = continueCashClimb(state);
     const board = buildCashClimbTvBoard(state);
     assert.equal(board.kohStarted, true);
     assert.ok(board.roundName.includes('King of the Hill'));
