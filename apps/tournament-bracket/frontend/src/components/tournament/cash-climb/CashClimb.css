@@ -493,6 +493,7 @@
   justify-content: center;
   z-index: 80;
   padding: 16px;
+  overflow: auto;
 }
 
 .cc-modal {
@@ -505,9 +506,24 @@
 }
 
 .cc-edit-modal {
+  display: flex;
+  flex-direction: column;
   width: min(34rem, 100%);
-  max-height: 90vh;
+  max-height: min(90dvh, calc(100dvh - 32px));
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cc-edit-modal h3,
+.cc-edit-modal .cc-modal-meta {
+  flex-shrink: 0;
+}
+
+.cc-edit-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .cc-edit-modal label {
@@ -572,7 +588,8 @@
 .cc-edit-modal .form-actions {
   display: flex;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: 12px;
+  flex-shrink: 0;
 }
 
 .cc-edit-modal .btn-primary,

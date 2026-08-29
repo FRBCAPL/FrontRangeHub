@@ -88,6 +88,7 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
         <h3 id="cc-edit-title">Edit tournament</h3>
         <p className="cc-modal-meta">Changes apply to this event. Match results already recorded stay as they are.</p>
 
+        <div className="cc-edit-modal-body">
         <div className="cc-field-row">
           <label>
             Tournament name
@@ -204,6 +205,7 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
             setPlayerNames((rows) => rows.map((row) => (row.id === id ? { ...row, name } : row)));
           }}
         />
+        </div>
 
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={onClose}>
