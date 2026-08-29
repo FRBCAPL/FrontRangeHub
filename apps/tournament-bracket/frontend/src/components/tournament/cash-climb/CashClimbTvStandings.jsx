@@ -18,9 +18,7 @@ export default function CashClimbTvStandings({ board, layout = 'landscape' }) {
       ? 'King of the Hill'
       : 'Standings';
   const count = board.standings.length;
-  const cols = layout === 'landscape'
-    ? (count >= 12 ? 2 : 1)
-    : (count >= 16 ? 2 : 1);
+  const cols = layout === 'portrait' ? 1 : (count >= 14 ? 2 : 1);
   const rows = Math.max(1, Math.ceil(count / cols));
 
   return (
@@ -40,15 +38,21 @@ export default function CashClimbTvStandings({ board, layout = 'landscape' }) {
             className={`cc-tv-standings-row ${p.eliminated ? 'is-out' : ''} ${p.in_koh ? 'is-koh' : ''} ${i === 0 ? 'is-lead' : ''}`}
           >
             <span className="cc-tv-rank">{i + 1}</span>
-            <span className="cc-tv-standings-name">{p.player_name}</span>
-            <span className="cc-tv-standings-wl">
-              <strong><WinLoss wins={p.wins} losses={p.losses} /></strong>
-              {board.kohStarted && (
-                <small><WinLoss prefix="KOH" wins={p.koh_wins} losses={p.koh_losses} /></small>
-              )}
+            <span className="cc-tv-standings-main">
+              <span className="cc-tv-standings-name">{p.player_name}</span>
+              <span className="cc-tv-standings-meta">
+                <WinLoss wins={p.wins} losses={p.losses} />
+                {board.kohStarted && (
+                  <>
+                    {' · '}
+                    <WinLoss prefix="KOH" wins={p.koh_wins} losses={p.koh_losses} />
+                  </>
+                )}
+                {' · '}
+                <span className={`cc-tv-tag ${p.finish_place ? 'cc-tv-tag-place' : `cc-tv-tag-${tag(p).toLowerCase()}`}`}>{tag(p)}</span>
+              </span>
             </span>
             <span className="cc-tv-standings-paid">{formatMoney(p.total_payout)}</span>
-            <span className={`cc-tv-tag ${p.finish_place ? 'cc-tv-tag-place' : `cc-tv-tag-${tag(p).toLowerCase()}`}`}>{tag(p)}</span>
           </li>
         ))}
       </ol>

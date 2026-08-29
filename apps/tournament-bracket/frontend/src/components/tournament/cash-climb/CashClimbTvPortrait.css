@@ -98,9 +98,9 @@
 }
 
 .cc-tv-portrait .cc-tv-standings-row {
-  grid-template-columns: 1.8rem minmax(0, 1.4fr) auto auto auto;
-  gap: 6px;
-  padding: 0 6px;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 0 8px;
 }
 
 .cc-tv-portrait .cc-tv-standings-name {
@@ -108,7 +108,7 @@
 }
 
 .cc-tv-portrait .cc-tv-standings-paid {
-  min-width: 5.2rem;
+  min-width: 0;
 }
 
 .cc-tv-portrait .cc-tv-tag {

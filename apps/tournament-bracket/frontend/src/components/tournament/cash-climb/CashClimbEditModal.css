@@ -1,9 +1,12 @@
 .cc-modal.cc-edit-modal {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
   width: min(56rem, calc(100vw - 32px));
-  max-height: min(90dvh, calc(100dvh - 32px));
+  height: calc(100dvh - 32px);
+  max-height: calc(100dvh - 32px);
   min-height: 0;
+  margin: auto;
   overflow: hidden;
 }
 
@@ -14,10 +17,12 @@
 .cc-edit-modal-panes {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(16rem, 0.95fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 16px;
   flex: 1 1 auto;
   min-height: 0;
   margin-top: 8px;
+  overflow: hidden;
 }
 
 .cc-edit-pane {
@@ -25,6 +30,7 @@
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
   padding: 12px 14px;
   border-radius: 12px;
   background: rgba(2, 6, 23, 0.45);
@@ -87,10 +93,6 @@
 @media (max-width: 760px) {
   .cc-edit-modal-panes {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, auto) minmax(12rem, 1fr);
-  }
-
-  .cc-edit-pane-scroll {
-    max-height: 28vh;
+    grid-template-rows: minmax(0, 0.95fr) minmax(0, 1.05fr);
   }
 }

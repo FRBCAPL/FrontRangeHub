@@ -24,7 +24,7 @@
 }
 
 .cc-tv-landscape .cc-tv-standings-row {
-  grid-template-columns: 2.2rem minmax(0, 1fr) auto auto auto;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
 }
 
 .cc-tv-landscape .cc-tv-standings-name {
