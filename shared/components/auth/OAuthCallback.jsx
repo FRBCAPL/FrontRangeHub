@@ -82,10 +82,16 @@ const OAuthCallback = ({ onSuccess }) => {
         const pendingSignup = localStorage.getItem('pendingOAuthSignup');
         const signupInfo = pendingSignup ? JSON.parse(pendingSignup) : null;
         
-        // Where to redirect after successful OAuth (set before OAuth by SupabaseLogin/SupabaseSignupModal)
-        const returnTo = localStorage.getItem('oauthReturnTo') || '/hub';
+        // Where to redirect after successful OAuth (set before OAuth by SupabaseLogin)
+        const storedReturn = (localStorage.getItem('oauthReturnTo') || '').split('?')[0];
         localStorage.removeItem('oauthReturnTo');
-        const redirectPath = returnTo && returnTo.startsWith('/') ? returnTo : '/hub';
+        let redirectPath = '/ladder';
+        if (storedReturn.startsWith('/tournament-bracket')) redirectPath = '/tournament-bracket';
+        else if (storedReturn.startsWith('/ladder')) redirectPath = '/ladder';
+        else if (storedReturn.startsWith('/league')) redirectPath = '/league';
+        else if (storedReturn.startsWith('/') && storedReturn !== '/' && storedReturn !== '/hub' && storedReturn !== '/auth/callback') {
+          redirectPath = storedReturn;
+        }
         
         const result = await supabaseAuthService.handleOAuthCallback();
         

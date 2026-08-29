@@ -2,6 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabaseAuthService from '../../services/supabaseAuthService.js';
 import { supabase } from '../../config/supabase';
+import { peekLoginReturn, clearLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
+
+let oauthCallbackStarted = false;
+let oauthResolvedReturnPath = '';
+
+function resolveOAuthReturnPathOnce() {
+  if (oauthResolvedReturnPath) return oauthResolvedReturnPath;
+  const stored = peekLoginReturn() || '';
+  if (stored.startsWith('/tournament-bracket')) oauthResolvedReturnPath = '/tournament-bracket';
+  else if (stored.startsWith('/ladder')) oauthResolvedReturnPath = '/ladder';
+  else if (stored.startsWith('/league')) oauthResolvedReturnPath = '/league';
+  else if (stored && stored !== '/' && stored !== '/hub' && stored !== '/auth/callback') oauthResolvedReturnPath = stored;
+  else oauthResolvedReturnPath = '/ladder';
+  return oauthResolvedReturnPath;
+}
 
 /**
  * OAuth Callback Handler
@@ -47,21 +62,19 @@ const OAuthCallback = ({ onSuccess }) => {
       return;
     }
     
-    let isProcessing = false; // Prevent multiple executions
-    
     const handleOAuthCallback = async () => {
-      // Prevent multiple executions
-      if (isProcessing) {
+      if (oauthCallbackStarted) {
         console.log('⏸️ OAuth callback already processing, skipping...');
         return;
       }
-      
-      isProcessing = true;
+      oauthCallbackStarted = true;
+      const returnPath = resolveOAuthReturnPathOnce();
       
       try {
         console.log('🔄 Handling OAuth callback...');
         console.log('🔍 Current pathname:', window.location.pathname);
         console.log('🔍 Current hash:', window.location.hash);
+        console.log('🔍 OAuth return path:', returnPath);
         
         // Check if this is for claiming a position or new signup
         const pendingClaim = localStorage.getItem('pendingClaim');
@@ -138,7 +151,7 @@ const OAuthCallback = ({ onSuccess }) => {
                       result.user
                     );
                   } else {
-                    navigate('/hub');
+                    navigate(returnPath);
                   }
                 }, 2000);
                 return;
@@ -252,15 +265,20 @@ const OAuthCallback = ({ onSuccess }) => {
             // Also ensure Supabase auth service has stored the data
             console.log('✅ OAuth login complete - user should be authenticated');
             
-            // Show success message briefly, then redirect to hub
+            // Return immediately to tournament; keep a short pause for other apps
             setLoading(false);
             setSuccess(true);
-            setTimeout(() => {
-              navigate('/hub', { replace: true });
-            }, 2000);
+            if (returnPath === '/tournament-bracket') {
+              clearLoginReturn();
+              navigate(returnPath, { replace: true });
+            } else {
+              clearLoginReturn();
+              setTimeout(() => {
+                navigate(returnPath, { replace: true });
+              }, 2000);
+            }
           } else {
-            // Redirect to hub if no callback provided
-            navigate('/hub');
+            navigate(returnPath);
           }
         } else {
           console.error('❌ OAuth callback failed:', result.message);
@@ -271,6 +289,8 @@ const OAuthCallback = ({ onSuccess }) => {
           }, 3000);
         }
       } catch (err) {
+        oauthCallbackStarted = false;
+        oauthResolvedReturnPath = '';
         console.error('❌ OAuth callback error:', err);
         localStorage.removeItem('pendingClaim');
         setError('An error occurred during authentication. Please try again.');
@@ -279,16 +299,10 @@ const OAuthCallback = ({ onSuccess }) => {
         }, 3000);
       } finally {
         setLoading(false);
-        isProcessing = false; // Reset flag
       }
     };
 
     handleOAuthCallback();
-    
-    // Cleanup function
-    return () => {
-      isProcessing = false;
-    };
   }, [navigate, onSuccess]);
 
   return (

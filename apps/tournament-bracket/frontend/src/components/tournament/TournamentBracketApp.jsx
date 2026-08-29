@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buildSingleElimination, buildDoubleElimination } from './bracketLogic';
 import BracketDisplay from './BracketDisplay';
@@ -8,6 +8,7 @@ import CashClimbApp from './cash-climb/CashClimbApp';
 import { loadCashClimb } from './cash-climb/cashClimbStore';
 import { formatTournamentDate } from './cash-climb/cashClimbEngine.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
+import { clearLoginReturn } from './tournamentOperators.js';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
 
@@ -26,6 +27,9 @@ function loadElim() {
 
 export default function TournamentBracketApp() {
   const navigate = useNavigate();
+  useEffect(() => {
+    clearLoginReturn();
+  }, []);
   const [screen, setScreen] = useState(() => {
     if (loadCashClimb()) return 'cash-climb';
     if (loadElim()) return 'elim-play';
@@ -146,7 +150,7 @@ export default function TournamentBracketApp() {
     <div className="tournament-bracket-app">
       <header className="tb-header">
         <h1>Open Tournament</h1>
-        <p>Run an event that is not tied to the ladder. No sign-in required — the event stays in this browser. Ladder tournaments stay on the ladder.</p>
+        <p>Run an event that is not tied to the ladder. The event stays in this browser. Ladder tournaments stay on the ladder.</p>
       </header>
 
       {(cashClimb || elim) && (

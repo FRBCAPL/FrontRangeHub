@@ -24,8 +24,9 @@ import {
   CUELESS_FULL_MATCH_PLAYLIST_URL,
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
 import { openCashClimbTv } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbTv.js';
+import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 
-const Homepage = () => {
+const Homepage = ({ canRunTournament = false }) => {
   const navigate = useNavigate();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -69,6 +70,7 @@ const Homepage = () => {
   };
 
   const handleNavigateToTournamentBracket = () => {
+    rememberLoginReturn('/tournament-bracket');
     navigate('/tournament-bracket');
   };
 
@@ -491,17 +493,20 @@ const Homepage = () => {
           </div>
         </div>
 
-        {/* Tournament Bracket link */}
         <div className="legends-tracker-small tournament-bracket-link">
           <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToTournamentBracket}>
             🏆 Tournament Bracket
           </button>
-          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={() => openCashClimbTv('landscape')}>
-            Tournament TV wide 16:9
-          </button>
-          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={() => openCashClimbTv('portrait')}>
-            Tournament TV tall 9:16
-          </button>
+          {canRunTournament && (
+            <>
+              <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={() => openCashClimbTv('landscape')}>
+                Tournament TV wide 16:9
+              </button>
+              <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={() => openCashClimbTv('portrait')}>
+                Tournament TV tall 9:16
+              </button>
+            </>
+          )}
         </div>
 
         {/* EstateIt — estate inventory (not a league promo) */}

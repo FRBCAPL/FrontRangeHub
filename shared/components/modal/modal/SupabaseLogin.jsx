@@ -4,6 +4,16 @@ import AuthServiceStatus from './AuthServiceStatus.jsx';
 
 const SHOW_FACEBOOK = false; // Hidden while not working; OAuth code kept for future use
 
+function getHashAppPath() {
+  if (typeof window === 'undefined') return '/ladder';
+  const hash = window.location.hash || '';
+  if (hash.startsWith('#/')) {
+    const path = hash.slice(1).split('?')[0] || '/';
+    return path === '/auth/callback' ? '/ladder' : path;
+  }
+  return window.location.pathname || '/ladder';
+}
+
 /**
  * Supabase Login - Google OAuth + Email/Password
  * @param {function} onSuccess - callback when login succeeds
@@ -115,9 +125,13 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
     // Clear any Dues Tracker OAuth flag - this is Hub login, not Dues Tracker
     localStorage.removeItem('__DUES_TRACKER_OAUTH__');
     
-    // Store where to return after OAuth (hub, ladder, etc.)
-    const returnTo = typeof window !== 'undefined' ? (window.location.pathname || '/hub') : '/hub';
-    localStorage.setItem('oauthReturnTo', returnTo || '/hub');
+    // Keep an existing tournament return; HashRouter pathname is "/" and would send Google login to the ladder.
+    const existingReturn = (() => {
+      try { return sessionStorage.getItem('frontrange-login-return') || ''; } catch (_) { return ''; }
+    })();
+    if (!existingReturn.startsWith('/tournament-bracket')) {
+      localStorage.setItem('oauthReturnTo', getHashAppPath());
+    }
     
     try {
       const result = await supabaseAuthService.signInWithOAuth(provider);

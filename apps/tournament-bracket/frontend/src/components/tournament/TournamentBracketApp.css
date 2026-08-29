@@ -41,6 +41,21 @@
   color: #e0e7ff;
 }
 
+.tb-gate-login {
+  max-width: 420px;
+  margin: 0 auto 24px;
+  padding: 8px 12px 16px;
+}
+
+.tb-gate-login-title {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 1rem;
+  color: #a5b4fc;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .tb-create {
   max-width: 480px;
   margin: 0 auto;

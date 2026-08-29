@@ -99,7 +99,9 @@ import UserProfileModal from '@shared/components/modal/modal/UserProfileModal';
 import DuesTracker from '@apps/dues-tracker/frontend/src/components/dues/DuesTracker';
 import LegendsPoolLeagueTracker from './components/legends/LegendsPoolLeagueTracker';
 import TournamentBracketApp from '@apps/tournament-bracket/frontend/src/components/tournament/TournamentBracketApp';
+import TournamentBracketGate from '@apps/tournament-bracket/frontend/src/components/tournament/TournamentBracketGate';
 import CashClimbTvView from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbTvView';
+import { isTournamentOperator, peekLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
 import EstateFamilySignIn from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateFamilySignIn';
@@ -213,6 +215,7 @@ function redirectHashArcadeTvToStaticPage() {
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const getStoredValue = (key, fallback = "") => {
     if (typeof window === "undefined") return fallback;
     try {
@@ -395,6 +398,7 @@ function AppContent() {
     setUserToken(token || '');
     setUserType(userType || 'league');
     setIsAuthenticated(true);
+    setAdminLoading(true);
 
     // Store unified user data IMMEDIATELY
     localStorage.setItem("userFirstName", firstName);
@@ -418,6 +422,11 @@ function AppContent() {
       isAuthenticated: true,
       localStorageCheck: localStorage.getItem("isAuthenticated")
     });
+
+    const returnTo = peekLoginReturn();
+    if (returnTo && returnTo.startsWith('/tournament-bracket')) {
+      navigate('/tournament-bracket', { replace: true });
+    }
   };
 
   // --- Check if user is super admin ---
@@ -436,33 +445,35 @@ function AppContent() {
     return isAdminState;
   };
 
+  const canRunTournament = isAuthenticated && (isAdminState || isTournamentOperator(userEmail));
+
   // Check admin status when user logs in
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (isAuthenticated && userEmail) {
-        setAdminLoading(true);
-        try {
-          // Check if user is a super admin
-          const superAdminResult = await adminAuthService.isSuperAdmin(userEmail, userPin || 'supabase-auth');
-          setIsSuperAdminState(superAdminResult);
-          
-          // Check if user is any type of admin
-          const adminResult = await adminAuthService.isAdmin(userEmail, userPin || 'supabase-auth');
-          setIsAdminState(adminResult);
-          
-          console.log('🔍 Admin Status Check:', {
-            userEmail: userEmail,
-            userPin: userPin ? '***' : 'supabase-auth',
-            isSuperAdmin: superAdminResult,
-            isAdmin: adminResult
-          });
-        } catch (error) {
-          console.log('🔍 Admin check failed:', error.message);
-          setIsSuperAdminState(false);
-          setIsAdminState(false);
-        } finally {
-          setAdminLoading(false);
-        }
+      if (!isAuthenticated || !userEmail) {
+        setIsSuperAdminState(false);
+        setIsAdminState(false);
+        setAdminLoading(false);
+        return;
+      }
+      setAdminLoading(true);
+      try {
+        const superAdminResult = await adminAuthService.isSuperAdmin(userEmail, userPin || 'supabase-auth');
+        setIsSuperAdminState(superAdminResult);
+        const adminResult = await adminAuthService.isAdmin(userEmail, userPin || 'supabase-auth');
+        setIsAdminState(adminResult);
+        console.log('🔍 Admin Status Check:', {
+          userEmail: userEmail,
+          userPin: userPin ? '***' : 'supabase-auth',
+          isSuperAdmin: superAdminResult,
+          isAdmin: adminResult
+        });
+      } catch (error) {
+        console.log('🔍 Admin check failed:', error.message);
+        setIsSuperAdminState(false);
+        setIsAdminState(false);
+      } finally {
+        setAdminLoading(false);
       }
     };
 
@@ -504,6 +515,7 @@ function AppContent() {
     setIsAuthenticated(false);
     setIsAdminState(false);
     setIsSuperAdminState(false);
+    setAdminLoading(false);
     localStorage.removeItem("userFirstName");
     localStorage.removeItem("userLastName");
     localStorage.removeItem("userEmail");
@@ -899,15 +911,27 @@ function AppContent() {
               }
             />
 
-            {/* Tournament Bracket Route — open events live in the browser; no ladder login */}
+            {/* Tournament Bracket — operator (admin) only. TV display stays public. */}
             <Route
               path="/tournament-bracket"
               element={
-                <AppRouteWrapper appName="Tournament Bracket">
-                  <main className="main-app-content">
-                    <TournamentBracketApp />
-                  </main>
-                </AppRouteWrapper>
+                canRunTournament ? (
+                  <AppRouteWrapper appName="Tournament Bracket">
+                    <main className="main-app-content">
+                      <TournamentBracketApp />
+                    </main>
+                  </AppRouteWrapper>
+                ) : (
+                  <AppRouteWrapper appName="Tournament Bracket">
+                    <main className="main-app-content">
+                      <TournamentBracketGate
+                        isAuthenticated={isAuthenticated}
+                        adminLoading={adminLoading}
+                        onLoginSuccess={handleLoginSuccess}
+                      />
+                    </main>
+                  </AppRouteWrapper>
+                )
               }
             />
             <Route
@@ -1106,7 +1130,7 @@ function AppContent() {
             {/* Default Route - Homepage */}
             <Route
               path="/"
-              element={<Homepage />}
+              element={<Homepage canRunTournament={canRunTournament} />}
             />
             
             {/* Catch-all route */}
