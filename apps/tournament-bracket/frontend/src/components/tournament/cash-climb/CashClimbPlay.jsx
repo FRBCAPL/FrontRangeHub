@@ -5,6 +5,7 @@ import CashClimbProgressBar from './CashClimbProgressBar.jsx';
 import { formatMoney, getCurrentRound, getRoundMatches } from './cashClimbEngine.js';
 import { OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
+import { cashClimbKohRaceTo, cashClimbRrRaceTo, formatRaceLabel, raceToForMatch } from './cashClimbRace.js';
 import CashClimbPlayHeader from './CashClimbPlayHeader.jsx';
 import CashClimbMatchButton from './CashClimbMatchButton.jsx';
 import CashClimbEditModal from './CashClimbEditModal.jsx';
@@ -25,7 +26,8 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
   const inKoh = round?.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName;
   const durationEstimate = estimateCashClimbDuration({
     playerCount: tournament.stats?.length || tournament.players?.length || 0,
-    raceTo: tournament.raceTo,
+    raceTo: cashClimbRrRaceTo(tournament),
+    kohRaceTo: cashClimbKohRaceTo(tournament),
     gameType: tournament.gameType,
     tableCount: tournament.tableCount,
     kohThreshold: tournament.koh_threshold,
@@ -60,7 +62,11 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
           <section className="cc-round">
             <h2>{round.round_name}</h2>
             {pending[0] && (
-              <p className="cc-meta">This round: {formatMoney(pending[0].payout_amount)} per win</p>
+              <p className="cc-meta">
+                This round: {formatMoney(pending[0].payout_amount)} per win
+                {' • '}
+                {formatRaceLabel(raceToForMatch(tournament, pending[0]))}
+              </p>
             )}
             {pending.length === 0 && !completedPlayable.length && !byeMatches.length && (
               <p>No open matches in this round.</p>
@@ -142,7 +148,7 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
       {selected && (
         <CashClimbResultModal
           match={selected}
-          raceTo={tournament.raceTo}
+          raceTo={raceToForMatch(tournament, selected)}
           onCancel={() => setSelected(null)}
           onSubmit={(winnerId, score) => {
             onRecord(selected.id, winnerId, score);

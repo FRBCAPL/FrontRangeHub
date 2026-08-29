@@ -6,16 +6,19 @@ import { todayDateInput } from './cashClimbEngine.js';
 import { buildPayoutPreview } from './cashClimbPayoutPreview.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
+import CashClimbRaceFields from './CashClimbRaceFields.jsx';
+import { defaultKohRaceTo, defaultRrRaceTo, requireRaceTo } from './cashClimbRace.js';
 
-const RACE_TO_PRESETS = ['1', '2', '3', '4', '5'];
 const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 
 export default function CashClimbSetup({ onStart, onCancel }) {
   const [name, setName] = useState('Cash Climb');
   const [tournamentDate, setTournamentDate] = useState(todayDateInput);
   const [gameType, setGameType] = useState(OPEN_TOURNAMENT_STRUCTURE.gameRules.gameType);
-  const [raceToMode, setRaceToMode] = useState(String(OPEN_TOURNAMENT_STRUCTURE.gameRules.raceTo));
+  const [raceToMode, setRaceToMode] = useState(String(defaultRrRaceTo()));
   const [otherRaceTo, setOtherRaceTo] = useState('');
+  const [kohRaceToMode, setKohRaceToMode] = useState(String(defaultKohRaceTo()));
+  const [otherKohRaceTo, setOtherKohRaceTo] = useState('');
   const [tableCountMode, setTableCountMode] = useState('4');
   const [otherTableCount, setOtherTableCount] = useState('');
   const [entryFee, setEntryFee] = useState(String(OPEN_TOURNAMENT_STRUCTURE.entryFee));
@@ -36,8 +39,11 @@ export default function CashClimbSetup({ onStart, onCancel }) {
 
   const autoType = determineRoundRobinType(players.length);
   const raceTo = raceToMode === 'other'
-    ? Math.max(1, Number(otherRaceTo) || OPEN_TOURNAMENT_STRUCTURE.gameRules.raceTo)
-    : Number(raceToMode) || OPEN_TOURNAMENT_STRUCTURE.gameRules.raceTo;
+    ? Math.max(1, Number(otherRaceTo) || defaultRrRaceTo())
+    : Number(raceToMode) || defaultRrRaceTo();
+  const kohRaceTo = kohRaceToMode === 'other'
+    ? Math.max(1, Number(otherKohRaceTo) || defaultKohRaceTo())
+    : Number(kohRaceToMode) || defaultKohRaceTo();
   const tableCount = tableCountMode === 'other'
     ? Math.max(1, Number(otherTableCount) || 4)
     : Number(tableCountMode) || 4;
@@ -50,16 +56,17 @@ export default function CashClimbSetup({ onStart, onCancel }) {
       playerCount: players.length,
       tournament: previewTournament,
     }),
-    [players.length, autoType, prizePool, raceTo, gameType, tableCount]
+    [players.length, autoType, prizePool, raceTo, kohRaceTo, gameType, tableCount]
   );
   const durationEstimate = useMemo(
     () => estimateCashClimbDuration({
       playerCount: players.length,
       raceTo,
+      kohRaceTo,
       gameType,
       tableCount: Number(tableCount) || 4,
     }),
-    [players.length, raceTo, gameType, tableCount]
+    [players.length, raceTo, kohRaceTo, gameType, tableCount]
   );
 
   const handleSubmit = (e) => {
@@ -69,8 +76,12 @@ export default function CashClimbSetup({ onStart, onCancel }) {
       return;
     }
     const raceTo = raceToMode === 'other' ? Number(otherRaceTo) : Number(raceToMode);
-    if (!Number.isFinite(raceTo) || raceTo < 1) {
-      alert('Enter a race-to of at least 1.');
+    const kohRaceTo = kohRaceToMode === 'other' ? Number(otherKohRaceTo) : Number(kohRaceToMode);
+    try {
+      requireRaceTo(raceTo);
+      requireRaceTo(kohRaceTo);
+    } catch (err) {
+      alert(err.message || 'Enter a race-to of at least 1.');
       return;
     }
     if (tableCountMode === 'other') {
@@ -89,6 +100,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
       tournamentDate,
       gameType,
       raceTo: Math.round(raceTo),
+      kohRaceTo: Math.round(kohRaceTo),
       tableCount: Number(tableCount) || 4,
       roundRobinType: autoType,
       entryFee: Number(entryFee) || 0,
@@ -121,7 +133,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
             />
           </label>
         </div>
-        <div className="cc-field-row cc-field-row-3">
+        <div className="cc-field-row">
           <label>
             Game
             <select value={gameType} onChange={(e) => setGameType(e.target.value)}>
@@ -129,15 +141,6 @@ export default function CashClimbSetup({ onStart, onCancel }) {
               <option value="9-Ball">9-Ball</option>
               <option value="10-Ball">10-Ball</option>
               <option value="mixed">Mixed</option>
-            </select>
-          </label>
-          <label>
-            Race to
-            <select value={raceToMode} onChange={(e) => setRaceToMode(e.target.value)}>
-              {RACE_TO_PRESETS.map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-              <option value="other">Other…</option>
             </select>
           </label>
           <label>
@@ -164,20 +167,16 @@ export default function CashClimbSetup({ onStart, onCancel }) {
             </span>
           </label>
         </div>
-        {raceToMode === 'other' && (
-          <label>
-            Other race to
-            <input
-              type="number"
-              min="1"
-              max="21"
-              step="1"
-              value={otherRaceTo}
-              onChange={(e) => setOtherRaceTo(e.target.value)}
-              placeholder="1–21"
-            />
-          </label>
-        )}
+        <CashClimbRaceFields
+          raceToMode={raceToMode}
+          setRaceToMode={setRaceToMode}
+          otherRaceTo={otherRaceTo}
+          setOtherRaceTo={setOtherRaceTo}
+          kohRaceToMode={kohRaceToMode}
+          setKohRaceToMode={setKohRaceToMode}
+          otherKohRaceTo={otherKohRaceTo}
+          setOtherKohRaceTo={setOtherKohRaceTo}
+        />
         <div className="cc-field-row">
           <label>
             Entry fee ($)

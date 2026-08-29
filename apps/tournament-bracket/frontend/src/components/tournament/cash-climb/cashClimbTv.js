@@ -87,6 +87,7 @@ export function buildCashClimbTvBoard(tournament) {
     message: tournament.message || '',
     gameType: tournament.gameType,
     raceTo: tournament.raceTo,
+    kohRaceTo: tournament.kohRaceTo,
     tableCount: tournament.tableCount,
     pool: formatMoney(tournament.totalPrizePool),
     paid: formatMoney(paidOut),

@@ -17,6 +17,7 @@ describe('edit open Cash Climb', () => {
       tournamentDate: '2026-08-29',
       gameType: '9-Ball',
       raceTo: 7,
+      kohRaceTo: 3,
       tableCount: 2,
       entryFee: 20,
       placeCount: 1,
@@ -25,6 +26,7 @@ describe('edit open Cash Climb', () => {
     assert.equal(state.tournamentDate, '2026-08-29');
     assert.equal(state.gameType, '9-Ball');
     assert.equal(state.raceTo, 7);
+    assert.equal(state.kohRaceTo, 3);
     assert.equal(state.tableCount, 2);
   });
 
@@ -67,6 +69,7 @@ describe('edit open Cash Climb', () => {
       tournamentDate: state.tournamentDate,
       gameType: state.gameType,
       raceTo: 9,
+      kohRaceTo: 2,
       tableCount: 6,
       entryFee: 99,
       placeCount: 4,

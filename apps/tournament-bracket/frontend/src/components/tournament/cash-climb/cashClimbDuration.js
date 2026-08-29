@@ -2,7 +2,7 @@ import { getKOHThreshold, OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStru
 import { minimumClimbCost } from './cashClimbClimb.js';
 
 function matchMinutes(raceTo, gameType) {
-  const race = Math.max(1, Number(raceTo) || 5);
+  const race = Math.max(1, Number(raceTo) || 1);
   let minutes = 8 + race * 5;
   if (gameType === '9-Ball') minutes *= 0.9;
   if (gameType === '8-Ball') minutes *= 1.05;
@@ -268,6 +268,7 @@ export function formatDurationRange(lowMinutes, highMinutes) {
 export function estimateCashClimbDuration({
   playerCount,
   raceTo,
+  kohRaceTo,
   gameType,
   tableCount,
   kohThreshold,
@@ -315,23 +316,28 @@ export function estimateCashClimbDuration({
 
   const kohSeed = inKoh ? seed : Array.from({ length: Math.max(2, kohPlayers) }, () => 0);
   const kohSlots = simulateKoh(kohSeed, tables, kohMaxLosses);
-  const sequentialSlots = rrWaves + kohSlots;
-  const perMatch = matchMinutes(raceTo, gameType);
-  const midpoint = sequentialSlots * perMatch;
+  const rrRace = Math.max(1, Number(raceTo) || 1);
+  const kohRace = Math.max(1, Number(kohRaceTo != null && kohRaceTo !== '' ? kohRaceTo : raceTo) || rrRace);
+  const rrMatchMin = matchMinutes(inKoh ? kohRace : rrRace, gameType);
+  const kohMatchMin = matchMinutes(kohRace, gameType);
+  const midpoint = inKoh
+    ? kohSlots * kohMatchMin
+    : rrWaves * rrMatchMin + kohSlots * kohMatchMin;
   const remaining = Boolean(
     inKoh || (live && (live.length < (started || active) || live.some((n) => n > 0)))
   );
 
   return {
     playerCount: started || active,
-    raceTo: Math.max(1, Number(raceTo) || 5),
+    raceTo: rrRace,
+    kohRaceTo: kohRace,
     gameType: gameType || '8-Ball',
     tableCount: tables,
     rrRounds,
     earlyKoh: earlyKoh && !inKoh,
     kohPlayers,
     remaining,
-    matchMinutes: Math.round(perMatch),
+    matchMinutes: Math.round(inKoh ? kohMatchMin : rrMatchMin),
     minutesLow: Math.round(midpoint * 0.88),
     minutesHigh: Math.round(midpoint * 1.18),
     label: formatDurationRange(midpoint * 0.88, midpoint * 1.18),

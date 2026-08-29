@@ -50,7 +50,8 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
 
   gameRules: {
     gameType: '8-Ball',
-    raceTo: 5,
+    raceTo: 1,
+    kohRaceTo: 2,
     callShots: true,
     rulesNote: 'CSI game play rules with no modifications',
   },

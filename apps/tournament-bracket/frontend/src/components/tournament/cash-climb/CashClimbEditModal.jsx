@@ -2,16 +2,14 @@ import React, { useRef, useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
 import { computePlacePrizes, maxPlaceCount, lastStandingSplitNote } from './cashClimbPlacePrizes.js';
 import { cashClimbMoneyLocked } from './cashClimbEdit.js';
+import { cashClimbRoster } from './cashClimbRename.js';
+import CashClimbEditPlayers from './CashClimbEditPlayers.jsx';
+import CashClimbRaceFields from './CashClimbRaceFields.jsx';
+import { cashClimbKohRaceTo, cashClimbRrRaceTo, raceModeFrom } from './cashClimbRace.js';
 import { isPayoutV2 } from './cashClimbPayoutRuntime.js';
 import { buildPayoutPreview } from './cashClimbPayoutPreview.js';
 
-const RACE_TO_PRESETS = ['1', '2', '3', '4', '5'];
 const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
-
-function raceModeFrom(value) {
-  const n = String(value);
-  return RACE_TO_PRESETS.includes(n) ? n : 'other';
-}
 
 function tableModeFrom(value) {
   const n = String(value);
@@ -23,12 +21,17 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
   const [name, setName] = useState(tournament.name || '');
   const [tournamentDate, setTournamentDate] = useState(String(tournament.tournamentDate || '').slice(0, 10));
   const [gameType, setGameType] = useState(tournament.gameType || '8-Ball');
-  const [raceToMode, setRaceToMode] = useState(raceModeFrom(tournament.raceTo));
-  const [otherRaceTo, setOtherRaceTo] = useState(raceModeFrom(tournament.raceTo) === 'other' ? String(tournament.raceTo || '') : '');
+  const rrRace = cashClimbRrRaceTo(tournament);
+  const kohRace = cashClimbKohRaceTo(tournament);
+  const [raceToMode, setRaceToMode] = useState(raceModeFrom(rrRace));
+  const [otherRaceTo, setOtherRaceTo] = useState(raceModeFrom(rrRace) === 'other' ? String(rrRace) : '');
+  const [kohRaceToMode, setKohRaceToMode] = useState(raceModeFrom(kohRace));
+  const [otherKohRaceTo, setOtherKohRaceTo] = useState(raceModeFrom(kohRace) === 'other' ? String(kohRace) : '');
   const [tableCountMode, setTableCountMode] = useState(tableModeFrom(tournament.tableCount));
   const [otherTableCount, setOtherTableCount] = useState(tableModeFrom(tournament.tableCount) === 'other' ? String(tournament.tableCount || '') : '');
   const [entryFee, setEntryFee] = useState(String(tournament.entryFee ?? ''));
   const [placeCountMode, setPlaceCountMode] = useState(String(tournament.placeCount || 3));
+  const [playerNames, setPlayerNames] = useState(() => cashClimbRoster(tournament));
   const dateInputRef = useRef(null);
 
   const openDatePicker = () => {
@@ -57,15 +60,18 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     const raceTo = raceToMode === 'other' ? Number(otherRaceTo) : Number(raceToMode);
+    const kohRaceTo = kohRaceToMode === 'other' ? Number(otherKohRaceTo) : Number(kohRaceToMode);
     const tableCount = tableCountMode === 'other' ? Number(otherTableCount) : Number(tableCountMode);
     onSave({
       name,
       tournamentDate,
       gameType,
       raceTo,
+      kohRaceTo,
       tableCount,
       entryFee: Number(entryFee),
       placeCount,
+      playerNames,
     });
   };
 
@@ -100,7 +106,7 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
           </label>
         </div>
 
-        <div className="cc-field-row cc-field-row-3">
+        <div className="cc-field-row">
           <label>
             Game
             <select value={gameType} onChange={(e) => setGameType(e.target.value)}>
@@ -108,15 +114,6 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
               <option value="9-Ball">9-Ball</option>
               <option value="10-Ball">10-Ball</option>
               <option value="mixed">Mixed</option>
-            </select>
-          </label>
-          <label>
-            Race to
-            <select value={raceToMode} onChange={(e) => setRaceToMode(e.target.value)}>
-              {RACE_TO_PRESETS.map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-              <option value="other">Other…</option>
             </select>
           </label>
           <label>
@@ -143,20 +140,16 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
             </span>
           </label>
         </div>
-
-        {raceToMode === 'other' && (
-          <label>
-            Other race to
-            <input
-              type="number"
-              min="1"
-              max="21"
-              step="1"
-              value={otherRaceTo}
-              onChange={(e) => setOtherRaceTo(e.target.value)}
-            />
-          </label>
-        )}
+        <CashClimbRaceFields
+          raceToMode={raceToMode}
+          setRaceToMode={setRaceToMode}
+          otherRaceTo={otherRaceTo}
+          setOtherRaceTo={setOtherRaceTo}
+          kohRaceToMode={kohRaceToMode}
+          setKohRaceToMode={setKohRaceToMode}
+          otherKohRaceTo={otherKohRaceTo}
+          setOtherKohRaceTo={setOtherKohRaceTo}
+        />
 
         <div className="cc-field-row">
           <label>
@@ -189,7 +182,7 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
 
         {moneyLocked ? (
           <p className="cc-edit-lock-note">
-            Prize money is locked after the first recorded match (or a paid bye). Name, date, game, race, and tables can still change.
+            Prize money is locked after the first recorded match (or a paid bye). Tournament name, date, game, race, tables, and player names can still change.
           </p>
         ) : v2 ? (
           <p className="players-count">
@@ -204,6 +197,13 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
             {` • ${lastStandingSplitNote(placeCount)}`}
           </p>
         )}
+
+        <CashClimbEditPlayers
+          playerNames={playerNames}
+          onChangeName={(id, name) => {
+            setPlayerNames((rows) => rows.map((row) => (row.id === id ? { ...row, name } : row)));
+          }}
+        />
 
         <div className="form-actions">
           <button type="button" className="btn-secondary" onClick={onClose}>

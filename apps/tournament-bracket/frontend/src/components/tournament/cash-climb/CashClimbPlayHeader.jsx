@@ -2,7 +2,8 @@ import React from 'react';
 import { formatMoney, formatTournamentDate } from './cashClimbEngine.js';
 import { getFormatDisplay } from './openTournamentStructure.js';
 import { openCashClimbTv } from './cashClimbTv.js';
-import { finishPlaceLabel, leftoverAwardLabel, listedPlacePrizes } from './cashClimbPlacePrizes.js';
+import { formatEventRaces } from './cashClimbRace.js';
+import { finishPlaceLabel, listedPlacePrizes } from './cashClimbPlacePrizes.js';
 import { isPayoutV2, remainingPhaseBudget } from './cashClimbPayoutRuntime.js';
 
 function Chip({ children }) {
@@ -69,7 +70,7 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
         <Chip>{dateLabel}</Chip>
         <Chip>{getFormatDisplay(tournament.roundRobinType)}</Chip>
         <Chip>{tournament.gameType}</Chip>
-        <Chip>{tournament.raceTo ? `Race to ${tournament.raceTo}` : ''}</Chip>
+        <Chip>{formatEventRaces(tournament.raceTo, tournament.kohRaceTo ?? tournament.raceTo)}</Chip>
         <Chip>{tables}</Chip>
         <Chip>{status}</Chip>
       </div>
@@ -78,21 +79,13 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
         <Stat label="Pool" value={formatMoney(tournament.totalPrizePool)} />
         <Stat label="Paid" value={formatMoney(paidOut)} />
         <Stat label="Remaining" value={formatMoney(remaining)} />
-        {isPayoutV2(tournament) && tournament.status === 'completed' ? (
-          listedPlacePrizes(tournament.placePrizes || { first: tournament.firstPlacePrize }).map((row) => (
-            <Stat
-              key={row.place}
-              label={leftoverAwardLabel(row.place)}
-              value={formatMoney(row.amount)}
-            />
-          ))
-        ) : isPayoutV2(tournament) ? (
+        {isPayoutV2(tournament) && tournament.status !== 'completed' ? (
           <>
             <Stat label="RR left" value={formatMoney(remainingPhaseBudget(tournament, false))} />
             <Stat label="KOH left" value={formatMoney(remainingPhaseBudget(tournament, true))} />
             <Stat label="Champ floor" value={formatMoney(tournament.championshipFloor)} />
           </>
-        ) : (
+        ) : tournament.status !== 'completed' ? (
           listedPlacePrizes(tournament.placePrizes || { first: tournament.firstPlacePrize }).map((row) => (
             <Stat
               key={row.place}
@@ -100,7 +93,7 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
               value={formatMoney(row.amount)}
             />
           ))
-        )}
+        ) : null}
         {tournament.status !== 'completed' && durationEstimate ? (
           <Stat
             label={durationEstimate.remaining ? 'Time remaining' : 'Estimated time'}
@@ -109,17 +102,18 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
         ) : null}
       </div>
 
-      {tournament.message && <p className="cc-banner">{tournament.message}</p>}
+      {tournament.message && !tournament.winner && (
+        <p className="cc-banner">{tournament.message}</p>
+      )}
       {tournament.winner && (
         <p className="cc-winner">
-          Last standing: {tournament.winner.player_name} • {formatMoney(tournament.winner.total_payout)}
+          {finishPlaceLabel(1)}: {tournament.winner.player_name} {formatMoney(tournament.winner.total_payout)}
           {(tournament.stats || []).some((p) => p.finish_place > 1) ? (
             <>
-              {' '}
               {(tournament.stats || [])
                 .filter((p) => p.finish_place > 1)
                 .sort((a, b) => a.finish_place - b.finish_place)
-                .map((p) => ` • ${finishPlaceLabel(p.finish_place)} ${p.player_name} ${formatMoney(p.total_payout)}`)
+                .map((p) => ` • ${finishPlaceLabel(p.finish_place)}: ${p.player_name} ${formatMoney(p.total_payout)}`)
                 .join('')}
             </>
           ) : null}

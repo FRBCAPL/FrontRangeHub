@@ -18,6 +18,16 @@ describe('Cash Climb duration estimate', () => {
     assert.ok(sixteenRace7.minutesLow > eightRace5.minutesLow);
   });
 
+  it('shortens the estimate when KOH is a shorter race than round robin', () => {
+    const longKoh = estimateCashClimbDuration({
+      playerCount: 8, raceTo: 5, kohRaceTo: 5, gameType: '8-Ball',
+    });
+    const shortKoh = estimateCashClimbDuration({
+      playerCount: 8, raceTo: 5, kohRaceTo: 2, gameType: '8-Ball',
+    });
+    assert.ok(longKoh.minutesLow > shortKoh.minutesLow);
+  });
+
   it('shortens the estimate for a shorter race', () => {
     const race3 = estimateCashClimbDuration({ playerCount: 8, raceTo: 3, gameType: '9-Ball' });
     const race7 = estimateCashClimbDuration({ playerCount: 8, raceTo: 7, gameType: '8-Ball' });

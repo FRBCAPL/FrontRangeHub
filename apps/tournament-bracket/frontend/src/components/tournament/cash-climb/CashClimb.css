@@ -543,6 +543,32 @@
   margin: 4px 0 12px;
 }
 
+.cc-edit-players {
+  margin: 8px 0 4px;
+}
+
+.cc-edit-players h4 {
+  margin: 0 0 4px;
+  color: #e0e7ff;
+  font-size: 0.95rem;
+}
+
+.cc-edit-players-note {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin: 0 0 8px;
+}
+
+.cc-edit-player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cc-edit-player-list li {
+  margin: 0 0 8px;
+}
+
 .cc-edit-modal .form-actions {
   display: flex;
   gap: 12px;

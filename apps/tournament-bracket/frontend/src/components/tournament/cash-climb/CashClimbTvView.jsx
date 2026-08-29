@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { formatEventRaces } from './cashClimbRace.js';
 import { loadCashClimb, cashClimbStorageKey } from './cashClimbStore.js';
 import { buildCashClimbTvBoard, parseTvLayout, readStoredTvLayout, storeTvLayout } from './cashClimbTv.js';
 import CashClimbTvLayoutBar from './CashClimbTvLayoutBar.jsx';
@@ -79,7 +80,7 @@ export default function CashClimbTvView() {
   const chips = [
     board.dateLabel,
     board.gameType,
-    board.raceTo ? `Race to ${board.raceTo}` : '',
+    formatEventRaces(board.raceTo, board.kohRaceTo ?? board.raceTo),
     board.tableCount ? `${board.tableCount} table${board.tableCount === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
 

@@ -4,7 +4,7 @@ import { finishPlaceLabel } from './cashClimbPlacePrizes.js';
 import WinLoss from './WinLoss.jsx';
 
 function tag(player) {
-  if (player.finish_place) return finishPlaceLabel(player.finish_place, true);
+  if (player.finish_place) return finishPlaceLabel(player.finish_place);
   if (player.eliminated) return 'Out';
   if (player.in_koh) return 'KOH';
   return 'In';

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatEventRaces } from './cashClimbRace.js';
 
 export default function CashClimbDurationEstimate({ estimate, compact = false }) {
   if (!estimate) {
@@ -23,7 +24,7 @@ export default function CashClimbDurationEstimate({ estimate, compact = false })
         {estimate.remaining ? 'Estimated time remaining' : 'Estimated time'}: <strong>{estimate.label}</strong>
       </p>
       <p className="cc-duration-note">
-        Race to {estimate.raceTo} {estimate.gameType} • {estimate.tableCount} table
+        {formatEventRaces(estimate.raceTo, estimate.kohRaceTo)} {estimate.gameType} • {estimate.tableCount} table
         {estimate.tableCount === 1 ? '' : 's'} • {roundCopy}.
         Later rounds have fewer matches as players go out. Pace varies.
       </p>

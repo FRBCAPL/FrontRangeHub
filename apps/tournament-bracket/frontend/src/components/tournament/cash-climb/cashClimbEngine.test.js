@@ -54,7 +54,8 @@ describe('open Cash Climb engine', () => {
     });
     assert.equal(setup.ladder_name, undefined);
     assert.equal(setup.totalPrizePool, 80);
-    assert.equal(setup.raceTo, 5);
+    assert.equal(setup.raceTo, 1);
+    assert.equal(setup.kohRaceTo, 2);
 
     let state = startTournament(setup);
     assert.equal(state.status, 'in-progress');
@@ -257,6 +258,17 @@ describe('open Cash Climb engine', () => {
       players: [{ name: 'Ann' }, { name: 'Ben' }],
     });
     assert.equal(setup.raceTo, 7);
+    assert.equal(setup.kohRaceTo, 2);
+  });
+
+  it('stores a custom KOH race', () => {
+    const setup = createOpenTournament({
+      raceTo: 1,
+      kohRaceTo: 3,
+      players: [{ name: 'Ann' }, { name: 'Ben' }],
+    });
+    assert.equal(setup.raceTo, 1);
+    assert.equal(setup.kohRaceTo, 3);
   });
 
   it('eliminates at 3 losses in round robin', () => {

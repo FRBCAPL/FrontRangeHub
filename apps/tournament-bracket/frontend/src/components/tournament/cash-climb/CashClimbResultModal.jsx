@@ -60,7 +60,7 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
         <h3 id="cc-result-title">{editing ? 'Edit result' : 'Enter result'}</h3>
         <p className="cc-modal-meta">
           Round {match.round_number} • Match {match.match_number}
-          {race ? ` • Race to ${race}` : ''}
+          {race ? ` • ${race === 1 ? '1 game' : `Race to ${race}`}` : ''}
           {' '}• Win pays {formatMoney(match.payout_amount)}
         </p>
         <label className="cc-winner-pick">
@@ -140,7 +140,9 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
           <p className="cc-score-hint">No score recorded. Winner only.</p>
         )}
 
-        {recordScore && race ? (
+        {recordScore && race === 1 ? (
+          <p className="cc-score-hint">1 game: the winner has 1, the other player 0.</p>
+        ) : recordScore && race ? (
           <p className="cc-score-hint">
             Race to {race}: the winner must have {race} games, the other player 0–{race - 1}.
           </p>

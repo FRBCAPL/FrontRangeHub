@@ -9,6 +9,8 @@ import {
 import { remainingEventRoundsFromState } from './cashClimbDuration.js';
 import { recomputePendingRoundPayouts } from './cashClimbEngine.js';
 import { attachPayoutPlan, isPayoutV2 } from './cashClimbPayoutRuntime.js';
+import { applyPlayerNames } from './cashClimbRename.js';
+import { requireRaceTo } from './cashClimbRace.js';
 
 function money(n) {
   return Math.round(Number(n || 0) * 100) / 100;
@@ -16,13 +18,6 @@ function money(n) {
 
 function clone(state) {
   return JSON.parse(JSON.stringify(state));
-}
-
-function parseRaceTo(value) {
-  const n = Math.round(Number(value));
-  if (!Number.isFinite(n) || n < 1) throw new Error('Enter a race-to of at least 1.');
-  if (n > 21) throw new Error('Race-to cannot be more than 21.');
-  return n;
 }
 
 function parseTableCount(value) {
@@ -63,7 +58,8 @@ export function updateOpenTournament(state, patch = {}) {
     throw new Error('Pick a game type.');
   }
   next.gameType = gameType;
-  next.raceTo = parseRaceTo(patch.raceTo ?? next.raceTo);
+  next.raceTo = requireRaceTo(patch.raceTo ?? next.raceTo);
+  next.kohRaceTo = requireRaceTo(patch.kohRaceTo ?? next.kohRaceTo ?? next.raceTo);
   next.tableCount = parseTableCount(patch.tableCount ?? next.tableCount);
 
   if (!cashClimbMoneyLocked(next)) {
@@ -105,6 +101,10 @@ export function updateOpenTournament(state, patch = {}) {
       next.prizeRoundsLeft = Math.max(1, next.prizeSchedule.length);
     }
     recomputePendingRoundPayouts(next);
+  }
+
+  if (Array.isArray(patch.playerNames)) {
+    applyPlayerNames(next, patch.playerNames);
   }
 
   return next;

@@ -18,6 +18,7 @@ import {
   reservedPlaceTotal,
 } from './cashClimbPlacePrizes.js';
 import { PAYOUT_MODEL_V2 } from './cashClimbPayoutConfig.js';
+import { defaultKohRaceTo, defaultRrRaceTo, parseRaceTo } from './cashClimbRace.js';
 import { splitFinishAwards } from './cashClimbFinishAwards.js';
 import {
   attachPayoutPlan,
@@ -34,12 +35,6 @@ function uid() {
 
 function money(n) {
   return Math.round(Number(n || 0) * 100) / 100;
-}
-
-function parseRaceTo(value) {
-  const n = Math.round(Number(value));
-  if (!Number.isFinite(n) || n < 1) return OPEN_TOURNAMENT_STRUCTURE.gameRules.raceTo;
-  return Math.min(21, n);
 }
 
 function parseTableCount(value) {
@@ -93,7 +88,8 @@ export function createOpenTournament(config) {
     firstPlacePrize: 0,
     placeCount: 3,
     placePrizes: { first: 0, second: 0, third: 0, fourth: 0 },
-    raceTo: parseRaceTo(config.raceTo),
+    raceTo: parseRaceTo(config.raceTo, defaultRrRaceTo()),
+    kohRaceTo: parseRaceTo(config.kohRaceTo, defaultKohRaceTo()),
     tableCount: parseTableCount(config.tableCount),
     callShots: config.callShots ?? OPEN_TOURNAMENT_STRUCTURE.gameRules.callShots,
     phase1EliminationLosses: OPEN_TOURNAMENT_STRUCTURE.phase1.eliminationLosses,
@@ -725,9 +721,7 @@ function completeTournament(state, winner) {
   state.rounds.forEach((r) => {
     if (r.status !== 'completed') r.status = 'completed';
   });
-  state.message = winner
-    ? `${winner.player_name} wins Cash Climb.`
-    : 'Tournament complete.';
+  state.message = winner ? '' : 'Tournament complete.';
   return state;
 }
 

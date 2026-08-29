@@ -64,11 +64,9 @@ describe('cash climb place prizes', () => {
     assert.equal(finishPlaceLabel(1), 'Last standing');
     assert.equal(finishPlaceLabel(2), '2nd last standing');
     assert.equal(finishPlaceLabel(3), '3rd last standing');
-    assert.equal(finishPlaceLabel(2, true), '2nd last');
-    assert.equal(finishPlaceLabel(3, true), '3rd last');
-    assert.equal(leftoverAwardLabel(1), 'Championship');
-    assert.equal(leftoverAwardLabel(2), '2nd standing leftover');
-    assert.equal(leftoverAwardLabel(3), '3rd standing leftover');
+    assert.equal(leftoverAwardLabel(1), 'Last standing leftover');
+    assert.equal(leftoverAwardLabel(2), '2nd last leftover');
+    assert.equal(leftoverAwardLabel(3), '3rd last leftover');
   });
 
   it('clamps place count to 1–4', () => {

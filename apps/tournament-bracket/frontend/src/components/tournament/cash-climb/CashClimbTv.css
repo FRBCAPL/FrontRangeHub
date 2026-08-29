@@ -481,8 +481,9 @@
   color: #fde68a;
   background: rgba(250, 204, 21, 0.2);
   white-space: nowrap;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   text-transform: none;
+  font-size: 0.68em;
 }
 
 .cc-tv-ticker {
