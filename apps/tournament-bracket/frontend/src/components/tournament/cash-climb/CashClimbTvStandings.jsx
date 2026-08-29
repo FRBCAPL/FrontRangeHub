@@ -1,19 +1,26 @@
 import React from 'react';
 import { formatMoney } from './cashClimbEngine.js';
-import { placeOrdinal } from './cashClimbPlacePrizes.js';
+import { finishPlaceLabel } from './cashClimbPlacePrizes.js';
 import WinLoss from './WinLoss.jsx';
 
 function tag(player) {
-  if (player.finish_place) return placeOrdinal(player.finish_place);
+  if (player.finish_place) return finishPlaceLabel(player.finish_place, true);
   if (player.eliminated) return 'Out';
   if (player.in_koh) return 'KOH';
   return 'In';
 }
 
 export default function CashClimbTvStandings({ board }) {
+  const completed = board.status === 'completed';
+  const kicker = completed
+    ? 'Cash rank'
+    : board.kohStarted
+      ? 'King of the Hill'
+      : 'Standings';
+
   return (
     <section className="cc-tv-standings">
-      <p className="cc-tv-kicker">{board.kohStarted ? 'King of the Hill' : 'Standings'}</p>
+      <p className="cc-tv-kicker">{kicker}</p>
       <ol className="cc-tv-standings-list">
         {board.standings.map((p, i) => (
           <li

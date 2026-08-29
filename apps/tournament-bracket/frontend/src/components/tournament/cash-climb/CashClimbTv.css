@@ -480,6 +480,9 @@
 .cc-tv-tag-place {
   color: #fde68a;
   background: rgba(250, 204, 21, 0.2);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  text-transform: none;
 }
 
 .cc-tv-ticker {

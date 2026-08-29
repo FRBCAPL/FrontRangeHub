@@ -2,7 +2,7 @@ import React from 'react';
 import { formatMoney, formatTournamentDate } from './cashClimbEngine.js';
 import { getFormatDisplay } from './openTournamentStructure.js';
 import { openCashClimbTv } from './cashClimbTv.js';
-import { listedPlacePrizes, placeOrdinal } from './cashClimbPlacePrizes.js';
+import { finishPlaceLabel, leftoverAwardLabel, listedPlacePrizes } from './cashClimbPlacePrizes.js';
 import { isPayoutV2, remainingPhaseBudget } from './cashClimbPayoutRuntime.js';
 
 function Chip({ children }) {
@@ -82,7 +82,7 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
           listedPlacePrizes(tournament.placePrizes || { first: tournament.firstPlacePrize }).map((row) => (
             <Stat
               key={row.place}
-              label={row.place === 1 ? 'Championship' : row.label}
+              label={leftoverAwardLabel(row.place)}
               value={formatMoney(row.amount)}
             />
           ))
@@ -112,14 +112,14 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
       {tournament.message && <p className="cc-banner">{tournament.message}</p>}
       {tournament.winner && (
         <p className="cc-winner">
-          Winner: {tournament.winner.player_name} • {formatMoney(tournament.winner.total_payout)}
+          Last standing: {tournament.winner.player_name} • {formatMoney(tournament.winner.total_payout)}
           {(tournament.stats || []).some((p) => p.finish_place > 1) ? (
             <>
               {' '}
               {(tournament.stats || [])
                 .filter((p) => p.finish_place > 1)
                 .sort((a, b) => a.finish_place - b.finish_place)
-                .map((p) => ` • ${placeOrdinal(p.finish_place)} ${p.player_name} ${formatMoney(p.total_payout)}`)
+                .map((p) => ` • ${finishPlaceLabel(p.finish_place)} ${p.player_name} ${formatMoney(p.total_payout)}`)
                 .join('')}
             </>
           ) : null}

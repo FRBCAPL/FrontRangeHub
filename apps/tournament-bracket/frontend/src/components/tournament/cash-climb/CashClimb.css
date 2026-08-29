@@ -477,6 +477,13 @@
   opacity: 0.55;
 }
 
+.cc-standings .cc-finish-tag {
+  white-space: nowrap;
+  font-size: 0.85em;
+  font-weight: 700;
+  color: #fde68a;
+}
+
 .cc-modal-overlay {
   position: fixed;
   inset: 0;

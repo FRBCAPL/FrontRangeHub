@@ -2,7 +2,9 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   computePlacePrizes,
+  finishPlaceLabel,
   lastStandingFinishers,
+  leftoverAwardLabel,
   listedPlacePrizes,
   parsePlaceCount,
 } from './cashClimbPlacePrizes.js';
@@ -56,6 +58,17 @@ describe('cash climb place prizes', () => {
       { player_id: 'd', player_name: 'Dee', eliminated: true, eliminated_order: 3 },
     ], winner);
     assert.deepEqual(finishers.map((p) => p.player_name), ['Ann', 'Dee', 'Ben', 'Cam']);
+  });
+
+  it('labels finish places as last standing, not cash rank', () => {
+    assert.equal(finishPlaceLabel(1), 'Last standing');
+    assert.equal(finishPlaceLabel(2), '2nd last standing');
+    assert.equal(finishPlaceLabel(3), '3rd last standing');
+    assert.equal(finishPlaceLabel(2, true), '2nd last');
+    assert.equal(finishPlaceLabel(3, true), '3rd last');
+    assert.equal(leftoverAwardLabel(1), 'Championship');
+    assert.equal(leftoverAwardLabel(2), '2nd standing leftover');
+    assert.equal(leftoverAwardLabel(3), '3rd standing leftover');
   });
 
   it('clamps place count to 1–4', () => {

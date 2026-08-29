@@ -25,6 +25,22 @@ export function placeOrdinal(place) {
   return String(place);
 }
 
+/** Who lasted longest in KOH. Not cash rank. */
+export function finishPlaceLabel(place, compact = false) {
+  if (place === 1) return 'Last standing';
+  if (place === 2) return compact ? '2nd last' : '2nd last standing';
+  if (place === 3) return compact ? '3rd last' : '3rd last standing';
+  return placeOrdinal(place);
+}
+
+/** Leftover award buckets, not people. */
+export function leftoverAwardLabel(place) {
+  if (place === 1) return 'Championship';
+  if (place === 2) return '2nd standing leftover';
+  if (place === 3) return '3rd standing leftover';
+  return `${placeOrdinal(place)} leftover`;
+}
+
 export function lastStandingSplitNote(placeCount) {
   const count = parsePlaceCount(placeCount);
   if (count <= 1) return 'all to the winner';

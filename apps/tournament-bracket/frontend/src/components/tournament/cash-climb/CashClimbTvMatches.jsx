@@ -81,7 +81,7 @@ export default function CashClimbTvMatches({ board, layout = 'landscape' }) {
   if (board.status === 'completed' && board.winner) {
     return (
       <section className="cc-tv-now cc-tv-now-winner" aria-live="polite">
-        <p className="cc-tv-kicker">Champion</p>
+        <p className="cc-tv-kicker">Last standing</p>
         <h2>{board.winner.player_name}</h2>
         <p className="cc-tv-payout cc-tv-payout-champion">
           <strong>{formatMoney(board.winner.total_payout)}</strong>
