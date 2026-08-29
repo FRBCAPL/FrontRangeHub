@@ -5,15 +5,18 @@ export const PAYOUT_MODEL_V2 = 'rr-koh-v2';
 export const MIN_OPENING_WIN = 2;
 export const RR_CLIMB_STEP = 1;
 
-/** Share of the total prize pool parked as the KOH match + championship allocation. */
+/** Minimum share of the pool parked as KOH match + championship money. */
 export const KOH_TARGET_PERCENT = 0.25;
 
-/** KOH schedule always has this many slots. Unused slots become championship money. */
+/** Extra planned RR rounds kept in the RR bank so a long night can hold the last per-win. */
+export const RR_HOLD_BUFFER_ROUNDS = 2;
+
+/** KOH schedule prefers this many slots. Unused slots become championship money. */
 export const KOH_MATCH_COUNT = 5;
 
 /**
  * Fraction of the KOH budget that may be scheduled as match pays.
- * The rest is a guaranteed championship floor even if all 5 KOH matches are played.
+ * The rest is a guaranteed championship floor even if the KOH ladder is fully played.
  */
 export const KOH_MATCH_SPEND_CAP = 0.8;
 

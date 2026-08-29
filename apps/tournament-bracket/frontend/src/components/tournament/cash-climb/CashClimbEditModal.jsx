@@ -195,7 +195,7 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
           <p className="players-count">
             {prizePool
               ? `RR bank ${formatMoney(v2Preview?.rrBudget || 0)} • KOH bank ${formatMoney(v2Preview?.kohBudget || 0)} • Championship floor ${formatMoney(v2Preview?.championshipFloor || 0)}`
-              : 'Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd.'}
+              : 'Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd, unless the champion needs some of it to stay ahead.'}
           </p>
         ) : (
           <p className="players-count">

@@ -4,7 +4,7 @@ import { buildPayoutPlan, splitRrSurplus } from './cashClimbAllocations.js';
 import { estimateFinishTotals, simulateLockedPayouts } from './cashClimbPayoutSim.js';
 
 const ENTRY_FEES = [10, 15, 20, 25, 30];
-const PLAYER_COUNTS = [7, 8, 9, 10, 12, 13, 16, 20, 24];
+const PLAYER_COUNTS = [4, 7, 8, 9, 10, 12, 13, 16, 20, 24];
 
 describe('Cash Climb RR/KOH allocations', () => {
   it('splits a 13-player $20 pool into protected RR and KOH budgets', () => {
@@ -20,6 +20,16 @@ describe('Cash Climb RR/KOH allocations', () => {
     assert.equal(plan.koh.scheduledSpend + plan.championshipFloor, plan.kohBudget);
     assert.ok(plan.championshipFloor > 0);
     assert.ok(plan.kohSchedule[0] >= plan.lastRrPerWin + 1);
+  });
+
+  it('gives a 4-player pool a smaller RR bank so KOH can climb above RR', () => {
+    const plan = buildPayoutPlan({ prizePool: 80, playerCount: 4 });
+    assert.equal(plan.pool, 80);
+    assert.equal(Math.round((plan.rrBudget + plan.kohBudget) * 100) / 100, 80);
+    assert.ok(plan.rrBudget < plan.kohBudget);
+    assert.ok(plan.rrBudget < 60);
+    assert.ok(plan.kohSchedule[0] >= plan.lastRrPerWin + 1);
+    assert.ok(plan.rr.schedule[0] >= 2);
   });
 
   it('splits unused RR 60/40 to 2nd and 3rd', () => {

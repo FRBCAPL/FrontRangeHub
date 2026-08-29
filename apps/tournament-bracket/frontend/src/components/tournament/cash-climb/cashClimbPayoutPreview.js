@@ -1,4 +1,5 @@
-import { buildPayoutPlan, splitRrSurplus } from './cashClimbAllocations.js';
+import { buildPayoutPlan } from './cashClimbAllocations.js';
+import { splitFinishAwards } from './cashClimbFinishAwards.js';
 
 function money(n) {
   return Math.round(Number(n || 0) * 100) / 100;
@@ -29,7 +30,13 @@ export function buildPayoutPreview({ prizePool, playerCount, tournament = null }
     matchCount: 1,
     paidThisRound: perWin,
   }));
-  const podium = splitRrSurplus(plan.rr.unspentInPlan);
+  const awards = splitFinishAwards({
+    rrSurplus: plan.rr.unspentInPlan,
+    kohSurplus: plan.championshipFloor,
+    firstMatchPaid: 0,
+    secondMatchPaid: 0,
+    thirdMatchPaid: 0,
+  });
 
   return {
     plan,
@@ -42,8 +49,8 @@ export function buildPayoutPreview({ prizePool, playerCount, tournament = null }
     rrBudget: plan.rrBudget,
     kohBudget: plan.kohBudget,
     championshipFloor: plan.championshipFloor,
-    estimatedSecond: podium.second,
-    estimatedThird: podium.third,
-    estimatedChampionship: plan.championshipFloor,
+    estimatedSecond: awards.second,
+    estimatedThird: awards.third,
+    estimatedChampionship: awards.championship,
   };
 }

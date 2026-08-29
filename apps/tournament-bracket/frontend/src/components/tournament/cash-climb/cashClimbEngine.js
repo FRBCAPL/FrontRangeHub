@@ -18,7 +18,7 @@ import {
   reservedPlaceTotal,
 } from './cashClimbPlacePrizes.js';
 import { PAYOUT_MODEL_V2 } from './cashClimbPayoutConfig.js';
-import { splitRrSurplus } from './cashClimbAllocations.js';
+import { splitFinishAwards } from './cashClimbFinishAwards.js';
 import {
   attachPayoutPlan,
   isPayoutV2,
@@ -676,13 +676,21 @@ function roundComplete(state, round) {
 }
 
 function completeTournament(state, winner) {
+  const finishers = lastStandingFinishers(state.stats, winner);
   if (isPayoutV2(state)) {
-    const podium = splitRrSurplus(remainingPhaseBudget(state, false));
+    const awards = splitFinishAwards({
+      rrSurplus: remainingPhaseBudget(state, false),
+      kohSurplus: remainingPhaseBudget(state, true),
+      firstMatchPaid: finishers[0]?.total_payout || 0,
+      secondMatchPaid: finishers[1]?.total_payout || 0,
+      thirdMatchPaid: finishers[2]?.total_payout || 0,
+      otherMatchPaids: finishers.slice(3).map((p) => p.total_payout || 0),
+    });
     assignPlacePrizes(state, {
       placeCount: 3,
-      first: remainingPhaseBudget(state, true),
-      second: podium.second,
-      third: podium.third,
+      first: awards.championship,
+      second: awards.second,
+      third: awards.third,
       fourth: 0,
       potPercent: 0,
     });
@@ -694,7 +702,6 @@ function completeTournament(state, winner) {
     }));
   }
   const prizes = state.placePrizes || {};
-  const finishers = lastStandingFinishers(state.stats, winner);
   const placeCount = parsePlaceCount(state.placeCount);
   finishers.forEach((player, index) => {
     const place = index + 1;

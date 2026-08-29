@@ -245,6 +245,10 @@ describe('open Cash Climb engine', () => {
     const extras = byExit.reduce((sum, p) => sum + (Number(p.place_bonus) || 0), 0);
     assert.ok(extras >= 0);
     assert.ok(Math.abs(extras - (state.placePrizes.second + state.placePrizes.third)) < 0.02);
+    const maxOther = Math.max(...state.stats
+      .filter((p) => p.player_id !== winner.player_id)
+      .map((p) => p.total_payout));
+    assert.ok(winner.total_payout + 0.001 >= maxOther);
   });
 
   it('stores the chosen race to', () => {

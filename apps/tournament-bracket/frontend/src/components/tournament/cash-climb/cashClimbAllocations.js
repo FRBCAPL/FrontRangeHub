@@ -7,6 +7,7 @@ import {
   KOH_TARGET_PERCENT,
   MIN_OPENING_WIN,
   RR_CLIMB_STEP,
+  RR_HOLD_BUFFER_ROUNDS,
   RR_SURPLUS_SECOND_SHARE,
   RR_SURPLUS_THIRD_SHARE,
 } from './cashClimbPayoutConfig.js';
@@ -38,30 +39,31 @@ export function allocateBudgets(prizePool) {
 
 export function buildKohSchedule(kohBudget, lastRrPerWin = 0) {
   const budget = Math.max(0, Math.round(Number(kohBudget) || 0));
-  const count = KOH_MATCH_COUNT;
   const matchCap = Math.max(0, Math.floor(budget * KOH_MATCH_SPEND_CAP));
   const minStart = Math.max(1, Math.round(Number(lastRrPerWin) || 0) + KOH_MIN_GAP_OVER_RR);
 
   let best = null;
-  const consider = (start, step) => {
-    if (start < 1 || step < 1) return;
+  const consider = (start, step, count) => {
+    if (start < 1 || step < 1 || count < 1) return;
     const sum = kohLadderSum(start, step, count);
     if (sum > matchCap) return;
     const above = start >= minStart ? 1 : 0;
-    const score = above * 1e9 + start * 1e4 + step * 100 - sum;
-    if (!best || score > best.score) best = { start, step, sum, score };
+    const score = above * 1e12 + count * 1e8 + start * 1e4 + step * 100 - sum;
+    if (!best || score > best.score) best = { start, step, count, sum, score };
   };
 
-  for (let step = 3; step >= 1; step -= 1) {
-    const maxStart = Math.floor((matchCap - step * (count * (count - 1)) / 2) / count);
-    for (let start = Math.max(1, maxStart); start >= 1; start -= 1) {
-      consider(start, step);
+  for (let count = KOH_MATCH_COUNT; count >= 1; count -= 1) {
+    for (let step = 3; step >= 1; step -= 1) {
+      const maxStart = Math.floor((matchCap - step * (count * (count - 1)) / 2) / count);
+      for (let start = Math.max(1, maxStart); start >= 1; start -= 1) {
+        consider(start, step, count);
+      }
     }
   }
 
   if (!best) {
-    const each = Math.max(1, Math.floor(matchCap / count) || 1);
-    const schedule = Array.from({ length: count }, (_, i) => each + i);
+    const each = Math.max(1, Math.floor(matchCap / Math.max(1, KOH_MATCH_COUNT)) || 1);
+    const schedule = Array.from({ length: KOH_MATCH_COUNT }, (_, i) => each + i);
     const scheduledSpend = schedule.reduce((sum, n) => sum + n, 0);
     return {
       schedule,
@@ -70,7 +72,7 @@ export function buildKohSchedule(kohBudget, lastRrPerWin = 0) {
     };
   }
 
-  const schedule = Array.from({ length: count }, (_, i) => best.start + i * best.step);
+  const schedule = Array.from({ length: best.count }, (_, i) => best.start + i * best.step);
   return {
     schedule,
     scheduledSpend: best.sum,
@@ -125,14 +127,37 @@ export function buildRrSchedule(rrBudget, playerCount, tournament = null, maxPer
 }
 
 export function buildPayoutPlan({ prizePool, playerCount, tournament = null } = {}) {
-  const { pool, rrBudget, kohBudget } = allocateBudgets(prizePool);
-  const kohFirstPass = buildKohSchedule(kohBudget, 0);
-  const rrCap = Math.max(
-    MIN_OPENING_WIN,
-    (kohFirstPass.schedule[0] || MIN_OPENING_WIN) - KOH_MIN_GAP_OVER_RR
-  );
-  const rr = buildRrSchedule(rrBudget, playerCount, tournament, rrCap);
-  const koh = buildKohSchedule(kohBudget, rr.lastPerWin);
+  const { pool } = allocateBudgets(prizePool);
+  const maxRr = money(pool - Math.round(pool * KOH_TARGET_PERCENT));
+  let rrBudget = maxRr;
+  let kohBudget = money(pool - rrBudget);
+
+  const planWith = (nextRr) => {
+    const nextKoh = money(Math.max(0, pool - nextRr));
+    const kohFirstPass = buildKohSchedule(nextKoh, 0);
+    const rrCap = Math.max(
+      MIN_OPENING_WIN,
+      (kohFirstPass.schedule[0] || MIN_OPENING_WIN) - KOH_MIN_GAP_OVER_RR
+    );
+    const rr = buildRrSchedule(nextRr, playerCount, tournament, rrCap);
+    const koh = buildKohSchedule(nextKoh, rr.lastPerWin);
+    return { rrBudget: money(nextRr), kohBudget: nextKoh, rr, koh };
+  };
+
+  let current = planWith(rrBudget);
+  const lastRr = (current.rr.rounds || [])[current.rr.rounds.length - 1];
+  const holdBuffer = lastRr
+    ? RR_HOLD_BUFFER_ROUNDS * roundWinCost(lastRr.perWin, lastRr.matchCount, lastRr.byeCount)
+    : 0;
+  const rrNeed = money(current.rr.plannedSpend + holdBuffer);
+  if (rrNeed + 0.001 < current.rrBudget) {
+    current = planWith(rrNeed);
+  }
+
+  rrBudget = current.rrBudget;
+  kohBudget = current.kohBudget;
+  const rr = current.rr;
+  const koh = current.koh;
   return {
     pool,
     rrBudget,

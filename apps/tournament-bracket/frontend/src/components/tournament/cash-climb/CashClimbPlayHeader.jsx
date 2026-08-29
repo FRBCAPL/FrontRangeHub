@@ -78,7 +78,15 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
         <Stat label="Pool" value={formatMoney(tournament.totalPrizePool)} />
         <Stat label="Paid" value={formatMoney(paidOut)} />
         <Stat label="Remaining" value={formatMoney(remaining)} />
-        {isPayoutV2(tournament) ? (
+        {isPayoutV2(tournament) && tournament.status === 'completed' ? (
+          listedPlacePrizes(tournament.placePrizes || { first: tournament.firstPlacePrize }).map((row) => (
+            <Stat
+              key={row.place}
+              label={row.place === 1 ? 'Championship' : row.label}
+              value={formatMoney(row.amount)}
+            />
+          ))
+        ) : isPayoutV2(tournament) ? (
           <>
             <Stat label="RR left" value={formatMoney(remainingPhaseBudget(tournament, false))} />
             <Stat label="KOH left" value={formatMoney(remainingPhaseBudget(tournament, true))} />
