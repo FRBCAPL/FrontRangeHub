@@ -2,6 +2,8 @@
 .cc-tv-landscape .cc-tv-body {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
   gap: clamp(12px, 1.6vw, 22px);
 }
 
@@ -26,6 +28,5 @@
 }
 
 .cc-tv-landscape .cc-tv-standings-name {
-  font-size: clamp(1.35rem, 3.4vh, 2rem);
   font-weight: 800;
 }

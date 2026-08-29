@@ -10,18 +10,30 @@ function tag(player) {
   return 'In';
 }
 
-export default function CashClimbTvStandings({ board }) {
+export default function CashClimbTvStandings({ board, layout = 'landscape' }) {
   const completed = board.status === 'completed';
   const kicker = completed
     ? 'Cash rank'
     : board.kohStarted
       ? 'King of the Hill'
       : 'Standings';
+  const count = board.standings.length;
+  const cols = layout === 'landscape'
+    ? (count >= 12 ? 2 : 1)
+    : (count >= 16 ? 2 : 1);
+  const rows = Math.max(1, Math.ceil(count / cols));
 
   return (
     <section className="cc-tv-standings">
       <p className="cc-tv-kicker">{kicker}</p>
-      <ol className="cc-tv-standings-list">
+      <ol
+        className="cc-tv-standings-list"
+        style={{
+          '--cc-tv-n': count,
+          '--cc-tv-stand-cols': cols,
+          '--cc-tv-stand-rows': rows,
+        }}
+      >
         {board.standings.map((p, i) => (
           <li
             key={p.player_id}

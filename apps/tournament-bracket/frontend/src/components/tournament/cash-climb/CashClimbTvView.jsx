@@ -111,7 +111,7 @@ export default function CashClimbTvView() {
 
       <div className="cc-tv-body">
         <CashClimbTvMatches board={board} layout={layout} />
-        <CashClimbTvStandings board={board} />
+        <CashClimbTvStandings board={board} layout={layout} />
       </div>
 
       <CashClimbTvTicker matches={tournament.matches} rounds={tournament.rounds} />
