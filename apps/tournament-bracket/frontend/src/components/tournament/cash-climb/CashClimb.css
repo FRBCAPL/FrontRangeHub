@@ -505,27 +505,6 @@
   color: #e0e7ff;
 }
 
-.cc-edit-modal {
-  display: flex;
-  flex-direction: column;
-  width: min(34rem, 100%);
-  max-height: min(90dvh, calc(100dvh - 32px));
-  min-height: 0;
-  overflow: hidden;
-}
-
-.cc-edit-modal h3,
-.cc-edit-modal .cc-modal-meta {
-  flex-shrink: 0;
-}
-
-.cc-edit-modal-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
 .cc-edit-modal label {
   display: block;
   margin-bottom: 12px;
@@ -557,39 +536,6 @@
   color: #fbbf24;
   font-size: 0.85rem;
   margin: 4px 0 12px;
-}
-
-.cc-edit-players {
-  margin: 8px 0 4px;
-}
-
-.cc-edit-players h4 {
-  margin: 0 0 4px;
-  color: #e0e7ff;
-  font-size: 0.95rem;
-}
-
-.cc-edit-players-note {
-  color: #94a3b8;
-  font-size: 0.85rem;
-  margin: 0 0 8px;
-}
-
-.cc-edit-player-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.cc-edit-player-list li {
-  margin: 0 0 8px;
-}
-
-.cc-edit-modal .form-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 12px;
-  flex-shrink: 0;
 }
 
 .cc-edit-modal .btn-primary,
