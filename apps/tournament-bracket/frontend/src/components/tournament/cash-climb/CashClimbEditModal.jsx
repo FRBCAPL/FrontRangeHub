@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
 import { computePlacePrizes, maxPlaceCount, lastStandingSplitNote } from './cashClimbPlacePrizes.js';
 import { cashClimbMoneyLocked } from './cashClimbEdit.js';
-import { cashClimbRoster } from './cashClimbRename.js';
+import { cashClimbRoster, capitalizePlayerName } from './cashClimbRename.js';
 import CashClimbEditPlayers from './CashClimbEditPlayers.jsx';
 import CashClimbRaceFields from './CashClimbRaceFields.jsx';
 import { cashClimbKohRaceTo, cashClimbRrRaceTo, raceModeFrom } from './cashClimbRace.js';
@@ -32,7 +32,9 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
   const [otherTableCount, setOtherTableCount] = useState(tableModeFrom(tournament.tableCount) === 'other' ? String(tournament.tableCount || '') : '');
   const [entryFee, setEntryFee] = useState(String(tournament.entryFee ?? ''));
   const [placeCountMode, setPlaceCountMode] = useState(String(tournament.placeCount || 3));
-  const [playerNames, setPlayerNames] = useState(() => cashClimbRoster(tournament));
+  const [playerNames, setPlayerNames] = useState(() =>
+    cashClimbRoster(tournament).map((row) => ({ ...row, name: capitalizePlayerName(row.name) }))
+  );
   const dateInputRef = useRef(null);
 
   const openDatePicker = () => {

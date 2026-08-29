@@ -2,8 +2,12 @@ function clone(state) {
   return JSON.parse(JSON.stringify(state));
 }
 
+export function capitalizePlayerName(value) {
+  return String(value || '').replace(/(^|[\s'-])([a-z])/g, (_, sep, letter) => sep + letter.toUpperCase());
+}
+
 export function parsePlayerName(value) {
-  const name = String(value || '').trim();
+  const name = capitalizePlayerName(String(value || '').trim());
   if (!name) throw new Error('Enter a player name.');
   if (name.length > 80) throw new Error('Player name is too long.');
   return name;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { capitalizePlayerName } from './cashClimbRename.js';
 
 export default function CashClimbEditPlayers({ playerNames, onChangeName }) {
   if (!playerNames?.length) return null;
@@ -15,7 +16,7 @@ export default function CashClimbEditPlayers({ playerNames, onChangeName }) {
             <span className="cc-edit-player-num" aria-hidden="true">{index + 1}</span>
             <input
               value={row.name}
-              onChange={(e) => onChangeName(row.id, e.target.value)}
+              onChange={(e) => onChangeName(row.id, capitalizePlayerName(e.target.value))}
               autoComplete="off"
               aria-label={`Player ${index + 1} name`}
             />
