@@ -52,7 +52,7 @@ export function simulateLockedPayouts({
   let rrPaid = 0;
   const rrPays = [];
   rrRounds.forEach((round, i) => {
-    const remaining = money(plan.rrBudget - rrPaid);
+    const remaining = money((plan.rrSpendable ?? plan.rrBudget) - rrPaid);
     let perWin = rrHoldPerWin(plan, i);
     let cost = roundWinCost(perWin, round.matchCount, round.byeCount);
     if (cost > remaining + 0.001) {
@@ -83,6 +83,8 @@ export function simulateLockedPayouts({
     pool,
     rrBudget: plan.rrBudget,
     kohBudget: plan.kohBudget,
+    rrSpendable: plan.rrSpendable,
+    podiumReserve: plan.podiumReserve,
     rrSchedule: plan.rr.schedule,
     kohSchedule: plan.kohSchedule,
     lastRrPerWin: plan.lastRrPerWin,

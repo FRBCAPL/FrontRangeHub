@@ -20,7 +20,7 @@ export default function CashClimbStandings({ stats, currentRound }) {
     <div className="cc-standings">
       <h3>{koh ? 'King of the Hill' : 'Standings'}</h3>
       <p className="cc-standings-note">
-        Ranked by money earned. Paid includes match wins and finishing prizes. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd, unless the champion needs some of it to stay ahead.
+        Ranked by money earned. Paid includes match wins and finishing prizes. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd, unless the champion needs some of it to stay ahead. A podium slice of the RR bank cannot be spent as match wins.
       </p>
       <table>
         <thead>

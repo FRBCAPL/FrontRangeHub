@@ -25,6 +25,8 @@ export function attachPayoutPlan(state, playerCount = 0) {
   state.payoutModel = PAYOUT_MODEL_V2;
   state.rrBudget = plan.rrBudget;
   state.kohBudget = plan.kohBudget;
+  state.rrSpendable = plan.rrSpendable;
+  state.rrPodiumReserve = plan.podiumReserve;
   state.rrSchedule = plan.rr.schedule;
   state.kohSchedule = plan.kohSchedule;
   state.championshipFloor = plan.championshipFloor;
@@ -57,6 +59,13 @@ export function remainingPhaseBudget(state, koh, exceptMatchId = null) {
   return money(Math.max(0, budget - phasePaid(state, koh, exceptMatchId)));
 }
 
+export function remainingMatchBudget(state, koh, exceptMatchId = null) {
+  if (koh) return remainingPhaseBudget(state, true, exceptMatchId);
+  const spendable = Number(state.rrSpendable);
+  const budget = Number.isFinite(spendable) ? spendable : Number(state.rrBudget) || 0;
+  return money(Math.max(0, budget - phasePaid(state, false, exceptMatchId)));
+}
+
 function completedRrRoundCount(state) {
   return (state?.rounds || []).filter((r) => !isKohRound(r) && r.status === 'completed').length;
 }
@@ -70,7 +79,7 @@ function completedKohPlayableCount(state) {
 }
 
 export function lockedRoundPayouts(state, numMatches, numByes, koh = false) {
-  const remaining = remainingPhaseBudget(state, koh);
+  const remaining = remainingMatchBudget(state, koh);
   const matches = Math.max(0, Math.round(Number(numMatches) || 0));
   const byes = Math.max(0, Math.round(Number(numByes) || 0));
   let perMatch = koh

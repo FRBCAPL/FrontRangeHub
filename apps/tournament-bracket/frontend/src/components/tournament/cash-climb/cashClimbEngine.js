@@ -23,6 +23,7 @@ import {
   attachPayoutPlan,
   isPayoutV2,
   lockedRoundPayouts,
+  remainingMatchBudget,
   remainingPhaseBudget,
 } from './cashClimbPayoutRuntime.js';
 
@@ -281,7 +282,7 @@ function creditPayout(state, player, amount, allowReserved = false, match = null
   if (!allowReserved) {
     if (isPayoutV2(state)) {
       const round = match ? (state.rounds || []).find((r) => r.id === match.round_id) : null;
-      cap = remainingPhaseBudget(state, isKohRound(round), match?.id || null);
+      cap = remainingMatchBudget(state, isKohRound(round), match?.id || null);
     } else {
       cap = remainingAfterReserved(state);
     }

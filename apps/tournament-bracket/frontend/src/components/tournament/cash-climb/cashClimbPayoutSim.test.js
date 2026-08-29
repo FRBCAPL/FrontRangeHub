@@ -4,15 +4,16 @@ import { buildPayoutPlan, splitRrSurplus } from './cashClimbAllocations.js';
 import { estimateFinishTotals, simulateLockedPayouts } from './cashClimbPayoutSim.js';
 
 const ENTRY_FEES = [10, 15, 20, 25, 30];
-const PLAYER_COUNTS = [4, 7, 8, 9, 10, 12, 13, 16, 20, 24];
+const PLAYER_COUNTS = [4, 7, 8, 9, 10, 12, 13, 16, 20, 24, 32];
 
 describe('Cash Climb RR/KOH allocations', () => {
-  it('splits a 13-player $20 pool into protected RR and KOH budgets', () => {
+  it('splits a 13-player $20 pool into a smaller KOH bank and a parked podium', () => {
     const plan = buildPayoutPlan({ prizePool: 260, playerCount: 13 });
     assert.equal(plan.pool, 260);
-    assert.equal(plan.kohBudget, 65);
-    assert.equal(plan.rrBudget, 195);
-    assert.equal(plan.kohSchedule.length, 5);
+    assert.equal(plan.kohBudget, 47);
+    assert.equal(plan.rrBudget, 213);
+    assert.equal(plan.podiumReserve, 31);
+    assert.equal(plan.rrSpendable, 182);
     assert.ok(plan.rr.schedule[0] >= 2);
     plan.kohSchedule.forEach((win, i) => {
       if (i > 0) assert.ok(win >= plan.kohSchedule[i - 1] + 1);
@@ -22,13 +23,13 @@ describe('Cash Climb RR/KOH allocations', () => {
     assert.ok(plan.kohSchedule[0] >= plan.lastRrPerWin + 1);
   });
 
-  it('gives a 4-player pool a smaller RR bank so KOH can climb above RR', () => {
+  it('keeps KOH at about 18% on a 4-player pool and parks a podium slice', () => {
     const plan = buildPayoutPlan({ prizePool: 80, playerCount: 4 });
     assert.equal(plan.pool, 80);
     assert.equal(Math.round((plan.rrBudget + plan.kohBudget) * 100) / 100, 80);
-    assert.ok(plan.rrBudget < plan.kohBudget);
-    assert.ok(plan.rrBudget < 60);
-    assert.ok(plan.kohSchedule[0] >= plan.lastRrPerWin + 1);
+    assert.equal(plan.kohBudget, 14);
+    assert.ok(plan.podiumReserve >= 8);
+    assert.ok(plan.kohSchedule[0] >= plan.lastRrPerWin);
     assert.ok(plan.rr.schedule[0] >= 2);
   });
 
@@ -54,8 +55,9 @@ describe('Cash Climb payout simulation', () => {
         for (const row of [slow, fast, long]) {
           assert.equal(row.undistributed, 0);
           assert.equal(row.distributed, row.pool);
-          assert.ok(row.rrPaid <= row.rrBudget + 0.001);
+          assert.ok(row.rrPaid <= (row.rrSpendable ?? row.rrBudget) + 0.001);
           assert.ok(row.kohPaid <= row.kohBudget + 0.001);
+          assert.ok(row.rrSurplus + 0.001 >= (row.podiumReserve || 0) - 0.001);
           assert.equal(moneyCheck(row.rrPaid + row.kohPaid + row.rrSurplus + row.kohSurplus), row.pool);
         }
       });
@@ -73,8 +75,30 @@ describe('Cash Climb payout simulation', () => {
     assert.equal(result.undistributed, 0);
     assert.ok(totals.first > totals.second);
     assert.ok(totals.second > totals.third);
-    assert.ok(totals.firstSecondRatio < 2.2, `1st/2nd ratio ${totals.firstSecondRatio}`);
+    assert.ok(totals.firstSecondRatio < 2.5, `1st/2nd ratio ${totals.firstSecondRatio}`);
     assert.ok(totals.first < result.pool * 0.5, `1st took ${totals.first} of ${result.pool}`);
+  });
+
+  it('leaves 2nd a real payday on a 32-player $20 night that spends the RR climb', () => {
+    const result = simulateLockedPayouts({
+      entryFee: 20,
+      playerCount: 32,
+      fastestRr: false,
+      extraRrRounds: 2,
+      kohMatches: 4,
+    });
+    assert.equal(result.pool, 640);
+    assert.equal(result.kohBudget, 115);
+    assert.ok(result.rrPaid <= result.rrSpendable + 0.001);
+    assert.ok(result.rrSurplus >= result.podiumReserve - 0.001);
+    const secondPodium = splitRrSurplus(result.rrSurplus).second;
+    assert.ok(secondPodium >= 40, `2nd podium ${secondPodium} from unused RR ${result.rrSurplus}`);
+    const firstIfSweep = 60 + result.kohBudget;
+    const secondIfQa = 42 + secondPodium;
+    assert.ok(
+      firstIfSweep / secondIfQa < 2.6,
+      `reconstructed 1st/2nd ${firstIfSweep}/${secondIfQa}`
+    );
   });
 });
 

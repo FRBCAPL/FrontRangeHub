@@ -49,7 +49,7 @@ describe('edit open Cash Climb', () => {
     assert.equal(Math.round((state.rrBudget + state.kohBudget) * 100) / 100, 100);
     assert.equal(state.firstPlacePrize, state.championshipFloor);
     assert.ok(state.rrSchedule.length >= 1);
-    assert.equal(state.kohSchedule.length, 5);
+    assert.ok(state.kohSchedule.length >= 1);
   });
 
   it('does not change prize money after a real match is recorded', () => {

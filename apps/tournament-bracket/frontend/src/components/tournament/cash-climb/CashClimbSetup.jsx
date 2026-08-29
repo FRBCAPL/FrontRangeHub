@@ -191,7 +191,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
           </label>
         </div>
         <p className="players-count">
-          Full entry stays in the event. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd, unless the champion needs some of it to stay ahead.
+          Full entry stays in the event. KOH is a smaller protected bank. A podium slice of RR cannot be spent as match wins, so 2nd and 3rd still get paid on a long night.
         </p>
         <label>
           Players

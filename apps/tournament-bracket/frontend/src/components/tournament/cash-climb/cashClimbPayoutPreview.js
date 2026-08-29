@@ -31,7 +31,7 @@ export function buildPayoutPreview({ prizePool, playerCount, tournament = null }
     paidThisRound: perWin,
   }));
   const awards = splitFinishAwards({
-    rrSurplus: plan.rr.unspentInPlan,
+    rrSurplus: money((plan.rr.unspentInPlan || 0) + (plan.podiumReserve || 0)),
     kohSurplus: plan.championshipFloor,
     firstMatchPaid: 0,
     secondMatchPaid: 0,
@@ -49,6 +49,8 @@ export function buildPayoutPreview({ prizePool, playerCount, tournament = null }
     rrBudget: plan.rrBudget,
     kohBudget: plan.kohBudget,
     championshipFloor: plan.championshipFloor,
+    podiumReserve: plan.podiumReserve,
+    rrSpendable: plan.rrSpendable,
     estimatedSecond: awards.second,
     estimatedThird: awards.third,
     estimatedChampionship: awards.championship,

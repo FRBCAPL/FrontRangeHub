@@ -24,7 +24,7 @@ export default function CashClimbPrizePreview({
       <p className="players-count">
         Prize pool {formatMoney(prizePool)}
         {v2
-          ? ` • RR bank ${formatMoney(preview.rrBudget)} • KOH bank ${formatMoney(preview.kohBudget)}`
+          ? ` • RR bank ${formatMoney(preview.rrBudget)} • KOH bank ${formatMoney(preview.kohBudget)}${preview.podiumReserve ? ` • Podium parked ${formatMoney(preview.podiumReserve)}` : ''}`
           : finishing.length
             ? ` • Last standing leftover ${formatMoney(finishing.reduce((sum, row) => sum + row.amount, 0))}`
             : ''}
@@ -66,7 +66,7 @@ export default function CashClimbPrizePreview({
       </table>
       <p className="cc-prize-preview-note">
         {v2
-          ? 'The full entry fee stays in this event. The RR bank funds the planned climb plus a hold buffer; the rest is a protected King of the Hill bank. Match pays are locked at the start. Extra RR rounds hold the last per-win if the RR bank can pay; they never take KOH money. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd, except any amount needed so the champion earns at least as much as 2nd. King of the Hill starts at 3 players. Each win is a whole dollar.'
+          ? 'The full entry fee stays in this event. About 18% is a protected King of the Hill bank (matches plus championship leftover). About 12% is parked for 2nd and 3rd so a long night cannot spend it as round-robin wins. The rest funds the RR climb. Match pays are locked at the start. Extra RR rounds hold the last per-win if the RR climb bank can pay; they never take KOH or podium money. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd, except any amount needed so the champion earns at least as much as 2nd. King of the Hill starts at 3 players. Each win is a whole dollar.'
           : 'This table is the starting estimate. Match wins climb from $2. Last standing leftover is parked so the winner is always awarded. Extra rounds can shrink leftover; a short night can grow it. King of the Hill starts at 3 players. Each win is a whole dollar.'}
       </p>
     </div>
