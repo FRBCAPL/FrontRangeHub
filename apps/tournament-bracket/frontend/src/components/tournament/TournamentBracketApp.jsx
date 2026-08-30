@@ -1,31 +1,28 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buildSingleElimination, buildDoubleElimination } from './bracketLogic';
-import BracketDisplay from './BracketDisplay';
-import DoubleElimDisplay from './DoubleElimDisplay';
 import CreateTournamentForm from './CreateTournamentForm';
+import ElimPlayScreen from './ElimPlayScreen';
 import CashClimbApp from './cash-climb/CashClimbApp';
+import CashClimbSavedEvents from './cash-climb/CashClimbSavedEvents.jsx';
 import { loadCashClimb } from './cash-climb/cashClimbStore';
+import { preferLocalTournament } from './cash-climb/cashClimbSaved.js';
 import { formatTournamentDate } from './cash-climb/cashClimbEngine.js';
 import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
 import { clearLoginReturn } from './tournamentOperators.js';
+import { loadElim, saveElim, clearElim } from './elimStore.js';
+import { withElimStatus, elimIdsEqual, elimFormatLabel } from './elimStatus.js';
+import {
+  syncElimCloud,
+  retireElimEvent,
+  loadLiveElimEvent,
+  listSavedElimEvents,
+  deleteElimEvent,
+} from './elimCloud.js';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
-
-const STORAGE_KEY = 'frontrange-tournament-bracket';
-
-function loadElim() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const t = JSON.parse(raw);
-      if (t && t.entrantNames && t.entrantNames.length >= 2) return t;
-    }
-  } catch (_) {}
-  return null;
-}
 
 export default function TournamentBracketApp() {
   const navigate = useNavigate();
@@ -39,16 +36,45 @@ export default function TournamentBracketApp() {
   });
   const [elimType, setElimType] = useState('single');
   const [tournament, setTournament] = useState(loadElim);
+  const [savedElim, setSavedElim] = useState([]);
 
   const persist = useCallback((t) => {
-    setTournament(t);
-    try {
-      if (t) localStorage.setItem(STORAGE_KEY, JSON.stringify(t));
-      else localStorage.removeItem(STORAGE_KEY);
-    } catch (_) {}
+    const next = t ? withElimStatus(t) : null;
+    setTournament(next);
+    saveElim(next);
+    if (next) syncElimCloud(next);
   }, []);
 
+  const refreshSavedElim = useCallback(async () => {
+    setSavedElim(await listSavedElimEvents());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hydrate = async () => {
+      const local = loadElim();
+      const live = await loadLiveElimEvent();
+      if (cancelled) return;
+      const chosen = preferLocalTournament(local, live.tournament);
+      if (chosen && !local) {
+        const restored = withElimStatus(chosen);
+        setTournament(restored);
+        saveElim(restored);
+      } else if (local) {
+        syncElimCloud(local);
+      }
+      if (!cancelled) await refreshSavedElim();
+    };
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshSavedElim]);
+
   const handleCreate = (config) => {
+    if (tournament && tournament.status !== 'completed') {
+      retireElimEvent(withElimStatus(tournament, 'ended'));
+    }
     if (config.type === 'single') {
       const { rounds } = buildSingleElimination(config.entrantNames);
       persist({
@@ -73,19 +99,54 @@ export default function TournamentBracketApp() {
     setScreen('elim-play');
   };
 
-  const handleBracketUpdate = (rounds) => {
-    if (!tournament) return;
-    if (tournament.type === 'single') persist({ ...tournament, rounds });
-  };
-
-  const handleDoubleElimUpdate = (data) => {
-    if (!tournament || tournament.type !== 'double') return;
-    persist({ ...tournament, ...data });
+  const leaveElimToHome = () => {
+    clearElim();
+    setTournament(null);
+    setScreen('home');
+    refreshSavedElim();
   };
 
   const handleNewElim = () => {
-    persist(null);
-    setScreen('home');
+    if (tournament && tournament.status !== 'completed') {
+      const ok = window.confirm(
+        'Start a new tournament? This event will be ended in the database and cleared from this tablet. You can open or remove it later from the home list.'
+      );
+      if (!ok) return;
+      retireElimEvent(withElimStatus(tournament, 'ended'));
+    }
+    leaveElimToHome();
+  };
+
+  const handleRemoveElim = async () => {
+    if (!tournament?.id) return;
+    const ok = window.confirm('Remove this tournament from the database and this tablet? This cannot be undone.');
+    if (!ok) return;
+    await deleteElimEvent(tournament.id);
+    leaveElimToHome();
+  };
+
+  const handleOpenSavedElim = (item) => {
+    if (!item?.tournament) return;
+    if (tournament && tournament.status !== 'completed' && !elimIdsEqual(tournament.id, item.id)) {
+      const ok = window.confirm('Replace the event on this tablet with the saved one? The current event stays in the database.');
+      if (!ok) return;
+      if (tournament.status !== 'completed') retireElimEvent(withElimStatus(tournament, 'ended'));
+    }
+    persist(item.tournament);
+    setScreen('elim-play');
+  };
+
+  const handleRemoveSavedElim = async (item) => {
+    if (!item?.id) return;
+    const ok = window.confirm(`Remove "${item.name}" from the database? This cannot be undone.`);
+    if (!ok) return;
+    await deleteElimEvent(item.id);
+    if (tournament && elimIdsEqual(tournament.id, item.id)) {
+      clearElim();
+      setTournament(null);
+      setScreen('home');
+    }
+    refreshSavedElim();
   };
 
   const cashClimb = loadCashClimb();
@@ -106,6 +167,12 @@ export default function TournamentBracketApp() {
           <h1>{elimType === 'single' ? 'Single elimination' : 'Double elimination'}</h1>
           <p>Separate from the Ladder of Legends.</p>
         </header>
+        <CashClimbSavedEvents
+          title="Saved elimination tournaments"
+          events={savedElim}
+          onOpen={handleOpenSavedElim}
+          onRemove={handleRemoveSavedElim}
+        />
         <div className="tb-create">
           <CreateTournamentForm
             key={elimType}
@@ -120,31 +187,12 @@ export default function TournamentBracketApp() {
 
   if (screen === 'elim-play' && elim) {
     return (
-      <div className="tournament-bracket-app">
-        <header className="tb-header">
-          <h1>{elim.name}</h1>
-          <p>
-            {elim.type === 'single' ? 'Single elimination' : 'Double elimination'} •{' '}
-            {elim.entrantNames?.length || 0} entrants
-          </p>
-          <button type="button" className="tb-btn-new" onClick={handleNewElim}>
-            New tournament
-          </button>
-        </header>
-        {elim.type === 'single' && (
-          <BracketDisplay rounds={elim.rounds} onUpdate={handleBracketUpdate} />
-        )}
-        {elim.type === 'double' && (
-          <DoubleElimDisplay
-            data={{
-              winnersRounds: elim.winnersRounds,
-              loserRounds: elim.loserRounds,
-              grandFinal: elim.grandFinal,
-            }}
-            onUpdate={handleDoubleElimUpdate}
-          />
-        )}
-      </div>
+      <ElimPlayScreen
+        tournament={elim}
+        onUpdate={persist}
+        onNew={handleNewElim}
+        onRemove={handleRemoveElim}
+      />
     );
   }
 
@@ -152,7 +200,7 @@ export default function TournamentBracketApp() {
     <div className="tournament-bracket-app">
       <header className="tb-header">
         <h1>Open Tournament</h1>
-        <p>Run an event that is not tied to the ladder. The event stays in this browser. Ladder tournaments stay on the ladder.</p>
+        <p>Run an event that is not tied to the ladder. Events save to the database, with this tablet as backup. Ladder tournaments stay on the ladder.</p>
       </header>
 
       {(cashClimb || elim) && (
@@ -170,11 +218,18 @@ export default function TournamentBracketApp() {
           {elim && (
             <button type="button" className="cc-format-btn" onClick={() => setScreen('elim-play')}>
               <strong>Resume {elim.name}</strong>
-              <span>{elim.type === 'single' ? 'Single elimination' : 'Double elimination'}</span>
+              <span>{elimFormatLabel(elim.type)}</span>
             </button>
           )}
         </div>
       )}
+
+      <CashClimbSavedEvents
+        title="Saved elimination tournaments"
+        events={savedElim.filter((item) => !elim || !elimIdsEqual(item.id, elim.id))}
+        onOpen={handleOpenSavedElim}
+        onRemove={handleRemoveSavedElim}
+      />
 
       <div className="cc-format-grid">
         <button

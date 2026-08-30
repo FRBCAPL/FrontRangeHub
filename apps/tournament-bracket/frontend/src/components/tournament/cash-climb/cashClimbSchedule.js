@@ -105,6 +105,15 @@ export function getRoundGameType(roundNumber, gameType) {
   return games[(roundNumber - 1) % 3];
 }
 
+export function roundDisplayName(round, gameType) {
+  if (!round) return '';
+  if (round.koh_round_number != null || round.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName) {
+    return OPEN_TOURNAMENT_STRUCTURE.finalStageName;
+  }
+  const n = Math.max(1, Number(round.round_number) || 1);
+  return `Round ${n} (${getRoundGameType(n, gameType)})`;
+}
+
 /**
  * One round of round robin: each remaining player plays at most once.
  * roundOffset rotates pairings so later rounds are not the same as round 1.

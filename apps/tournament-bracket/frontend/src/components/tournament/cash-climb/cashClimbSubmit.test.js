@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { CASH_CLIMB_SUBMIT_HASH, cashClimbSubmitHref, pendingByMatchId, pendingWinnerName, findMatchById, resolvePendingWinnerId } from './cashClimbSubmit.js';
+import { CASH_CLIMB_SUBMIT_HASH, cashClimbSubmitHref, pendingByMatchId, pendingWinnerName, findMatchById, resolvePendingWinnerId, openPendingSubmissions, pendingApprovalLabel } from './cashClimbSubmit.js';
 
 describe('cash climb player submit helpers', () => {
   it('exposes a public submit hash route', () => {
@@ -30,5 +30,21 @@ describe('cash climb player submit helpers', () => {
     const match = findMatchById(tournament, 'm1');
     assert.equal(match.id, 'm1');
     assert.equal(resolvePendingWinnerId(match, { winner_id: 'p2' }), 'p2');
+  });
+
+  it('counts only open matches awaiting approval', () => {
+    const tournament = {
+      matches: [
+        { id: 'm1', status: 'pending', is_bye: false },
+        { id: 'm2', status: 'completed', is_bye: false },
+      ],
+    };
+    const open = openPendingSubmissions(tournament, [
+      { match_id: 'm1' },
+      { match_id: 'm2' },
+    ]);
+    assert.equal(open.length, 1);
+    assert.equal(pendingApprovalLabel(1), '1 match awaiting approval');
+    assert.equal(pendingApprovalLabel(3), '3 matches awaiting approval');
   });
 });

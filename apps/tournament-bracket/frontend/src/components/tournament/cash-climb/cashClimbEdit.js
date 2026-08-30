@@ -1,5 +1,6 @@
 import {
   calculatePrizeDistribution,
+  getRoundGameType,
 } from './cashClimbSchedule.js';
 import {
   computePlacePrizes,
@@ -11,6 +12,7 @@ import { recomputePendingRoundPayouts } from './cashClimbEngine.js';
 import { attachPayoutPlan, isPayoutV2 } from './cashClimbPayoutRuntime.js';
 import { applyPlayerNames } from './cashClimbRename.js';
 import { requireRaceTo } from './cashClimbRace.js';
+import { isCashClimbGameType, OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
 
 function money(n) {
   return Math.round(Number(n || 0) * 100) / 100;
@@ -29,6 +31,20 @@ function parseTableCount(value) {
 
 function paidOutTotal(state) {
   return money((state.stats || []).reduce((sum, p) => sum + (Number(p.total_payout) || 0), 0));
+}
+
+function relabelRoundsForGameType(state) {
+  const kohName = OPEN_TOURNAMENT_STRUCTURE.finalStageName;
+  (state.rounds || []).forEach((round) => {
+    const koh = round.koh_round_number != null || round.round_name === kohName;
+    if (koh) {
+      round.game_type = state.gameType === 'mixed' ? '8-Ball' : getRoundGameType(1, state.gameType);
+      return;
+    }
+    const gameType = getRoundGameType(round.round_number, state.gameType);
+    round.game_type = gameType;
+    round.round_name = `Round ${round.round_number} (${gameType})`;
+  });
 }
 
 export function cashClimbHasPlayedMatch(state) {
@@ -54,10 +70,11 @@ export function updateOpenTournament(state, patch = {}) {
   next.tournamentDate = date;
 
   const gameType = patch.gameType ?? next.gameType;
-  if (!['8-Ball', '9-Ball', '10-Ball', 'mixed'].includes(gameType)) {
+  if (!isCashClimbGameType(gameType)) {
     throw new Error('Pick a game type.');
   }
   next.gameType = gameType;
+  relabelRoundsForGameType(next);
   next.raceTo = requireRaceTo(patch.raceTo ?? next.raceTo);
   next.kohRaceTo = requireRaceTo(patch.kohRaceTo ?? next.kohRaceTo ?? next.raceTo);
   next.tableCount = parseTableCount(patch.tableCount ?? next.tableCount);

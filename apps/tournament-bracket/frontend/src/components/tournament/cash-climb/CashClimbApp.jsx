@@ -1,16 +1,21 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import CashClimbSetup from './CashClimbSetup.jsx';
 import CashClimbPlay from './CashClimbPlay.jsx';
-import { createOpenTournament, startTournament, recordMatchResult, continueCashClimb } from './cashClimbEngine.js';
+import { createOpenTournament, sanitizeCashClimb, startTournament, recordMatchResult, continueCashClimb } from './cashClimbEngine.js';
 import { updateOpenTournament } from './cashClimbEdit.js';
 import { loadCashClimb, saveCashClimb, clearCashClimb } from './cashClimbStore.js';
 import {
   syncCashClimbCloud,
   retireCashClimbEvent,
+  loadLiveCashClimbEvent,
   loadCashClimbPending,
   deleteCashClimbPending,
+  listSavedCashClimbEvents,
+  deleteCashClimbEvent,
 } from './cashClimbCloud.js';
 import { findMatchById, idsEqual, resolvePendingWinnerId } from './cashClimbSubmit.js';
+import { playedGameFromPending } from './cashClimbPlayedGame.js';
+import { preferLocalTournament } from './cashClimbSaved.js';
 import './CashClimb.css';
 
 const PENDING_POLL_MS = 2500;
@@ -18,6 +23,7 @@ const PENDING_POLL_MS = 2500;
 export default function CashClimbApp({ onLeave }) {
   const [tournament, setTournament] = useState(() => loadCashClimb());
   const [submissions, setSubmissions] = useState([]);
+  const [savedEvents, setSavedEvents] = useState([]);
 
   const persist = useCallback((next) => {
     setTournament(next);
@@ -25,11 +31,31 @@ export default function CashClimbApp({ onLeave }) {
     syncCashClimbCloud(next);
   }, []);
 
-  useEffect(() => {
-    if (tournament?.id) syncCashClimbCloud(tournament);
-    // Publish once on open so phones can see an event that was already running.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const refreshSaved = useCallback(async () => {
+    setSavedEvents(await listSavedCashClimbEvents());
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const hydrate = async () => {
+      const local = loadCashClimb();
+      const live = await loadLiveCashClimbEvent();
+      if (cancelled) return;
+      const chosen = preferLocalTournament(local, live.tournament);
+      if (chosen && !local) {
+        const restored = sanitizeCashClimb(chosen);
+        setTournament(restored);
+        saveCashClimb(restored);
+      } else if (local) {
+        syncCashClimbCloud(local);
+      }
+      if (!cancelled) await refreshSaved();
+    };
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshSaved]);
 
   useEffect(() => {
     if (!tournament?.id || tournament.status === 'completed') {
@@ -58,9 +84,9 @@ export default function CashClimbApp({ onLeave }) {
     }
   };
 
-  const handleRecord = (matchId, winnerId, score) => {
+  const handleRecord = (matchId, winnerId, score, extras = {}) => {
     try {
-      persist(recordMatchResult(tournament, matchId, winnerId, score));
+      persist(recordMatchResult(tournament, matchId, winnerId, score, extras));
     } catch (err) {
       alert(err.message || 'Could not save result');
     }
@@ -79,7 +105,8 @@ export default function CashClimbApp({ onLeave }) {
       return;
     }
     try {
-      persist(recordMatchResult(tournament, match.id, winnerId, row.score || null));
+      const extras = { playedGame: playedGameFromPending(row) };
+      persist(recordMatchResult(tournament, match.id, winnerId, row.score || null, extras));
       dropPending(match.id);
     } catch (err) {
       alert(err.message || 'Could not confirm that result');
@@ -109,19 +136,57 @@ export default function CashClimbApp({ onLeave }) {
     }
   };
 
-  const handleNew = () => {
-    if (tournament && tournament.status !== 'completed') {
-      const ok = window.confirm('Start a new Cash Climb? The current event on this device will be cleared.');
-      if (!ok) return;
-    }
-    if (tournament) retireCashClimbEvent(tournament);
+  const leaveToSetup = () => {
     clearCashClimb();
     setTournament(null);
     setSubmissions([]);
+    refreshSaved();
+  };
+
+  const handleNew = () => {
+    if (tournament && tournament.status !== 'completed') {
+      const ok = window.confirm(
+        'Start a new Cash Climb? This event will be ended in the database and cleared from this tablet. You can open or remove it later from setup.'
+      );
+      if (!ok) return;
+      retireCashClimbEvent(tournament);
+    }
+    leaveToSetup();
+  };
+
+  const handleRemove = async () => {
+    if (!tournament?.id) return;
+    const ok = window.confirm('Remove this tournament from the database and this tablet? This cannot be undone.');
+    if (!ok) return;
+    await deleteCashClimbEvent(tournament.id);
+    leaveToSetup();
+  };
+
+  const handleOpenSaved = (item) => {
+    if (!item?.tournament) return;
+    persist(sanitizeCashClimb(item.tournament));
+  };
+
+  const handleRemoveSaved = async (item) => {
+    if (!item?.id) return;
+    const ok = window.confirm(`Remove "${item.name}" from the database? This cannot be undone.`);
+    if (!ok) return;
+    await deleteCashClimbEvent(item.id);
+    const local = loadCashClimb();
+    if (local && idsEqual(local.id, item.id)) clearCashClimb();
+    refreshSaved();
   };
 
   if (!tournament) {
-    return <CashClimbSetup onStart={handleStart} onCancel={onLeave} />;
+    return (
+      <CashClimbSetup
+        onStart={handleStart}
+        onCancel={onLeave}
+        savedEvents={savedEvents}
+        onOpenSaved={handleOpenSaved}
+        onRemoveSaved={handleRemoveSaved}
+      />
+    );
   }
 
   return (
@@ -133,6 +198,7 @@ export default function CashClimbApp({ onLeave }) {
       onRejectSubmit={handleRejectSubmit}
       onContinue={handleContinue}
       onNew={handleNew}
+      onRemove={handleRemove}
       onEdit={handleEdit}
       onLeave={onLeave}
     />

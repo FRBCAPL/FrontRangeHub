@@ -66,6 +66,24 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
   ],
 };
 
+export const CASH_CLIMB_GAME_TYPES = [
+  { value: '8-Ball', label: '8-Ball' },
+  { value: '9-Ball', label: '9-Ball' },
+  { value: '10-Ball', label: '10-Ball' },
+  { value: 'mixed', label: 'Mixed' },
+  { value: "Lagger's Choice", label: "Lagger's Choice" },
+];
+
+export function isCashClimbGameType(gameType) {
+  return CASH_CLIMB_GAME_TYPES.some((g) => g.value === gameType);
+}
+
+export const CASH_CLIMB_PLAYED_GAMES = ['8-Ball', '9-Ball', '10-Ball'];
+
+export function isLaggersChoice(gameType) {
+  return String(gameType || '').replace(/['’]/g, '').toLowerCase().trim() === 'laggers choice';
+}
+
 export function getKOHThreshold(playerCount, tournament = null) {
   const override = tournament?.koh_threshold;
   if (override != null && override !== '') return Number(override);

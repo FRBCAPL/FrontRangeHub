@@ -3,6 +3,7 @@ import {
   determineRoundRobinType,
   getKOHThreshold,
 } from './openTournamentStructure.js';
+import { playedGameFromExtras } from './cashClimbPlayedGame.js';
 import {
   pairOneRound,
   calculatePrizeDistribution,
@@ -625,7 +626,7 @@ function applyMatchWinner(state, match, winnerId, score) {
   }
 }
 
-export function recordMatchResult(state, matchId, winnerId, score = null) {
+export function recordMatchResult(state, matchId, winnerId, score = null, extras = {}) {
   const next = clone(state);
   const match = next.matches.find((m) => m.id === matchId);
   if (!match) throw new Error('Match not found');
@@ -642,6 +643,8 @@ export function recordMatchResult(state, matchId, winnerId, score = null) {
   }
   if (match.status === 'completed') reverseMatchResult(next, match);
   applyMatchWinner(next, match, winnerId, score);
+  const played = playedGameFromExtras(extras);
+  if (played !== undefined) match.played_game = played || null;
   dropGhostMatches(next);
   return next;
 }

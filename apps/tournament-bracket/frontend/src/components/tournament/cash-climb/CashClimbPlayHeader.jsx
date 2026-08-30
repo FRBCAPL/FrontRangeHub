@@ -21,7 +21,7 @@ function Stat({ label, value }) {
   );
 }
 
-export default function CashClimbPlayHeader({ tournament, paidOut, durationEstimate, onNew, onLeave, onEdit, onRules, onGuide, onSubmitPage }) {
+export default function CashClimbPlayHeader({ tournament, paidOut, durationEstimate, onNew, onLeave, onEdit, onRemove, onRules, onGuide, onSubmitPage }) {
   const dateLabel = formatTournamentDate(tournament.tournamentDate);
   const tables = tournament.tableCount
     ? `${tournament.tableCount} table${tournament.tableCount === 1 ? '' : 's'}`
@@ -70,9 +70,14 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
           <button type="button" className="tb-btn-new" onClick={() => openCashClimbTv('portrait')}>
             TV tall 9:16
           </button>
-          {onEdit && (
+          {onEdit && tournament.status !== 'completed' && (
             <button type="button" className="tb-btn-new" onClick={onEdit}>
               Edit tournament
+            </button>
+          )}
+          {tournament.status === 'completed' && onRemove && (
+            <button type="button" className="tb-btn-new" onClick={onRemove}>
+              Remove tournament
             </button>
           )}
           <button type="button" className="tb-btn-new" onClick={onNew}>

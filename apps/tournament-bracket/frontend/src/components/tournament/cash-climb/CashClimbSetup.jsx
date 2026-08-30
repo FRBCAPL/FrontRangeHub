@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import AddPlayerModal from '../AddPlayerModal.jsx';
 import CashClimbPrizePreview from './CashClimbPrizePreview.jsx';
-import { OPEN_TOURNAMENT_STRUCTURE, determineRoundRobinType, getFormatDisplay } from './openTournamentStructure.js';
+import { OPEN_TOURNAMENT_STRUCTURE, determineRoundRobinType, getFormatDisplay, CASH_CLIMB_GAME_TYPES } from './openTournamentStructure.js';
 import { todayDateInput } from './cashClimbEngine.js';
 import { buildPayoutPreview } from './cashClimbPayoutPreview.js';
 import { estimateCashClimbDuration } from './cashClimbDuration.js';
@@ -9,10 +9,11 @@ import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
 import CashClimbRaceFields from './CashClimbRaceFields.jsx';
 import { defaultKohRaceTo, defaultRrRaceTo, requireRaceTo } from './cashClimbRace.js';
 import CashClimbRulesModal from './CashClimbRulesModal.jsx';
+import CashClimbSavedEvents from './CashClimbSavedEvents.jsx';
 
 const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 
-export default function CashClimbSetup({ onStart, onCancel }) {
+export default function CashClimbSetup({ onStart, onCancel, savedEvents = [], onOpenSaved, onRemoveSaved }) {
   const [name, setName] = useState('Cash Climb');
   const [tournamentDate, setTournamentDate] = useState(todayDateInput);
   const [gameType, setGameType] = useState(OPEN_TOURNAMENT_STRUCTURE.gameRules.gameType);
@@ -112,6 +113,11 @@ export default function CashClimbSetup({ onStart, onCancel }) {
 
   return (
     <>
+      <CashClimbSavedEvents
+        events={savedEvents}
+        onOpen={onOpenSaved}
+        onRemove={onRemoveSaved}
+      />
       <form className="create-tournament-form cc-setup" onSubmit={handleSubmit}>
         <h3>New Cash Climb</h3>
         <p className="cc-setup-note">
@@ -147,10 +153,9 @@ export default function CashClimbSetup({ onStart, onCancel }) {
           <label>
             Game
             <select value={gameType} onChange={(e) => setGameType(e.target.value)}>
-              <option value="8-Ball">8-Ball</option>
-              <option value="9-Ball">9-Ball</option>
-              <option value="10-Ball">10-Ball</option>
-              <option value="mixed">Mixed</option>
+              {CASH_CLIMB_GAME_TYPES.map((g) => (
+                <option key={g.value} value={g.value}>{g.label}</option>
+              ))}
             </select>
           </label>
           <label>

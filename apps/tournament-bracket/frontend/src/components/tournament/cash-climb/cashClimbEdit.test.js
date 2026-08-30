@@ -30,6 +30,23 @@ describe('edit open Cash Climb', () => {
     assert.equal(state.tableCount, 2);
   });
 
+  it('accepts Lagger\'s Choice as the game type', () => {
+    let state = startTournament(createOpenTournament({
+      players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
+    }));
+    state = updateOpenTournament(state, {
+      name: state.name,
+      tournamentDate: state.tournamentDate,
+      gameType: "Lagger's Choice",
+      raceTo: state.raceTo,
+      kohRaceTo: state.kohRaceTo,
+      tableCount: state.tableCount,
+      entryFee: state.entryFee,
+    });
+    assert.equal(state.gameType, "Lagger's Choice");
+    assert.match(getCurrentRound(state).round_name, /Lagger's Choice/);
+  });
+
   it('rebuilds the prize pool if no real match has been played', () => {
     let state = startTournament(createOpenTournament({
       entryFee: 20,

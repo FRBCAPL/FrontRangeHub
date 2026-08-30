@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { sanitizeCashClimb, formatMoney, getCurrentRound } from './cashClimbEngine.js';
-import { cashClimbRrRaceTo, cashClimbKohRaceTo, formatRaceLabel, raceToForMatch } from './cashClimbRace.js';
-import { pendingPlayableMatches, splitByTables, matchTableLabel } from './cashClimbProgress.js';
+import { sanitizeCashClimb, getCurrentRound } from './cashClimbEngine.js';
+import { raceToForMatch } from './cashClimbRace.js';
 import { loadLiveCashClimbEvent, loadCashClimbPending, submitCashClimbPending } from './cashClimbCloud.js';
-import { pendingByMatchId, pendingWinnerName } from './cashClimbSubmit.js';
-import CashClimbMatchButton from './CashClimbMatchButton.jsx';
+import CashClimbStandings from './CashClimbStandings.jsx';
+import CashClimbSubmitMatches from './CashClimbSubmitMatches.jsx';
 import CashClimbResultModal from './CashClimbResultModal.jsx';
 import '../TournamentBracketApp.css';
 import './CashClimb.css';
@@ -49,11 +48,8 @@ export default function CashClimbSubmitPage() {
   }, []);
 
   const round = tournament ? getCurrentRound(tournament) : null;
-  const open = tournament && round ? pendingPlayableMatches(tournament, round) : [];
-  const { atTable, onDeck } = splitByTables(open, tournament?.tableCount);
-  const waiting = pendingByMatchId(submissions);
 
-  const handleSubmit = async (winnerId, score) => {
+  const handleSubmit = async (winnerId, score, extras = {}) => {
     if (!tournament?.id || !selected?.id) return;
     const result = await submitCashClimbPending({
       eventId: tournament.id,
@@ -61,6 +57,7 @@ export default function CashClimbSubmitPage() {
       winnerId,
       score,
       submittedBy: winnerId === selected.player1_id ? selected.player1_name : selected.player2_name,
+      playedGame: extras.playedGame || '',
     });
     setSelected(null);
     if (result.error) {
@@ -78,7 +75,7 @@ export default function CashClimbSubmitPage() {
           <p className="cc-play-kicker">Cash Climb</p>
           <h1>Submit a result</h1>
           <p className="cc-submit-note">
-            Pick your match. The director confirms it before money posts. You cannot continue the round from here.
+            Click your match to submit result. <br />Standings update after the director confirms.
           </p>
         </header>
 
@@ -91,50 +88,19 @@ export default function CashClimbSubmitPage() {
         ) : null}
 
         {tournament && round && tournament.status === 'in-progress' ? (
-          <section className="cc-round">
-            <h2>{round.round_name}</h2>
-            {open[0] ? (
-              <p className="cc-meta">
-                {formatMoney(open[0].payout_amount)} per win
-                {' • '}
-                {formatRaceLabel(raceToForMatch(tournament, open[0]))}
-                {' • RR '}
-                {formatRaceLabel(cashClimbRrRaceTo(tournament))}
-                {' • KOH '}
-                {formatRaceLabel(cashClimbKohRaceTo(tournament))}
-              </p>
-            ) : (
-              <p className="cc-meta">No open matches to submit. Wait for the director.</p>
-            )}
-            {atTable.length > 0 && (
-              <ul className="cc-matches">
-                {atTable.map((m, i) => (
-                  <CashClimbMatchButton
-                    key={m.id}
-                    match={m}
-                    tableLabel={waiting[m.id] ? `Waiting • ${pendingWinnerName(m, waiting[m.id]) || 'director'}` : matchTableLabel(i, tournament.tableCount)}
-                    onPick={setSelected}
-                  />
-                ))}
-              </ul>
-            )}
-            {onDeck.length > 0 && (
-              <>
-                <p className="cc-meta">On deck</p>
-                <ul className="cc-matches">
-                  {onDeck.map((m) => (
-                    <CashClimbMatchButton
-                      key={m.id}
-                      match={m}
-                      tableLabel={waiting[m.id] ? 'Waiting on director' : 'On deck'}
-                      onPick={setSelected}
-                      onDeck
-                    />
-                  ))}
-                </ul>
-              </>
-            )}
-          </section>
+          <div className="cc-submit-board">
+            <section className="cc-submit-results" aria-label="Tournament results">
+              <h2><center></center></h2>
+              <p className="cc-meta"><center></center></p>
+              <CashClimbStandings stats={tournament.stats} currentRound={round} tournament={tournament} briefNote />
+            </section>
+            <CashClimbSubmitMatches
+              tournament={tournament}
+              round={round}
+              submissions={submissions}
+              onPick={setSelected}
+            />
+          </div>
         ) : null}
 
         {message ? <p className="cc-submit-status">{message}</p> : null}
@@ -150,6 +116,7 @@ export default function CashClimbSubmitPage() {
           raceTo={raceToForMatch(tournament, selected)}
           title="Submit result"
           submitLabel="Send to director"
+          askPlayedGame
           onCancel={() => setSelected(null)}
           onSubmit={handleSubmit}
         />

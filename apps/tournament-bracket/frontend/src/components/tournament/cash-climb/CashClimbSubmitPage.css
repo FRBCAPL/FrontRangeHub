@@ -6,9 +6,19 @@
 }
 
 .cc-submit {
-  max-width: 40rem;
+  max-width: 72rem;
   margin: 0 auto;
   text-align: left;
+}
+
+.cc-submit-head {
+  text-align: center;
+}
+
+.cc-submit-head .cc-play-kicker {
+  font-size: 1.15rem;
+  letter-spacing: 0.14em;
+  margin-bottom: 8px;
 }
 
 .cc-submit-head h1 {
@@ -27,6 +37,69 @@
   font-weight: 700;
 }
 
+.cc-submit-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: 16px;
+  align-items: start;
+  margin-top: 8px;
+}
+
+.cc-submit-results h2,
+.cc-submit-matches h2 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 1.15rem;
+}
+
+.cc-submit-matches h2 {
+  text-align: center;
+}
+
+.cc-submit-pay,
+.cc-submit-race,
+.cc-submit-empty {
+  margin: 0 0 4px;
+  text-align: center;
+  color: #cbd5e1;
+}
+
+.cc-submit-pay {
+  font-weight: 800;
+  color: #86efac;
+}
+
+.cc-submit-race {
+  margin-bottom: 12px;
+}
+
+.cc-submit-matches {
+  width: 100%;
+  max-width: 22rem;
+  justify-self: end;
+}
+
+.cc-submit-results .cc-standings {
+  margin-top: 10px;
+}
+
+.cc-submit-results .cc-standings h3,
+.cc-submit-results .cc-standings-note {
+  text-align: center;
+}
+
 .cc-submit .tb-btn-new {
   margin-top: 18px;
+}
+
+@media (max-width: 860px) {
+  .cc-submit-board {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-submit-matches {
+    order: -1;
+    max-width: none;
+    justify-self: stretch;
+  }
 }

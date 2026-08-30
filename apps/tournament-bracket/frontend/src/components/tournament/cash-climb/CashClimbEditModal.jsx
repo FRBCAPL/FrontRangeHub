@@ -8,6 +8,7 @@ import CashClimbRaceFields from './CashClimbRaceFields.jsx';
 import { cashClimbKohRaceTo, cashClimbRrRaceTo, raceModeFrom } from './cashClimbRace.js';
 import { isPayoutV2 } from './cashClimbPayoutRuntime.js';
 import { buildPayoutPreview } from './cashClimbPayoutPreview.js';
+import { CASH_CLIMB_GAME_TYPES } from './openTournamentStructure.js';
 import './CashClimbEditModal.css';
 
 const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
@@ -119,10 +120,9 @@ export default function CashClimbEditModal({ tournament, onSave, onClose }) {
                 <label>
                   Game
                   <select value={gameType} onChange={(e) => setGameType(e.target.value)}>
-                    <option value="8-Ball">8-Ball</option>
-                    <option value="9-Ball">9-Ball</option>
-                    <option value="10-Ball">10-Ball</option>
-                    <option value="mixed">Mixed</option>
+                    {CASH_CLIMB_GAME_TYPES.map((g) => (
+                      <option key={g.value} value={g.value}>{g.label}</option>
+                    ))}
                   </select>
                 </label>
                 <label>

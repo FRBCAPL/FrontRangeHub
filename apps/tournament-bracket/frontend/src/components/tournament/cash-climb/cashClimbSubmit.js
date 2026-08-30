@@ -43,3 +43,16 @@ export function pendingWinnerName(match, pending) {
   if (idsEqual(pending.winner_id, match.player2_id)) return match.player2_name || '';
   return '';
 }
+
+export function openPendingSubmissions(tournament, submissions) {
+  return (submissions || []).filter((row) => {
+    const match = findMatchById(tournament, row.match_id);
+    return Boolean(match && match.status === 'pending' && !match.is_bye);
+  });
+}
+
+export function pendingApprovalLabel(count) {
+  const n = Number(count) || 0;
+  if (n === 1) return '1 match awaiting approval';
+  return `${n} matches awaiting approval`;
+}

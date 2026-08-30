@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
 import { validateRecordedGames } from './cashClimbScore.js';
+import { CASH_CLIMB_PLAYED_GAMES } from './openTournamentStructure.js';
+import { playedGameFromForm } from './cashClimbPlayedGame.js';
 
 export default function CashClimbResultModal({
   match,
@@ -9,12 +11,14 @@ export default function CashClimbResultModal({
   onCancel,
   title,
   submitLabel,
+  askPlayedGame = true,
 }) {
   const editing = match?.status === 'completed';
   const [winnerId, setWinnerId] = useState(match?.winner_id || '');
   const [recordScore, setRecordScore] = useState(Boolean(match?.score));
   const [p1Games, setP1Games] = useState('');
   const [p2Games, setP2Games] = useState('');
+  const [playedGame, setPlayedGame] = useState(match?.played_game || '');
   const [error, setError] = useState('');
   const firstPick = useRef(null);
 
@@ -24,9 +28,10 @@ export default function CashClimbResultModal({
     setRecordScore(Boolean(match?.score));
     setP1Games(scoreParts.length === 2 ? scoreParts[0] : '');
     setP2Games(scoreParts.length === 2 ? scoreParts[1] : '');
+    setPlayedGame(match?.played_game || '');
     setError('');
     firstPick.current?.focus();
-  }, [match?.id, match?.winner_id, match?.score]);
+  }, [match?.id, match?.winner_id, match?.score, match?.played_game]);
 
   if (!match) return null;
   const race = Math.max(1, Number(raceTo) || 0);
@@ -58,7 +63,8 @@ export default function CashClimbResultModal({
       return;
     }
     setError('');
-    onSubmit(winnerId, recordScore ? parsed.score : null);
+    const chosen = playedGameFromForm(e.currentTarget, playedGame);
+    onSubmit(winnerId, recordScore ? parsed.score : null, { playedGame: chosen });
   };
 
   return (
@@ -95,6 +101,22 @@ export default function CashClimbResultModal({
           />
           {match.player2_name}
         </label>
+
+        {askPlayedGame ? (
+          <label className="cc-played-game">
+            Game played
+            <select
+              name="playedGame"
+              value={playedGame}
+              onChange={(e) => setPlayedGame(e.target.value)}
+            >
+              <option value="">Optional</option>
+              {CASH_CLIMB_PLAYED_GAMES.map((game) => (
+                <option key={game} value={game}>{game}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
 
         <label className="cc-score-toggle">
           <input

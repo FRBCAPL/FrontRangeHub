@@ -489,8 +489,26 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
+.cc-standings .cc-standings-wl {
+  text-align: center;
+}
+
 .cc-standings .cc-out {
   opacity: 0.55;
+}
+
+.cc-standings tr.cc-standings-row {
+  cursor: pointer;
+}
+
+.cc-standings tr.cc-standings-row:hover,
+.cc-standings tr.cc-standings-row:focus-visible {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.cc-standings .cc-standings-player {
+  color: #86efac;
+  font-weight: 700;
 }
 
 .cc-standings .cc-finish-tag {
@@ -614,6 +632,24 @@
   border: 1px solid rgba(148, 163, 184, 0.3);
   border-radius: 8px;
   cursor: pointer;
+}
+
+.cc-played-game {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0 4px;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.cc-played-game select {
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
 }
 
 .cc-score-toggle {

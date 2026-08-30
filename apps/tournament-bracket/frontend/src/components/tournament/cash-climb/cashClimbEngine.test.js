@@ -539,4 +539,16 @@ describe('open Cash Climb engine', () => {
     assert.equal(winner.total_payout, edited.payout_amount);
     assert.equal(loser.total_payout, 0);
   });
+
+  it('stores optional played game without changing the winner', () => {
+    let state = startTournament(createOpenTournament({
+      roundRobinType: 'single',
+      players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
+    }));
+    const match = getRoundMatches(state, getCurrentRound(state).id).find((m) => m.status === 'pending' && m.player2_id);
+    state = recordMatchResult(state, match.id, match.player1_id, null, { playedGame: '9-Ball' });
+    const saved = state.matches.find((m) => m.id === match.id);
+    assert.equal(saved.winner_id, match.player1_id);
+    assert.equal(saved.played_game, '9-Ball');
+  });
 });

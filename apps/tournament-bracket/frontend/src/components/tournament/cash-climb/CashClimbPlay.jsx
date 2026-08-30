@@ -13,6 +13,7 @@ import CashClimbRulesModal from './CashClimbRulesModal.jsx';
 import CashClimbPendingQueue from './CashClimbPendingQueue.jsx';
 import { pendingByMatchId, pendingWinnerName, openCashClimbSubmit } from './cashClimbSubmit.js';
 import { cashClimbContinueLabel, cashClimbProgress, matchTableLabel, pendingPlayableMatches, playableRoundMatches, roundByeMatches, splitByTables } from './cashClimbProgress.js';
+import { roundDisplayName } from './cashClimbSchedule.js';
 
 export default function CashClimbPlay({
   tournament,
@@ -24,6 +25,7 @@ export default function CashClimbPlay({
   onNew,
   onLeave,
   onEdit,
+  onRemove,
 }) {
   const [selected, setSelected] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
@@ -61,6 +63,7 @@ export default function CashClimbPlay({
         onNew={onNew}
         onLeave={onLeave}
         onEdit={() => setShowEdit(true)}
+        onRemove={onRemove}
         onRules={() => setRulesView('tonight')}
         onGuide={() => setRulesView('guide')}
         onSubmitPage={openCashClimbSubmit}
@@ -87,7 +90,7 @@ export default function CashClimbPlay({
       <div className={`cc-play-board${tournament.status === 'completed' || !round ? ' is-complete' : ''}`}>
         {tournament.status !== 'completed' && round && (
           <section className="cc-round">
-            <h2>{round.round_name}</h2>
+            <h2>{roundDisplayName(round, tournament.gameType)}</h2>
             {pending[0] && (
               <p className="cc-meta">
                 This round: {formatMoney(pending[0].payout_amount)} per win
@@ -181,16 +184,17 @@ export default function CashClimbPlay({
           </section>
         )}
 
-        <CashClimbStandings stats={tournament.stats} currentRound={round} />
+        <CashClimbStandings stats={tournament.stats} currentRound={round} tournament={tournament} />
       </div>
 
       {selected && (
         <CashClimbResultModal
           match={selected}
           raceTo={raceToForMatch(tournament, selected)}
+          askPlayedGame
           onCancel={() => setSelected(null)}
-          onSubmit={(winnerId, score) => {
-            onRecord(selected.id, winnerId, score);
+          onSubmit={(winnerId, score, extras) => {
+            onRecord(selected.id, winnerId, score, extras);
             setSelected(null);
           }}
         />
