@@ -70,7 +70,7 @@
 }
 
 .cc-tv-portrait .cc-tv-player {
-  font-size: clamp(1.45rem, 6.8vw, 2rem);
+  font-size: clamp(1.65rem, 7.6vw, 2.35rem);
 }
 
 .cc-tv-portrait .cc-tv-score-wl {
@@ -101,10 +101,12 @@
   grid-template-columns: 2.1rem minmax(0, 1fr) auto;
   gap: 8px;
   padding: 0 8px;
+  font-size: clamp(0.78rem, calc(100cqh / var(--cc-tv-stand-rows, 8) * 0.44), 1.45rem);
 }
 
 .cc-tv-portrait .cc-tv-standings-name {
   font-weight: 800;
+  font-size: 1.12em;
 }
 
 .cc-tv-portrait .cc-tv-standings-paid {
@@ -118,7 +120,7 @@
 }
 
 .cc-tv-portrait .cc-tv-on-deck {
-  font-size: clamp(1.05rem, 4.2vw, 1.35rem);
+  font-size: clamp(1.15rem, 4.6vw, 1.55rem);
 }
 
 .cc-tv-portrait .cc-tv-ticker {
