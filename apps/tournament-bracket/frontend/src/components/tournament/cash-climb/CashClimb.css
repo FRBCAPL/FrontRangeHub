@@ -208,6 +208,22 @@
   margin-top: 0;
 }
 
+.cc-rules-open {
+  border-color: rgba(34, 197, 94, 0.65) !important;
+  color: #86efac !important;
+}
+
+.cc-setup .cc-rules-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+
+.cc-setup .cc-rules-open {
+  margin: 0;
+}
+
 .cc-chip-row {
   display: flex;
   flex-wrap: wrap;

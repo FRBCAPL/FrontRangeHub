@@ -21,7 +21,7 @@ function Stat({ label, value }) {
   );
 }
 
-export default function CashClimbPlayHeader({ tournament, paidOut, durationEstimate, onNew, onLeave, onEdit }) {
+export default function CashClimbPlayHeader({ tournament, paidOut, durationEstimate, onNew, onLeave, onEdit, onRules, onGuide }) {
   const dateLabel = formatTournamentDate(tournament.tournamentDate);
   const tables = tournament.tableCount
     ? `${tournament.tableCount} table${tournament.tableCount === 1 ? '' : 's'}`
@@ -44,6 +44,16 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
           <h1>{tournament.name}</h1>
         </div>
         <div className="cc-play-actions">
+          {onRules && (
+            <button type="button" className="tb-btn-new cc-rules-open" onClick={onRules}>
+              Player rules
+            </button>
+          )}
+          {onGuide && (
+            <button type="button" className="tb-btn-new cc-rules-open" onClick={onGuide}>
+              New players
+            </button>
+          )}
           {onLeave && (
             <button type="button" className="tb-btn-new" onClick={onLeave}>
               All formats

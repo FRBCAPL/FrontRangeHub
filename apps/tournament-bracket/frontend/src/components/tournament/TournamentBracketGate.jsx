@@ -5,11 +5,12 @@ import {
   rememberLoginReturn,
   clearLoginReturn,
 } from './tournamentOperators.js';
+import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
 import './TournamentBracketApp.css';
 
 /**
  * Cash Climb / open tournament is house-operator only.
- * TV display stays on a separate public route.
+ * TV and the new-player guide stay on separate public routes.
  */
 export default function TournamentBracketGate({ isAuthenticated, adminLoading, onLoginSuccess }) {
   const navigate = useNavigate();
@@ -56,6 +57,9 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
           <p>
             Cash Climb is a house format. Sign in with the operator account to run an event.
           </p>
+          <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
+            How Cash Climb works
+          </button>
           <button type="button" className="tb-btn-new" onClick={goHome}>
             Back to home
           </button>
@@ -75,6 +79,9 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
         <SupabaseLogin compact onSuccess={handleLoginSuccess} />
       </section>
       <div className="tb-header">
+        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
+          How Cash Climb works
+        </button>
         <button type="button" className="tb-btn-new" onClick={goHome}>
           Back to home
         </button>

@@ -24,6 +24,7 @@ import {
   CUELESS_FULL_MATCH_PLAYLIST_URL,
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
 import { openCashClimbTv } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbTv.js';
+import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbGuideRoute.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 
 const Homepage = ({ canRunTournament = false }) => {
@@ -72,6 +73,10 @@ const Homepage = ({ canRunTournament = false }) => {
   const handleNavigateToTournamentBracket = () => {
     rememberLoginReturn('/tournament-bracket');
     navigate('/tournament-bracket');
+  };
+
+  const handleNavigateToCashClimbGuide = () => {
+    navigate(CASH_CLIMB_GUIDE_HASH);
   };
 
   const handleNavigateToEstateIt = () => {
@@ -496,6 +501,9 @@ const Homepage = ({ canRunTournament = false }) => {
         <div className="legends-tracker-small tournament-bracket-link">
           <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToTournamentBracket}>
             🏆 Tournament Bracket
+          </button>
+          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToCashClimbGuide}>
+            How Cash Climb works
           </button>
           {canRunTournament && (
             <>

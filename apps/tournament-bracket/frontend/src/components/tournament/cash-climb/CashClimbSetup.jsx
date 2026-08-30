@@ -8,6 +8,7 @@ import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
 import CashClimbRaceFields from './CashClimbRaceFields.jsx';
 import { defaultKohRaceTo, defaultRrRaceTo, requireRaceTo } from './cashClimbRace.js';
+import CashClimbRulesModal from './CashClimbRulesModal.jsx';
 
 const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 
@@ -24,6 +25,7 @@ export default function CashClimbSetup({ onStart, onCancel }) {
   const [entryFee, setEntryFee] = useState(String(OPEN_TOURNAMENT_STRUCTURE.entryFee));
   const [players, setPlayers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [rulesView, setRulesView] = useState(null);
   const dateInputRef = useRef(null);
 
   const openDatePicker = () => {
@@ -116,6 +118,14 @@ export default function CashClimbSetup({ onStart, onCancel }) {
          Cash Climb Tournament. <br />
          Round robin, 3-loss cut, then King of the Hill when 3 players remain.
         </p>
+        <div className="cc-rules-btns">
+          <button type="button" className="tb-btn-new cc-rules-open" onClick={() => setRulesView('tonight')}>
+            Player rules
+          </button>
+          <button type="button" className="tb-btn-new cc-rules-open" onClick={() => setRulesView('guide')}>
+            New players
+          </button>
+        </div>
         <div className="cc-field-row">
           <label>
             Tournament name
@@ -242,6 +252,14 @@ export default function CashClimbSetup({ onStart, onCancel }) {
         </div>
       </form>
       <AddPlayerModal isOpen={showAdd} onClose={() => setShowAdd(false)} onAdd={(p) => setPlayers((prev) => [...prev, p])} />
+      {rulesView && (
+        <CashClimbRulesModal
+          key={rulesView}
+          tournament={{ gameType, raceTo, kohRaceTo, entryFee: Number(entryFee) || 0 }}
+          initialView={rulesView}
+          onClose={() => setRulesView(null)}
+        />
+      )}
     </>
   );
 }

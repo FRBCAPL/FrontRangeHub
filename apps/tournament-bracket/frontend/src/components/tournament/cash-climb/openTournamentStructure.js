@@ -53,7 +53,10 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
     raceTo: 1,
     kohRaceTo: 2,
     callShots: true,
-    rulesNote: 'CSI game play rules with no modifications',
+    rulesNote: 'CSI game play rules, with one house rule',
+    houseRules: [
+      'No 9 on the break. If the 9-ball is pocketed on the break, spot it and the shooter continues with the table as it lays.',
+    ],
   },
 
   roundRobinByPlayerCount: [

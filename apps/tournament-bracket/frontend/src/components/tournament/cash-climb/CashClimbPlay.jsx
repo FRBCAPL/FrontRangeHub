@@ -9,11 +9,13 @@ import { cashClimbKohRaceTo, cashClimbRrRaceTo, formatRaceLabel, raceToForMatch 
 import CashClimbPlayHeader from './CashClimbPlayHeader.jsx';
 import CashClimbMatchButton from './CashClimbMatchButton.jsx';
 import CashClimbEditModal from './CashClimbEditModal.jsx';
+import CashClimbRulesModal from './CashClimbRulesModal.jsx';
 import { cashClimbContinueLabel, cashClimbProgress, matchTableLabel, pendingPlayableMatches, playableRoundMatches, roundByeMatches, splitByTables } from './cashClimbProgress.js';
 
 export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew, onLeave, onEdit }) {
   const [selected, setSelected] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [rulesView, setRulesView] = useState(null);
   const round = getCurrentRound(tournament);
   const matches = round ? getRoundMatches(tournament, round.id) : [];
   const pending = pendingPlayableMatches(tournament, round);
@@ -46,6 +48,8 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
         onNew={onNew}
         onLeave={onLeave}
         onEdit={() => setShowEdit(true)}
+        onRules={() => setRulesView('tonight')}
+        onGuide={() => setRulesView('guide')}
       />
 
       {tournament.status !== 'completed' && round && (
@@ -163,6 +167,14 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
           onSave={(patch) => {
             if (onEdit(patch) !== false) setShowEdit(false);
           }}
+        />
+      )}
+      {rulesView && (
+        <CashClimbRulesModal
+          key={rulesView}
+          tournament={tournament}
+          initialView={rulesView}
+          onClose={() => setRulesView(null)}
         />
       )}
     </div>

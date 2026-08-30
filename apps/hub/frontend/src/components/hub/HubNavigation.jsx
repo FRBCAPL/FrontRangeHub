@@ -165,6 +165,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     ? 'Platform Admin'
                     : location.pathname === '/dues-tracker'
                     ? 'Dues Tracker'
+                    : location.pathname === '/tournament-bracket/how-it-works'
+                    ? 'How Cash Climb works'
                     : location.pathname === '/tournament-bracket'
                     ? 'Tournament Bracket'
                     : location.pathname === '/estate-inventory' ||
@@ -221,6 +223,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   ? 'Platform Admin'
                   : location.pathname === '/dues-tracker'
                   ? 'Dues Tracker'
+                  : location.pathname === '/tournament-bracket/how-it-works'
+                  ? 'How Cash Climb works'
                   : location.pathname === '/tournament-bracket'
                   ? 'Tournament Bracket'
                   : location.pathname === '/estate-inventory' ||
