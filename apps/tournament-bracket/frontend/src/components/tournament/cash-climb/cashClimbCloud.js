@@ -7,24 +7,39 @@ export const CASH_CLIMB_PENDING_TABLE = 'cash_climb_pending_results';
 
 function isMissingTable(error) {
   const msg = String(error?.message || error?.code || '');
+  if (/column/i.test(msg) || error?.code === 'PGRST204' || error?.code === '42703') return false;
   return error?.code === 'PGRST205' || error?.code === '42P01' || /cash_climb_/i.test(msg) && /does not exist|schema cache/i.test(msg);
 }
 
 function isUnknownColumn(error, column) {
-  const msg = String(error?.message || error?.details || error?.hint || '');
+  if (!error) return false;
   const col = String(column || '');
-  if (!col) return false;
-  return (
-    error?.code === 'PGRST204'
-    || (new RegExp(`\\b${col}\\b`, 'i').test(msg) && /column|schema cache|does not exist|Could not find/i.test(msg))
-  );
+  if (error.code === 'PGRST204' || error.code === '42703') return true;
+  let blob = String(error.message || error.details || error.hint || error.code || '');
+  try { blob = `${blob} ${JSON.stringify(error)}`; } catch { /* ignore */ }
+  return Boolean(col) && new RegExp(col, 'i').test(blob) && /column|schema cache|does not exist|Could not find/i.test(blob);
+}
+
+let pendingHasGameType = true;
+
+function pendingSelect() {
+  return pendingHasGameType
+    ? 'id, event_id, match_id, winner_id, score, game_type, submitted_by, submitted_at'
+    : 'id, event_id, match_id, winner_id, score, submitted_by, submitted_at';
+}
+
+function rememberMissingGameType(error) {
+  if (!pendingHasGameType) return false;
+  if (!isUnknownColumn(error, 'game_type')) return false;
+  pendingHasGameType = false;
+  return true;
 }
 
 async function swallow(work) {
   try {
     const result = await work();
     if (result?.error) {
-      if (!isMissingTable(result.error)) {
+      if (!isMissingTable(result.error) && !isUnknownColumn(result.error, 'game_type')) {
         console.warn('Cash Climb cloud:', result.error.message || result.error);
       }
       return { data: null, error: result.error };
@@ -99,20 +114,15 @@ export async function deleteCashClimbEvent(eventId) {
 
 export async function loadCashClimbPending(eventId) {
   if (!eventId) return [];
-  const withGame = await swallow(() => supabase
+  const result = await swallow(() => supabase
     .from(CASH_CLIMB_PENDING_TABLE)
-    .select('id, event_id, match_id, winner_id, score, game_type, submitted_by, submitted_at')
+    .select(pendingSelect())
     .eq('event_id', String(eventId))
     .order('submitted_at', { ascending: false }));
-  if (withGame.error && isUnknownColumn(withGame.error, 'game_type')) {
-    const fallback = await swallow(() => supabase
-      .from(CASH_CLIMB_PENDING_TABLE)
-      .select('id, event_id, match_id, winner_id, score, submitted_by, submitted_at')
-      .eq('event_id', String(eventId))
-      .order('submitted_at', { ascending: false }));
-    return Array.isArray(fallback.data) ? fallback.data : [];
+  if (result.error && rememberMissingGameType(result.error)) {
+    return loadCashClimbPending(eventId);
   }
-  return Array.isArray(withGame.data) ? withGame.data : [];
+  return Array.isArray(result.data) ? result.data : [];
 }
 
 export async function submitCashClimbPending({ eventId, matchId, winnerId, score = null, submittedBy = '', playedGame = '' }) {
@@ -125,12 +135,11 @@ export async function submitCashClimbPending({ eventId, matchId, winnerId, score
     submitted_by: tagSubmittedBy(submittedBy, playedGame),
     submitted_at: new Date().toISOString(),
   };
-  const withGame = {
-    ...row,
-    game_type: playedGame ? String(playedGame).trim() : null,
-  };
-  const first = await swallow(() => supabase.from(CASH_CLIMB_PENDING_TABLE).upsert(withGame, { onConflict: 'event_id,match_id' }));
-  if (first.error && isUnknownColumn(first.error, 'game_type')) {
+  const payload = pendingHasGameType
+    ? { ...row, game_type: playedGame ? String(playedGame).trim() : null }
+    : row;
+  const first = await swallow(() => supabase.from(CASH_CLIMB_PENDING_TABLE).upsert(payload, { onConflict: 'event_id,match_id' }));
+  if (first.error && rememberMissingGameType(first.error)) {
     return swallow(() => supabase.from(CASH_CLIMB_PENDING_TABLE).upsert(row, { onConflict: 'event_id,match_id' }));
   }
   return first;
