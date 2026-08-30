@@ -10,6 +10,7 @@ import {
   loadCashClimbPending,
   deleteCashClimbPending,
 } from './cashClimbCloud.js';
+import { findMatchById, idsEqual, resolvePendingWinnerId } from './cashClimbSubmit.js';
 import './CashClimb.css';
 
 const PENDING_POLL_MS = 2500;
@@ -65,11 +66,21 @@ export default function CashClimbApp({ onLeave }) {
     }
   };
 
+  const dropPending = (matchId) => {
+    setSubmissions((prev) => prev.filter((item) => !idsEqual(item.match_id, matchId)));
+    deleteCashClimbPending(tournament.id, matchId);
+  };
+
   const handleConfirmSubmit = (row) => {
-    if (!row?.match_id || !row?.winner_id) return;
+    const match = findMatchById(tournament, row?.match_id);
+    const winnerId = resolvePendingWinnerId(match, row);
+    if (!match || !winnerId) {
+      alert('That submit does not match an open table. Enter the result on this tablet instead.');
+      return;
+    }
     try {
-      persist(recordMatchResult(tournament, row.match_id, row.winner_id, row.score || null));
-      deleteCashClimbPending(tournament.id, row.match_id);
+      persist(recordMatchResult(tournament, match.id, winnerId, row.score || null));
+      dropPending(match.id);
     } catch (err) {
       alert(err.message || 'Could not confirm that result');
     }
@@ -77,9 +88,7 @@ export default function CashClimbApp({ onLeave }) {
 
   const handleRejectSubmit = (row) => {
     if (!row?.match_id) return;
-    deleteCashClimbPending(tournament.id, row.match_id).then(() => {
-      setSubmissions((prev) => prev.filter((item) => item.match_id !== row.match_id));
-    });
+    dropPending(row.match_id);
   };
 
   const handleContinue = () => {

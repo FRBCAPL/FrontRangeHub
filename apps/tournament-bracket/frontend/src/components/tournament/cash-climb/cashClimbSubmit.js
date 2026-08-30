@@ -11,18 +11,35 @@ export function openCashClimbSubmit() {
   if (!opened) window.location.assign(url);
 }
 
+export function idsEqual(a, b) {
+  if (a == null || b == null || a === '' || b === '') return false;
+  return String(a) === String(b);
+}
+
+export function findMatchById(tournament, matchId) {
+  return (tournament?.matches || []).find((m) => idsEqual(m.id, matchId)) || null;
+}
+
 export function pendingByMatchId(rows) {
   const map = {};
   (rows || []).forEach((row) => {
-    if (!row?.match_id || map[row.match_id]) return;
-    map[row.match_id] = row;
+    const id = row?.match_id != null ? String(row.match_id) : '';
+    if (!id || map[id]) return;
+    map[id] = row;
   });
   return map;
 }
 
+export function resolvePendingWinnerId(match, pending) {
+  if (!match || !pending?.winner_id) return null;
+  if (idsEqual(pending.winner_id, match.player1_id)) return match.player1_id;
+  if (idsEqual(pending.winner_id, match.player2_id)) return match.player2_id;
+  return null;
+}
+
 export function pendingWinnerName(match, pending) {
   if (!match || !pending?.winner_id) return '';
-  if (pending.winner_id === match.player1_id) return match.player1_name || '';
-  if (pending.winner_id === match.player2_id) return match.player2_name || '';
+  if (idsEqual(pending.winner_id, match.player1_id)) return match.player1_name || '';
+  if (idsEqual(pending.winner_id, match.player2_id)) return match.player2_name || '';
   return '';
 }

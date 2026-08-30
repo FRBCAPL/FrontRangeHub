@@ -113,10 +113,15 @@ export default function CashClimbPlay({
                     <CashClimbMatchButton
                       key={m.id}
                       match={m}
-                      tableLabel={waiting[m.id]
-                        ? `Waiting • ${pendingWinnerName(m, waiting[m.id]) || 'phone'}`
+                      tableLabel={waiting[String(m.id)]
+                        ? `Waiting • ${pendingWinnerName(m, waiting[String(m.id)]) || 'phone'}`
                         : matchTableLabel(i, tournament.tableCount)}
-                      onPick={setSelected}
+                      onPick={(match) => {
+                        const pending = waiting[String(match.id)];
+                        setSelected(pending
+                          ? { ...match, winner_id: pending.winner_id, score: pending.score || match.score }
+                          : match);
+                      }}
                     />
                   ))}
                   {byeMatches.map((m) => (
@@ -137,8 +142,13 @@ export default function CashClimbPlay({
                     <CashClimbMatchButton
                       key={m.id}
                       match={m}
-                      tableLabel={waiting[m.id] ? 'Waiting on director' : 'On deck'}
-                      onPick={setSelected}
+                      tableLabel={waiting[String(m.id)] ? 'Waiting on director' : 'On deck'}
+                      onPick={(match) => {
+                        const pending = waiting[String(match.id)];
+                        setSelected(pending
+                          ? { ...match, winner_id: pending.winner_id, score: pending.score || match.score }
+                          : match);
+                      }}
                       onDeck
                     />
                   ))}
