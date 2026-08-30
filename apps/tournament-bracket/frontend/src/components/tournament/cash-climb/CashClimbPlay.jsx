@@ -11,6 +11,7 @@ import CashClimbMatchButton from './CashClimbMatchButton.jsx';
 import CashClimbEditModal from './CashClimbEditModal.jsx';
 import CashClimbRulesModal from './CashClimbRulesModal.jsx';
 import CashClimbPendingQueue from './CashClimbPendingQueue.jsx';
+import CashClimbShareModal from './CashClimbShareModal.jsx';
 import { pendingByMatchId, pendingWinnerName, openCashClimbSubmit } from './cashClimbSubmit.js';
 import { cashClimbContinueLabel, cashClimbProgress, matchTableLabel, pendingPlayableMatches, playableRoundMatches, roundByeMatches, splitByTables } from './cashClimbProgress.js';
 import { roundDisplayName } from './cashClimbSchedule.js';
@@ -29,6 +30,7 @@ export default function CashClimbPlay({
 }) {
   const [selected, setSelected] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [rulesView, setRulesView] = useState(null);
   const round = getCurrentRound(tournament);
   const matches = round ? getRoundMatches(tournament, round.id) : [];
@@ -66,7 +68,7 @@ export default function CashClimbPlay({
         onRemove={onRemove}
         onRules={() => setRulesView('tonight')}
         onGuide={() => setRulesView('guide')}
-        onSubmitPage={() => openCashClimbSubmit(tournament.id)}
+        onSubmitPage={() => setShowShare(true)}
       />
 
       {tournament.status !== 'completed' && (
@@ -205,6 +207,16 @@ export default function CashClimbPlay({
           onClose={() => setShowEdit(false)}
           onSave={(patch) => {
             if (onEdit(patch) !== false) setShowEdit(false);
+          }}
+        />
+      )}
+      {showShare && (
+        <CashClimbShareModal
+          tournament={tournament}
+          onClose={() => setShowShare(false)}
+          onOpen={() => {
+            setShowShare(false);
+            openCashClimbSubmit(tournament.id);
           }}
         />
       )}

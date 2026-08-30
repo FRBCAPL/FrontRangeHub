@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { sanitizeCashClimb, getCurrentRound } from './cashClimbEngine.js';
+import { sanitizeCashClimb, getCurrentRound, formatMoney } from './cashClimbEngine.js';
 import { raceToForMatch } from './cashClimbRace.js';
 import { cashClimbSubmitEventId } from './cashClimbSubmit.js';
-import { loadLiveCashClimbEvent, loadCashClimbEventById, loadCashClimbPending, submitCashClimbPending } from './cashClimbCloud.js';
+import { loadPublicCashClimbEvent, loadCashClimbPending, submitCashClimbPending } from './cashClimbCloud.js';
 import CashClimbStandings from './CashClimbStandings.jsx';
 import CashClimbSubmitMatches from './CashClimbSubmitMatches.jsx';
 import CashClimbResultModal from './CashClimbResultModal.jsx';
@@ -12,6 +12,14 @@ import './CashClimb.css';
 import './CashClimbSubmitPage.css';
 
 const POLL_MS = 2500;
+
+function endedAtLabel(tournament) {
+  const raw = tournament?.completedAt || tournament?.updated_at || '';
+  if (!raw) return '';
+  const when = new Date(raw);
+  if (Number.isNaN(when.getTime())) return '';
+  return when.toLocaleString();
+}
 
 export default function CashClimbSubmitPage() {
   const navigate = useNavigate();
@@ -24,20 +32,20 @@ export default function CashClimbSubmitPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = 'Submit Cash Climb result';
-  }, []);
+    document.title = tournament && tournament.status !== 'in-progress'
+      ? 'Cash Climb results'
+      : 'Submit Cash Climb result';
+  }, [tournament?.status]);
 
   useEffect(() => {
     let cancelled = false;
     const refresh = async () => {
-      const live = eventId
-        ? await loadCashClimbEventById(eventId)
-        : await loadLiveCashClimbEvent();
+      const live = await loadPublicCashClimbEvent(eventId);
       if (cancelled) return;
       const next = live.tournament ? sanitizeCashClimb(live.tournament) : null;
       setTournament(next);
       setLoading(false);
-      if (!next?.id) {
+      if (!next?.id || next.status !== 'in-progress') {
         setSubmissions([]);
         return;
       }
@@ -73,14 +81,20 @@ export default function CashClimbSubmitPage() {
     setSubmissions(await loadCashClimbPending(tournament.id));
   };
 
+  const live = tournament?.status === 'in-progress';
+  const finished = tournament && !live;
+  const paidOut = (tournament?.stats || []).reduce((sum, p) => sum + (p.total_payout || 0), 0);
+
   return (
     <div className="cc-submit-shell">
       <div className="tournament-bracket-app cc-submit">
         <header className="cc-submit-head">
           <p className="cc-play-kicker">Cash Climb</p>
-          <h1>Submit a result</h1>
+          <h1>{finished ? 'Final results' : 'Submit a result'}</h1>
           <p className="cc-submit-note">
-            Click your match to submit result. <br />Standings update after the director confirms.
+            {finished
+              ? `${tournament.name}${endedAtLabel(tournament) ? ` • Completed ${endedAtLabel(tournament)}` : ''}`
+              : 'Click your match to submit a result. The director must confirm before standings or money change.'}
           </p>
         </header>
 
@@ -88,23 +102,25 @@ export default function CashClimbSubmitPage() {
         {!loading && !tournament ? (
           <p className="cc-banner">No Cash Climb is running right now.</p>
         ) : null}
-        {tournament && tournament.status !== 'in-progress' ? (
-          <p className="cc-banner">This event is not taking results.</p>
+        {finished ? (
+          <p className="cc-banner">
+            This event is complete. Pool {formatMoney(tournament.totalPrizePool)} • Paid {formatMoney(paidOut)}.
+          </p>
         ) : null}
 
-        {tournament && round && tournament.status === 'in-progress' ? (
-          <div className="cc-submit-board">
+        {tournament && (live || finished) ? (
+          <div className={`cc-submit-board${finished ? ' is-final' : ''}`}>
             <section className="cc-submit-results" aria-label="Tournament results">
-              <h2><center></center></h2>
-              <p className="cc-meta"><center></center></p>
               <CashClimbStandings stats={tournament.stats} currentRound={round} tournament={tournament} briefNote />
             </section>
-            <CashClimbSubmitMatches
-              tournament={tournament}
-              round={round}
-              submissions={submissions}
-              onPick={setSelected}
-            />
+            {live ? (
+              <CashClimbSubmitMatches
+                tournament={tournament}
+                round={round}
+                submissions={submissions}
+                onPick={setSelected}
+              />
+            ) : null}
           </div>
         ) : null}
 
@@ -115,7 +131,7 @@ export default function CashClimbSubmitPage() {
         </button>
       </div>
 
-      {selected && (
+      {selected && live && (
         <CashClimbResultModal
           match={selected}
           raceTo={raceToForMatch(tournament, selected)}

@@ -37,12 +37,8 @@
   font-weight: 700;
 }
 
-.cc-submit-board {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
-  gap: 16px;
-  align-items: start;
-  margin-top: 8px;
+.cc-submit-board.is-final {
+  grid-template-columns: 1fr;
 }
 
 .cc-submit-results h2,

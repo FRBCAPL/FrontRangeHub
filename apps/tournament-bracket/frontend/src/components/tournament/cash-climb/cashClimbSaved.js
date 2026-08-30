@@ -1,6 +1,6 @@
 export function tournamentFromEventRow(row) {
   if (!row?.payload || typeof row.payload !== 'object') return null;
-  return { ...row.payload, id: row.id || row.payload.id };
+  return { ...row.payload, id: row.id || row.payload.id, updated_at: row.updated_at };
 }
 
 export function savedEventSummary(row) {

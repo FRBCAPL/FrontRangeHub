@@ -56,7 +56,7 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
           )}
           {onSubmitPage && (
             <button type="button" className="tb-btn-new cc-rules-open" onClick={onSubmitPage}>
-              Player submit
+              Share player link
             </button>
           )}
           {onLeave && (

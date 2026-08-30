@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   matchWithPendingDraft,
   cashClimbSubmitHash,
+  cashClimbSubmitHref,
   cashClimbSubmitEventId,
   isCashClimbSubmitPath,
 } from './cashClimbSubmit.js';
@@ -40,5 +41,6 @@ describe('cash climb submit routes', () => {
     assert.equal(cashClimbSubmitEventId('/tournament-bracket/submit'), '');
     assert.equal(isCashClimbSubmitPath('/tournament-bracket/submit/abc'), true);
     assert.equal(isCashClimbSubmitPath('/tournament-bracket'), false);
+    assert.equal(cashClimbSubmitHref('abc 1').endsWith('/#/tournament-bracket/submit/abc%201'), true);
   });
 });

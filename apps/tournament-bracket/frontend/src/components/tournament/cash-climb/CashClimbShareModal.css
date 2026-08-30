@@ -1,0 +1,51 @@
+.cc-modal.cc-share-modal {
+  width: min(28rem, 100%);
+  text-align: center;
+}
+
+.cc-share-qr {
+  display: block;
+  width: 200px;
+  height: 200px;
+  margin: 12px auto;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px;
+}
+
+.cc-share-url {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.7);
+  color: #cbd5e1;
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+
+.cc-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cc-share-modal .btn-primary,
+.cc-share-modal .btn-secondary {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cc-share-modal .btn-primary {
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+}
+
+.cc-share-modal .btn-secondary {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.8);
+  color: #e2e8f0;
+}

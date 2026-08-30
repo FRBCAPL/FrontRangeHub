@@ -86,6 +86,20 @@ export async function loadCashClimbEventById(eventId) {
   return { tournament: tournamentFromEventRow(result.data), error: result.error };
 }
 
+export async function loadPublicCashClimbEvent(eventId) {
+  if (eventId) return loadCashClimbEventById(eventId);
+  const live = await loadLiveCashClimbEvent();
+  if (live.tournament) return live;
+  const result = await swallow(() => supabase
+    .from(CASH_CLIMB_EVENTS_TABLE)
+    .select('id, payload, status, updated_at')
+    .in('status', ['completed', 'ended'])
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle());
+  return { tournament: tournamentFromEventRow(result.data), error: result.error };
+}
+
 export async function listLiveCashClimbEvents() {
   const result = await swallow(() => supabase
     .from(CASH_CLIMB_EVENTS_TABLE)
