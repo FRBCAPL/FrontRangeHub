@@ -25,6 +25,7 @@ import {
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
 import { openCashClimbTv } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbTv.js';
 import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbGuideRoute.js';
+import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 
 const Homepage = ({ canRunTournament = false }) => {
@@ -77,6 +78,10 @@ const Homepage = ({ canRunTournament = false }) => {
 
   const handleNavigateToCashClimbGuide = () => {
     navigate(CASH_CLIMB_GUIDE_HASH);
+  };
+
+  const handleNavigateToCashClimbSubmit = () => {
+    navigate(CASH_CLIMB_SUBMIT_HASH);
   };
 
   const handleNavigateToEstateIt = () => {
@@ -504,6 +509,9 @@ const Homepage = ({ canRunTournament = false }) => {
           </button>
           <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToCashClimbGuide}>
             How Cash Climb works
+          </button>
+          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToCashClimbSubmit}>
+            Submit a Cash Climb result
           </button>
           {canRunTournament && (
             <>

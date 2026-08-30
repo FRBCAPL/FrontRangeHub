@@ -2,7 +2,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
 import { validateRecordedGames } from './cashClimbScore.js';
 
-export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel }) {
+export default function CashClimbResultModal({
+  match,
+  raceTo,
+  onSubmit,
+  onCancel,
+  title,
+  submitLabel,
+}) {
   const editing = match?.status === 'completed';
   const [winnerId, setWinnerId] = useState(match?.winner_id || '');
   const [recordScore, setRecordScore] = useState(Boolean(match?.score));
@@ -57,7 +64,7 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
   return (
     <div className="cc-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true" aria-labelledby="cc-result-title">
       <form className="cc-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
-        <h3 id="cc-result-title">{editing ? 'Edit result' : 'Enter result'}</h3>
+        <h3 id="cc-result-title">{title || (editing ? 'Edit result' : 'Enter result')}</h3>
         <p className="cc-modal-meta">
           Round {match.round_number} • Match {match.match_number}
           {race ? ` • ${race === 1 ? '1 game' : `Race to ${race}`}` : ''}
@@ -156,7 +163,7 @@ export default function CashClimbResultModal({ match, raceTo, onSubmit, onCancel
             Cancel
           </button>
           <button type="submit" className="btn-primary">
-            {editing ? 'Save changes' : 'Save result'}
+            {submitLabel || (editing ? 'Save changes' : 'Save result')}
           </button>
         </div>
       </form>

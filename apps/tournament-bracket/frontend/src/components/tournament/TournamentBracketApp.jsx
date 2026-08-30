@@ -8,6 +8,7 @@ import CashClimbApp from './cash-climb/CashClimbApp';
 import { loadCashClimb } from './cash-climb/cashClimbStore';
 import { formatTournamentDate } from './cash-climb/cashClimbEngine.js';
 import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
+import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
 import { clearLoginReturn } from './tournamentOperators.js';
 import './TournamentBracketApp.css';
@@ -214,6 +215,9 @@ export default function TournamentBracketApp() {
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
           How it works (public)
+        </button>
+        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_SUBMIT_HASH)}>
+          Player submit (public)
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
           Back to home

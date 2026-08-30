@@ -10,9 +10,21 @@ import CashClimbPlayHeader from './CashClimbPlayHeader.jsx';
 import CashClimbMatchButton from './CashClimbMatchButton.jsx';
 import CashClimbEditModal from './CashClimbEditModal.jsx';
 import CashClimbRulesModal from './CashClimbRulesModal.jsx';
+import CashClimbPendingQueue from './CashClimbPendingQueue.jsx';
+import { pendingByMatchId, pendingWinnerName, openCashClimbSubmit } from './cashClimbSubmit.js';
 import { cashClimbContinueLabel, cashClimbProgress, matchTableLabel, pendingPlayableMatches, playableRoundMatches, roundByeMatches, splitByTables } from './cashClimbProgress.js';
 
-export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew, onLeave, onEdit }) {
+export default function CashClimbPlay({
+  tournament,
+  submissions = [],
+  onRecord,
+  onConfirmSubmit,
+  onRejectSubmit,
+  onContinue,
+  onNew,
+  onLeave,
+  onEdit,
+}) {
   const [selected, setSelected] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
   const [rulesView, setRulesView] = useState(null);
@@ -23,6 +35,7 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
   const continueLabel = cashClimbContinueLabel(tournament);
   const completedPlayable = playableRoundMatches(matches).filter((m) => m.status === 'completed');
   const byeMatches = roundByeMatches(matches);
+  const waiting = pendingByMatchId(submissions);
   const paidOut = tournament.stats.reduce((sum, p) => sum + (p.total_payout || 0), 0);
   const progress = cashClimbProgress(tournament);
   const inKoh = round?.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName;
@@ -50,7 +63,17 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
         onEdit={() => setShowEdit(true)}
         onRules={() => setRulesView('tonight')}
         onGuide={() => setRulesView('guide')}
+        onSubmitPage={openCashClimbSubmit}
       />
+
+      {tournament.status !== 'completed' && (
+        <CashClimbPendingQueue
+          tournament={tournament}
+          submissions={submissions}
+          onConfirm={onConfirmSubmit}
+          onReject={onRejectSubmit}
+        />
+      )}
 
       {tournament.status !== 'completed' && round && (
         <CashClimbProgressBar
@@ -90,7 +113,9 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
                     <CashClimbMatchButton
                       key={m.id}
                       match={m}
-                      tableLabel={matchTableLabel(i, tournament.tableCount)}
+                      tableLabel={waiting[m.id]
+                        ? `Waiting • ${pendingWinnerName(m, waiting[m.id]) || 'phone'}`
+                        : matchTableLabel(i, tournament.tableCount)}
                       onPick={setSelected}
                     />
                   ))}
@@ -112,7 +137,7 @@ export default function CashClimbPlay({ tournament, onRecord, onContinue, onNew,
                     <CashClimbMatchButton
                       key={m.id}
                       match={m}
-                      tableLabel="On deck"
+                      tableLabel={waiting[m.id] ? 'Waiting on director' : 'On deck'}
                       onPick={setSelected}
                       onDeck
                     />

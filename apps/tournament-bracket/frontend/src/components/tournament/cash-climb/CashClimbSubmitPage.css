@@ -1,0 +1,32 @@
+.cc-submit-shell {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: 16px 16px 32px;
+  background: linear-gradient(180deg, #07111c 0%, #05080f 100%);
+}
+
+.cc-submit {
+  max-width: 40rem;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.cc-submit-head h1 {
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.cc-submit-note,
+.cc-submit-status {
+  color: #e2e8f0;
+  line-height: 1.45;
+}
+
+.cc-submit-status {
+  color: #86efac;
+  font-weight: 700;
+}
+
+.cc-submit .tb-btn-new {
+  margin-top: 18px;
+}

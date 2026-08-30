@@ -1,0 +1,57 @@
+.cc-pending-queue {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(250, 204, 21, 0.4);
+}
+
+.cc-pending-queue h2 {
+  margin: 0 0 4px;
+  color: #fde68a;
+  font-size: 1.1rem;
+}
+
+.cc-pending-queue ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cc-pending-queue li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.45);
+}
+
+.cc-pending-queue li div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cc-pending-queue strong {
+  color: #fff;
+}
+
+.cc-pending-queue span,
+.cc-pending-queue small {
+  color: #e2e8f0;
+  font-size: 0.92rem;
+}
+
+.cc-pending-queue-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 8px;
+  flex-shrink: 0;
+}

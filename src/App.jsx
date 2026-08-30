@@ -102,6 +102,7 @@ import TournamentBracketApp from '@apps/tournament-bracket/frontend/src/componen
 import TournamentBracketGate from '@apps/tournament-bracket/frontend/src/components/tournament/TournamentBracketGate';
 import CashClimbTvView from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbTvView';
 import CashClimbPublicGuide from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbPublicGuide.jsx';
+import CashClimbSubmitPage from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbSubmitPage.jsx';
 import { isTournamentOperator, peekLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
@@ -175,6 +176,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/tournament-bracket': '#/tournament-bracket',
   '/tournament-bracket/tv': '#/tournament-bracket/tv',
   '/tournament-bracket/how-it-works': '#/tournament-bracket/how-it-works',
+  '/tournament-bracket/submit': '#/tournament-bracket/submit',
   '/league': '#/league',
   '/guest/league': '#/guest/league',
   '/arcade': '#/arcade/kiosk',
@@ -598,6 +600,25 @@ function AppContent() {
     );
   }
 
+  if (location.pathname === '/tournament-bracket/submit') {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: '#020617',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        zIndex: 9999,
+        WebkitOverflowScrolling: 'touch',
+      }}>
+        <CashClimbSubmitPage />
+      </div>
+    );
+  }
+
   // Public TV view: ladder + players only, no nav (for TV/kiosk display)
   if (location.pathname === '/ladder-tv') {
     return (
@@ -984,6 +1005,16 @@ function AppContent() {
                 <AppRouteWrapper appName="How Cash Climb works">
                   <main className="main-app-content">
                     <CashClimbPublicGuide />
+                  </main>
+                </AppRouteWrapper>
+              }
+            />
+            <Route
+              path="/tournament-bracket/submit"
+              element={
+                <AppRouteWrapper appName="Submit Cash Climb result">
+                  <main className="main-app-content">
+                    <CashClimbSubmitPage />
                   </main>
                 </AppRouteWrapper>
               }
