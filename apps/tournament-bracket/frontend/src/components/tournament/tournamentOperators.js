@@ -1,6 +1,7 @@
 /** Accounts that can always run Open Tournament / Cash Climb. */
 const TOURNAMENT_OPERATOR_EMAILS = [
   'sslampro@gmail.com',
+  'guest@guestmail.com',
 ];
 
 export const LOGIN_RETURN_KEY = 'frontrange-login-return';
