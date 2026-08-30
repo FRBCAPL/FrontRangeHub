@@ -21,8 +21,11 @@ export default function CashClimbPlayerHistoryModal({ tournament, player, onClos
       <div className="cc-modal cc-history-modal" onClick={(e) => e.stopPropagation()}>
         <header className="cc-history-head">
           <p className="cc-play-kicker">Cash Climb</p>
-          <h3 id="cc-history-title">{player.player_name}</h3>
-          <p className="cc-modal-meta">
+          <div className="cc-history-name">
+            <h3 id="cc-history-title">{player.player_name}</h3>
+            <span className="cc-history-status">{tag(player)}</span>
+          </div>
+          <p className="cc-history-record">
             <WinLoss wins={player.wins} losses={player.losses} />
             {player.in_koh || player.koh_wins || player.koh_losses ? (
               <>
@@ -30,11 +33,8 @@ export default function CashClimbPlayerHistoryModal({ tournament, player, onClos
                 <WinLoss wins={player.koh_wins} losses={player.koh_losses} />
               </>
             ) : null}
-            {' • '}
-            {formatMoney(player.total_payout)}
-            {' • '}
-            {tag(player)}
           </p>
+          <p className="cc-history-earned">{formatMoney(player.total_payout)}</p>
         </header>
         {rows.length ? (
           <ul className="cc-history-list">

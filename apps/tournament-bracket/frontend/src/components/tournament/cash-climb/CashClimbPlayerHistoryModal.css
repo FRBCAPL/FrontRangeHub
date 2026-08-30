@@ -13,8 +13,34 @@
   flex-shrink: 0;
 }
 
+.cc-history-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .cc-history-head h3 {
-  margin: 0 0 4px;
+  margin: 0;
+  min-width: 0;
+}
+
+.cc-history-status {
+  flex-shrink: 0;
+  color: #fde68a;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.cc-history-record {
+  margin: 6px 0 0;
+  color: #cbd5e1;
+}
+
+.cc-history-earned {
+  margin: 4px 0 0;
+  color: #86efac;
+  font-weight: 700;
 }
 
 .cc-history-list {
@@ -40,7 +66,8 @@
 }
 
 .cc-history-row strong {
-  grid-column: 1;
+  grid-column: 1 / -1;
+  text-align: center;
   color: #fff;
 }
 
@@ -52,7 +79,6 @@
 
 .cc-history-row small {
   grid-column: 2;
-  grid-row: 1 / span 2;
   align-self: center;
   color: #86efac;
   font-weight: 700;
