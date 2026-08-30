@@ -102,14 +102,16 @@ export default function CashClimbApp({ onLeave }) {
     const winnerId = resolvePendingWinnerId(match, row);
     if (!match || !winnerId) {
       alert('That submit does not match an open table. Enter the result on this tablet instead.');
-      return;
+      return false;
     }
     try {
       const extras = { playedGame: playedGameFromPending(row) };
       persist(recordMatchResult(tournament, match.id, winnerId, row.score || null, extras));
       dropPending(match.id);
+      return true;
     } catch (err) {
       alert(err.message || 'Could not confirm that result');
+      return false;
     }
   };
 

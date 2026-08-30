@@ -31,8 +31,10 @@ export function pendingSubmitterName(row) {
 }
 
 export function playedGameFromPending(row) {
+  if (!row) return '';
+  if (Object.prototype.hasOwnProperty.call(row, 'game_type') && row.game_type === '') return '';
   return normalizePlayedGame(
-    row?.game_type || row?.played_game || row?.playedGame || String(row?.submitted_by || '').match(GAME_TAG)?.[1]
+    row.game_type || row.played_game || row.playedGame || String(row.submitted_by || '').match(GAME_TAG)?.[1]
   );
 }
 

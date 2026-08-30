@@ -3,14 +3,14 @@ import { formatMoney } from './cashClimbEngine.js';
 import { findMatchById, pendingWinnerName } from './cashClimbSubmit.js';
 import { pendingSubmitterName, playedGameFromPending } from './cashClimbPlayedGame.js';
 
-export default function CashClimbPendingModal({ tournament, rows, onConfirm, onReject, onClose }) {
+export default function CashClimbPendingModal({ tournament, rows, onConfirm, onEdit, onReject, onClose }) {
   return (
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="cc-pending-title">
       <div className="cc-modal cc-pending-modal" onClick={(e) => e.stopPropagation()}>
         <header className="cc-pending-modal-head">
           <p className="cc-play-kicker">Cash Climb</p>
           <h3 id="cc-pending-title">Awaiting approval</h3>
-          <p className="cc-modal-meta">Confirm to post money. Players cannot continue the round.</p>
+          <p className="cc-modal-meta">Confirm to post as submitted, or edit first. Players cannot continue the round.</p>
         </header>
         <ul className="cc-pending-modal-list">
           {rows.map((row) => {
@@ -35,6 +35,13 @@ export default function CashClimbPendingModal({ tournament, rows, onConfirm, onR
                   </span>
                   <small>Pays {formatMoney(match.payout_amount)}</small>
                   <em>Confirm this result</em>
+                </button>
+                <button
+                  type="button"
+                  className="cc-pending-edit"
+                  onClick={() => onEdit(row)}
+                >
+                  Edit
                 </button>
                 <button
                   type="button"

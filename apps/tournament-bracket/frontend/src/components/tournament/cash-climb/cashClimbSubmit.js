@@ -1,3 +1,5 @@
+import { playedGameFromPending } from './cashClimbPlayedGame.js';
+
 export const CASH_CLIMB_SUBMIT_HASH = '/tournament-bracket/submit';
 
 export function cashClimbSubmitHref() {
@@ -42,6 +44,17 @@ export function pendingWinnerName(match, pending) {
   if (idsEqual(pending.winner_id, match.player1_id)) return match.player1_name || '';
   if (idsEqual(pending.winner_id, match.player2_id)) return match.player2_name || '';
   return '';
+}
+
+export function matchWithPendingDraft(match, pending) {
+  if (!match) return null;
+  const score = pending?.score != null && pending.score !== '' ? String(pending.score) : (match.score || '');
+  return {
+    ...match,
+    winner_id: resolvePendingWinnerId(match, pending) || match.winner_id || '',
+    score,
+    played_game: playedGameFromPending(pending) || match.played_game || '',
+  };
 }
 
 export function openPendingSubmissions(tournament, submissions) {

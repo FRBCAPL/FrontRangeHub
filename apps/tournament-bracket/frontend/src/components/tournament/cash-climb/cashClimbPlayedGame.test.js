@@ -33,5 +33,7 @@ describe('cash climb played game', () => {
     assert.equal(pendingSubmitterName({ submitted_by: 'Ann [9-Ball]' }), 'Ann');
     assert.equal(playedGameFromPending({ submitted_by: 'Ann [9-Ball]' }), '9-Ball');
     assert.equal(playedGameFromPending({ game_type: '10-Ball', submitted_by: 'Ann [9-Ball]' }), '10-Ball');
+    assert.equal(playedGameFromPending({ game_type: '', submitted_by: 'Ann [9-Ball]' }), '');
+    assert.equal(playedGameFromPending({ game_type: null, submitted_by: 'Ann [9-Ball]' }), '9-Ball');
   });
 });

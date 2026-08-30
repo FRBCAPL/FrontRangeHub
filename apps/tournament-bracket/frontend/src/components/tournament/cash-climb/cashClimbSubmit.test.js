@@ -1,50 +1,28 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { CASH_CLIMB_SUBMIT_HASH, cashClimbSubmitHref, pendingByMatchId, pendingWinnerName, findMatchById, resolvePendingWinnerId, openPendingSubmissions, pendingApprovalLabel } from './cashClimbSubmit.js';
+import { matchWithPendingDraft } from './cashClimbSubmit.js';
 
-describe('cash climb player submit helpers', () => {
-  it('exposes a public submit hash route', () => {
-    assert.equal(CASH_CLIMB_SUBMIT_HASH, '/tournament-bracket/submit');
-    assert.match(cashClimbSubmitHref(), /#\/tournament-bracket\/submit$/);
-  });
-
-  it('keeps the latest pending row per match', () => {
-    const map = pendingByMatchId([
-      { match_id: 'm1', winner_id: 'a', submitted_at: '2' },
-      { match_id: 'm1', winner_id: 'b', submitted_at: '1' },
-      { match_id: 'm2', winner_id: 'c' },
-    ]);
-    assert.equal(map.m1.winner_id, 'a');
-    assert.equal(map.m2.winner_id, 'c');
-  });
-
-  it('names the pending winner from the match', () => {
-    const match = { player1_id: 'a', player1_name: 'Ann', player2_id: 'b', player2_name: 'Ben' };
-    assert.equal(pendingWinnerName(match, { winner_id: 'b' }), 'Ben');
-  });
-
-  it('matches cloud string ids to local match ids', () => {
-    const tournament = {
-      matches: [{ id: 'm1', status: 'pending', player1_id: 'p1', player2_id: 'p2' }],
+describe('cash climb pending draft', () => {
+  it('seeds the result form from a player submit', () => {
+    const match = {
+      id: 'm1',
+      player1_id: 'ann',
+      player1_name: 'Ann',
+      player2_id: 'ben',
+      player2_name: 'Ben',
+      status: 'pending',
+      winner_id: null,
+      score: null,
     };
-    const match = findMatchById(tournament, 'm1');
-    assert.equal(match.id, 'm1');
-    assert.equal(resolvePendingWinnerId(match, { winner_id: 'p2' }), 'p2');
-  });
-
-  it('counts only open matches awaiting approval', () => {
-    const tournament = {
-      matches: [
-        { id: 'm1', status: 'pending', is_bye: false },
-        { id: 'm2', status: 'completed', is_bye: false },
-      ],
-    };
-    const open = openPendingSubmissions(tournament, [
-      { match_id: 'm1' },
-      { match_id: 'm2' },
-    ]);
-    assert.equal(open.length, 1);
-    assert.equal(pendingApprovalLabel(1), '1 match awaiting approval');
-    assert.equal(pendingApprovalLabel(3), '3 matches awaiting approval');
+    const draft = matchWithPendingDraft(match, {
+      match_id: 'm1',
+      winner_id: 'ben',
+      score: '3-5',
+      game_type: '9-Ball',
+    });
+    assert.equal(draft.winner_id, 'ben');
+    assert.equal(draft.score, '3-5');
+    assert.equal(draft.played_game, '9-Ball');
+    assert.equal(draft.status, 'pending');
   });
 });
