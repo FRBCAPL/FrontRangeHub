@@ -167,7 +167,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     ? 'Dues Tracker'
                     : location.pathname === '/tournament-bracket/how-it-works'
                     ? 'How Cash Climb works'
-                    : location.pathname === '/tournament-bracket/submit'
+                    : location.pathname.startsWith('/tournament-bracket/submit')
                     ? 'Submit Cash Climb result'
                     : location.pathname === '/tournament-bracket'
                     ? 'Tournament Bracket'
@@ -227,7 +227,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   ? 'Dues Tracker'
                   : location.pathname === '/tournament-bracket/how-it-works'
                   ? 'How Cash Climb works'
-                  : location.pathname === '/tournament-bracket/submit'
+                  : location.pathname.startsWith('/tournament-bracket/submit')
                   ? 'Submit Cash Climb result'
                   : location.pathname === '/tournament-bracket'
                   ? 'Tournament Bracket'

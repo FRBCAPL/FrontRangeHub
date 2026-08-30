@@ -103,6 +103,7 @@ import TournamentBracketGate from '@apps/tournament-bracket/frontend/src/compone
 import CashClimbTvView from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbTvView';
 import CashClimbPublicGuide from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbPublicGuide.jsx';
 import CashClimbSubmitPage from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbSubmitPage.jsx';
+import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isTournamentOperator, peekLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
@@ -250,7 +251,8 @@ function AppContent() {
     ) {
       return;
     }
-    const targetHash = PATHNAME_TO_HASH_ROUTE[pathname];
+    const targetHash = PATHNAME_TO_HASH_ROUTE[pathname]
+      || (isCashClimbSubmitPath(pathname) ? `#${pathname}` : null);
     if (targetHash) {
       const search = window.location.search || '';
       window.location.replace(`${window.location.origin}/${search}${targetHash}`);
@@ -600,7 +602,7 @@ function AppContent() {
     );
   }
 
-  if (location.pathname === '/tournament-bracket/submit') {
+  if (isCashClimbSubmitPath(location.pathname)) {
     return (
       <div style={{
         position: 'fixed',
@@ -1010,7 +1012,7 @@ function AppContent() {
               }
             />
             <Route
-              path="/tournament-bracket/submit"
+              path="/tournament-bracket/submit/:eventId?"
               element={
                 <AppRouteWrapper appName="Submit Cash Climb result">
                   <main className="main-app-content">

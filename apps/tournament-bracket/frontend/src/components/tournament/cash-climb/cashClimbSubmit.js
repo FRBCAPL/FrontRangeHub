@@ -2,13 +2,36 @@ import { playedGameFromPending } from './cashClimbPlayedGame.js';
 
 export const CASH_CLIMB_SUBMIT_HASH = '/tournament-bracket/submit';
 
-export function cashClimbSubmitHref() {
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${origin}/#${CASH_CLIMB_SUBMIT_HASH}`;
+export function cashClimbSubmitHash(eventId) {
+  const id = eventId != null ? String(eventId).trim() : '';
+  if (!id) return CASH_CLIMB_SUBMIT_HASH;
+  return `${CASH_CLIMB_SUBMIT_HASH}/${encodeURIComponent(id)}`;
 }
 
-export function openCashClimbSubmit() {
-  const url = cashClimbSubmitHref();
+export function cashClimbSubmitEventId(pathname) {
+  const prefix = `${CASH_CLIMB_SUBMIT_HASH}/`;
+  const path = String(pathname || '');
+  if (!path.startsWith(prefix)) return '';
+  const raw = path.slice(prefix.length).split('/')[0] || '';
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+export function isCashClimbSubmitPath(pathname) {
+  const path = String(pathname || '');
+  return path === CASH_CLIMB_SUBMIT_HASH || path.startsWith(`${CASH_CLIMB_SUBMIT_HASH}/`);
+}
+
+export function cashClimbSubmitHref(eventId) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  return `${origin}/#${cashClimbSubmitHash(eventId)}`;
+}
+
+export function openCashClimbSubmit(eventId) {
+  const url = cashClimbSubmitHref(eventId);
   const opened = window.open(url, 'frontrange-cash-climb-submit');
   if (!opened) window.location.assign(url);
 }

@@ -66,7 +66,7 @@ export default function CashClimbPlay({
         onRemove={onRemove}
         onRules={() => setRulesView('tonight')}
         onGuide={() => setRulesView('guide')}
-        onSubmitPage={openCashClimbSubmit}
+        onSubmitPage={() => openCashClimbSubmit(tournament.id)}
       />
 
       {tournament.status !== 'completed' && (

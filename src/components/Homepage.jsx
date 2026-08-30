@@ -25,7 +25,8 @@ import {
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
 import { openCashClimbTv } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbTv.js';
 import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbGuideRoute.js';
-import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
+import { cashClimbSubmitHash } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
+import CashClimbSubmitPickModal from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbSubmitPickModal.jsx';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 
 const Homepage = ({ canRunTournament = false }) => {
@@ -38,6 +39,7 @@ const Homepage = ({ canRunTournament = false }) => {
   const [showWhatIsDuezyModal, setShowWhatIsDuezyModal] = useState(false);
   const [showDuezyModal, setShowDuezyModal] = useState(false);
   const [showWhatIsLadderModal, setShowWhatIsLadderModal] = useState(false);
+  const [showSubmitPick, setShowSubmitPick] = useState(false);
   const [showLadderLearnMoreModal, setShowLadderLearnMoreModal] = useState(false);
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -81,7 +83,7 @@ const Homepage = ({ canRunTournament = false }) => {
   };
 
   const handleNavigateToCashClimbSubmit = () => {
-    navigate(CASH_CLIMB_SUBMIT_HASH);
+    setShowSubmitPick(true);
   };
 
   const handleNavigateToEstateIt = () => {
@@ -511,7 +513,7 @@ const Homepage = ({ canRunTournament = false }) => {
             How Cash Climb works
           </button>
           <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToCashClimbSubmit}>
-            Submit a Cash Climb result
+            Submit a result
           </button>
           {canRunTournament && (
             <>
@@ -537,6 +539,16 @@ const Homepage = ({ canRunTournament = false }) => {
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>
       </div>
+
+      {showSubmitPick ? (
+        <CashClimbSubmitPickModal
+          onClose={() => setShowSubmitPick(false)}
+          onPick={(eventId) => {
+            setShowSubmitPick(false);
+            navigate(cashClimbSubmitHash(eventId));
+          }}
+        />
+      ) : null}
 
       {/* Public Ladder View Modal */}
       <StandaloneLadderModal

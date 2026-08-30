@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { sanitizeCashClimb, getCurrentRound } from './cashClimbEngine.js';
 import { raceToForMatch } from './cashClimbRace.js';
-import { loadLiveCashClimbEvent, loadCashClimbPending, submitCashClimbPending } from './cashClimbCloud.js';
+import { cashClimbSubmitEventId } from './cashClimbSubmit.js';
+import { loadLiveCashClimbEvent, loadCashClimbEventById, loadCashClimbPending, submitCashClimbPending } from './cashClimbCloud.js';
 import CashClimbStandings from './CashClimbStandings.jsx';
 import CashClimbSubmitMatches from './CashClimbSubmitMatches.jsx';
 import CashClimbResultModal from './CashClimbResultModal.jsx';
@@ -14,6 +15,8 @@ const POLL_MS = 2500;
 
 export default function CashClimbSubmitPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const eventId = cashClimbSubmitEventId(location.pathname);
   const [tournament, setTournament] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -27,7 +30,9 @@ export default function CashClimbSubmitPage() {
   useEffect(() => {
     let cancelled = false;
     const refresh = async () => {
-      const live = await loadLiveCashClimbEvent();
+      const live = eventId
+        ? await loadCashClimbEventById(eventId)
+        : await loadLiveCashClimbEvent();
       if (cancelled) return;
       const next = live.tournament ? sanitizeCashClimb(live.tournament) : null;
       setTournament(next);
@@ -45,7 +50,7 @@ export default function CashClimbSubmitPage() {
       cancelled = true;
       clearInterval(timer);
     };
-  }, []);
+  }, [eventId]);
 
   const round = tournament ? getCurrentRound(tournament) : null;
 

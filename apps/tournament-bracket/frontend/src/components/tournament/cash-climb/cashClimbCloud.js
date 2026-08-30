@@ -57,17 +57,29 @@ export async function retireCashClimbEvent(tournament) {
 }
 
 export async function loadLiveCashClimbEvent() {
+  const live = await listLiveCashClimbEvents();
+  return { tournament: live[0]?.tournament || null, error: null };
+}
+
+export async function loadCashClimbEventById(eventId) {
+  if (!eventId) return { tournament: null, error: null };
+  const result = await swallow(() => supabase
+    .from(CASH_CLIMB_EVENTS_TABLE)
+    .select('id, payload, status, updated_at')
+    .eq('id', String(eventId))
+    .maybeSingle());
+  return { tournament: tournamentFromEventRow(result.data), error: result.error };
+}
+
+export async function listLiveCashClimbEvents() {
   const result = await swallow(() => supabase
     .from(CASH_CLIMB_EVENTS_TABLE)
     .select('id, payload, status, updated_at')
     .eq('status', 'in-progress')
     .order('updated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle());
-  const row = result.data;
-  const tournament = tournamentFromEventRow(row);
-  if (!tournament) return { tournament: null, error: result.error };
-  return { tournament, error: null };
+    .limit(12));
+  const rows = Array.isArray(result.data) ? result.data : [];
+  return rows.map(savedEventSummary).filter((item) => item && item.status === 'in-progress');
 }
 
 export async function listSavedCashClimbEvents() {
