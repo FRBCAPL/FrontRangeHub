@@ -84,3 +84,65 @@ export function splitFinishAwards({
     thirdTotal: totals.third,
   };
 }
+
+/**
+ * After 3rd leftover is locked (and usually already paid), champion protection
+ * can only take from the 2nd leftover bucket plus unused KOH. Never 3rd.
+ */
+export function settleAfterThirdLocked({
+  secondBucket = 0,
+  kohSurplus = 0,
+  firstMatchPaid = 0,
+  secondMatchPaid = 0,
+  thirdTotal = 0,
+  otherMatchPaids = [],
+} = {}) {
+  const leftoverStart = money(Math.max(0, secondBucket));
+  const championshipStart = money(Math.max(0, kohSurplus));
+  const firstMatch = money(firstMatchPaid);
+  const secondMatch = money(secondMatchPaid);
+  const third = money(thirdTotal);
+  const others = (otherMatchPaids || []).map((n) => money(n));
+
+  const projected = (transfer) => {
+    const t = money(Math.max(0, Math.min(leftoverStart, transfer)));
+    const championship = money(championshipStart + t);
+    const secondLeftover = money(leftoverStart - t);
+    const first = money(firstMatch + championship);
+    const second = money(secondMatch + secondLeftover);
+    const maxOther = Math.max(second, third, ...others, 0);
+    return { first, second, championship, secondLeftover, maxOther, t };
+  };
+
+  const ok = (transfer) => projected(transfer).first + 0.0001 >= projected(transfer).maxOther;
+
+  let transfer = 0;
+  if (!ok(0)) {
+    if (ok(leftoverStart)) {
+      let lo = 0;
+      let hi = leftoverStart;
+      for (let i = 0; i < 24; i += 1) {
+        const mid = money((lo + hi) / 2);
+        if (ok(mid)) hi = mid;
+        else lo = mid;
+      }
+      transfer = hi;
+      while (transfer < leftoverStart && !ok(transfer)) {
+        transfer = money(transfer + 0.01);
+      }
+    } else {
+      transfer = leftoverStart;
+    }
+  }
+
+  const totals = projected(transfer);
+  return {
+    championship: totals.championship,
+    second: totals.secondLeftover,
+    third: 0,
+    transferredToChampion: totals.t,
+    firstTotal: totals.first,
+    secondTotal: totals.second,
+    thirdTotal: third,
+  };
+}

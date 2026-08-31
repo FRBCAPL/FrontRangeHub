@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatMoney, formatTournamentDate } from './cashClimbEngine.js';
-import { getFormatDisplay } from './openTournamentStructure.js';
+import { getFormatDisplay, OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
+import { leftoverBucketsForDisplay } from './cashClimbKohSettle.js';
 import { openCashClimbTv } from './cashClimbTv.js';
 import { formatEventRaces } from './cashClimbRace.js';
 import { finishPlaceLabel, listedPlacePrizes } from './cashClimbPlacePrizes.js';
@@ -29,6 +30,10 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
   const remaining = Math.max(
     0,
     Math.round(((Number(tournament.totalPrizePool) || 0) - (Number(paidOut) || 0)) * 100) / 100
+  );
+  const buckets = leftoverBucketsForDisplay(tournament);
+  const kohStarted = (tournament.rounds || []).some(
+    (r) => r.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName
   );
   const status = tournament.status === 'completed'
     ? 'Complete'
@@ -104,6 +109,17 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
             <Stat label="RR left" value={formatMoney(remainingPhaseBudget(tournament, false))} />
             <Stat label="KOH left" value={formatMoney(remainingPhaseBudget(tournament, true))} />
             <Stat label="Champ floor" value={formatMoney(tournament.championshipFloor)} />
+            {kohStarted && buckets ? (
+              <>
+                <Stat
+                  label="3rd leftover"
+                  value={tournament.thirdLastAwardPaid
+                    ? `Paid ${formatMoney(tournament.thirdLastAwardPaid.amount)}`
+                    : formatMoney(buckets.third)}
+                />
+                <Stat label="2nd leftover" value={formatMoney(buckets.second)} />
+              </>
+            ) : null}
           </>
         ) : tournament.status !== 'completed' ? (
           listedPlacePrizes(tournament.placePrizes || { first: tournament.firstPlacePrize }).map((row) => (
@@ -122,7 +138,7 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
         ) : null}
       </div>
 
-      {tournament.message && !tournament.winner && (
+      {tournament.message && !tournament.winner && !tournament.chopped && (
         <p className="cc-banner">{tournament.message}</p>
       )}
       {cloudError && tournament.status !== 'completed' ? (
@@ -138,7 +154,19 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
           ) : null}
         </p>
       ) : null}
-      {tournament.winner && (
+      {tournament.chopped ? (
+        <p className="cc-winner">
+          Chop: {(tournament.stats || []).filter((p) => p.chopped).map((p) => `${p.player_name} ${formatMoney(p.total_payout)}`).join(' • ')}
+          {(tournament.stats || []).some((p) => p.finish_place === 3) ? (
+            <>
+              {(tournament.stats || [])
+                .filter((p) => p.finish_place === 3)
+                .map((p) => ` • ${finishPlaceLabel(3)}: ${p.player_name} ${formatMoney(p.total_payout)}`)
+                .join('')}
+            </>
+          ) : null}
+        </p>
+      ) : tournament.winner ? (
         <p className="cc-winner">
           {finishPlaceLabel(1)}: {tournament.winner.player_name} {formatMoney(tournament.winner.total_payout)}
           {(tournament.stats || []).some((p) => p.finish_place > 1) ? (
@@ -151,7 +179,7 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
             </>
           ) : null}
         </p>
-      )}
+      ) : null}
     </header>
   );
 }

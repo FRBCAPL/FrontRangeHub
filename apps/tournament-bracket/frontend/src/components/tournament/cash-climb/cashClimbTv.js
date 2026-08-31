@@ -92,6 +92,8 @@ export function buildCashClimbTvBoard(tournament) {
     pool: formatMoney(tournament.totalPrizePool),
     paid: formatMoney(paidOut),
     winner: tournament.winner || null,
+    chopped: Boolean(tournament.chopped),
+    chopPlayers: stats.filter((p) => p.chopped),
     roundName: round?.round_name || (tournament.status === 'completed' ? 'Final' : 'Standings'),
     kohStarted,
     live: atTable,

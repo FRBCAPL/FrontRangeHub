@@ -44,8 +44,10 @@ export function cashClimbNewPlayerGuide() {
       {
         title: 'How the night ends',
         body: [
+          '3rd last leftover is paid when that player sits, not at the end.',
           'Leftover King of the Hill money is the championship for last standing.',
-          'Leftover round-robin money goes to 2nd and 3rd last standing. Ties are allowed.',
+          'Leftover round-robin money for 2nd last standing is paid at the end, unless the last two chop remaining leftover 50/50.',
+          'The last two players may chop instead of playing for last standing. Match money already won is kept.',
         ],
       },
       {

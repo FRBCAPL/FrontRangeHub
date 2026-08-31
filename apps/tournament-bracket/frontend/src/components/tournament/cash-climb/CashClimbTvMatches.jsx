@@ -78,6 +78,21 @@ function ByeMatchCard({ board, match }) {
 export default function CashClimbTvMatches({ board, layout = 'landscape' }) {
   const byes = board.byes || [];
 
+  if (board.status === 'completed' && board.chopped) {
+    return (
+      <section className="cc-tv-now cc-tv-now-winner" aria-live="polite">
+        <p className="cc-tv-kicker">Chop</p>
+        {(board.chopPlayers || []).map((p) => (
+          <p key={p.player_id} className="cc-tv-payout cc-tv-payout-champion">
+            <strong>{p.player_name}</strong>
+            {' '}
+            {formatMoney(p.total_payout)}
+          </p>
+        ))}
+      </section>
+    );
+  }
+
   if (board.status === 'completed' && board.winner) {
     return (
       <section className="cc-tv-now cc-tv-now-winner" aria-live="polite">

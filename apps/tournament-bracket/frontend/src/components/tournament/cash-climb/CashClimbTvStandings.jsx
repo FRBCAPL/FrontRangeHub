@@ -4,6 +4,7 @@ import { finishPlaceLabel } from './cashClimbPlacePrizes.js';
 import WinLoss from './WinLoss.jsx';
 
 function tag(player) {
+  if (player.chopped) return 'Chop';
   if (player.finish_place) return finishPlaceLabel(player.finish_place);
   if (player.eliminated) return 'Out';
   if (player.in_koh) return 'KOH';
@@ -46,7 +47,7 @@ export default function CashClimbTvStandings({ board, layout = 'landscape' }) {
               ) : null}
             </span>
             <span className="cc-tv-standings-paid">{formatMoney(p.total_payout)}</span>
-            <span className={`cc-tv-tag ${p.finish_place ? 'cc-tv-tag-place' : `cc-tv-tag-${tag(p).toLowerCase()}`}`}>
+            <span className={`cc-tv-tag ${p.finish_place || p.chopped ? 'cc-tv-tag-place' : `cc-tv-tag-${tag(p).toLowerCase()}`}`}>
               {tag(p)}
             </span>
           </li>

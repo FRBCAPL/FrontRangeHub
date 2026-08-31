@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { createOpenTournament, startTournament, recordMatchResult, continueCashClimb, getCurrentRound, getRoundMatches, getActivePlayers, sanitizeCashClimb } from './cashClimbEngine.js';
+import { createOpenTournament, startTournament, recordMatchResult, continueCashClimb, chopCashClimb, getCurrentRound, getRoundMatches, getActivePlayers, sanitizeCashClimb } from './cashClimbEngine.js';
 import { remainingEventRoundsFromState } from './cashClimbDuration.js';
 import { getKOHThreshold } from './openTournamentStructure.js';
 import { remainingPhaseBudget } from './cashClimbPayoutRuntime.js';
@@ -19,6 +19,23 @@ function playPending(state) {
     }
     const match = pending[0];
     current = recordMatchResult(current, match.id, match.player1_id, '5-3');
+  }
+  return current;
+}
+
+function playUntil(state, pred) {
+  let current = state;
+  for (let guard = 0; guard < 200; guard += 1) {
+    if (pred(current)) return current;
+    if (current.status === 'completed') return current;
+    const round = getCurrentRound(current);
+    if (!round) return current;
+    const pending = getRoundMatches(current, round.id).filter((m) => m.status === 'pending' && !m.is_bye && m.player2_id);
+    if (!pending.length) {
+      current = continueCashClimb(current);
+      continue;
+    }
+    current = recordMatchResult(current, pending[0].id, pending[0].player1_id);
   }
   return current;
 }
@@ -550,5 +567,64 @@ describe('open Cash Climb engine', () => {
     const saved = state.matches.find((m) => m.id === match.id);
     assert.equal(saved.winner_id, match.player1_id);
     assert.equal(saved.played_game, '9-Ball');
+  });
+
+  it('pays 3rd leftover when the first KOH player sits, and reverse claws it back', () => {
+    let state = startTournament(createOpenTournament({
+      entryFee: 20,
+      roundRobinType: 'single',
+      players: Array.from({ length: 8 }, (_, i) => ({ name: `P${i + 1}` })),
+    }));
+    state = playUntil(state, (s) => s.rounds.some((r) => r.round_name === 'King of the Hill'));
+    if (getActivePlayers(state).length === 3) {
+      state = playUntil(state, (s) => getActivePlayers(s).length === 2);
+    }
+    assert.equal(state.status, 'in-progress');
+    const third = state.stats.find((p) => p.finish_place === 3);
+    assert.ok(third);
+    assert.equal(state.thirdLastAwardPaid.player_id, third.player_id);
+    if (!third.in_koh) return;
+    const match = (state.matches || []).find((m) => {
+      if (m.status !== 'completed' || m.loser_id !== third.player_id) return false;
+      const round = (state.rounds || []).find((r) => r.id === m.round_id);
+      return round?.round_name === 'King of the Hill' && round.id === getCurrentRound(state).id;
+    });
+    assert.ok(match);
+    state = recordMatchResult(state, match.id, third.player_id);
+    const restored = state.stats.find((p) => p.player_id === third.player_id);
+    assert.equal(restored.finish_place, null);
+    assert.equal(restored.leftover_award, 0);
+    assert.equal(state.thirdLastAwardPaid, null);
+    assert.equal(getActivePlayers(state).length, 3);
+  });
+
+  it('chops remaining leftover 50/50 without paying a fake KOH match', () => {
+    let state = startTournament(createOpenTournament({
+      entryFee: 20,
+      roundRobinType: 'single',
+      players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
+    }));
+    state = playUntil(state, (s) => (
+      s.rounds.some((r) => r.round_name === 'King of the Hill')
+      && getActivePlayers(s).length === 2
+    ));
+    const matchMoney = Object.fromEntries(
+      getActivePlayers(state).map((p) => [p.player_id, p.total_payout])
+    );
+    const pending = (state.matches || []).filter((m) => m.status === 'pending');
+    state = chopCashClimb(state);
+    assert.equal(state.status, 'completed');
+    assert.equal(state.chopped, true);
+    assert.equal(state.winner, null);
+    pending.forEach((m) => {
+      assert.equal(state.matches.find((row) => row.id === m.id).status, 'cancelled');
+    });
+    const chopped = state.stats.filter((p) => p.chopped);
+    assert.equal(chopped.length, 2);
+    chopped.forEach((p) => {
+      assert.equal(Math.round((p.total_payout - p.chop_share) * 100) / 100, matchMoney[p.player_id]);
+    });
+    const paid = state.stats.reduce((sum, p) => sum + p.total_payout, 0);
+    assert.ok(Math.abs(paid - 80) < 0.02);
   });
 });

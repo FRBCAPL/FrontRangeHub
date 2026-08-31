@@ -44,6 +44,7 @@ export function cashClimbPlayerRules(tournament) {
           'KOH starts when 3 players are still in (or 2 if two players bust in the same round).',
           `KOH is ${formatRacePhrase(kohRace)}. Winner stays. Loser sits.`,
           '2 KOH losses and you are out. Last player standing is the champion.',
+          'The last two players may chop remaining leftover 50/50 instead of playing it out.',
         ],
       },
       {
@@ -51,15 +52,16 @@ export function cashClimbPlayerRules(tournament) {
         body: [
           "Win a match, you take that match's posted dollars. Pays are whole dollars and climb as the night goes on.",
           'Money you already won is yours. There is no clawback.',
-          'Leftover KOH money is the championship (last standing). Leftover round-robin money splits 60 / 40 to 2nd and 3rd last standing.',
-          'If last standing would finish behind anyone else in total cash, enough leftover RR money moves to last standing so they are at least tied. Ties are allowed.',
+          'Leftover round-robin money locks when King of the Hill starts: 40% to 3rd last standing, 60% to 2nd last standing. Leftover KOH is the championship.',
+          '3rd last leftover is paid as soon as that player sits (or when KOH starts with 2). It is not held until the end.',
+          'If last standing would finish behind anyone else in total cash, leftover 2nd-place RR money can move to last standing so they are at least tied. 3rd leftover is never taken back. Ties are allowed.',
         ],
       },
       {
         title: 'The board',
         body: [
           'The number next to your name is cash rank: who has earned the most.',
-          'Last standing / 2nd last standing / 3rd last standing is who survived longest in King of the Hill, not who has the most money.',
+          'Last standing / 2nd last standing / 3rd last standing is who survived longest in King of the Hill, not who has the most money. Chop means the last two split remaining leftover.',
         ],
       },
     ],

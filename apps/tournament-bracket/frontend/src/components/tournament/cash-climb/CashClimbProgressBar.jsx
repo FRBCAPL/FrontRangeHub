@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function CashClimbProgressBar({ progress, onNextMatch, continueLabel, onContinue }) {
+export default function CashClimbProgressBar({ progress, onNextMatch, continueLabel, onContinue, chopLabel, onChop }) {
   if (!progress?.roundLabel) return null;
   const canOpenNext = Boolean(progress.nextMatch && onNextMatch);
 
@@ -18,6 +18,11 @@ export default function CashClimbProgressBar({ progress, onNextMatch, continueLa
         {continueLabel && onContinue ? (
           <button type="button" className="cc-continue-btn" onClick={onContinue}>
             {continueLabel}
+          </button>
+        ) : null}
+        {chopLabel && onChop ? (
+          <button type="button" className="cc-chop-btn" onClick={onChop}>
+            {chopLabel}
           </button>
         ) : null}
       </div>

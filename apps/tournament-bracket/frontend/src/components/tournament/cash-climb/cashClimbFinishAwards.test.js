@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { splitFinishAwards } from './cashClimbFinishAwards.js';
+import { splitFinishAwards, settleAfterThirdLocked } from './cashClimbFinishAwards.js';
 import { splitRrSurplus } from './cashClimbAllocations.js';
 
 describe('Cash Climb finish awards', () => {
@@ -35,5 +35,20 @@ describe('Cash Climb finish awards', () => {
       Math.round((awards.championship + awards.second + awards.third) * 100) / 100,
       58
     );
+  });
+
+  it('never takes locked 3rd leftover for champion protection', () => {
+    const awards = settleAfterThirdLocked({
+      secondBucket: 20,
+      kohSurplus: 5,
+      firstMatchPaid: 10,
+      secondMatchPaid: 8,
+      thirdTotal: 100,
+    });
+    assert.equal(awards.transferredToChampion, 20);
+    assert.equal(awards.second, 0);
+    assert.equal(awards.championship, 25);
+    assert.equal(awards.firstTotal, 35);
+    assert.ok(awards.firstTotal < awards.thirdTotal);
   });
 });

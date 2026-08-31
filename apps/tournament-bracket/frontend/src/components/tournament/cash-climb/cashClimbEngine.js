@@ -20,7 +20,7 @@ import {
 } from './cashClimbPlacePrizes.js';
 import { PAYOUT_MODEL_V2 } from './cashClimbPayoutConfig.js';
 import { defaultKohRaceTo, defaultRrRaceTo, parseRaceTo } from './cashClimbRace.js';
-import { splitFinishAwards } from './cashClimbFinishAwards.js';
+import { settleAfterThirdLocked, splitFinishAwards } from './cashClimbFinishAwards.js';
 import {
   attachPayoutPlan,
   isPayoutV2,
@@ -28,6 +28,13 @@ import {
   remainingMatchBudget,
   remainingPhaseBudget,
 } from './cashClimbPayoutRuntime.js';
+import {
+  canChopKoh,
+  chopKohRemaining,
+  lockLeftoverBuckets,
+  payThirdLastIfNeeded,
+  undoThirdLastAward,
+} from './cashClimbKohSettle.js';
 
 function uid() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -379,6 +386,7 @@ export function startTournament(state) {
     koh_losses: 0,
     total_payout: 0,
     place_bonus: 0,
+    leftover_award: 0,
     finish_place: null,
     eliminated: false,
     eliminated_at: null,
@@ -567,7 +575,11 @@ function reverseMatchResult(state, match) {
   }
   if (loser) {
     if (koh) {
-      loser.koh_losses = Math.max(0, (loser.koh_losses || 0) - 1);
+      const nextLosses = Math.max(0, (loser.koh_losses || 0) - 1);
+      if (loser.eliminated && nextLosses < (state.phase2EliminationLosses || 2)) {
+        undoThirdLastAward(state, loser);
+      }
+      loser.koh_losses = nextLosses;
       clearEliminationIfUnderLimit(loser, loser.koh_losses, state.phase2EliminationLosses);
     } else {
       loser.losses = Math.max(0, (loser.losses || 0) - 1);
@@ -646,6 +658,7 @@ export function recordMatchResult(state, matchId, winnerId, score = null, extras
   const played = playedGameFromExtras(extras);
   if (played !== undefined) match.played_game = played || null;
   dropGhostMatches(next);
+  if (isPayoutV2(next)) payThirdLastIfNeeded(next);
   return next;
 }
 
@@ -666,6 +679,13 @@ export function continueCashClimb(state) {
   return maybeAdvance(next);
 }
 
+export function chopCashClimb(state) {
+  if (!canChopKoh(state)) {
+    throw new Error('Chop is only for the last two players in King of the Hill.');
+  }
+  return chopKohRemaining(clone(state));
+}
+
 function isKohRound(round) {
   return round && round.round_name === OPEN_TOURNAMENT_STRUCTURE.finalStageName;
 }
@@ -676,8 +696,29 @@ function roundComplete(state, round) {
 }
 
 function completeTournament(state, winner) {
-  const finishers = lastStandingFinishers(state.stats, winner);
   if (isPayoutV2(state)) {
+    lockLeftoverBuckets(state);
+    payThirdLastIfNeeded(state);
+  }
+  const finishers = lastStandingFinishers(state.stats, winner);
+  if (isPayoutV2(state) && state.leftoverBuckets) {
+    const awards = settleAfterThirdLocked({
+      secondBucket: state.leftoverBuckets.second,
+      kohSurplus: remainingPhaseBudget(state, true),
+      firstMatchPaid: finishers[0]?.total_payout || 0,
+      secondMatchPaid: finishers[1]?.total_payout || 0,
+      thirdTotal: finishers[2]?.total_payout || 0,
+      otherMatchPaids: finishers.slice(3).map((p) => p.total_payout || 0),
+    });
+    assignPlacePrizes(state, {
+      placeCount: 3,
+      first: awards.championship,
+      second: awards.second,
+      third: state.thirdLastAwardPaid?.amount || 0,
+      fourth: 0,
+      potPercent: 0,
+    });
+  } else if (isPayoutV2(state)) {
     const awards = splitFinishAwards({
       rrSurplus: remainingPhaseBudget(state, false),
       kohSurplus: remainingPhaseBudget(state, true),
@@ -703,9 +744,14 @@ function completeTournament(state, winner) {
   }
   const prizes = state.placePrizes || {};
   const placeCount = parsePlaceCount(state.placeCount);
+  const thirdPaidId = state.thirdLastAwardPaid?.player_id;
   finishers.forEach((player, index) => {
     const place = index + 1;
     if (place > placeCount) return;
+    if (place === 3 && (player.finish_place === 3 || player.player_id === thirdPaidId)) {
+      player.finish_place = 3;
+      return;
+    }
     player.finish_place = place;
     if (place === 1) return;
     const amount = place === 2 ? prizes.second : place === 3 ? prizes.third : prizes.fourth;
@@ -821,6 +867,10 @@ function startKingOfTheHill(state) {
   state.rounds.push(kohRound);
   pairKohMatches(state, kohRound, active);
   state.message = `King of the Hill — ${active.length} players. KOH losses start at 0.`;
+  if (isPayoutV2(state)) {
+    lockLeftoverBuckets(state);
+    payThirdLastIfNeeded(state);
+  }
   return state;
 }
 
@@ -930,6 +980,10 @@ export function sanitizeCashClimb(state) {
       const round = next.rounds.find((r) => r.id === match.round_id);
       if (match.status === 'pending' && !isKohRound(round)) match.status = 'cancelled';
     });
+    if (isPayoutV2(next)) {
+      lockLeftoverBuckets(next);
+      payThirdLastIfNeeded(next);
+    }
   }
   dropGhostMatches(next);
   if (!next.lastRrPerWin) {

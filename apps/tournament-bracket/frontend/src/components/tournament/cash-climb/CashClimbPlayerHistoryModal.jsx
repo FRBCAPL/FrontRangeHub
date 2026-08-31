@@ -6,6 +6,7 @@ import WinLoss from './WinLoss.jsx';
 import './CashClimbPlayerHistoryModal.css';
 
 function tag(player) {
+  if (player.chopped) return 'Chop';
   if (player.finish_place) return finishPlaceLabel(player.finish_place);
   if (player.eliminated) return 'Out';
   if (player.in_koh) return 'KOH';

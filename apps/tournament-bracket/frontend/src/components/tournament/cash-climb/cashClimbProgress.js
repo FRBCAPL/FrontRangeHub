@@ -1,5 +1,6 @@
 import { OPEN_TOURNAMENT_STRUCTURE, getKOHThreshold } from './openTournamentStructure.js';
-import { getActivePlayers, getCurrentRound, getRoundMatches, roundReadyToContinue } from './cashClimbEngine.js';
+import { formatMoney, getActivePlayers, getCurrentRound, getRoundMatches, roundReadyToContinue } from './cashClimbEngine.js';
+import { canChopKoh, chopRemainingPreview } from './cashClimbKohSettle.js';
 
 export function playableRoundMatches(matches) {
   return (matches || []).filter((m) => !m.is_bye && m.player2_id && m.status !== 'cancelled');
@@ -81,4 +82,9 @@ export function cashClimbContinueLabel(tournament) {
   const started = (tournament.stats || []).length;
   if (active <= getKOHThreshold(started, tournament)) return 'Start King of the Hill';
   return 'Continue to next round';
+}
+
+export function cashClimbChopLabel(tournament) {
+  if (!canChopKoh(tournament)) return '';
+  return `Chop remaining ${formatMoney(chopRemainingPreview(tournament))}`;
 }

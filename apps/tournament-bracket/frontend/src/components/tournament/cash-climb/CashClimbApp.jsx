@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import CashClimbSetup from './CashClimbSetup.jsx';
 import CashClimbPlay from './CashClimbPlay.jsx';
-import { createOpenTournament, sanitizeCashClimb, startTournament, recordMatchResult, continueCashClimb } from './cashClimbEngine.js';
+import { createOpenTournament, sanitizeCashClimb, startTournament, recordMatchResult, continueCashClimb, chopCashClimb, formatMoney } from './cashClimbEngine.js';
+import { chopRemainingPreview } from './cashClimbKohSettle.js';
 import { updateOpenTournament } from './cashClimbEdit.js';
 import { loadCashClimb, saveCashClimb, clearCashClimb } from './cashClimbStore.js';
 import {
@@ -149,6 +150,22 @@ export default function CashClimbApp({ onLeave }) {
     }
   };
 
+  const handleChop = () => {
+    try {
+      const remaining = formatMoney(chopRemainingPreview(tournament));
+      const thirdUnpaid = tournament.leftoverBuckets && !tournament.thirdLastAwardPaid;
+      const ok = window.confirm(
+        thirdUnpaid
+          ? `Pay 3rd last leftover first, then chop remaining leftover 50/50 (${remaining} after 3rd is paid)?\n\nEach player keeps match money already won. Pending King of the Hill matches will not be played and will not pay extra.`
+          : `Chop remaining leftover 50/50 (${remaining})?\n\nEach player keeps match money already won. Pending King of the Hill matches will not be played and will not pay extra.`
+      );
+      if (!ok) return;
+      persist(chopCashClimb(tournament));
+    } catch (err) {
+      alert(err.message || 'Could not chop');
+    }
+  };
+
   const handleEdit = (patch) => {
     try {
       persist(updateOpenTournament(tournament, patch));
@@ -220,6 +237,7 @@ export default function CashClimbApp({ onLeave }) {
       onConfirmSubmit={handleConfirmSubmit}
       onRejectSubmit={handleRejectSubmit}
       onContinue={handleContinue}
+      onChop={handleChop}
       onNew={handleNew}
       onRemove={handleRemove}
       onEdit={handleEdit}

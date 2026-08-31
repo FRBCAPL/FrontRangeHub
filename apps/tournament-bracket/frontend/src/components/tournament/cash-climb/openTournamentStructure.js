@@ -23,7 +23,7 @@ export const OPEN_TOURNAMENT_STRUCTURE = {
   phase2: {
     name: 'King of the Hill',
     eliminationLosses: 2,
-    description: 'Winner-stays format. Starts when 3 players remain. Unused KOH is the championship. Unused RR splits 60 / 40 to 2nd and 3rd.',
+    description: 'Winner-stays format. Starts when 3 players remain. Unused KOH is the championship. Unused RR leftover for 3rd is paid when they sit. Last two may chop remaining leftover.',
     thresholds: [
       { maxPlayers: Infinity, threshold: 3 },
     ],

@@ -13,7 +13,7 @@ import CashClimbRulesModal from './CashClimbRulesModal.jsx';
 import CashClimbPendingQueue from './CashClimbPendingQueue.jsx';
 import CashClimbShareModal from './CashClimbShareModal.jsx';
 import { pendingByMatchId, pendingWinnerName, openCashClimbSubmit } from './cashClimbSubmit.js';
-import { cashClimbContinueLabel, cashClimbProgress, matchTableLabel, pendingPlayableMatches, playableRoundMatches, roundByeMatches, splitByTables } from './cashClimbProgress.js';
+import { cashClimbChopLabel, cashClimbContinueLabel, cashClimbProgress, matchTableLabel, pendingPlayableMatches, playableRoundMatches, roundByeMatches, splitByTables } from './cashClimbProgress.js';
 import { roundDisplayName } from './cashClimbSchedule.js';
 
 export default function CashClimbPlay({
@@ -23,6 +23,7 @@ export default function CashClimbPlay({
   onConfirmSubmit,
   onRejectSubmit,
   onContinue,
+  onChop,
   onNew,
   onLeave,
   onEdit,
@@ -39,6 +40,7 @@ export default function CashClimbPlay({
   const pending = pendingPlayableMatches(tournament, round);
   const { atTable, onDeck } = splitByTables(pending, tournament.tableCount);
   const continueLabel = cashClimbContinueLabel(tournament);
+  const chopLabel = cashClimbChopLabel(tournament);
   const completedPlayable = playableRoundMatches(matches).filter((m) => m.status === 'completed');
   const byeMatches = roundByeMatches(matches);
   const waiting = pendingByMatchId(submissions);
@@ -93,6 +95,8 @@ export default function CashClimbPlay({
           onNextMatch={setSelected}
           continueLabel={continueLabel}
           onContinue={onContinue}
+          chopLabel={chopLabel}
+          onChop={onChop}
         />
       )}
 
@@ -183,11 +187,18 @@ export default function CashClimbPlay({
                 </ul>
               </section>
             )}
-            {continueLabel && (
+            {(continueLabel || chopLabel) && (
               <div className="cc-continue-row">
-                <button type="button" className="cc-continue-btn" onClick={onContinue}>
-                  {continueLabel}
-                </button>
+                {continueLabel ? (
+                  <button type="button" className="cc-continue-btn" onClick={onContinue}>
+                    {continueLabel}
+                  </button>
+                ) : null}
+                {chopLabel ? (
+                  <button type="button" className="cc-chop-btn" onClick={onChop}>
+                    {chopLabel}
+                  </button>
+                ) : null}
               </div>
             )}
           </section>
