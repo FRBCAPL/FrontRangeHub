@@ -105,6 +105,7 @@ import CashClimbPublicGuide from '@apps/tournament-bracket/frontend/src/componen
 import CashClimbSubmitPage from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbSubmitPage.jsx';
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isTournamentOperator, peekLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
+import { hasLocalTournamentWork } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentLocalWork.js';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
 import EstateFamilySignIn from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateFamilySignIn';
@@ -967,7 +968,7 @@ function AppContent() {
             <Route
               path="/tournament-bracket"
               element={
-                canRunTournament ? (
+                canRunTournament || hasLocalTournamentWork() ? (
                   <AppRouteWrapper appName="Tournament Bracket">
                     <main className="main-app-content">
                       <TournamentBracketApp />

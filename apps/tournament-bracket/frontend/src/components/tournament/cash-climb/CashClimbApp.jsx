@@ -14,7 +14,9 @@ import {
   listSavedCashClimbEvents,
   deleteCashClimbEvent,
 } from './cashClimbCloud.js';
-import { cashClimbPublishErrorMessage } from './cashClimbPublic.js';
+import { cashClimbPublishErrorMessage, isCashClimbAuthError } from './cashClimbPublic.js';
+import { cashClimbUnsavedConfirm, cashClimbUnsavedNewConfirm } from './cashClimbCloudSave.js';
+import CashClimbCloudSaveModal from './CashClimbCloudSaveModal.jsx';
 import { findMatchById, idsEqual, resolvePendingWinnerId } from './cashClimbSubmit.js';
 import { playedGameFromPending } from './cashClimbPlayedGame.js';
 import { preferLocalTournament } from './cashClimbSaved.js';
@@ -27,16 +29,34 @@ export default function CashClimbApp({ onLeave }) {
   const [submissions, setSubmissions] = useState([]);
   const [savedEvents, setSavedEvents] = useState([]);
   const [cloudError, setCloudError] = useState('');
+  const [cloudNeedsSignIn, setCloudNeedsSignIn] = useState(false);
+  const [savePromptOpen, setSavePromptOpen] = useState(false);
   const tournamentRef = useRef(tournament);
+  const hadCloudError = useRef(false);
   tournamentRef.current = tournament;
+
+  const applyCloudResult = useCallback((result) => {
+    const error = result?.error || null;
+    const message = error ? cashClimbPublishErrorMessage(error) : '';
+    setCloudError(message);
+    setCloudNeedsSignIn(Boolean(error && isCashClimbAuthError(error)));
+    if (message && !hadCloudError.current) setSavePromptOpen(true);
+    if (!message) setSavePromptOpen(false);
+    hadCloudError.current = Boolean(message);
+  }, []);
 
   const persist = useCallback((next) => {
     setTournament(next);
     saveCashClimb(next);
-    syncCashClimbCloud(next).then((result) => {
-      setCloudError(result?.error ? cashClimbPublishErrorMessage(result.error) : '');
-    });
-  }, []);
+    syncCashClimbCloud(next).then(applyCloudResult);
+  }, [applyCloudResult]);
+
+  const retryCloud = useCallback(() => {
+    const current = tournamentRef.current;
+    if (!current?.id) return Promise.resolve();
+    saveCashClimb(current);
+    return syncCashClimbCloud(current).then(applyCloudResult);
+  }, [applyCloudResult]);
 
   const refreshSaved = useCallback(async () => {
     setSavedEvents(await listSavedCashClimbEvents());
@@ -55,9 +75,7 @@ export default function CashClimbApp({ onLeave }) {
         saveCashClimb(restored);
       } else if (local) {
         const result = await syncCashClimbCloud(local);
-        if (!cancelled) {
-          setCloudError(result?.error ? cashClimbPublishErrorMessage(result.error) : '');
-        }
+        if (!cancelled) applyCloudResult(result);
       }
       if (!cancelled) await refreshSaved();
     };
@@ -65,7 +83,7 @@ export default function CashClimbApp({ onLeave }) {
     return () => {
       cancelled = true;
     };
-  }, [refreshSaved]);
+  }, [refreshSaved, applyCloudResult]);
 
   useEffect(() => {
     if (!tournament?.id || tournament.status === 'completed') {
@@ -86,16 +104,20 @@ export default function CashClimbApp({ onLeave }) {
   }, [tournament?.id, tournament?.status, tournament?.matches]);
 
   useEffect(() => {
-    if (!tournament?.id || tournament.status === 'completed' || !cloudError) return undefined;
-    const timer = setInterval(() => {
+    if (!tournament?.id || !cloudError) return undefined;
+    const save = () => {
       const current = tournamentRef.current;
       if (!current?.id) return;
-      syncCashClimbCloud(current).then((result) => {
-        setCloudError(result?.error ? cashClimbPublishErrorMessage(result.error) : '');
-      });
-    }, 8000);
-    return () => clearInterval(timer);
-  }, [tournament?.id, tournament?.status, cloudError]);
+      syncCashClimbCloud(current).then(applyCloudResult);
+    };
+    const timer = setInterval(save, 8000);
+    const onFocus = () => save();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [tournament?.id, cloudError, applyCloudResult]);
 
   const handleStart = (config) => {
     try {
@@ -184,6 +206,7 @@ export default function CashClimbApp({ onLeave }) {
   };
 
   const handleNew = () => {
+    if (cloudError && !window.confirm(cashClimbUnsavedNewConfirm())) return;
     if (tournament && tournament.status !== 'completed') {
       const ok = window.confirm(
         'Start a new Cash Climb? This event will be ended in the database and cleared from this tablet. You can open or remove it later from setup.'
@@ -192,6 +215,11 @@ export default function CashClimbApp({ onLeave }) {
       retireCashClimbEvent(tournament);
     }
     leaveToSetup();
+  };
+
+  const handleLeave = () => {
+    if (cloudError && !window.confirm(cashClimbUnsavedConfirm())) return;
+    onLeave?.();
   };
 
   const handleRemove = async () => {
@@ -230,20 +258,33 @@ export default function CashClimbApp({ onLeave }) {
   }
 
   return (
-    <CashClimbPlay
-      tournament={tournament}
-      submissions={submissions}
-      onRecord={handleRecord}
-      onConfirmSubmit={handleConfirmSubmit}
-      onRejectSubmit={handleRejectSubmit}
-      onContinue={handleContinue}
-      onChop={handleChop}
-      onNew={handleNew}
-      onRemove={handleRemove}
-      onEdit={handleEdit}
-      onLeave={onLeave}
-      cloudError={cloudError}
-      onRetryCloud={() => persist(tournament)}
-    />
+    <>
+      <CashClimbPlay
+        tournament={tournament}
+        submissions={submissions}
+        onRecord={handleRecord}
+        onConfirmSubmit={handleConfirmSubmit}
+        onRejectSubmit={handleRejectSubmit}
+        onContinue={handleContinue}
+        onChop={handleChop}
+        onNew={handleNew}
+        onRemove={handleRemove}
+        onEdit={handleEdit}
+        onLeave={handleLeave}
+        cloudError={cloudError}
+        cloudNeedsSignIn={cloudNeedsSignIn}
+        onRetryCloud={retryCloud}
+        onOpenSavePrompt={() => setSavePromptOpen(true)}
+      />
+      {cloudError && savePromptOpen ? (
+        <CashClimbCloudSaveModal
+          needsSignIn={cloudNeedsSignIn}
+          message={cloudError}
+          onRetry={retryCloud}
+          onKeepWorking={() => setSavePromptOpen(false)}
+          onSignedIn={retryCloud}
+        />
+      ) : null}
+    </>
   );
 }

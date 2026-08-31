@@ -7,6 +7,7 @@ import {
 } from './tournamentOperators.js';
 import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
+import { hasLocalTournamentWork, localTournamentWorkLabel } from './tournamentLocalWork.js';
 import './TournamentBracketApp.css';
 
 /**
@@ -38,6 +39,9 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
     onLoginSuccess(name, email, pin, userType);
     navigate('/tournament-bracket', { replace: true });
   };
+
+  const localWork = hasLocalTournamentWork();
+  const localLabel = localTournamentWorkLabel();
 
   if (isAuthenticated && adminLoading) {
     return (
@@ -76,8 +80,17 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
     <div className="tournament-bracket-app">
       <header className="tb-header">
         <h1>Open Tournament</h1>
-        <p>Operator sign-in is required to run Cash Climb or an elimination bracket.</p>
+        <p>
+          {localWork
+            ? `${localLabel} is still on this tablet. Sign in with the operator account to save it. Nothing you entered has been deleted.`
+            : 'Operator sign-in is required to run Cash Climb or an elimination bracket.'}
+        </p>
       </header>
+      {localWork ? (
+        <p className="tb-gate-unsaved">
+          After you sign in, this event will open again from this tablet and save to the database.
+        </p>
+      ) : null}
       <section className="tb-gate-login" aria-labelledby="tb-gate-login-heading">
         <h2 id="tb-gate-login-heading" className="tb-gate-login-title">Sign in</h2>
         <SupabaseLogin compact onSuccess={handleLoginSuccess} />

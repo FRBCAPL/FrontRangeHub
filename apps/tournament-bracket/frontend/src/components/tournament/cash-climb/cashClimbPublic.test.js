@@ -1,24 +1,25 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { cashClimbListErrorMessage, cashClimbPublishErrorMessage, isCashClimbAuthError } from './cashClimbPublic.js';
+import { cashClimbPublishErrorMessage, isCashClimbAuthError } from './cashClimbPublic.js';
 
-describe('cash climb public cloud errors', () => {
-  it('treats expired hub sessions as auth failures', () => {
-    assert.equal(isCashClimbAuthError({ message: 'JWT expired', code: 'PGRST301' }), true);
-    assert.equal(isCashClimbAuthError({ message: 'column game_type does not exist' }), false);
-  });
-
-  it('tells the director to sign in again when publish is rejected', () => {
+describe('Cash Climb cloud save messages', () => {
+  it('treats expired tokens as a sign-in problem', () => {
+    assert.equal(isCashClimbAuthError({ message: 'JWT expired', status: 401 }), true);
     assert.match(
       cashClimbPublishErrorMessage({ message: 'JWT expired' }),
-      /Sign in again/
+      /only on this tablet/i
+    );
+    assert.match(
+      cashClimbPublishErrorMessage({ message: 'JWT expired' }),
+      /Nothing you entered has been deleted/
     );
   });
 
-  it('does not pretend an auth failure is an empty tournament list', () => {
+  it('keeps a connection failure on the tablet', () => {
+    assert.equal(isCashClimbAuthError({ message: 'Failed to fetch' }), false);
     assert.match(
-      cashClimbListErrorMessage({ message: 'JWT expired' }),
-      /Could not load live events/
+      cashClimbPublishErrorMessage({ message: 'Failed to fetch' }),
+      /still on this tablet/
     );
   });
 });

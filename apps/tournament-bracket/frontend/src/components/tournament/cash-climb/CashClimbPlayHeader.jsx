@@ -22,7 +22,22 @@ function Stat({ label, value }) {
   );
 }
 
-export default function CashClimbPlayHeader({ tournament, paidOut, durationEstimate, onNew, onLeave, onEdit, onRemove, onRules, onGuide, onSubmitPage, cloudError, onRetryCloud }) {
+export default function CashClimbPlayHeader({
+  tournament,
+  paidOut,
+  durationEstimate,
+  onNew,
+  onLeave,
+  onEdit,
+  onRemove,
+  onRules,
+  onGuide,
+  onSubmitPage,
+  cloudError,
+  cloudNeedsSignIn,
+  onRetryCloud,
+  onOpenSavePrompt,
+}) {
   const dateLabel = formatTournamentDate(tournament.tournamentDate);
   const tables = tournament.tableCount
     ? `${tournament.tableCount} table${tournament.tableCount === 1 ? '' : 's'}`
@@ -141,16 +156,18 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
       {tournament.message && !tournament.winner && !tournament.chopped && (
         <p className="cc-banner">{tournament.message}</p>
       )}
-      {cloudError && tournament.status !== 'completed' ? (
-        <p className="cc-banner cc-banner-warn">
-          {cloudError}
+      {cloudError ? (
+        <p className="cc-save-bar" role="status">
+          <span>{cloudError}</span>
+          {onOpenSavePrompt ? (
+            <button type="button" className="cc-chop-btn" onClick={onOpenSavePrompt}>
+              {cloudNeedsSignIn ? 'Sign in to save' : 'Save to database'}
+            </button>
+          ) : null}
           {onRetryCloud ? (
-            <>
-              {' '}
-              <button type="button" className="cc-banner-retry" onClick={onRetryCloud}>
-                Retry
-              </button>
-            </>
+            <button type="button" className="cc-banner-retry" onClick={onRetryCloud}>
+              Retry
+            </button>
           ) : null}
         </p>
       ) : null}

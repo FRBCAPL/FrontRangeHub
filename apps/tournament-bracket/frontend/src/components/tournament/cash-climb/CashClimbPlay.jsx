@@ -29,7 +29,9 @@ export default function CashClimbPlay({
   onEdit,
   onRemove,
   cloudError = '',
+  cloudNeedsSignIn = false,
   onRetryCloud,
+  onOpenSavePrompt,
 }) {
   const [selected, setSelected] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
@@ -77,7 +79,9 @@ export default function CashClimbPlay({
           setShowShare(true);
         }}
         cloudError={cloudError}
+        cloudNeedsSignIn={cloudNeedsSignIn}
         onRetryCloud={onRetryCloud}
+        onOpenSavePrompt={onOpenSavePrompt}
       />
 
       {tournament.status !== 'completed' && (

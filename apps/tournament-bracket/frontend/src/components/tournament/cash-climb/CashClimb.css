@@ -285,6 +285,24 @@
   cursor: pointer;
 }
 
+.cc-save-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  background: rgba(120, 53, 15, 0.55);
+  color: #fef3c7;
+  font-weight: 700;
+}
+
+.cc-save-bar button {
+  min-height: 40px;
+}
+
 .cc-play-board {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
