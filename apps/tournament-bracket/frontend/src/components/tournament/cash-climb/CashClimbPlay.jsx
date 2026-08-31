@@ -27,6 +27,8 @@ export default function CashClimbPlay({
   onLeave,
   onEdit,
   onRemove,
+  cloudError = '',
+  onRetryCloud,
 }) {
   const [selected, setSelected] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
@@ -68,7 +70,12 @@ export default function CashClimbPlay({
         onRemove={onRemove}
         onRules={() => setRulesView('tonight')}
         onGuide={() => setRulesView('guide')}
-        onSubmitPage={() => setShowShare(true)}
+        onSubmitPage={() => {
+          if (onRetryCloud) onRetryCloud();
+          setShowShare(true);
+        }}
+        cloudError={cloudError}
+        onRetryCloud={onRetryCloud}
       />
 
       {tournament.status !== 'completed' && (
@@ -213,6 +220,7 @@ export default function CashClimbPlay({
       {showShare && (
         <CashClimbShareModal
           tournament={tournament}
+          cloudError={cloudError}
           onClose={() => setShowShare(false)}
           onOpen={() => {
             setShowShare(false);

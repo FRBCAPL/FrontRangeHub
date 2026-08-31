@@ -108,8 +108,9 @@ export function playerRecord(board, playerId) {
 }
 
 export function matchGridColumns(layout, matchCount) {
+  const n = Math.max(1, Number(matchCount) || 1);
   if (parseTvLayout(layout) === 'portrait') return 2;
-  return Math.max(1, Math.min(4, Number(matchCount) || 1));
+  return n <= 1 ? 1 : 2;
 }
 
 export function tickerRoundLabel(match, rounds) {

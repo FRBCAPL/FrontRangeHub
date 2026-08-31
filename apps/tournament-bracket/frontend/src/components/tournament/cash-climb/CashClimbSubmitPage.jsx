@@ -30,6 +30,7 @@ export default function CashClimbSubmitPage() {
   const [selected, setSelected] = useState(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     document.title = tournament && tournament.status !== 'in-progress'
@@ -44,6 +45,7 @@ export default function CashClimbSubmitPage() {
       if (cancelled) return;
       const next = live.tournament ? sanitizeCashClimb(live.tournament) : null;
       setTournament(next);
+      setLoadError(live.error && !next ? (live.error.message || 'Could not load this event.') : '');
       setLoading(false);
       if (!next?.id || next.status !== 'in-progress') {
         setSubmissions([]);
@@ -100,7 +102,11 @@ export default function CashClimbSubmitPage() {
 
         {loading ? <p className="cc-meta">Checking for a live event…</p> : null}
         {!loading && !tournament ? (
-          <p className="cc-banner">No Cash Climb is running right now.</p>
+          <p className="cc-banner">
+            {loadError
+              ? loadError
+              : 'No Cash Climb is on the player list right now. Ask the director for the Share player link.'}
+          </p>
         ) : null}
         {finished ? (
           <p className="cc-banner">

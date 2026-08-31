@@ -1,22 +1,38 @@
-import React, { useEffect, useState } from 'react';
-import { listLiveCashClimbEvents } from './cashClimbCloud.js';
+import React, { useEffect, useRef, useState } from 'react';
+import { listLiveCashClimbEventsResult } from './cashClimbCloud.js';
+import { cashClimbListErrorMessage } from './cashClimbPublic.js';
 import { formatTournamentDate } from './cashClimbEngine.js';
 import './CashClimb.css';
 import './CashClimbSubmitPickModal.css';
 
+const POLL_MS = 2500;
+
 export default function CashClimbSubmitPickModal({ onClose, onPick }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const onPickRef = useRef(onPick);
+  const pickedRef = useRef(false);
+  onPickRef.current = onPick;
 
   useEffect(() => {
     let cancelled = false;
-    listLiveCashClimbEvents().then((rows) => {
+    const refresh = async () => {
+      const result = await listLiveCashClimbEventsResult();
       if (cancelled) return;
-      setEvents(rows);
+      setEvents(result.events);
+      setError(result.error ? cashClimbListErrorMessage(result.error) : '');
       setLoading(false);
-    });
+      if (!pickedRef.current && result.events.length === 1) {
+        pickedRef.current = true;
+        onPickRef.current(result.events[0].id);
+      }
+    };
+    refresh();
+    const timer = setInterval(refresh, POLL_MS);
     return () => {
       cancelled = true;
+      clearInterval(timer);
     };
   }, []);
 
@@ -27,8 +43,12 @@ export default function CashClimbSubmitPickModal({ onClose, onPick }) {
         <h3 id="cc-submit-pick-title">Current tournaments</h3>
         <p className="cc-modal-meta">Pick the event you are playing in.</p>
         {loading ? <p className="cc-meta">Checking for live events…</p> : null}
-        {!loading && !events.length ? (
-          <p className="cc-banner">No tournament is taking results right now.</p>
+        {!loading && error ? <p className="cc-banner cc-banner-warn">{error}</p> : null}
+        {!loading && !error && !events.length ? (
+          <p className="cc-banner">
+            No live Cash Climb is on the player list yet. Ask the director for the Share player
+            link, or try again in a few seconds.
+          </p>
         ) : null}
         {events.length ? (
           <ul className="cc-submit-pick-list">

@@ -21,7 +21,7 @@ function Stat({ label, value }) {
   );
 }
 
-export default function CashClimbPlayHeader({ tournament, paidOut, durationEstimate, onNew, onLeave, onEdit, onRemove, onRules, onGuide, onSubmitPage }) {
+export default function CashClimbPlayHeader({ tournament, paidOut, durationEstimate, onNew, onLeave, onEdit, onRemove, onRules, onGuide, onSubmitPage, cloudError, onRetryCloud }) {
   const dateLabel = formatTournamentDate(tournament.tournamentDate);
   const tables = tournament.tableCount
     ? `${tournament.tableCount} table${tournament.tableCount === 1 ? '' : 's'}`
@@ -125,6 +125,19 @@ export default function CashClimbPlayHeader({ tournament, paidOut, durationEstim
       {tournament.message && !tournament.winner && (
         <p className="cc-banner">{tournament.message}</p>
       )}
+      {cloudError && tournament.status !== 'completed' ? (
+        <p className="cc-banner cc-banner-warn">
+          {cloudError}
+          {onRetryCloud ? (
+            <>
+              {' '}
+              <button type="button" className="cc-banner-retry" onClick={onRetryCloud}>
+                Retry
+              </button>
+            </>
+          ) : null}
+        </p>
+      ) : null}
       {tournament.winner && (
         <p className="cc-winner">
           {finishPlaceLabel(1)}: {tournament.winner.player_name} {formatMoney(tournament.winner.total_payout)}

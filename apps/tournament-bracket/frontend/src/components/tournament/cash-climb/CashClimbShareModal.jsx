@@ -3,7 +3,7 @@ import { cashClimbSubmitHref } from './cashClimbSubmit.js';
 import './CashClimb.css';
 import './CashClimbShareModal.css';
 
-export default function CashClimbShareModal({ tournament, onClose, onOpen }) {
+export default function CashClimbShareModal({ tournament, cloudError, onClose, onOpen }) {
   const [copied, setCopied] = useState(false);
   const url = cashClimbSubmitHref(tournament?.id);
   const qr = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
@@ -23,9 +23,11 @@ export default function CashClimbShareModal({ tournament, onClose, onOpen }) {
         <p className="cc-play-kicker">Cash Climb</p>
         <h3 id="cc-share-title">Send this to players</h3>
         <p className="cc-modal-meta">
-          {tournament?.status === 'in-progress'
-            ? 'Anyone with this link can submit a result. Standings and money only change after you confirm.'
-            : 'Send this link so players can see the final standings. Results stay read-only after the event ends.'}
+          {cloudError
+            ? cloudError
+            : tournament?.status === 'in-progress'
+              ? 'Anyone with this link can submit a result. Standings and money only change after you confirm.'
+              : 'Send this link so players can see the final standings. Results stay read-only after the event ends.'}
         </p>
         <img className="cc-share-qr" src={qr} alt="QR code for the player submit page" width="200" height="200" />
         <p className="cc-share-url">{url}</p>

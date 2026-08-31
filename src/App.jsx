@@ -119,6 +119,7 @@ import AdvisorPortal from '@apps/estate-inventory/frontend/src/components/estate
 import AuctionPortal from '@apps/estate-inventory/frontend/src/components/estate-inventory/AuctionPortal';
 import { APP_NAME, ESTATEIT_PATH } from '@shared/utils/estateInventoryConstants.js';
 import adminAuthService from '@shared/services/services/adminAuthService.js';
+import { signOutHubSession, subscribeHubSession } from '@shared/services/hubSession.js';
 
 // Guest App Components
 import GuestLeagueApp from '@shared/components/guest/GuestLeagueApp';
@@ -322,18 +323,28 @@ function AppContent() {
     };
   }, []);
 
-  // --- Load auth/user info from localStorage on mount ---
+  // Confirm the live Supabase session. localStorage isAuthenticated is only a hint.
   useEffect(() => {
-    const savedAuth = localStorage.getItem("isAuthenticated");
-    if (savedAuth === "true") {
-      setUserFirstName(localStorage.getItem("userFirstName") || "");
-      setUserLastName(localStorage.getItem("userLastName") || "");
-      setUserEmail(localStorage.getItem("userEmail") || "");
-      setUserPin(localStorage.getItem("userPin") || "");
-      setUserToken(localStorage.getItem("userToken") || "");
-      setUserType(localStorage.getItem("userType") || "league");
-      setIsAuthenticated(true);
-    }
+    return subscribeHubSession({
+      onSession: (profile) => {
+        setUserFirstName(profile.firstName || '');
+        setUserLastName(profile.lastName || '');
+        setUserEmail(profile.email || '');
+        setUserPin(profile.pin || 'supabase-auth');
+        setUserToken(profile.token || '');
+        setUserType(profile.userType || 'league');
+        setIsAuthenticated(true);
+      },
+      onSignedOut: () => {
+        setUserFirstName('');
+        setUserLastName('');
+        setUserEmail('');
+        setUserPin('');
+        setUserToken('');
+        setUserType('league');
+        setIsAuthenticated(false);
+      },
+    });
   }, []);
 
   // --- When OAuth completes in a separate tab (e.g. from iframe), reload to pick up session ---
@@ -516,18 +527,14 @@ function AppContent() {
     setUserLastName("");
     setUserEmail("");
     setUserPin("");
+    setUserToken("");
     setUserType("league");
     setCurrentAppName("");
     setIsAuthenticated(false);
     setIsAdminState(false);
     setIsSuperAdminState(false);
     setAdminLoading(false);
-    localStorage.removeItem("userFirstName");
-    localStorage.removeItem("userLastName");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userPin");
-    localStorage.removeItem("userType");
-    localStorage.removeItem("isAuthenticated");
+    signOutHubSession();
   };
 
   // --- Ladder position claim handler ---

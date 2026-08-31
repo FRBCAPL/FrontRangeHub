@@ -1,22 +1,27 @@
-/* Landscape 16:9 (wide TV) — matches left, standings right. */
+/* Landscape 16:9 (wide projector) — matches left, standings right. */
 .cc-tv-landscape .cc-tv-body {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   min-height: 0;
-  gap: clamp(12px, 1.6vw, 22px);
+  gap: clamp(10px, 1.4vw, 18px);
 }
 
-.cc-tv-landscape .cc-tv-now {
+.cc-tv-landscape .cc-tv-now,
+.cc-tv-landscape .cc-tv-standings {
   min-height: 0;
+  overflow: hidden;
+  padding: clamp(10px, 1.6vh, 16px);
 }
 
 .cc-tv-landscape .cc-tv-player {
-  font-size: clamp(1.15rem, 2.6vh, 1.7rem);
+  font-size: clamp(1.2rem, 2.8cqi + 1.4vh, 2.05rem);
 }
 
 .cc-tv-landscape .cc-tv-payout {
-  font-size: clamp(1.3rem, 3.4vh, 2.05rem);
+  margin: 6px 0 0;
+  padding-top: 6px;
+  font-size: clamp(1.15rem, 2.8vh, 1.85rem);
 }
 
 .cc-tv-landscape:not(.cc-tv-is-tall) .cc-tv-match-grid {
@@ -24,7 +29,8 @@
 }
 
 .cc-tv-landscape .cc-tv-standings-row {
-  grid-template-columns: 2.1rem minmax(0, 1fr) auto;
+  grid-template-columns: 2.1rem minmax(0, 1fr) auto auto auto;
+  column-gap: 10px;
 }
 
 .cc-tv-landscape .cc-tv-standings-name {

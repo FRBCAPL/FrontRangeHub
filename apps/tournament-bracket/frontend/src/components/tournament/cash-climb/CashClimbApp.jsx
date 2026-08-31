@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import CashClimbSetup from './CashClimbSetup.jsx';
 import CashClimbPlay from './CashClimbPlay.jsx';
 import { createOpenTournament, sanitizeCashClimb, startTournament, recordMatchResult, continueCashClimb } from './cashClimbEngine.js';
@@ -13,6 +13,7 @@ import {
   listSavedCashClimbEvents,
   deleteCashClimbEvent,
 } from './cashClimbCloud.js';
+import { cashClimbPublishErrorMessage } from './cashClimbPublic.js';
 import { findMatchById, idsEqual, resolvePendingWinnerId } from './cashClimbSubmit.js';
 import { playedGameFromPending } from './cashClimbPlayedGame.js';
 import { preferLocalTournament } from './cashClimbSaved.js';
@@ -24,11 +25,16 @@ export default function CashClimbApp({ onLeave }) {
   const [tournament, setTournament] = useState(() => loadCashClimb());
   const [submissions, setSubmissions] = useState([]);
   const [savedEvents, setSavedEvents] = useState([]);
+  const [cloudError, setCloudError] = useState('');
+  const tournamentRef = useRef(tournament);
+  tournamentRef.current = tournament;
 
   const persist = useCallback((next) => {
     setTournament(next);
     saveCashClimb(next);
-    syncCashClimbCloud(next);
+    syncCashClimbCloud(next).then((result) => {
+      setCloudError(result?.error ? cashClimbPublishErrorMessage(result.error) : '');
+    });
   }, []);
 
   const refreshSaved = useCallback(async () => {
@@ -47,7 +53,10 @@ export default function CashClimbApp({ onLeave }) {
         setTournament(restored);
         saveCashClimb(restored);
       } else if (local) {
-        syncCashClimbCloud(local);
+        const result = await syncCashClimbCloud(local);
+        if (!cancelled) {
+          setCloudError(result?.error ? cashClimbPublishErrorMessage(result.error) : '');
+        }
       }
       if (!cancelled) await refreshSaved();
     };
@@ -74,6 +83,18 @@ export default function CashClimbApp({ onLeave }) {
       clearInterval(timer);
     };
   }, [tournament?.id, tournament?.status, tournament?.matches]);
+
+  useEffect(() => {
+    if (!tournament?.id || tournament.status === 'completed' || !cloudError) return undefined;
+    const timer = setInterval(() => {
+      const current = tournamentRef.current;
+      if (!current?.id) return;
+      syncCashClimbCloud(current).then((result) => {
+        setCloudError(result?.error ? cashClimbPublishErrorMessage(result.error) : '');
+      });
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [tournament?.id, tournament?.status, cloudError]);
 
   const handleStart = (config) => {
     try {
@@ -203,6 +224,8 @@ export default function CashClimbApp({ onLeave }) {
       onRemove={handleRemove}
       onEdit={handleEdit}
       onLeave={onLeave}
+      cloudError={cloudError}
+      onRetryCloud={() => persist(tournament)}
     />
   );
 }

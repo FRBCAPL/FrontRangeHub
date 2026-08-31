@@ -23,8 +23,8 @@ describe('Cash Climb TV board', () => {
     assert.match(cashClimbTvHref('portrait'), /layout=portrait/);
     assert.equal(matchGridColumns('landscape', 1), 1);
     assert.equal(matchGridColumns('landscape', 2), 2);
-    assert.equal(matchGridColumns('landscape', 4), 4);
-    assert.equal(matchGridColumns('landscape', 7), 4);
+    assert.equal(matchGridColumns('landscape', 4), 2);
+    assert.equal(matchGridColumns('landscape', 7), 2);
     assert.equal(matchGridColumns('portrait', 1), 2);
     assert.equal(matchGridColumns('portrait', 2), 2);
     assert.deepEqual(

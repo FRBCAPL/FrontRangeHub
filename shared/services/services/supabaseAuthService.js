@@ -1,5 +1,6 @@
 import { supabase, supabaseFunctionsUrl } from '@shared/config/supabase.js';
 import { supabaseHelpers } from './supabaseHelpers.js';
+import { clearHubLoginStorage } from '../hubSessionState.js';
 
 /**
  * Supabase Authentication Service
@@ -197,11 +198,7 @@ class SupabaseAuthService {
 
       this.currentUser = null;
       this.isAuthenticated = false;
-      
-      // Clear localStorage
-      localStorage.removeItem('supabaseAuth');
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('userData');
+      clearHubLoginStorage();
       
       console.log('✅ Supabase sign out successful');
       return { success: true };
@@ -213,15 +210,13 @@ class SupabaseAuthService {
   }
 
   /**
-   * Check if user is authenticated (from localStorage or current session)
+   * Check if user is authenticated from the live Supabase session.
    */
   async checkAuthStatus() {
     try {
-      // Check current session
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
-        // Get fresh user data
         const profileResult = await supabaseHelpers.getUserProfile(session.user.id);
         
         if (profileResult.data) {
@@ -244,20 +239,13 @@ class SupabaseAuthService {
             userType: this.determineUserType(leagueProfile.data, ladderProfile.data)
           };
         }
-      }
 
-      // Check localStorage for cached auth
-      const cachedAuth = localStorage.getItem('supabaseAuth');
-      if (cachedAuth) {
-        const authData = JSON.parse(cachedAuth);
-        this.currentUser = authData.user;
-        this.isAuthenticated = true;
-        
-        return {
-          success: true,
-          user: this.currentUser,
-          userType: authData.userType
+        this.currentUser = {
+          id: session.user.id,
+          email: session.user.email,
         };
+        this.isAuthenticated = true;
+        return { success: true, user: this.currentUser, userType: 'user' };
       }
 
       this.isAuthenticated = false;
