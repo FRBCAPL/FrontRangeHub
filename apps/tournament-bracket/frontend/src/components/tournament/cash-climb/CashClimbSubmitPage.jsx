@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { sanitizeCashClimb, getCurrentRound, formatMoney } from './cashClimbEngine.js';
 import { raceToForMatch } from './cashClimbRace.js';
-import { cashClimbSubmitEventId } from './cashClimbSubmit.js';
+import { CASH_CLIMB_SUBMIT_HASH, cashClimbSubmitEventId } from './cashClimbSubmit.js';
 import { loadPublicCashClimbEvent, loadCashClimbPending, submitCashClimbPending } from './cashClimbCloud.js';
 import CashClimbStandings from './CashClimbStandings.jsx';
 import CashClimbSubmitMatches from './CashClimbSubmitMatches.jsx';
 import CashClimbResultModal from './CashClimbResultModal.jsx';
+import CashClimbSubmitPicker from './CashClimbSubmitPicker.jsx';
 import '../TournamentBracketApp.css';
 import './CashClimb.css';
 import './CashClimbSubmitPage.css';
@@ -22,9 +23,14 @@ function endedAtLabel(tournament) {
 }
 
 export default function CashClimbSubmitPage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const eventId = cashClimbSubmitEventId(location.pathname);
+  if (!eventId) return <CashClimbSubmitPicker />;
+  return <CashClimbSubmitEventPage eventId={eventId} />;
+}
+
+function CashClimbSubmitEventPage({ eventId }) {
+  const navigate = useNavigate();
   const [tournament, setTournament] = useState(null);
   const [submissions, setSubmissions] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -96,16 +102,16 @@ export default function CashClimbSubmitPage() {
           <p className="cc-submit-note">
             {finished
               ? `${tournament.name}${endedAtLabel(tournament) ? ` • Completed ${endedAtLabel(tournament)}` : ''}`
-              : 'Click your match to submit a result. The director must confirm before standings or money change.'}
+              : `${tournament?.name || 'Cash Climb'} — click your match to submit a result. The director must confirm before standings or money change.`}
           </p>
         </header>
 
-        {loading ? <p className="cc-meta">Checking for a live event…</p> : null}
+        {loading ? <p className="cc-meta">Loading this event…</p> : null}
         {!loading && !tournament ? (
           <p className="cc-banner">
             {loadError
               ? loadError
-              : 'No Cash Climb is on the player list right now. Ask the director for the Share player link.'}
+              : 'That tournament is not on the player list. Pick a current event.'}
           </p>
         ) : null}
         {finished ? (
@@ -132,9 +138,14 @@ export default function CashClimbSubmitPage() {
 
         {message ? <p className="cc-submit-status">{message}</p> : null}
 
-        <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
-          Back to home
-        </button>
+        <div className="cc-submit-nav">
+          <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_SUBMIT_HASH)}>
+            All current tournaments
+          </button>
+          <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
+            Back to home
+          </button>
+        </div>
       </div>
 
       {selected && live && (

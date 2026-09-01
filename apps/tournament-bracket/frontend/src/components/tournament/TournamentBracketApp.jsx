@@ -4,16 +4,20 @@ import { buildSingleElimination, buildDoubleElimination } from './bracketLogic';
 import CreateTournamentForm from './CreateTournamentForm';
 import ElimPlayScreen from './ElimPlayScreen';
 import CashClimbApp from './cash-climb/CashClimbApp';
-import CashClimbSavedEvents from './cash-climb/CashClimbSavedEvents.jsx';
-import { loadCashClimb } from './cash-climb/cashClimbStore';
+import { loadCashClimb, saveCashClimb, clearCashClimb } from './cash-climb/cashClimbStore';
+import { sanitizeCashClimb } from './cash-climb/cashClimbEngine.js';
 import { preferLocalTournament } from './cash-climb/cashClimbSaved.js';
-import { formatTournamentDate } from './cash-climb/cashClimbEngine.js';
 import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
+import {
+  listSavedCashClimbEvents,
+  deleteCashClimbEvent,
+  retireCashClimbEvent,
+} from './cash-climb/cashClimbCloud.js';
 import { clearLoginReturn } from './tournamentOperators.js';
 import { loadElim, saveElim, clearElim } from './elimStore.js';
-import { withElimStatus, elimIdsEqual, elimFormatLabel } from './elimStatus.js';
+import { withElimStatus, elimIdsEqual } from './elimStatus.js';
 import {
   syncElimCloud,
   retireElimEvent,
@@ -21,6 +25,15 @@ import {
   listSavedElimEvents,
   deleteElimEvent,
 } from './elimCloud.js';
+import TournamentHubHome from './TournamentHubHome.jsx';
+import TournamentFormatPicker from './TournamentFormatPicker.jsx';
+import TournamentEventsScreen from './TournamentEventsScreen.jsx';
+import {
+  mergeHubEvents,
+  filterCurrentEvents,
+  filterCompletedEvents,
+  isCashClimbHubEvent,
+} from './tournamentHubEvents.js';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
 
@@ -29,14 +42,13 @@ export default function TournamentBracketApp() {
   useEffect(() => {
     clearLoginReturn();
   }, []);
-  const [screen, setScreen] = useState(() => {
-    if (loadCashClimb()) return 'cash-climb';
-    if (loadElim()) return 'elim-play';
-    return 'home';
-  });
+  const [screen, setScreen] = useState('home');
+  const [leaveTo, setLeaveTo] = useState('home');
+  const [cashClimbIntent, setCashClimbIntent] = useState('open');
   const [elimType, setElimType] = useState('single');
   const [tournament, setTournament] = useState(loadElim);
   const [savedElim, setSavedElim] = useState([]);
+  const [savedCashClimb, setSavedCashClimb] = useState([]);
 
   const persist = useCallback((t) => {
     const next = t ? withElimStatus(t) : null;
@@ -45,8 +57,10 @@ export default function TournamentBracketApp() {
     if (next) syncElimCloud(next);
   }, []);
 
-  const refreshSavedElim = useCallback(async () => {
-    setSavedElim(await listSavedElimEvents());
+  const refreshSaved = useCallback(async () => {
+    const [elim, cash] = await Promise.all([listSavedElimEvents(), listSavedCashClimbEvents()]);
+    setSavedElim(elim);
+    setSavedCashClimb(cash);
   }, []);
 
   useEffect(() => {
@@ -63,13 +77,20 @@ export default function TournamentBracketApp() {
       } else if (local) {
         syncElimCloud(local);
       }
-      if (!cancelled) await refreshSavedElim();
+      if (!cancelled) await refreshSaved();
     };
     hydrate();
     return () => {
       cancelled = true;
     };
-  }, [refreshSavedElim]);
+  }, [refreshSaved]);
+
+  const goHome = () => {
+    setCashClimbIntent('open');
+    setLeaveTo('home');
+    setScreen('home');
+    refreshSaved();
+  };
 
   const handleCreate = (config) => {
     if (tournament && tournament.status !== 'completed') {
@@ -102,14 +123,13 @@ export default function TournamentBracketApp() {
   const leaveElimToHome = () => {
     clearElim();
     setTournament(null);
-    setScreen('home');
-    refreshSavedElim();
+    goHome();
   };
 
   const handleNewElim = () => {
     if (tournament && tournament.status !== 'completed') {
       const ok = window.confirm(
-        'Start a new tournament? This event will be ended in the database and cleared from this tablet. You can open or remove it later from the home list.'
+        'Start a new tournament? This event will be ended in the database and cleared from this tablet. You can open or remove it later from Current or Completed.'
       );
       if (!ok) return;
       retireElimEvent(withElimStatus(tournament, 'ended'));
@@ -144,18 +164,71 @@ export default function TournamentBracketApp() {
     if (tournament && elimIdsEqual(tournament.id, item.id)) {
       clearElim();
       setTournament(null);
-      setScreen('home');
     }
-    refreshSavedElim();
+    refreshSaved();
+  };
+
+  const handleOpenSavedCashClimb = (item) => {
+    if (!item?.tournament) return;
+    const local = loadCashClimb();
+    if (local && local.status !== 'completed' && String(local.id) !== String(item.id)) {
+      const ok = window.confirm('Replace the Cash Climb on this tablet with the saved one? The current event stays in the database.');
+      if (!ok) return;
+      if (local.status !== 'completed') retireCashClimbEvent(local);
+    }
+    saveCashClimb(sanitizeCashClimb(item.tournament));
+    setCashClimbIntent('open');
+    setScreen('cash-climb');
+  };
+
+  const handleRemoveSavedCashClimb = async (item) => {
+    if (!item?.id) return;
+    const ok = window.confirm(`Remove "${item.name}" from the database? This cannot be undone.`);
+    if (!ok) return;
+    await deleteCashClimbEvent(item.id);
+    const local = loadCashClimb();
+    if (local && String(local.id) === String(item.id)) clearCashClimb();
+    refreshSaved();
+  };
+
+  const handleOpenHubEvent = (item) => {
+    if (isCashClimbHubEvent(item)) handleOpenSavedCashClimb(item);
+    else handleOpenSavedElim(item);
+  };
+
+  const handleRemoveHubEvent = (item) => {
+    if (isCashClimbHubEvent(item)) return handleRemoveSavedCashClimb(item);
+    return handleRemoveSavedElim(item);
+  };
+
+  const startNewCashClimb = () => {
+    setCashClimbIntent('new');
+    setLeaveTo('new');
+    setScreen('cash-climb');
   };
 
   const cashClimb = loadCashClimb();
   const elim = tournament;
+  const hubEvents = mergeHubEvents({
+    cashClimbSaved: savedCashClimb,
+    elimSaved: savedElim,
+    localCashClimb: cashClimb,
+    localElim: elim,
+  });
+  const currentEvents = filterCurrentEvents(hubEvents);
+  const completedEvents = filterCompletedEvents(hubEvents);
 
   if (screen === 'cash-climb') {
     return (
       <div className="tournament-bracket-app">
-        <CashClimbApp onLeave={() => setScreen('home')} />
+        <CashClimbApp
+          intent={cashClimbIntent}
+          onLeave={() => {
+            setCashClimbIntent('open');
+            setScreen(leaveTo);
+            refreshSaved();
+          }}
+        />
       </div>
     );
   }
@@ -167,18 +240,12 @@ export default function TournamentBracketApp() {
           <h1>{elimType === 'single' ? 'Single elimination' : 'Double elimination'}</h1>
           <p>Separate from the Ladder of Legends.</p>
         </header>
-        <CashClimbSavedEvents
-          title="Saved elimination tournaments"
-          events={savedElim}
-          onOpen={handleOpenSavedElim}
-          onRemove={handleRemoveSavedElim}
-        />
         <div className="tb-create">
           <CreateTournamentForm
             key={elimType}
             defaultType={elimType}
             onSubmit={handleCreate}
-            onCancel={() => setScreen('home')}
+            onCancel={() => setScreen('new')}
           />
         </div>
       </div>
@@ -196,88 +263,67 @@ export default function TournamentBracketApp() {
     );
   }
 
-  return (
-    <div className="tournament-bracket-app">
-      <header className="tb-header">
-        <h1>Open Tournament</h1>
-        <p>Run an event that is not tied to the ladder. Events save to the database, with this tablet as backup. Ladder tournaments stay on the ladder.</p>
-      </header>
-
-      {(cashClimb || elim) && (
-        <div className="cc-resume">
-          {cashClimb && (
-            <button type="button" className="cc-format-btn cc-primary" onClick={() => setScreen('cash-climb')}>
-              <strong>Resume Cash Climb: {cashClimb.name}</strong>
-              <span>
-                {cashClimb.status === 'completed' ? 'Completed' : 'In progress'}
-                {cashClimb.tournamentDate ? ` • ${formatTournamentDate(cashClimb.tournamentDate)}` : ''}
-                {' '}• {cashClimb.players?.length || 0} players
-              </span>
-            </button>
-          )}
-          {elim && (
-            <button type="button" className="cc-format-btn" onClick={() => setScreen('elim-play')}>
-              <strong>Resume {elim.name}</strong>
-              <span>{elimFormatLabel(elim.type)}</span>
-            </button>
-          )}
-        </div>
-      )}
-
-      <CashClimbSavedEvents
-        title="Saved elimination tournaments"
-        events={savedElim.filter((item) => !elim || !elimIdsEqual(item.id, elim.id))}
-        onOpen={handleOpenSavedElim}
-        onRemove={handleRemoveSavedElim}
-      />
-
-      <div className="cc-format-grid">
-        <button
-          type="button"
-          className="cc-format-btn cc-primary"
-          onClick={() => setScreen('cash-climb')}
-        >
-          <strong>Cash Climb</strong>
-          <span>Round robin, 3-loss cut, then King of the Hill at 3 players.</span>
-        </button>
-        <button
-          type="button"
-          className="cc-format-btn"
-          onClick={() => {
+  if (screen === 'new') {
+    return (
+      <div className="tournament-bracket-app">
+        <TournamentFormatPicker
+          onCashClimb={startNewCashClimb}
+          onSingleElim={() => {
             setElimType('single');
             setScreen('elim-create');
           }}
-        >
-          <strong>Single elimination</strong>
-          <span>Classic bracket. Winner advances, loser is out.</span>
-        </button>
-        <button
-          type="button"
-          className="cc-format-btn"
-          onClick={() => {
+          onDoubleElim={() => {
             setElimType('double');
             setScreen('elim-create');
           }}
-        >
-          <strong>Double elimination</strong>
-          <span>Winners and losers brackets plus a grand final.</span>
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => openCashClimbTv('landscape')}>
-          TV wide 16:9
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => openCashClimbTv('portrait')}>
-          TV tall 9:16
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
-          How it works (public)
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_SUBMIT_HASH)}>
-          Player submit (public)
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
-          Back to home
-        </button>
+          onBack={goHome}
+        />
       </div>
+    );
+  }
+
+  if (screen === 'current' || screen === 'completed') {
+    const isCurrent = screen === 'current';
+    return (
+      <div className="tournament-bracket-app">
+        <TournamentEventsScreen
+          title={isCurrent ? 'Current Tournaments' : 'Completed'}
+          note={
+            isCurrent
+              ? 'Events still in progress on this tablet or in the database.'
+              : 'Finished events you can open or remove.'
+          }
+          emptyMessage={
+            isCurrent
+              ? 'No tournaments in progress. Start a new one from the Tournaments menu.'
+              : 'No completed tournaments yet.'
+          }
+          events={isCurrent ? currentEvents : completedEvents}
+          onOpen={(item) => {
+            setLeaveTo(screen);
+            handleOpenHubEvent(item);
+          }}
+          onRemove={handleRemoveHubEvent}
+          onBack={goHome}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="tournament-bracket-app">
+      <TournamentHubHome
+        currentCount={currentEvents.length}
+        completedCount={completedEvents.length}
+        onNew={() => setScreen('new')}
+        onCurrent={() => setScreen('current')}
+        onCompleted={() => setScreen('completed')}
+        onTvWide={() => openCashClimbTv('landscape')}
+        onTvTall={() => openCashClimbTv('portrait')}
+        onGuide={() => navigate(CASH_CLIMB_GUIDE_HASH)}
+        onSubmit={() => navigate(CASH_CLIMB_SUBMIT_HASH)}
+        onBackHome={() => navigate('/')}
+      />
     </div>
   );
 }

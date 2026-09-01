@@ -23,10 +23,8 @@ import {
   CUELESS_FEATURED_FACEBOOK_REEL,
   CUELESS_FULL_MATCH_PLAYLIST_URL,
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
-import { openCashClimbTv } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbTv.js';
 import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbGuideRoute.js';
-import { cashClimbSubmitHash } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
-import CashClimbSubmitPickModal from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbSubmitPickModal.jsx';
+import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 
 const Homepage = ({ canRunTournament = false }) => {
@@ -39,7 +37,6 @@ const Homepage = ({ canRunTournament = false }) => {
   const [showWhatIsDuezyModal, setShowWhatIsDuezyModal] = useState(false);
   const [showDuezyModal, setShowDuezyModal] = useState(false);
   const [showWhatIsLadderModal, setShowWhatIsLadderModal] = useState(false);
-  const [showSubmitPick, setShowSubmitPick] = useState(false);
   const [showLadderLearnMoreModal, setShowLadderLearnMoreModal] = useState(false);
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -73,17 +70,20 @@ const Homepage = ({ canRunTournament = false }) => {
     window.open('https://frusapl.com', '_blank');
   };
 
-  const handleNavigateToTournamentBracket = () => {
+  const handleNavigateToTournamentBracket = (e) => {
+    e?.stopPropagation?.();
     rememberLoginReturn('/tournament-bracket');
     navigate('/tournament-bracket');
   };
 
-  const handleNavigateToCashClimbGuide = () => {
+  const handleNavigateToCashClimbGuide = (e) => {
+    e?.stopPropagation?.();
     navigate(CASH_CLIMB_GUIDE_HASH);
   };
 
-  const handleNavigateToCashClimbSubmit = () => {
-    setShowSubmitPick(true);
+  const handleNavigateToCashClimbSubmit = (e) => {
+    e?.stopPropagation?.();
+    navigate(CASH_CLIMB_SUBMIT_HASH);
   };
 
   const handleNavigateToEstateIt = () => {
@@ -503,28 +503,40 @@ const Homepage = ({ canRunTournament = false }) => {
             </div>
             <span className="arcade-banner-arrow">→</span>
           </div>
-        </div>
 
-        <div className="legends-tracker-small tournament-bracket-link">
-          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToTournamentBracket}>
-            🏆 Tournament Bracket
-          </button>
-          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToCashClimbGuide}>
-            How Cash Climb works
-          </button>
-          <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={handleNavigateToCashClimbSubmit}>
-            Submit a result
-          </button>
-          {canRunTournament && (
-            <>
-              <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={() => openCashClimbTv('landscape')}>
-                Tournament TV wide 16:9
-              </button>
-              <button className="legends-tracker-small-btn tournament-bracket-btn" onClick={() => openCashClimbTv('portrait')}>
-                Tournament TV tall 9:16
-              </button>
-            </>
-          )}
+          <div
+            className="tournament-banner"
+            onClick={handleNavigateToTournamentBracket}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && handleNavigateToTournamentBracket()}
+          >
+            <span className="tournament-banner-icon" aria-hidden="true">🏆</span>
+            <div className="tournament-banner-content">
+              <h2>Tournaments</h2>
+              <p>Cash Climb, single elimination, and double elimination.</p>
+              <div
+                className="tournament-banner-tags"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="group"
+                aria-label="Tournament shortcuts"
+              >
+                <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToCashClimbGuide}>
+                  How Cash Climb works
+                </button>
+                <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToCashClimbSubmit}>
+                  Submit a result
+                </button>
+                {canRunTournament ? (
+                  <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToTournamentBracket}>
+                    Run event
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <span className="tournament-banner-arrow">→</span>
+          </div>
         </div>
 
         {/* EstateIt — estate inventory (not a league promo) */}
@@ -539,16 +551,6 @@ const Homepage = ({ canRunTournament = false }) => {
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>
       </div>
-
-      {showSubmitPick ? (
-        <CashClimbSubmitPickModal
-          onClose={() => setShowSubmitPick(false)}
-          onPick={(eventId) => {
-            setShowSubmitPick(false);
-            navigate(cashClimbSubmitHash(eventId));
-          }}
-        />
-      ) : null}
 
       {/* Public Ladder View Modal */}
       <StandaloneLadderModal

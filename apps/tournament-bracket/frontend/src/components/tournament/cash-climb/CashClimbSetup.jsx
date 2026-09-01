@@ -9,11 +9,10 @@ import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
 import CashClimbRaceFields from './CashClimbRaceFields.jsx';
 import { defaultKohRaceTo, defaultRrRaceTo, requireRaceTo } from './cashClimbRace.js';
 import CashClimbRulesModal from './CashClimbRulesModal.jsx';
-import CashClimbSavedEvents from './CashClimbSavedEvents.jsx';
 
 const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 
-export default function CashClimbSetup({ onStart, onCancel, savedEvents = [], onOpenSaved, onRemoveSaved }) {
+export default function CashClimbSetup({ onStart, onCancel }) {
   const [name, setName] = useState('Cash Climb');
   const [tournamentDate, setTournamentDate] = useState(todayDateInput);
   const [gameType, setGameType] = useState(OPEN_TOURNAMENT_STRUCTURE.gameRules.gameType);
@@ -113,11 +112,6 @@ export default function CashClimbSetup({ onStart, onCancel, savedEvents = [], on
 
   return (
     <>
-      <CashClimbSavedEvents
-        events={savedEvents}
-        onOpen={onOpenSaved}
-        onRemove={onRemoveSaved}
-      />
       <form className="create-tournament-form cc-setup" onSubmit={handleSubmit}>
         <h3>New Cash Climb</h3>
         <p className="cc-setup-note">

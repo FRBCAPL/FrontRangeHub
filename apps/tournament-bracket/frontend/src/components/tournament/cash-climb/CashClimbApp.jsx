@@ -11,7 +11,6 @@ import {
   loadLiveCashClimbEvent,
   loadCashClimbPending,
   deleteCashClimbPending,
-  listSavedCashClimbEvents,
   deleteCashClimbEvent,
 } from './cashClimbCloud.js';
 import { cashClimbPublishErrorMessage, isCashClimbAuthError } from './cashClimbPublic.js';
@@ -24,10 +23,9 @@ import './CashClimb.css';
 
 const PENDING_POLL_MS = 2500;
 
-export default function CashClimbApp({ onLeave }) {
-  const [tournament, setTournament] = useState(() => loadCashClimb());
+export default function CashClimbApp({ onLeave, intent = 'open' }) {
+  const [tournament, setTournament] = useState(() => (intent === 'new' ? null : loadCashClimb()));
   const [submissions, setSubmissions] = useState([]);
-  const [savedEvents, setSavedEvents] = useState([]);
   const [cloudError, setCloudError] = useState('');
   const [cloudNeedsSignIn, setCloudNeedsSignIn] = useState(false);
   const [savePromptOpen, setSavePromptOpen] = useState(false);
@@ -58,11 +56,8 @@ export default function CashClimbApp({ onLeave }) {
     return syncCashClimbCloud(current).then(applyCloudResult);
   }, [applyCloudResult]);
 
-  const refreshSaved = useCallback(async () => {
-    setSavedEvents(await listSavedCashClimbEvents());
-  }, []);
-
   useEffect(() => {
+    if (intent === 'new') return undefined;
     let cancelled = false;
     const hydrate = async () => {
       const local = loadCashClimb();
@@ -77,13 +72,12 @@ export default function CashClimbApp({ onLeave }) {
         const result = await syncCashClimbCloud(local);
         if (!cancelled) applyCloudResult(result);
       }
-      if (!cancelled) await refreshSaved();
     };
     hydrate();
     return () => {
       cancelled = true;
     };
-  }, [refreshSaved, applyCloudResult]);
+  }, [intent, applyCloudResult]);
 
   useEffect(() => {
     if (!tournament?.id || tournament.status === 'completed') {
@@ -121,6 +115,14 @@ export default function CashClimbApp({ onLeave }) {
 
   const handleStart = (config) => {
     try {
+      const previous = loadCashClimb();
+      if (previous && previous.status !== 'completed' && previous.status !== 'ended') {
+        const ok = window.confirm(
+          'Start this new Cash Climb? The event on this tablet will be ended in the database. You can still open it from Current or Completed.'
+        );
+        if (!ok) return;
+        retireCashClimbEvent(previous);
+      }
       const created = createOpenTournament(config);
       persist(startTournament(created));
     } catch (err) {
@@ -202,14 +204,13 @@ export default function CashClimbApp({ onLeave }) {
     clearCashClimb();
     setTournament(null);
     setSubmissions([]);
-    refreshSaved();
   };
 
   const handleNew = () => {
     if (cloudError && !window.confirm(cashClimbUnsavedNewConfirm())) return;
     if (tournament && tournament.status !== 'completed') {
       const ok = window.confirm(
-        'Start a new Cash Climb? This event will be ended in the database and cleared from this tablet. You can open or remove it later from setup.'
+        'Start a new Cash Climb? This event will be ended in the database and cleared from this tablet. You can open or remove it later from Current or Completed.'
       );
       if (!ok) return;
       retireCashClimbEvent(tournament);
@@ -230,29 +231,11 @@ export default function CashClimbApp({ onLeave }) {
     leaveToSetup();
   };
 
-  const handleOpenSaved = (item) => {
-    if (!item?.tournament) return;
-    persist(sanitizeCashClimb(item.tournament));
-  };
-
-  const handleRemoveSaved = async (item) => {
-    if (!item?.id) return;
-    const ok = window.confirm(`Remove "${item.name}" from the database? This cannot be undone.`);
-    if (!ok) return;
-    await deleteCashClimbEvent(item.id);
-    const local = loadCashClimb();
-    if (local && idsEqual(local.id, item.id)) clearCashClimb();
-    refreshSaved();
-  };
-
   if (!tournament) {
     return (
       <CashClimbSetup
         onStart={handleStart}
         onCancel={onLeave}
-        savedEvents={savedEvents}
-        onOpenSaved={handleOpenSaved}
-        onRemoveSaved={handleRemoveSaved}
       />
     );
   }

@@ -88,6 +88,21 @@
   margin-top: 18px;
 }
 
+.cc-submit-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cc-submit-nav .tb-btn-new {
+  margin-top: 18px;
+}
+
+.cc-submit-pick-page {
+  max-width: 28rem;
+  margin: 16px auto 0;
+}
+
 @media (max-width: 860px) {
   .cc-submit-board {
     grid-template-columns: 1fr;
