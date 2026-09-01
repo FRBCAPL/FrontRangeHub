@@ -429,6 +429,40 @@ const Homepage = ({ canRunTournament = false }) => {
 
           </div>
 
+          <div
+            className="tournament-banner"
+            onClick={handleNavigateToTournamentBracket}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && handleNavigateToTournamentBracket()}
+          >
+            <span className="tournament-banner-icon" aria-hidden="true">🏆</span>
+            <div className="tournament-banner-content">
+              <h2>Tournaments</h2>
+              <p>Cash Climb, single elimination, and double elimination.</p>
+              <div
+                className="tournament-banner-tags"
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="group"
+                aria-label="Tournament shortcuts"
+              >
+                <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToCashClimbGuide}>
+                  How Cash Climb works
+                </button>
+                <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToCashClimbSubmit}>
+                  Submit a result
+                </button>
+                {canRunTournament ? (
+                  <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToTournamentBracket}>
+                    Run event
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <span className="tournament-banner-arrow">→</span>
+          </div>
+
           {/* Dues Tracker – wide banner below the 3 cards */}
           <div className="dues-tracker-banner" onClick={handleNavigateToDuesTracker}>
             <span className="dues-tracker-banner-icon" aria-hidden="true">💰</span>
@@ -502,40 +536,6 @@ const Homepage = ({ canRunTournament = false }) => {
               </div>
             </div>
             <span className="arcade-banner-arrow">→</span>
-          </div>
-
-          <div
-            className="tournament-banner"
-            onClick={handleNavigateToTournamentBracket}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleNavigateToTournamentBracket()}
-          >
-            <span className="tournament-banner-icon" aria-hidden="true">🏆</span>
-            <div className="tournament-banner-content">
-              <h2>Tournaments</h2>
-              <p>Cash Climb, single elimination, and double elimination.</p>
-              <div
-                className="tournament-banner-tags"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-                role="group"
-                aria-label="Tournament shortcuts"
-              >
-                <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToCashClimbGuide}>
-                  How Cash Climb works
-                </button>
-                <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToCashClimbSubmit}>
-                  Submit a result
-                </button>
-                {canRunTournament ? (
-                  <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToTournamentBracket}>
-                    Run event
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            <span className="tournament-banner-arrow">→</span>
           </div>
         </div>
 
