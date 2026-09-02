@@ -137,12 +137,14 @@
 }
 
 .home-tournament-banner-wrap {
-  width: calc(100% + 40px);
+  width: 100%;
   max-width: none;
   min-width: 0;
   box-sizing: border-box;
-  margin: 0 -20px 0.75rem;
-  padding: 0 16px;
+  margin: 0 0 0.25rem;
+  padding: 0;
+  display: flex;
+  justify-content: center;
 }
 
 .home-tournament-banner-wrap:not(:has(*)) {
@@ -152,12 +154,13 @@
 }
 
 .home-tournament-banner-wrap:not(:empty) + .section-title {
-  margin-top: 0.85rem;
+  margin-top: 0.35rem;
+  margin-bottom: 1.1rem;
 }
 
 .homepage.iframe-mode .home-tournament-banner-wrap {
   width: 100%;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.25rem;
   padding: 0;
 }
 
@@ -167,9 +170,9 @@
 
 @media (max-width: 768px) {
   .home-tournament-banner-wrap {
-    width: calc(100% + 40px);
-    margin: 0 -20px 0.75rem;
-    padding: 0 12px;
+    width: 100%;
+    margin: 0 0 0.25rem;
+    padding: 0;
   }
 
   .home-tournament-banner-wrap:not(:has(*)) {

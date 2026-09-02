@@ -98,7 +98,7 @@ export default function Login({ onSuccess }) {
       <div className={styles.pinLoginFrame}>
         <div style={{ display: 'flex', gap: '10px', marginBottom: "1.5rem", justifyContent: 'center' }}>
           <a
-            href="https://frusapl.com/frbcapl-singles#3a534cc1-c4ac-4c04-8d7a-a0fe9ddfaca4"
+            href="/#/usapl/singles"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.signupBtn}

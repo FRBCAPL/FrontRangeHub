@@ -3,6 +3,8 @@
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  display: flex;
+  justify-content: center;
 }
 
 .tba-banner {
@@ -15,7 +17,17 @@
   border-radius: 16px;
   padding: 0.7rem 1.1rem;
   cursor: pointer;
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.tba-banner--compact {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.32rem 0.85rem 0.32rem 0.7rem;
 }
 
 .tba-banner.is-upcoming {
@@ -33,6 +45,11 @@
 .tba-banner:hover,
 .tba-banner:focus-visible {
   box-shadow: 0 6px 24px rgba(34, 197, 94, 0.4);
+}
+
+.tba-banner--compact:hover,
+.tba-banner--compact:focus-visible {
+  transform: translateY(-1px);
 }
 
 .tba-shimmer {
@@ -55,6 +72,27 @@
   font-weight: 800;
   text-align: center;
   text-shadow: none;
+}
+
+.tba-banner--compact .tba-title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.tba-badge-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.tba-badge-cta {
+  color: #14532d;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0.85;
 }
 
 .tba-chips {
@@ -255,8 +293,22 @@
     padding: 0.65rem 0.75rem;
   }
 
+  .tba-banner--compact {
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem 0.3rem 0.6rem;
+    max-width: 100%;
+  }
+
   .tba-title {
     font-size: 0.92rem;
+  }
+
+  .tba-banner--compact .tba-title {
+    font-size: 0.78rem;
+  }
+
+  .tba-badge-cta {
+    display: none;
   }
 
   .tba-chip {

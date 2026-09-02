@@ -1,0 +1,212 @@
+.usapl-form {
+  display: grid;
+  gap: 16px;
+}
+
+.usapl-field {
+  display: grid;
+  gap: 6px;
+}
+
+.usapl-field label {
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--usapl-ink);
+}
+
+.usapl-field-hint {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--usapl-muted);
+}
+
+.usapl-field input,
+.usapl-field select,
+.usapl-field textarea {
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--usapl-line);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--usapl-ink);
+  padding: 8px 12px;
+  font-size: 1rem;
+}
+
+.usapl-field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.usapl-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.usapl-choice {
+  min-height: 48px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--usapl-line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--usapl-ink);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.usapl-choice.selected {
+  border-color: var(--usapl-red);
+  background: rgba(226, 59, 74, 0.16);
+  color: var(--usapl-ink);
+}
+
+.usapl-check-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.usapl-check-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--usapl-line);
+  background: rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.usapl-check-item.is-checked {
+  border-color: var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.12);
+}
+
+.usapl-check-item input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--usapl-red);
+}
+
+.usapl-check-item span {
+  display: grid;
+  gap: 2px;
+}
+
+.usapl-check-item .usapl-meta {
+  margin: 0;
+}
+
+.usapl-player-card {
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  background: var(--usapl-cream);
+  box-shadow: 0 1px 0 var(--usapl-line);
+}
+
+.usapl-player-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.usapl-honeypot {
+  position: absolute;
+  left: -9999px;
+  height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .usapl-player-grid,
+  .usapl-check-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.usapl-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 28px 16px 48px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.usapl-modal {
+  width: min(680px, 100%);
+  margin: auto;
+  padding: 22px;
+  border-radius: 16px;
+  border: 1px solid var(--usapl-line);
+  background: #151218;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.usapl-modal h2 {
+  margin: 0 0 16px;
+}
+
+.usapl-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.usapl-step button {
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--usapl-line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--usapl-muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.usapl-step.is-done button,
+.usapl-step.is-active button {
+  color: var(--usapl-ink);
+}
+
+.usapl-step.is-active button {
+  border-color: var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.16);
+}
+
+.usapl-report-preview {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--usapl-line);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.usapl-report-preview h2 {
+  margin: 4px 0 6px;
+  font-size: 1.15rem;
+}
+
+.usapl-schedule-edit-preview {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--usapl-line);
+}

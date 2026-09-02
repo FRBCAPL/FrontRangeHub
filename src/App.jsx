@@ -129,6 +129,7 @@ import GuestLadderApp from '@shared/components/guest/GuestLadderApp';
 import LadderTvView from '@shared/components/guest/LadderTvView';
 import ArcadeKiosk from '@apps/arcade/frontend/src/components/arcade/ArcadeKiosk';
 import ArcadeAdmin from '@apps/arcade/frontend/src/components/arcade/ArcadeAdmin';
+import UsaplApp from '@apps/usapl/frontend/src/components/usapl/UsaplApp.jsx';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import ResetPassword from './components/auth/ResetPassword';
 import ConfirmEmail from './components/auth/ConfirmEmail';
@@ -187,6 +188,17 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/arcade': '#/arcade/kiosk',
   '/arcade/kiosk': '#/arcade/kiosk',
   '/arcade/admin': '#/arcade/admin',
+  '/usapl': '#/usapl',
+  '/usapl/signup': '#/usapl/signup',
+  '/usapl/roster': '#/usapl/roster',
+  '/usapl/divisions': '#/usapl/divisions',
+  '/usapl/vegas-cup': '#/usapl/vegas-cup',
+  '/usapl/rules': '#/usapl/rules',
+  '/usapl/dues': '#/usapl/dues',
+  '/usapl/singles': '#/usapl/singles',
+  '/usapl/admin': '#/usapl/admin',
+  '/usapl/admin/divisions': '#/usapl/admin/divisions',
+  '/usapl/admin/locations': '#/usapl/admin/locations',
   '/estateit': '#/estateit',
   '/estateit/enter': '#/estateit/enter',
   '/estateit/owner': '#/estateit/owner',
@@ -256,6 +268,7 @@ function AppContent() {
       return;
     }
     const targetHash = PATHNAME_TO_HASH_ROUTE[pathname]
+      || (pathname.startsWith('/usapl') ? `#${pathname}` : null)
       || (isCashClimbSubmitPath(pathname) ? `#${pathname}` : null)
       || (isElimSubmitPath(pathname) ? `#${pathname}` : null);
     if (targetHash) {
@@ -506,6 +519,7 @@ function AppContent() {
     location.pathname.startsWith('/estateit/') ||
     location.pathname === '/estate-inventory' ||
     location.pathname.startsWith('/estate-inventory/');
+  const isUsaplLeague = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
 
   const isFiduciaryLogHost = (() => {
     const host = (window.location.hostname || '').toLowerCase();
@@ -688,7 +702,7 @@ function AppContent() {
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';
-          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && location.pathname !== '/tournament-bracket/tv' && <FloatingLogos />;
+          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && !isUsaplLeague && location.pathname !== '/tournament-bracket/tv' && <FloatingLogos />;
         })()}
         {!isEstateInventory && location.pathname !== '/tournament-bracket/tv' ? (
                          <HubNavigation 
@@ -707,7 +721,7 @@ function AppContent() {
         />
         ) : null}
 
-                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : "80px" }}>
+                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : isUsaplLeague ? "72px" : "80px" }}>
           <Routes>
             
             {/* League App Routes */}
@@ -935,6 +949,18 @@ function AppContent() {
             <Route
               path="/cueless"
               element={<CuelessInTheBooth />}
+            />
+
+            {/* Front Range USA Pool League — public league site inside the hub */}
+            <Route
+              path="/usapl/*"
+              element={
+                <AppRouteWrapper appName="Front Range USA Pool League">
+                  <main className="main-app-content">
+                    <UsaplApp canAdmin={isAuthenticated && isAdmin()} />
+                  </main>
+                </AppRouteWrapper>
+              }
             />
 
             {/* Arcade — redirects to kiosk; fullscreen handled above */}

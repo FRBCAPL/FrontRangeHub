@@ -46,30 +46,26 @@ const TournamentBannerAll = () => {
     if (item?.path) navigate(item.path);
   };
 
+  const liveCount = banner.items.filter((item) => item.live).length;
+  const badgeLabel = banner.hasLive
+    ? (liveCount === 1 ? 'Live Tournament' : `Live Tournaments · ${liveCount}`)
+    : (banner.items.length === 1 ? 'Upcoming Tournament' : `Upcoming Tournaments · ${banner.items.length}`);
+
   return (
     <div className="tba-shell">
       <div
-        className={`tba-banner${banner.hasLive ? ' is-live' : ' is-upcoming'}`}
+        className={`tba-banner tba-banner--compact${banner.hasLive ? ' is-live' : ' is-upcoming'}`}
         role="button"
         tabIndex={0}
         onClick={openList}
         onKeyDown={(e) => e.key === 'Enter' && openList()}
+        aria-label={`${badgeLabel}. Open current tournaments.`}
       >
         <div className="tba-shimmer" aria-hidden="true" />
-        <div className="tba-body">
-          <h3 className="tba-title">🏆 {banner.title} 🏆</h3>
-          <div className="tba-chips">
-            {banner.items.map((item) => (
-              <span key={item.id} className="tba-chip">
-                <strong>{item.label}</strong>
-                {item.detail ? <span>{item.detail}</span> : null}
-                {item.live ? <em className="tba-pill">Live</em> : null}
-                {item.urgent && !item.live ? <em className="tba-pill">Soon</em> : null}
-              </span>
-            ))}
-          </div>
-          <div className="tba-footer">{banner.footer}</div>
-        </div>
+        <span className="tba-badge-icon" aria-hidden="true">🏆</span>
+        <span className="tba-title">{badgeLabel}</span>
+        {banner.hasLive ? <em className="tba-pill">Live</em> : null}
+        <span className="tba-badge-cta">Tap for list</span>
       </div>
       {listOpen ? (
         <HomepageTournamentListModal

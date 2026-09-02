@@ -117,7 +117,6 @@ const Homepage = ({ canRunTournament = false }) => {
   };
 
   const handleNavigateToUSAPool = () => {
-    // Open Front Range USA Pool League website in new tab
     window.open('https://frusapl.com', '_blank');
   };
 
@@ -298,7 +297,13 @@ const Homepage = ({ canRunTournament = false }) => {
         <div className="homepage-navigation">
           <div className="nav-cards">
             {/* USA Pool Website Card */}
-            <div className="nav-card usapool-card" onClick={handleNavigateToUSAPool}>
+            <div
+              className="nav-card usapool-card"
+              onClick={handleNavigateToUSAPool}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handleNavigateToUSAPool()}
+            >
               <div className="nav-card-logos">
                 <img src={bcaplLogo} alt="BCAPL Logo" className="league-logo" />
                 <img src={frontRangeLogo} alt="Front Range Logo" className="league-logo" />
