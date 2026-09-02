@@ -1,54 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import tournamentService from '@shared/services/services/tournamentService';
+import { loadHomepageTournamentBanner } from './homepageTournamentBannerData.js';
 
-const LADDER_LABELS = {
-  '499-under': '499 & Under',
-  '500-549': '500-549',
-  '550-plus': '550+',
-  simulation: 'Simulation'
-};
+const POLL_MS = 20000;
 
 /**
- * Landing-page banner showing all upcoming tournaments across ladders.
- * Click navigates to Hub (sign in to view/register).
+ * Landing-page banner: ladder events in registration, plus live Cash Climb / elim events.
  */
 const TournamentBannerAll = () => {
   const navigate = useNavigate();
-  const [tournaments, setTournaments] = useState([]);
+  const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
-      setLoading(true);
+    let cancelled = false;
+    const fetchBanner = async () => {
       try {
-        const result = await tournamentService.getAllUpcomingTournaments(8);
-        if (result.success && result.data?.length) {
-          setTournaments(result.data);
-        } else {
-          setTournaments([]);
-        }
+        const next = await loadHomepageTournamentBanner();
+        if (!cancelled) setBanner(next.items.length ? next : null);
       } catch (err) {
         console.error('TournamentBannerAll fetch error:', err);
-        setTournaments([]);
+        if (!cancelled) setBanner(null);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
-    fetch();
+    fetchBanner();
+    const timer = setInterval(fetchBanner, POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, []);
 
-  if (loading || tournaments.length === 0) return null;
+  if (loading || !banner?.items?.length) return null;
 
-  const formatDate = (d) =>
-    new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const hasUrgent = tournaments.some((t) => {
-    const days = Math.ceil((new Date(t.tournament_date) - new Date()) / (1000 * 60 * 60 * 24));
-    return days <= 7;
-  });
-
-  const handleClick = () => {
-    navigate('/ladder');
+  const hasUrgent = banner.hasUrgent;
+  const handleBannerClick = () => {
+    navigate(banner.defaultPath);
+  };
+  const handleChipClick = (e, path) => {
+    e.stopPropagation();
+    navigate(path);
   };
 
   return (
@@ -57,8 +50,8 @@ const TournamentBannerAll = () => {
       className="tournament-banner-all"
       role="button"
       tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+      onClick={handleBannerClick}
+      onKeyDown={(e) => e.key === 'Enter' && handleBannerClick()}
       style={{
         background: hasUrgent
           ? 'linear-gradient(135deg, #ff4444 0%, #cc0000 100%)'
@@ -136,7 +129,7 @@ const TournamentBannerAll = () => {
               textShadow: '0 2px 4px rgba(0,0,0,0.2)'
             }}
           >
-            🏆 Upcoming Tournaments 🏆
+            🏆 {banner.title} 🏆
           </h3>
         </div>
         <div
@@ -148,64 +141,68 @@ const TournamentBannerAll = () => {
             alignItems: 'center'
           }}
         >
-          {tournaments.map((t) => {
-            const regCount = t.registrations?.length ?? t.total_players ?? 0;
-            const ladderLabel = LADDER_LABELS[t.ladder_name] || t.ladder_name;
-            const entryFee = Number(t.entry_fee) || 20;
-            const daysUntil = Math.ceil(
-              (new Date(t.tournament_date) - new Date()) / (1000 * 60 * 60 * 24)
-            );
-            const isUrgent = daysUntil <= 7;
-            return (
-              <div
-                key={t.id}
+          {banner.items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={(e) => handleChipClick(e, item.path)}
+              style={{
+                background: 'rgba(0,0,0,0.2)',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '0.28rem 0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                flexWrap: 'wrap',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <span
                 style={{
-                  background: 'rgba(0,0,0,0.2)',
-                  borderRadius: '6px',
-                  padding: '0.28rem 0.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  flexWrap: 'wrap'
+                  color: '#000',
+                  fontWeight: 'bold',
+                  fontSize: '0.8rem'
                 }}
               >
+                {item.label}
+              </span>
+              {item.detail ? (
+                <span style={{ color: 'rgba(0,0,0,0.85)', fontSize: '0.78rem' }}>
+                  {item.detail}
+                </span>
+              ) : null}
+              {item.live ? (
                 <span
                   style={{
-                    color: '#000',
+                    background: 'rgba(0,0,0,0.3)',
+                    padding: '0.06rem 0.3rem',
+                    borderRadius: '4px',
+                    fontSize: '0.65rem',
                     fontWeight: 'bold',
-                    fontSize: '0.8rem'
+                    color: '#fff'
                   }}
                 >
-                  {ladderLabel}
+                  Live
                 </span>
-                <span style={{ color: 'rgba(0,0,0,0.85)', fontSize: '0.78rem' }}>
-                  {formatDate(t.tournament_date)}
+              ) : null}
+              {item.urgent && !item.live ? (
+                <span
+                  style={{
+                    background: 'rgba(0,0,0,0.3)',
+                    padding: '0.06rem 0.3rem',
+                    borderRadius: '4px',
+                    fontSize: '0.65rem',
+                    fontWeight: 'bold',
+                    color: '#fff'
+                  }}
+                >
+                  Soon
                 </span>
-                <span style={{ color: 'rgba(0,0,0,0.75)', fontSize: '0.75rem' }}>
-                  ${entryFee}
-                </span>
-                {regCount > 0 && (
-                  <span style={{ color: 'rgba(0,0,0,0.7)', fontSize: '0.72rem' }}>
-                    {regCount} reg
-                  </span>
-                )}
-                {isUrgent && (
-                  <span
-                    style={{
-                      background: 'rgba(0,0,0,0.3)',
-                      padding: '0.06rem 0.3rem',
-                      borderRadius: '4px',
-                      fontSize: '0.65rem',
-                      fontWeight: 'bold',
-                      color: '#fff'
-                    }}
-                  >
-                    Soon
-                  </span>
-                )}
-              </div>
-            );
-          })}
+              ) : null}
+            </button>
+          ))}
         </div>
         <div
           style={{
@@ -217,7 +214,7 @@ const TournamentBannerAll = () => {
             opacity: 0.9
           }}
         >
-          Sign in at The Hub to register →
+          {banner.footer}
         </div>
       </div>
     </div>

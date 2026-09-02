@@ -1,7 +1,25 @@
-import { supabase } from '@shared/config/supabase.js';
+import { createClient } from '@supabase/supabase-js';
+import { supabase, SUPABASE_ANON_KEY, SUPABASE_URL } from '@shared/config/supabase.js';
 import { savedEventSummary, tournamentFromEventRow } from './cash-climb/cashClimbSaved.js';
 
 export const ELIM_EVENTS_TABLE = 'elim_events';
+
+const PUBLIC_KEY = '__FRPH_ELIM_PUBLIC__';
+
+function elimPublicClient() {
+  const store = typeof globalThis !== 'undefined' ? globalThis : window;
+  if (!store[PUBLIC_KEY]) {
+    store[PUBLIC_KEY] = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storageKey: 'frph-elim-public',
+      },
+    });
+  }
+  return store[PUBLIC_KEY];
+}
 
 function isMissingTable(error) {
   const msg = String(error?.message || error?.code || '');
@@ -61,6 +79,17 @@ export async function loadLiveElimEvent() {
   const tournament = tournamentFromEventRow(result.data);
   if (!tournament) return { tournament: null, error: result.error };
   return { tournament, error: null };
+}
+
+export async function listLiveElimEvents() {
+  const result = await swallow(() => elimPublicClient()
+    .from(ELIM_EVENTS_TABLE)
+    .select('id, payload, status, updated_at')
+    .eq('status', 'in-progress')
+    .order('updated_at', { ascending: false })
+    .limit(12));
+  const rows = Array.isArray(result.data) ? result.data : [];
+  return rows.map(savedEventSummary).filter((item) => item && item.status === 'in-progress');
 }
 
 export async function listSavedElimEvents() {
