@@ -36,6 +36,13 @@ export function withElimStatus(tournament, nextStatus) {
   };
 }
 
+/** Unfinished brackets that were parked as "ended" can be opened again as live. */
+export function reopenEndedElim(tournament) {
+  if (!tournament) return tournament;
+  if (elimChampion(tournament)) return withElimStatus(tournament, 'completed');
+  return withElimStatus(tournament, 'in-progress');
+}
+
 export function isValidElim(tournament) {
   return Boolean(tournament && Array.isArray(tournament.entrantNames) && tournament.entrantNames.length >= 2);
 }

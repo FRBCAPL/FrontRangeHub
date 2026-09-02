@@ -103,7 +103,9 @@ import TournamentBracketGate from '@apps/tournament-bracket/frontend/src/compone
 import CashClimbTvView from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbTvView';
 import CashClimbPublicGuide from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbPublicGuide.jsx';
 import CashClimbSubmitPage from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbSubmitPage.jsx';
+import ElimSubmitPage from '@apps/tournament-bracket/frontend/src/components/tournament/ElimSubmitPage.jsx';
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
+import { isElimSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
 import { isTournamentOperator, peekLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 import { hasLocalTournamentWork } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentLocalWork.js';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
@@ -180,6 +182,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/tournament-bracket/tv': '#/tournament-bracket/tv',
   '/tournament-bracket/how-it-works': '#/tournament-bracket/how-it-works',
   '/tournament-bracket/submit': '#/tournament-bracket/submit',
+  '/tournament-bracket/elim': '#/tournament-bracket/elim',
   '/league': '#/league',
   '/guest/league': '#/guest/league',
   '/arcade': '#/arcade/kiosk',
@@ -254,7 +257,8 @@ function AppContent() {
       return;
     }
     const targetHash = PATHNAME_TO_HASH_ROUTE[pathname]
-      || (isCashClimbSubmitPath(pathname) ? `#${pathname}` : null);
+      || (isCashClimbSubmitPath(pathname) ? `#${pathname}` : null)
+      || (isElimSubmitPath(pathname) ? `#${pathname}` : null);
     if (targetHash) {
       const search = window.location.search || '';
       window.location.replace(`${window.location.origin}/${search}${targetHash}`);
@@ -610,7 +614,7 @@ function AppContent() {
     );
   }
 
-  if (isCashClimbSubmitPath(location.pathname)) {
+  if (isCashClimbSubmitPath(location.pathname) || isElimSubmitPath(location.pathname)) {
     return (
       <div style={{
         position: 'fixed',
@@ -624,7 +628,7 @@ function AppContent() {
         zIndex: 9999,
         WebkitOverflowScrolling: 'touch',
       }}>
-        <CashClimbSubmitPage />
+        {isElimSubmitPath(location.pathname) ? <ElimSubmitPage /> : <CashClimbSubmitPage />}
       </div>
     );
   }
@@ -1025,6 +1029,16 @@ function AppContent() {
                 <AppRouteWrapper appName="Submit Cash Climb result">
                   <main className="main-app-content">
                     <CashClimbSubmitPage />
+                  </main>
+                </AppRouteWrapper>
+              }
+            />
+            <Route
+              path="/tournament-bracket/elim/:eventId?"
+              element={
+                <AppRouteWrapper appName="Submit elimination result">
+                  <main className="main-app-content">
+                    <ElimSubmitPage />
                   </main>
                 </AppRouteWrapper>
               }

@@ -1,17 +1,25 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { preferLocalTournament, savedEventSummary, savedStatusLabel, tournamentFromEventRow } from './cashClimbSaved.js';
+import { preferTournamentCopy, savedEventSummary, savedStatusLabel, tournamentFromEventRow } from './cashClimbSaved.js';
 
 describe('cash climb saved events', () => {
-  it('keeps the local tablet copy when both exist', () => {
-    const local = { id: 'local' };
-    const cloud = { id: 'cloud' };
-    assert.equal(preferLocalTournament(local, cloud).id, 'local');
+  it('keeps the local tablet copy when the cloud event is a different id', () => {
+    const local = { id: 'local', updated_at: '2026-09-01T10:00:00.000Z' };
+    const cloud = { id: 'cloud', updated_at: '2026-09-01T12:00:00.000Z' };
+    assert.equal(preferTournamentCopy(local, cloud).id, 'local');
+  });
+
+  it('uses the newer copy when both devices have the same event', () => {
+    const local = { id: 'e1', updated_at: '2026-09-01T10:00:00.000Z' };
+    const cloud = { id: 'e1', updated_at: '2026-09-01T12:00:00.000Z' };
+    assert.equal(preferTournamentCopy(local, cloud).id, 'e1');
+    assert.equal(preferTournamentCopy(local, cloud).updated_at, cloud.updated_at);
+    assert.equal(preferTournamentCopy(cloud, local).updated_at, cloud.updated_at);
   });
 
   it('restores the cloud event when local storage is empty', () => {
-    assert.equal(preferLocalTournament(null, { id: 'cloud' }).id, 'cloud');
-    assert.equal(preferLocalTournament(null, null), null);
+    assert.equal(preferTournamentCopy(null, { id: 'cloud' }).id, 'cloud');
+    assert.equal(preferTournamentCopy(null, null), null);
   });
 
   it('summarizes a database row for the setup list', () => {

@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { setWinnerAndAdvance, setLoserBracketWinner } from './bracketLogic';
+import { isElimNamedPlayer, gamesFromElimScore } from './elimScore.js';
 import './BracketDisplay.css';
 
 const MATCH_WIDTH = 160;
@@ -12,7 +13,7 @@ const GAP_Y = 8;
  * If grandFinalRef is passed (double-elim), winner advances to grand final.
  * bracketKind='losers' uses loser's bracket advancement (winner → next LB match or GF slot2).
  */
-export default function BracketDisplay({ rounds, onUpdate, grandFinalRef, bracketKind = 'winners' }) {
+export default function BracketDisplay({ rounds, onUpdate, grandFinalRef, bracketKind = 'winners', onPickMatch }) {
   const containerRef = useRef(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const matchRefs = useRef({});
@@ -25,6 +26,37 @@ export default function BracketDisplay({ rounds, onUpdate, grandFinalRef, bracke
       setWinnerAndAdvance(rounds, matchId, winner, grandFinalRef);
     }
     onUpdate([...rounds]);
+  };
+
+  const openMatch = (match, roundName, clickedName) => {
+    if (clickedName === 'Bye' || !clickedName) return;
+    const p1 = isElimNamedPlayer(match.slot1);
+    const p2 = isElimNamedPlayer(match.slot2);
+    if (p1 && match.slot2 === 'Bye') {
+      handleSetWinner(match.matchId, match.slot1);
+      return;
+    }
+    if (p2 && match.slot1 === 'Bye') {
+      handleSetWinner(match.matchId, match.slot2);
+      return;
+    }
+    if (!p1 || !p2) return;
+    if (onPickMatch) {
+      onPickMatch({
+        id: match.matchId,
+        matchId: match.matchId,
+        player1_id: match.slot1,
+        player1_name: match.slot1,
+        player2_id: match.slot2,
+        player2_name: match.slot2,
+        winner: match.winner || '',
+        score: match.score || '',
+        round_name: roundName,
+        preferredWinner: clickedName,
+      });
+      return;
+    }
+    handleSetWinner(match.matchId, clickedName);
   };
 
   const layout = useMemo(() => {
@@ -133,8 +165,8 @@ export default function BracketDisplay({ rounds, onUpdate, grandFinalRef, bracke
                 >
                   <MatchCell
                     match={match}
-                    onSetWinner={handleSetWinner}
                     roundName={round.name}
+                    onOpen={(clickedName) => openMatch(match, round.name, clickedName)}
                   />
                 </div>
               );
@@ -149,35 +181,50 @@ export default function BracketDisplay({ rounds, onUpdate, grandFinalRef, bracke
 /**
  * Paper-style match cell: two slots (top/bottom) with a divider, like printed brackets.
  */
-function MatchCell({ match, onSetWinner, roundName }) {
+function MatchCell({ match, onOpen, roundName }) {
   const slot1 = match.slot1 || '';
   const slot2 = match.slot2 || '';
   const winner = match.winner;
-  const display1 = slot1 || '—';
-  const display2 = slot2 || '—';
-
-  const setWinner = (name) => {
-    if (name === 'Bye' || !name) return;
-    onSetWinner(match.matchId, name);
-  };
+  const games = gamesFromElimScore(match.score);
+  const decided = Boolean(winner);
+  const ready = isElimNamedPlayer(slot1) && isElimNamedPlayer(slot2);
 
   return (
     <div className="bracket-match-paper">
-      <div
-        className={`bracket-slot-paper top ${winner === match.slot1 ? 'winner' : ''}`}
-        onClick={() => match.slot1 && setWinner(match.slot1)}
-        title={match.slot1 ? `Click to set ${match.slot1} as winner` : ''}
-      >
-        {display1}
-      </div>
+      <BracketSlot
+        className="top"
+        name={slot1}
+        games={games.p1}
+        isWinner={winner === slot1}
+        isLoser={decided && isElimNamedPlayer(slot1) && winner !== slot1}
+        onClick={() => slot1 && onOpen(slot1)}
+        title={ready ? `Enter result for ${roundName}` : ''}
+      />
       <div className="bracket-match-divider" />
-      <div
-        className={`bracket-slot-paper bottom ${winner === match.slot2 ? 'winner' : ''}`}
-        onClick={() => match.slot2 && setWinner(match.slot2)}
-        title={match.slot2 ? `Click to set ${match.slot2} as winner` : ''}
-      >
-        {display2}
-      </div>
+      <BracketSlot
+        className="bottom"
+        name={slot2}
+        games={games.p2}
+        isWinner={winner === slot2}
+        isLoser={decided && isElimNamedPlayer(slot2) && winner !== slot2}
+        onClick={() => slot2 && onOpen(slot2)}
+        title={ready ? `Enter result for ${roundName}` : ''}
+      />
+    </div>
+  );
+}
+
+export function BracketSlot({ className = '', name, games, isWinner, isLoser, onClick, title }) {
+  const slotClass = [
+    'bracket-slot-paper',
+    className,
+    isWinner ? 'winner' : '',
+    isLoser ? 'loser' : '',
+  ].filter(Boolean).join(' ');
+  return (
+    <div className={slotClass} onClick={onClick} title={title}>
+      <span className="bracket-slot-name">{name || '—'}</span>
+      {games !== '' ? <span className="bracket-slot-games">{games}</span> : null}
     </div>
   );
 }

@@ -1,28 +1,32 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { buildSingleElimination, buildDoubleElimination } from './bracketLogic';
+import { createElimTournament } from './elimSeed.js';
 import CreateTournamentForm from './CreateTournamentForm';
 import ElimPlayScreen from './ElimPlayScreen';
 import CashClimbApp from './cash-climb/CashClimbApp';
 import { loadCashClimb, saveCashClimb, clearCashClimb } from './cash-climb/cashClimbStore';
 import { sanitizeCashClimb } from './cash-climb/cashClimbEngine.js';
-import { preferLocalTournament } from './cash-climb/cashClimbSaved.js';
+import { preferTournamentCopy, withTournamentTimestamp, tournamentTime } from './cash-climb/cashClimbSaved.js';
 import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
 import {
   listSavedCashClimbEvents,
+  listLiveCashClimbEvents,
+  loadCashClimbEventById,
   deleteCashClimbEvent,
   retireCashClimbEvent,
 } from './cash-climb/cashClimbCloud.js';
 import { clearLoginReturn } from './tournamentOperators.js';
 import { loadElim, saveElim, clearElim } from './elimStore.js';
-import { withElimStatus, elimIdsEqual } from './elimStatus.js';
+import { withElimStatus, elimIdsEqual, reopenEndedElim } from './elimStatus.js';
 import {
   syncElimCloud,
-  retireElimEvent,
+  parkLiveElimEvent,
   loadLiveElimEvent,
+  loadElimEventById,
   listSavedElimEvents,
+  listLiveElimEvents,
   deleteElimEvent,
 } from './elimCloud.js';
 import TournamentHubHome from './TournamentHubHome.jsx';
@@ -51,37 +55,59 @@ export default function TournamentBracketApp() {
   const [savedCashClimb, setSavedCashClimb] = useState([]);
 
   const persist = useCallback((t) => {
-    const next = t ? withElimStatus(t) : null;
+    const next = t ? withTournamentTimestamp(withElimStatus(t)) : null;
     setTournament(next);
     saveElim(next);
     if (next) syncElimCloud(next);
   }, []);
 
   const refreshSaved = useCallback(async () => {
-    const [elim, cash] = await Promise.all([listSavedElimEvents(), listSavedCashClimbEvents()]);
-    setSavedElim(elim);
-    setSavedCashClimb(cash);
+    const [elim, cash, elimLive, cashLive] = await Promise.all([
+      listSavedElimEvents(),
+      listSavedCashClimbEvents(),
+      listLiveElimEvents(),
+      listLiveCashClimbEvents(),
+    ]);
+    setSavedElim([...elimLive, ...elim]);
+    setSavedCashClimb([...cashLive, ...cash]);
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-    const hydrate = async () => {
-      const local = loadElim();
-      const live = await loadLiveElimEvent();
-      if (cancelled) return;
-      const chosen = preferLocalTournament(local, live.tournament);
-      if (chosen && !local) {
+    const applyCopy = (local, cloud, { allowSync = false } = {}) => {
+      const chosen = preferTournamentCopy(local, cloud);
+      if (!chosen || cancelled) return;
+      if (!local || tournamentTime(chosen) > tournamentTime(local)) {
         const restored = withElimStatus(chosen);
         setTournament(restored);
         saveElim(restored);
-      } else if (local) {
-        syncElimCloud(local);
+        return;
       }
+      if (allowSync && local) syncElimCloud(local);
+    };
+    const hydrate = async () => {
+      const local = loadElim();
+      const byId = local?.id ? (await loadElimEventById(local.id)).tournament : null;
+      const live = byId || (await loadLiveElimEvent()).tournament;
+      if (cancelled) return;
+      applyCopy(local, live, { allowSync: true });
       if (!cancelled) await refreshSaved();
     };
     hydrate();
+    const pull = async () => {
+      const local = loadElim();
+      if (!local?.id || cancelled) return;
+      const cloud = (await loadElimEventById(local.id)).tournament;
+      if (cancelled || !cloud) return;
+      applyCopy(local, cloud);
+    };
+    const timer = setInterval(pull, 10000);
+    const onFocus = () => pull();
+    window.addEventListener('focus', onFocus);
     return () => {
       cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
     };
   }, [refreshSaved]);
 
@@ -92,32 +118,21 @@ export default function TournamentBracketApp() {
     refreshSaved();
   };
 
-  const handleCreate = (config) => {
-    if (tournament && tournament.status !== 'completed') {
-      retireElimEvent(withElimStatus(tournament, 'ended'));
+  const keepCurrentElim = async () => {
+    if (!tournament?.id || tournament.status === 'completed' || tournament.status === 'ended') return true;
+    const result = await parkLiveElimEvent(withTournamentTimestamp(tournament));
+    if (result.error) {
+      window.alert('Could not save the current elimination event first. Sign in and try again so it is not lost.');
+      return false;
     }
-    if (config.type === 'single') {
-      const { rounds } = buildSingleElimination(config.entrantNames);
-      persist({
-        name: config.name,
-        type: 'single',
-        entrantNames: config.entrantNames,
-        entrants: config.entrants || config.entrantNames.map((n) => ({ name: n })),
-        rounds,
-      });
-    } else {
-      const { winnersRounds, loserRounds, grandFinal } = buildDoubleElimination(config.entrantNames);
-      persist({
-        name: config.name,
-        type: 'double',
-        entrantNames: config.entrantNames,
-        entrants: config.entrants || config.entrantNames.map((n) => ({ name: n })),
-        winnersRounds,
-        loserRounds,
-        grandFinal,
-      });
-    }
+    return true;
+  };
+
+  const handleCreate = async (config) => {
+    if (!(await keepCurrentElim())) return;
+    persist(createElimTournament(config));
     setScreen('elim-play');
+    refreshSaved();
   };
 
   const leaveElimToHome = () => {
@@ -126,13 +141,13 @@ export default function TournamentBracketApp() {
     goHome();
   };
 
-  const handleNewElim = () => {
-    if (tournament && tournament.status !== 'completed') {
+  const handleNewElim = async () => {
+    if (tournament && tournament.status === 'in-progress') {
       const ok = window.confirm(
-        'Start a new tournament? This event will be ended in the database and cleared from this tablet. You can open or remove it later from Current or Completed.'
+        'Leave this bracket on this tablet? It stays in Current Tournaments so you can open it again. It will not be erased.'
       );
       if (!ok) return;
-      retireElimEvent(withElimStatus(tournament, 'ended'));
+      if (!(await keepCurrentElim())) return;
     }
     leaveElimToHome();
   };
@@ -145,14 +160,19 @@ export default function TournamentBracketApp() {
     leaveElimToHome();
   };
 
-  const handleOpenSavedElim = (item) => {
-    if (!item?.tournament) return;
+  const handleOpenSavedElim = async (item) => {
+    if (!item?.tournament && !item?.id) return;
     if (tournament && tournament.status !== 'completed' && !elimIdsEqual(tournament.id, item.id)) {
-      const ok = window.confirm('Replace the event on this tablet with the saved one? The current event stays in the database.');
+      const ok = window.confirm('Switch this tablet to that event? The one you are on stays in Current Tournaments.');
       if (!ok) return;
-      if (tournament.status !== 'completed') retireElimEvent(withElimStatus(tournament, 'ended'));
+      if (!(await keepCurrentElim())) return;
     }
-    persist(item.tournament);
+    const fresh = item.id ? (await loadElimEventById(item.id)).tournament : null;
+    const payload = reopenEndedElim(fresh || item.tournament);
+    if (!payload) return;
+    setTournament(payload);
+    saveElim(payload);
+    if (payload.status === 'in-progress') syncElimCloud(payload);
     setScreen('elim-play');
   };
 
@@ -168,15 +188,18 @@ export default function TournamentBracketApp() {
     refreshSaved();
   };
 
-  const handleOpenSavedCashClimb = (item) => {
-    if (!item?.tournament) return;
+  const handleOpenSavedCashClimb = async (item) => {
+    if (!item?.tournament && !item?.id) return;
     const local = loadCashClimb();
     if (local && local.status !== 'completed' && String(local.id) !== String(item.id)) {
       const ok = window.confirm('Replace the Cash Climb on this tablet with the saved one? The current event stays in the database.');
       if (!ok) return;
       if (local.status !== 'completed') retireCashClimbEvent(local);
     }
-    saveCashClimb(sanitizeCashClimb(item.tournament));
+    const fresh = item.id ? (await loadCashClimbEventById(item.id)).tournament : null;
+    const payload = fresh || item.tournament;
+    if (!payload) return;
+    saveCashClimb(sanitizeCashClimb(payload));
     setCashClimbIntent('open');
     setScreen('cash-climb');
   };
@@ -290,7 +313,7 @@ export default function TournamentBracketApp() {
           title={isCurrent ? 'Current Tournaments' : 'Completed'}
           note={
             isCurrent
-              ? 'Events still in progress on this tablet or in the database.'
+              ? 'Start on one device, then Open here on another to keep running. Starting a new bracket does not end the others. Players submit from the homepage.'
               : 'Finished events you can open or remove.'
           }
           emptyMessage={

@@ -73,17 +73,33 @@
 .bracket-slot-paper {
   flex: 1;
   min-height: 28px;
-  padding: 6px 10px;
+  min-width: 0;
+  padding: 6px 8px 6px 10px;
   font-size: 0.9rem;
   font-weight: 500;
   color: #1e293b;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   cursor: pointer;
   transition: background 0.15s ease;
   border: none;
   text-align: left;
   font-family: inherit;
+}
+
+.bracket-slot-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket-slot-games {
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .bracket-slot-paper.top {
@@ -94,7 +110,7 @@
   border-top: none;
 }
 
-.bracket-slot-paper:hover:not(.winner) {
+.bracket-slot-paper:hover:not(.winner):not(.loser) {
   background: #f1f5f9;
 }
 
@@ -104,19 +120,27 @@
   font-weight: 600;
 }
 
+.bracket-slot-paper.loser {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.bracket-slot-paper.loser:hover {
+  background: #fecaca;
+}
+
+.bracket-slot-paper.winner:hover {
+  background: #bbf7d0;
+}
+
 .bracket-slot-paper:empty::after,
 .bracket-slot-paper:has(:empty) {
   color: #94a3b8;
 }
 
-.bracket-match-divider {
-  height: 1px;
-  background: #c9c4b8;
-  flex-shrink: 0;
-}
-
 /* Placeholder for empty slot */
-.bracket-slot-paper:not(.winner) {
+.bracket-slot-paper:not(.winner):not(.loser) {
   color: #64748b;
 }
 

@@ -1,0 +1,63 @@
+.elim-result-modal {
+  box-sizing: border-box;
+  max-width: calc(100vw - 2rem);
+  overflow: hidden;
+}
+
+.elim-result-modal .cc-score-fields {
+  margin-top: 12px;
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.elim-result-modal .cc-score-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.elim-result-modal .cc-score-fields input {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+  font-size: 1rem;
+}
+
+.elim-result-modal .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.elim-result-modal .btn-primary,
+.elim-result-modal .btn-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.elim-result-modal .btn-primary {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+}
+
+.elim-result-modal .btn-secondary {
+  background: rgba(100, 116, 139, 0.3);
+  color: #e0e7ff;
+}

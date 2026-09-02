@@ -91,6 +91,31 @@ describe('open Cash Climb engine', () => {
     assert.ok(Math.abs(paid - 80) < 0.02);
   });
 
+  it('reshuffles RR pairings and skips rematches while another pairing exists', () => {
+    let state = startTournament(createOpenTournament({
+      roundRobinType: 'single',
+      kohThreshold: 2,
+      players: [{ name: 'Ann' }, { name: 'Ben' }, { name: 'Cam' }, { name: 'Dee' }],
+    }));
+    const round1 = getCurrentRound(state);
+    const pairKeys = (round) => getRoundMatches(state, round.id)
+      .filter((m) => !m.is_bye && m.player2_id)
+      .map((m) => [m.player1_id, m.player2_id].sort().join('|'))
+      .sort();
+    const round1Keys = pairKeys(round1);
+    const round1Id = round1.id;
+    for (const match of getRoundMatches(state, round1Id).filter((m) => m.status === 'pending')) {
+      state = playToKeepField(state, match, 4);
+    }
+    state = continueCashClimb(state);
+    const round2 = getCurrentRound(state);
+    assert.ok(round2);
+    assert.notEqual(round2.id, round1.id);
+    assert.equal(String(round2.round_name).includes('King of the Hill'), false);
+    const round2Keys = pairKeys(round2);
+    assert.equal(round2Keys.some((key) => round1Keys.includes(key)), false);
+  });
+
   it('pays locked RR amounts and does not spend the KOH bank in round robin', () => {
     let state = startTournament(createOpenTournament({
       name: 'Friday Cash Climb',
@@ -444,6 +469,13 @@ describe('open Cash Climb engine', () => {
     const victim = state.stats[0];
     victim.eliminated = true;
     const current = getCurrentRound(state);
+    const victimMatch = getRoundMatches(state, current.id).find(
+      (m) => m.status === 'pending' && (m.player1_id === victim.player_id || m.player2_id === victim.player_id)
+    );
+    const currentOppId = victimMatch
+      ? (victimMatch.player1_id === victim.player_id ? victimMatch.player2_id : victimMatch.player1_id)
+      : null;
+    const ghostOpp = state.stats.find((p) => p.player_id !== victim.player_id && p.player_id !== currentOppId) || state.stats[1];
     state.rounds.push({
       id: 'future-round',
       round_number: 99,
@@ -458,17 +490,17 @@ describe('open Cash Climb engine', () => {
       match_number: 1,
       player1_id: victim.player_id,
       player1_name: victim.player_name,
-      player2_id: state.stats[1].player_id,
-      player2_name: state.stats[1].player_name,
+      player2_id: ghostOpp.player_id,
+      player2_name: ghostOpp.player_name,
       is_bye: false,
       status: 'pending',
       payout_amount: 10,
     });
-    const opponentPaid = state.stats[1].total_payout;
+    const opponentPaid = ghostOpp.total_payout;
     state = sanitizeCashClimb(state);
     const ghost = state.matches.find((m) => m.id === 'ghost-match');
     assert.equal(ghost.status, 'cancelled');
-    assert.equal(state.stats[1].total_payout, opponentPaid);
+    assert.equal(state.stats.find((p) => p.player_id === ghostOpp.player_id).total_payout, opponentPaid);
     const pending = state.matches.filter((m) => m.status === 'pending');
     for (const match of pending) {
       for (const id of [match.player1_id, match.player2_id].filter(Boolean)) {

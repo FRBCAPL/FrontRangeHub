@@ -9,6 +9,7 @@ import {
   syncCashClimbCloud,
   retireCashClimbEvent,
   loadLiveCashClimbEvent,
+  loadCashClimbEventById,
   loadCashClimbPending,
   deleteCashClimbPending,
   deleteCashClimbEvent,
@@ -18,10 +19,11 @@ import { cashClimbUnsavedConfirm, cashClimbUnsavedNewConfirm } from './cashClimb
 import CashClimbCloudSaveModal from './CashClimbCloudSaveModal.jsx';
 import { findMatchById, idsEqual, resolvePendingWinnerId } from './cashClimbSubmit.js';
 import { playedGameFromPending } from './cashClimbPlayedGame.js';
-import { preferLocalTournament } from './cashClimbSaved.js';
+import { preferTournamentCopy, withTournamentTimestamp, tournamentTime } from './cashClimbSaved.js';
 import './CashClimb.css';
 
 const PENDING_POLL_MS = 2500;
+const COPY_POLL_MS = 10000;
 
 export default function CashClimbApp({ onLeave, intent = 'open' }) {
   const [tournament, setTournament] = useState(() => (intent === 'new' ? null : loadCashClimb()));
@@ -44,9 +46,10 @@ export default function CashClimbApp({ onLeave, intent = 'open' }) {
   }, []);
 
   const persist = useCallback((next) => {
-    setTournament(next);
-    saveCashClimb(next);
-    syncCashClimbCloud(next).then(applyCloudResult);
+    const stamped = withTournamentTimestamp(next);
+    setTournament(stamped);
+    saveCashClimb(stamped);
+    syncCashClimbCloud(stamped).then(applyCloudResult);
   }, [applyCloudResult]);
 
   const retryCloud = useCallback(() => {
@@ -59,23 +62,43 @@ export default function CashClimbApp({ onLeave, intent = 'open' }) {
   useEffect(() => {
     if (intent === 'new') return undefined;
     let cancelled = false;
-    const hydrate = async () => {
-      const local = loadCashClimb();
-      const live = await loadLiveCashClimbEvent();
-      if (cancelled) return;
-      const chosen = preferLocalTournament(local, live.tournament);
-      if (chosen && !local) {
+    const applyCopy = (local, cloud, { allowSync = false } = {}) => {
+      const chosen = preferTournamentCopy(local, cloud);
+      if (!chosen) return;
+      if (!local || tournamentTime(chosen) > tournamentTime(local)) {
         const restored = sanitizeCashClimb(chosen);
         setTournament(restored);
         saveCashClimb(restored);
-      } else if (local) {
-        const result = await syncCashClimbCloud(local);
-        if (!cancelled) applyCloudResult(result);
+        return;
+      }
+      if (allowSync && local) {
+        syncCashClimbCloud(local).then((result) => {
+          if (!cancelled) applyCloudResult(result);
+        });
       }
     };
+    const hydrate = async () => {
+      const local = loadCashClimb();
+      const byId = local?.id ? (await loadCashClimbEventById(local.id)).tournament : null;
+      const live = byId || (await loadLiveCashClimbEvent()).tournament;
+      if (cancelled) return;
+      applyCopy(local, live, { allowSync: true });
+    };
     hydrate();
+    const pull = async () => {
+      const local = tournamentRef.current;
+      if (!local?.id || cancelled) return;
+      const cloud = (await loadCashClimbEventById(local.id)).tournament;
+      if (cancelled || !cloud) return;
+      applyCopy(local, cloud);
+    };
+    const timer = setInterval(pull, COPY_POLL_MS);
+    const onFocus = () => pull();
+    window.addEventListener('focus', onFocus);
     return () => {
       cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
     };
   }, [intent, applyCloudResult]);
 

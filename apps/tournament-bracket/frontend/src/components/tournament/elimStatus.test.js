@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { elimChampion, elimFormatLabel, withElimStatus } from './elimStatus.js';
+import { elimChampion, elimFormatLabel, reopenEndedElim, withElimStatus } from './elimStatus.js';
 
 describe('elimination save status', () => {
   it('treats a single-elim final winner as complete', () => {
@@ -29,6 +29,16 @@ describe('elimination save status', () => {
   it('keeps an unfinished bracket in progress', () => {
     const t = withElimStatus({
       type: 'single',
+      entrantNames: ['Ann', 'Ben'],
+      rounds: [{ matches: [{ winner: null }] }],
+    });
+    assert.equal(t.status, 'in-progress');
+  });
+
+  it('reopens an unfinished ended bracket as live', () => {
+    const t = reopenEndedElim({
+      type: 'single',
+      status: 'ended',
       entrantNames: ['Ann', 'Ben'],
       rounds: [{ matches: [{ winner: null }] }],
     });

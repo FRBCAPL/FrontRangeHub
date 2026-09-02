@@ -122,9 +122,6 @@ function CashClimbSubmitEventPage({ eventId }) {
 
         {tournament && (live || finished) ? (
           <div className={`cc-submit-board${finished ? ' is-final' : ''}`}>
-            <section className="cc-submit-results" aria-label="Tournament results">
-              <CashClimbStandings stats={tournament.stats} currentRound={round} tournament={tournament} briefNote />
-            </section>
             {live ? (
               <CashClimbSubmitMatches
                 tournament={tournament}
@@ -133,6 +130,9 @@ function CashClimbSubmitEventPage({ eventId }) {
                 onPick={setSelected}
               />
             ) : null}
+            <section className="cc-submit-results" aria-label="Tournament results">
+              <CashClimbStandings stats={tournament.stats} currentRound={round} tournament={tournament} briefNote />
+            </section>
           </div>
         ) : null}
 

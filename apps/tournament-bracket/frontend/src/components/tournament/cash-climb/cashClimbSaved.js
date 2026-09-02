@@ -17,11 +17,28 @@ export function savedEventSummary(row) {
   };
 }
 
-/** Local tablet copy wins. Cloud is used only when this device has no backup. */
+export function tournamentTime(tournament) {
+  return Date.parse(tournament?.updated_at || '') || 0;
+}
+
+export function withTournamentTimestamp(tournament) {
+  if (!tournament) return tournament;
+  return { ...tournament, updated_at: new Date().toISOString() };
+}
+
+/**
+ * Same event: newer copy wins so a second device can pick up.
+ * Different events: keep this device's copy until the operator opens another.
+ */
+export function preferTournamentCopy(local, cloudLive) {
+  if (!local?.id) return cloudLive || null;
+  if (!cloudLive?.id) return local;
+  if (String(local.id) !== String(cloudLive.id)) return local;
+  return tournamentTime(cloudLive) > tournamentTime(local) ? cloudLive : local;
+}
+
 export function preferLocalTournament(local, cloudLive) {
-  if (local?.id) return local;
-  if (cloudLive?.id) return cloudLive;
-  return null;
+  return preferTournamentCopy(local, cloudLive);
 }
 
 export function savedStatusLabel(status) {

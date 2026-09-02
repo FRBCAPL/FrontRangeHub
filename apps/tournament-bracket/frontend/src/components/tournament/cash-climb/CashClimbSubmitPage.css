@@ -37,8 +37,10 @@
   font-weight: 700;
 }
 
-.cc-submit-board.is-final {
-  grid-template-columns: 1fr;
+.cc-submit-board {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .cc-submit-results h2,
@@ -50,6 +52,14 @@
 
 .cc-submit-matches h2 {
   text-align: center;
+}
+
+.cc-submit-round {
+  margin: 0 0 8px;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .cc-submit-pay,
@@ -72,7 +82,7 @@
 .cc-submit-matches {
   width: 100%;
   max-width: 22rem;
-  justify-self: end;
+  margin: 0 auto;
 }
 
 .cc-submit-results .cc-standings {
@@ -104,13 +114,7 @@
 }
 
 @media (max-width: 860px) {
-  .cc-submit-board {
-    grid-template-columns: 1fr;
-  }
-
   .cc-submit-matches {
-    order: -1;
     max-width: none;
-    justify-self: stretch;
   }
 }

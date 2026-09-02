@@ -13,8 +13,9 @@ export default function CashClimbSubmitMatches({ tournament, round, submissions,
   const race = raceToForMatch(tournament, open[0] || { round_id: round.id });
 
   return (
-    <section className="cc-round cc-submit-matches">
-      <h2>{roundDisplayName(round, tournament.gameType)}</h2>
+    <section className="cc-round cc-submit-matches" aria-label="Active matches">
+      <h2>Active matches</h2>
+      <p className="cc-submit-round">{roundDisplayName(round, tournament.gameType)}</p>
       {open[0] ? (
         <p className="cc-submit-pay">{formatMoney(open[0].payout_amount)} per win</p>
       ) : null}

@@ -91,7 +91,9 @@ export default function CreateTournamentForm({ onSubmit, onCancel, defaultType =
               </ul>
             )}
             {players.length > 0 && (
-              <p className="players-count">{players.length} player{players.length !== 1 ? 's' : ''} added</p>
+              <p className="players-count">
+                {players.length} player{players.length !== 1 ? 's' : ''} added. The bracket uses a random draw when you create it.
+              </p>
             )}
           </div>
         </label>

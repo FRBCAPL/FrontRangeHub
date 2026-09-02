@@ -1,8 +1,9 @@
 import tournamentService from '@shared/services/services/tournamentService';
 import { listLiveCashClimbEventsResult } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbCloud.js';
-import { cashClimbSubmitHash, CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
+import { cashClimbSubmitHash } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { listLiveElimEvents } from '@apps/tournament-bracket/frontend/src/components/tournament/elimCloud.js';
 import { elimFormatLabel } from '@apps/tournament-bracket/frontend/src/components/tournament/elimStatus.js';
+import { elimSubmitHash } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
 
 const LADDER_LABELS = {
   '499-under': '499 & Under',
@@ -43,17 +44,17 @@ export async function loadHomepageTournamentBanner() {
       label: event.name || 'Cash Climb',
       detail: detailLine(['Live Cash Climb', formatDate(event.tournamentDate), players ? `${players} players` : '']),
       live: true,
-      urgent: true,
+      cta: 'Submit a result',
     });
   });
   (elimEvents || []).forEach((event) => {
     live.push({
       id: `elim-${event.id}`,
-      path: '/tournament-bracket',
+      path: elimSubmitHash(event.id),
       label: event.name || 'Elimination',
       detail: detailLine(['Live', elimFormatLabel(event.type) || 'Bracket', formatDate(event.tournamentDate)]),
       live: true,
-      urgent: true,
+      cta: 'Submit a result',
     });
   });
 
@@ -68,29 +69,26 @@ export async function loadHomepageTournamentBanner() {
       detail: detailLine([formatDate(t.tournament_date), `$${entryFee}`, regCount > 0 ? `${regCount} reg` : '']),
       live: false,
       urgent: daysUntil <= 7,
+      cta: 'Register at The Hub',
     };
   });
 
   const items = [...live, ...upcoming];
   const hasLive = live.length > 0;
   const hasUpcoming = upcoming.length > 0;
-  const defaultPath = hasLive
-    ? (live.some((item) => String(item.id).startsWith('cc-')) ? CASH_CLIMB_SUBMIT_HASH : '/tournament-bracket')
-    : '/ladder';
 
   let title = 'Upcoming Tournaments';
   if (hasLive && hasUpcoming) title = 'Live & Upcoming Tournaments';
   else if (hasLive) title = 'Live Tournaments';
 
-  let footer = 'Sign in at The Hub to register →';
-  if (hasLive && hasUpcoming) footer = 'Tap a live event to join, or sign in at The Hub to register →';
-  else if (hasLive) footer = 'Tap an event to submit a result or open it →';
+  let footer = 'Tap for the list →';
+  if (hasLive && hasUpcoming) footer = 'Tap to pick a live event or register →';
+  else if (hasLive) footer = 'Tap to pick a tournament →';
 
   return {
     items,
     hasLive,
     hasUrgent: items.some((item) => item.urgent),
-    defaultPath,
     title,
     footer,
   };

@@ -5,11 +5,11 @@ import {
 } from './openTournamentStructure.js';
 import { playedGameFromExtras } from './cashClimbPlayedGame.js';
 import {
-  pairOneRound,
   calculatePrizeDistribution,
   climbRoundPayouts,
   getRoundGameType,
 } from './cashClimbSchedule.js';
+import { pairRrRound, rrHistoryFromMatches } from './cashClimbRrPairing.js';
 import { remainingEventRoundsFromState, climbShapeForPayout, remainingClimbShape } from './cashClimbDuration.js';
 import { minimumClimbCost } from './cashClimbClimb.js';
 import {
@@ -411,16 +411,14 @@ function addRoundRobinRound(state) {
   if (active.length < 2) return false;
 
   const roundNumber = state.rounds.filter((r) => !isKohRound(r)).length + 1;
-  const pairing = pairOneRound(rrPlayerList(active), state.pairingOffset || 0);
-  state.pairingOffset = (state.pairingOffset || 0) + 1;
-
+  const rrRoundIds = new Set((state.rounds || []).filter((r) => !isKohRound(r)).map((r) => r.id));
+  const history = rrHistoryFromMatches((state.matches || []).filter((m) => rrRoundIds.has(m.round_id)));
+  const pairing = pairRrRound(rrPlayerList(active), history);
   const used = new Set();
   const regular = [];
   for (const raw of pairing.matches || []) {
-    const match = normalizeByeMatch(raw);
-    if (match.isBye || !match.player2?.id || isByeName(match.player2?.name)) continue;
-    const p1 = match.player1?.id;
-    const p2 = match.player2?.id;
+    const p1 = raw.player1?.id;
+    const p2 = raw.player2?.id;
     if (!p1 || !p2 || p1 === p2) continue;
     if (used.has(p1) || used.has(p2)) continue;
     const s1 = findStat(state, p1);
@@ -428,7 +426,7 @@ function addRoundRobinRound(state) {
     if (!s1 || s1.eliminated || !s2 || s2.eliminated) continue;
     used.add(p1);
     used.add(p2);
-    regular.push({ player1: match.player1, player2: match.player2 });
+    regular.push({ player1: raw.player1, player2: raw.player2 });
   }
   const byePlayers = active.filter((p) => !used.has(p.player_id));
   if (!regular.length) return false;

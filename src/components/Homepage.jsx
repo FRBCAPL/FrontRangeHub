@@ -239,13 +239,8 @@ const Homepage = ({ canRunTournament = false }) => {
         </button>
       </div>
 
-      {/* All upcoming tournaments banner - same width as button row (960px) */}
-      <div style={{
-        width: '960px',
-        maxWidth: 'calc(100% - 40px)',
-        margin: '0 auto 1.5rem',
-        boxSizing: 'border-box'
-      }}>
+      {/* Live / upcoming tournaments — full viewport width */}
+      <div className="home-tournament-banner-wrap">
         <TournamentBannerAll />
       </div>
 
