@@ -256,3 +256,131 @@
     text-align: center;
   }
 }
+
+/* TV / projector: one screen, no scrolling. */
+.cc-public-guide-shell.is-tv {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 1.2vh 1.4vw 1.4vh;
+  overflow: hidden;
+}
+
+.cc-public-guide-shell.is-tv .cc-public-guide {
+  height: 100%;
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-hero {
+  flex: 0 0 auto;
+  margin: 0 0 1.2vh;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-brand {
+  margin: 0 0 0.2vh;
+  font-size: clamp(0.7rem, 1.3vmin, 0.95rem);
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-kicker {
+  margin: 0 0 0.4vh;
+  font-size: clamp(0.8rem, 1.6vmin, 1.1rem);
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-hero h1 {
+  margin: 0 0 0.4vh;
+  font-size: clamp(1.6rem, 4.2vmin, 3.2rem);
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-tagline {
+  margin: 0 0 0.8vh;
+  font-size: clamp(1.05rem, 2.2vmin, 1.6rem);
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-chips {
+  gap: 0.6vh 0.7vw;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-chips span {
+  padding: 0.45vh 0.9vw;
+  font-size: clamp(0.8rem, 1.5vmin, 1.05rem);
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-stages {
+  flex: 0 0 auto;
+  gap: 0.9vw;
+  margin: 0 0 1.2vh;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-stage {
+  padding: 1.1vh 1.1vw 1vh;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-stage-label {
+  margin-bottom: 0.4vh;
+  font-size: clamp(0.68rem, 1.3vmin, 0.85rem);
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-stage h2 {
+  margin: 0 0 0.4vh;
+  font-size: clamp(1.15rem, 2.4vmin, 1.7rem);
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-stage p {
+  font-size: clamp(0.95rem, 1.7vmin, 1.25rem);
+  line-height: 1.28;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-stage-meta {
+  margin-top: 0.5vh !important;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 0.9vw;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-card {
+  min-height: 0;
+  overflow: hidden;
+  padding: 1.1vh 1vw 1vh;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-card h2 {
+  margin: 0 0 0.6vh;
+  font-size: clamp(0.78rem, 1.45vmin, 1rem);
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-card p {
+  margin: 0 0 0.45em;
+  font-size: clamp(0.92rem, 1.55vmin, 1.22rem);
+  line-height: 1.32;
+}
+
+.cc-public-guide-shell.is-tv .cc-guide-callout,
+.cc-public-guide-shell.is-tv .cc-guide-climb {
+  padding: 0.5vh 0.6vw;
+}
+
+@media (max-aspect-ratio: 4/5) {
+  .cc-public-guide-shell.is-tv .cc-guide-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cc-public-guide-shell.is-tv .cc-guide-stages {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-public-guide-shell.is-tv .cc-guide-stage-join {
+    padding: 0.2vh 0;
+  }
+}

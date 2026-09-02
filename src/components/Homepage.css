@@ -112,9 +112,16 @@
 
 .homepage.iframe-mode .ladder-home-card .nav-card-content h2,
 .homepage.iframe-mode .ladder-home-card .nav-card-content p,
-.homepage.iframe-mode .ladder-home-card .ladder-entry-ctas {
+.homepage.iframe-mode .ladder-home-card .ladder-entry-ctas,
+.homepage.iframe-mode .ladder-home-card .ladder-home-page-btns {
   transform: none !important;
   position: static !important;
+}
+
+.homepage.iframe-mode .ladder-home-card {
+  height: 650px !important;
+  min-height: 650px !important;
+  max-height: 650px !important;
 }
 
 .homepage.iframe-mode .ladder-home-card .ladder-home-logos .league-logo {
@@ -134,21 +141,39 @@
   max-width: none;
   min-width: 0;
   box-sizing: border-box;
-  margin: 0 -20px 1.5rem;
+  margin: 0 -20px 0.75rem;
   padding: 0 16px;
+}
+
+.home-tournament-banner-wrap:not(:has(*)) {
+  display: none;
+  margin: 0;
+  padding: 0;
+}
+
+.home-tournament-banner-wrap:not(:empty) + .section-title {
+  margin-top: 0.85rem;
 }
 
 .homepage.iframe-mode .home-tournament-banner-wrap {
   width: 100%;
-  margin: 0 0 1rem;
+  margin: 0 0 0.75rem;
   padding: 0;
+}
+
+.homepage.iframe-mode .home-tournament-banner-wrap:not(:has(*)) {
+  margin: 0;
 }
 
 @media (max-width: 768px) {
   .home-tournament-banner-wrap {
     width: calc(100% + 40px);
-    margin: 0 -20px 1.25rem;
+    margin: 0 -20px 0.75rem;
     padding: 0 12px;
+  }
+
+  .home-tournament-banner-wrap:not(:has(*)) {
+    margin: 0;
   }
 }
 
@@ -335,16 +360,21 @@
 }
 
 .estateit-home-btn {
-  background: linear-gradient(145deg, rgba(15, 118, 110, 0.22), rgba(15, 118, 110, 0.08));
-  border: 1px solid rgba(45, 212, 191, 0.45);
-  color: #2dd4bf;
+  color: #5eead4;
+  border-color: #2dd4bf;
+  background: linear-gradient(145deg, rgba(15, 118, 110, 0.18) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(15, 118, 110, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(45, 212, 191, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.estateit-home-btn:hover {
-  background: linear-gradient(145deg, rgba(15, 118, 110, 0.35), rgba(15, 118, 110, 0.15));
+.estateit-home-btn:hover,
+.estateit-home-btn:focus-visible {
+  background: rgba(15, 118, 110, 0.3);
   border-color: #5eead4;
-  color: #5eead4;
-  box-shadow: 0 4px 15px rgba(15, 118, 110, 0.3);
+  box-shadow:
+    0 0 24px rgba(45, 212, 191, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .dues-tracker-link-container {
@@ -785,30 +815,80 @@ html body div.nav-cards div.cueless-card div.nav-card-content h2 {
   justify-content: center;
 }
 
-.cueless-watch-link {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.82rem;
-  font-weight: 600;
+/* Homepage link pills — same family as the ladder card buttons */
+.cueless-watch-link,
+.tournament-banner-tag-btn,
+.arcade-banner-tag-btn,
+.dues-tracker-banner-learn-btn,
+.estateit-home-btn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+  border-radius: 25px;
+  border: 2px solid;
+  padding: 0.42rem 0.95rem;
+  font-family: 'Lucida Handwriting', 'Brush Script MT', 'Bradley Hand', 'Monotype Corsiva', cursive;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  white-space: normal;
+  backdrop-filter: blur(20px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
-.cueless-watch-link--fb {
-  background: #1877f2;
+.cueless-watch-link:hover,
+.cueless-watch-link:focus-visible,
+.tournament-banner-tag-btn:hover,
+.tournament-banner-tag-btn:focus-visible,
+.arcade-banner-tag-btn:hover,
+.arcade-banner-tag-btn:focus-visible,
+.dues-tracker-banner-learn-btn:hover,
+.dues-tracker-banner-learn-btn:focus-visible,
+.estateit-home-btn:hover,
+.estateit-home-btn:focus-visible {
+  transform: translateY(-2px) scale(1.03);
   color: #fff;
 }
 
-.cueless-watch-link--yt {
-  background: rgba(255, 68, 68, 0.15);
-  color: #ff6b6b;
-  border: 1px solid rgba(255, 68, 68, 0.5);
+.cueless-watch-link--fb {
+  color: #93c5fd;
+  border-color: #1877f2;
+  background: linear-gradient(145deg, rgba(24, 119, 242, 0.16) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(24, 119, 242, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(24, 119, 242, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.cueless-watch-link:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+.cueless-watch-link--fb:hover,
+.cueless-watch-link--fb:focus-visible {
+  background: rgba(24, 119, 242, 0.28);
+  box-shadow:
+    0 0 24px rgba(24, 119, 242, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.cueless-watch-link--yt {
+  color: #ff8a80;
+  border-color: #ff4444;
+  background: linear-gradient(145deg, rgba(255, 68, 68, 0.14) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 68, 68, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(255, 68, 68, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.cueless-watch-link--yt:hover,
+.cueless-watch-link--yt:focus-visible {
+  background: rgba(255, 68, 68, 0.22);
+  box-shadow:
+    0 0 24px rgba(255, 68, 68, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .cueless-card .nav-card-content p {
@@ -899,20 +979,21 @@ html body .cueless-card .nav-card-content p {
 }
 
 .dues-tracker-banner-learn-btn {
-  background: rgba(99, 102, 241, 0.3);
-  border: 1px solid rgba(99, 102, 241, 0.7);
-  color: #e0e7ff;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 0.35rem 0.85rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  color: #c7d2fe;
+  border-color: #818cf8;
+  background: linear-gradient(145deg, rgba(99, 102, 241, 0.16) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(99, 102, 241, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(99, 102, 241, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.dues-tracker-banner-learn-btn:hover {
-  background: rgba(99, 102, 241, 0.5);
-  border-color: rgba(99, 102, 241, 0.9);
+.dues-tracker-banner-learn-btn:hover,
+.dues-tracker-banner-learn-btn:focus-visible {
+  background: rgba(99, 102, 241, 0.28);
+  border-color: #a5b4fc;
+  box-shadow:
+    0 0 24px rgba(99, 102, 241, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .dues-tracker-banner-tags {
@@ -1171,63 +1252,78 @@ html body .cueless-card .nav-card-content p {
 }
 
 .arcade-banner-tag-btn {
-  font-size: 0.8rem;
-  padding: 0.4rem 0.85rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-family: inherit;
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-}
-
-.arcade-banner-tag-btn:hover {
-  transform: translateY(-1px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
 }
 
 .arcade-banner-tag-btn:nth-child(1) {
-  background: rgba(34, 211, 238, 0.15);
-  border: 1px solid rgba(34, 211, 238, 0.45);
   color: #a5f3fc;
+  border-color: #22d3ee;
+  background: linear-gradient(145deg, rgba(34, 211, 238, 0.14) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(34, 211, 238, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(34, 211, 238, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.arcade-banner-tag-btn:nth-child(1):hover {
-  background: rgba(34, 211, 238, 0.28);
-  box-shadow: 0 0 12px rgba(34, 211, 238, 0.25);
+.arcade-banner-tag-btn:nth-child(1):hover,
+.arcade-banner-tag-btn:nth-child(1):focus-visible {
+  background: rgba(34, 211, 238, 0.24);
+  box-shadow:
+    0 0 24px rgba(34, 211, 238, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .arcade-banner-tag-btn:nth-child(2) {
-  background: rgba(251, 191, 36, 0.15);
-  border: 1px solid rgba(251, 191, 36, 0.45);
   color: #fde68a;
+  border-color: #fbbf24;
+  background: linear-gradient(145deg, rgba(251, 191, 36, 0.14) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(251, 191, 36, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(251, 191, 36, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.arcade-banner-tag-btn:nth-child(2):hover {
-  background: rgba(251, 191, 36, 0.28);
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.25);
+.arcade-banner-tag-btn:nth-child(2):hover,
+.arcade-banner-tag-btn:nth-child(2):focus-visible {
+  background: rgba(251, 191, 36, 0.24);
+  box-shadow:
+    0 0 24px rgba(251, 191, 36, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .arcade-banner-tag-btn:nth-child(3) {
-  background: rgba(244, 114, 182, 0.15);
-  border: 1px solid rgba(244, 114, 182, 0.45);
   color: #fbcfe8;
+  border-color: #f472b6;
+  background: linear-gradient(145deg, rgba(244, 114, 182, 0.14) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(244, 114, 182, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(244, 114, 182, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.arcade-banner-tag-btn:nth-child(3):hover {
-  background: rgba(244, 114, 182, 0.28);
-  box-shadow: 0 0 12px rgba(244, 114, 182, 0.25);
+.arcade-banner-tag-btn:nth-child(3):hover,
+.arcade-banner-tag-btn:nth-child(3):focus-visible {
+  background: rgba(244, 114, 182, 0.24);
+  box-shadow:
+    0 0 24px rgba(244, 114, 182, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .arcade-banner-tag-btn--tv,
 .arcade-banner-tag-btn:nth-child(4) {
-  background: rgba(167, 139, 250, 0.15);
-  border: 1px solid rgba(167, 139, 250, 0.45);
   color: #ddd6fe;
+  border-color: #a78bfa;
+  background: linear-gradient(145deg, rgba(167, 139, 250, 0.14) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(167, 139, 250, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(167, 139, 250, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .arcade-banner-tag-btn--tv:hover,
-.arcade-banner-tag-btn:nth-child(4):hover {
-  background: rgba(167, 139, 250, 0.28);
-  box-shadow: 0 0 12px rgba(167, 139, 250, 0.25);
+.arcade-banner-tag-btn--tv:focus-visible,
+.arcade-banner-tag-btn:nth-child(4):hover,
+.arcade-banner-tag-btn:nth-child(4):focus-visible {
+  background: rgba(167, 139, 250, 0.24);
+  box-shadow:
+    0 0 24px rgba(167, 139, 250, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .arcade-banner-arrow {
@@ -1297,20 +1393,21 @@ html body .cueless-card .nav-card-content p {
 }
 
 .tournament-banner-tag-btn {
-  background: rgba(34, 197, 94, 0.18);
-  border: 1px solid rgba(34, 197, 94, 0.55);
   color: #bbf7d0;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.35rem 0.75rem;
-  border-radius: 8px;
-  cursor: pointer;
+  border-color: #4ade80;
+  background: linear-gradient(145deg, rgba(34, 197, 94, 0.16) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(34, 197, 94, 0.08) 100%);
+  box-shadow:
+    0 0 16px rgba(34, 197, 94, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.tournament-banner-tag-btn:hover {
-  background: rgba(34, 197, 94, 0.32);
-  border-color: #4ade80;
-  color: #fff;
+.tournament-banner-tag-btn:hover,
+.tournament-banner-tag-btn:focus-visible {
+  background: rgba(34, 197, 94, 0.28);
+  border-color: #86efac;
+  box-shadow:
+    0 0 24px rgba(34, 197, 94, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .tournament-banner-arrow {
@@ -1747,6 +1844,23 @@ html body .cueless-card .nav-card-content p {
 /* USA Pool League card - Bottom group of tags positioning */
 .usapool-card .nav-card-content .nav-card-features .feature-tag-row:nth-child(3) {
   transform: translateY(-165px);
+}
+
+.usapool-card .nav-card-content .nav-card-features .usapool-chips-row {
+  transform: translateY(-165px);
+  width: 100%;
+}
+
+.usapool-card .usapool-highlight-row,
+.usapool-card .usapool-chips-row {
+  width: 100%;
+}
+
+.usapool-card .rotating-feature-badge.feature-tag {
+  font-weight: 700;
+  font-size: 0.98rem;
+  padding: 12px 16px;
+  border-width: 2px;
 }
 
 .nav-card-content p {
@@ -3187,6 +3301,7 @@ html body .cueless-card .nav-card-content p {
   line-height: 1.45;
   margin: 0 0 1rem !important;
   max-width: 100%;
+  white-space: pre-line;
 }
 
 .hub-card-ladder-tap {
@@ -3207,29 +3322,90 @@ html body .cueless-card .nav-card-content p {
 
 .ladder-entry-cta {
   cursor: pointer;
-  border-radius: 8px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 25px;
+  border: 2px solid;
   padding: 0.7rem 0.85rem;
+  font-family: 'Lucida Handwriting', 'Brush Script MT', 'Bradley Hand', 'Monotype Corsiva', cursive;
   font-size: 0.9rem;
   font-weight: 700;
-  border: none;
-  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  white-space: normal;
+  backdrop-filter: blur(20px);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
 }
 
 .ladder-entry-cta.primary {
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  color: #fff;
-  box-shadow: 0 3px 12px rgba(124, 58, 237, 0.4);
+  color: #c4b5fd;
+  border-color: #8B5CF6;
+  background: linear-gradient(145deg, rgba(139, 92, 246, 0.12) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(139, 92, 246, 0.08) 100%);
+  box-shadow:
+    0 0 18px rgba(139, 92, 246, 0.45),
+    0 0 36px rgba(139, 92, 246, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .ladder-entry-cta.secondary {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: #fff;
+  color: #ff8a80;
+  border-color: #ff4444;
+  background: linear-gradient(145deg, rgba(255, 68, 68, 0.12) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 68, 68, 0.08) 100%);
+  box-shadow:
+    0 0 18px rgba(255, 68, 68, 0.4),
+    0 0 36px rgba(255, 68, 68, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .ladder-entry-cta.tertiary {
-  background: transparent;
   color: #86efac;
-  border: 2px solid #22c55e;
+  border-color: #4CAF50;
+  background: linear-gradient(145deg, rgba(76, 175, 80, 0.12) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(76, 175, 80, 0.08) 100%);
+  box-shadow:
+    0 0 18px rgba(76, 175, 80, 0.4),
+    0 0 36px rgba(76, 175, 80, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.ladder-entry-cta:hover,
+.ladder-entry-cta:focus-visible {
+  z-index: 2;
+  transform: translateY(-2px) scale(1.03);
+  color: #fff;
+}
+
+.ladder-entry-cta.primary:hover,
+.ladder-entry-cta.primary:focus-visible {
+  background: rgba(139, 92, 246, 0.22);
+  box-shadow:
+    0 0 28px rgba(139, 92, 246, 0.65),
+    0 0 48px rgba(139, 92, 246, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.ladder-entry-cta.secondary:hover,
+.ladder-entry-cta.secondary:focus-visible {
+  background: rgba(255, 68, 68, 0.2);
+  box-shadow:
+    0 0 28px rgba(255, 68, 68, 0.6),
+    0 0 48px rgba(255, 68, 68, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.ladder-entry-cta.tertiary:hover,
+.ladder-entry-cta.tertiary:focus-visible {
+  background: rgba(76, 175, 80, 0.2);
+  box-shadow:
+    0 0 28px rgba(76, 175, 80, 0.6),
+    0 0 48px rgba(76, 175, 80, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 @media (min-width: 520px) {
@@ -3245,6 +3421,12 @@ html body .cueless-card .nav-card-content p {
     flex: 1 1 140px;
     max-width: 200px;
   }
+
+  .ladder-home-card .ladder-entry-cta {
+    width: 100%;
+    max-width: none;
+    flex: 1 1 0;
+  }
 }
 
 /* ===== Ladder + Cueless homepage cards: reset legacy translate positioning ===== */
@@ -3254,12 +3436,16 @@ html body .cueless-card .nav-card-content p {
 }
 
 .ladder-home-card {
-  padding: 30px 28px 34px !important;
+  padding: 20px 22px 18px !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  justify-content: flex-start !important;
+  justify-content: space-between !important;
   overflow: hidden !important;
+  height: 650px !important;
+  min-height: 650px !important;
+  max-height: 650px !important;
+  box-sizing: border-box !important;
 }
 
 /* Corner logos — same layout pattern as Cueless cube row */
@@ -3272,9 +3458,9 @@ html body .cueless-card .nav-card-content p {
   gap: 0 !important;
   width: 100% !important;
   height: auto !important;
-  min-height: 95px !important;
-  margin: -20px 0 0.35rem !important;
-  padding: 15px 10px 8px !important;
+  min-height: 72px !important;
+  margin: -12px 0 0 !important;
+  padding: 10px 8px 0 !important;
   grid-template-columns: unset !important;
   grid-template-rows: unset !important;
   overflow: visible !important;
@@ -3285,12 +3471,12 @@ html body .cueless-card .nav-card-content p {
 }
 
 .ladder-home-card .ladder-home-logos .league-logo {
-  width: 128px !important;
-  height: 128px !important;
+  width: 110px !important;
+  height: 110px !important;
   max-width: 48% !important;
   flex: 0 0 auto !important;
   object-fit: contain !important;
-  transform: translateY(-38px) !important;
+  transform: translateY(-24px) !important;
   position: static !important;
   grid-column: unset !important;
   grid-row: unset !important;
@@ -3310,10 +3496,12 @@ html body .cueless-card .nav-card-content p {
 
 .ladder-home-card .nav-card-content h2,
 .ladder-home-card .hub-card-ladder-content h2,
+.ladder-home-card .hub-card-ladder-heading,
 .ladder-home-card .nav-card-content > p,
 .ladder-home-card .hub-card-ladder-pitch,
 .ladder-home-card .hub-card-ladder-tap,
-.ladder-home-card .ladder-entry-ctas {
+.ladder-home-card .ladder-entry-ctas,
+.ladder-home-card .ladder-home-page-btns {
   transform: none !important;
   position: static !important;
   top: auto !important;
@@ -3322,44 +3510,101 @@ html body .cueless-card .nav-card-content p {
 
 .ladder-home-card .nav-card-content h2,
 .ladder-home-card .hub-card-ladder-content h2 {
-  margin: 0 0 0.75rem !important;
-  font-size: 1.65rem !important;
+  margin: 0 !important;
+  font-size: 1.5rem !important;
+  line-height: 1.15 !important;
   text-shadow:
     0 0 10px rgba(156, 39, 176, 1),
     0 0 20px rgba(156, 39, 176, 0.8),
     0 0 30px rgba(156, 39, 176, 0.6);
 }
 
+.ladder-home-card .hub-card-ladder-heading {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.1rem !important;
+  flex-shrink: 0 !important;
+}
+
 .ladder-home-card .hub-card-ladder-content {
   flex: 1 1 auto !important;
   display: flex !important;
   flex-direction: column !important;
-  justify-content: flex-start !important;
-  gap: 1.05rem !important;
+  justify-content: space-between !important;
+  gap: 0.55rem !important;
   width: 100% !important;
+  min-height: 0 !important;
   margin-top: 0 !important;
-  padding: 0 0.5rem !important;
+  padding: 0 0.25rem !important;
   z-index: 2 !important;
+  overflow: hidden !important;
 }
 
 .ladder-home-card .hub-card-ladder-pitch {
-  font-size: 0.88rem !important;
-  line-height: 1.45 !important;
+  font-size: 0.85rem !important;
+  line-height: 1.3 !important;
   margin: 0 !important;
   max-height: none !important;
   overflow: visible !important;
+  white-space: pre-line !important;
 }
 
 .ladder-home-card .ladder-entry-ctas {
-  margin-top: 0.65rem !important;
-  margin-bottom: 0.75rem !important;
-  gap: 0.8rem !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+  max-width: 100% !important;
   flex-shrink: 0 !important;
+}
+
+.ladder-home-card .ladder-entry-cta {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1 1 0 !important;
+  padding: 12px 14px !important;
+  font-size: 0.78rem !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.04em !important;
+  animation: none !important;
+}
+
+.ladder-home-card .ladder-entry-cta:hover,
+.ladder-home-card .ladder-entry-cta:focus-visible {
+  transform: translateY(-2px) scale(1.03) !important;
+  color: #fff !important;
+}
+
+.ladder-home-page-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ladder-home-card .ladder-home-page-btns .quick-action-button {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 12px 10px !important;
+  font-size: 0.75rem !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.04em !important;
+  white-space: normal !important;
+  animation: none !important;
+  transform: none !important;
 }
 
 .ladder-home-card .nav-card-arrow,
 .ladder-home-card .ladder-home-card-link {
-  margin-top: auto !important;
+  margin-top: 0.35rem !important;
   flex-shrink: 0 !important;
   text-decoration: none;
   color: inherit;
@@ -3465,7 +3710,8 @@ a.ladder-entry-cta {
 
 .cueless-home-card .cueless-home-features {
   margin-top: 0.5rem !important;
-  padding-bottom: 3.15rem !important;
+  padding-bottom: 1.5rem !important;
+  width: 100% !important;
 }
 
 .cueless-home-card .cueless-home-features .feature-tag-row {
@@ -3506,10 +3752,10 @@ a.ladder-entry-cta {
 }
 
 .ladder-home-card .ladder-home-tags {
-  margin: 0.45rem 0 0.6rem !important;
+  margin: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.85rem !important;
+  gap: 0.5rem !important;
 }
 
 .ladder-home-card .ladder-home-tag-row {
@@ -3521,9 +3767,15 @@ a.ladder-entry-cta {
   transform: none !important;
 }
 
-.ladder-home-card .ladder-home-tag-row--compact .feature-tag {
-  font-size: 0.72rem !important;
-  padding: 4px 8px !important;
+.ladder-home-card .ladder-rotating-badge {
+  width: 100% !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  padding: 12px 16px !important;
+  color: #fff !important;
+  border: 2px solid rgba(156, 39, 176, 0.7) !important;
+  background: rgba(156, 39, 176, 0.22) !important;
+  box-shadow: 0 0 15px rgba(156, 39, 176, 0.45) !important;
 }
 
 .ladder-home-card .ladder-home-badge-top .hub-highlight-tag,
@@ -3545,28 +3797,32 @@ a.ladder-entry-cta {
 }
 
 .ladder-home-card .hub-card-ladder-tap {
-  margin-top: 0.5rem !important;
-  line-height: 1.45 !important;
+  margin-top: 0 !important;
+  line-height: 1.35 !important;
+  font-size: 0.75rem !important;
 }
 
 /* Kill remaining legacy hub transforms on ladder layout */
 html body .homepage .ladder-home-card.hub-card .nav-card-content h2,
 html body .homepage .ladder-home-card.hub-card .nav-card-content > p,
+html body .homepage .ladder-home-card.hub-card .hub-card-ladder-heading,
 html body .homepage .ladder-home-card.hub-card .hub-card-ladder-pitch,
 html body .homepage .ladder-home-card.hub-card .ladder-home-tags,
 html body .homepage .ladder-home-card.hub-card .ladder-home-tag-row,
 html body .homepage .ladder-home-card.hub-card .ladder-entry-ctas,
+html body .homepage .ladder-home-card.hub-card .ladder-home-page-btns,
 html body .homepage .ladder-home-card.hub-card .hub-highlight-tag {
   transform: none !important;
 }
 
 html body .homepage .ladder-home-card.hub-card .nav-card-arrow {
-  margin-top: auto !important;
+  margin-top: 0.35rem !important;
 }
 
 /* Cueless — promo + tagline badges share cueless-highlight-tag look */
 .cueless-home-card .cueless-home-highlights,
-.cueless-home-card .cueless-promo-badge {
+.cueless-home-card .cueless-promo-badge,
+.cueless-home-card .cueless-rotating-badge {
   transform: none !important;
   position: relative !important;
   width: 100% !important;
@@ -3589,7 +3845,8 @@ html body .homepage .ladder-home-card.hub-card .nav-card-arrow {
   margin: 0 !important;
 }
 
-.cueless-home-card .cueless-promo-badge.cueless-highlight-tag {
+.cueless-home-card .cueless-promo-badge.cueless-highlight-tag,
+.cueless-home-card .cueless-rotating-badge.cueless-highlight-tag {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -3597,36 +3854,13 @@ html body .homepage .ladder-home-card.hub-card .nav-card-arrow {
   animation: pulseGlow 4s ease-in-out infinite;
 }
 
-.cueless-home-card .cueless-promo-badge .line-1 {
-  animation: showLine 12s ease-in-out infinite;
-  position: absolute;
-  width: 100%;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.cueless-home-card .cueless-promo-badge .line-2 {
-  animation: showLine 12s ease-in-out infinite 4s;
-  position: absolute;
-  width: 100%;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0;
-}
-
-.cueless-home-card .cueless-promo-badge .line-3 {
-  animation: showLine 12s ease-in-out infinite 8s;
-  position: absolute;
-  width: 100%;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0;
-}
-
 @media (max-width: 768px) {
+  .ladder-home-card {
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+  }
+
   .ladder-home-card .ladder-home-badge-top {
     display: none !important;
   }

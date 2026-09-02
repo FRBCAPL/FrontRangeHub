@@ -1,0 +1,35 @@
+.rotating-feature-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3em;
+  overflow: hidden;
+}
+
+.rotating-feature-badge-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  width: 100%;
+  padding: 0 0.4rem;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: opacity 0.45s ease;
+}
+
+.rotating-feature-badge-line.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotating-feature-badge-line {
+    transition: none;
+  }
+}

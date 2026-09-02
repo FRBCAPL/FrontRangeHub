@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { formatMoney } from './cashClimbEngine.js';
 import { cashClimbPlayerRules } from './cashClimbPlayerRules.js';
 import { cashClimbNewPlayerGuide } from './cashClimbNewPlayerGuide.js';
+import { openCashClimbGuideTv } from './cashClimbGuideRoute.js';
 import CashClimbRulesSections from './CashClimbRulesSections.jsx';
 import './CashClimbRulesModal.css';
 
@@ -47,6 +48,9 @@ export default function CashClimbRulesModal({ tournament, onClose, initialView =
           <CashClimbRulesSections sections={isTonight ? tonight.sections : guide.sections} />
         </div>
         <div className="form-actions">
+          <button type="button" className="btn-secondary" onClick={openCashClimbGuideTv}>
+            Show on TV
+          </button>
           <button type="button" className="btn-primary" onClick={onClose}>
             Close
           </button>

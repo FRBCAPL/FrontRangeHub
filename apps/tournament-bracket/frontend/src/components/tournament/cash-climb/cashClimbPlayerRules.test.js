@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { cashClimbPlayerRules } from './cashClimbPlayerRules.js';
 import { cashClimbNewPlayerGuide } from './cashClimbNewPlayerGuide.js';
-import { CASH_CLIMB_GUIDE_HASH, cashClimbGuideHref } from './cashClimbGuideRoute.js';
+import { CASH_CLIMB_GUIDE_HASH, cashClimbGuideHref, cashClimbGuideTvHref, isCashClimbGuideTv } from './cashClimbGuideRoute.js';
 
 describe('cash climb player rules', () => {
   it('uses live game, fee, and races when a tournament is passed', () => {
@@ -45,5 +45,8 @@ describe('cash climb player rules', () => {
   it('exposes a public how-it-works hash route', () => {
     assert.equal(CASH_CLIMB_GUIDE_HASH, '/tournament-bracket/how-it-works');
     assert.match(cashClimbGuideHref(), /#\/tournament-bracket\/how-it-works$/);
+    assert.match(cashClimbGuideTvHref(), /#\/tournament-bracket\/how-it-works\?tv=1$/);
+    assert.equal(isCashClimbGuideTv('?tv=1'), true);
+    assert.equal(isCashClimbGuideTv(''), false);
   });
 });

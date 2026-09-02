@@ -70,5 +70,26 @@
 
 .cc-rules-modal .form-actions {
   flex-shrink: 0;
+  display: flex;
   justify-content: flex-end;
+  gap: 8px;
+}
+
+.cc-rules-modal .btn-primary,
+.cc-rules-modal .btn-secondary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.cc-rules-modal .btn-primary {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+}
+
+.cc-rules-modal .btn-secondary {
+  background: rgba(100, 116, 139, 0.3);
+  color: #e0e7ff;
 }

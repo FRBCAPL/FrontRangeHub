@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { cashClimbNewPlayerGuide } from './cashClimbNewPlayerGuide.js';
 import { cashClimbGuideHref } from './cashClimbGuideRoute.js';
 import '../TournamentBracketApp.css';
@@ -14,14 +14,22 @@ function lineClass(line) {
 
 export default function CashClimbPublicGuide() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isTv = searchParams.get('tv') === '1';
   const guide = cashClimbNewPlayerGuide();
 
   useEffect(() => {
-    document.title = guide.title || 'How Cash Climb works';
-  }, [guide.title]);
+    document.title = isTv ? 'How Cash Climb works — TV' : (guide.title || 'How Cash Climb works');
+    if (!isTv) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [guide.title, isTv]);
 
   return (
-    <div className="cc-public-guide-shell">
+    <div className={`cc-public-guide-shell${isTv ? ' is-tv' : ''}`}>
       <div className="cc-public-guide">
         <header className="cc-guide-hero">
           <p className="cc-guide-brand">Front Range Pool</p>
@@ -66,12 +74,14 @@ export default function CashClimbPublicGuide() {
           ))}
         </div>
 
-        <footer className="cc-guide-foot">
-          <p className="cc-guide-share">{cashClimbGuideHref()}</p>
-          <button type="button" className="cc-guide-home" onClick={() => navigate('/')}>
-            Back to home
-          </button>
-        </footer>
+        {isTv ? null : (
+          <footer className="cc-guide-foot">
+            <p className="cc-guide-share">{cashClimbGuideHref()}</p>
+            <button type="button" className="cc-guide-home" onClick={() => navigate('/')}>
+              Back to home
+            </button>
+          </footer>
+        )}
       </div>
     </div>
   );

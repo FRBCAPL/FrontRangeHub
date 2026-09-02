@@ -41,6 +41,7 @@
   font-size: 0.95rem;
   line-height: 1.45;
   max-width: 42rem;
+  white-space: pre-line;
 }
 
 .public-ladder-embed-banner-ctas {

@@ -9,6 +9,7 @@ export default function TournamentHubHome({
   onTvWide,
   onTvTall,
   onGuide,
+  onGuideTv,
   onSubmit,
   onBackHome,
 }) {
@@ -45,6 +46,7 @@ export default function TournamentHubHome({
       <div className="tb-hub-tools">
         <button type="button" className="tb-btn-new" onClick={onTvWide}>TV wide 16:9</button>
         <button type="button" className="tb-btn-new" onClick={onTvTall}>TV tall 9:16</button>
+        <button type="button" className="tb-btn-new" onClick={onGuideTv}>How it works TV</button>
         <button type="button" className="tb-btn-new" onClick={onGuide}>How it works (public)</button>
         <button type="button" className="tb-btn-new" onClick={onSubmit}>Player submit (public)</button>
         <button type="button" className="tb-btn-new" onClick={onBackHome}>Back to home</button>

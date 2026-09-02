@@ -1,7 +1,7 @@
 /** Shared copy for ladder entry (homepage, sign-in gate, public embed). */
 
 export const LADDER_ONE_LINER =
-  'BCAPL sanctioned singles ladder — challenge players above you, report match results in the app, and compete for quarterly prizes.';
+  'Challenge players above you. \nReport match results, and compete for quarterly prizes.';
 
 export const LADDER_RETURNING_HINT =
   'Returning player? Sign in with Google or email — then use Find Opponent to challenge.';

@@ -107,7 +107,6 @@ import ElimSubmitPage from '@apps/tournament-bracket/frontend/src/components/tou
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isElimSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
 import { isTournamentOperator, peekLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
-import { hasLocalTournamentWork } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentLocalWork.js';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
 import EstateFamilySignIn from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateFamilySignIn';
@@ -594,8 +593,9 @@ function AppContent() {
     );
   }
 
-  // Public Cash Climb explainer: scrollable page, no operator gate
+  // Public Cash Climb explainer: phones can scroll; ?tv=1 is a no-scroll projector board
   if (location.pathname === '/tournament-bracket/how-it-works') {
+    const isTv = new URLSearchParams(location.search || '').get('tv') === '1';
     return (
       <div style={{
         position: 'fixed',
@@ -604,10 +604,10 @@ function AppContent() {
         width: '100%',
         height: '100%',
         background: '#020617',
-        overflowY: 'auto',
+        overflowY: isTv ? 'hidden' : 'auto',
         overflowX: 'hidden',
         zIndex: 9999,
-        WebkitOverflowScrolling: 'touch',
+        WebkitOverflowScrolling: isTv ? undefined : 'touch',
       }}>
         <CashClimbPublicGuide />
       </div>
@@ -972,7 +972,7 @@ function AppContent() {
             <Route
               path="/tournament-bracket"
               element={
-                canRunTournament || hasLocalTournamentWork() ? (
+                canRunTournament ? (
                   <AppRouteWrapper appName="Tournament Bracket">
                     <main className="main-app-content">
                       <TournamentBracketApp />

@@ -3,6 +3,7 @@ import { formatMoney, formatTournamentDate } from './cashClimbEngine.js';
 import { getFormatDisplay, OPEN_TOURNAMENT_STRUCTURE } from './openTournamentStructure.js';
 import { leftoverBucketsForDisplay } from './cashClimbKohSettle.js';
 import { openCashClimbTv } from './cashClimbTv.js';
+import { openCashClimbGuideTv } from './cashClimbGuideRoute.js';
 import { formatEventRaces } from './cashClimbRace.js';
 import { finishPlaceLabel, listedPlacePrizes } from './cashClimbPlacePrizes.js';
 import { isPayoutV2, remainingPhaseBudget } from './cashClimbPayoutRuntime.js';
@@ -89,6 +90,9 @@ export default function CashClimbPlayHeader({
           </button>
           <button type="button" className="tb-btn-new" onClick={() => openCashClimbTv('portrait')}>
             TV tall 9:16
+          </button>
+          <button type="button" className="tb-btn-new" onClick={openCashClimbGuideTv}>
+            How it works TV
           </button>
           {onEdit && tournament.status !== 'completed' && (
             <button type="button" className="tb-btn-new" onClick={onEdit}>

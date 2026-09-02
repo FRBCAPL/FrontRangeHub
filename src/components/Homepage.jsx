@@ -16,6 +16,9 @@ import ContactAdminModal from '@apps/ladder/frontend/src/components/ladder/Conta
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
+import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
+import { loadHomepageTournamentBanner } from '@shared/components/tournament/homepageTournamentBannerData.js';
+import RotatingFeatureBadge from './RotatingFeatureBadge';
 import { LADDER_ONE_LINER } from '@shared/utils/utils/ladderEntryCopy.js';
 import {
   CUELESS_TAGLINE,
@@ -26,6 +29,45 @@ import {
 import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
+
+const USAPL_HIGHLIGHT_BADGES = [
+  'All things USAPL in one place',
+  '1 in 12 Teams Win a Trip to Las Vegas!',
+];
+
+const USAPL_FEATURE_BADGES = [
+  'Team Play',
+  'Structured Format',
+  'Scheduled Opponents',
+  'Assigned Locations',
+  'Dual Sanctioned',
+  'Official Rules',
+  'Registration',
+  'Information',
+  'Resources',
+];
+
+const LADDER_FEATURE_BADGES = [
+  'Singles Play',
+  'Flexible Schedule',
+  'Play Anyday/Anywhere',
+  'BCAPL Sanctioned',
+  'Registration',
+  'Player Tools',
+  'Statistics',
+];
+
+const CUELESS_PROMO_LINES = ['Got game?', 'Want it streamed?', 'We got you covered!'];
+
+const CUELESS_FEATURE_BADGES = [
+  'Live Streaming',
+  'At Legends Brews & Cues',
+  'On-Location Available',
+  'Equipment Provided',
+  '"Expert" Commentary',
+  'Unfiltered & Real',
+  'No League or Ladder Membership Required',
+];
 
 const Homepage = ({ canRunTournament = false }) => {
   const navigate = useNavigate();
@@ -38,6 +80,10 @@ const Homepage = ({ canRunTournament = false }) => {
   const [showDuezyModal, setShowDuezyModal] = useState(false);
   const [showWhatIsLadderModal, setShowWhatIsLadderModal] = useState(false);
   const [showLadderLearnMoreModal, setShowLadderLearnMoreModal] = useState(false);
+  const [publicTournamentListOpen, setPublicTournamentListOpen] = useState(false);
+  const [publicTournamentListLoading, setPublicTournamentListLoading] = useState(false);
+  const [publicTournamentListItems, setPublicTournamentListItems] = useState([]);
+  const [publicTournamentListTitle, setPublicTournamentListTitle] = useState('Current tournaments');
   const [cameraPosition, setCameraPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -60,9 +106,14 @@ const Homepage = ({ canRunTournament = false }) => {
     navigate('/ladder', { state: { openSignup: true } });
   };
 
-  const handleLadderViewRankings = (e) => {
+  const handleViewLadder = (e) => {
     e.stopPropagation();
     setShowPublicLadderView(true);
+  };
+
+  const handleMatchCalendar = (e) => {
+    e.stopPropagation();
+    setShowCalendar(true);
   };
 
   const handleNavigateToUSAPool = () => {
@@ -74,6 +125,34 @@ const Homepage = ({ canRunTournament = false }) => {
     e?.stopPropagation?.();
     rememberLoginReturn('/tournament-bracket');
     navigate('/tournament-bracket');
+  };
+
+  const handleTournamentCardClick = async (e) => {
+    e?.stopPropagation?.();
+    if (canRunTournament) {
+      handleNavigateToTournamentBracket(e);
+      return;
+    }
+    setPublicTournamentListOpen(true);
+    setPublicTournamentListLoading(true);
+    setPublicTournamentListItems([]);
+    setPublicTournamentListTitle('Current tournaments');
+    try {
+      const next = await loadHomepageTournamentBanner();
+      const items = next.hasLive ? next.items.filter((item) => item.live) : next.items;
+      setPublicTournamentListItems(items);
+      setPublicTournamentListTitle(next.hasLive ? 'Live tournaments' : 'Current tournaments');
+    } catch (err) {
+      console.error('Public tournament list fetch error:', err);
+      setPublicTournamentListItems([]);
+    } finally {
+      setPublicTournamentListLoading(false);
+    }
+  };
+
+  const handlePickPublicTournament = (item) => {
+    setPublicTournamentListOpen(false);
+    if (item?.path) navigate(item.path);
   };
 
   const handleNavigateToCashClimbGuide = (e) => {
@@ -107,18 +186,6 @@ const Homepage = ({ canRunTournament = false }) => {
   const handleNavigateToArcadeTv = (e) => {
     e.stopPropagation();
     window.location.href = '/arcade/tv';
-  };
-
-  const handleViewLadder = (e) => {
-    e.stopPropagation(); // Prevent the card click
-    // Open the public ladder view modal
-    setShowPublicLadderView(true);
-  };
-
-  const handleMatchCalendar = (e) => {
-    e.stopPropagation(); // Prevent the card click
-    // Open the calendar modal
-    setShowCalendar(true);
   };
 
   const handleWhatIsDuezy = (e) => {
@@ -219,30 +286,12 @@ const Homepage = ({ canRunTournament = false }) => {
 
   return (
     <div className={`homepage ${isInIframe ? 'iframe-mode' : ''}`}>
-      <h2 className="section-title">Choose Your Destination</h2>
-
-      {/* Quick Action Buttons */}
-      <div className="quick-actions quick-actions-row-1">
-        <button className="quick-action-button what-is-ladder-btn" onClick={handleWhatIsLadder}>
-          What is the Ladder of Legends?
-        </button>
-      </div>
-      <div className="quick-actions quick-actions-row-2">
-        <button className="quick-action-button view-ladder-btn" onClick={handleViewLadder}>
-          View The Ladder of Legends
-        </button>
-        <button className="quick-action-button match-scheduling-btn" onClick={() => setShowMatchScheduling(true)}>
-          Schedule A Ladder Match
-        </button>
-        <button className="quick-action-button calendar-btn" onClick={handleMatchCalendar}>
-          Ladder of Legends Calendar
-        </button>
-      </div>
-
-      {/* Live / upcoming tournaments — full viewport width */}
+      {/* Live / upcoming tournaments — full viewport width; collapses when empty */}
       <div className="home-tournament-banner-wrap">
         <TournamentBannerAll />
       </div>
+
+      <h2 className="section-title">Choose Your Destination</h2>
 
       <div className="homepage-container">
         {/* Main Navigation Cards */}
@@ -261,22 +310,20 @@ const Homepage = ({ canRunTournament = false }) => {
                 <h2>Front Range USA Pool League</h2>
                 <p>Click here to go to the Front Range USA Pool League website.</p>
                 <div className="nav-card-features">
-                  <div className="feature-tag-row">
-                    <span className="feature-tag vegas-tag">All things USAPL in one place</span>
+                  <div className="feature-tag-row usapool-highlight-row">
+                    <RotatingFeatureBadge
+                      id="vegas-trip-tag"
+                      className="feature-tag vegas-tag"
+                      items={USAPL_HIGHLIGHT_BADGES}
+                      intervalMs={5500}
+                    />
                   </div>
-                  <div className="feature-tag-row">
-                    <span className="feature-tag vegas-tag" id="vegas-trip-tag">1 in 12 Teams Win a Trip to Las Vegas!</span>
-                  </div>
-                  <div className="feature-tag-row">
-                    <span className="feature-tag">Team Play</span>
-                    <span className="feature-tag">Structured Format</span>
-                    <span className="feature-tag">Scheduled Opponents</span>
-                    <span className="feature-tag">Assigned Locations</span>
-                    <span className="feature-tag">Dual Sanctioned</span>
-                    <span className="feature-tag">Official Rules</span>
-                    <span className="feature-tag">Registration</span>
-                    <span className="feature-tag">Information</span>
-                    <span className="feature-tag">Resources</span>
+                  <div className="feature-tag-row usapool-chips-row">
+                    <RotatingFeatureBadge
+                      className="feature-tag"
+                      items={USAPL_FEATURE_BADGES}
+                      intervalMs={4800}
+                    />
                   </div>
                 </div>
                 {/* Bottom logos for iframe - BCA and National Championship */}
@@ -300,41 +347,38 @@ const Homepage = ({ canRunTournament = false }) => {
                 <img src={frontRangeLogo} alt="Front Range Logo" className="league-logo ladder-home-logo-left" />
                 <img src={bcaplLogo} alt="BCAPL Logo" className="league-logo ladder-home-logo-right" />
               </div>
-              <div className="ladder-home-badge-top">
-                <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
-              </div>
               <div className="nav-card-content hub-card-ladder-content">
-                <div className="ladder-home-badge-mobile">
-                  <span className="feature-tag hub-highlight-tag">Access to the Ladder of Legends</span>
-                </div>
-                <h2>Ladder of Legends</h2>
-                <p className="hub-card-ladder-pitch">{LADDER_ONE_LINER}</p>
-                <div className="ladder-home-tags">
-                  <div className="ladder-home-tag-row">
-                    <span className="feature-tag hub-highlight-tag">Ladder of Legends &amp; player tools</span>
-                  </div>
-                  <div className="ladder-home-tag-row">
-                    <span className="feature-tag independent-formats-tag">BCAPL Sanctioned Singles Play</span>
-                  </div>
-                  <div className="ladder-home-tag-row ladder-home-tag-row--compact">
-                    <span className="feature-tag">Singles Play</span>
-                    <span className="feature-tag">Flexible Schedule</span>
-                    <span className="feature-tag">Play Anyday/Anywhere</span>
-                    <span className="feature-tag">BCAPL Sanctioned</span>
-                    <span className="feature-tag">Registration</span>
-                    <span className="feature-tag">Player Tools</span>
-                    <span className="feature-tag">Statistics</span>
-                  </div>
+                <div className="hub-card-ladder-heading">
+                  <h2>Ladder of Legends</h2>
+                  <p className="hub-card-ladder-pitch">{LADDER_ONE_LINER}</p>
                 </div>
                 <div className="ladder-entry-ctas" onClick={(e) => e.stopPropagation()}>
                   <button type="button" className="ladder-entry-cta primary" onClick={handleLadderPlayerLogin}>
-                    Player login
+                    Player login / <br />Ladder Access
                   </button>
                   <button type="button" className="ladder-entry-cta secondary" onClick={handleLadderNewPlayer}>
-                    New player? Start here
+                    New player? <br />Start here
                   </button>
-                  <button type="button" className="ladder-entry-cta tertiary" onClick={handleLadderViewRankings}>
-                    View rankings
+                </div>
+                <div className="ladder-home-tags">
+                  <RotatingFeatureBadge
+                    className="feature-tag ladder-rotating-badge"
+                    items={LADDER_FEATURE_BADGES}
+                    intervalMs={3400}
+                  />
+                </div>
+                <div className="ladder-home-page-btns" onClick={(e) => e.stopPropagation()}>
+                  <button type="button" className="quick-action-button what-is-ladder-btn" onClick={handleWhatIsLadder}>
+                    What is the Ladder of Legends?
+                  </button>
+                  <button type="button" className="quick-action-button view-ladder-btn" onClick={handleViewLadder}>
+                    View The Ladder of Legends
+                  </button>
+                  <button type="button" className="quick-action-button match-scheduling-btn" onClick={() => setShowMatchScheduling(true)}>
+                    Schedule A Ladder Match
+                  </button>
+                  <button type="button" className="quick-action-button calendar-btn" onClick={handleMatchCalendar}>
+                    Ladder of Legends Calendar
                   </button>
                 </div>
                 <p className="hub-card-ladder-tap">Or tap anywhere else on this card to open the ladder app</p>
@@ -372,14 +416,12 @@ const Homepage = ({ canRunTournament = false }) => {
               <div className="cueless-camera-icon">🎥</div>
                 <div className="nav-card-content">
                   <h2>Cueless in the Booth</h2>
-                  <div
+                  <RotatingFeatureBadge
                     className="feature-tag cueless-highlight-tag cueless-promo-badge"
-                    aria-hidden="true"
-                  >
-                    <span className="line-1">Got game?</span>
-                    <span className="line-2">Want it streamed?</span>
-                    <span className="line-3">We got you covered!</span>
-                  </div>
+                    items={CUELESS_PROMO_LINES}
+                    intervalMs={2200}
+                    ariaHidden
+                  />
                   <div className="cueless-home-highlights">
                     <span className="feature-tag cueless-highlight-tag">{CUELESS_TAGLINE}</span>
                   </div>
@@ -409,15 +451,11 @@ const Homepage = ({ canRunTournament = false }) => {
                     </a>
                   </div>
                   <div className="nav-card-features cueless-home-features">
-                    <div className="feature-tag-row">
-                      <span className="feature-tag">Live Streaming</span>
-                      <span className="feature-tag">At Legends Brews &amp; Cues</span>
-                      <span className="feature-tag">On-Location Available</span>
-                      <span className="feature-tag">Equipment Provided</span>
-                      <span className="feature-tag">&quot;Expert&quot; Commentary</span>
-                      <span className="feature-tag">Unfiltered &amp; Real</span>
-                      <span className="feature-tag">No League or Ladder Membership Required</span>
-                    </div>
+                    <RotatingFeatureBadge
+                      className="feature-tag cueless-highlight-tag cueless-rotating-badge"
+                      items={CUELESS_FEATURE_BADGES}
+                      intervalMs={2600}
+                    />
                   </div>
                 </div>
             </div>
@@ -426,10 +464,10 @@ const Homepage = ({ canRunTournament = false }) => {
 
           <div
             className="tournament-banner"
-            onClick={handleNavigateToTournamentBracket}
+            onClick={handleTournamentCardClick}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleNavigateToTournamentBracket()}
+            onKeyDown={(e) => e.key === 'Enter' && handleTournamentCardClick(e)}
           >
             <span className="tournament-banner-icon" aria-hidden="true">🏆</span>
             <div className="tournament-banner-content">
@@ -546,6 +584,16 @@ const Homepage = ({ canRunTournament = false }) => {
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>
       </div>
+
+      {publicTournamentListOpen ? (
+        <HomepageTournamentListModal
+          title={publicTournamentListTitle}
+          items={publicTournamentListItems}
+          loading={publicTournamentListLoading}
+          onClose={() => setPublicTournamentListOpen(false)}
+          onPick={handlePickPublicTournament}
+        />
+      ) : null}
 
       {/* Public Ladder View Modal */}
       <StandaloneLadderModal
