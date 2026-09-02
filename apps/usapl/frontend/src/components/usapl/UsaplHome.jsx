@@ -17,13 +17,13 @@ export default function UsaplHome() {
       <header className="usapl-hero-welcome">
         <img
           className="usapl-hero-corner usapl-hero-corner-left"
-          src={bcaVegasLogo}
-          alt="BCA Pool League World Championships Las Vegas"
+          src={frontRangeLogo}
+          alt=""
         />
         <img
           className="usapl-hero-corner usapl-hero-corner-right"
-          src={usaplNationalsLogo}
-          alt="USAPL Nationals Las Vegas"
+          src={frontRangeLogo}
+          alt="Front Range Pool"
         />
         <p className="usapl-kicker usapl-league-name" style={{ fontFamily: '"Paytone One", sans-serif' }}>
           Front Range USA Pool League
@@ -52,8 +52,17 @@ export default function UsaplHome() {
           <img src={usaplLogo} alt="USA Pool League" />
           <img src={fargorateLogo} alt="FargoRate" />
           <img src={bcaplLogo} alt="BCA Pool League" />
-          <img src={frontRangeLogo} alt="Front Range Pool" />
         </div>
+        <img
+          className="usapl-hero-edge usapl-hero-edge-left"
+          src={bcaVegasLogo}
+          alt="BCA Pool League World Championships Las Vegas"
+        />
+        <img
+          className="usapl-hero-edge usapl-hero-edge-right"
+          src={usaplNationalsLogo}
+          alt="USAPL Nationals Las Vegas"
+        />
       </header>
 
       <UsaplChampsBanner />
@@ -73,7 +82,9 @@ export default function UsaplHome() {
             <h2>New to league night? <br />
             You&apos;re in the right place.</h2>
             <p>
-              Matches are weekly, the format is friendly, fun, and competitve. <br />
+              Matches are weekly.<br />
+              The format is friendly, fun, and competitve. <br />
+              No age restrictions - Juniors Welcome!<br />
               Scoring is on your phone — no paperwork.<br />
               Electronic dues payments available. <br />
               Watch the video for a quick walkthrough of the<br />

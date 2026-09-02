@@ -1,6 +1,7 @@
 import React from 'react';
 import { USAPL_DEFAULT_FARGO_CAP } from '../../data/usaplDivisions.js';
 import UsaplFormatFields from './UsaplFormatFields.jsx';
+import UsaplDivisionEditWinners from './UsaplDivisionEditWinners.jsx';
 
 export default function UsaplDivisionEditPlay({ form, setField, setForm, notesText }) {
   return (
@@ -48,6 +49,7 @@ export default function UsaplDivisionEditPlay({ form, setField, setForm, notesTe
         <label>Notes (one per line)</label>
         <textarea value={notesText} onChange={(e) => setField('notesText', e.target.value)} />
       </div>
+      <UsaplDivisionEditWinners form={form} setForm={setForm} />
     </>
   );
 }

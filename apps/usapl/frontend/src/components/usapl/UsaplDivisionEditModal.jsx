@@ -16,7 +16,9 @@ const STEPS = ['Night', 'Play', 'Report'];
 
 function withPrefill(draft) {
   const ids = parseUsaplFargoIds(draft?.fargoDivisionId);
-  const next = { ...draft, ...parseUsaplFormat(draft?.format) };
+  const parsed = parseUsaplFormat(draft?.format);
+  const next = { ...draft, ...parsed };
+  next.inSession = parsed.inSession === true;
   next.fargoReportA = draft?.fargoReportA || ids[0] || '';
   next.fargoReportB = draft?.fargoReportB || ids[1] || '';
   if (next.combinedFargoCap === '' || next.combinedFargoCap == null) {
@@ -95,7 +97,13 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
         ...form,
         id,
         locationNote,
-        format: composeUsaplFormat(form),
+        archived: Boolean(form.archived),
+        signupOpen: form.archived ? false : Boolean(form.signupOpen),
+        inSession: form.archived ? false : form.inSession === true,
+        format: composeUsaplFormat({
+          ...form,
+          inSession: form.archived ? false : form.inSession === true,
+        }),
         fargoDivisionId: joinUsaplFargoIds([form.fargoReportA, form.fargoReportB]),
         duesPerPlayer: form.duesPerPlayer === '' || form.duesPerPlayer == null ? 10 : form.duesPerPlayer,
         combinedFargoCap: form.combinedFargoCap === '' || form.combinedFargoCap == null ? USAPL_DEFAULT_FARGO_CAP : form.combinedFargoCap,

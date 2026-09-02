@@ -101,7 +101,8 @@ export default function UsaplAdminDivisions() {
       <h1>Divisions</h1>
       <p className="usapl-lede">
         Open for signup is what players see on the signup form. Closed nights stay listed
-        on Play nights, without a Join button.
+        on Play nights, without a Join button. Mark a finished session as a past division
+        and enter the winner — it moves to Past divisions.
       </p>
       {tableMissing ? (
         <div className="usapl-error">
@@ -139,7 +140,7 @@ export default function UsaplAdminDivisions() {
             <p className="usapl-meta">
               {usaplNightLabel(division.night)} · {usaplFormatWithoutInHouse(division.format) || 'format TBD'}
               <br />
-              {division.signupOpen ? 'Open for signup' : 'Signup closed'}
+              {division.archived ? 'Past division' : (division.signupOpen ? 'Open for signup' : 'Signup closed')}
             </p>
           </div>
           <div className="usapl-actions" style={{ marginTop: 0 }}>

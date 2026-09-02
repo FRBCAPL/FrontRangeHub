@@ -1,47 +1,111 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { sortUsaplDivisionsByPlayDay, usaplDivisionSignupOpen, usaplDivisionSummaryLines } from '../../data/usaplDivisions.js';
+import {
+  groupUsaplDivisionsByNight,
+  sortUsaplDivisionsForListing,
+  usaplDivisionIsInSession,
+  usaplDivisionSignupOpen,
+} from '../../data/usaplDivisions.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
-import UsaplInHouseTag from './UsaplInHouseTag.jsx';
+import UsaplDivisionCard from './UsaplDivisionCard.jsx';
+
+function NightSections({ groups, night, titleFor }) {
+  const visible = night === 'all' ? groups : groups.filter((group) => group.night === night);
+  return visible.map((group) => (
+    <section className="usapl-night-section" key={group.night}>
+      <h2 className="usapl-night-section-title">{titleFor(group)}</h2>
+      <div className="usapl-night-grid">
+        {group.divisions.map((division) => (
+          <UsaplDivisionCard key={division.id} division={division} />
+        ))}
+      </div>
+    </section>
+  ));
+}
 
 export default function UsaplDivisionsPage() {
   const { divisions, loading } = useUsaplDivisions();
-  const ordered = sortUsaplDivisionsByPlayDay(divisions);
+  const [night, setNight] = useState('all');
+  const groups = useMemo(() => groupUsaplDivisionsByNight(divisions), [divisions]);
+  const playing = useMemo(
+    () => sortUsaplDivisionsForListing(divisions.filter(usaplDivisionIsInSession)),
+    [divisions]
+  );
+  const signupList = useMemo(
+    () => sortUsaplDivisionsForListing(
+      divisions.filter((row) => !usaplDivisionIsInSession(row) && usaplDivisionSignupOpen(row))
+    ),
+    [divisions]
+  );
+  const otherGroups = useMemo(
+    () => groupUsaplDivisionsByNight(
+      divisions.filter((row) => !usaplDivisionIsInSession(row) && !usaplDivisionSignupOpen(row))
+    ),
+    [divisions]
+  );
+  const visiblePlaying = night === 'all'
+    ? playing
+    : playing.filter((row) => row.night === night);
+  const visibleSignup = night === 'all'
+    ? signupList
+    : signupList.filter((row) => row.night === night);
 
   return (
-    <div className="usapl-page">
+    <div className="usapl-page usapl-divisions-page">
       <h1>Where we play</h1>
       <p className="usapl-lede">
         Pick a night that fits. Full teams, partial teams, and individuals looking for a
-        home are all welcome. Start a division with four teams and never pay dues as the rep.
+        home are all welcome.<br />
+        {' '}
+        <Link to="/usapl/past-divisions">Past divisions and winners</Link>
       </p>
+      {groups.length > 1 ? (
+        <div className="usapl-choice-row usapl-night-filters">
+          <button
+            type="button"
+            className={`usapl-choice${night === 'all' ? ' selected' : ''}`}
+            onClick={() => setNight('all')}
+          >
+            All nights
+          </button>
+          {groups.map((group) => (
+            <button
+              type="button"
+              key={group.night}
+              className={`usapl-choice${night === group.night ? ' selected' : ''}`}
+              onClick={() => setNight(group.night)}
+            >
+              {group.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
       {loading ? <p>Loading nights…</p> : null}
-      <div className="usapl-night-list">
-        {ordered.map((division) => (
-          <article className="usapl-night-row" key={division.id}>
-            <div className="usapl-night-copy">
-              <h2>
-                {division.shortName}
-                <UsaplInHouseTag division={division} />
-              </h2>
-              <p className="usapl-meta">
-                {usaplDivisionSummaryLines(division).map((line, index) => (
-                  <span key={`${division.id}-${index}`}>
-                    {index > 0 ? <br /> : null}
-                    {line}
-                  </span>
-                ))}
-              </p>
-            </div>
-            <div className="usapl-actions" style={{ marginTop: 0 }}>
-              <Link className="usapl-btn-secondary" to={`/usapl/divisions/${division.id}`}>Divison Page</Link>
-              {usaplDivisionSignupOpen(division) ? (
-                <Link className="usapl-btn" to={`/usapl/signup?division=${division.id}`}>Join this division</Link>
-              ) : null}
-            </div>
-          </article>
-        ))}
-      </div>
+      {visiblePlaying.length ? (
+        <section className="usapl-night-section">
+          <h2 className="usapl-night-section-title">Now playing</h2>
+          <div className="usapl-night-grid">
+            {visiblePlaying.map((division) => (
+              <UsaplDivisionCard key={division.id} division={division} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+      {visibleSignup.length ? (
+        <section className="usapl-night-section">
+          <h2 className="usapl-night-section-title">Taking signups</h2>
+          <div className="usapl-night-grid">
+            {visibleSignup.map((division) => (
+              <UsaplDivisionCard key={division.id} division={division} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+      <NightSections
+        groups={otherGroups}
+        night={night}
+        titleFor={(group) => group.label}
+      />
     </div>
   );
 }

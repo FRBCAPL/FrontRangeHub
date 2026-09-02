@@ -5,6 +5,7 @@ import UsaplHome from './UsaplHome.jsx';
 import UsaplSignupPage from './UsaplSignupPage.jsx';
 import UsaplRosterPage from './UsaplRosterPage.jsx';
 import UsaplDivisionsPage from './UsaplDivisionsPage.jsx';
+import UsaplPastDivisionsPage from './UsaplPastDivisionsPage.jsx';
 import UsaplDivisionDetail from './UsaplDivisionDetail.jsx';
 import UsaplVegasCupPage from './UsaplVegasCupPage.jsx';
 import UsaplRulesPage from './UsaplRulesPage.jsx';
@@ -39,6 +40,7 @@ export default function UsaplApp({ canAdmin = false }) {
         <Route path="signup" element={<UsaplSignupPage />} />
         <Route path="roster" element={<UsaplRosterPage />} />
         <Route path="divisions" element={<UsaplDivisionsPage />} />
+        <Route path="past-divisions" element={<UsaplPastDivisionsPage />} />
         <Route path="divisions/:divisionId" element={<UsaplDivisionDetail />} />
         <Route path="vegas-cup" element={<UsaplVegasCupPage />} />
         <Route path="rules" element={<UsaplRulesPage />} />

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { USAPL_DIVISIONS, usaplDivisionSignupOpen } from '../data/usaplDivisions.js';
+import { usaplDivisionIsPast } from '../data/usaplPastDivisions.js';
 import { listUsaplDivisions } from '../services/usaplDivisions.js';
 
 export function useUsaplDivisions({ signupOnly = false } = {}) {
@@ -33,10 +34,12 @@ export function useUsaplDivisions({ signupOnly = false } = {}) {
     reload();
   }, [reload]);
 
-  const visible = useMemo(
-    () => (signupOnly ? divisions.filter(usaplDivisionSignupOpen) : divisions),
-    [divisions, signupOnly]
-  );
+  const visible = useMemo(() => {
+    if (signupOnly) {
+      return divisions.filter((row) => usaplDivisionSignupOpen(row) && !usaplDivisionIsPast(row));
+    }
+    return divisions.filter((row) => !usaplDivisionIsPast(row));
+  }, [divisions, signupOnly]);
 
   return { divisions: visible, allDivisions: divisions, loading, fromDatabase, error, reload };
 }

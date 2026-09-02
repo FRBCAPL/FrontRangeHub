@@ -7,6 +7,7 @@ const UUID = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-
 export const USAPL_FARGO_DIVISION_IDS = {
   'nay-nays': 'acf783b3-6e91-47c2-93b7-b3d501825058,81f787f9-0437-4055-bc50-b3d501845b9c',
   'wed-13861-13061': '2aef836f-8ce3-4218-9f61-b49f017bdf93,a225944f-82ca-4d85-b193-b4a1012e25ca',
+  'wed-13861-13061-s1': '2aef836f-8ce3-4218-9f61-b49f017bdf93,a225944f-82ca-4d85-b193-b4a1012e25ca',
 };
 
 function extractUuid(value) {

@@ -2,8 +2,10 @@ import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getUsaplDivision, usaplDivisionIsInHouse, usaplDivisionSignupOpen, usaplNightLabel } from '../../data/usaplDivisions.js';
 import { usaplFormatWithoutInHouse } from '../../data/usaplFormat.js';
+import { usaplDivisionIsPast } from '../../data/usaplPastDivisions.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
 import UsaplDivisionFacts from './UsaplDivisionFacts.jsx';
+import UsaplDivisionWinners from './UsaplDivisionWinners.jsx';
 import UsaplInHouseTag from './UsaplInHouseTag.jsx';
 import UsaplPublicReport from './UsaplPublicReport.jsx';
 import UsaplSchedulePic from './UsaplSchedulePic.jsx';
@@ -49,7 +51,11 @@ export default function UsaplDivisionDetail() {
           <Link className="usapl-btn" to={`/usapl/signup?division=${division.id}`}>Sign up</Link>
         ) : null}
         <Link className="usapl-btn-secondary" to={`/usapl/roster?division=${division.id}`}>Team roster</Link>
+        {usaplDivisionIsPast(division) ? (
+          <Link className="usapl-btn-secondary" to="/usapl/past-divisions">Past divisions</Link>
+        ) : null}
       </div>
+      <UsaplDivisionWinners division={division} />
       <UsaplDivisionFacts division={division} />
       <UsaplPublicReport division={division} />
       <UsaplSchedulePic division={division} />

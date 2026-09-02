@@ -752,6 +752,39 @@
   box-shadow: 0 8px 48px rgba(229, 62, 62, 0.4), 0 0 24px rgba(229, 62, 62, 0.2);
 }
 
+.usapool-entry-ctas {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 0.35rem 0 0.7rem;
+}
+
+.usapool-site-btn {
+  cursor: pointer;
+  width: 100%;
+  max-width: 280px;
+  min-height: 48px;
+  padding: 0.7rem 1.1rem;
+  border-radius: 25px;
+  border: 2px solid #e53e3e;
+  background: linear-gradient(145deg, rgba(229, 62, 62, 0.18) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(229, 62, 62, 0.1) 100%);
+  color: #fecaca;
+  font-family: 'Lucida Handwriting', 'Brush Script MT', 'Bradley Hand', 'Monotype Corsiva', cursive;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow:
+    0 0 18px rgba(229, 62, 62, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.usapool-site-btn:hover,
+.usapool-site-btn:focus-visible {
+  color: #fff;
+  background: linear-gradient(145deg, rgba(229, 62, 62, 0.32) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(229, 62, 62, 0.2) 100%);
+}
+
 /* Future Card */
 .future-card {
   --app-color: #f59e42;

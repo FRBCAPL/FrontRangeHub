@@ -1,6 +1,6 @@
 import { supabase } from '@shared/config/supabase.js';
 import { USAPL_TENANT_ID } from '../data/usaplConstants.js';
-import { usaplFormatIsInHouse } from '../data/usaplFormat.js';
+import { usaplFormatIsInHouse, parseUsaplFormat } from '../data/usaplFormat.js';
 import { USAPL_FARGO_DIVISION_IDS, joinUsaplFargoIds, parseUsaplFargoIds } from '../data/usaplPublicReports.js';
 
 const TABLE = 'usapl_divisions';
@@ -39,11 +39,16 @@ export function rowToDivision(row) {
     locationNote: row.location_note || '',
     playAnywhere: Boolean(row.play_anywhere),
     inHouse: Boolean(row.in_house) || usaplFormatIsInHouse(row.format),
+    inSession: parseUsaplFormat(row.format).inSession,
     fargoDivisionId: (staleStored ? mapped : (row.fargo_division_id || mapped)) || '',
     scheduleImageUrl: row.schedule_image_url || '',
     reportHeading: row.report_heading || '',
     reportBlurb: row.report_blurb || '',
     signupOpen: Boolean(row.signup_open),
+    archived: Boolean(row.archived),
+    winnerTeam: row.winner_team || '',
+    winnerTeamB: row.winner_team_b || '',
+    leagueNumbers: row.league_numbers || row.csi_numbers || '',
     notes: Array.isArray(row.notes) ? row.notes : [],
     sortOrder: row.sort_order ?? 0,
   };
@@ -69,7 +74,11 @@ export function divisionToRow(division) {
     schedule_image_url: emptyToNull(String(division.scheduleImageUrl || '').trim()),
     report_heading: emptyToNull(String(division.reportHeading || '').trim()),
     report_blurb: emptyToNull(String(division.reportBlurb || '').trim()),
-    signup_open: Boolean(division.signupOpen),
+    signup_open: Boolean(division.signupOpen) && !division.archived,
+    archived: Boolean(division.archived),
+    winner_team: emptyToNull(String(division.winnerTeam || '').trim()),
+    winner_team_b: emptyToNull(String(division.winnerTeamB || '').trim()),
+    league_numbers: emptyToNull(String(division.leagueNumbers || '').trim()),
     notes: Array.isArray(division.notes) ? division.notes.filter(Boolean) : [],
     sort_order: toInt(division.sortOrder) ?? 0,
     updated_at: new Date().toISOString(),
@@ -87,7 +96,16 @@ export async function listUsaplDivisions() {
   return (data || []).map(rowToDivision);
 }
 
-const OPTIONAL_COLUMNS = ['fargo_division_id', 'schedule_image_url', 'report_heading', 'report_blurb'];
+const OPTIONAL_COLUMNS = [
+  'fargo_division_id',
+  'schedule_image_url',
+  'report_heading',
+  'report_blurb',
+  'archived',
+  'winner_team',
+  'winner_team_b',
+  'league_numbers',
+];
 
 function columnFromError(error) {
   const msg = String(error?.message || '');
@@ -102,6 +120,9 @@ function optionalColumnDroppedError(dropped) {
   }
   if (dropped.includes('schedule_image_url')) {
     return 'The schedule picture needs a database column. Run supabase-migrations/usapl-divisions-public-report-2026-09.sql in the Supabase SQL editor, then save again.';
+  }
+  if (dropped.includes('archived') || dropped.includes('winner_team') || dropped.includes('winner_team_b') || dropped.includes('league_numbers')) {
+    return 'Past divisions and winners need a database column. Run supabase-migrations/usapl-divisions-past-winners-2026-09.sql in the Supabase SQL editor, then save again.';
   }
   return '';
 }
