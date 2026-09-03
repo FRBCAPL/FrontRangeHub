@@ -257,6 +257,7 @@ function AppContent() {
     if (redirectHashArcadeTvToStaticPage()) return;
     const hash = window.location.hash || '';
     const pathname = window.location.pathname || '';
+    const search = window.location.search || '';
     if (hash.startsWith('#/')) return;
     if (
       pathname === '/ladder-embed' ||
@@ -265,6 +266,19 @@ function AppContent() {
       pathname.startsWith('/arcade/') ||
       pathname.startsWith('/dues-tracker')
     ) {
+      return;
+    }
+    const host = (window.location.hostname || '').toLowerCase();
+    const q = new URLSearchParams(search);
+    const fromFrusaplHost = host === 'frusapl.com' || host === 'www.frusapl.com';
+    const fromUsaplQuery = q.has('usapl') || q.get('from') === 'usapl' || q.get('to') === 'usapl';
+    if ((fromFrusaplHost || fromUsaplQuery) && (pathname === '/' || pathname === '')) {
+      q.delete('usapl');
+      if (q.get('from') === 'usapl') q.delete('from');
+      if (q.get('to') === 'usapl') q.delete('to');
+      const rest = q.toString();
+      const restSearch = rest ? `?${rest}` : '';
+      window.location.replace(`${window.location.origin}/${restSearch}#/usapl`);
       return;
     }
     const targetHash = PATHNAME_TO_HASH_ROUTE[pathname]
