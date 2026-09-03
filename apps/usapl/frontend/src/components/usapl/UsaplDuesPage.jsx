@@ -1,71 +1,80 @@
 import React from 'react';
 import { USAPL_CONTACT, USAPL_DUES_PRODUCTS, USAPL_LINKS } from '../../data/usaplConstants.js';
+import UsaplPayColumn from './UsaplPayColumn.jsx';
 
 const NOTE_LINES = [
   '1. Full amount due',
-  '2. Name of person making payment',
-  '3. Team name',
-  '4. Date of play — if a makeup, include the original play date',
+  '2. Team name',
+  '3. Date of play — if a makeup, include the original play date',
 ];
 
 export default function UsaplDuesPage() {
   return (
-    <div className="usapl-page">
+    <div className="usapl-page usapl-dues-page">
       <h1>League dues</h1>
       <p className="usapl-lede">
-        Please pay the full team amount for the date and match(es) played. Dues are due within 24 hours or the team may get penalty points.
+        Please pay the full team amount for the date and match(es) played.
       </p>
 
       <p className="usapl-note">
-        Card / Apple Pay / Google Pay / ACH is moving into this app next (it used to be a JotForm + Square form). For now use Cash App or Venmo with the notes below.
+        Card / Apple Pay / Google Pay / ACH is moving into this app next.<br />
+        Scan the QR code or use the button on this page.
+        Do not search the $ or @ name — lookalike accounts have taken payments.
       </p>
 
-      <section className="usapl-card" style={{ marginTop: 16 }}>
-        <h2>Team dues</h2>
-        <p>Pay the full weekly amount as one payment when you can. Partial or incomplete info can delay processing and scores.</p>
-        <ul>
-          {USAPL_DUES_PRODUCTS.team.map((product) => (
-            <li key={product.id}>{product.label} — ${product.amount}</li>
-          ))}
-        </ul>
-        <p className="usapl-meta">Teams get 100 bonus points for paying full dues and submitting scores within 24 hours.</p>
-      </section>
+      <details className="usapl-facts usapl-dues-fold">
+        <summary>
+          <h2>Team dues</h2>
+          <span className="usapl-vegas-fold-action">
+            <span className="is-show">Show Team Dues</span>
+            <span className="is-hide">Hide</span>
+          </span>
+        </summary>
+        <div className="usapl-facts-body">
+          <p>Please pay the full weekly team amount as one payment.<br />
+           Partial or incomplete info can delay processing and scores.</p>
+          <ul>
+            {USAPL_DUES_PRODUCTS.team.map((product) => (
+              <li key={product.id}>{product.label} — ${product.amount}</li>
+            ))}
+          </ul>
+          <p className="usapl-meta">Due are due within 48 hours.<br />
+ Late payments will be subject to penalty as outlined in the local by-laws.</p>
+        </div>
+      </details>
 
-      <section className="usapl-card" style={{ marginTop: 14 }}>
-        <h2>Cash App · {USAPL_LINKS.cashAppHandle}</h2>
-        <p>Put all of this in the For / Notes field:</p>
+      <section className="usapl-card usapl-pay-notes">
+        <h2>Required for every payment type :</h2>
+        
         <ul>
           {NOTE_LINES.map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>
-        <div className="usapl-actions">
-          <a className="usapl-btn" href={USAPL_LINKS.cashApp} target="_blank" rel="noreferrer">Open Cash App</a>
-        </div>
-      </section>
-
-      <section className="usapl-card" style={{ marginTop: 14 }}>
-        <h2>Venmo · {USAPL_LINKS.venmoHandle}</h2>
-        <p>Put the same four items in What&apos;s this for?</p>
-        <div className="usapl-actions">
-          <a className="usapl-btn" href={USAPL_LINKS.venmo} target="_blank" rel="noreferrer">Open Venmo</a>
-        </div>
-      </section>
-
-      <section className="usapl-card" style={{ marginTop: 14 }}>
-        <h2>Individual dues</h2>
         <p>
-          Individual payments are accepted, but one team payment is strongly preferred. Split payments can delay scores and may lead to penalty points.
-        </p>
-        <ul>
-          {USAPL_DUES_PRODUCTS.individual.map((product) => (
-            <li key={product.id}>{product.label} — ${product.amount}</li>
-          ))}
-        </ul>
-        <p className="usapl-meta">
-          Questions? Call or text {USAPL_CONTACT.phoneDisplay} or email {USAPL_CONTACT.email}.
+        Cash Payments may be made by dropping in the red drop box at Legends Brews & Cues.<br />
+        Look for envelopes near the box or ask a staff member.
         </p>
       </section>
+
+      <div className="usapl-pay-pair">
+        <UsaplPayColumn
+          title={`Cash App · ${USAPL_LINKS.cashAppHandle}`}
+          warn={`Scan this code or tap Open Cash App. \nDo not search ${USAPL_LINKS.cashAppHandle}.`}
+          src={USAPL_LINKS.cashAppQr}
+          alt="Cash App QR code for Front Range USA Pool League $frusapl"
+          href={USAPL_LINKS.cashApp}
+          buttonLabel="Open Cash App"
+        />
+        <UsaplPayColumn
+          title={`Venmo · ${USAPL_LINKS.venmoHandle}`}
+          warn={`Scan this code or tap Open Venmo. \nDo not search ${USAPL_LINKS.venmoHandle}.`}
+          src={USAPL_LINKS.venmoQr}
+          alt="Venmo QR code for Front Range USA Pool League @duesfrusapl"
+          href={USAPL_LINKS.venmo}
+          buttonLabel="Open Venmo"
+        />
+      </div>
     </div>
   );
 }

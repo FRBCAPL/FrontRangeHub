@@ -28,10 +28,13 @@ export const USAPL_LINKS = {
   scoringApple: 'https://apps.apple.com/us/app/usapl-scoring-app/id1257913353',
   csiPolicies: 'https://www.playcsipool.com/usapl-policies.html',
   csiRules: 'https://www.playcsipool.com/usapl-rules.html',
+  localBylaws: '/usapl/frusapl-bylaws.pdf',
   cashApp: 'https://cash.app/$frusapl',
   cashAppHandle: '$frusapl',
+  cashAppQr: '/usapl/frusapl-cashapp-qr.png',
   venmo: 'https://venmo.com/u/duesfrusapl',
   venmoHandle: '@duesfrusapl',
+  venmoQr: '/usapl/frusapl-venmo-qr.png',
   duesTracker: '/dues-tracker/index.html',
 };
 
@@ -40,27 +43,11 @@ export const USAPL_LEAGUE_NUMBERS = {
   bcapl: '2345',
 };
 
-export const USAPL_RULE_HIGHLIGHTS = [
-  'No slop. Call pocket (except 9-ball).',
-  '"Gentleman\'s call pocket" — you do not have to call obvious shots.',
-  'Combos, banks, kicks, and caroms are not obvious.',
-  'Open after the break (8-ball).',
-  'Ball in hand if you scratch on the break.',
-  'Pocket safes allowed in 8-ball (call a safety and pocket a ball).',
-  'Push out allowed (9-ball and 10-ball).',
-  '3-foul rule (9-ball and 10-ball).',
-  'Coaching / timeouts: 1 per game, 3 per match, 10 per team — all skill levels.',
-  'Jump cues allowed.',
-  'Alternate breaks.',
-  'Rack your own.',
-  'Good sportsmanship.',
-];
-
 export const USAPL_DUES_PRODUCTS = {
   team: [
-    { id: 'team-single-8', label: 'Team · Single play · $8/player', amount: 40, playType: 'single', perPlayer: 8 },
-    { id: 'team-double-8', label: 'Team · Double play · $8/player', amount: 80, playType: 'double', perPlayer: 8 },
-    { id: 'team-single-10', label: 'Team · Single play · $10/player', amount: 50, playType: 'single', perPlayer: 10 },
+    { id: 'team-single-10', label: 'Team · Single play · $10/player', amount: 50, playType: 'single', perPlayer: 8 },
+    { id: 'team-double-10', label: 'Team · Double play · $10/player', amount: 100, playType: 'double', perPlayer: 8 },
+    
   ],
   individual: [
     { id: 'ind-single-8', label: 'Individual · Single play · $8', amount: 8, playType: 'single', perPlayer: 8 },

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import UsaplNav from './UsaplNav.jsx';
 import UsaplHome from './UsaplHome.jsx';
@@ -18,6 +18,8 @@ import './usaplForms.css';
 
 const USAPL_FONTS_HREF =
   'https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Paytone+One&display=swap';
+
+const UsaplBylawsPage = lazy(() => import('./UsaplBylawsPage.jsx'));
 
 export default function UsaplApp({ canAdmin = false }) {
   useEffect(() => {
@@ -43,6 +45,14 @@ export default function UsaplApp({ canAdmin = false }) {
         <Route path="divisions/:divisionId" element={<UsaplDivisionDetail />} />
         <Route path="vegas-cup" element={<UsaplVegasCupPage canAdmin={canAdmin} />} />
         <Route path="rules" element={<UsaplRulesPage />} />
+        <Route
+          path="bylaws"
+          element={(
+            <Suspense fallback={<p className="usapl-lede">Loading by-laws…</p>}>
+              <UsaplBylawsPage />
+            </Suspense>
+          )}
+        />
         <Route path="dues" element={<UsaplDuesPage />} />
         <Route path="singles" element={<Navigate to="/usapl" replace />} />
         <Route

@@ -32,6 +32,21 @@ if (typeof process !== 'undefined') {
   }
 }
 
+/** Copy pdf.js worker so the by-laws viewer can draw pages without Chrome's PDF/Adobe bar. */
+function copyPdfWorkerPlugin() {
+  const src = path.join(__dirname, 'node_modules', 'pdfjs-dist', 'build', 'pdf.worker.min.js')
+  const destDir = path.join(__dirname, 'public', 'usapl')
+  const dest = path.join(destDir, 'pdf.worker.min.js')
+  return {
+    name: 'copy-pdf-worker',
+    buildStart() {
+      if (!existsSync(src)) return
+      mkdirSync(destDir, { recursive: true })
+      copyFileSync(src, dest)
+    }
+  }
+}
+
 /** Copy arcade-tv index to /arcade/tv/ so production static hosts serve the TV app at that URL. */
 function arcadeTvAliasBuildPlugin() {
   return {
@@ -78,7 +93,7 @@ function staticSubappIndexPlugin() {
 // https://vitejs.dev/config/
 export default defineConfig({
   root: __dirname,
-  plugins: [react(), staticSubappIndexPlugin(), arcadeTvAliasBuildPlugin()],
+  plugins: [react(), copyPdfWorkerPlugin(), staticSubappIndexPlugin(), arcadeTvAliasBuildPlugin()],
   resolve: {
     alias: {
       '@shared': sharedDir,
@@ -93,6 +108,8 @@ export default defineConfig({
       'date-fns': path.resolve(__dirname, 'node_modules', 'date-fns'),
       'react-datepicker': path.resolve(__dirname, 'node_modules', 'react-datepicker'),
       'emailjs-com': path.resolve(__dirname, 'node_modules', 'emailjs-com'),
+      'pdfjs-dist': path.resolve(__dirname, 'node_modules', 'pdfjs-dist'),
+      canvas: path.resolve(__dirname, 'src', 'empty-module.js'),
       '@stripe/react-stripe-js': path.resolve(__dirname, 'node_modules', '@stripe/react-stripe-js'),
       '@stripe/stripe-js': path.resolve(__dirname, 'node_modules', '@stripe/stripe-js')
     }
@@ -113,6 +130,9 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  optimizeDeps: {
+    include: ['pdfjs-dist']
   },
   build: {
     outDir: 'dist',
