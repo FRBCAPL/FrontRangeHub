@@ -19,7 +19,7 @@ export default function UsaplVegasCupFinals() {
           </li>
           <li>
             How many teams win a trip depends on the total number of teams in all divisions.<br /> 
-            For the 2027 USAPL Nationals, FRUSAPL will ve sending 2 teams.
+            For the 2027 USAPL Nationals, FRUSAPL will be sending 2 teams.
           </li>
           <li>
             Double Play teams may enter whichever Nationals format they played during the
