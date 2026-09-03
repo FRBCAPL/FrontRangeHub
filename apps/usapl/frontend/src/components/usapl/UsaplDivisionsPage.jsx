@@ -8,6 +8,8 @@ import {
 } from '../../data/usaplDivisions.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
 import UsaplDivisionCard from './UsaplDivisionCard.jsx';
+import UsaplLeagueNumberGuide from './UsaplLeagueNumberGuide.jsx';
+import UsaplVegasWinnerTicker from './UsaplVegasWinnerTicker.jsx';
 
 function NightSections({ groups, night, titleFor }) {
   const visible = night === 'all' ? groups : groups.filter((group) => group.night === night);
@@ -52,13 +54,15 @@ export default function UsaplDivisionsPage() {
 
   return (
     <div className="usapl-page usapl-divisions-page">
-      <h1>Where we play</h1>
+      <h1>FRUSAPL Divisions</h1>
       <p className="usapl-lede">
         Pick a night that fits. Full teams, partial teams, and individuals looking for a
         home are all welcome.<br />
         {' '}
         <Link to="/usapl/past-divisions">Past divisions and winners</Link>
       </p>
+      <UsaplVegasWinnerTicker />
+      <UsaplLeagueNumberGuide />
       {groups.length > 1 ? (
         <div className="usapl-choice-row usapl-night-filters">
           <button

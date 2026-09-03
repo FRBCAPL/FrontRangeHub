@@ -18,10 +18,25 @@ export default function UsaplVegasCupJourney() {
         <p>The journey to Las Vegas starts in your division.</p>
         <ul>
           <li>Division winners earn a seeded spot in the Vegas Cup Tournament.</li>
-          <li>Double Play divisions send the 1st-place team from each format.</li>
-          <li>Win more than one division and you get a higher seed which may result in a possible bye(s) in the Vegas Cup Tournament.</li>
+          <li>Double Play divisions send the 1st-place team from each format — each format is its own division win.</li>
           <li>
-            Standings are available in the FargoRate app and on the{' '}
+            The more divisions you win, the higher you seed. Higher seeds may get a bye.{' '}
+            <button
+              type="button"
+              className="usapl-inline-link"
+              onClick={() => {
+                const card = document.getElementById('vegas-seeds');
+                const fold = card?.querySelector('details');
+                if (fold) fold.open = true;
+                card?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+            >
+              See current seeds
+            </button>
+          </li>
+          <li>
+            Standings are available in the FargoRate app and on the<br />
+            {' '}
             <Link to="/usapl/divisions">division stats page</Link>. See{' '}
             <Link to="/usapl/past-divisions">past division winners</Link>.
           </li>

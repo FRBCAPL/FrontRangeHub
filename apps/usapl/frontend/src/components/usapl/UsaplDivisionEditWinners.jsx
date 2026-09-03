@@ -44,6 +44,10 @@ export default function UsaplDivisionEditWinners({ form, setForm }) {
           </div>
         ) : null}
       </div>
+      <p className="usapl-meta">
+        Winning teams stay on Past divisions even if they are not eligible for Vegas Cup.
+        Mark inactive teams on the Vegas Cup seed board (signed in as admin).
+      </p>
     </>
   );
 }

@@ -10,7 +10,6 @@ import UsaplDivisionDetail from './UsaplDivisionDetail.jsx';
 import UsaplVegasCupPage from './UsaplVegasCupPage.jsx';
 import UsaplRulesPage from './UsaplRulesPage.jsx';
 import UsaplDuesPage from './UsaplDuesPage.jsx';
-import UsaplSinglesPage from './UsaplSinglesPage.jsx';
 import UsaplAdminInbox from './UsaplAdminInbox.jsx';
 import UsaplAdminDivisions from './UsaplAdminDivisions.jsx';
 import UsaplAdminLocations from './UsaplAdminLocations.jsx';
@@ -42,10 +41,10 @@ export default function UsaplApp({ canAdmin = false }) {
         <Route path="divisions" element={<UsaplDivisionsPage />} />
         <Route path="past-divisions" element={<UsaplPastDivisionsPage />} />
         <Route path="divisions/:divisionId" element={<UsaplDivisionDetail />} />
-        <Route path="vegas-cup" element={<UsaplVegasCupPage />} />
+        <Route path="vegas-cup" element={<UsaplVegasCupPage canAdmin={canAdmin} />} />
         <Route path="rules" element={<UsaplRulesPage />} />
         <Route path="dues" element={<UsaplDuesPage />} />
-        <Route path="singles" element={<UsaplSinglesPage />} />
+        <Route path="singles" element={<Navigate to="/usapl" replace />} />
         <Route
           path="admin"
           element={canAdmin ? <UsaplAdminInbox /> : <Navigate to="/usapl" replace />}

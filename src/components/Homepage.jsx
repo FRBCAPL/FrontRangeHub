@@ -117,12 +117,12 @@ const Homepage = ({ canRunTournament = false }) => {
   };
 
   const handleNavigateToUSAPool = () => {
-    window.open('https://frusapl.com', '_blank');
+    navigate('/usapl');
   };
 
-  const handleNavigateToNewUsaplSite = (e) => {
+  const handleNavigateToOldUsaplSite = (e) => {
     e?.stopPropagation?.();
-    navigate('/usapl');
+    window.open('https://frusapl.com', '_blank');
   };
 
   const handleNavigateToTournamentBracket = (e) => {
@@ -320,8 +320,8 @@ const Homepage = ({ canRunTournament = false }) => {
                 <h2>Front Range USA Pool League</h2>
                 <p>Sign up, standings, schedules, and dues — all in one place.</p>
                 <div className="usapool-entry-ctas" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" className="usapool-site-btn" onClick={handleNavigateToNewUsaplSite}>
-                    New website
+                  <button type="button" className="usapool-site-btn" onClick={handleNavigateToOldUsaplSite}>
+                    Old website
                   </button>
                 </div>
                 <div className="nav-card-features">
@@ -347,7 +347,7 @@ const Homepage = ({ canRunTournament = false }) => {
                   <img src={usaplNationalsLogo} alt="USAPL Nationals Logo" className="bottom-logo" />
                 </div>
               </div>
-              <div className="nav-card-arrow">↗</div>
+              <div className="nav-card-arrow">→</div>
             </div>
 
             {/* Ladder Card */}

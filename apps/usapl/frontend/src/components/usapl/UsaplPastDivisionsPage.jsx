@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { groupUsaplPastDivisions } from '../../data/usaplPastDivisions.js';
-import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
+import { useUsaplVegasSeedStats } from '../../hooks/useUsaplVegasSeedStats.js';
 import UsaplPastDivisionCard from './UsaplPastDivisionCard.jsx';
+import UsaplVegasWinnerTicker from './UsaplVegasWinnerTicker.jsx';
 
 export default function UsaplPastDivisionsPage() {
-  const { allDivisions, loading } = useUsaplDivisions();
+  const { allDivisions, loading, stats } = useUsaplVegasSeedStats();
   const [year, setYear] = useState('all');
   const groups = useMemo(() => groupUsaplPastDivisions(allDivisions), [allDivisions]);
   const visible = year === 'all' ? groups : groups.filter((group) => String(group.year) === year);
@@ -15,9 +16,10 @@ export default function UsaplPastDivisionsPage() {
     <div className="usapl-page usapl-divisions-page">
       <h1>Past divisions</h1>
       <p className="usapl-lede">
-        Finished sessions and the teams that won them. Division winners earn a seeded spot in
-        Vegas Cup.
+        Finished sessions and the teams that won them. Vegas Cup seeding is by division
+        wins — the more you win, the higher you seed.
       </p>
+      <UsaplVegasWinnerTicker />
       {groups.length > 1 ? (
         <div className="usapl-choice-row usapl-night-filters">
           <button
@@ -51,7 +53,7 @@ export default function UsaplPastDivisionsPage() {
           <h2 className="usapl-night-section-title">{group.label}</h2>
           <div className="usapl-night-grid">
             {group.divisions.map((division) => (
-              <UsaplPastDivisionCard key={division.id} division={division} />
+              <UsaplPastDivisionCard key={division.id} division={division} stats={stats} />
             ))}
           </div>
         </section>

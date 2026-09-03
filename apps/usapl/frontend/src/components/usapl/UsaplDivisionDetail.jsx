@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getUsaplDivision, usaplDivisionIsInHouse, usaplDivisionSignupOpen, usaplNightLabel } from '../../data/usaplDivisions.js';
 import { usaplFormatWithoutInHouse } from '../../data/usaplFormat.js';
 import { usaplDivisionIsPast } from '../../data/usaplPastDivisions.js';
-import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
+import { useUsaplVegasSeedStats } from '../../hooks/useUsaplVegasSeedStats.js';
 import UsaplDivisionFacts from './UsaplDivisionFacts.jsx';
 import UsaplDivisionWinners from './UsaplDivisionWinners.jsx';
 import UsaplInHouseTag from './UsaplInHouseTag.jsx';
@@ -12,7 +12,7 @@ import UsaplSchedulePic from './UsaplSchedulePic.jsx';
 
 export default function UsaplDivisionDetail() {
   const { divisionId } = useParams();
-  const { allDivisions, loading } = useUsaplDivisions();
+  const { allDivisions, loading, stats } = useUsaplVegasSeedStats();
   const division = getUsaplDivision(divisionId, allDivisions);
 
   if (loading && !division) {
@@ -55,7 +55,7 @@ export default function UsaplDivisionDetail() {
           <Link className="usapl-btn-secondary" to="/usapl/past-divisions">Past divisions</Link>
         ) : null}
       </div>
-      <UsaplDivisionWinners division={division} />
+      <UsaplDivisionWinners division={division} stats={stats} />
       <UsaplDivisionFacts division={division} />
       <UsaplPublicReport division={division} />
       <UsaplSchedulePic division={division} />

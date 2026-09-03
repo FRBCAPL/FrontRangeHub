@@ -108,7 +108,7 @@ export default function UsaplSignupPage() {
 
   if (done) {
     return (
-      <div className="usapl-page">
+      <div className="usapl-page usapl-signup-page">
         <div className="usapl-success">
           <h1>Signup received</h1>
           <p>Thanks. The league office will follow up. You can add or update a roster any time.</p>
@@ -122,7 +122,7 @@ export default function UsaplSignupPage() {
   }
 
   return (
-    <div className="usapl-page">
+    <div className="usapl-page usapl-signup-page">
       <h1>League signup</h1>
       <p className="usapl-lede">{kindHint}</p>
       <form className="usapl-form" onSubmit={handleSubmit} style={{ marginTop: 16 }}>

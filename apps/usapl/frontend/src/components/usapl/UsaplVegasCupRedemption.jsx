@@ -15,8 +15,9 @@ export default function UsaplVegasCupRedemption() {
           How many teams advance depends on the field size and how many teams are already seeded, to fill
           the first-round bracket.
         </li>
-        <li>Single elim or modified double elim, based on entries. Default format is 8-ball.</li>
-        <li>12 or more teams in a division may run their own Redemption.</li>
+        <li>Single elim or modified double elim, based on entries. 
+          Default format is 8-ball on the winner's side and 10-ball on the one loss side.</li>
+        <li>12 or more teams in a division may have their own Redemption.</li>
         <li>Fewer than 12 teams may combine with other divisions.</li>
       </ul>
     </UsaplVegasCupCard>

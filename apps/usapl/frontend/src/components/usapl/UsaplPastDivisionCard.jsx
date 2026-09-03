@@ -7,7 +7,7 @@ import { usaplFormatWithoutInHouse } from '../../data/usaplFormat.js';
 import UsaplDivisionWinners from './UsaplDivisionWinners.jsx';
 import UsaplInHouseTag from './UsaplInHouseTag.jsx';
 
-export default function UsaplPastDivisionCard({ division }) {
+export default function UsaplPastDivisionCard({ division, stats }) {
   const dates = formatUsaplSessionRange(division);
   const league = usaplDivisionLeagueNumbers(division);
   const hasWinner = usaplDivisionWinners(division).length > 0;
@@ -32,7 +32,7 @@ export default function UsaplPastDivisionCard({ division }) {
           ) : null}
         </p>
         {hasWinner ? (
-          <UsaplDivisionWinners division={division} />
+          <UsaplDivisionWinners division={division} stats={stats} />
         ) : (
           <p className="usapl-meta">Winner to be posted.</p>
         )}

@@ -12,10 +12,14 @@ export default function UsaplVegasCupFinals() {
       >
         <p>Division winners and Redemption winners play for the trip.</p>
         <ul>
-          <li>Modified double elimination. Default format is 8-ball unless noted.</li>
-          <li>Division winners are seeded.</li>
+          <li>Modified double elimination.<br /> 
+            Default format is 8-ball on the winner's side and 10-ball on the one loss side.</li>
           <li>
-            How many teams win a trip depends on the total number of teams in all divisions.
+            Division winners are seeded by how many divisions they won. More wins = higher seed.
+          </li>
+          <li>
+            How many teams win a trip depends on the total number of teams in all divisions.<br /> 
+            For the 2027 USAPL Nationals, FRUSAPL will ve sending 2 teams.
           </li>
           <li>
             Double Play teams may enter whichever Nationals format they played during the

@@ -3,6 +3,7 @@ import usaplNationalsLogo from '@frontend/assets/usapl_nationals_logo_color.png'
 import frontRangeLogo from '@frontend/assets/logo.png';
 import { USAPL_VEGAS_BANNER } from '../../data/usaplConstants.js';
 import UsaplRotateBanner from './UsaplRotateBanner.jsx';
+import UsaplVegasWinnerTicker from './UsaplVegasWinnerTicker.jsx';
 
 export default function UsaplVegasCupWelcome() {
   return (
@@ -11,14 +12,16 @@ export default function UsaplVegasCupWelcome() {
       <img className="usapl-hero-corner usapl-hero-corner-right" src={frontRangeLogo} alt="Front Range Pool" />
       <p className="usapl-kicker usapl-league-name">Front Range USA Pool League</p>
       <UsaplRotateBanner items={USAPL_VEGAS_BANNER} />
-      <h1 className="usapl-hero-title">Vegas Cup</h1>
       <div className="usapl-vegas-welcome-row">
         <img
           className="usapl-vegas-nationals"
           src={usaplNationalsLogo}
           alt=""
         />
-        <p className="usapl-vegas-welcome-kicker">Welcome to the Vegas Cup Tournament</p>
+        <div className="usapl-vegas-welcome-mid">
+          <h1 className="usapl-hero-title">Vegas Cup Division Winners</h1>
+          <UsaplVegasWinnerTicker />
+        </div>
         <img
           className="usapl-vegas-nationals"
           src={usaplNationalsLogo}

@@ -1,7 +1,15 @@
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAYS = {
+  1: 'Monday',
+  2: 'Tuesday',
+  3: 'Wednesday',
+  4: 'Thursday',
+  5: 'Friday',
+  6: 'Saturday',
+  7: 'Sunday',
+};
 
 export const USAPL_LEAGUE_NUMBER_HINT =
-  'Front Range numbers: which division that day (1=first), weekday (Wed=3), 8=8-ball / 0=10-ball, year (6=2026), session (1=first). Double play pairs look like 13861/13061.';
+  'Front Range numbers: which division that day (1=first), weekday (Wed=3, Sun=7), 8=8-ball / 0=10-ball, year (6=2026), session (1=first). Double play pairs look like 13861/13061.';
 
 function ordinal(n) {
   if (n === 1) return '1st';

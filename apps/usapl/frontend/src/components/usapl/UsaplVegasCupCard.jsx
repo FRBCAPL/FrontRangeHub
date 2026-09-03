@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function UsaplVegasCupCard({ title, when, wide = false, shout = false, children }) {
+export default function UsaplVegasCupCard({ id, title, when, wide = false, shout = false, children }) {
   const className = [
     'usapl-vegas-card',
     wide ? 'is-wide' : '',
@@ -8,7 +8,7 @@ export default function UsaplVegasCupCard({ title, when, wide = false, shout = f
   ].filter(Boolean).join(' ');
 
   return (
-    <article className={className}>
+    <article id={id} className={className}>
       {title ? <h2>{title}</h2> : null}
       {when ? <p className="usapl-vegas-when">{when}</p> : null}
       {children}

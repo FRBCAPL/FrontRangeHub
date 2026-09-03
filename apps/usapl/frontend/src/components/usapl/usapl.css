@@ -519,17 +519,82 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 8px 12px;
+  width: 100%;
   font-family: Georgia, Palatino, serif;
   font-size: clamp(1.8rem, 4vw, 2.4rem);
   color: var(--usapl-ink);
   line-height: 1.2;
+  text-align: center;
 }
 
-.usapl-divisions-page > h1 {
+.usapl-signup-page .usapl-choice-row {
   justify-content: center;
+}
+
+.usapl-divisions-page .usapl-vegas-ticker {
+  margin: 0 0 20px;
+  border-radius: 12px;
+}
+
+.usapl-number-guide {
+  margin: 0 0 18px;
+}
+
+.usapl-number-guide summary {
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-height: 0;
+  padding: 8px 0 12px;
   text-align: center;
-  width: 100%;
+}
+
+.usapl-number-guide summary::after {
+  content: none;
+  display: none;
+}
+
+.usapl-number-guide[open] .usapl-vegas-fold-action .is-show {
+  display: none;
+}
+
+.usapl-number-guide[open] .usapl-vegas-fold-action .is-hide {
+  display: inline;
+}
+
+.usapl-number-example-label {
+  margin: 12px 0 8px;
+  font-weight: 700;
+  color: var(--usapl-gold);
+}
+
+.usapl-number-parts {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.usapl-number-parts li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px;
+  color: var(--usapl-ink);
+}
+
+.usapl-number-parts span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.16);
+  color: var(--usapl-gold);
+  font-weight: 800;
 }
 
 
@@ -943,31 +1008,138 @@
   padding-bottom: 12px;
 }
 
-.usapl-vegas-welcome-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 20px;
-  width: 100%;
-  margin: 8px 0 0;
+.usapl-vegas-hero .usapl-league-name {
+  margin-bottom: 24px;
 }
 
-.usapl-vegas-welcome-kicker {
+.usapl-vegas-hero .usapl-rotate-banner {
+  margin-bottom: 28px;
+}
+
+.usapl-vegas-welcome-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 28px;
+  width: calc(100% + 192px);
+  margin: 0 -96px 0;
+}
+
+.usapl-vegas-welcome-mid {
   flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.usapl-vegas-hero .usapl-hero-title {
+  margin: 0 0 8px;
+}
+
+.usapl-vegas-welcome-row .usapl-vegas-ticker {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
-  text-align: center;
-  color: #5cff7e;
-  font-size: 1.15rem;
-  font-weight: 700;
+  border-radius: 12px;
+}
+
+.usapl-vegas-welcome-row .usapl-vegas-ticker-label {
+  display: none;
 }
 
 .usapl-vegas-nationals {
   flex: 0 0 auto;
   display: block;
   width: auto;
-  height: 96px;
+  height: 124px;
   margin: 0;
   object-fit: contain;
+}
+
+.usapl-vegas-ticker {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  margin: 8px 0 0;
+  border-top: 1px solid rgba(224, 179, 77, 0.35);
+  border-bottom: 1px solid rgba(224, 179, 77, 0.2);
+  background: linear-gradient(180deg, #1a0c12 0%, #2a1016 100%);
+  overflow: hidden;
+}
+
+.usapl-vegas-ticker-label {
+  flex: 0 0 auto;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: #14080c;
+  border-right: 1px solid var(--usapl-gold);
+  color: var(--usapl-gold);
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.usapl-vegas-ticker-label:hover {
+  color: #fff;
+}
+
+.usapl-vegas-ticker-window {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+
+.usapl-vegas-ticker-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  padding: 10px 0;
+  animation: usapl-vegas-ticker-scroll 32s linear infinite;
+}
+
+.usapl-vegas-ticker:hover .usapl-vegas-ticker-track {
+  animation-play-state: paused;
+}
+
+.usapl-vegas-ticker-item {
+  flex: 0 0 auto;
+  padding: 0 28px;
+  color: var(--usapl-ink);
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.usapl-vegas-ticker-item::after {
+  content: "•";
+  margin-left: 28px;
+  color: var(--usapl-gold);
+}
+
+@keyframes usapl-vegas-ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usapl-vegas-ticker-track {
+    animation: none;
+    flex-wrap: wrap;
+    width: auto;
+  }
+
+  .usapl-vegas-ticker-window {
+    mask-image: none;
+    overflow: auto;
+  }
 }
 
 .usapl-vegas-cards {
@@ -995,9 +1167,139 @@
   grid-column: 1 / -1;
 }
 
+.usapl-vegas-fold {
+  margin: 0;
+  border-bottom: none;
+}
+
+.usapl-vegas-card .usapl-vegas-fold summary {
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-height: 0;
+  padding: 2px 0 6px;
+  text-align: center;
+}
+
+.usapl-vegas-card .usapl-vegas-fold summary::after {
+  content: none;
+  display: none;
+}
+
+.usapl-vegas-fold-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.usapl-vegas-fold-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 1px solid var(--usapl-gold);
+  border-radius: 999px;
+  background: rgba(224, 179, 77, 0.12);
+  color: var(--usapl-gold);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.usapl-vegas-fold-action .is-hide {
+  display: none;
+}
+
+.usapl-vegas-fold[open] .usapl-vegas-fold-action .is-show {
+  display: none;
+}
+
+.usapl-vegas-fold[open] .usapl-vegas-fold-action .is-hide {
+  display: inline;
+}
+
+.usapl-vegas-card .usapl-vegas-fold .usapl-facts-body {
+  padding-top: 12px;
+}
+
 .usapl-vegas-card h2 {
   margin: 0 0 6px;
   text-align: center;
+}
+
+.usapl-seed-rules {
+  margin: 0 0 14px;
+  padding-left: 1.2rem;
+}
+
+.usapl-vegas-card .usapl-seed-rules li {
+  margin: 0 0 6px;
+}
+
+.usapl-seed-list {
+  margin: 4px 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.usapl-vegas-card .usapl-seed-list li {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(0, 1fr) auto;
+  gap: 10px 14px;
+  align-items: start;
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--usapl-line);
+}
+
+.usapl-vegas-card .usapl-seed-list li:last-child {
+  border-bottom: none;
+}
+
+.usapl-seed-place {
+  font-weight: 800;
+  color: var(--usapl-gold);
+}
+
+.usapl-seed-place.is-dq {
+  color: var(--usapl-muted);
+}
+
+.usapl-seed-dq {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0 0;
+  color: var(--usapl-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.usapl-seed-copy {
+  min-width: 0;
+}
+
+.usapl-seed-name {
+  font-weight: 700;
+}
+
+.usapl-seed-titles,
+.usapl-seed-wins {
+  margin: 4px 0 0;
+  color: var(--usapl-muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.usapl-seed-pending-title {
+  margin: 18px 0 8px;
+  text-align: left;
+  font-size: 1.05rem;
+}
+
+.usapl-seed-pending {
+  margin: 0 0 12px;
+  padding-left: 1.15rem;
 }
 
 .usapl-vegas-card p,
@@ -1006,6 +1308,23 @@
   font-size: 1.02rem;
   line-height: 1.55;
   color: var(--usapl-ink);
+}
+
+#vegas-seeds {
+  scroll-margin-top: 12px;
+}
+
+.usapl-inline-link {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--usapl-gold);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .usapl-vegas-card ul {
@@ -1077,6 +1396,11 @@
 }
 
 @media (max-width: 800px) {
+  .usapl-vegas-welcome-row {
+    width: calc(100% + 128px);
+    margin: 0 -64px 0;
+  }
+
   .usapl-vegas-cards {
     grid-template-columns: 1fr;
     width: min(920px, calc(100% - 28px));
@@ -1084,11 +1408,12 @@
 }
 
 @media (max-width: 640px) {
-  .usapl-vegas-nationals {
-    height: 56px;
+  .usapl-vegas-welcome-row {
+    width: 100%;
+    margin: 0;
   }
 
-  .usapl-vegas-welcome-kicker {
-    font-size: 0.95rem;
+  .usapl-vegas-nationals {
+    height: 72px;
   }
 }
