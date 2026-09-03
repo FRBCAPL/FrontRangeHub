@@ -6,3 +6,6 @@
 /arcade/leaderboard-tv/   /arcade-tv/index.html       200
 /dues-tracker         /dues-tracker/index.html        200
 /dues-tracker/        /dues-tracker/index.html        200
+/usapl                /index.html                     200
+/usapl/               /index.html                     200
+/usapl/*              /index.html                     200
