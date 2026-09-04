@@ -1012,6 +1012,14 @@
   border-bottom: 1px solid rgba(226, 59, 74, 0.2);
   color: var(--usapl-ink);
   text-align: center;
+  cursor: default;
+}
+
+.usapl-champs,
+.usapl-champs-photo,
+.usapl-champs-photo img,
+.usapl-champs-copy {
+  cursor: default;
 }
 
 .usapl-band-vegas h2,
@@ -1027,6 +1035,7 @@
 .usapl-band-vegas .usapl-btn {
   background: var(--usapl-red-deep);
   color: #fff;
+  cursor: pointer;
 }
 
 .usapl-split {
@@ -1137,21 +1146,35 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
+  z-index: 1;
   min-height: 100%;
   padding: 16px 16px 14px;
   border-radius: 16px;
   border: 1px solid var(--usapl-line);
   background: rgba(0, 0, 0, 0.22);
-  text-align: left;
+  text-align: center;
 }
 
 .usapl-night-card h2 {
   margin: 0 0 6px;
+  display: block;
+  width: 100%;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.usapl-night-pills {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 8px 10px;
-  font-size: 1.2rem;
+  gap: 8px;
+  margin: 4px 0 10px;
+}
+
+.usapl-night-pills .usapl-signup-pill {
+  margin: 0;
 }
 
 .usapl-signup-pill {
@@ -1189,6 +1212,10 @@
 
 .usapl-night-copy {
   min-width: 0;
+  text-align: center;
+}
+
+.usapl-night-row .usapl-night-copy {
   text-align: left;
 }
 
@@ -1217,9 +1244,73 @@
   line-height: 1.2;
 }
 
+.usapl-travel-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #7eb8ff;
+  background: rgba(126, 184, 255, 0.16);
+  color: #9cc9ff;
+  font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.usapl-tip-wrap {
+  position: relative;
+  cursor: help;
+}
+
+.usapl-tip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  z-index: 4;
+  width: max-content;
+  max-width: 16rem;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--usapl-line);
+  background: #161218;
+  color: var(--usapl-ink);
+  font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.usapl-tip-wrap:hover .usapl-tip,
+.usapl-tip-wrap:focus-visible .usapl-tip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.usapl-night-card:has(.usapl-tip-wrap:hover),
+.usapl-night-card:has(.usapl-tip-wrap:focus-visible) {
+  z-index: 2;
+}
+
 .usapl-night-copy .usapl-meta {
   margin: 0;
+  text-align: center;
+}
+
+.usapl-night-row .usapl-night-copy .usapl-meta {
   text-align: left;
+}
+
+.usapl-night-card .usapl-actions {
+  justify-content: center;
 }
 
 .usapl-contact-line a {

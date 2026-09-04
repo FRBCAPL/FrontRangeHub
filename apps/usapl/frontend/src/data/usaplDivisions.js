@@ -164,6 +164,12 @@ export function usaplDivisionIsInHouse(division) {
   return Boolean(division.inHouse) || usaplFormatIsInHouse(division.format);
 }
 
+export function usaplDivisionIsTravel(division) {
+  if (!division || usaplDivisionIsInHouse(division)) return false;
+  if (division.playAnywhere) return true;
+  return /any location/i.test(String(division.locationNote || ''));
+}
+
 export function usaplDivisionSignupOpen(division) {
   return division?.signupOpen === true;
 }
@@ -284,16 +290,13 @@ export function emptyUsaplDivision(sortOrder = 60) {
 export function usaplDivisionSummaryLines(division) {
   if (!division) return [];
   const nightFormat = [
-    usaplDivisionIsInHouse(division) ? 'In-house' : '',
     usaplNightLabel(division.night),
     usaplFormatWithoutInHouse(division.format),
   ].filter(Boolean).join(' · ');
   const numbers = String(division.leagueNumbers || '').trim();
-  const location = String(division.locationNote || '').trim() || division.shortName || '';
-  const dues = division.duesPerPlayer != null && division.duesPerPlayer !== ''
-    ? `$${division.duesPerPlayer}/player per match`
-    : '';
-  const cap = division.combinedFargoCap ? `${division.combinedFargoCap} combined cap` : '';
-  const money = [dues, cap].filter(Boolean).join(' · ');
-  return [numbers ? `Div. ${numbers}` : '', nightFormat, location, money].filter(Boolean);
+  const location = String(division.locationNote || '').trim();
+  const hideLocation = usaplDivisionIsInHouse(division)
+    || usaplDivisionIsTravel(division)
+    || location.toLowerCase() === String(division.shortName || '').trim().toLowerCase();
+  return [numbers ? `Div. ${numbers}` : '', nightFormat, hideLocation ? '' : location].filter(Boolean);
 }
