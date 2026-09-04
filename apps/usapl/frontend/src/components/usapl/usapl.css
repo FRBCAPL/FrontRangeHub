@@ -710,24 +710,41 @@
   justify-content: center;
 }
 
+.usapl-signup-page:has(.usapl-signup-backdrop) {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
 .usapl-signup-backdrop {
   z-index: 50;
+  top: 72px;
+  align-items: center;
+  padding: 10px 12px 12px;
+  overflow: hidden;
 }
 
 .usapl-signup-modal {
+  display: flex;
+  flex-direction: column;
   width: min(720px, 100%);
+  max-height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 12px 16px 10px;
+  overflow: hidden;
 }
 
 .usapl-signup-modal h2 {
-  margin: 0 0 14px;
+  margin: 0 0 8px;
   font-family: Georgia, Palatino, serif;
-  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-size: clamp(1.2rem, 2.6vw, 1.55rem);
   color: var(--usapl-ink);
   line-height: 1.25;
 }
 
 .usapl-signup-phase {
-  margin: 0 0 6px;
+  margin: 0 0 2px;
   color: var(--usapl-gold);
   font-size: 0.78rem;
   font-weight: 800;
@@ -736,9 +753,56 @@
 }
 
 .usapl-signup-modal .usapl-lede {
-  margin: 2px 0 0;
+  margin: 0;
   max-width: none;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
+}
+
+.usapl-signup-modal .usapl-meta {
+  margin: 0 0 6px;
+}
+
+.usapl-signup-modal .usapl-stepper {
+  margin: 0 0 8px;
+}
+
+.usapl-signup-modal .usapl-roster-summary {
+  margin: 0 0 8px;
+}
+
+.usapl-signup-modal .usapl-form {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  gap: 10px;
+  align-content: start;
+}
+
+.usapl-signup-modal .usapl-player-card {
+  padding: 10px 12px;
+}
+
+.usapl-signup-modal .usapl-player-card h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.usapl-signup-modal .usapl-player-grid {
+  gap: 8px 10px;
+}
+
+.usapl-signup-modal .usapl-field {
+  gap: 3px;
+}
+
+.usapl-signup-modal .usapl-field label {
+  font-size: 0.82rem;
+}
+
+.usapl-signup-modal .usapl-field input,
+.usapl-signup-modal .usapl-field select,
+.usapl-signup-modal .usapl-choice {
+  min-height: 38px;
 }
 
 .usapl-signup-kinds {
@@ -825,6 +889,16 @@
 .usapl-signup-actions {
   justify-content: space-between;
   width: 100%;
+}
+
+.usapl-signup-modal .usapl-signup-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 4px;
+  padding-top: 10px;
+  background: #151218;
+  box-shadow: 0 -10px 12px #151218;
 }
 
 .usapl-divisions-page .usapl-vegas-ticker {
@@ -1327,6 +1401,11 @@
   .usapl-page {
     width: calc(100% - 28px);
     padding-top: 20px;
+  }
+
+  .usapl-signup-backdrop {
+    top: 64px;
+    padding: 8px;
   }
 
   .usapl-hero-welcome {

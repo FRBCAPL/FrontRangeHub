@@ -4,16 +4,27 @@ import { USAPL_CONTACT } from '../../data/usaplConstants.js';
 import { playersFromDuezyTeam } from '../../data/usaplDuezyNames.js';
 import {
   USAPL_ROSTER_MAX_EXTRA,
-  USAPL_ROSTER_STEPS,
+  usaplNeedsCaptainLogin,
   usaplRosterFirstError,
   usaplRosterInitialMode,
   usaplRosterPlayerTitle,
   usaplRosterStepError,
+  usaplRosterSteps,
 } from '../../data/usaplRosterSteps.js';
+import { usaplIsRosterAdmin } from '../../data/usaplAdmins.js';
+import { useUsaplCaptainSession } from '../../hooks/useUsaplCaptainSession.js';
 import { useUsaplDuezyTeams } from '../../hooks/useUsaplDuezyTeams.js';
+import {
+  requestUsaplCaptainAccess,
+  signOutUsaplCaptain,
+  usaplCanEditTeam,
+  usaplClaimForTeam,
+} from '../../services/usaplCaptainClaims.js';
 import { emptyPlayer, playerHasData, submitUsaplRoster } from '../../services/usaplSubmissions.js';
 import UsaplRosterActions from './UsaplRosterActions.jsx';
+import UsaplRosterAuthStep from './UsaplRosterAuthStep.jsx';
 import UsaplRosterCaptainStep from './UsaplRosterCaptainStep.jsx';
+import UsaplRosterClaimStep from './UsaplRosterClaimStep.jsx';
 import UsaplRosterModeStep from './UsaplRosterModeStep.jsx';
 import UsaplRosterTeamStep from './UsaplRosterTeamStep.jsx';
 import UsaplSignupRosterPlayerStep from './UsaplSignupRosterPlayerStep.jsx';
@@ -21,6 +32,7 @@ import UsaplSignupRosterPlayerStep from './UsaplSignupRosterPlayerStep.jsx';
 export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDone }) {
   const navigate = useNavigate();
   const { teams, loading: teamsLoading } = useUsaplDuezyTeams();
+  const { user, claims, reload: reloadCaptain } = useUsaplCaptainSession();
   const [step, setStep] = useState(0);
   const [mode, setMode] = useState(usaplRosterInitialMode(initialMode));
   const [teamPick, setTeamPick] = useState('');
@@ -33,26 +45,50 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
   const [honeypot, setHoneypot] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [prefilled, setPrefilled] = useState(false);
 
-  const current = USAPL_ROSTER_STEPS[step];
-  const lastMainStep = step === USAPL_ROSTER_STEPS.length - 1;
+  const gated = usaplNeedsCaptainLogin(mode);
+  const signedIn = Boolean(user);
+  const isOffice = usaplIsRosterAdmin(user?.email);
+  const listedTeam = Boolean(teamPick && teamPick !== 'Other');
+  const resolvedTeamName = mode === 'new'
+    ? (teamNameUnknown ? 'Unknown' : teamName)
+    : (teamPick === 'Other' ? otherName : teamPick);
+  const teamReady = Boolean(String(resolvedTeamName || '').trim());
+  const canEdit = !gated || isOffice || usaplCanEditTeam(claims, resolvedTeamName);
+  const claim = usaplClaimForTeam(claims, resolvedTeamName);
+  const steps = useMemo(
+    () => usaplRosterSteps({ mode, signedIn, teamReady, canEdit }),
+    [mode, signedIn, teamReady, canEdit]
+  );
+  const current = steps[Math.min(step, steps.length - 1)] || steps[0];
+  const lastMainStep = step >= steps.length - 1;
   const inRoster = rosterSlot >= 0;
   const rosterPlayer = players[rosterSlot] || emptyPlayer();
   const canAddAnother = players.length < USAPL_ROSTER_MAX_EXTRA;
   const hasNextPlayer = inRoster && rosterSlot < players.length - 1;
   const rosterCount = players.length + 1;
   const playerTitle = usaplRosterPlayerTitle(mode, rosterSlot);
-  const listedTeam = Boolean(teamPick && teamPick !== 'Other');
-  const showPlayerCount = Boolean(teamPick)
-    || (mode === 'new' && (teamNameUnknown || Boolean(teamName.trim())) && (step > 1 || inRoster));
-  const resolvedTeamName = mode === 'new'
-    ? (teamNameUnknown ? 'Unknown' : teamName)
-    : (teamPick === 'Other' ? otherName : teamPick);
   const displayTeamName = mode === 'new' && teamNameUnknown
     ? "Don't know yet"
     : resolvedTeamName;
-  const validationCtx = { teamName: resolvedTeamName, teamNameUnknown, captain };
+  const showPlayerCount = Boolean(
+    (listedTeam && canEdit)
+    || (mode === 'new' && (teamNameUnknown || Boolean(teamName.trim())) && (step > 1 || inRoster))
+  );
+  const validationCtx = {
+    teamName: resolvedTeamName,
+    teamNameUnknown,
+    captain,
+    signedIn,
+    canEdit,
+  };
   const teamNames = useMemo(() => teams.map((team) => team.teamName), [teams]);
+  const hidePrimary = current.id === 'auth' || current.id === 'claim';
+
+  useEffect(() => {
+    if (step > steps.length - 1) setStep(steps.length - 1);
+  }, [step, steps.length]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -67,13 +103,25 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
     };
   }, [navigate]);
 
+  useEffect(() => {
+    if (current.id !== 'claim' || claim?.status !== 'pending') return undefined;
+    const timer = window.setInterval(() => { reloadCaptain(); }, 8000);
+    return () => window.clearInterval(timer);
+  }, [current.id, claim?.status, reloadCaptain]);
+
   const applyListedTeam = (name) => {
     const listed = teams.find((team) => team.teamName === name);
     if (!listed) return;
     const next = playersFromDuezyTeam(listed, emptyPlayer);
     setCaptain(next.captain);
     setPlayers(mode === 'add' ? [] : next.extras);
+    setPrefilled(true);
   };
+
+  useEffect(() => {
+    if (!listedTeam || !canEdit || prefilled) return;
+    applyListedTeam(teamPick);
+  }, [listedTeam, canEdit, prefilled, teamPick, teams, mode]);
 
   const chooseMode = (nextMode) => {
     setMode(nextMode);
@@ -84,25 +132,23 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
     setCaptain(emptyPlayer());
     setPlayers([]);
     setRosterSlot(-1);
+    setPrefilled(false);
   };
 
   const chooseTeam = (value) => {
     setTeamPick(value);
     setError('');
-    if (!value || value === 'Other') {
-      setOtherName('');
-      setCaptain(emptyPlayer());
-      setPlayers([]);
-      return;
-    }
-    applyListedTeam(value);
+    setPrefilled(false);
+    setCaptain(emptyPlayer());
+    setPlayers([]);
+    if (!value || value === 'Other') setOtherName('');
   };
 
   const goToStep = (index) => {
     if (index === step && rosterSlot < 0) return;
     if (index > step) {
       for (let i = step; i < index; i += 1) {
-        const message = usaplRosterStepError(USAPL_ROSTER_STEPS[i].id, validationCtx);
+        const message = usaplRosterStepError(steps[i].id, validationCtx);
         if (message) {
           setError(message);
           setStep(i);
@@ -123,11 +169,11 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
       return;
     }
     setError('');
-    setStep((currentStep) => Math.min(currentStep + 1, USAPL_ROSTER_STEPS.length - 1));
+    setStep((currentStep) => Math.min(currentStep + 1, steps.length - 1));
   };
 
   const saveRoster = async () => {
-    const first = usaplRosterFirstError(validationCtx);
+    const first = usaplRosterFirstError(steps, validationCtx);
     if (first) {
       setError(first.message);
       setRosterSlot(-1);
@@ -163,6 +209,19 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
     }
   };
 
+  const requestAccess = async () => {
+    setSubmitting(true);
+    setError('');
+    try {
+      await requestUsaplCaptainAccess(resolvedTeamName);
+      await reloadCaptain();
+    } catch (err) {
+      setError(err?.message || 'Could not send that request.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const startRoster = () => {
     setPlayers((prev) => (prev.length ? prev : [emptyPlayer()]));
     setRosterSlot(0);
@@ -190,7 +249,7 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (honeypot) return;
+    if (honeypot || hidePrimary) return;
     if (inRoster) {
       if (hasNextPlayer) {
         setError('');
@@ -216,6 +275,7 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
     mode,
     playersLength: players.length,
     submitting,
+    hidePrimary,
     onBack: () => {
       setError('');
       if (inRoster) {
@@ -240,15 +300,24 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
         <p className="usapl-signup-phase">
           {inRoster
             ? `${playerTitle} · ${rosterSlot + 2} of ${rosterCount}`
-            : `Step ${step + 1} of ${USAPL_ROSTER_STEPS.length}`}
+            : `Step ${step + 1} of ${steps.length}`}
         </p>
         <h2 id="usapl-roster-title">
           {inRoster
             ? `${mode === 'update' ? 'Review' : 'Add'} ${playerTitle.toLowerCase()}`
             : current.title}
         </h2>
+        {gated && user ? (
+          <p className="usapl-meta">
+            {isOffice ? 'Office login' : 'Signed in as'} {user.email}
+            {' · '}
+            <button className="usapl-inline-link" type="button" onClick={() => signOutUsaplCaptain()}>
+              Sign out
+            </button>
+          </p>
+        ) : null}
         <ol className="usapl-stepper">
-          {USAPL_ROSTER_STEPS.map((item, index) => (
+          {steps.map((item, index) => (
             <li
               key={item.id}
               className={`usapl-step${index === step ? ' is-active' : ''}${index < step || inRoster ? ' is-done' : ''}`}
@@ -278,6 +347,10 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
             <UsaplRosterModeStep mode={mode} onChange={chooseMode} />
           ) : null}
 
+          {current.id === 'auth' && !inRoster ? (
+            <UsaplRosterAuthStep user={user} />
+          ) : null}
+
           {current.id === 'team' && !inRoster ? (
             <UsaplRosterTeamStep
               mode={mode}
@@ -291,6 +364,16 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
               onOtherName={setOtherName}
               teamNames={teamNames}
               loading={teamsLoading}
+              gated={gated && !isOffice}
+            />
+          ) : null}
+
+          {current.id === 'claim' && !inRoster ? (
+            <UsaplRosterClaimStep
+              teamName={resolvedTeamName.trim()}
+              claim={claim}
+              submitting={submitting}
+              onRequest={requestAccess}
             />
           ) : null}
 
@@ -298,7 +381,7 @@ export default function UsaplRosterWizard({ initialMode, initialDivisionId, onDo
             <UsaplRosterCaptainStep
               captain={captain}
               onChange={setCaptain}
-              listedTeam={listedTeam}
+              listedTeam={listedTeam && canEdit}
             />
           ) : null}
 

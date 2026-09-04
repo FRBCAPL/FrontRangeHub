@@ -12,6 +12,7 @@ export default function UsaplRosterTeamStep({
   onOtherName,
   teamNames,
   loading,
+  gated = false,
 }) {
   if (mode === 'new') {
     return (
@@ -75,7 +76,11 @@ export default function UsaplRosterTeamStep({
         </div>
       ) : null}
       {listed ? (
-        <p className="usapl-note">Names on the next steps are filled in so you can change them.</p>
+        <p className="usapl-note">
+          {gated
+            ? 'The office has to approve you as captain the first time. After that, this login can edit this team.'
+            : 'Names on the next steps are filled in so you can change them.'}
+        </p>
       ) : null}
     </>
   );

@@ -1,15 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { listUsaplRosters, listUsaplSignups, updateUsaplRosterStatus, updateUsaplSignupStatus } from '../../services/usaplSubmissions.js';
-import { usaplPreferredContactLabel } from '../../data/usaplContact.js';
-import { usaplRosterModeLabel } from '../../data/usaplRosterSteps.js';
+import { listUsaplRosters, listUsaplSignups, updateUsaplSignupStatus } from '../../services/usaplSubmissions.js';
+import { usaplPersonName, usaplPreferredContactLabel } from '../../data/usaplContact.js';
 import { labelUsaplDivisions } from '../../data/usaplDivisionIds.js';
+import { USAPL_SIGNUP_STATUS, usaplRosterSavedInDuezy } from '../../data/usaplInboxStatus.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
+import UsaplAdminCaptains from './UsaplAdminCaptains.jsx';
 import UsaplAdminSubnav from './UsaplAdminSubnav.jsx';
-
-function personName(player) {
-  if (!player) return '';
-  return [player.firstName, player.lastName].filter(Boolean).join(' ');
-}
+import UsaplInboxRosterCard from './UsaplInboxRosterCard.jsx';
+import UsaplInboxSavedRosters from './UsaplInboxSavedRosters.jsx';
+import UsaplInboxStatus from './UsaplInboxStatus.jsx';
 
 export default function UsaplAdminInbox() {
   const { divisions } = useUsaplDivisions();
@@ -18,6 +17,8 @@ export default function UsaplAdminInbox() {
   const [rosters, setRosters] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const pendingRosters = rosters.filter((row) => !usaplRosterSavedInDuezy(row.status));
+  const savedRosters = rosters.filter((row) => usaplRosterSavedInDuezy(row.status));
 
   const load = async () => {
     setLoading(true);
@@ -41,24 +42,30 @@ export default function UsaplAdminInbox() {
     <div className="usapl-page">
       <UsaplAdminSubnav />
       <h1>League inbox</h1>
-      <p className="usapl-lede">New signups and roster sheets. Contact details are operator-only.</p>
+      <p className="usapl-lede">New signups, roster sheets, and captain access requests. Contact details are operator-only.</p>
       <div className="usapl-choice-row" style={{ margin: '16px 0' }}>
         <button type="button" className={`usapl-choice ${tab === 'signups' ? 'selected' : ''}`} onClick={() => setTab('signups')}>
           Signups ({signups.length})
         </button>
         <button type="button" className={`usapl-choice ${tab === 'rosters' ? 'selected' : ''}`} onClick={() => setTab('rosters')}>
-          Rosters ({rosters.length})
+          Rosters ({pendingRosters.length})
+        </button>
+        <button type="button" className={`usapl-choice ${tab === 'saved' ? 'selected' : ''}`} onClick={() => setTab('saved')}>
+          Saved in Duezy ({savedRosters.length})
+        </button>
+        <button type="button" className={`usapl-choice ${tab === 'captains' ? 'selected' : ''}`} onClick={() => setTab('captains')}>
+          Captains
         </button>
       </div>
-      {loading ? <p>Loading…</p> : null}
+      {loading && tab !== 'captains' ? <p>Loading…</p> : null}
       {error ? <div className="usapl-error">{error}</div> : null}
 
       {tab === 'signups' ? signups.map((row) => (
         <section className="usapl-card" key={row.id} style={{ marginBottom: 12 }}>
-          <h2>{row.team_name || personName(row.captain) || 'Signup'}</h2>
+          <h2>{row.team_name || usaplPersonName(row.captain) || 'Signup'}</h2>
           <p>{row.kind} · {labelUsaplDivisions(row.division_id, divisions) || 'no division'} · {row.location}</p>
           <p className="usapl-meta">
-            {personName(row.captain)}
+            {usaplPersonName(row.captain)}
             {row.kind === 'full_team' && row.captain?.isCaptain ? ' · Captain' : ''}
             {' · '}
             {row.captain?.email} · {row.captain?.phone}
@@ -67,53 +74,33 @@ export default function UsaplAdminInbox() {
               : ''}
           </p>
           <p className="usapl-meta">{row.created_at ? new Date(row.created_at).toLocaleString() : ''}</p>
-          <div className="usapl-field" style={{ maxWidth: 220, marginTop: 8 }}>
-            <label>Status</label>
-            <select
-              value={row.status || 'new'}
-              onChange={(e) => updateUsaplSignupStatus(row.id, e.target.value).then(load)}
-            >
-              <option value="new">New</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="placed">Placed</option>
-            </select>
-          </div>
+          <UsaplInboxStatus
+            label="Your tracking"
+            hint="For your inbox only. This does not change Duezy."
+            value={row.status || 'new'}
+            options={USAPL_SIGNUP_STATUS}
+            onChange={(status) => updateUsaplSignupStatus(row.id, status).then(load)}
+          />
         </section>
       )) : null}
 
-      {tab === 'rosters' ? rosters.map((row) => (
-        <section className="usapl-card" key={row.id} style={{ marginBottom: 12 }}>
-          <h2>{row.team_name}</h2>
-          <p>{usaplRosterModeLabel(row.mode)} · {labelUsaplDivisions(row.division_id, divisions) || 'no division'}</p>
-          <p>
-            Captain: {personName(row.captain)} · {row.captain?.email} · {row.captain?.phone}
-            {row.captain?.preferredContact
-              ? ` · Prefers ${usaplPreferredContactLabel(row.captain.preferredContact)}`
-              : ''}
-          </p>
-          <ul>
-            {(row.players || []).map((player, index) => (
-              <li key={`${row.id}-${index}`}>
-                {personName(player)} {player.email ? `· ${player.email}` : ''} {player.phone ? `· ${player.phone}` : ''}
-              </li>
-            ))}
-          </ul>
-          <div className="usapl-field" style={{ maxWidth: 220, marginTop: 8 }}>
-            <label>Status</label>
-            <select
-              value={row.status || 'new'}
-              onChange={(e) => updateUsaplRosterStatus(row.id, e.target.value).then(load)}
-            >
-              <option value="new">New</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="filed">Filed</option>
-            </select>
-          </div>
-        </section>
+      {tab === 'rosters' ? pendingRosters.map((row) => (
+        <UsaplInboxRosterCard
+          key={row.id}
+          row={row}
+          divisions={divisions}
+          onReload={load}
+        />
       )) : null}
+
+      {tab === 'saved' ? (
+        <UsaplInboxSavedRosters rows={savedRosters} divisions={divisions} />
+      ) : null}
+
+      {tab === 'captains' ? <UsaplAdminCaptains /> : null}
 
       {!loading && tab === 'signups' && !signups.length ? <p>No signups yet.</p> : null}
-      {!loading && tab === 'rosters' && !rosters.length ? <p>No rosters yet.</p> : null}
+      {!loading && tab === 'rosters' && !pendingRosters.length ? <p>No roster edits waiting.</p> : null}
     </div>
   );
 }

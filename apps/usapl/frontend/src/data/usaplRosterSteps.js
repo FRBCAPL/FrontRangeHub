@@ -11,21 +11,39 @@ export const USAPL_ROSTER_MODES = [
     id: 'update',
     label: 'Update a roster',
     range: 'Current team',
-    hint: 'Change names on a team that is already playing.',
+    hint: 'Change names on a team that is already playing. Captains sign in once.',
   },
   {
     id: 'add',
     label: 'Add a player',
     range: 'One new player',
-    hint: 'Add someone to a team that already has a roster.',
+    hint: 'Add someone to a team that already has a roster. Captains sign in once.',
   },
 ];
 
-export const USAPL_ROSTER_STEPS = [
-  { id: 'mode', label: 'Type', title: 'What do you need?' },
-  { id: 'team', label: 'Team', title: 'Team name' },
-  { id: 'captain', label: 'Captain', title: 'Captain info' },
-];
+const STEP = {
+  mode: { id: 'mode', label: 'Type', title: 'What do you need?' },
+  auth: { id: 'auth', label: 'Sign in', title: 'Captain login' },
+  team: { id: 'team', label: 'Team', title: 'Team name' },
+  claim: { id: 'claim', label: 'Access', title: 'Captain access' },
+  captain: { id: 'captain', label: 'Captain', title: 'Captain info' },
+};
+
+export function usaplNeedsCaptainLogin(mode) {
+  return mode === 'update' || mode === 'add';
+}
+
+export function usaplRosterSteps({ mode, signedIn, teamReady, canEdit }) {
+  const steps = [STEP.mode];
+  const gated = usaplNeedsCaptainLogin(mode);
+  if (gated && !signedIn) steps.push(STEP.auth);
+  steps.push(STEP.team);
+  if (gated && signedIn && teamReady && !canEdit) steps.push(STEP.claim);
+  steps.push(STEP.captain);
+  return steps;
+}
+
+export const USAPL_ROSTER_STEPS = [STEP.mode, STEP.team, STEP.captain];
 
 export const USAPL_ROSTER_MAX_EXTRA = 40;
 
@@ -45,15 +63,18 @@ export function usaplRosterModeMeta(mode) {
   return USAPL_ROSTER_MODES.find((item) => item.id === mode) || USAPL_ROSTER_MODES[0];
 }
 
-export function usaplRosterStepError(stepId, { teamName, teamNameUnknown, captain }) {
+export function usaplRosterStepError(stepId, { teamName, teamNameUnknown, captain, signedIn, canEdit }) {
+  if (stepId === 'auth' && !signedIn) return 'Please sign in or create a login.';
   if (stepId === 'team' && !teamNameUnknown && !String(teamName || '').trim()) return 'Please enter a team name.';
+  if (stepId === 'claim' && !canEdit) return 'The office has to approve you as captain before you can edit this team.';
   if (stepId === 'captain') return usaplContactError(captain);
   return '';
 }
 
-export function usaplRosterFirstError(ctx) {
-  for (let index = 0; index < USAPL_ROSTER_STEPS.length; index += 1) {
-    const message = usaplRosterStepError(USAPL_ROSTER_STEPS[index].id, ctx);
+export function usaplRosterFirstError(steps, ctx) {
+  const list = steps || USAPL_ROSTER_STEPS;
+  for (let index = 0; index < list.length; index += 1) {
+    const message = usaplRosterStepError(list[index].id, ctx);
     if (message) return { index, message };
   }
   return null;

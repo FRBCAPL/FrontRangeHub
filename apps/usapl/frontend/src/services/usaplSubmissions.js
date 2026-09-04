@@ -17,7 +17,7 @@ export async function submitUsaplSignup(payload) {
 }
 
 function dbRosterMode(mode) {
-  if (mode === 'new') return 'full';
+  if (mode === 'new') return 'new';
   if (mode === 'add') return 'add';
   if (mode === 'update') return 'update';
   return 'full';
@@ -33,7 +33,7 @@ async function insertUsaplRoster(payload) {
 export async function submitUsaplRoster(payload) {
   const row = { ...payload, mode: dbRosterMode(payload.mode) };
   let error = await insertUsaplRoster(row);
-  if (error && row.mode === 'update') {
+  if (error && row.mode === 'new' && /mode|check/i.test(error.message || '')) {
     error = await insertUsaplRoster({ ...row, mode: 'full' });
   }
   if (error) throw error;

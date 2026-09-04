@@ -9,6 +9,7 @@ export default function UsaplRosterActions({
   mode,
   playersLength,
   submitting,
+  hidePrimary,
   onBack,
   onCancel,
   onAddAnother,
@@ -37,7 +38,7 @@ export default function UsaplRosterActions({
             {submitting ? 'Sending…' : 'Submit roster'}
           </button>
         )
-      ) : lastMainStep && mode === 'new' ? (
+      ) : hidePrimary ? null : lastMainStep && mode === 'new' ? (
         <>
           <button className="usapl-btn-secondary" type="button" onClick={onSave} disabled={submitting}>
             {submitting ? 'Sending…' : 'Submit roster'}

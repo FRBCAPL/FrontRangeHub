@@ -4,6 +4,11 @@ export const USAPL_CONTACT_METHODS = [
   { id: 'text', label: 'Text' },
 ];
 
+export function usaplPersonName(player) {
+  if (!player) return '';
+  return [player.firstName, player.middleInitial, player.lastName].filter(Boolean).join(' ');
+}
+
 export function usaplPreferredContactLabel(id) {
   return USAPL_CONTACT_METHODS.find((item) => item.id === id)?.label || '';
 }
