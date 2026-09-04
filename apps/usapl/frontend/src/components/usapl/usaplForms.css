@@ -88,6 +88,11 @@
   background: rgba(224, 179, 77, 0.12);
 }
 
+.usapl-signup-modal .usapl-check-item.is-checked {
+  border-color: var(--usapl-green);
+  background: rgba(61, 207, 110, 0.12);
+}
+
 .usapl-check-item input[type="checkbox"] {
   flex: 0 0 auto;
   width: 20px;
@@ -95,6 +100,10 @@
   min-height: 20px;
   margin: 2px 0 0;
   accent-color: var(--usapl-red);
+}
+
+.usapl-signup-modal .usapl-check-item input[type="checkbox"] {
+  accent-color: var(--usapl-green);
 }
 
 .usapl-check-item span {

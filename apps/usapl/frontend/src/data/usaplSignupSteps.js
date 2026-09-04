@@ -23,9 +23,11 @@ export const USAPL_SIGNUP_STEPS = [
   { id: 'kind', label: 'Join as', title: 'How are you joining?' },
   { id: 'nights', label: 'Nights', title: 'Which nights do you want?' },
   { id: 'details', label: 'Details', title: 'Team details' },
-  { id: 'contact', label: 'Contact', title: 'Who should we reach?' },
+  { id: 'contact', label: 'Contact', title: 'Your info' },
   { id: 'send', label: 'Send', title: 'Review and send' },
 ];
+
+export const USAPL_SIGNUP_ROSTER_MAX_EXTRA = 7;
 
 export function usaplSignupKindMeta(kind) {
   return USAPL_SIGNUP_KINDS.find((item) => item.id === kind) || USAPL_SIGNUP_KINDS[0];
@@ -35,15 +37,17 @@ export function usaplSignupStepError(stepId, {
   kind,
   divisionIds,
   teamName,
+  teamNameUnknown,
   locationRequired,
+  locationUnknown,
   locationValue,
   captain,
 }) {
   if (stepId === 'kind' && !kind) return 'Choose how you are joining.';
   if (stepId === 'nights' && !divisionIds?.length) return 'Please choose at least one division.';
   if (stepId === 'details') {
-    if (kind !== 'individual' && !String(teamName || '').trim()) return 'Please enter a team name.';
-    if (locationRequired && !String(locationValue || '').trim()) return 'Please enter a home location.';
+    if (kind !== 'individual' && !teamNameUnknown && !String(teamName || '').trim()) return 'Please enter a team name.';
+    if (locationRequired && !locationUnknown && !String(locationValue || '').trim()) return 'Please enter a home location.';
   }
   if (stepId === 'contact') {
     if (!captain?.firstName?.trim() || !captain?.lastName?.trim() || !captain?.email?.trim() || !captain?.phone?.trim()) {

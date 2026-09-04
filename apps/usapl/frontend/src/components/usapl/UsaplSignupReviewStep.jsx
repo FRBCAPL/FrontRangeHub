@@ -1,5 +1,4 @@
 import React from 'react';
-import UsaplPlayerFields from './UsaplPlayerFields.jsx';
 
 export default function UsaplSignupReviewStep({
   kindLabel,
@@ -7,10 +6,9 @@ export default function UsaplSignupReviewStep({
   teamName,
   locationSummary,
   captain,
+  isCaptain,
   includeRoster,
   onIncludeRoster,
-  players,
-  onPlayerChange,
 }) {
   return (
     <>
@@ -37,7 +35,10 @@ export default function UsaplSignupReviewStep({
         ) : null}
         <div>
           <dt>Contact</dt>
-          <dd>{[captain.firstName, captain.lastName].filter(Boolean).join(' ') || '—'}</dd>
+          <dd>
+            {[captain.firstName, captain.lastName].filter(Boolean).join(' ') || '—'}
+            {isCaptain ? ' · Captain' : ''}
+          </dd>
         </div>
       </dl>
 
@@ -53,15 +54,6 @@ export default function UsaplSignupReviewStep({
         />
         Add roster names now (optional — a full roster is still required at start of play)
       </label>
-
-      {includeRoster ? players.map((player, index) => (
-        <UsaplPlayerFields
-          key={index}
-          title={`Player ${index + 2}`}
-          player={player}
-          onChange={(next) => onPlayerChange(index, next)}
-        />
-      )) : null}
     </>
   );
 }

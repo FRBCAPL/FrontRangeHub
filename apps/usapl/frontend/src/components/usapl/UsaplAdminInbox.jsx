@@ -55,7 +55,12 @@ export default function UsaplAdminInbox() {
         <section className="usapl-card" key={row.id} style={{ marginBottom: 12 }}>
           <h2>{row.team_name || personName(row.captain) || 'Signup'}</h2>
           <p>{row.kind} · {labelUsaplDivisions(row.division_id, divisions) || 'no division'} · {row.location}</p>
-          <p className="usapl-meta">{personName(row.captain)} · {row.captain?.email} · {row.captain?.phone}</p>
+          <p className="usapl-meta">
+            {personName(row.captain)}
+            {row.kind === 'full_team' && row.captain?.isCaptain ? ' · Captain' : ''}
+            {' · '}
+            {row.captain?.email} · {row.captain?.phone}
+          </p>
           <p className="usapl-meta">{row.created_at ? new Date(row.created_at).toLocaleString() : ''}</p>
           <div className="usapl-field" style={{ maxWidth: 220, marginTop: 8 }}>
             <label>Status</label>

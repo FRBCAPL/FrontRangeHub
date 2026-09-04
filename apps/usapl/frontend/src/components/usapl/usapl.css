@@ -4,6 +4,7 @@
   --usapl-red: #e23b4a;
   --usapl-red-deep: #c8102e;
   --usapl-gold: #e0b34d;
+  --usapl-green: #3dcf6e;
   --usapl-ink: #f4efe6;
   --usapl-muted: rgba(244, 239, 230, 0.72);
   --usapl-paper: #0b0b0d;
@@ -501,7 +502,7 @@
 }
 
 .usapl-dues-cash-word {
-  color: #3dcf6e;
+  color: var(--usapl-green);
   font-weight: 800;
 }
 
@@ -770,8 +771,8 @@
 }
 
 .usapl-signup-kind.selected {
-  border-color: var(--usapl-gold);
-  background: rgba(224, 179, 77, 0.14);
+  border-color: var(--usapl-green);
+  background: rgba(61, 207, 110, 0.14);
 }
 
 .usapl-signup-recap {

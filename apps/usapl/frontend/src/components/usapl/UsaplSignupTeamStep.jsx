@@ -7,6 +7,8 @@ export default function UsaplSignupTeamStep({
   needsTeamName,
   teamName,
   onTeamName,
+  teamNameUnknown,
+  onTeamNameUnknown,
   hideLocation,
   locationLabel,
   locationRequired,
@@ -17,6 +19,8 @@ export default function UsaplSignupTeamStep({
   onCustomLocation,
   locationNames,
   locationsLoading,
+  locationUnknown,
+  onLocationUnknown,
 }) {
   return (
     <>
@@ -37,13 +41,23 @@ export default function UsaplSignupTeamStep({
 
       {needsTeamName ? (
         <div className="usapl-field">
-          <label htmlFor="usapl-signup-team-name">Team name *</label>
+          <label htmlFor="usapl-signup-team-name">Team name{teamNameUnknown ? '' : ' *'}</label>
           <input
             id="usapl-signup-team-name"
-            value={teamName}
+            value={teamNameUnknown ? '' : teamName}
             onChange={(e) => onTeamName(e.target.value)}
             autoComplete="organization"
+            disabled={teamNameUnknown}
+            placeholder={teamNameUnknown ? 'Unknown' : ''}
           />
+          <label className="usapl-signup-roster-toggle">
+            <input
+              type="checkbox"
+              checked={teamNameUnknown}
+              onChange={(e) => onTeamNameUnknown(e.target.checked)}
+            />
+            Unknown
+          </label>
         </div>
       ) : (
         <p className="usapl-note">No team name needed. We will help place you.</p>
@@ -55,30 +69,37 @@ export default function UsaplSignupTeamStep({
         <>
           <div className="usapl-field">
             <label htmlFor="usapl-signup-location">
-              {locationLabel}{locationRequired ? ' *' : ''}
+              {locationLabel}{locationRequired && !locationUnknown ? ' *' : ''}
             </label>
             <select
               id="usapl-signup-location"
-              value={location}
+              value={locationUnknown ? '' : location}
               onChange={(e) => onLocation(e.target.value)}
+              disabled={locationUnknown}
             >
               <option value="">{locationsLoading ? 'Loading locations…' : locationPlaceholder}</option>
-              <option value="Other">{kind === 'full_team' ? 'Other/unknown' : 'Other'}</option>
+              <option value="Other">Other</option>
               {locationNames.map((name) => (
                 <option key={name} value={name}>{name}</option>
               ))}
             </select>
+            <label className="usapl-signup-roster-toggle">
+              <input
+                type="checkbox"
+                checked={locationUnknown}
+                onChange={(e) => onLocationUnknown(e.target.checked)}
+              />
+              Unknown
+            </label>
           </div>
-          {location === 'Other' ? (
+          {!locationUnknown && location === 'Other' ? (
             <div className="usapl-field">
-              <label htmlFor="usapl-signup-location-other">
-                {kind === 'full_team' ? 'Name it if you know' : 'Other location'}
-              </label>
+              <label htmlFor="usapl-signup-location-other">Other location</label>
               <input
                 id="usapl-signup-location-other"
                 value={customLocation}
                 onChange={(e) => onCustomLocation(e.target.value)}
-                placeholder={kind === 'full_team' ? 'Optional' : ''}
+                placeholder="Name it if you know"
               />
             </div>
           ) : null}
