@@ -473,6 +473,36 @@
   margin: 16px 0 18px;
 }
 
+.usapl-dues-block {
+  margin: 16px 0 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--usapl-line);
+  text-align: center;
+}
+
+.usapl-dues-page .usapl-dues-block > h2 {
+  margin: 0 0 12px;
+}
+
+.usapl-dues-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+button.usapl-vegas-fold-action {
+  min-height: 48px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.usapl-dues-block .usapl-facts-body {
+  margin-top: 16px;
+  text-align: left;
+}
+
 .usapl-dues-fold summary {
   flex-direction: column;
   justify-content: center;
@@ -500,13 +530,78 @@
 }
 
 .usapl-dues-page .usapl-card ul,
-.usapl-dues-fold ul {
+.usapl-dues-fold ul,
+.usapl-dues-block ul {
   list-style: none;
   padding-left: 0;
 }
 
 .usapl-pay-notes {
-  margin-top: 8px;
+  margin: 8px 0 18px;
+  padding: 18px 18px 16px;
+  border-radius: 16px;
+  border: 2px solid var(--usapl-gold);
+  background:
+    linear-gradient(180deg, rgba(224, 179, 77, 0.22) 0%, rgba(224, 179, 77, 0.08) 100%);
+  box-shadow: 0 0 0 4px rgba(224, 179, 77, 0.12);
+}
+
+.usapl-pay-notes-kicker {
+  margin: 0 0 4px;
+  color: var(--usapl-gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.usapl-dues-page .usapl-pay-notes h2 {
+  margin: 0 0 14px;
+  color: var(--usapl-gold);
+  font-size: clamp(1.35rem, 3.2vw, 1.7rem);
+}
+
+.usapl-pay-notes-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: usapl-pay-req;
+}
+
+.usapl-pay-notes-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(224, 179, 77, 0.4);
+  background: rgba(0, 0, 0, 0.38);
+  color: var(--usapl-ink);
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.4;
+  counter-increment: usapl-pay-req;
+}
+
+.usapl-pay-notes-list li::before {
+  content: counter(usapl-pay-req);
+  flex: 0 0 auto;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--usapl-gold);
+  color: #1a140c;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.usapl-pay-notes > p:last-child {
+  margin: 14px 0 0;
 }
 
 .usapl-pay-pair {
@@ -515,6 +610,7 @@
   gap: 20px 24px;
   align-items: start;
   margin: 8px 0 0;
+  scroll-margin-top: 20px;
 }
 
 .usapl-pay-column {
@@ -618,6 +714,118 @@
 
 .usapl-signup-page .usapl-choice-row {
   justify-content: center;
+}
+
+.usapl-signup-backdrop {
+  z-index: 50;
+}
+
+.usapl-signup-modal {
+  width: min(720px, 100%);
+}
+
+.usapl-signup-modal h2 {
+  margin: 0 0 14px;
+  font-family: Georgia, Palatino, serif;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  color: var(--usapl-ink);
+  line-height: 1.25;
+}
+
+.usapl-signup-phase {
+  margin: 0 0 6px;
+  color: var(--usapl-gold);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.usapl-signup-modal .usapl-lede {
+  margin: 2px 0 0;
+  max-width: none;
+  font-size: 0.98rem;
+}
+
+.usapl-signup-kinds {
+  display: grid;
+  gap: 10px;
+}
+
+.usapl-signup-kind {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: 72px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--usapl-line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--usapl-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.usapl-signup-kind strong {
+  font-size: 1.05rem;
+}
+
+.usapl-signup-kind span {
+  color: var(--usapl-muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.usapl-signup-kind.selected {
+  border-color: var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.14);
+}
+
+.usapl-signup-recap {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--usapl-line);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.usapl-signup-recap div {
+  display: grid;
+  gap: 2px;
+}
+
+.usapl-signup-recap dt {
+  color: var(--usapl-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.usapl-signup-recap dd {
+  margin: 0;
+  font-weight: 650;
+}
+
+.usapl-signup-roster-toggle {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.usapl-signup-roster-toggle input {
+  margin-top: 3px;
+  flex: 0 0 auto;
+}
+
+.usapl-signup-actions {
+  justify-content: space-between;
+  width: 100%;
 }
 
 .usapl-divisions-page .usapl-vegas-ticker {
