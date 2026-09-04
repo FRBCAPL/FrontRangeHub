@@ -59,10 +59,10 @@ export const USAPL_DUES_PRODUCTS = {
 
 export const USAPL_NAV = [
   { to: '/usapl', label: 'Home', end: true },
-  { to: '/usapl/signup', label: 'Sign up' },
   { to: '/usapl/divisions', label: 'Divisions' },
   { to: '/usapl/vegas-cup', label: 'Vegas Cup' },
   { to: '/usapl/rules', label: 'Rules' },
   { to: '/usapl/dues', label: 'Dues' },
+  { to: '/usapl/signup', label: 'Sign up' },
   { to: '/usapl/roster', label: 'Roster' },
 ];

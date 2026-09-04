@@ -1,3 +1,5 @@
+import { usaplContactError } from './usaplContact.js';
+
 export const USAPL_SIGNUP_KINDS = [
   {
     id: 'full_team',
@@ -49,11 +51,7 @@ export function usaplSignupStepError(stepId, {
     if (kind !== 'individual' && !teamNameUnknown && !String(teamName || '').trim()) return 'Please enter a team name.';
     if (locationRequired && !locationUnknown && !String(locationValue || '').trim()) return 'Please enter a home location.';
   }
-  if (stepId === 'contact') {
-    if (!captain?.firstName?.trim() || !captain?.lastName?.trim() || !captain?.email?.trim() || !captain?.phone?.trim()) {
-      return 'Name, email, and phone are required.';
-    }
-  }
+  if (stepId === 'contact') return usaplContactError(captain);
   return '';
 }
 

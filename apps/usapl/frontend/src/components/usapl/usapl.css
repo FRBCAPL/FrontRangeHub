@@ -775,6 +775,11 @@
   background: rgba(61, 207, 110, 0.14);
 }
 
+.usapl-signup-modal .usapl-choice.selected {
+  border-color: var(--usapl-green);
+  background: rgba(61, 207, 110, 0.14);
+}
+
 .usapl-signup-recap {
   display: grid;
   gap: 10px;

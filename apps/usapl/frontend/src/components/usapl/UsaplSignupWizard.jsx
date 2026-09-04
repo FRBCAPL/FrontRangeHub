@@ -338,11 +338,10 @@ export default function UsaplSignupWizard({
               >
                 Back
               </button>
-            ) : (
-              <button className="usapl-btn-secondary" type="button" onClick={() => navigate('/usapl')}>
-                Cancel
-              </button>
-            )}
+            ) : null}
+            <button className="usapl-btn-secondary" type="button" onClick={() => navigate('/usapl')}>
+              Cancel
+            </button>
             {inRoster && canAddAnother ? (
               <button className="usapl-btn-secondary" type="button" onClick={addAnotherPlayer}>
                 Add another player

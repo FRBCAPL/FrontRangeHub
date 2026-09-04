@@ -172,13 +172,23 @@
 .usapl-stepper {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 8px;
-  margin: 0 0 18px;
+  margin: 0 0 12px;
   padding: 0;
   list-style: none;
 }
 
-.usapl-step button {
+.usapl-roster-summary {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 18px;
+}
+
+.usapl-step button,
+.usapl-step-badge {
+  display: inline-flex;
+  align-items: center;
   min-height: 36px;
   padding: 6px 12px;
   border-radius: 999px;
@@ -186,15 +196,21 @@
   background: rgba(0, 0, 0, 0.28);
   color: var(--usapl-muted);
   font-weight: 700;
+}
+
+.usapl-step button {
   cursor: pointer;
 }
 
 .usapl-step.is-done button,
-.usapl-step.is-active button {
+.usapl-step.is-active button,
+.usapl-step.is-done .usapl-step-badge,
+.usapl-step.is-active .usapl-step-badge {
   color: var(--usapl-ink);
 }
 
-.usapl-step.is-active button {
+.usapl-step.is-active button,
+.usapl-step.is-active .usapl-step-badge {
   border-color: var(--usapl-gold);
   background: rgba(224, 179, 77, 0.16);
 }

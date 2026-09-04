@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { listUsaplRosters, listUsaplSignups, updateUsaplRosterStatus, updateUsaplSignupStatus } from '../../services/usaplSubmissions.js';
+import { usaplPreferredContactLabel } from '../../data/usaplContact.js';
+import { usaplRosterModeLabel } from '../../data/usaplRosterSteps.js';
 import { labelUsaplDivisions } from '../../data/usaplDivisionIds.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
 import UsaplAdminSubnav from './UsaplAdminSubnav.jsx';
@@ -60,6 +62,9 @@ export default function UsaplAdminInbox() {
             {row.kind === 'full_team' && row.captain?.isCaptain ? ' · Captain' : ''}
             {' · '}
             {row.captain?.email} · {row.captain?.phone}
+            {row.captain?.preferredContact
+              ? ` · Prefers ${usaplPreferredContactLabel(row.captain.preferredContact)}`
+              : ''}
           </p>
           <p className="usapl-meta">{row.created_at ? new Date(row.created_at).toLocaleString() : ''}</p>
           <div className="usapl-field" style={{ maxWidth: 220, marginTop: 8 }}>
@@ -79,8 +84,13 @@ export default function UsaplAdminInbox() {
       {tab === 'rosters' ? rosters.map((row) => (
         <section className="usapl-card" key={row.id} style={{ marginBottom: 12 }}>
           <h2>{row.team_name}</h2>
-          <p>{row.mode === 'add' ? 'Add player' : 'Roster'} · {labelUsaplDivisions(row.division_id, divisions) || 'no division'}</p>
-          <p>Captain: {personName(row.captain)} · {row.captain?.email} · {row.captain?.phone}</p>
+          <p>{usaplRosterModeLabel(row.mode)} · {labelUsaplDivisions(row.division_id, divisions) || 'no division'}</p>
+          <p>
+            Captain: {personName(row.captain)} · {row.captain?.email} · {row.captain?.phone}
+            {row.captain?.preferredContact
+              ? ` · Prefers ${usaplPreferredContactLabel(row.captain.preferredContact)}`
+              : ''}
+          </p>
           <ul>
             {(row.players || []).map((player, index) => (
               <li key={`${row.id}-${index}`}>

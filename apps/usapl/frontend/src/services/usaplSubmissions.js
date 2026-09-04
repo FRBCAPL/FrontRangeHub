@@ -9,23 +9,35 @@ function withTenant(row) {
 }
 
 export async function submitUsaplSignup(payload) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from(SIGNUPS)
-    .insert(withTenant(payload))
-    .select('id, created_at')
-    .single();
+    .insert(withTenant(payload));
   if (error) throw error;
-  return data;
+  return { ok: true };
+}
+
+function dbRosterMode(mode) {
+  if (mode === 'new') return 'full';
+  if (mode === 'add') return 'add';
+  if (mode === 'update') return 'update';
+  return 'full';
+}
+
+async function insertUsaplRoster(payload) {
+  const { error } = await supabase
+    .from(ROSTERS)
+    .insert(withTenant(payload));
+  return error;
 }
 
 export async function submitUsaplRoster(payload) {
-  const { data, error } = await supabase
-    .from(ROSTERS)
-    .insert(withTenant(payload))
-    .select('id, created_at')
-    .single();
+  const row = { ...payload, mode: dbRosterMode(payload.mode) };
+  let error = await insertUsaplRoster(row);
+  if (error && row.mode === 'update') {
+    error = await insertUsaplRoster({ ...row, mode: 'full' });
+  }
   if (error) throw error;
-  return data;
+  return { ok: true };
 }
 
 export async function listUsaplSignups() {
@@ -70,6 +82,7 @@ export function emptyPlayer() {
     city: '',
     state: 'CO',
     zip: '',
+    preferredContact: '',
   };
 }
 
