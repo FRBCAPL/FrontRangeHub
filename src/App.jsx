@@ -43,6 +43,35 @@ applyEstateAuthLanding();
   }
 })();
 
+/** frusapl.com / www.frusapl.com → league app (needs that host pointed at this SPA). */
+(function redirectFrusaplHostToUsapl() {
+  const host = (window.location.hostname || '').toLowerCase();
+  if (host !== 'frusapl.com' && host !== 'www.frusapl.com') return;
+  const hash = window.location.hash || '';
+  if (hash.startsWith('#/usapl')) return;
+  const pathname = (window.location.pathname || '').replace(/\/+$/, '') || '/';
+  if (
+    pathname.startsWith('/dues-tracker') ||
+    pathname.startsWith('/arcade') ||
+    pathname.startsWith('/estate-vault')
+  ) {
+    return;
+  }
+  const search = window.location.search || '';
+  const byPath = {
+    '/': '#/usapl',
+    '/usapl': '#/usapl',
+    '/frusapl.html': '#/usapl',
+    '/league-sign-up': '#/usapl/signup',
+    '/vegas-cup': '#/usapl/vegas-cup',
+    '/divisions': '#/usapl/divisions',
+    '/rules-1': '#/usapl/rules',
+    '/the-hub': '#/',
+  };
+  const target = byPath[pathname] || '#/usapl';
+  window.location.replace(`${window.location.origin}/${search}${target}`);
+})();
+
 /** fiduciarylog.com → marketing storefront; app remains at /#/estateit */
 (function redirectEstateItCustomDomain() {
   const host = (window.location.hostname || '').toLowerCase();

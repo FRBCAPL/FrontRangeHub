@@ -120,11 +120,6 @@ const Homepage = ({ canRunTournament = false }) => {
     navigate('/usapl');
   };
 
-  const handleNavigateToOldUsaplSite = (e) => {
-    e?.stopPropagation?.();
-    window.open('https://frusapl.com', '_blank');
-  };
-
   const handleNavigateToTournamentBracket = (e) => {
     e?.stopPropagation?.();
     rememberLoginReturn('/tournament-bracket');
@@ -319,11 +314,6 @@ const Homepage = ({ canRunTournament = false }) => {
               <div className="nav-card-content">
                 <h2>Front Range USA Pool League</h2>
                 <p>Sign up, standings, schedules, and dues — all in one place.</p>
-                <div className="usapool-entry-ctas" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" className="usapool-site-btn" onClick={handleNavigateToOldUsaplSite}>
-                    Old website
-                  </button>
-                </div>
                 <div className="nav-card-features">
                   <div className="feature-tag-row usapool-highlight-row">
                     <RotatingFeatureBadge
