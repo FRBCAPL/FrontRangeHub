@@ -10,9 +10,12 @@ import UsaplDivisionDetail from './UsaplDivisionDetail.jsx';
 import UsaplVegasCupPage from './UsaplVegasCupPage.jsx';
 import UsaplRulesPage from './UsaplRulesPage.jsx';
 import UsaplDuesPage from './UsaplDuesPage.jsx';
+import useUsaplPageVisitTracker from '../../hooks/useUsaplPageVisitTracker.js';
 import UsaplAdminInbox from './UsaplAdminInbox.jsx';
 import UsaplAdminDivisions from './UsaplAdminDivisions.jsx';
+import UsaplAdminArchived from './UsaplAdminArchived.jsx';
 import UsaplAdminLocations from './UsaplAdminLocations.jsx';
+import UsaplAdminVisits from './UsaplAdminVisits.jsx';
 import './usapl.css';
 import './usaplForms.css';
 
@@ -22,6 +25,7 @@ const USAPL_FONTS_HREF =
 const UsaplBylawsPage = lazy(() => import('./UsaplBylawsPage.jsx'));
 
 export default function UsaplApp({ canAdmin = false }) {
+  useUsaplPageVisitTracker();
   useEffect(() => {
     let link = document.querySelector('link[data-usapl-font="usapl-display"]');
     if (!link) {
@@ -64,8 +68,16 @@ export default function UsaplApp({ canAdmin = false }) {
           element={canAdmin ? <UsaplAdminDivisions /> : <Navigate to="/usapl" replace />}
         />
         <Route
+          path="admin/archived"
+          element={canAdmin ? <UsaplAdminArchived /> : <Navigate to="/usapl" replace />}
+        />
+        <Route
           path="admin/locations"
           element={canAdmin ? <UsaplAdminLocations /> : <Navigate to="/usapl" replace />}
+        />
+        <Route
+          path="admin/visits"
+          element={canAdmin ? <UsaplAdminVisits /> : <Navigate to="/usapl" replace />}
         />
         <Route path="*" element={<Navigate to="/usapl" replace />} />
       </Routes>

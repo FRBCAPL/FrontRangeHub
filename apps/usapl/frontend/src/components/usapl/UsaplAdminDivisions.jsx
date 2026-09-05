@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { emptyUsaplDivision, USAPL_DIVISIONS, usaplNightLabel } from '../../data/usaplDivisions.js';
-import { usaplFormatWithoutInHouse } from '../../data/usaplFormat.js';
+import { emptyUsaplDivision, USAPL_DIVISIONS } from '../../data/usaplDivisions.js';
+import { usaplDivisionIsPast } from '../../data/usaplPastDivisions.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
 import { useUsaplLocations } from '../../hooks/useUsaplLocations.js';
 import { deleteUsaplDivision, saveUsaplDivision, saveUsaplDivisions } from '../../services/usaplDivisions.js';
+import UsaplAdminDivisionRow from './UsaplAdminDivisionRow.jsx';
 import UsaplAdminSubnav from './UsaplAdminSubnav.jsx';
 import UsaplDivisionEditModal from './UsaplDivisionEditModal.jsx';
-import UsaplInHouseTag from './UsaplInHouseTag.jsx';
 
 export default function UsaplAdminDivisions() {
   const { allDivisions, loading, fromDatabase, error, reload } = useUsaplDivisions();
@@ -15,7 +15,8 @@ export default function UsaplAdminDivisions() {
   const [isNew, setIsNew] = useState(false);
   const [busyId, setBusyId] = useState('');
   const [message, setMessage] = useState('');
-
+  const current = allDivisions.filter((row) => !usaplDivisionIsPast(row));
+  const archived = allDivisions.filter(usaplDivisionIsPast);
   const tableMissing = Boolean(error && /could not find the table|schema cache/i.test(error));
 
   const persist = async (division) => {
@@ -33,7 +34,7 @@ export default function UsaplAdminDivisions() {
     await persist(division);
     setEditing(null);
     setIsNew(false);
-    setMessage('Division saved. Signup and play-nights pages use this list.');
+    setMessage(division.archived ? 'Saved. Archived nights are on the Archived page.' : 'Division saved.');
     await reload();
   };
 
@@ -52,12 +53,12 @@ export default function UsaplAdminDivisions() {
 
   const move = async (index, direction) => {
     const otherIndex = index + direction;
-    if (otherIndex < 0 || otherIndex >= allDivisions.length) return;
-    const next = [...allDivisions];
+    if (otherIndex < 0 || otherIndex >= current.length) return;
+    const next = [...current];
     const swapped = next[index];
     next[index] = next[otherIndex];
     next[otherIndex] = swapped;
-    const ordered = next.map((row, i) => ({ ...row, sortOrder: (i + 1) * 10 }));
+    const ordered = [...next.map((row, i) => ({ ...row, sortOrder: (i + 1) * 10 })), ...archived];
     setBusyId(swapped.id);
     try {
       await saveUsaplDivisions(ordered);
@@ -100,9 +101,8 @@ export default function UsaplAdminDivisions() {
       <UsaplAdminSubnav />
       <h1>Divisions</h1>
       <p className="usapl-lede">
-        Open for signup is what players see on the signup form. Closed nights stay listed
-        on Play nights, without a Join button. Mark a finished session as a past division
-        and enter the winner — it moves to Past divisions.
+        Current nights only. Finished sessions live on Archived. Open for signup is what
+        players see on the signup form.
       </p>
       {tableMissing ? (
         <div className="usapl-error">
@@ -118,7 +118,7 @@ export default function UsaplAdminDivisions() {
           className="usapl-btn"
           onClick={() => {
             setIsNew(true);
-            setEditing(emptyUsaplDivision((allDivisions.length + 1) * 10));
+            setEditing(emptyUsaplDivision((current.length + 1) * 10));
           }}
         >
           Add division
@@ -130,40 +130,21 @@ export default function UsaplAdminDivisions() {
         ) : null}
       </div>
 
-      {allDivisions.map((division, index) => (
-        <article className="usapl-night-row" key={division.id}>
-          <div className="usapl-night-copy">
-            <h2>
-              {division.shortName}
-              <UsaplInHouseTag division={division} />
-            </h2>
-            <p className="usapl-meta">
-              {usaplNightLabel(division.night)} · {usaplFormatWithoutInHouse(division.format) || 'format TBD'}
-              <br />
-              {division.archived ? 'Past division' : (division.signupOpen ? 'Open for signup' : 'Signup closed')}
-            </p>
-          </div>
-          <div className="usapl-actions" style={{ marginTop: 0 }}>
-            <button type="button" className="usapl-btn-secondary" disabled={busyId === division.id} onClick={() => toggleSignup(division)}>
-              {division.signupOpen ? 'Close signup' : 'Open signup'}
-            </button>
-            <button type="button" className="usapl-btn-secondary" onClick={() => { setIsNew(false); setEditing(division); }}>
-              Edit
-            </button>
-            <button type="button" className="usapl-btn-secondary" disabled={index === 0 || busyId} onClick={() => move(index, -1)}>
-              Up
-            </button>
-            <button type="button" className="usapl-btn-secondary" disabled={index === allDivisions.length - 1 || busyId} onClick={() => move(index, 1)}>
-              Down
-            </button>
-            {fromDatabase ? (
-              <button type="button" className="usapl-btn-secondary" disabled={busyId === division.id} onClick={() => handleDelete(division)}>
-                Remove
-              </button>
-            ) : null}
-          </div>
-        </article>
+      {current.map((division, index) => (
+        <UsaplAdminDivisionRow
+          key={division.id}
+          division={division}
+          index={index}
+          total={current.length}
+          busy={busyId === division.id || Boolean(busyId)}
+          fromDatabase={fromDatabase}
+          onToggleSignup={toggleSignup}
+          onEdit={(row) => { setIsNew(false); setEditing(row); }}
+          onMove={move}
+          onDelete={handleDelete}
+        />
       ))}
+      {!loading && !current.length ? <p>No current divisions.</p> : null}
 
       {editing ? (
         <UsaplDivisionEditModal

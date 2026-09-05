@@ -40,7 +40,7 @@ export default function UsaplHome() {
         </p>
         <div className="usapl-cta-strip">
           <Link className="usapl-btn" to="/usapl/signup">Join the league</Link>
-          <Link className="usapl-btn-secondary" to="/usapl/divisions">Play nights</Link>
+          <Link className="usapl-btn-secondary" to="/usapl/divisions">Divisions</Link>
           <Link className="usapl-btn-secondary" to="/usapl/roster">Team roster</Link>
           <Link className="usapl-btn-secondary" to="/usapl/dues">Pay dues</Link>
           <Link className="usapl-btn-secondary" to="/usapl/vegas-cup">Vegas Cup</Link>

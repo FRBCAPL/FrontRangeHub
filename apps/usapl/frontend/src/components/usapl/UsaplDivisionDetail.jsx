@@ -46,7 +46,7 @@ export default function UsaplDivisionDetail() {
       </h1>
       <p className="usapl-lede">
         {[
-          usaplDivisionIsInHouse(division) ? 'In-house league' : '',
+          usaplDivisionIsInHouse(division) ? 'In-house league' : 'Travel league',
           usaplFormatWithoutInHouse(division.format) || division.format,
           usaplNightLabel(division.night),
         ].filter(Boolean).join(' · ')}
@@ -67,7 +67,7 @@ export default function UsaplDivisionDetail() {
         <div className="usapl-division-hero">
           <UsaplDivisionFlyer division={division} />
           <div className="usapl-division-hero-facts">
-            <UsaplDivisionFactsBody division={division} />
+            <UsaplDivisionFactsBody division={division} summary />
           </div>
         </div>
       ) : (

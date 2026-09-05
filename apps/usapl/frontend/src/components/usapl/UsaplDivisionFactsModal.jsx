@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function UsaplDivisionFactsModal({ title, onClose, children }) {
+export default function UsaplDivisionFactsModal({ title, onClose, children, className = '' }) {
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -18,7 +18,7 @@ export default function UsaplDivisionFactsModal({ title, onClose, children }) {
   return createPortal(
     <div className="usapl-info-overlay" role="presentation" onClick={onClose}>
       <div
-        className="usapl-info-dialog"
+        className={`usapl-info-dialog usapl-facts-modal${className ? ` ${className}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="usapl-division-facts-title"

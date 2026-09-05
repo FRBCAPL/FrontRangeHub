@@ -542,6 +542,111 @@
   border-top: 1px solid var(--usapl-line);
 }
 
+.usapl-info-overlay:has(.usapl-facts-modal) {
+  align-items: center;
+  overflow: hidden;
+}
+
+.usapl-facts-modal {
+  width: min(520px, 100%);
+  height: auto;
+  max-height: none;
+  flex: 0 0 auto;
+  margin: auto;
+  padding: 18px 22px 16px;
+  overflow: visible;
+}
+
+.usapl-facts-modal .usapl-info-dialog-body {
+  flex: none;
+  overflow: visible;
+  min-height: 0;
+  padding: 0;
+}
+
+.usapl-facts-modal > h2 {
+  margin: 0 0 8px;
+  color: var(--usapl-gold);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.usapl-facts-modal .usapl-facts-body h2 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+
+.usapl-facts-modal .usapl-facts-place {
+  margin: 0 0 12px;
+}
+
+.usapl-facts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px 0;
+}
+
+.usapl-facts-modal .usapl-facts-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 20px;
+}
+
+.usapl-facts-notes {
+  grid-column: 1 / -1;
+}
+
+.usapl-facts-modal .usapl-fact {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 8px;
+  margin: 0;
+  align-items: baseline;
+}
+
+.usapl-facts-modal .usapl-fact-label {
+  display: inline;
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.usapl-facts-modal .usapl-fact-label::after {
+  content: ':';
+}
+
+.usapl-facts-modal .usapl-fact-value {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.usapl-facts-modal .usapl-fargo-cap-notice {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+}
+
+.usapl-facts-modal .usapl-fargo-cap-notice h2 {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.usapl-facts-modal .usapl-fargo-cap-notice p {
+  margin: 0;
+  line-height: 1.45;
+  font-size: 0.92rem;
+  color: var(--usapl-ink);
+}
+
+.usapl-facts-modal .usapl-actions {
+  justify-content: center;
+}
+
 .usapl-info-dialog-body .usapl-fargo-cap-notice {
   margin: 16px 0 4px;
 }
@@ -1117,28 +1222,21 @@
 
 .usapl-number-guide {
   margin: 0 0 18px;
-}
-
-.usapl-number-guide summary {
+  display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: center;
   gap: 10px;
-  min-height: 0;
-  padding: 8px 0 12px;
   text-align: center;
 }
 
-.usapl-number-guide summary::after {
-  content: none;
-  display: none;
+.usapl-number-guide-title {
+  margin: 0;
+  font-weight: 700;
 }
 
-.usapl-number-guide[open] .usapl-vegas-fold-action .is-show {
-  display: none;
-}
-
-.usapl-number-guide[open] .usapl-vegas-fold-action .is-hide {
-  display: inline;
+button.usapl-vegas-fold-action {
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .usapl-number-example-label {
@@ -1596,6 +1694,33 @@
   border-color: var(--usapl-red);
   background: rgba(226, 59, 74, 0.18);
   color: var(--usapl-ink);
+}
+
+.usapl-admin-division {
+  display: grid;
+  gap: 12px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--usapl-line);
+  text-align: left;
+}
+
+.usapl-admin-division h2 {
+  margin: 0 0 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  font-size: 1.25rem;
+  text-align: left;
+}
+
+.usapl-admin-view-page {
+  margin-top: 12px;
+  width: fit-content;
+}
+
+.usapl-admin-division-actions {
+  margin-top: 0;
 }
 
 .usapl-night-row {
@@ -2397,5 +2522,55 @@
 
   .usapl-vegas-nationals {
     height: 72px;
+  }
+}
+
+.usapl-visit-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+
+.usapl-visit-stat {
+  margin: 0;
+  padding: 14px 16px;
+}
+
+.usapl-visit-stat strong {
+  display: block;
+  font-size: 1.7rem;
+  line-height: 1.1;
+  margin: 4px 0;
+}
+
+.usapl-visit-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.usapl-visit-table th,
+.usapl-visit-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--usapl-line);
+}
+
+.usapl-visit-table .usapl-visit-num,
+.usapl-visit-table th.usapl-visit-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.usapl-visit-table .usapl-meta {
+  margin: 2px 0 0;
+  word-break: break-all;
+}
+
+@media (max-width: 800px) {
+  .usapl-visit-summary {
+    grid-template-columns: 1fr 1fr;
   }
 }

@@ -5,14 +5,9 @@ export function usaplFargoCapValue(division) {
   return Number.isFinite(cap) && cap > 0 ? cap : USAPL_DEFAULT_FARGO_CAP;
 }
 
-export function usaplFargoCapLines(cap) {
+export function usaplFargoCapSummary(cap) {
   const n = Number(cap) || USAPL_DEFAULT_FARGO_CAP;
-  return [
-    `If a team goes over the ${n} combined FargoRate cap, they are not disqualified.`,
-    'They may still play, but penalty points are assessed.',
-    'Weekly play: 1 penalty point for each 1 point over the cap.',
-    'USAPL National Tournament play: 2 points for each 1 point over the cap.',
-  ];
+  return `Over ${n} combined, teams still play. Weekly: 1 penalty point per point over. Nationals: 2 per point over.`;
 }
 
 export function isUsaplFargoCapNote(line) {

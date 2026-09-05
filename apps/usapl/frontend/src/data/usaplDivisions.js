@@ -158,8 +158,7 @@ export function usaplDivisionIsInHouse(division) {
 
 export function usaplDivisionIsTravel(division) {
   if (!division || usaplDivisionIsInHouse(division)) return false;
-  if (division.playAnywhere) return true;
-  return /any location/i.test(String(division.locationNote || ''));
+  return true;
 }
 
 export function usaplDivisionSignupOpen(division) {
