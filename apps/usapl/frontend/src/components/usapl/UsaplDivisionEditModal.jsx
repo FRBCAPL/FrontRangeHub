@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import './UsaplDivisionEditModal.css';
 import { USAPL_DEFAULT_FARGO_CAP, slugUsaplDivisionId } from '../../data/usaplDivisions.js';
 import { composeUsaplFormat, parseUsaplFormat } from '../../data/usaplFormat.js';
 import {
@@ -7,6 +9,8 @@ import {
   USAPL_REPORT_BLURB,
   USAPL_REPORT_HEADING,
 } from '../../data/usaplPublicReports.js';
+import { stripUsaplFargoCapNotes } from '../../data/usaplFargoCapCopy.js';
+import UsaplDivisionEditFlyer from './UsaplDivisionEditFlyer.jsx';
 import UsaplDivisionEditNight from './UsaplDivisionEditNight.jsx';
 import UsaplDivisionEditPlay from './UsaplDivisionEditPlay.jsx';
 import UsaplDivisionEditReport from './UsaplDivisionEditReport.jsx';
@@ -109,10 +113,7 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
         combinedFargoCap: form.combinedFargoCap === '' || form.combinedFargoCap == null ? USAPL_DEFAULT_FARGO_CAP : form.combinedFargoCap,
         teamSize: form.teamSize === '' || form.teamSize == null ? 5 : form.teamSize,
         rosterMax: form.rosterMax === '' || form.rosterMax == null ? 8 : form.rosterMax,
-        notes: String(form.notesText ?? (form.notes || []).join('\n'))
-          .split('\n')
-          .map((line) => line.trim())
-          .filter(Boolean),
+        notes: stripUsaplFargoCapNotes(form.notesText ?? (form.notes || []).join('\n')),
       });
     } catch (err) {
       setError(err?.message || 'Could not save division.');
@@ -120,16 +121,17 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
     }
   };
 
-  const notesText = form.notesText ?? (form.notes || []).join('\n');
+  const notesText = stripUsaplFargoCapNotes(form.notesText ?? (form.notes || []).join('\n')).join('\n');
   const lastStep = step === STEPS.length - 1;
 
-  return (
-    <div className="usapl-modal-backdrop" onClick={onClose} role="presentation">
+  return createPortal(
+    <div className="usapl-division-edit-overlay" onClick={onClose} role="presentation">
       <div
-        className="usapl-modal"
+        className="usapl-division-edit-dialog"
         role="dialog"
         aria-labelledby="usapl-division-edit-title"
         onClick={(e) => e.stopPropagation()}
+        style={{ height: '100%', maxHeight: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
       >
         <h2 id="usapl-division-edit-title">{isNew ? 'Add division' : 'Edit division'}</h2>
         <ol className="usapl-stepper">
@@ -144,20 +146,25 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
             </li>
           ))}
         </ol>
-        <form className="usapl-form" onSubmit={handleSubmit}>
-          {step === 0 ? (
-            <UsaplDivisionEditNight form={form} setField={setField} locationOptions={locationOptions} />
-          ) : null}
-          {step === 1 ? (
-            <UsaplDivisionEditPlay form={form} setField={setField} setForm={setForm} notesText={notesText} />
-          ) : null}
-          {step === 2 ? (
-            <>
-              <UsaplDivisionEditReport form={form} setField={setField} />
-              <UsaplDivisionEditSchedule form={form} setField={setField} />
-            </>
-          ) : null}
-          {error ? <div className="usapl-error">{error}</div> : null}
+        <form className="usapl-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden', gap: 8 }}>
+          <div className="usapl-division-edit-body" style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'scroll' }}>
+            {step === 0 ? (
+              <>
+                <UsaplDivisionEditNight form={form} setField={setField} locationOptions={locationOptions} />
+                <UsaplDivisionEditFlyer form={form} setField={setField} />
+              </>
+            ) : null}
+            {step === 1 ? (
+              <UsaplDivisionEditPlay form={form} setField={setField} setForm={setForm} notesText={notesText} />
+            ) : null}
+            {step === 2 ? (
+              <>
+                <UsaplDivisionEditReport form={form} setField={setField} />
+                <UsaplDivisionEditSchedule form={form} setField={setField} />
+              </>
+            ) : null}
+            {error ? <div className="usapl-error">{error}</div> : null}
+          </div>
           <div className="usapl-actions">
             {step > 0 ? (
               <button className="usapl-btn-secondary" type="button" onClick={() => { setError(''); setStep((current) => current - 1); }}>
@@ -174,6 +181,7 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

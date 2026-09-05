@@ -1,8 +1,17 @@
-import { sortUsaplDivisionsByPlayDay } from './usaplDivisions.js';
+import { sortUsaplDivisionsByPlayDay, usaplDivisionIsInSession, usaplDivisionSignupOpen } from './usaplDivisions.js';
 import { parseUsaplFormat } from './usaplFormat.js';
 
 export function usaplDivisionIsPast(division) {
   return division?.archived === true;
+}
+
+/** Fargo reports and winners belong to a finished or currently playing session — not a signup placeholder. */
+export function usaplDivisionShowsSessionStats(division) {
+  if (!division) return false;
+  if (usaplDivisionIsPast(division)) return true;
+  const hasNumbers = Boolean(String(division.leagueNumbers || '').trim());
+  if (usaplDivisionSignupOpen(division) && !hasNumbers) return false;
+  return usaplDivisionIsInSession(division);
 }
 
 function formatLabel(choice, other) {

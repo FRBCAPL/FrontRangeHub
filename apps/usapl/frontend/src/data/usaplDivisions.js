@@ -20,12 +20,7 @@ export const USAPL_DIVISIONS = [
     fargoDivisionId: 'acf783b3-6e91-47c2-93b7-b3d501825058,81f787f9-0437-4055-bc50-b3d501845b9c',
     signupOpen: true,
     sortOrder: 10,
-    notes: [
-      'If a team goes over the 2375 combined FargoRate cap, they are not disqualified.',
-      'They may still play, but penalty points are assessed.',
-      'Weekly play: 1 penalty point for each 1 point over the cap.',
-      'USAPL National Tournament play: 2 points for each 1 point over the cap.',
-    ],
+    notes: [],
   },
   {
     id: 'wed-13861-13061',
@@ -47,9 +42,6 @@ export const USAPL_DIVISIONS = [
     sortOrder: 20,
     notes: [
       'Teams can play from any location that has at least 2 tables available for league play on Wednesdays.',
-      'If a team goes over the 2375 combined FargoRate cap, they are not disqualified.',
-      'Weekly play: 1 penalty point for each 1 point over the cap.',
-      'USAPL National Tournament play: 2 points for each 1 point over the cap.',
     ],
   },
   {
@@ -275,6 +267,7 @@ export function emptyUsaplDivision(sortOrder = 60) {
     inSession: undefined,
     fargoDivisionId: '',
     scheduleImageUrl: '',
+    flyerImageUrl: '',
     reportHeading: '',
     reportBlurb: '',
     signupOpen: true,

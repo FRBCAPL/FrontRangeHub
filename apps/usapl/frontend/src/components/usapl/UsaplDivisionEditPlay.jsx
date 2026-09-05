@@ -46,8 +46,15 @@ export default function UsaplDivisionEditPlay({ form, setField, setForm, notesTe
         </div>
       </div>
       <div className="usapl-field">
-        <label>Notes (one per line)</label>
-        <textarea value={notesText} onChange={(e) => setField('notesText', e.target.value)} />
+        <label>Extra notes (optional)</label>
+        <textarea
+          value={notesText}
+          onChange={(e) => setField('notesText', e.target.value)}
+          placeholder="Anything special about this night"
+        />
+        <p className="usapl-field-hint">
+          Fargo cap and penalty rules show on every division page. You do not need to type them here.
+        </p>
       </div>
       <UsaplDivisionEditWinners form={form} setForm={setForm} />
     </>

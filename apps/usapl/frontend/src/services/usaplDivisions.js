@@ -42,6 +42,7 @@ export function rowToDivision(row) {
     inSession: parseUsaplFormat(row.format).inSession,
     fargoDivisionId: (staleStored ? mapped : (row.fargo_division_id || mapped)) || '',
     scheduleImageUrl: row.schedule_image_url || '',
+    flyerImageUrl: row.flyer_image_url || '',
     reportHeading: row.report_heading || '',
     reportBlurb: row.report_blurb || '',
     signupOpen: Boolean(row.signup_open),
@@ -72,6 +73,7 @@ export function divisionToRow(division) {
     play_anywhere: Boolean(division.playAnywhere),
     fargo_division_id: emptyToNull(joinUsaplFargoIds(division.fargoDivisionId || USAPL_FARGO_DIVISION_IDS[division.id])),
     schedule_image_url: emptyToNull(String(division.scheduleImageUrl || '').trim()),
+    flyer_image_url: emptyToNull(String(division.flyerImageUrl || '').trim()),
     report_heading: emptyToNull(String(division.reportHeading || '').trim()),
     report_blurb: emptyToNull(String(division.reportBlurb || '').trim()),
     signup_open: Boolean(division.signupOpen) && !division.archived,
@@ -99,6 +101,7 @@ export async function listUsaplDivisions() {
 const OPTIONAL_COLUMNS = [
   'fargo_division_id',
   'schedule_image_url',
+  'flyer_image_url',
   'report_heading',
   'report_blurb',
   'archived',
@@ -119,7 +122,10 @@ function optionalColumnDroppedError(dropped) {
     return 'The heading and blurb need a database column. Run supabase-migrations/usapl-divisions-public-report-2026-09.sql in the Supabase SQL editor, then save again.';
   }
   if (dropped.includes('schedule_image_url')) {
-    return 'The schedule picture needs a database column. Run supabase-migrations/usapl-divisions-public-report-2026-09.sql in the Supabase SQL editor, then save again.';
+    return 'The schedule picture needs a database column. Run supabase-migrations/usapl-schedule-images-2026-09.sql in the Supabase SQL editor, then save again.';
+  }
+  if (dropped.includes('flyer_image_url')) {
+    return 'The division flyer needs a database column. Run supabase-migrations/usapl-division-flyer-2026-09.sql in the Supabase SQL editor, then save again.';
   }
   if (dropped.includes('archived') || dropped.includes('winner_team') || dropped.includes('winner_team_b') || dropped.includes('league_numbers')) {
     return 'Past divisions and winners need a database column. Run supabase-migrations/usapl-divisions-past-winners-2026-09.sql in the Supabase SQL editor, then save again.';

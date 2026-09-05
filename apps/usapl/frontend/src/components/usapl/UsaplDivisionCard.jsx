@@ -5,6 +5,7 @@ import {
   usaplDivisionSignupOpen,
   usaplDivisionSummaryLines,
 } from '../../data/usaplDivisions.js';
+import UsaplDivisionFlyer from './UsaplDivisionFlyer.jsx';
 import UsaplPlayPlaceBadge from './UsaplPlayPlaceBadge.jsx';
 
 export default function UsaplDivisionCard({ division }) {
@@ -21,22 +22,25 @@ export default function UsaplDivisionCard({ division }) {
 
   return (
     <article className="usapl-night-card">
-      <div className="usapl-night-copy">
-        <h2>{division.shortName}</h2>
-        <div className="usapl-night-pills">
-          <UsaplPlayPlaceBadge division={division} />
-          <p className={`usapl-signup-pill${playing ? ' is-playing' : open ? ' is-open' : ''}`}>
-            {pill}
+      <div className="usapl-night-card-main">
+        <div className="usapl-night-copy">
+          <h2>{division.shortName}</h2>
+          <div className="usapl-night-pills">
+            <UsaplPlayPlaceBadge division={division} />
+            <p className={`usapl-signup-pill${playing ? ' is-playing' : open ? ' is-open' : ''}`}>
+              {pill}
+            </p>
+          </div>
+          <p className="usapl-meta">
+            {lines.map((line, index) => (
+              <span key={`${division.id}-${index}`}>
+                {index > 0 ? <br /> : null}
+                {line}
+              </span>
+            ))}
           </p>
         </div>
-        <p className="usapl-meta">
-          {lines.map((line, index) => (
-            <span key={`${division.id}-${index}`}>
-              {index > 0 ? <br /> : null}
-              {line}
-            </span>
-          ))}
-        </p>
+        <UsaplDivisionFlyer division={division} compact />
       </div>
       <div className="usapl-actions" style={{ marginTop: 12 }}>
         <Link className="usapl-btn-secondary" to={`/usapl/divisions/${division.id}`}>Division page</Link>

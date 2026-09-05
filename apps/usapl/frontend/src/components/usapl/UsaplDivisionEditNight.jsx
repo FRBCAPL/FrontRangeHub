@@ -30,7 +30,7 @@ export default function UsaplDivisionEditNight({ form, setField, locationOptions
           onChange={(e) => setField('leagueNumbers', e.target.value)}
           placeholder="13861/13061"
         />
-        <p className="usapl-field-hint">{USAPL_LEAGUE_NUMBER_HINT}</p>
+        <p className="usapl-field-hint" title={USAPL_LEAGUE_NUMBER_HINT}>e.g. 13861/13061</p>
       </div>
       <div className="usapl-field">
         <label>Location *</label>
@@ -49,26 +49,28 @@ export default function UsaplDivisionEditNight({ form, setField, locationOptions
           </datalist>
         ) : null}
       </div>
-      <label className="usapl-field" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <input type="checkbox" checked={Boolean(form.signupOpen)} onChange={(e) => setField('signupOpen', e.target.checked)} />
-        Open for signup
-      </label>
-      <label className="usapl-field" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <input
-          type="checkbox"
-          checked={form.inSession === true}
-          onChange={(e) => setField('inSession', e.target.checked)}
-        />
-        Currently running — show first under Now playing
-      </label>
-      <label className="usapl-field" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <input type="checkbox" checked={Boolean(form.playAnywhere)} onChange={(e) => setField('playAnywhere', e.target.checked)} />
-        Teams may play from any location
-      </label>
-      <label className="usapl-field" style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <input type="checkbox" checked={Boolean(form.inHouse)} onChange={(e) => setField('inHouse', e.target.checked)} />
-        In-house league
-      </label>
+      <div className="usapl-division-edit-flags">
+        <label className="usapl-field">
+          <input type="checkbox" checked={Boolean(form.signupOpen)} onChange={(e) => setField('signupOpen', e.target.checked)} />
+          Open for signup
+        </label>
+        <label className="usapl-field">
+          <input
+            type="checkbox"
+            checked={form.inSession === true}
+            onChange={(e) => setField('inSession', e.target.checked)}
+          />
+          Now playing
+        </label>
+        <label className="usapl-field">
+          <input type="checkbox" checked={Boolean(form.playAnywhere)} onChange={(e) => setField('playAnywhere', e.target.checked)} />
+          Play from any location
+        </label>
+        <label className="usapl-field">
+          <input type="checkbox" checked={Boolean(form.inHouse)} onChange={(e) => setField('inHouse', e.target.checked)} />
+          In-house league
+        </label>
+      </div>
     </>
   );
 }

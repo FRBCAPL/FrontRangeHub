@@ -1,8 +1,9 @@
 import React from 'react';
 import { formatUsaplVegasSeedNote, formatUsaplWinnerName, normalizeUsaplTeamKey } from '../../data/usaplVegasSeeds.js';
-import { usaplDivisionWinners } from '../../data/usaplPastDivisions.js';
+import { usaplDivisionShowsSessionStats, usaplDivisionWinners } from '../../data/usaplPastDivisions.js';
 
 export default function UsaplDivisionWinners({ division, stats }) {
+  if (!usaplDivisionShowsSessionStats(division)) return null;
   const winners = usaplDivisionWinners(division);
   if (!winners.length) return null;
   return (

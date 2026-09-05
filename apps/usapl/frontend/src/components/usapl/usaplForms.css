@@ -165,6 +165,17 @@
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
 }
 
+.usapl-flyer-edit-preview {
+  display: block;
+  width: 140px;
+  height: 140px;
+  max-width: 140px;
+  max-height: 140px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--usapl-line);
+}
+
 .usapl-modal h2 {
   margin: 0 0 16px;
 }

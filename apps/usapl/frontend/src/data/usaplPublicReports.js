@@ -1,4 +1,5 @@
 import { parseUsaplFormat } from './usaplFormat.js';
+import { usaplDivisionShowsSessionStats } from './usaplPastDivisions.js';
 
 export const USAPL_FARGO_LEAGUE_ID = 'af6f5e01-113d-4453-aded-b117017af2dd';
 
@@ -48,6 +49,7 @@ export function joinUsaplFargoIds(values) {
 }
 
 export function usaplFargoDivisionIds(division) {
+  if (!usaplDivisionShowsSessionStats(division)) return [];
   const custom = parseUsaplFargoIds(division?.fargoDivisionId);
   if (custom.length) return custom;
   return parseUsaplFargoIds(USAPL_FARGO_DIVISION_IDS[division?.id]);
@@ -95,4 +97,8 @@ export function usaplReportBlurb(division) {
 
 export function usaplScheduleImageUrl(division) {
   return String(division?.scheduleImageUrl || '').trim();
+}
+
+export function usaplFlyerImageUrl(division) {
+  return String(division?.flyerImageUrl || '').trim();
 }

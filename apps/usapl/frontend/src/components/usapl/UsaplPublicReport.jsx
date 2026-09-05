@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usaplDivisionShowsSessionStats } from '../../data/usaplPastDivisions.js';
 import { usaplPublicReportEntries, usaplReportBlurb, usaplReportHeading } from '../../data/usaplPublicReports.js';
 
 export default function UsaplPublicReport({ division }) {
@@ -7,12 +8,15 @@ export default function UsaplPublicReport({ division }) {
   const current = reports[Math.min(active, Math.max(reports.length - 1, 0))];
   const heading = usaplReportHeading(division);
   const blurb = usaplReportBlurb(division);
+  const waiting = !usaplDivisionShowsSessionStats(division);
 
-  if (!current) {
+  if (waiting || !current) {
     return (
       <section className="usapl-card usapl-report-card">
         <h2>{heading}</h2>
-        <p className="usapl-meta">{blurb}</p>
+        <p className="usapl-meta">
+          {waiting ? 'Stats will appear here when division play begins.' : blurb}
+        </p>
       </section>
     );
   }
