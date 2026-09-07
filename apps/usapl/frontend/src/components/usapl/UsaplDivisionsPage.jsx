@@ -59,7 +59,7 @@ export default function UsaplDivisionsPage() {
         Pick a night that fits. Full teams, partial teams, and individuals looking for a
         home are all welcome.<br />
         {' '}
-        <Link to="/usapl/past-divisions">Past divisions and winners</Link>
+        <Link to="/usapl/past-divisions">Click here for past divisions and winners</Link>
       </p>
       <UsaplVegasWinnerTicker />
       <UsaplLeagueNumberGuide />

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { USAPL_VEGAS_CUP } from '../../data/usaplVegasCup.js';
 import { usaplWinnerTickerItems } from '../../data/usaplVegasSeeds.js';
 import { useUsaplVegasSeedStats } from '../../hooks/useUsaplVegasSeedStats.js';
 
@@ -26,9 +27,9 @@ export default function UsaplVegasWinnerTicker() {
   const seconds = Math.max(24, lines.length * 8);
 
   return (
-    <div className="usapl-vegas-ticker" role="marquee" aria-label="Division winners">
+    <div className="usapl-vegas-ticker" role="marquee" aria-label={`${USAPL_VEGAS_CUP.year} division winners`}>
       <Link className="usapl-vegas-ticker-label" to="/usapl/past-divisions">
-        Division winners
+        {USAPL_VEGAS_CUP.year} Division winners
       </Link>
       <div className="usapl-vegas-ticker-window">
         <div
