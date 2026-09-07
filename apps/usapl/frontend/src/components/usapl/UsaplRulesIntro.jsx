@@ -3,8 +3,7 @@ import React from 'react';
 export default function UsaplRulesIntro() {
   return (
     <header className="usapl-rules-intro">
-      <p className="usapl-hero-title">Front Range USA Pool League<br />
-        Rules At A Glance:</p>
+      <p className="usapl-hero-title">Rules at a glance</p>
       
       <p className="usapl-lede">
         For the full rules: <br />

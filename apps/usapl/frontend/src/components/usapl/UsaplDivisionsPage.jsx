@@ -8,6 +8,7 @@ import {
 } from '../../data/usaplDivisions.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
 import UsaplDivisionCard from './UsaplDivisionCard.jsx';
+import UsaplLeagueMark from './UsaplLeagueMark.jsx';
 import UsaplLeagueNumberGuide from './UsaplLeagueNumberGuide.jsx';
 import UsaplVegasWinnerTicker from './UsaplVegasWinnerTicker.jsx';
 
@@ -53,7 +54,9 @@ export default function UsaplDivisionsPage() {
     : signupList.filter((row) => row.night === night);
 
   return (
-    <div className="usapl-page usapl-divisions-page">
+    <div className="usapl-brand-page">
+      <UsaplLeagueMark />
+      <div className="usapl-page usapl-divisions-page">
       <h1>FRUSAPL Divisions</h1>
       <p className="usapl-lede">
         Current Divsions. Divisions starting soon. Past divisions.<br />
@@ -115,6 +118,7 @@ export default function UsaplDivisionsPage() {
         night={night}
         titleFor={(group) => group.label}
       />
+      </div>
     </div>
   );
 }

@@ -72,6 +72,14 @@
   padding: 0;
 }
 
+.usapl-brand-page {
+  width: 100%;
+}
+
+.usapl-brand-page .usapl-page {
+  padding-top: 12px;
+}
+
 .usapl-hero-welcome {
   position: relative;
   text-align: center;
@@ -92,6 +100,25 @@
 
 .usapl-hero-corner-right {
   right: 12px;
+}
+
+.usapl-league-mark {
+  position: relative;
+  width: 100%;
+  text-align: center;
+  padding: 28px 108px 16px;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.usapl-league-mark .usapl-hero-corner {
+  top: 12px;
+  transform: none;
+  height: 80px;
+}
+
+.usapl-league-mark .usapl-league-name {
+  margin: 0;
 }
 
 .usapl-kicker {
@@ -116,6 +143,7 @@
   line-height: 1.2;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: #e23b4a !important;
   -webkit-text-stroke: 2px #f4efe6;
   paint-order: stroke fill;
@@ -780,6 +808,10 @@
   text-align: center;
 }
 
+.usapl-dues-pay-jump .usapl-dues-after {
+  margin: 14px 0 0;
+}
+
 .usapl-dues-cash-note {
   margin: 0;
   max-width: 36rem;
@@ -829,22 +861,28 @@
 
 .usapl-dues-must {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
   margin: 0 0 10px;
   font-size: 0.95rem;
 }
 
+.usapl-dues-must-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
 .usapl-dues-must strong {
   color: var(--usapl-gold);
-  font-size: 0.78rem;
+  font-size: 1.05rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.usapl-dues-must span {
+.usapl-dues-must-badges span {
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid rgba(224, 179, 77, 0.35);
@@ -1419,6 +1457,10 @@ button.usapl-vegas-fold-action {
 @media (max-width: 800px) {
   .usapl-hero-welcome {
     padding: 24px 80px 28px;
+  }
+
+  .usapl-league-mark {
+    padding: 24px 80px 16px;
   }
 
   .usapl-hero-corner {

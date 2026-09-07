@@ -66,8 +66,18 @@
     padding: 64px 12px 20px;
   }
 
+  .usapl-league-mark {
+    padding: 18px 16px 12px;
+  }
+
+  .usapl-league-mark .usapl-hero-corner {
+    top: 8px;
+    height: 40px;
+  }
+
+  .usapl-league-mark .usapl-league-name,
   .usapl-hero-welcome .usapl-league-name {
-    font-size: clamp(1.15rem, 6.5vw, 1.85rem) !important;
+    font-size: clamp(1.15rem, 5vw, 1.85rem) !important;
     -webkit-text-stroke: 1px #f4efe6;
   }
 

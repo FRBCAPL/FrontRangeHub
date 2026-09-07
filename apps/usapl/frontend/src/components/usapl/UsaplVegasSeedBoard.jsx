@@ -19,7 +19,7 @@ export default function UsaplVegasSeedBoard({ canAdmin = false }) {
     <UsaplVegasCupCard id="vegas-seeds" wide>
       <details className="usapl-facts usapl-vegas-fold">
         <summary>
-          <span className="usapl-vegas-fold-title">{USAPL_VEGAS_CUP.year} Vegas Cup seeding</span>
+          <span className="usapl-vegas-fold-title">{USAPL_VEGAS_CUP.year} Vegas Cup Seeding</span>
           <span className="usapl-vegas-fold-action">
             <span className="is-show">Show Team Seeding</span>
             <span className="is-hide">Hide Seeding</span>

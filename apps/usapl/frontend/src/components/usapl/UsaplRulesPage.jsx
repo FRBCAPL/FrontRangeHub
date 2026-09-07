@@ -2,12 +2,15 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { USAPL_LINKS } from '../../data/usaplConstants.js';
 import { USAPL_RULE_GROUPS } from '../../data/usaplRules.js';
+import UsaplLeagueMark from './UsaplLeagueMark.jsx';
 import UsaplRulesGroup from './UsaplRulesGroup.jsx';
 import UsaplRulesIntro from './UsaplRulesIntro.jsx';
 
 export default function UsaplRulesPage() {
   return (
-    <div className="usapl-page usapl-rules-page">
+    <div className="usapl-brand-page">
+      <UsaplLeagueMark />
+      <div className="usapl-page usapl-rules-page">
       <UsaplRulesIntro />
       <div className="usapl-rules-grid">
         {USAPL_RULE_GROUPS.map((group) => (
@@ -31,6 +34,7 @@ export default function UsaplRulesPage() {
             <a className="usapl-btn-secondary" href={USAPL_LINKS.csiRules} target="_blank" rel="noreferrer">Official CSI rules</a>
           </div>
         </article>
+      </div>
       </div>
     </div>
   );
