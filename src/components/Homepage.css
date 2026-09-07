@@ -73,7 +73,9 @@
 .homepage.iframe-mode .usapool-card .nav-card-content p,
 .homepage.iframe-mode .usapool-card .nav-card-features .feature-tag-row:first-child,
 .homepage.iframe-mode .usapool-card .nav-card-features .feature-tag-row:nth-child(2),
-.homepage.iframe-mode .usapool-card .nav-card-features .feature-tag-row:nth-child(3) {
+.homepage.iframe-mode .usapool-card .nav-card-features .feature-tag-row:nth-child(3),
+.homepage.iframe-mode .usapool-card .usapool-home-actions,
+.homepage.iframe-mode .usapool-card .usapool-home-tap {
   transform: none !important;
   position: static !important;
 }
@@ -783,6 +785,40 @@
 .usapool-site-btn:focus-visible {
   color: #fff;
   background: linear-gradient(145deg, rgba(229, 62, 62, 0.32) 0%, rgba(255, 255, 255, 0.12) 50%, rgba(229, 62, 62, 0.2) 100%);
+}
+
+.usapool-card .usapool-home-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  transform: translateY(-150px);
+  position: relative;
+  z-index: 3;
+}
+
+.usapool-card .usapool-home-actions .usapool-site-btn {
+  width: 100%;
+  max-width: none;
+  min-height: 44px;
+  padding: 0.55rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.usapool-card .usapool-home-tap {
+  margin: 10px 0 0;
+  transform: translateY(-145px);
+  position: relative;
+  z-index: 3;
+  color: #bbb;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 /* Future Card */
@@ -1861,7 +1897,7 @@ html body .cueless-card .nav-card-content p {
 }
 
 /* USA Pool League card description positioning */
-.usapool-card .nav-card-content p {
+.usapool-card .nav-card-content .usapool-card-blurb {
   transform: translateY(-215px); /* Moved up from -85px */
 }
 
@@ -2215,6 +2251,8 @@ html body .cueless-card .nav-card-content p {
   .usapool-card .nav-card-features .feature-tag-row:first-child,
   .usapool-card .nav-card-features .feature-tag-row:nth-child(2),
   .usapool-card .nav-card-features .feature-tag-row:nth-child(3),
+  .usapool-card .usapool-home-actions,
+  .usapool-card .usapool-home-tap,
   .usapool-card .league-logo:first-child,
   .usapool-card .league-logo:nth-child(2),
   .usapool-card .league-logo:nth-child(3),
@@ -2978,6 +3016,8 @@ html body .cueless-card .nav-card-content p {
   .homepage .usapool-card .nav-card-content h2,
   .homepage .usapool-card .nav-card-content p,
   .homepage .usapool-card .nav-card-content .nav-card-features .feature-tag-row,
+  .homepage .usapool-card .usapool-home-actions,
+  .homepage .usapool-card .usapool-home-tap,
   .homepage .cueless-card .nav-card-content h2,
   .homepage .cueless-card .cueless-flashing-tag,
   .homepage .cueless-card .nav-card-content p,

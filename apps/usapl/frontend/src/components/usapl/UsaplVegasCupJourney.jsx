@@ -15,12 +15,12 @@ export default function UsaplVegasCupJourney() {
       </UsaplVegasCupCard>
 
       <UsaplVegasCupCard title="Weekly play">
-        <p>The journey to Las Vegas starts in your division.</p>
+        <p><center>The journey to Las Vegas starts in your division.</center></p>
         <ul>
           <li>Division winners earn a seeded spot in the Vegas Cup Tournament.</li>
           <li>Double Play divisions send the 1st-place team from each format — each format is its own division win.</li>
-          <li>
-            The more divisions you win, the higher you seed. Higher seeds may get a bye.{' '}
+          <li>The more divisions you win, the higher you seed.<br />
+            Higher seeds may get a bye.{' '}
             <button
               type="button"
               className="usapl-inline-link"

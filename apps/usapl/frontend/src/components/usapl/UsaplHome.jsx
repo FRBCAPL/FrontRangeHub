@@ -79,8 +79,9 @@ export default function UsaplHome() {
           </div>
           <div className="usapl-split-copy">
             <p className="usapl-kicker">Get ready for league night with RJ</p>
-            <h2>New to league night? <br />
-            You&apos;re in the right place.</h2>
+            <h2>New to USA Pool League? <br />
+            Check out this video to get started. <br />
+           </h2>
             <p>
               Matches are weekly.<br />
               The format is friendly, fun, and competitve. <br />

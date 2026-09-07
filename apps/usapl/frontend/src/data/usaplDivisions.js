@@ -281,14 +281,11 @@ export function emptyUsaplDivision(sortOrder = 60) {
 
 export function usaplDivisionSummaryLines(division) {
   if (!division) return [];
-  const nightFormat = [
-    usaplNightLabel(division.night),
-    usaplFormatWithoutInHouse(division.format),
-  ].filter(Boolean).join(' · ');
+  const format = usaplFormatWithoutInHouse(division.format);
   const numbers = String(division.leagueNumbers || '').trim();
   const location = String(division.locationNote || '').trim();
   const hideLocation = usaplDivisionIsInHouse(division)
     || usaplDivisionIsTravel(division)
     || location.toLowerCase() === String(division.shortName || '').trim().toLowerCase();
-  return [numbers ? `Div. ${numbers}` : '', nightFormat, hideLocation ? '' : location].filter(Boolean);
+  return [numbers ? `Div. ${numbers}` : '', format, hideLocation ? '' : location].filter(Boolean);
 }

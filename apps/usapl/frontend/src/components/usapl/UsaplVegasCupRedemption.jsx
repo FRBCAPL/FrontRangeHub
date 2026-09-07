@@ -8,7 +8,7 @@ export default function UsaplVegasCupRedemption() {
       title="Redemption Tournament"
       when={USAPL_VEGAS_CUP.redemptionWhen}
     >
-      <p>Teams that did not win a division can enter Redemption.</p>
+      <p><center>Teams that did not win a division can enter Redemption.</center></p>
       <ul>
         <li>Top placing teams advance to the Vegas Cup Tournament.</li>
         <li>

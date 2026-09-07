@@ -6,6 +6,7 @@ import {
   usaplDivisionSummaryLines,
 } from '../../data/usaplDivisions.js';
 import UsaplDivisionFlyer from './UsaplDivisionFlyer.jsx';
+import UsaplPlayDayBadge from './UsaplPlayDayBadge.jsx';
 import UsaplPlayPlaceBadge from './UsaplPlayPlaceBadge.jsx';
 
 export default function UsaplDivisionCard({ division }) {
@@ -25,12 +26,6 @@ export default function UsaplDivisionCard({ division }) {
       <div className="usapl-night-card-main">
         <div className="usapl-night-copy">
           <h2>{division.shortName}</h2>
-          <div className="usapl-night-pills">
-            <UsaplPlayPlaceBadge division={division} />
-            <p className={`usapl-signup-pill${playing ? ' is-playing' : open ? ' is-open' : ''}`}>
-              {pill}
-            </p>
-          </div>
           <p className="usapl-meta">
             {lines.map((line, index) => (
               <span key={`${division.id}-${index}`}>
@@ -39,6 +34,13 @@ export default function UsaplDivisionCard({ division }) {
               </span>
             ))}
           </p>
+          <div className="usapl-night-pills">
+            <UsaplPlayDayBadge division={division} />
+            <UsaplPlayPlaceBadge division={division} />
+            <p className={`usapl-signup-pill${playing ? ' is-playing' : open ? ' is-open' : ''}`}>
+              {pill}
+            </p>
+          </div>
         </div>
         <UsaplDivisionFlyer division={division} compact />
       </div>

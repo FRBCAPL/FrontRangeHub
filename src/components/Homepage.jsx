@@ -19,6 +19,7 @@ import TournamentBannerAll from '@shared/components/tournament/TournamentBannerA
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
 import { loadHomepageTournamentBanner } from '@shared/components/tournament/homepageTournamentBannerData.js';
 import RotatingFeatureBadge from './RotatingFeatureBadge';
+import HomepageUsaplActions from './HomepageUsaplActions.jsx';
 import { LADDER_ONE_LINER } from '@shared/utils/utils/ladderEntryCopy.js';
 import {
   CUELESS_TAGLINE,
@@ -29,23 +30,6 @@ import {
 import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
-
-const USAPL_HIGHLIGHT_BADGES = [
-  'All things USAPL in one place',
-  '1 in 12 Teams Win a Trip to Las Vegas!',
-];
-
-const USAPL_FEATURE_BADGES = [
-  'Team Play',
-  'Structured Format',
-  'Scheduled Opponents',
-  'Assigned Locations',
-  'Dual Sanctioned',
-  'Official Rules',
-  'Registration',
-  'Information',
-  'Resources',
-];
 
 const LADDER_FEATURE_BADGES = [
   'Singles Play',
@@ -313,24 +297,15 @@ const Homepage = ({ canRunTournament = false }) => {
               </div>
               <div className="nav-card-content">
                 <h2>Front Range USA Pool League</h2>
-                <p>Sign up, standings, schedules, and dues — all in one place.</p>
+                <p className="usapool-card-blurb">Sign up, standings, schedules, and dues — all in one place.</p>
                 <div className="nav-card-features">
                   <div className="feature-tag-row usapool-highlight-row">
-                    <RotatingFeatureBadge
-                      id="vegas-trip-tag"
-                      className="feature-tag vegas-tag"
-                      items={USAPL_HIGHLIGHT_BADGES}
-                      intervalMs={5500}
-                    />
-                  </div>
-                  <div className="feature-tag-row usapool-chips-row">
-                    <RotatingFeatureBadge
-                      className="feature-tag"
-                      items={USAPL_FEATURE_BADGES}
-                      intervalMs={4800}
-                    />
+                    <span id="vegas-trip-tag" className="feature-tag vegas-tag rotating-feature-badge">
+                      1 in 12 Teams Win a Trip to Las Vegas!
+                    </span>
                   </div>
                 </div>
+                <HomepageUsaplActions onOpen={navigate} />
                 {/* Bottom logos for iframe - BCA and National Championship */}
                 <div className="bottom-logos">
                   <img src={bcaplLogo} alt="BCAPL Logo" className="bottom-logo" />

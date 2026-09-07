@@ -1564,10 +1564,13 @@ button.usapl-vegas-fold-action {
   gap: 12px 14px;
 }
 
-.usapl-night-card:has(.usapl-night-flyer) .usapl-night-copy,
+.usapl-night-card:has(.usapl-night-flyer) .usapl-night-copy {
+  text-align: center;
+}
+
 .usapl-night-card:has(.usapl-night-flyer) .usapl-night-copy .usapl-meta,
 .usapl-night-card:has(.usapl-night-flyer) h2 {
-  text-align: left;
+  text-align: center;
 }
 
 .usapl-night-card:has(.usapl-night-flyer) .usapl-night-copy {
@@ -1666,7 +1669,7 @@ button.usapl-vegas-fold-action {
   justify-content: center;
   align-items: center;
   gap: 8px;
-  margin: 4px 0 10px;
+  margin: 0 0 4px;
 }
 
 .usapl-night-pills .usapl-signup-pill {
@@ -1752,14 +1755,13 @@ button.usapl-vegas-fold-action {
   text-align: left;
 }
 
-.usapl-in-house-tag {
+.usapl-in-house-tag,
+.usapl-travel-tag,
+.usapl-play-day-tag {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
   border-radius: 999px;
-  border: 1px solid var(--usapl-gold);
-  background: rgba(224, 179, 77, 0.18);
-  color: var(--usapl-gold);
   font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
   font-size: 0.72rem;
   font-weight: 800;
@@ -1767,19 +1769,22 @@ button.usapl-vegas-fold-action {
   line-height: 1.2;
 }
 
+.usapl-play-day-tag {
+  border: 1px solid #c9b8ff;
+  background: rgba(168, 140, 255, 0.22);
+  color: #ece6ff;
+}
+
+.usapl-in-house-tag {
+  border: 1px solid var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.18);
+  color: var(--usapl-gold);
+}
+
 .usapl-travel-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  border-radius: 999px;
   border: 1px solid #7eb8ff;
   background: rgba(126, 184, 255, 0.16);
   color: #9cc9ff;
-  font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.2;
 }
 
 .usapl-tip-wrap {
@@ -1823,8 +1828,8 @@ button.usapl-vegas-fold-action {
   z-index: 2;
 }
 
-.usapl-night-copy .usapl-meta {
-  margin: 0;
+.usapl-night-card .usapl-night-copy .usapl-meta {
+  margin: 0 0 8px;
   text-align: center;
 }
 
@@ -2219,8 +2224,15 @@ button.usapl-vegas-fold-action {
 .usapl-vegas-card li {
   margin: 0 0 10px;
   font-size: 1.02rem;
-  line-height: 1.55;
   color: var(--usapl-ink);
+}
+
+.usapl-vegas-card p {
+  line-height: 1.55;
+}
+
+.usapl-vegas-card li {
+  line-height: 1.22;
 }
 
 #vegas-seeds {
@@ -2312,15 +2324,38 @@ button.usapl-vegas-fold-action {
   width: min(1080px, calc(100% - 32px));
 }
 
+.usapl-rules-intro {
+  margin: 0 0 22px;
+  text-align: center;
+}
+
 .usapl-rules-page .usapl-kicker {
   text-align: center;
   color: var(--usapl-gold);
+}
+
+.usapl-rules-page .usapl-hero-title {
+  margin: 0 0 12px;
 }
 
 .usapl-rules-page .usapl-lede {
   margin-left: auto;
   margin-right: auto;
   text-align: center;
+}
+
+.usapl-rules-shout {
+  display: inline-block;
+  margin: 16px 0 0;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.14);
+  color: var(--usapl-gold);
+  font-weight: 800;
+  font-size: 0.98rem;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
 }
 
 .usapl-rules-grid {
@@ -2334,49 +2369,59 @@ button.usapl-vegas-fold-action {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding: 22px 22px 18px;
+  padding: 20px 22px 16px;
   border-radius: 18px;
   border: 1px solid var(--usapl-line);
-  background: rgba(0, 0, 0, 0.32);
+  border-left: 4px solid var(--usapl-gold);
+  background: rgba(21, 18, 24, 0.72);
   text-align: left;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
 }
 
-.usapl-rules-page .usapl-rule-card h2 {
+.usapl-rule-head {
   margin: 0 0 4px;
-  padding-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--usapl-line);
   text-align: center;
+}
+
+.usapl-rules-page .usapl-rule-card h2 {
+  margin: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  text-align: center;
+  font-family: "Baloo 2", "Trebuchet MS", sans-serif;
+  font-size: 1.55rem;
+  font-weight: 800;
   color: var(--usapl-ink);
 }
 
 .usapl-rule-blurb {
-  margin: 12px 0 6px;
+  margin: 6px 0 0;
   text-align: center;
   color: var(--usapl-gold);
   font-weight: 800;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   letter-spacing: 0.02em;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .usapl-rule-card ul {
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   padding: 0;
   list-style: none;
-  counter-reset: rule-item;
 }
 
 .usapl-rule-card li {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
+  grid-template-columns: 1rem minmax(0, 1fr);
   gap: 12px;
   align-items: start;
   margin: 0;
   padding: 11px 0;
   border-bottom: 1px solid var(--usapl-line);
   font-size: 1.02rem;
-  line-height: 1.5;
+  line-height: 1.45;
   color: var(--usapl-ink);
 }
 
@@ -2391,19 +2436,14 @@ button.usapl-vegas-fold-action {
 }
 
 .usapl-rule-card li::before {
-  counter-increment: rule-item;
-  content: counter(rule-item);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 8px;
-  border: 1px solid var(--usapl-gold);
-  background: rgba(224, 179, 77, 0.16);
-  color: var(--usapl-gold);
-  font-size: 0.9rem;
-  font-weight: 800;
+  content: '';
+  width: 0.72rem;
+  height: 0.72rem;
+  margin-top: 0.48rem;
+  border-radius: 50%;
+  border: 2px solid var(--usapl-gold);
+  background: radial-gradient(circle at 32% 30%, #fff 0 34%, var(--usapl-gold) 38%);
+  box-shadow: 0 0 8px rgba(224, 179, 77, 0.35);
 }
 
 .usapl-rule-card-official {

@@ -10,7 +10,7 @@ export default function UsaplVegasCupFinals() {
         title="Vegas Cup Tournament"
         when={USAPL_VEGAS_CUP.vegasWhen}
       >
-        <p>Division winners and Redemption winners play for the trip.</p>
+        <p><center>Division winners and Redemption winners play for the trip.</center></p>
         <ul>
           <li>Modified double elimination.<br /> 
             Default format is 8-ball on the winner's side and 10-ball on the one loss side.</li>
@@ -26,7 +26,7 @@ export default function UsaplVegasCupFinals() {
             session(s).
           </li>
         </ul>
-        <p className="usapl-vegas-win">Winning team(s) go to Vegas!</p>
+        <p className="usapl-vegas-win"><center>Winning team(s) go to Vegas!</center></p>
       </UsaplVegasCupCard>
 
       <UsaplVegasCupCard title="Everyone can still play Nationals">
@@ -35,7 +35,8 @@ export default function UsaplVegasCupFinals() {
           You do not have to win a trip to play.
         </p>
         <p className="usapl-vegas-close">
-          Sign up. Hit the tables. Win your way to becoming USA Pool League National Champions.
+          <center>Sign up. Hit the tables.</center><br />
+          <center> Win your way to becoming USA Pool League National Champions.</center>
         </p>
         <div className="usapl-actions usapl-vegas-actions">
           <Link className="usapl-btn" to="/usapl/signup">Sign up</Link>
