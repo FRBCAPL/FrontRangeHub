@@ -56,8 +56,8 @@ export default function UsaplDivisionsPage() {
     <div className="usapl-page usapl-divisions-page">
       <h1>FRUSAPL Divisions</h1>
       <p className="usapl-lede">
-        Pick a night that fits. Full teams, partial teams, and individuals looking for a
-        home are all welcome.<br />
+        Current Divsions. Divisions starting soon. Past divisions.<br />
+        Click a divsion page to see stats, results, and more.<br />
         {' '}
         <Link to="/usapl/past-divisions">Click here for past divisions and winners</Link>
       </p>
@@ -98,6 +98,11 @@ export default function UsaplDivisionsPage() {
       {visibleSignup.length ? (
         <section className="usapl-night-section">
           <h2 className="usapl-night-section-title">Taking signups</h2>
+          <p className="usapl-lede usapl-night-section-lede">
+            Pick a night that fits.<br />
+            Full teams, partial teams, and individuals looking for a
+            home are all welcome.
+          </p>
           <div className="usapl-night-grid">
             {visibleSignup.map((division) => (
               <UsaplDivisionCard key={division.id} division={division} />

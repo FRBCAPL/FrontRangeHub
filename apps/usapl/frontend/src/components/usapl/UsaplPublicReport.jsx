@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
 import { usaplDivisionShowsSessionStats } from '../../data/usaplPastDivisions.js';
-import { usaplPublicReportEntries, usaplReportBlurb, usaplReportHeading } from '../../data/usaplPublicReports.js';
+import { usaplPublicReportEntries, usaplReportBlurb } from '../../data/usaplPublicReports.js';
 
 export default function UsaplPublicReport({ division }) {
   const reports = usaplPublicReportEntries(division);
   const [active, setActive] = useState(0);
   const current = reports[Math.min(active, Math.max(reports.length - 1, 0))];
-  const heading = usaplReportHeading(division);
   const blurb = usaplReportBlurb(division);
   const waiting = !usaplDivisionShowsSessionStats(division);
 
   if (waiting || !current) {
     return (
       <section className="usapl-card usapl-report-card">
-        <h2>{heading}</h2>
         <p className="usapl-meta">
           {waiting ? 'Stats will appear here when division play begins.' : blurb}
         </p>
@@ -21,9 +19,10 @@ export default function UsaplPublicReport({ division }) {
     );
   }
 
+  const title = `${division.shortName || division.name} ${current.label} public report`;
+
   return (
     <section className="usapl-card usapl-report-card">
-      <h2>{heading}</h2>
       {blurb ? <p className="usapl-meta">{blurb}</p> : null}
       {reports.length > 1 ? (
         <div className="usapl-report-tabs">
@@ -40,14 +39,11 @@ export default function UsaplPublicReport({ division }) {
         </div>
       ) : null}
       <div className="usapl-report-frame">
-        <iframe
-          title={`${division.shortName || division.name} ${current.label} public report`}
-          src={current.src}
-        />
+        <iframe title={title} src={current.src} />
       </div>
       <div className="usapl-actions">
         <a className="usapl-btn-secondary" href={current.src} target="_blank" rel="noreferrer">
-          Open {current.label} report
+          Open in FargoRate
         </a>
       </div>
     </section>

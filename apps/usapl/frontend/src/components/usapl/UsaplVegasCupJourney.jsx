@@ -8,7 +8,7 @@ export default function UsaplVegasCupJourney() {
       <UsaplVegasCupCard wide shout>
         <p>Every team has a chance to win a trip to Vegas</p>
         <p className="usapl-vegas-shout-sub">
-          Compete for a seeded spot in the Vegas Cup Tournament<br />
+          Compete for divsion wins and a seeded spot in the Vegas Cup Tournament<br />
           Win a trip to the USAPL National Championships
           at the CSI expo in Las Vegas.
         </p>

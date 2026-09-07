@@ -1,0 +1,260 @@
+/* Phone and small-tablet layout. Loaded after usapl.css. */
+
+.usapl-app {
+  overflow-x: clip;
+  padding-bottom: max(64px, env(safe-area-inset-bottom));
+}
+
+.usapl-app iframe,
+.usapl-app video {
+  max-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .usapl-vegas-welcome-row {
+    width: 100%;
+    margin: 0;
+    gap: 10px 16px;
+  }
+
+  .usapl-vegas-ticker-track {
+    animation-duration: 110s !important;
+  }
+
+  .usapl-vegas-cards,
+  .usapl-champs,
+  .usapl-split {
+    width: min(920px, calc(100% - 24px));
+  }
+
+  .usapl-rules-page {
+    width: min(1080px, calc(100% - 24px));
+  }
+}
+
+@media (max-width: 640px) {
+  .usapl-nav {
+    justify-content: center;
+    gap: 0 4px;
+    padding: 6px 8px max(8px, env(safe-area-inset-top));
+  }
+
+  .usapl-nav a,
+  .usapl-nav-link {
+    min-height: 44px;
+    padding: 10px 8px;
+    font-size: 0.82rem;
+  }
+
+  .usapl-page {
+    width: calc(100% - 20px);
+    padding-top: 16px;
+  }
+
+  .usapl-page h1:not(.usapl-hero-title) {
+    font-size: clamp(1.28rem, 6.4vw, 1.7rem);
+    gap: 6px 8px;
+  }
+
+  .usapl-lede,
+  .usapl-hero-copy {
+    font-size: 1rem;
+    max-width: none;
+  }
+
+  .usapl-hero-welcome {
+    padding: 64px 12px 20px;
+  }
+
+  .usapl-hero-welcome .usapl-league-name {
+    font-size: clamp(1.15rem, 6.5vw, 1.85rem) !important;
+    -webkit-text-stroke: 1px #f4efe6;
+  }
+
+  .usapl-hero-welcome h1,
+  .usapl-hero-title,
+  .usapl-page h1.usapl-hero-title {
+    font-size: clamp(1.45rem, 7vw, 2.1rem) !important;
+  }
+
+  .usapl-hero-corner {
+    height: 40px;
+    top: 8px;
+  }
+
+  .usapl-hero-edge {
+    height: 48px;
+    bottom: 6px;
+  }
+
+  .usapl-rotate-banner {
+    width: 100%;
+    border-radius: 16px;
+    min-height: 3.4rem;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .usapl-cta-strip {
+    width: 100%;
+    max-width: none;
+  }
+
+  .usapl-cta-strip .usapl-btn,
+  .usapl-cta-strip .usapl-btn-secondary {
+    flex: 1 1 9.5rem;
+    min-height: 44px;
+  }
+
+  .usapl-band {
+    padding: 24px 14px;
+  }
+
+  .usapl-store-pair {
+    flex-direction: column;
+  }
+
+  .usapl-contact-line {
+    overflow-wrap: anywhere;
+  }
+
+  .usapl-division-page-links {
+    width: 100%;
+  }
+
+  .usapl-division-page-links .usapl-btn-secondary,
+  .usapl-division-page-links .usapl-btn {
+    flex: 1 1 8.5rem;
+  }
+
+  .usapl-division-ad {
+    width: 100%;
+  }
+
+  .usapl-division-ad img {
+    max-height: min(420px, 58vh);
+  }
+
+  .usapl-night-card:has(.usapl-night-flyer) .usapl-night-card-main {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .usapl-night-card:has(.usapl-night-flyer) .usapl-night-copy,
+  .usapl-night-card:has(.usapl-night-flyer) .usapl-night-copy .usapl-meta,
+  .usapl-night-card:has(.usapl-night-flyer) h2,
+  .usapl-night-card:has(.usapl-night-flyer) .usapl-night-pills {
+    text-align: center;
+    justify-content: center;
+  }
+
+  .usapl-night-filters {
+    justify-content: center;
+  }
+
+  .usapl-night-filters .usapl-choice {
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+
+  .usapl-vegas-welcome-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .usapl-vegas-nationals {
+    height: 56px;
+  }
+
+  .usapl-vegas-welcome-row .usapl-vegas-nationals:last-of-type {
+    display: none;
+  }
+
+  .usapl-vegas-welcome-mid,
+  .usapl-vegas-welcome-row .usapl-vegas-ticker {
+    width: 100%;
+  }
+
+  .usapl-vegas-ticker-track {
+    animation-duration: 110s !important;
+  }
+
+  .usapl-vegas-card {
+    padding: 16px 14px;
+  }
+
+  .usapl-vegas-card.is-shout {
+    padding: 18px 14px;
+  }
+
+  .usapl-vegas-card.is-shout > p:first-child {
+    font-size: clamp(1.05rem, 5.4vw, 1.4rem);
+  }
+
+  .usapl-vegas-card li,
+  .usapl-vegas-card p {
+    overflow-wrap: break-word;
+  }
+
+  .usapl-rules-shout {
+    border-radius: 16px;
+    padding: 10px 14px;
+  }
+
+  .usapl-rule-card {
+    padding: 16px 14px 14px;
+  }
+
+  .usapl-rules-page .usapl-rule-card h2 {
+    font-size: 1.28rem;
+  }
+
+  .usapl-facts-modal .usapl-facts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .usapl-info-overlay,
+  .usapl-flyer-lightbox {
+    padding: 8px;
+  }
+
+  .usapl-info-dialog,
+  .usapl-flyer-lightbox-frame,
+  .usapl-flyer-lightbox-frame.is-wide {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    max-height: calc(100dvh - 88px);
+  }
+
+  .usapl-report-frame {
+    min-height: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .usapl-report-frame iframe {
+    height: min(70vh, 560px);
+    min-width: 320px;
+  }
+
+  .usapl-visit-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .usapl-visit-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .usapl-admin-division-actions {
+    justify-content: flex-start;
+  }
+
+  .usapl-pay-qr img {
+    max-width: 220px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

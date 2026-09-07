@@ -397,39 +397,6 @@
   gap: 10px;
 }
 
-.usapl-division-hero {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  gap: 20px 28px;
-  margin: 18px 0 8px;
-}
-
-.usapl-division-hero .usapl-division-ad {
-  flex: 0 1 22rem;
-  width: min(100%, 22rem);
-  margin: 0;
-}
-
-.usapl-division-hero .usapl-division-ad img {
-  max-height: min(420px, 58vh);
-}
-
-.usapl-division-hero-facts {
-  flex: 1 1 16rem;
-  min-width: 0;
-  max-width: 28rem;
-  text-align: left;
-  align-self: stretch;
-}
-
-.usapl-division-hero-facts .usapl-facts-body {
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  min-height: 100%;
-}
-
 .usapl-facts-place {
   display: flex;
   justify-content: flex-start;
@@ -442,18 +409,6 @@
   padding: 8px 18px;
   font-size: 0.95rem;
   letter-spacing: 0.05em;
-}
-
-@media (max-width: 700px) {
-  .usapl-division-hero {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .usapl-division-hero-facts {
-    max-width: none;
-    width: 100%;
-  }
 }
 
 .usapl-facts {
@@ -748,16 +703,35 @@
 
 .usapl-schedule-pic {
   display: block;
+  width: 100%;
   margin: 12px 0 8px;
-  max-width: min(28rem, 100%);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
 }
 
 .usapl-schedule-pic img {
   display: block;
   width: 100%;
   height: auto;
+  max-height: 280px;
+  object-fit: contain;
   border-radius: 12px;
   border: 1px solid var(--usapl-line);
+}
+
+.usapl-flyer-lightbox-frame.is-wide {
+  width: min(1100px, 94vw);
+  height: min(820px, 86vh);
+}
+
+.usapl-flyer-lightbox-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
 }
 
 .usapl-card p,
@@ -1223,15 +1197,7 @@
 .usapl-number-guide {
   margin: 0 0 18px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  text-align: center;
-}
-
-.usapl-number-guide-title {
-  margin: 0;
-  font-weight: 700;
+  justify-content: center;
 }
 
 button.usapl-vegas-fold-action {
@@ -1517,6 +1483,10 @@ button.usapl-vegas-fold-action {
   color: var(--usapl-gold);
 }
 
+.usapl-night-section-lede {
+  margin: -4px 0 16px;
+}
+
 .usapl-night-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1793,10 +1763,8 @@ button.usapl-vegas-fold-action {
 }
 
 .usapl-tip {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 8px);
-  z-index: 4;
+  position: fixed;
+  z-index: 1400;
   width: max-content;
   max-width: 16rem;
   padding: 8px 10px;
@@ -1812,20 +1780,11 @@ button.usapl-vegas-fold-action {
   text-align: center;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
   transform: translateX(-50%);
-  opacity: 0;
   pointer-events: none;
-  visibility: hidden;
 }
 
-.usapl-tip-wrap:hover .usapl-tip,
-.usapl-tip-wrap:focus-visible .usapl-tip {
-  opacity: 1;
-  visibility: visible;
-}
-
-.usapl-night-card:has(.usapl-tip-wrap:hover),
-.usapl-night-card:has(.usapl-tip-wrap:focus-visible) {
-  z-index: 2;
+.usapl-tip.is-above {
+  transform: translate(-50%, -100%);
 }
 
 .usapl-night-card .usapl-night-copy .usapl-meta {
@@ -2023,7 +1982,7 @@ button.usapl-vegas-fold-action {
   align-items: center;
   width: max-content;
   padding: 10px 0;
-  animation: usapl-vegas-ticker-scroll 32s linear infinite;
+  animation: usapl-vegas-ticker-scroll 55s linear infinite;
 }
 
 .usapl-vegas-ticker:hover .usapl-vegas-ticker-track {

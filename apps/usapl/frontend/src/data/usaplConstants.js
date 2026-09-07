@@ -12,7 +12,7 @@ export const USAPL_CONTACT = {
 export const USAPL_VEGAS_BANNER = [
   'Best odds of winning a trip to Vegas!',
   'Approximately 1 in 12 teams \n win a trip to the USAPL Nationals!',
-  'Join Now for your chance to win!',
+  'Join Now! \n For your chance to win!',
 ];
 
 export const USAPL_LINKS = {

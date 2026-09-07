@@ -17,6 +17,7 @@ import UsaplAdminArchived from './UsaplAdminArchived.jsx';
 import UsaplAdminLocations from './UsaplAdminLocations.jsx';
 import UsaplAdminVisits from './UsaplAdminVisits.jsx';
 import './usapl.css';
+import './usapl-mobile.css';
 import './usaplForms.css';
 
 const USAPL_FONTS_HREF =

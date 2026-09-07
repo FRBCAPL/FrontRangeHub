@@ -14,12 +14,11 @@ export default function UsaplLeagueNumberGuide() {
 
   return (
     <div className="usapl-number-guide">
-      <p className="usapl-number-guide-title">How Front Range division numbers work</p>
       <button type="button" className="usapl-vegas-fold-action" onClick={() => setOpen(true)}>
-        How it works
+        How Division Numbers Work
       </button>
       {open ? (
-        <UsaplDivisionFactsModal title="How Front Range division numbers work" onClose={() => setOpen(false)}>
+        <UsaplDivisionFactsModal title="How Division Numbers Work" onClose={() => setOpen(false)}>
           <div className="usapl-number-guide-body">
             <p>
               Each Front Range USA Pool League division has a 5-digit league number.<br />
