@@ -5,14 +5,18 @@ export function usaplVisitsSinceIso(days) {
   return start.toISOString();
 }
 
-export function summarizeUsaplVisits(rows, divisions = [], labelFor) {
-  const views = rows.length;
-  const visitors = new Set(rows.map((row) => row.visitor_id)).size;
+export function summarizeUsaplVisits(rows, divisions = [], labelFor, mineId = '') {
+  const mineKey = String(mineId || '');
+  const isMine = (row) => Boolean(mineKey) && row.visitor_id === mineKey;
+  const others = mineKey ? rows.filter((row) => !isMine(row)) : rows;
+  const mineRows = mineKey ? rows.filter(isMine) : [];
+  const views = others.length;
+  const visitors = new Set(others.map((row) => row.visitor_id)).size;
   const todayKey = new Date().toDateString();
-  const todayRows = rows.filter((row) => row.created_at && new Date(row.created_at).toDateString() === todayKey);
+  const todayOthers = others.filter((row) => row.created_at && new Date(row.created_at).toDateString() === todayKey);
   const pages = new Map();
 
-  rows.forEach((row) => {
+  others.forEach((row) => {
     const key = row.path || '';
     const current = pages.get(key) || { path: key, views: 0, visitors: new Set() };
     current.views += 1;
@@ -33,9 +37,10 @@ export function summarizeUsaplVisits(rows, divisions = [], labelFor) {
   return {
     views,
     visitors,
-    todayViews: todayRows.length,
-    todayVisitors: new Set(todayRows.map((row) => row.visitor_id)).size,
+    mineViews: mineRows.length,
+    todayViews: todayOthers.length,
+    todayVisitors: new Set(todayOthers.map((row) => row.visitor_id)).size,
     pages: pageRows,
-    recent: rows.slice(0, 25),
+    recent: rows.slice(0, 25).map((row) => ({ ...row, isMine: isMine(row) })),
   };
 }

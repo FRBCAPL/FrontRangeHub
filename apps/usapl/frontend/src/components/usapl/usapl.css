@@ -2608,9 +2608,8 @@ button.usapl-vegas-fold-action {
   white-space: nowrap;
 }
 
-.usapl-visit-table .usapl-meta {
-  margin: 2px 0 0;
-  word-break: break-all;
+.usapl-visit-table tr.is-you td {
+  color: var(--usapl-gold);
 }
 
 @media (max-width: 800px) {

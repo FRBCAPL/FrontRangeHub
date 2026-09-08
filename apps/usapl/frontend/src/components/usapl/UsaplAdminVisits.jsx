@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { usaplVisitPageLabel } from '../../data/usaplVisitPages.js';
 import { summarizeUsaplVisits, usaplVisitsSinceIso } from '../../data/usaplVisitStats.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
-import { listUsaplPageVisits } from '../../services/usaplPageVisits.js';
+import { getUsaplVisitorId, listUsaplPageVisits } from '../../services/usaplPageVisits.js';
 import UsaplAdminSubnav from './UsaplAdminSubnav.jsx';
 import UsaplAdminVisitSummary from './UsaplAdminVisitSummary.jsx';
 import UsaplAdminVisitTables from './UsaplAdminVisitTables.jsx';
@@ -39,11 +39,12 @@ export default function UsaplAdminVisits() {
   }, [days]);
 
   const labelFor = (row) => usaplVisitPageLabel(row.path, divisions) || row.page_label || row.path;
+  const mineId = getUsaplVisitorId();
   const stats = useMemo(
     () => summarizeUsaplVisits(rows, divisions, (row) => (
       usaplVisitPageLabel(row.path, divisions) || row.page_label || row.path
-    )),
-    [rows, divisions]
+    ), mineId),
+    [rows, divisions, mineId]
   );
 
   return (
@@ -51,8 +52,11 @@ export default function UsaplAdminVisits() {
       <UsaplAdminSubnav />
       <h1>Visitor stats</h1>
       <p className="usapl-lede">
-        Anonymous counts for the FRUSAPL site. Visitors are remembered in the browser, not by name or email.
-        Admin pages are not counted.
+        Unique visitors are anonymous browser IDs (not names). This screen splits
+        <strong> this browser (you)</strong> from everyone else, so you can see if the numbers
+        are mostly your own clicks. Admin pages were never counted. Going forward, your
+        public-page clicks while logged in as admin are not counted either.
+        A phone, another computer, or clearing site data looks like a different visitor.
       </p>
       <div className="usapl-choice-row" style={{ margin: '16px 0' }}>
         {RANGES.map((range) => (

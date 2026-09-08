@@ -5,11 +5,12 @@ import { recordUsaplPageVisit } from '../services/usaplPageVisits.js';
 
 const DEDUPE_MS = 20000;
 
-export default function useUsaplPageVisitTracker() {
+export default function useUsaplPageVisitTracker(canAdmin = false) {
   const location = useLocation();
   const last = useRef({ key: '', at: 0 });
 
   useEffect(() => {
+    if (canAdmin) return undefined;
     const path = usaplVisitPath(location.pathname, location.search);
     if (!usaplVisitIsPublic(path)) return undefined;
 
@@ -24,5 +25,5 @@ export default function useUsaplPageVisitTracker() {
     }).catch(() => {});
 
     return undefined;
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, canAdmin]);
 }
