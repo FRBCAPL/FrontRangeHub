@@ -59,7 +59,7 @@ export default function UsaplDivisionsPage() {
       <div className="usapl-page usapl-divisions-page">
       <h1>FRUSAPL Divisions</h1>
       <p className="usapl-lede">
-        Current Divsions. Divisions starting soon. Past divisions.<br />
+        - Current Divsions - Divisions starting soon - Past divisions -<br />
         Click a divsion page to see stats, results, and more.<br />
         {' '}
         <Link to="/usapl/past-divisions">Click here for past divisions and winners</Link>

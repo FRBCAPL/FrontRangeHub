@@ -740,7 +740,7 @@ function AppContent() {
   const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
 
   return (
-    <div style={{ position: "relative", minHeight: "100vh", width: "100%", overflowX: "hidden", background: "#000" }}>
+    <div style={{ position: "relative", minHeight: "100vh", width: "100%", background: "#000" }}>
         {/* Hide FloatingLogos on ladder, embed-preview, and Estate Vault */}
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
@@ -764,7 +764,7 @@ function AppContent() {
         />
         ) : null}
 
-                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : isUsaplLeague ? "72px" : "80px" }}>
+                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", overflowX: "hidden", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : "96px" }}>
           <Routes>
             
             {/* League App Routes */}

@@ -5,6 +5,25 @@ import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
 
+function hubCenterTitle(pathname, currentAppName, userFirstName) {
+  if (pathname === '/') return 'Front Range Pool.com';
+  if (pathname === '/usapl' || String(pathname || '').startsWith('/usapl/')) {
+    return 'Front Range USA Pool League';
+  }
+  if (pathname === '/hub') return !userFirstName ? 'Ladder - Login' : 'Ladder of Legends';
+  if (pathname === '/guest/ladder' || pathname === '/ladder') return 'Ladder of Legends';
+  if (pathname === '/cueless') return 'Cueless in the Booth';
+  if (pathname === '/admin') return 'Admin Panel';
+  if (pathname === '/platform-admin') return 'Platform Admin';
+  if (pathname === '/dues-tracker') return 'Dues Tracker';
+  if (pathname === '/tournament-bracket/how-it-works') return 'How Cash Climb works';
+  if (pathname.startsWith('/tournament-bracket/submit')) return 'Submit Cash Climb result';
+  if (pathname === '/tournament-bracket') return 'Tournament Bracket';
+  if (pathname === '/estate-inventory' || pathname.startsWith('/estate-inventory/')) return 'Estate Vault';
+  if (pathname === '/calendar') return 'Match Calendar';
+  return currentAppName || 'Front Range Pool';
+}
+
 const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, showLadderUserViewToggle, ladderUserViewActive, onToggleLadderUserView }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -76,7 +95,10 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     navigate('/');
   };
 
-  const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends';
+  const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || location.pathname.startsWith('/ladder/') || currentAppName === 'Ladder of Legends';
+  const isUsaplApp = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
+  const isCuelessApp = location.pathname === '/cueless' || location.pathname.startsWith('/cueless/');
+  const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName);
   const handleHamburgerClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -84,7 +106,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
   
   return (
-    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
@@ -151,33 +173,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   letterSpacing: '0.5px',
                   whiteSpace: 'nowrap'
                 } : {}}>
-                  {location.pathname === '/'
-                    ? 'Front Range Pool.com'
-                    : location.pathname === '/hub'
-                    ? (!userFirstName ? 'Ladder - Login' : 'Ladder of Legends')
-                    : location.pathname === '/guest/ladder' || location.pathname === '/ladder'
-                    ? 'Ladder of Legends'
-                    : location.pathname === '/cueless'
-                    ? 'Cueless in the Booth'
-                    : location.pathname === '/admin'
-                    ? 'Admin Panel'
-                    : location.pathname === '/platform-admin'
-                    ? 'Platform Admin'
-                    : location.pathname === '/dues-tracker'
-                    ? 'Dues Tracker'
-                    : location.pathname === '/tournament-bracket/how-it-works'
-                    ? 'How Cash Climb works'
-                    : location.pathname.startsWith('/tournament-bracket/submit')
-                    ? 'Submit Cash Climb result'
-                    : location.pathname === '/tournament-bracket'
-                    ? 'Tournament Bracket'
-                    : location.pathname === '/estate-inventory' ||
-                      location.pathname.startsWith('/estate-inventory/')
-                    ? 'Estate Vault'
-                    : location.pathname === '/calendar'
-                    ? 'Match Calendar'
-                    : currentAppName || 'Front Range Pool'
-                  }
+                  {centerTitle}
                 </span>
               </div>
               <button 
@@ -211,33 +207,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 letterSpacing: '1px',
                 whiteSpace: 'nowrap'
               } : {}}>
-                {location.pathname === '/'
-                  ? 'Front Range Pool.com'
-                  : location.pathname === '/hub'
-                  ? (!userFirstName ? 'Ladder - Login' : 'Ladder of Legends')
-                  : location.pathname === '/guest/ladder' || location.pathname === '/ladder'
-                  ? 'Ladder of Legends'
-                  : location.pathname === '/cueless'
-                  ? 'Cueless in the Booth'
-                  : location.pathname === '/admin'
-                  ? 'Admin Panel'
-                  : location.pathname === '/platform-admin'
-                  ? 'Platform Admin'
-                  : location.pathname === '/dues-tracker'
-                  ? 'Dues Tracker'
-                  : location.pathname === '/tournament-bracket/how-it-works'
-                  ? 'How Cash Climb works'
-                  : location.pathname.startsWith('/tournament-bracket/submit')
-                  ? 'Submit Cash Climb result'
-                  : location.pathname === '/tournament-bracket'
-                  ? 'Tournament Bracket'
-                  : location.pathname === '/estate-inventory' ||
-                    location.pathname.startsWith('/estate-inventory/')
-                  ? 'Estate Vault'
-                  : location.pathname === '/calendar'
-                  ? 'Match Calendar'
-                  : currentAppName || 'Front Range Pool'
-                }
+                {centerTitle}
               </span>
             </div>
           </div>
