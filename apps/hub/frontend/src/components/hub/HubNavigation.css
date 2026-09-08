@@ -271,6 +271,19 @@ html body .hub-navigation.homepage-nav .nav-content {
     z-index: 6;
     justify-content: flex-start !important;
   }
+
+  .hub-navigation.ladder-app .nav-right,
+  .hub-navigation.cueless-app .nav-right,
+  .hub-navigation.usapl-nav:not(.homepage-nav) .nav-right,
+  .hub-navigation.homepage-nav .nav-right {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 6;
+    margin-left: auto;
+    justify-content: flex-end !important;
+  }
 }
 
 .hub-navigation.ladder-app .app-title,
