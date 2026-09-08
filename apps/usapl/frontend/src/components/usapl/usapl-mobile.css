@@ -27,7 +27,8 @@
     width: min(920px, calc(100% - 24px));
   }
 
-  .usapl-rules-page {
+  .usapl-rules-page,
+  .usapl-info-page {
     width: min(1080px, calc(100% - 24px));
   }
 }
@@ -49,6 +50,14 @@
   .usapl-page {
     width: calc(100% - 20px);
     padding-top: 16px;
+  }
+
+  .usapl-info-topics {
+    grid-template-columns: 1fr;
+  }
+
+  .usapl-info-topic {
+    min-height: 0;
   }
 
   .usapl-page h1:not(.usapl-hero-title) {
@@ -217,6 +226,14 @@
 
   .usapl-rules-page .usapl-rule-card h2 {
     font-size: 1.28rem;
+  }
+
+  .usapl-info-block {
+    padding: 16px 14px 14px;
+  }
+
+  .usapl-info-block h2 {
+    font-size: 1.22rem;
   }
 
   .usapl-facts-modal .usapl-facts-grid {

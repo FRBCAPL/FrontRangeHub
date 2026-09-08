@@ -1,0 +1,221 @@
+.usapl-info-page {
+  width: min(960px, calc(100% - 40px));
+}
+
+.usapl-info-intro h1 {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.usapl-info-intro .usapl-lede {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.usapl-info-intro .usapl-actions {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.usapl-info-topics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 28px 0 0;
+}
+
+.usapl-info-topic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 148px;
+  margin: 0;
+  padding: 20px 22px 18px;
+  text-align: center;
+  white-space: normal;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 16px;
+  border: 1px solid var(--usapl-line);
+  background: rgba(21, 18, 24, 0.88);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+
+.usapl-info-topic:hover,
+.usapl-info-topic:focus-visible {
+  border-color: var(--usapl-gold);
+  background: rgba(28, 22, 26, 0.96);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.usapl-info-topic.is-wide {
+  grid-column: 1 / -1;
+  min-height: 120px;
+}
+
+.usapl-info-topic-name {
+  color: var(--usapl-gold);
+  font-family: Georgia, Palatino, serif;
+  font-size: 1.28rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  width: 100%;
+}
+
+.usapl-info-topic-blurb {
+  flex: 1;
+  display: block;
+  color: var(--usapl-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-align: center;
+  width: 100%;
+}
+
+.usapl-info-topic-line {
+  display: block;
+}
+
+.usapl-info-topic-open {
+  color: var(--usapl-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  width: 100%;
+}
+
+.usapl-info-topic-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 24px 16px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.usapl-info-topic-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-width: 640px;
+  max-height: 80vh;
+  min-height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 18px 22px 16px;
+  text-align: center;
+  border-radius: 18px;
+  border: 1px solid var(--usapl-line, rgba(224, 179, 77, 0.22));
+  background: #151218;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.usapl-info-topic-modal.is-fill {
+  height: 80vh;
+}
+
+.usapl-info-topic-modal > h2 {
+  flex: 0 0 auto;
+  margin: 0 0 12px;
+  text-align: center;
+  color: var(--usapl-gold, #e0b34d);
+  font-size: 1.25rem;
+  letter-spacing: 0.06em;
+}
+
+.usapl-info-topic-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  text-align: center;
+}
+
+.usapl-info-topic-modal > .usapl-actions {
+  flex: 0 0 auto;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--usapl-line, rgba(224, 179, 77, 0.22));
+  justify-content: center;
+}
+
+.usapl-info-topic-modal ul {
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.usapl-info-topic-modal li {
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(224, 179, 77, 0.12);
+  color: var(--usapl-muted);
+  line-height: 1.45;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.usapl-info-topic-modal li:last-child {
+  border-bottom: none;
+}
+
+.usapl-info-topic-modal .usapl-actions {
+  margin-top: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.usapl-info-topic-body > p {
+  color: var(--usapl-muted);
+  line-height: 1.5;
+  margin: 0 auto 12px;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.usapl-info-faq-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.usapl-info-faq {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(224, 179, 77, 0.14);
+  text-align: center;
+}
+
+.usapl-info-faq h3 {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  color: var(--usapl-ink);
+  text-align: center;
+}
+
+.usapl-info-faq p {
+  margin: 0 0 8px;
+  color: var(--usapl-muted);
+  line-height: 1.45;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.usapl-info-faq p:last-child {
+  margin-bottom: 0;
+}

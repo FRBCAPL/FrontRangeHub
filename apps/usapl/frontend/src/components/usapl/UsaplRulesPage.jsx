@@ -30,6 +30,7 @@ export default function UsaplRulesPage() {
           </header>
           <div className="usapl-actions">
             <Link className="usapl-btn" to="/usapl/bylaws">FRUSAPL local by-laws</Link>
+            <Link className="usapl-btn-secondary" to="/usapl/info">League info &amp; FAQ</Link>
             <a className="usapl-btn-secondary" href={USAPL_LINKS.csiPolicies} target="_blank" rel="noreferrer">USAPL player handbook</a>
             <a className="usapl-btn-secondary" href={USAPL_LINKS.csiRules} target="_blank" rel="noreferrer">Official CSI rules</a>
           </div>

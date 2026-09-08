@@ -9,6 +9,7 @@ import UsaplPastDivisionsPage from './UsaplPastDivisionsPage.jsx';
 import UsaplDivisionDetail from './UsaplDivisionDetail.jsx';
 import UsaplVegasCupPage from './UsaplVegasCupPage.jsx';
 import UsaplRulesPage from './UsaplRulesPage.jsx';
+import UsaplInfoPage from './UsaplInfoPage.jsx';
 import UsaplDuesPage from './UsaplDuesPage.jsx';
 import useUsaplPageVisitTracker from '../../hooks/useUsaplPageVisitTracker.js';
 import UsaplAdminInbox from './UsaplAdminInbox.jsx';
@@ -50,6 +51,7 @@ export default function UsaplApp({ canAdmin = false }) {
         <Route path="divisions/:divisionId" element={<UsaplDivisionDetail />} />
         <Route path="vegas-cup" element={<UsaplVegasCupPage canAdmin={canAdmin} />} />
         <Route path="rules" element={<UsaplRulesPage />} />
+        <Route path="info" element={<UsaplInfoPage />} />
         <Route
           path="bylaws"
           element={(
