@@ -30,8 +30,8 @@ export const USAPL_RULE_GROUPS = [
     items: [
       'Pocket safes allowed in 8-ball (call a safety and pocket a ball).\n',
       'In 10-ball, a pocketed ball when a safety is called, is an illegally pocketed ball. In 9-ball the player\'s turn continues.',
-      'Push out allowed (9-ball and 10-ball).',
-      '3-foul rule (9-ball and 10-ball).',
+      'Push out allowed (9-ball and 10-ball only). \n Reagrdless of who breaks, the first shot after the break may be a push out.' ,
+      '3-foul rule (9-ball and 10-ball only). \n 3 consecutive fouls results in loss of game.',
     ],
   },
   {
@@ -40,6 +40,7 @@ export const USAPL_RULE_GROUPS = [
     blurb: 'Use your timeouts wisely.',
     items: [
       'Coaching / timeouts: \n 1 per game, 3 per match, 10 per team — all skill levels.',
+      'Only the players or referees can call a foul.',
       'Jump shots & jump cues are allowed. \nDependent on the establishment\'s policy.',
       'Good sportsmanship: \n Player\'s are expected to be friendly and respectful to each other and the staff.',
     ],
