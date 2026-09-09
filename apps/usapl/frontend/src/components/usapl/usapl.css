@@ -2608,6 +2608,10 @@ button.usapl-vegas-fold-action {
   white-space: nowrap;
 }
 
+.usapl-visit-table .usapl-visit-who {
+  word-break: break-word;
+}
+
 .usapl-visit-table tr.is-you td {
   color: var(--usapl-gold);
 }

@@ -15,4 +15,19 @@ describe('summarizeUsaplVisits', () => {
     assert.equal(stats.visitors, 1);
     assert.equal(stats.recent.filter((row) => row.isMine).length, 2);
   });
+
+  it('counts the same signed-in email as you across browsers', () => {
+    const rows = [
+      { id: '1', visitor_id: 'phone', visitor_email: 'you@gmail.com', path: '/usapl', created_at: new Date().toISOString() },
+      { id: '2', visitor_id: 'guest', path: '/usapl', created_at: new Date().toISOString() },
+      { id: '3', visitor_id: 'p2', visitor_email: 'other@gmail.com', path: '/usapl', created_at: new Date().toISOString() },
+    ];
+    const stats = summarizeUsaplVisits(rows, [], (row) => row.path, 'desktop', 'you@gmail.com');
+    assert.equal(stats.mineViews, 1);
+    assert.equal(stats.views, 2);
+    assert.equal(stats.visitors, 2);
+    assert.equal(stats.recent.find((row) => row.id === '1').whoLabel, 'You');
+    assert.equal(stats.recent.find((row) => row.id === '2').whoLabel, 'Guest');
+    assert.equal(stats.recent.find((row) => row.id === '3').whoLabel, 'other@gmail.com');
+  });
 });

@@ -13,6 +13,14 @@ const RANGES = [
   { days: 90, label: '90 days' },
 ];
 
+function hubEmail() {
+  try {
+    return String(localStorage.getItem('userEmail') || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 export default function UsaplAdminVisits() {
   const { divisions } = useUsaplDivisions();
   const [days, setDays] = useState(30);
@@ -27,7 +35,7 @@ export default function UsaplAdminVisits() {
       const data = await listUsaplPageVisits({ sinceIso: usaplVisitsSinceIso(rangeDays) });
       setRows(data);
     } catch (err) {
-      setError(err?.message || 'Could not load visits. Run usapl-page-visits-2026-09.sql in Supabase, then refresh.');
+      setError(err?.message || 'Could not load visits. Run the USAPL page-visits SQL in Supabase, then refresh.');
       setRows([]);
     } finally {
       setLoading(false);
@@ -40,11 +48,12 @@ export default function UsaplAdminVisits() {
 
   const labelFor = (row) => usaplVisitPageLabel(row.path, divisions) || row.page_label || row.path;
   const mineId = getUsaplVisitorId();
+  const mineEmail = hubEmail();
   const stats = useMemo(
     () => summarizeUsaplVisits(rows, divisions, (row) => (
       usaplVisitPageLabel(row.path, divisions) || row.page_label || row.path
-    ), mineId),
-    [rows, divisions, mineId]
+    ), mineId, mineEmail),
+    [rows, divisions, mineId, mineEmail]
   );
 
   return (
@@ -52,11 +61,11 @@ export default function UsaplAdminVisits() {
       <UsaplAdminSubnav />
       <h1>Visitor stats</h1>
       <p className="usapl-lede">
-        Unique visitors are anonymous browser IDs (not names). This screen splits
-        <strong> this browser (you)</strong> from everyone else, so you can see if the numbers
-        are mostly your own clicks. Admin pages were never counted. Going forward, your
-        public-page clicks while logged in as admin are not counted either.
-        A phone, another computer, or clearing site data looks like a different visitor.
+        Unique visitors: signed-in Google / Hub accounts show as their email. Guests
+        stay anonymous. Your own views are this Google account (any browser) plus
+        this browser when you were not signed in. Older visits from before email
+        tracking still look like guests. Admin pages are never counted. After you
+        add the visitor-email SQL in Supabase, new signed-in visits will show emails.
       </p>
       <div className="usapl-choice-row" style={{ margin: '16px 0' }}>
         {RANGES.map((range) => (

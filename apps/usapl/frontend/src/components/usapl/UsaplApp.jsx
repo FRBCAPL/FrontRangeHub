@@ -27,7 +27,7 @@ const USAPL_FONTS_HREF =
 const UsaplBylawsPage = lazy(() => import('./UsaplBylawsPage.jsx'));
 
 export default function UsaplApp({ canAdmin = false }) {
-  useUsaplPageVisitTracker(canAdmin);
+  useUsaplPageVisitTracker();
   useEffect(() => {
     let link = document.querySelector('link[data-usapl-font="usapl-display"]');
     if (!link) {

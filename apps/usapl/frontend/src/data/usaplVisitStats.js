@@ -1,3 +1,5 @@
+import { visitIsMine, visitWhoKey, visitWhoLabel } from './usaplVisitWho.js';
+
 export function usaplVisitsSinceIso(days) {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -5,13 +7,12 @@ export function usaplVisitsSinceIso(days) {
   return start.toISOString();
 }
 
-export function summarizeUsaplVisits(rows, divisions = [], labelFor, mineId = '') {
-  const mineKey = String(mineId || '');
-  const isMine = (row) => Boolean(mineKey) && row.visitor_id === mineKey;
-  const others = mineKey ? rows.filter((row) => !isMine(row)) : rows;
-  const mineRows = mineKey ? rows.filter(isMine) : [];
+export function summarizeUsaplVisits(rows, divisions = [], labelFor, mineId = '', mineEmail = '') {
+  const isMine = (row) => visitIsMine(row, mineId, mineEmail);
+  const others = rows.filter((row) => !isMine(row));
+  const mineRows = rows.filter(isMine);
   const views = others.length;
-  const visitors = new Set(others.map((row) => row.visitor_id)).size;
+  const visitors = new Set(others.map(visitWhoKey)).size;
   const todayKey = new Date().toDateString();
   const todayOthers = others.filter((row) => row.created_at && new Date(row.created_at).toDateString() === todayKey);
   const pages = new Map();
@@ -20,7 +21,7 @@ export function summarizeUsaplVisits(rows, divisions = [], labelFor, mineId = ''
     const key = row.path || '';
     const current = pages.get(key) || { path: key, views: 0, visitors: new Set() };
     current.views += 1;
-    current.visitors.add(row.visitor_id);
+    current.visitors.add(visitWhoKey(row));
     current.label = labelFor ? labelFor(row, divisions) : (row.page_label || key);
     pages.set(key, current);
   });
@@ -39,8 +40,12 @@ export function summarizeUsaplVisits(rows, divisions = [], labelFor, mineId = ''
     visitors,
     mineViews: mineRows.length,
     todayViews: todayOthers.length,
-    todayVisitors: new Set(todayOthers.map((row) => row.visitor_id)).size,
+    todayVisitors: new Set(todayOthers.map(visitWhoKey)).size,
     pages: pageRows,
-    recent: rows.slice(0, 25).map((row) => ({ ...row, isMine: isMine(row) })),
+    recent: rows.slice(0, 25).map((row) => ({
+      ...row,
+      isMine: isMine(row),
+      whoLabel: visitWhoLabel(row, isMine(row)),
+    })),
   };
 }

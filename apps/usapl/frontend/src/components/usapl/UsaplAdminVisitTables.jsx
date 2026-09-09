@@ -56,7 +56,7 @@ export default function UsaplAdminVisitTables({ stats, pageLabel }) {
               {stats.recent.map((row) => (
                 <tr key={row.id} className={row.isMine ? 'is-you' : ''}>
                   <td>{when(row.created_at)}</td>
-                  <td>{row.isMine ? 'You' : 'Someone else'}</td>
+                  <td className="usapl-visit-who">{row.whoLabel}</td>
                   <td>{pageLabel(row)}</td>
                   <td className="usapl-meta">{row.referrer || 'direct / in-site'}</td>
                 </tr>
