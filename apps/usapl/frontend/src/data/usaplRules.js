@@ -8,7 +8,7 @@ export const USAPL_RULE_GROUPS = [
       '"Gentleman\'s call pocket". \nYou do not have to call obvious shots.',
       'Combos, banks, kicks, and caroms should not be considered obvious.' ,
       'What may be obvious to you, may not be obvious to your opponent.',
-      'Make sure your opponent knows what you are calling.',
+      'Make sure your opponent knows which ball and pocket you are calling.',
     ],
   },
   {
@@ -17,7 +17,7 @@ export const USAPL_RULE_GROUPS = [
     blurb: 'Your break, your rack. Keep it moving.',
     items: [
       'Lag or Flip for first break.',
-      'Alternate breaks. \n The black dot above the player\'s name in the scoring app indicates the breaker.',
+      'Alternate breaks. \n The black dot above the player\'s name in the USAPL scoring app indicates the breaker.',
       'Rack your own. \n In 10 ball be sure to place the 2-ball & 3-ball in the bottom corners of the rack.',
       'Open after the break (8-ball).',
       'Ball in hand if you scratch on the break. All formats.',

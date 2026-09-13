@@ -9,10 +9,11 @@ export const USAPL_INFO_FAQ = [
     id: 'bca-name',
     q: 'Are “BCA” leagues really BCAPL leagues?',
     a: [
-      'Usually yes. \nPeople say “BCA league” when they mean the BCA Pool League (BCAPL).',
+      'Yes. When people say “BCA league” they might be thinking they are talking about the Billiard Congress of America, but they are actually referring to the BCA Pool League (BCAPL). \nIt is a common misconception.',
       'BCA by itself is the Billiard Congress of America.', 
-      'The Billiard Congress of America sold its league operations to CSI in 2004 and no longer runs pool leagues. The BCAPL kept the well-known name. Today the “BCA” in BCA Pool League stands for Billiards & CueSports Association, and it is not affiliated with the Billiard Congress of America.',
-   'CSI (CueSports International) operates the BCA Pool League and the USA Pool League as two separate products.',
+      'The Billiard Congress of America sold its league operations to CueSports International (CSI) in 2004 \nand the BCA no longer runs pool leagues.',
+      'CSI kept the well-known name. \nToday the “BCA” in BCA Pool League stands for \nBilliards & CueSports Association, \nand it is not affiliated with the Billiard Congress of America.',
+   'CSI (CueSports International) operates the \nBCA Pool League and the USA Pool League\n as two separate leagues.',
     ],
   },
   {

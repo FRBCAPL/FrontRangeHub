@@ -26,7 +26,12 @@ export default function UsaplVegasWinnerTicker() {
   const track = loopTrack(lines);
 
   return (
-    <div className="usapl-vegas-ticker" role="marquee" aria-label={`${USAPL_VEGAS_CUP.year} division winners`}>
+    <div
+      className="usapl-vegas-ticker"
+      role="marquee"
+      tabIndex={0}
+      aria-label={`${USAPL_VEGAS_CUP.year} division winners`}
+    >
       <Link className="usapl-vegas-ticker-label" to="/usapl/past-divisions">
         {USAPL_VEGAS_CUP.year} Division winners
       </Link>

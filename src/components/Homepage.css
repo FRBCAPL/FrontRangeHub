@@ -10,7 +10,7 @@
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   color: #fff;
   position: relative;
-  z-index: 0;
+  z-index: auto;
 }
 
 /* Iframe-specific overrides */
@@ -250,6 +250,23 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: titleGlow 3s ease-in-out infinite alternate;
+  position: relative;
+  z-index: 4;
+  isolation: isolate;
+}
+
+.homepage .section-title::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(100%, 42rem);
+  height: calc(100% + 0.55rem);
+  background: rgba(0, 0, 0, 0.82);
+  border-radius: 14px;
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Quick Action Buttons */
@@ -688,10 +705,12 @@
   max-width: 1200px; /* enough for 3 cards (350*3 + gaps) in embed preview */
   margin: 0 auto;
   align-items: start; /* Ensure all cards align to the top */
+  position: relative;
+  z-index: 4;
 }
 
 .nav-card {
-  background: rgba(17, 17, 17, 0.1);
+  background: rgba(17, 17, 17, 0.88);
   backdrop-filter: blur(5px);
   border: 2px solid var(--app-color);
   border-radius: 20px;

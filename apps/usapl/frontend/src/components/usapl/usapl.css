@@ -28,23 +28,27 @@
 
 .usapl-nav {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 18px;
+  flex-wrap: nowrap;
+  gap: 4px 14px;
   justify-content: center;
   margin: 0;
   padding: 14px 20px 10px;
   background: rgba(8, 8, 10, 0.92);
   border-bottom: 1px solid var(--usapl-line);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .usapl-nav a,
 .usapl-nav-link {
+  flex: 0 0 auto;
   color: var(--usapl-muted);
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 600;
   padding: 8px 2px 10px;
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
 }
 
 .usapl-nav a:hover,
@@ -1852,6 +1856,20 @@ button.usapl-vegas-fold-action {
   text-decoration: underline;
 }
 
+@media (max-width: 1200px) {
+  .usapl-nav {
+    gap: 2px 10px;
+    padding: 10px 16px 8px;
+    justify-content: flex-start;
+  }
+
+  .usapl-nav a,
+  .usapl-nav-link {
+    font-size: 0.84rem;
+    padding: 6px 2px 8px;
+  }
+}
+
 @media (max-width: 640px) {
   .usapl-page {
     width: calc(100% - 28px);
@@ -1904,13 +1922,14 @@ button.usapl-vegas-fold-action {
   }
 
   .usapl-nav {
-    gap: 2px 12px;
+    gap: 2px 10px;
     padding: 10px 12px 8px;
+    justify-content: flex-start;
   }
 
   .usapl-nav a,
   .usapl-nav-link {
-    font-size: 0.86rem;
+    font-size: 0.82rem;
   }
 
   .usapl-night-row {
@@ -2027,7 +2046,8 @@ button.usapl-vegas-fold-action {
   animation: usapl-vegas-ticker-scroll 55s linear infinite;
 }
 
-.usapl-vegas-ticker:hover .usapl-vegas-ticker-track {
+.usapl-vegas-ticker:hover .usapl-vegas-ticker-track,
+.usapl-vegas-ticker:focus-within .usapl-vegas-ticker-track {
   animation-play-state: paused;
 }
 
