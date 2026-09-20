@@ -183,6 +183,12 @@
     grid-template-columns: 1fr 1fr;
     align-items: start;
   }
+}
+
+@media (min-width: 980px) {
+  .usapl-metro-promos {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 
   .usapl-metro-promo-copy h3 {
     font-size: 1.05rem;

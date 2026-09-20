@@ -1,5 +1,6 @@
 import React from 'react';
 import { DENVER_METRO_PROMOS, DENVER_METRO_SNAPSHOT } from '../../data/usaplDenverMetroCash.js';
+import UsaplDenverMetroCashPool from './UsaplDenverMetroCashPool.jsx';
 import UsaplDenverMetroPromo from './UsaplDenverMetroPromo.jsx';
 import UsaplMetroText from './UsaplMetroText.jsx';
 import './usaplDenverMetro.css';
@@ -17,6 +18,7 @@ export default function UsaplDenverMetroGuide() {
         ))}
       </dl>
       <div className="usapl-metro-promos">
+        <UsaplDenverMetroCashPool />
         {DENVER_METRO_PROMOS.map((promo) => (
           <UsaplDenverMetroPromo key={promo.id} promo={promo} />
         ))}

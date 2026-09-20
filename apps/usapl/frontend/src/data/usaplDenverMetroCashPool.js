@@ -1,5 +1,12 @@
 export const DENVER_METRO_CASH_POOL = {
-  title: 'How much could we be playing for?',
+  title: 'Play. Place. Get Paid.',
+  src: '/usapl/denver-metro-get-paid.jpg',
+  alt: 'Play. Place. Get Paid! Estimated cash for the Denver Metro cash session.',
+  points: [
+    'The more teams that play, the more cash there is to win.',
+    'Click the graphic for estimated totals by division size. Examples only — not guaranteed amounts.',
+  ],
+  heading: 'How much could we be playing for?',
   intro: 'The more teams that play, the more cash there is to win.',
   basis: 'Based on a full 12-week session with scheduled matches played and dues collected:',
   byeNote: 'Odd-team divisions have a bye each week, so estimated cash lines up with the even size below them.',

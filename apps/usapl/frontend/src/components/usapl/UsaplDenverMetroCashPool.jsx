@@ -8,12 +8,21 @@ export default function UsaplDenverMetroCashPool() {
   const [open, setOpen] = useState(false);
   const { example } = pool;
   return (
-    <>
-      <button type="button" className="usapl-btn-secondary" onClick={() => setOpen(true)}>
-        Estimated cash
+    <article className="usapl-metro-promo">
+      <button type="button" className="usapl-metro-promo-art" onClick={() => setOpen(true)}>
+        <img src={pool.src} alt={pool.alt} />
       </button>
+      <div className="usapl-metro-promo-copy">
+        <h3>{pool.title}</h3>
+        <ul>
+          {pool.points.map((point) => (
+            <UsaplMetroText key={point} as="li" text={point} />
+          ))}
+        </ul>
+      </div>
       {open ? (
-        <UsaplDivisionFactsModal title={pool.title} onClose={() => setOpen(false)} className="usapl-metro-rules-modal">
+        <UsaplDivisionFactsModal title={pool.heading} onClose={() => setOpen(false)} className="usapl-metro-rules-modal">
+          <img className="usapl-metro-rules-art" src={pool.src} alt="" />
           <div className="usapl-metro-pool">
             <UsaplMetroText className="usapl-metro-pool-intro" text={pool.intro} />
             <UsaplMetroText className="usapl-metro-pool-basis" text={pool.basis} />
@@ -38,6 +47,6 @@ export default function UsaplDenverMetroCashPool() {
           </div>
         </UsaplDivisionFactsModal>
       ) : null}
-    </>
+    </article>
   );
 }
