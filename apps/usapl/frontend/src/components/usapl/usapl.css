@@ -2632,6 +2632,181 @@ button.usapl-vegas-fold-action {
   word-break: break-word;
 }
 
+.usapl-income-how {
+  margin: 0 0 24px;
+  padding-left: 1.2em;
+  color: var(--usapl-muted, inherit);
+}
+
+.usapl-income-how li + li {
+  margin-top: 10px;
+}
+
+.usapl-income-private > summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.usapl-income-private .usapl-lede,
+.usapl-income-private .usapl-form,
+.usapl-income-private .usapl-choice-row,
+.usapl-income-private .usapl-note {
+  margin-top: 12px;
+}
+
+.usapl-income-result-table th {
+  text-align: right;
+  font-weight: 600;
+}
+
+.usapl-income-result-table th:first-child {
+  text-align: left;
+}
+
+.usapl-income-payout-source {
+  margin-bottom: 12px;
+}
+
+.usapl-income-payout-form {
+  display: grid;
+  grid-template-columns: minmax(0, 14rem);
+  margin-bottom: 12px;
+}
+
+.usapl-income-payout-places {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.75rem, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.usapl-payout-compare-title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+
+.usapl-payout-board {
+  margin: 8px 0 20px;
+}
+
+.usapl-payout-board-head h3 {
+  margin: 0 0 4px;
+}
+
+.usapl-payout-board-head .usapl-meta {
+  margin: 0 0 4px;
+  font-weight: 650;
+}
+
+.usapl-payout-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.usapl-payout-row {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 7.75rem minmax(0, 1fr);
+  gap: 10px 14px;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--usapl-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.usapl-payout-row.is-suggested {
+  border-color: rgba(224, 179, 77, 0.55);
+}
+
+.usapl-payout-row.is-selected {
+  border-color: var(--usapl-gold);
+  box-shadow: 0 0 0 1px var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.08);
+}
+
+.usapl-payout-row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.usapl-payout-row-label strong {
+  font-size: 0.95rem;
+}
+
+.usapl-payout-option-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--usapl-gold);
+}
+
+.usapl-payout-row-pays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.usapl-payout-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.usapl-payout-pip {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.usapl-payout-chip-place {
+  font-size: 0.75rem;
+  color: var(--usapl-muted);
+}
+
+.usapl-payout-chip-amt {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.usapl-payout-fine {
+  padding-top: 18px;
+  margin-top: 8px;
+  border-top: 1px solid var(--usapl-line);
+}
+
+.usapl-payout-chart-seg-1 { background: var(--usapl-gold); }
+.usapl-payout-chart-seg-2 { background: #c4922e; }
+.usapl-payout-chart-seg-3 { background: #9a7424; }
+.usapl-payout-chart-seg-4 { background: #7a5c1c; }
+
+@media (max-width: 640px) {
+  .usapl-payout-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .usapl-income-payout-form,
+  .usapl-income-payout-places {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .usapl-visit-table tr.is-you td {
   color: var(--usapl-gold);
 }

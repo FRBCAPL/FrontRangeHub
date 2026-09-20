@@ -3,7 +3,7 @@ import { USAPL_DEFAULT_FARGO_CAP } from '../../data/usaplDivisions.js';
 import UsaplFormatFields from './UsaplFormatFields.jsx';
 import UsaplDivisionEditWinners from './UsaplDivisionEditWinners.jsx';
 
-export default function UsaplDivisionEditPlay({ form, setField, setForm, notesText }) {
+export default function UsaplDivisionEditPlay({ form, setField, setForm }) {
   return (
     <>
       <UsaplFormatFields
@@ -48,7 +48,7 @@ export default function UsaplDivisionEditPlay({ form, setField, setForm, notesTe
       <div className="usapl-field">
         <label>Extra notes (optional)</label>
         <textarea
-          value={notesText}
+          value={form.notesText ?? ''}
           onChange={(e) => setField('notesText', e.target.value)}
           placeholder="Anything special about this night"
         />

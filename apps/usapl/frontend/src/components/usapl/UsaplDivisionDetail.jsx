@@ -5,10 +5,12 @@ import { usaplDivisionIsPast } from '../../data/usaplPastDivisions.js';
 import { useUsaplVegasSeedStats } from '../../hooks/useUsaplVegasSeedStats.js';
 import UsaplDivisionFacts from './UsaplDivisionFacts.jsx';
 import UsaplDivisionFlyer from './UsaplDivisionFlyer.jsx';
+import UsaplDenverMetroGuide from './UsaplDenverMetroGuide.jsx';
 import UsaplDivisionWinners from './UsaplDivisionWinners.jsx';
 import UsaplInHouseTag from './UsaplInHouseTag.jsx';
 import UsaplPublicReport from './UsaplPublicReport.jsx';
 import UsaplSchedulePic from './UsaplSchedulePic.jsx';
+import { isDenverMetroCash } from '../../data/usaplDenverMetroCash.js';
 
 export default function UsaplDivisionDetail() {
   const { divisionId } = useParams();
@@ -52,7 +54,7 @@ export default function UsaplDivisionDetail() {
           <Link className="usapl-btn-secondary" to="/usapl/past-divisions">Past divisions</Link>
         ) : null}
       </div>
-      <UsaplDivisionFlyer division={division} />
+      {isDenverMetroCash(division) ? <UsaplDenverMetroGuide /> : <UsaplDivisionFlyer division={division} />}
       <UsaplDivisionWinners division={division} stats={stats} />
       <UsaplPublicReport division={division} />
     </div>

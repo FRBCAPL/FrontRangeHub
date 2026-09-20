@@ -28,6 +28,9 @@ function withPrefill(draft) {
   if (next.combinedFargoCap === '' || next.combinedFargoCap == null) {
     next.combinedFargoCap = USAPL_DEFAULT_FARGO_CAP;
   }
+  if (next.notesText == null) {
+    next.notesText = stripUsaplFargoCapNotes(next.notes || []).join('\n');
+  }
   if (!String(next.reportHeading || '').trim()) next.reportHeading = USAPL_REPORT_HEADING;
   if (!String(next.reportBlurb || '').trim()) next.reportBlurb = USAPL_REPORT_BLURB;
   return next;
@@ -121,7 +124,6 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
     }
   };
 
-  const notesText = stripUsaplFargoCapNotes(form.notesText ?? (form.notes || []).join('\n')).join('\n');
   const lastStep = step === STEPS.length - 1;
 
   return createPortal(
@@ -155,7 +157,7 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
               </>
             ) : null}
             {step === 1 ? (
-              <UsaplDivisionEditPlay form={form} setField={setField} setForm={setForm} notesText={notesText} />
+              <UsaplDivisionEditPlay form={form} setField={setField} setForm={setForm} />
             ) : null}
             {step === 2 ? (
               <>

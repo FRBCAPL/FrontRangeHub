@@ -1,0 +1,383 @@
+.usapl-income-page > h1 {
+  margin-bottom: 6px;
+  font-family: Georgia, Palatino, serif;
+  color: var(--usapl-red);
+}
+
+.usapl-income-page > .usapl-lede {
+  max-width: 36rem;
+  margin-bottom: 18px;
+}
+
+.usapl-income-page h2 {
+  margin: 0 0 10px;
+  font-family: Georgia, Palatino, serif;
+  color: var(--usapl-red);
+  font-size: 1.2rem;
+}
+
+.usapl-income-calc,
+.usapl-income-split-view,
+.usapl-income-payout-view {
+  margin: 0 0 22px;
+  padding: 0 0 22px;
+  border-bottom: 1px solid var(--usapl-line);
+}
+
+.usapl-income-payout-view {
+  border-bottom: none;
+}
+
+.usapl-income-calc-size {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 12rem));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.usapl-income-week-date input[type="date"] {
+  color-scheme: dark;
+}
+
+.usapl-income-stepper-row {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.usapl-income-stepper-btn {
+  appearance: none;
+  margin: 0;
+  border: 1px solid var(--usapl-line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--usapl-ink);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.usapl-income-stepper input {
+  text-align: center;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.usapl-income-calc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 12px;
+}
+
+.usapl-text-btn {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--usapl-gold);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.usapl-income-split-total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 10px;
+  margin: 0 0 12px;
+  color: var(--usapl-muted);
+}
+
+.usapl-income-split-total strong {
+  color: var(--usapl-ink);
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.usapl-income-split-bar {
+  display: flex;
+  height: 14px;
+  overflow: hidden;
+  margin: 0 0 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.usapl-income-split-seg {
+  display: block;
+  height: 100%;
+  min-width: 0;
+}
+
+.usapl-income-split-seg.is-prize { background: var(--usapl-gold); }
+.usapl-income-split-seg.is-csi { background: #c4922e; }
+.usapl-income-split-seg.is-lo { background: #7a5c1c; }
+.usapl-income-split-seg.is-left { background: rgba(255, 255, 255, 0.18); }
+
+.usapl-income-split-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.usapl-income-split-table th,
+.usapl-income-split-table td {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--usapl-line);
+  text-align: right;
+}
+
+.usapl-income-split-table th:first-child,
+.usapl-income-split-table td:first-child {
+  text-align: left;
+}
+
+.usapl-income-split-table thead th {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--usapl-muted);
+  font-weight: 700;
+}
+
+.usapl-income-split-table tfoot th,
+.usapl-income-split-table tfoot td {
+  border-bottom: 0;
+  padding-top: 12px;
+  font-weight: 700;
+  color: var(--usapl-gold);
+}
+
+.usapl-payout-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6.5rem;
+  gap: 12px 16px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.usapl-payout-controls .usapl-income-payout-source {
+  margin: 0;
+}
+
+.usapl-payout-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 16px;
+}
+
+.usapl-payout-pill {
+  appearance: none;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 2.75rem;
+  padding: 8px 10px;
+  border: 1px solid var(--usapl-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.usapl-payout-pill span {
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--usapl-gold);
+}
+
+.usapl-payout-pill.is-selected {
+  border-color: var(--usapl-gold);
+  box-shadow: 0 0 0 1px var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.12);
+}
+
+.usapl-payout-hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+
+.usapl-payout-hero li {
+  margin: 0;
+  padding: 14px 12px;
+  border: 1px solid var(--usapl-line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.usapl-payout-hero span {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--usapl-muted);
+}
+
+.usapl-payout-hero strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.55rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--usapl-gold);
+}
+
+.usapl-payout-matrix-wrap {
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+
+.usapl-payout-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.usapl-payout-matrix caption {
+  caption-side: bottom;
+  padding-top: 8px;
+  text-align: left;
+  color: var(--usapl-muted);
+  font-size: 0.82rem;
+}
+
+.usapl-payout-matrix th,
+.usapl-payout-matrix td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--usapl-line);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.usapl-payout-matrix th:first-child,
+.usapl-payout-matrix td:first-child,
+.usapl-payout-matrix tbody th {
+  text-align: left;
+  font-weight: 650;
+}
+
+.usapl-payout-matrix-pick {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.usapl-payout-fine > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 8px 0;
+}
+
+.usapl-payout-share .usapl-actions {
+  margin-top: 8px;
+}
+
+.usapl-payout-chart-page h1 {
+  font-family: Georgia, Palatino, serif;
+  color: var(--usapl-red);
+}
+
+.usapl-income-setup-dialog {
+  width: min(520px, 100%);
+  margin: auto;
+  padding: 18px 18px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--usapl-line);
+  background: #151218;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+.usapl-income-setup-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.usapl-income-setup-dialog h2 {
+  margin: 0;
+}
+
+.usapl-income-setup-hint {
+  margin: 8px 0 12px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.usapl-income-split-eq,
+.usapl-income-split-balance {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.usapl-income-split-eq {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.usapl-income-split-balance.is-ok {
+  background: rgba(80, 170, 90, 0.18);
+}
+
+.usapl-income-split-balance.is-short,
+.usapl-income-split-balance.is-over {
+  background: rgba(201, 162, 39, 0.16);
+}
+
+.usapl-income-split-form {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.usapl-income-split-form .usapl-income-play-type,
+.usapl-income-split-form .usapl-income-split-eq,
+.usapl-income-split-form .usapl-income-split-balance,
+.usapl-income-split-form .usapl-actions {
+  grid-column: 1 / -1;
+}
+
+.usapl-income-split-form .usapl-income-players {
+  grid-column: 1 / 3;
+}
+
+@media print {
+  body:has(.usapl-payout-chart-page) .app-hub-header,
+  body:has(.usapl-payout-chart-page) .usapl-nav,
+  body:has(.usapl-payout-chart-page) .usapl-payout-chart-toolbar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 800px) {
+  .usapl-income-calc-size,
+  .usapl-income-split-form,
+  .usapl-payout-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .usapl-income-calc-size,
+  .usapl-income-split-form,
+  .usapl-payout-controls {
+    grid-template-columns: 1fr;
+  }
+}

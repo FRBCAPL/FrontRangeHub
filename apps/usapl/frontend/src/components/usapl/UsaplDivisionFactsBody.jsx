@@ -1,5 +1,6 @@
 import React from 'react';
 import { usaplNightLabel } from '../../data/usaplDivisions.js';
+import { isDenverMetroCash } from '../../data/usaplDenverMetroCash.js';
 import { stripUsaplFargoCapNotes } from '../../data/usaplFargoCapCopy.js';
 import UsaplPlayPlaceBadge from './UsaplPlayPlaceBadge.jsx';
 
@@ -27,9 +28,15 @@ function Fact({ label, children }) {
 }
 
 export default function UsaplDivisionFactsBody({ division }) {
-  const extraNotes = stripUsaplFargoCapNotes(division.notes);
+  const cashNight = isDenverMetroCash(division);
+  const extraNotes = cashNight ? [] : stripUsaplFargoCapNotes(division.notes);
   const teamSize = division.teamSize || '';
   const rosterMax = division.rosterMax || '';
+  const duesLabel = cashNight
+    ? `$${division.duesPerPlayer} / player / format`
+    : (division.duesPerPlayer != null && division.duesPerPlayer !== ''
+      ? `$${division.duesPerPlayer} / player`
+      : '');
   return (
     <div className="usapl-facts-body">
       <h2>{division.name || division.shortName}</h2>
@@ -39,11 +46,7 @@ export default function UsaplDivisionFactsBody({ division }) {
       <div className="usapl-facts-grid">
         <Fact label="Day of play">{division.night ? usaplNightLabel(division.night) : ''}</Fact>
         <Fact label="First week">{formatDate(division.playStarts)}</Fact>
-        <Fact label="Dues">
-          {division.duesPerPlayer != null && division.duesPerPlayer !== ''
-            ? `$${division.duesPerPlayer} / player`
-            : ''}
-        </Fact>
+        <Fact label="Dues">{duesLabel}</Fact>
         <Fact label="Last week of play">{formatDate(division.lastWeek)}</Fact>
         <Fact label="Teams">{teamSize ? `${teamSize} players` : ''}</Fact>
         <Fact label="Roster">{rosterMax ? `${rosterMax} max` : ''}</Fact>
