@@ -33,6 +33,89 @@
   font-weight: 650;
 }
 
+.usapl-metro-pool {
+  text-align: center;
+}
+
+.usapl-metro-pool-intro,
+.usapl-metro-pool-basis,
+.usapl-metro-pool-bye,
+.usapl-metro-pool-split,
+.usapl-metro-pool-disclaimer,
+.usapl-metro-pool-lead,
+.usapl-metro-pool-footer {
+  margin: 0 auto 10px;
+  max-width: 38rem;
+}
+
+.usapl-metro-pool-rows {
+  list-style: none;
+  margin: 14px auto;
+  padding: 0;
+  max-width: 28rem;
+  display: grid;
+  gap: 8px;
+}
+
+.usapl-metro-pool-rows li {
+  display: grid;
+  gap: 2px;
+}
+
+.usapl-metro-pool-rows span {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--usapl-muted);
+}
+
+.usapl-metro-pool-rows strong {
+  font-size: 1.02rem;
+  color: var(--usapl-gold);
+}
+
+.usapl-metro-pool-example {
+  margin: 16px auto 12px;
+  padding: 16px 14px 14px;
+  max-width: 28rem;
+  border-radius: 14px;
+  border: 1px solid var(--usapl-gold);
+  background: rgba(224, 179, 77, 0.08);
+}
+
+.usapl-metro-pool-kicker {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--usapl-gold);
+}
+
+.usapl-metro-pool-amount {
+  margin: 4px 0 8px;
+  font-family: Georgia, Palatino, serif;
+  font-size: 1.45rem;
+  line-height: 1;
+  font-weight: 800;
+  color: var(--usapl-gold);
+}
+
+.usapl-metro-pool-formats {
+  margin: 0 0 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--usapl-gold);
+}
+
+.usapl-metro-pool-disclaimer {
+  margin-bottom: 0;
+  font-size: 0.88rem;
+  color: var(--usapl-muted);
+}
+
 .usapl-metro-promos {
   display: grid;
   gap: 22px;
