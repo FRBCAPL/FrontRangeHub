@@ -2,6 +2,7 @@ import React from 'react';
 import { USAPL_DEFAULT_FARGO_CAP } from '../../data/usaplDivisions.js';
 import UsaplFormatFields from './UsaplFormatFields.jsx';
 import UsaplDivisionEditWinners from './UsaplDivisionEditWinners.jsx';
+import UsaplDivisionWeekSpan from './UsaplDivisionWeekSpan.jsx';
 
 export default function UsaplDivisionEditPlay({ form, setField, setForm }) {
   return (
@@ -14,15 +15,12 @@ export default function UsaplDivisionEditPlay({ form, setField, setForm }) {
         formatOtherB={form.formatOtherB || ''}
         onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
       />
+      <UsaplDivisionWeekSpan
+        playStarts={form.playStarts || ''}
+        lastWeek={form.lastWeek || ''}
+        onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+      />
       <div className="usapl-player-grid">
-        <div className="usapl-field">
-          <label>Play starts</label>
-          <input type="date" value={form.playStarts || ''} onChange={(e) => setField('playStarts', e.target.value)} />
-        </div>
-        <div className="usapl-field">
-          <label>Last week</label>
-          <input type="date" value={form.lastWeek || ''} onChange={(e) => setField('lastWeek', e.target.value)} />
-        </div>
         <div className="usapl-field">
           <label>Dues per player</label>
           <input type="number" min="0" value={form.duesPerPlayer ?? ''} onChange={(e) => setField('duesPerPlayer', e.target.value)} />

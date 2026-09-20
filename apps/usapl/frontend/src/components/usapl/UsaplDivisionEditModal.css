@@ -98,6 +98,18 @@
   gap: 16px 18px;
 }
 
+.usapl-division-week-span {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 18px;
+}
+
+@media (max-width: 640px) {
+  .usapl-division-week-span {
+    grid-template-columns: 1fr;
+  }
+}
+
 .usapl-division-edit-dialog .usapl-field-hint,
 .usapl-division-edit-dialog .usapl-meta {
   line-height: 1.5;
