@@ -1,24 +1,33 @@
 import React from 'react';
 import { centsToDollars } from '../../data/usaplIncomeProjection.js';
+import { usaplPlayTypeLabel } from '../../data/usaplIncomePlayType.js';
 
 export default function UsaplAdminIncomePayoutCompare({
   compare,
   sim,
   teams,
+  payingTeams,
   weeks,
+  playType,
   selectedPlaces,
   onPickPlaces,
 }) {
   if (!compare?.columns?.length) return null;
   const teamCount = Number(teams) || 0;
+  const paying = Number(payingTeams) || teamCount;
+  const bye = Math.max(0, teamCount - paying);
   const weekCount = Number(weeks) || 0;
   const places = sim?.places || [];
   return (
     <div className="usapl-payout-board">
       <p className="usapl-meta">
         {teamCount} {teamCount === 1 ? 'team' : 'teams'}
+        {bye ? ` · 1 bye · ${paying} pay` : ''}
         {' · '}
         {weekCount} {weekCount === 1 ? 'week' : 'weeks'}
+        {' · '}
+        {usaplPlayTypeLabel(playType)}
+        {String(playType || '').toLowerCase() === 'double' ? ' · each format' : ''}
         {' · '}cash pool {centsToDollars(compare.cash_pool_cents)}
       </p>
       <div className="usapl-payout-pills" role="tablist" aria-label="Places paid">

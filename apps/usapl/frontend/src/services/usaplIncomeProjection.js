@@ -68,5 +68,5 @@ export async function projectUsaplLeagueIncome({ teams, players, weeks, playerDu
     }
     throw new Error(installError(message));
   }
-  return attachIncomeWeekTotals(data);
+  return attachIncomeWeekTotals(data, playType);
 }

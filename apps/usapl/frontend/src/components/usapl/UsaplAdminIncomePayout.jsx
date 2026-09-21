@@ -6,12 +6,14 @@ import {
   suggestedPaidPlaces,
 } from '../../data/usaplIncomePayout.js';
 import { comparePlacePayouts } from '../../data/usaplIncomePayoutCompare.js';
+import { usaplFormatPoolCents } from '../../data/usaplIncomePayoutFormats.js';
+import { usaplPlayMatches } from '../../data/usaplIncomePlayType.js';
 import UsaplAdminIncomePayoutCompare from './UsaplAdminIncomePayoutCompare.jsx';
 import UsaplAdminIncomePayoutRows from './UsaplAdminIncomePayoutRows.jsx';
 import UsaplAdminIncomePayoutShare from './UsaplAdminIncomePayoutShare.jsx';
 import UsaplAdminIncomePayoutSource from './UsaplAdminIncomePayoutSource.jsx';
 
-export default function UsaplAdminIncomePayout({ prizeCents, grossCents, teams, weeks }) {
+export default function UsaplAdminIncomePayout({ prizeCents, grossCents, teams, payingTeams, weeks, playType }) {
   const suggested = suggestedPaidPlaces(teams);
   const [source, setSource] = useState('prize');
   const [customDollars, setCustomDollars] = useState('');
@@ -37,27 +39,32 @@ export default function UsaplAdminIncomePayout({ prizeCents, grossCents, teams, 
     setPercents(defaultPlacePercents(count).map(String));
   };
 
+  const matches = usaplPlayMatches(playType);
+  const chartPrizeCents = usaplFormatPoolCents(prizeCents, playType);
+  const chartGrossCents = usaplFormatPoolCents(grossCents, playType);
+  const customCents = usaplFormatPoolCents(dollarsToCents(customDollars), playType);
+
   const compare = useMemo(() => {
     try {
       return comparePlacePayouts({
         teams,
-        prizeCents,
-        grossCents,
-        customCents: dollarsToCents(customDollars),
+        prizeCents: chartPrizeCents,
+        grossCents: chartGrossCents,
+        customCents,
         source,
         cashPercent,
       });
     } catch {
       return null;
     }
-  }, [teams, prizeCents, grossCents, customDollars, source, cashPercent]);
+  }, [teams, chartPrizeCents, chartGrossCents, customCents, source, cashPercent]);
 
   const sim = useMemo(() => {
     try {
       return simulateCashPayout({
-        prizeCents,
-        grossCents,
-        customCents: dollarsToCents(customDollars),
+        prizeCents: chartPrizeCents,
+        grossCents: chartGrossCents,
+        customCents,
         source,
         cashPercent,
         placePercents: percents,
@@ -65,11 +72,19 @@ export default function UsaplAdminIncomePayout({ prizeCents, grossCents, teams, 
     } catch (err) {
       return { error: err?.message || 'Could not simulate payouts.' };
     }
-  }, [prizeCents, grossCents, customDollars, source, cashPercent, percents]);
+  }, [chartPrizeCents, chartGrossCents, customCents, source, cashPercent, percents]);
 
   return (
     <section className="usapl-income-payout-view">
       <h2>Cash payout</h2>
+      {matches > 1 ? (
+        <p className="usapl-note">
+          Double play has two standings. This chart is <strong>one format</strong>
+          {' '}(8-ball and 10-ball each). Combined prize {centsToDollars(prizeCents)}
+          {' · '}
+          {centsToDollars(chartPrizeCents)} per format.
+        </p>
+      ) : null}
       <div className="usapl-payout-controls">
         <UsaplAdminIncomePayoutSource value={source} onChange={setSource} />
         <div className="usapl-field">
@@ -106,7 +121,9 @@ export default function UsaplAdminIncomePayout({ prizeCents, grossCents, teams, 
             compare={compare}
             sim={sim}
             teams={teams}
+            payingTeams={payingTeams}
             weeks={weeks}
+            playType={playType}
             selectedPlaces={placeCount}
             onPickPlaces={applyPlaceCount}
           />
@@ -114,6 +131,7 @@ export default function UsaplAdminIncomePayout({ prizeCents, grossCents, teams, 
             teams={teams}
             weeks={weeks}
             poolCents={compare.cash_pool_cents}
+            playType={playType}
           />
         </>
       ) : null}

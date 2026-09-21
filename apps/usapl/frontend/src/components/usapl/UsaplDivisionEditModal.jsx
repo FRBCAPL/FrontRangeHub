@@ -48,7 +48,7 @@ function stepError(step, form) {
   return '';
 }
 
-export default function UsaplDivisionEditModal({ draft, isNew, locationOptions = [], onClose, onSave }) {
+export default function UsaplDivisionEditModal({ draft, isNew, locationOptions = [], areaOptions = [], onClose, onSave }) {
   const [form, setForm] = useState(() => withPrefill(draft));
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -111,6 +111,7 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
           ...form,
           inSession: form.archived ? false : form.inSession === true,
         }),
+        divisionArea: String(form.divisionArea || '').trim(),
         fargoDivisionId: joinUsaplFargoIds([form.fargoReportA, form.fargoReportB]),
         duesPerPlayer: form.duesPerPlayer === '' || form.duesPerPlayer == null ? 10 : form.duesPerPlayer,
         combinedFargoCap: form.combinedFargoCap === '' || form.combinedFargoCap == null ? USAPL_DEFAULT_FARGO_CAP : form.combinedFargoCap,
@@ -152,7 +153,7 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
           <div className="usapl-division-edit-body" style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'scroll' }}>
             {step === 0 ? (
               <>
-                <UsaplDivisionEditNight form={form} setField={setField} locationOptions={locationOptions} />
+                <UsaplDivisionEditNight form={form} setField={setField} locationOptions={locationOptions} areaOptions={areaOptions} />
                 <UsaplDivisionEditFlyer form={form} setField={setField} />
               </>
             ) : null}

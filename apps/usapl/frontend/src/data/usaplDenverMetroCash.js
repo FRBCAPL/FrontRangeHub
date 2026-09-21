@@ -10,14 +10,20 @@ export function usaplMetroLines(text) {
     .split(/\n|\\n/);
 }
 
+export const DENVER_METRO_VEGAS_NOTE = {
+  title: 'USAPL is a Vegas league',
+  body: 'USA Pool League is a Vegas league. \nWe send approximately 1 in 12 teams to Las Vegas for USAPL Nationals each year. \nThis division is an exception.',
+  aside: 'Introductory cash divisions are not eligible for the Vegas trip. \nJanuary starts the road to Nationals.',
+};
+
 export const DENVER_METRO_SNAPSHOT = [
   { label: 'When', value: 'Tuesdays at 7 PM' },
-  { label: 'Where', value: 'Denver Metro — home and away' },
+  { label: 'Where', value: 'Denver Metro \n Home and Away' },
   { label: 'Format', value: '8-ball + 10-ball double play' },
   { label: 'Team', value: '5 players per format' },
   { label: 'Dues', value: '$10 per player per format' },
   { label: 'Membership', value: 'No annual membership fee' },
-  { label: 'Payouts', value: 'Separate 8-ball and 10-ball cash.\nNo playoffs — final standings pay.' },
+  { label: 'Payouts', value: 'Separate 8-ball and 10-ball payouts.\nNo playoffs — final standings pay.' },
 ];
 
 export const DENVER_METRO_PROMOS = [
@@ -27,7 +33,7 @@ export const DENVER_METRO_PROMOS = [
     src: '/usapl/denver-metro-finish-strong.jpg',
     alt: 'Finish Strong Cash Drawing. Complete the full session but don’t cash in either format? You’re still in the money.',
     points: [
-      'Complete the Fall session in good standing and don’t cash in either format.',
+      'Complete the Fall session in good \nstanding and don’t cash in \neither format.',
       'Click the graphic for full eligibility and how the drawing works.',
     ],
     rules: {
@@ -45,7 +51,7 @@ export const DENVER_METRO_PROMOS = [
             'Do not receive a cash payout in 8-Ball or 10-Ball',
           ],
           paragraphs: [
-            'Good Standing: Complete all required scheduled matches, and pay league dues within 48 hours of each match.',
+            'Good Standing: Complete all required scheduled matches + \nPay league dues within 48 hours of each match.',
           ],
         },
       ],
@@ -61,19 +67,19 @@ export const DENVER_METRO_PROMOS = [
     alt: '$100 team credit for the January 2027 session',
     points: [
       'Complete Fall 2026 with dues paid within 48 hours of each match and earn $100 toward January 2027.',
-      'Credit applies at $20 per league week. Click the graphic for the full rules.',
+      'Credit applies at $20 per league week. Click the graphic for the full details.',
     ],
     rules: {
       hook: 'Finish this session. Come back in January. Get $100 toward your team.',
       intro: [
-        'Complete the Fall Cash Session and your team can earn a $100 credit toward the January 2027 Denver Metro Vegas-qualifying session.',
+        'Complete the Inroductory Session and your team can earn a $100 credit toward the January 2027  Vegas-qualifying session.',
       ],
-      highlight: 'The credit may be used at a maximum of $20 per league week until the full $100 has been used.',
+      highlight: 'The credit may be used at a maximum of $20 per league week \nuntil the full credit has been used.',
       sections: [
         {
           title: 'To Qualify',
           bullets: [
-            'Complete the entire Fall Cash Session',
+            'Complete the entire Introductory Session',
             'Pay each week’s league dues within 48 hours of the time the match was played',
             'Return in January 2027 with at least 3 players from your Fall roster',
           ],

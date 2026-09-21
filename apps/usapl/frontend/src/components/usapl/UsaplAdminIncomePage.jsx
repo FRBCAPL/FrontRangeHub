@@ -214,7 +214,9 @@ export default function UsaplAdminIncomePage() {
           prizeCents={result.prize_cents}
           grossCents={result.gross_cents}
           teams={result.teams}
+          payingTeams={result.paying_teams}
           weeks={result.weeks}
+          playType={result.play_type}
         />
       ) : null}
       {setupOpen ? (

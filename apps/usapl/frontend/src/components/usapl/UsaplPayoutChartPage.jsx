@@ -57,7 +57,11 @@ export default function UsaplPayoutChartPage() {
     <div className="usapl-page usapl-payout-chart-page">
       <p className="usapl-kicker">Front Range USA Pool League</p>
       <h1>Cash payout</h1>
-      <p className="usapl-lede">Tap how many places finish in the money.</p>
+      <p className="usapl-lede">
+        {parsed.playType === 'double'
+          ? 'Amounts below are for one format. 8-ball and 10-ball each pay this chart.'
+          : 'Tap how many places finish in the money.'}
+      </p>
       <div className="usapl-payout-chart-toolbar usapl-actions">
         <button type="button" className="usapl-btn" onClick={() => window.print()}>Print</button>
       </div>
@@ -66,6 +70,7 @@ export default function UsaplPayoutChartPage() {
         sim={sim}
         teams={parsed.teams}
         weeks={parsed.weeks}
+        playType={parsed.playType}
         selectedPlaces={selected}
         onPickPlaces={setPlaceCount}
       />

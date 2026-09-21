@@ -1,8 +1,10 @@
 import { usaplPlayMatches } from './usaplIncomePlayType.js';
+import { usaplPayingTeams } from './usaplIncomeBye.js';
 
 export function incomeSplitRecipe(result) {
   if (!result) return null;
   const teams = Number(result.teams) || 0;
+  const paying = Number(result.paying_teams) || usaplPayingTeams(teams);
   const weeks = Number(result.weeks) || 0;
   if (!teams || !weeks) return null;
   const teamDues = Number(result.team_dues_cents) || 0;
@@ -11,13 +13,14 @@ export function incomeSplitRecipe(result) {
   const prizeNight = perNight(result.prize_cents);
   const csiNight = perNight(result.csi_cents);
   const loNight = perNight(result.lo_cents);
-  const nightDues = teams * teamDues;
-  const seasonDues = Number(result.gross_cents) || teams * weeks * teamDues;
+  const nightDues = paying * teamDues;
+  const seasonDues = Number(result.gross_cents) || paying * weeks * teamDues;
   const prizeSeason = Number(result.prize_cents) || 0;
   const csiSeason = Number(result.csi_cents) || 0;
   const loSeason = Number(result.lo_cents) || 0;
   return {
     teams,
+    paying_teams: paying,
     weeks,
     matches,
     team_dues_cents: teamDues,

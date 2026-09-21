@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { DENVER_METRO_PROMOS } from '../../data/usaplDenverMetroCash.js';
 import { DENVER_METRO_CASH_POOL } from '../../data/usaplDenverMetroCashPool.js';
 import UsaplDenverMetroRulesModal from './UsaplDenverMetroRulesModal.jsx';
 import UsaplFlyerLightbox from './UsaplFlyerLightbox.jsx';
@@ -35,9 +34,6 @@ export function UsaplDenverMetroCardArt() {
   return (
     <div className="usapl-night-flyer usapl-metro-card-art" aria-hidden="true">
       <img src={DENVER_METRO_CASH_POOL.src} alt="" />
-      {DENVER_METRO_PROMOS.map((promo) => (
-        <img key={promo.id} src={promo.src} alt="" />
-      ))}
     </div>
   );
 }

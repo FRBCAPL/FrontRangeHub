@@ -1,4 +1,5 @@
 import { normalizeUsaplPlayType, usaplPlayMatches, usaplPlayTypeLabel } from './usaplIncomePlayType.js';
+import { usaplPayingTeams } from './usaplIncomeBye.js';
 import { normalizeUsaplTeamPlayers, weeklyTeamDuesCents } from './usaplIncomeTeamSize.js';
 
 export function dollarsToCents(value) {
@@ -118,13 +119,15 @@ export function projectUsaplIncome({
     throw new Error('Prize, CSI, and league operator must add up to one team’s dues for one match.');
   }
   const matches = usaplPlayMatches(play);
-  const teamWeeks = teamCount * weekCount;
+  const payingTeams = usaplPayingTeams(teamCount);
+  const teamWeeks = payingTeams * weekCount;
   const gross = teamWeeks * teamDuesCents;
   const prize = teamWeeks * prizeEach * matches;
   const csi = teamWeeks * csiEach * matches;
   const lo = teamWeeks * loEach * matches;
   return {
     teams: teamCount,
+    paying_teams: payingTeams,
     weeks: weekCount,
     players_per_team: playerCount,
     player_dues_cents: playerDuesCents,
@@ -137,26 +140,27 @@ export function projectUsaplIncome({
     csi_cents: csi,
     lo_cents: lo,
     other_cents: 0,
-    gross_week_cents: teamCount * teamDuesCents,
-    prize_week_cents: teamCount * prizeEach * matches,
-    csi_week_cents: teamCount * csiEach * matches,
-    lo_week_cents: teamCount * loEach * matches,
+    gross_week_cents: payingTeams * teamDuesCents,
+    prize_week_cents: payingTeams * prizeEach * matches,
+    csi_week_cents: payingTeams * csiEach * matches,
+    lo_week_cents: payingTeams * loEach * matches,
   };
 }
 
-export function attachIncomeWeekTotals(result) {
+export function attachIncomeWeekTotals(result, playTypeHint) {
   if (!result) return result;
   const weeks = Number(result.weeks) || 1;
   const teams = Number(result.teams) || 0;
   const players = Number(result.players_per_team) || 0;
   const playerDues = Number(result.player_dues_cents || result.dues_cents) || 0;
-  const matches = usaplPlayMatches(result.play_type);
+  const play = normalizeUsaplPlayType(result.play_type || playTypeHint);
+  const matches = usaplPlayMatches(play);
   const oneMatchDues = playerDues * players;
-  const teamWeeks = teams * weeks || 1;
+  const rosteredWeeks = teams * weeks || 1;
   let prize = Number(result.prize_cents) || 0;
   let csi = Number(result.csi_cents) || 0;
   let lo = Number(result.lo_cents) || 0;
-  const chartPerTeam = Math.round((prize + csi + lo) / teamWeeks);
+  const chartPerTeam = Math.round((prize + csi + lo) / rosteredWeeks);
   if (matches > 1 && oneMatchDues > 0 && chartPerTeam === oneMatchDues) {
     prize *= matches;
     csi *= matches;
@@ -166,9 +170,20 @@ export function attachIncomeWeekTotals(result) {
   if (matches > 1 && oneMatchDues > 0 && teamDues === oneMatchDues) {
     teamDues = oneMatchDues * matches;
   }
-  const gross = teams * weeks * teamDues;
+  const paying = Number(result.paying_teams) || usaplPayingTeams(teams);
+  const rosteredSeason = teams * weeks * teamDues;
+  const payingSeason = paying * weeks * teamDues;
+  const buckets = prize + csi + lo;
+  if (paying !== teams && buckets === rosteredSeason) {
+    prize = Math.round((prize * paying) / teams);
+    csi = Math.round((csi * paying) / teams);
+    lo = Math.round((lo * paying) / teams);
+  }
+  const gross = payingSeason;
   return {
     ...result,
+    play_type: play,
+    paying_teams: paying,
     team_dues_cents: teamDues,
     gross_cents: gross,
     prize_cents: prize,
@@ -176,7 +191,7 @@ export function attachIncomeWeekTotals(result) {
     lo_cents: lo,
     other_cents: 0,
     matches,
-    gross_week_cents: teams * teamDues,
+    gross_week_cents: paying * teamDues,
     prize_week_cents: Math.round(prize / weeks),
     csi_week_cents: Math.round(csi / weeks),
     lo_week_cents: Math.round(lo / weeks),

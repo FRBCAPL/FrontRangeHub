@@ -45,6 +45,7 @@ export default function UsaplDivisionFactsBody({ division }) {
       </div>
       <div className="usapl-facts-grid">
         <Fact label="Day of play">{division.night ? usaplNightLabel(division.night) : ''}</Fact>
+        <Fact label="Area">{String(division.divisionArea || '').trim()}</Fact>
         <Fact label="First week">{formatDate(division.playStarts)}</Fact>
         <Fact label="Dues">{duesLabel}</Fact>
         <Fact label="Last week of play">{formatDate(division.lastWeek)}</Fact>

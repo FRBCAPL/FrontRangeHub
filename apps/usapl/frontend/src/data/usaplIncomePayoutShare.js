@@ -1,8 +1,11 @@
-export function payoutChartPath({ teams, weeks, poolCents }) {
+import { normalizeUsaplPlayType } from './usaplIncomePlayType.js';
+
+export function payoutChartPath({ teams, weeks, poolCents, playType }) {
   const query = new URLSearchParams();
   query.set('teams', String(Math.max(1, Math.round(Number(teams) || 1))));
   query.set('weeks', String(Math.max(1, Math.round(Number(weeks) || 1))));
   query.set('pool', String(Math.max(0, Math.round(Number(poolCents) || 0))));
+  if (String(playType || '').toLowerCase() === 'double') query.set('play', 'double');
   return `/usapl/payout-chart?${query.toString()}`;
 }
 
@@ -24,5 +27,10 @@ export function parsePayoutChartSearch(search) {
   if (!Number.isInteger(teams) || teams < 1 || teams > 64) return null;
   if (!Number.isInteger(weeks) || weeks < 1 || weeks > 52) return null;
   if (!Number.isInteger(pool) || pool < 0) return null;
-  return { teams, weeks, poolCents: pool };
+  return {
+    teams,
+    weeks,
+    poolCents: pool,
+    playType: normalizeUsaplPlayType(query.get('play')),
+  };
 }

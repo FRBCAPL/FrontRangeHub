@@ -35,6 +35,7 @@ export const USAPL_DIVISIONS = [
     rosterMax: 8,
     combinedFargoCap: USAPL_DEFAULT_FARGO_CAP,
     locationNote: 'Denver Metro — home and away',
+    divisionArea: 'Denver Metro',
     playAnywhere: true,
     signupOpen: true,
     sortOrder: 15,
@@ -288,6 +289,7 @@ export function emptyUsaplDivision(sortOrder = 60) {
     rosterMax: 8,
     combinedFargoCap: USAPL_DEFAULT_FARGO_CAP,
     locationNote: '',
+    divisionArea: '',
     playAnywhere: false,
     inHouse: false,
     inSession: undefined,
@@ -311,8 +313,22 @@ export function usaplDivisionSummaryLines(division) {
   const format = usaplFormatWithoutInHouse(division.format);
   const numbers = String(division.leagueNumbers || '').trim();
   const location = String(division.locationNote || '').trim();
+  const area = String(division.divisionArea || '').trim();
   const hideLocation = usaplDivisionIsInHouse(division)
     || usaplDivisionIsTravel(division)
     || location.toLowerCase() === String(division.shortName || '').trim().toLowerCase();
-  return [numbers ? `Div. ${numbers}` : '', format, hideLocation ? '' : location].filter(Boolean);
+  return [numbers ? `Div. ${numbers}` : '', format, area, hideLocation ? '' : location].filter(Boolean);
+}
+
+export function usaplDivisionAreaOptions(divisions) {
+  const seen = new Set();
+  const names = [];
+  (divisions || []).forEach((row) => {
+    const area = String(row?.divisionArea || '').trim();
+    const key = area.toLowerCase();
+    if (!area || seen.has(key)) return;
+    seen.add(key);
+    names.push(area);
+  });
+  return names.sort((a, b) => a.localeCompare(b));
 }

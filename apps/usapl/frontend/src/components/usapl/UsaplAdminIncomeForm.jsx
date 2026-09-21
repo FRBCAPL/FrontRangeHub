@@ -1,6 +1,7 @@
 import React from 'react';
 import { centsToDollars, incomeSplitChipLabel, incomeSplitOptionKey } from '../../data/usaplIncomeProjection.js';
 import { weeklyTeamDuesCents } from '../../data/usaplIncomeTeamSize.js';
+import { usaplByeTeams, usaplPayingTeams } from '../../data/usaplIncomeBye.js';
 import UsaplIncomeStepper from './UsaplIncomeStepper.jsx';
 import UsaplAdminIncomeWeekSpan from './UsaplAdminIncomeWeekSpan.jsx';
 
@@ -18,7 +19,9 @@ export default function UsaplAdminIncomeForm({
 }) {
   const teamDuesCents = weeklyTeamDuesCents(Math.round(Number(dues) * 100), playersPerTeam, playType);
   const teamCount = Math.max(0, Number.parseInt(teams, 10) || 0);
-  const nightDuesCents = teamDuesCents * teamCount;
+  const payingTeams = usaplPayingTeams(teamCount);
+  const byeTeams = usaplByeTeams(teamCount);
+  const nightDuesCents = teamDuesCents * payingTeams;
   const selectedKey = incomeSplitOptionKey(
     Math.round(Number(dues) * 100),
     playType,
@@ -54,7 +57,10 @@ export default function UsaplAdminIncomeForm({
       <div className="usapl-income-calc-meta">
         {teamDuesCents ? (
           <p className="usapl-note">
-            {teamCount || '—'} teams × {centsToDollars(teamDuesCents)}
+            {teamCount || '—'} {teamCount === 1 ? 'team' : 'teams'}
+            {byeTeams ? ` · 1 bye each week · ${payingTeams} pay` : ''}
+            {' × '}
+            {centsToDollars(teamDuesCents)}
             {playType === 'double' ? ' (2 matches)' : ''}
             {' '}={centsToDollars(nightDuesCents)} dues tonight.
           </p>
