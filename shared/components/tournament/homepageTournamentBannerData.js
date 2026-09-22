@@ -4,6 +4,9 @@ import { cashClimbSubmitHash } from '@apps/tournament-bracket/frontend/src/compo
 import { listLiveElimEvents } from '@apps/tournament-bracket/frontend/src/components/tournament/elimCloud.js';
 import { elimFormatLabel } from '@apps/tournament-bracket/frontend/src/components/tournament/elimStatus.js';
 import { elimSubmitHash } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
+import { listLiveBreakAndRunEvents } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunCloud.js';
+import { breakAndRunPhoneHash } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
+import { formatMoney } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunMath.js';
 
 const LADDER_LABELS = {
   '499-under': '499 & Under',
@@ -29,10 +32,11 @@ function detailLine(parts) {
 }
 
 export async function loadHomepageTournamentBanner() {
-  const [ladderResult, cashResult, elimEvents] = await Promise.all([
+  const [ladderResult, cashResult, elimEvents, bnrEvents] = await Promise.all([
     tournamentService.getAllUpcomingTournaments(8),
     listLiveCashClimbEventsResult(),
     listLiveElimEvents(),
+    listLiveBreakAndRunEvents(),
   ]);
 
   const live = [];
@@ -55,6 +59,23 @@ export async function loadHomepageTournamentBanner() {
       detail: detailLine(['Live', elimFormatLabel(event.type) || 'Bracket', formatDate(event.tournamentDate)]),
       live: true,
       cta: 'Submit a result',
+    });
+  });
+  (bnrEvents || []).forEach((event) => {
+    const players = playerCount(event);
+    const pot = Number(event?.tournament?.currentPot);
+    live.push({
+      id: `bnr-${event.id}`,
+      path: breakAndRunPhoneHash(event.id),
+      label: event.name || 'USAPL 10-Ball Break & Run',
+      detail: detailLine([
+        'Live USAPL Break & Run',
+        formatDate(event.tournamentDate),
+        Number.isFinite(pot) ? `Pot ${formatMoney(pot)}` : '',
+        players ? `${players} player${players === 1 ? '' : 's'}` : '',
+      ]),
+      live: true,
+      cta: 'View the pot',
     });
   });
 

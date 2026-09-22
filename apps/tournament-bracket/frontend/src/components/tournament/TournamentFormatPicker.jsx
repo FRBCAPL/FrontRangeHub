@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function TournamentFormatPicker({ onCashClimb, onSingleElim, onDoubleElim, onBack }) {
+export default function TournamentFormatPicker({ onCashClimb, onBreakAndRun, onSingleElim, onDoubleElim, onBack }) {
   return (
     <>
       <header className="tb-header">
@@ -12,6 +12,10 @@ export default function TournamentFormatPicker({ onCashClimb, onSingleElim, onDo
         <button type="button" className="cc-format-btn cc-primary" onClick={onCashClimb}>
           <strong>Cash Climb</strong>
           <span>Round robin, 3-loss cut, then King of the Hill at 3 players.</span>
+        </button>
+        <button type="button" className="cc-format-btn" onClick={onBreakAndRun}>
+          <strong>USAPL 10-Ball Break & Run</strong>
+          <span>Member or that day’s tournament vs open rate. Pot − reserve ÷ 10 per ball.</span>
         </button>
         <button type="button" className="cc-format-btn" onClick={onSingleElim}>
           <strong>Single elimination</strong>

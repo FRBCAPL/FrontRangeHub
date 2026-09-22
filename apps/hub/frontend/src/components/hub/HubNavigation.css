@@ -242,9 +242,10 @@ html body .hub-navigation.homepage-nav .nav-content {
   filter: none !important;
 }
 
-/* Ladder / Cueless / USAPL: same bar height and badge on the window’s left */
+/* Ladder / Cueless / USAPL / Tournaments: same bar height and badge on the window’s left */
 .hub-navigation.ladder-app,
 .hub-navigation.cueless-app,
+.hub-navigation.tournament-app,
 .hub-navigation.usapl-nav:not(.homepage-nav) {
   padding: 0.55rem 0 0.4rem !important;
   min-height: 5.25rem;
@@ -252,6 +253,7 @@ html body .hub-navigation.homepage-nav .nav-content {
 
 .hub-navigation.ladder-app .nav-content,
 .hub-navigation.cueless-app .nav-content,
+.hub-navigation.tournament-app .nav-content,
 .hub-navigation.usapl-nav:not(.homepage-nav) .nav-content {
   max-width: none !important;
   width: 100% !important;
@@ -263,6 +265,7 @@ html body .hub-navigation.homepage-nav .nav-content {
 @media (min-width: 769px) {
   .hub-navigation.ladder-app .nav-left,
   .hub-navigation.cueless-app .nav-left,
+  .hub-navigation.tournament-app .nav-left,
   .hub-navigation.usapl-nav:not(.homepage-nav) .nav-left {
     position: absolute;
     left: 12px;
@@ -274,6 +277,7 @@ html body .hub-navigation.homepage-nav .nav-content {
 
   .hub-navigation.ladder-app .nav-right,
   .hub-navigation.cueless-app .nav-right,
+  .hub-navigation.tournament-app .nav-right,
   .hub-navigation.usapl-nav:not(.homepage-nav) .nav-right,
   .hub-navigation.homepage-nav .nav-right {
     position: absolute;
@@ -284,10 +288,22 @@ html body .hub-navigation.homepage-nav .nav-content {
     margin-left: auto;
     justify-content: flex-end !important;
   }
+
+  .hub-navigation.tournament-app .nav-center {
+    width: calc(100vw - 520px) !important;
+    max-width: calc(100vw - 520px) !important;
+    margin: 0 auto;
+    z-index: 1;
+  }
+
+  .hub-navigation.tournament-app .app-title {
+    font-size: clamp(1rem, 2.1vw, 2.15rem) !important;
+  }
 }
 
 .hub-navigation.ladder-app .app-title,
 .hub-navigation.cueless-app .app-title,
+.hub-navigation.tournament-app .app-title,
 .hub-navigation.usapl-nav:not(.homepage-nav) .app-title {
   white-space: nowrap !important;
   word-break: normal !important;
@@ -297,6 +313,7 @@ html body .hub-navigation.homepage-nav .nav-content {
 @media (min-width: 769px) and (max-width: 1280px) {
   .hub-navigation.ladder-app .nav-center,
   .hub-navigation.cueless-app .nav-center,
+  .hub-navigation.tournament-app .nav-center,
   .hub-navigation.usapl-nav:not(.homepage-nav) .nav-center,
   .hub-navigation.homepage-nav .nav-center {
     width: calc(100vw - 360px) !important;
@@ -305,7 +322,8 @@ html body .hub-navigation.homepage-nav .nav-content {
     box-sizing: border-box;
   }
 
-  .hub-navigation.usapl-nav:not(.homepage-nav) .app-title {
+  .hub-navigation.usapl-nav:not(.homepage-nav) .app-title,
+  .hub-navigation.tournament-app .app-title {
     white-space: normal !important;
     word-break: break-word !important;
     font-size: clamp(0.92rem, 2.15vw, 1.55rem) !important;

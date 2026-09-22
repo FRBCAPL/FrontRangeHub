@@ -23,7 +23,7 @@ export default function TournamentHubHome({
       <div className="tb-hub-grid">
         <button type="button" className="cc-format-btn cc-primary" onClick={onNew}>
           <strong>New Tournament</strong>
-          <span>Cash Climb, single elimination, or double elimination.</span>
+          <span>Cash Climb, Break and Run, single elimination, or double elimination.</span>
         </button>
         <button type="button" className="cc-format-btn" onClick={onCurrent}>
           <strong>Current Tournaments</strong>

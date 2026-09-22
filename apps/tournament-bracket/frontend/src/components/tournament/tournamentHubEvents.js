@@ -12,19 +12,26 @@ export function isCashClimbHubEvent(item) {
   return item?.kind === 'cash-climb' || item?.type === 'cash-climb';
 }
 
+export function isBreakAndRunHubEvent(item) {
+  return item?.kind === 'break-and-run' || item?.type === 'break-and-run';
+}
+
 export function hubFormatLabel(item) {
   if (isCashClimbHubEvent(item)) return 'Cash Climb';
+  if (isBreakAndRunHubEvent(item)) return 'Break and Run';
   return elimFormatLabel(item?.type) || 'Tournament';
 }
 
 export function summaryFromLocal(tournament, kind) {
   if (!tournament?.id) return null;
   const isCash = kind === 'cash-climb';
+  const isBnr = kind === 'break-and-run';
+  const fallback = isCash ? 'Cash Climb' : isBnr ? 'Break and Run' : 'Pool Tournament';
   return {
     id: String(tournament.id),
-    name: String(tournament.name || (isCash ? 'Cash Climb' : 'Pool Tournament')).trim() || 'Tournament',
+    name: String(tournament.name || fallback).trim() || 'Tournament',
     status: tournament.status || 'in-progress',
-    type: isCash ? 'cash-climb' : (tournament.type || ''),
+    type: isCash ? 'cash-climb' : isBnr ? 'break-and-run' : (tournament.type || ''),
     kind,
     tournamentDate: tournament.tournamentDate || '',
     updatedAt: tournament.updated_at || '',
@@ -32,7 +39,14 @@ export function summaryFromLocal(tournament, kind) {
   };
 }
 
-export function mergeHubEvents({ cashClimbSaved = [], elimSaved = [], localCashClimb, localElim }) {
+export function mergeHubEvents({
+  cashClimbSaved = [],
+  elimSaved = [],
+  breakAndRunSaved = [],
+  localCashClimb,
+  localElim,
+  localBreakAndRun,
+}) {
   const byId = new Map();
   const put = (item, kind) => {
     if (!item?.id) return;
@@ -45,11 +59,14 @@ export function mergeHubEvents({ cashClimbSaved = [], elimSaved = [], localCashC
 
   cashClimbSaved.forEach((item) => put(item, 'cash-climb'));
   elimSaved.forEach((item) => put(item, 'elim'));
+  breakAndRunSaved.forEach((item) => put(item, 'break-and-run'));
 
   const localCc = summaryFromLocal(localCashClimb, 'cash-climb');
   const localEl = summaryFromLocal(localElim, 'elim');
+  const localBnr = summaryFromLocal(localBreakAndRun, 'break-and-run');
   if (localCc) byId.set(localCc.id, localCc);
   if (localEl) byId.set(localEl.id, localEl);
+  if (localBnr) byId.set(localBnr.id, localBnr);
 
   return Array.from(byId.values());
 }

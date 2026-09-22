@@ -108,8 +108,11 @@ import CashClimbTvView from '@apps/tournament-bracket/frontend/src/components/to
 import CashClimbPublicGuide from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbPublicGuide.jsx';
 import CashClimbSubmitPage from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/CashClimbSubmitPage.jsx';
 import ElimSubmitPage from '@apps/tournament-bracket/frontend/src/components/tournament/ElimSubmitPage.jsx';
+import BreakAndRunTvView from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunTvView.jsx';
+import BreakAndRunPhoneView from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunPhoneView.jsx';
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isElimSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
+import { isBreakAndRunDisplayPath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
 import { isTournamentOperator, peekLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
@@ -184,6 +187,8 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/hub': '#/ladder',
   '/tournament-bracket': '#/tournament-bracket',
   '/tournament-bracket/tv': '#/tournament-bracket/tv',
+  '/tournament-bracket/break-and-run/tv': '#/tournament-bracket/break-and-run/tv',
+  '/tournament-bracket/break-and-run/view': '#/tournament-bracket/break-and-run/view',
   '/tournament-bracket/how-it-works': '#/tournament-bracket/how-it-works',
   '/tournament-bracket/submit': '#/tournament-bracket/submit',
   '/tournament-bracket/elim': '#/tournament-bracket/elim',
@@ -625,6 +630,31 @@ function AppContent() {
     );
   }
 
+  // Break & Run TV / phone: cloud Realtime + optional same-browser storage, no hub nav
+  if (isBreakAndRunDisplayPath(location.pathname)) {
+    const isTv = location.pathname.includes('/break-and-run/tv');
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: '#020617',
+        padding: 0,
+        margin: 0,
+        zIndex: 9999,
+        overflowY: isTv ? 'hidden' : 'auto',
+        overflowX: 'hidden',
+        WebkitOverflowScrolling: isTv ? undefined : 'touch',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {isTv ? <BreakAndRunTvView /> : <BreakAndRunPhoneView />}
+      </div>
+    );
+  }
+
   // Public Cash Climb explainer: phones can scroll; ?tv=1 is a no-scroll projector board
   if (location.pathname === '/tournament-bracket/how-it-works') {
     const isTv = new URLSearchParams(location.search || '').get('tv') === '1';
@@ -720,9 +750,9 @@ function AppContent() {
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';
-          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && !isUsaplLeague && location.pathname !== '/tournament-bracket/tv' && <FloatingLogos />;
+          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && !isUsaplLeague && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) && <FloatingLogos />;
         })()}
-        {!isEstateInventory && location.pathname !== '/tournament-bracket/tv' ? (
+        {!isEstateInventory && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) ? (
                          <HubNavigation 
           currentAppName={currentAppName} 
           isAdmin={isPreviewMode ? false : isAdminState}
@@ -1054,6 +1084,48 @@ function AppContent() {
                   flexDirection: 'column'
                 }}>
                   <CashClimbTvView />
+                </div>
+              }
+            />
+            <Route
+              path="/tournament-bracket/break-and-run/tv/:eventId?"
+              element={
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: '#020617',
+                  padding: 0,
+                  margin: 0,
+                  zIndex: 9999,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column'
+                }}>
+                  <BreakAndRunTvView />
+                </div>
+              }
+            />
+            <Route
+              path="/tournament-bracket/break-and-run/view/:eventId?"
+              element={
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  background: '#020617',
+                  padding: 0,
+                  margin: 0,
+                  zIndex: 9999,
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  WebkitOverflowScrolling: 'touch',
+                }}>
+                  <BreakAndRunPhoneView />
                 </div>
               }
             />

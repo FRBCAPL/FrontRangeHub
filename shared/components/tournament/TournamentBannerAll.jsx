@@ -7,7 +7,7 @@ import './TournamentBannerAll.css';
 const POLL_MS = 20000;
 
 /**
- * Landing-page banner: ladder events in registration, plus live Cash Climb / elim events.
+ * Landing-page banner: ladder events in registration, plus live Cash Climb / elim / Break & Run.
  * Tapping the banner opens a short list modal instead of leaving the homepage.
  */
 const TournamentBannerAll = () => {

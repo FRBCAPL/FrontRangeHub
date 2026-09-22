@@ -5,6 +5,7 @@ import {
   filterCurrentEvents,
   filterCompletedEvents,
   isCashClimbHubEvent,
+  isBreakAndRunHubEvent,
   hubFormatLabel,
 } from './tournamentHubEvents.js';
 
@@ -18,17 +19,24 @@ describe('tournament hub events', () => {
       elimSaved: [
         { id: 'el-1', name: 'Sunday Single', status: 'ended', type: 'single', updatedAt: '1' },
       ],
+      breakAndRunSaved: [
+        { id: 'bnr-1', name: 'Friday B&R', status: 'in-progress', type: 'break-and-run', updatedAt: '1' },
+      ],
       localCashClimb: { id: 'cc-1', name: 'Friday Cash Climb (tablet)', status: 'in-progress', type: 'cash-climb' },
       localElim: { id: 'el-2', name: 'Live Double', status: 'in-progress', type: 'double' },
+      localBreakAndRun: { id: 'bnr-1', name: 'Friday B&R (tablet)', status: 'in-progress', type: 'break-and-run' },
     });
 
     const current = filterCurrentEvents(events);
     const completed = filterCompletedEvents(events);
 
     assert.equal(current.find((item) => item.id === 'cc-1')?.name, 'Friday Cash Climb (tablet)');
+    assert.equal(current.find((item) => item.id === 'bnr-1')?.name, 'Friday B&R (tablet)');
     assert.equal(current.some((item) => item.id === 'el-2'), true);
     assert.equal(completed.map((item) => item.id).sort().join(','), 'cc-2,el-1');
     assert.equal(hubFormatLabel(current.find((item) => item.id === 'cc-1')), 'Cash Climb');
+    assert.equal(hubFormatLabel(current.find((item) => item.id === 'bnr-1')), 'Break and Run');
     assert.equal(isCashClimbHubEvent(current.find((item) => item.id === 'el-2')), false);
+    assert.equal(isBreakAndRunHubEvent(current.find((item) => item.id === 'bnr-1')), true);
   });
 });

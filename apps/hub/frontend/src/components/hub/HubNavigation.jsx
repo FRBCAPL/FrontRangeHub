@@ -98,6 +98,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || location.pathname.startsWith('/ladder/') || currentAppName === 'Ladder of Legends';
   const isUsaplApp = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
   const isCuelessApp = location.pathname === '/cueless' || location.pathname.startsWith('/cueless/');
+  const isTournamentApp =
+    location.pathname.startsWith('/tournament-bracket') &&
+    location.pathname !== '/tournament-bracket/tv' &&
+    !location.pathname.startsWith('/tournament-bracket/break-and-run/tv') &&
+    !location.pathname.startsWith('/tournament-bracket/break-and-run/view');
   const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName);
   const handleHamburgerClick = (event) => {
     event.preventDefault();
@@ -106,7 +111,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
   
   return (
-    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
