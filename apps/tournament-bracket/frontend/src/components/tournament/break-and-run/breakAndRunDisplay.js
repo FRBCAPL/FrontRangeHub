@@ -92,7 +92,9 @@ export function buildBreakAndRunPublicBoard(tournament) {
     id: turn.id,
     playerName: turn.playerName,
     dateLabel: formatTurnDate(turn.date),
-    attemptLabel: turn.isRebuyTurn ? 'Rebuy' : 'Attempt',
+    attemptLabel: turn.isRebuyTurn || turn.attempt > 1
+      ? `Rebuy #${Math.max(1, (turn.attempt || 1) - 1)}`
+      : 'First try',
     detail: turnLine(turn),
     amountWon: turn.amountWon,
     amountLabel: turn.amountWon > 0 ? formatMoney(turn.amountWon) : 'No payout',
@@ -109,7 +111,8 @@ export function buildBreakAndRunPublicBoard(tournament) {
   return {
     id: clean.id,
     name: clean.name,
-    dateLabel: formatTournamentDate(clean.tournamentDate),
+    dateLabel: formatTournamentDate(clean.startDate || clean.tournamentDate),
+    startDateLabel: formatTournamentDate(clean.startDate || clean.tournamentDate),
     status: clean.status,
     live: clean.status === 'in-progress',
     currentPot: snapshot.currentPot,

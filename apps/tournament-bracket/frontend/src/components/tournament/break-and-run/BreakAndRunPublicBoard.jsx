@@ -43,7 +43,7 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
   return (
     <div className={`bnr-public bnr-public-${variant}${board.live ? '' : ' is-complete'}`}>
       <header className="bnr-public-header">
-        <p className="bnr-public-brand">Front Range Pool · USAPL 10-Ball Break & Run</p>
+        <p className="bnr-public-brand">Front Range Pool League · 10-Ball Break & Run</p>
         <h1>{board.name}</h1>
         <p className="bnr-public-meta">
           {[

@@ -50,11 +50,12 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!tournamentDate) {
-      alert('Pick the date.');
+      alert('Pick the start date.');
       return;
     }
     onStart({
       name: name.trim() || DEFAULT_EVENT_NAME,
+      startDate: tournamentDate,
       tournamentDate,
       memberFee: Number(memberFee) || 0,
       openFee: Number(openFee) || 0,
@@ -67,7 +68,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
   return (
     <>
       <form className="create-tournament-form cc-setup bnr-setup" onSubmit={handleSubmit}>
-        <h3>USAPL 10-Ball Break & Run</h3>
+        <h3>Front Range Pool League 10-Ball Break & Run</h3>
         <p className="cc-setup-note">
           Payable pot = pot − reserve, then ÷ 10 per ball. Reserve stays until you change it.
         </p>
@@ -78,7 +79,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
             <input value={name} onChange={(e) => setName(e.target.value)} />
           </label>
           <label className="cc-date-field">
-            Date
+            Start date
             <input
               ref={dateInputRef}
               type="date"

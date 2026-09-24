@@ -35,7 +35,9 @@ export default function BreakAndRunTurns({ turns = [] }) {
                 <span>
                   {formatTurnDate(turn.date)}
                   {' · '}
-                  {turn.isRebuyTurn ? 'Rebuy' : 'First attempt'}
+                  {turn.isRebuyTurn || turn.attempt > 1
+                    ? `Rebuy #${Math.max(1, (turn.attempt || 1) - 1)}`
+                    : 'First try'}
                   {' · '}
                   {turnDetail(turn)}
                 </span>

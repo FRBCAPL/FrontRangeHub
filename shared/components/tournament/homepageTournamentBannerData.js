@@ -67,10 +67,10 @@ export async function loadHomepageTournamentBanner() {
     live.push({
       id: `bnr-${event.id}`,
       path: breakAndRunPhoneHash(event.id),
-      label: event.name || 'USAPL 10-Ball Break & Run',
+      label: event.name || 'Front Range Pool League 10-Ball Break & Run',
       detail: detailLine([
-        'Live USAPL Break & Run',
-        formatDate(event.tournamentDate),
+        'Live Break & Run',
+        formatDate(event.startDate || event.tournamentDate),
         Number.isFinite(pot) ? `Pot ${formatMoney(pot)}` : '',
         players ? `${players} player${players === 1 ? '' : 's'}` : '',
       ]),

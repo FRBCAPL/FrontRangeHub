@@ -6,6 +6,7 @@ import BreakAndRunTurns from './BreakAndRunTurns.jsx';
 import BreakAndRunLedger from './BreakAndRunLedger.jsx';
 import BreakAndRunRecordModal from './BreakAndRunRecordModal.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
+import { currentSession } from './breakAndRunTurns.js';
 import { eventSnapshot, formatMoney, formatTournamentDate } from './breakAndRunEngine.js';
 import { openBreakAndRunPhone, openBreakAndRunTv } from './breakAndRunDisplay.js';
 import '../cash-climb/CashClimb.css';
@@ -16,8 +17,11 @@ export default function BreakAndRunPlay({
   tournament,
   onAddPlayer,
   onRecord,
+  onPayRebuy,
   onAddToPot,
   onSetReserve,
+  onStartSession,
+  onEndSession,
   onUndo,
   onComplete,
   onReopen,
@@ -32,6 +36,8 @@ export default function BreakAndRunPlay({
   const [reserveDraft, setReserveDraft] = useState(String(tournament.reserve ?? ''));
   const snapshot = eventSnapshot(tournament);
   const live = tournament.status === 'in-progress';
+  const session = currentSession(tournament);
+  const sessionOpen = session?.status === 'open';
 
   useEffect(() => {
     setReserveDraft(String(tournament.reserve ?? ''));
@@ -58,22 +64,49 @@ export default function BreakAndRunPlay({
     onSetReserve?.(amount);
   };
 
+  const handleStartSession = () => {
+    const label = sessionOpen
+      ? 'Start a new session? The current session ends. Players who cashed out can play again. The pot carries forward.'
+      : 'Start a new session? Players who cashed out can play again. The pot carries forward.';
+    if (!window.confirm(label)) return;
+    onStartSession?.();
+  };
+
+  const handleEndSession = () => {
+    if (!sessionOpen) return;
+    const ok = window.confirm(
+      'End this session? No more turns until you start the next session. The pot stays open and carries forward.'
+    );
+    if (!ok) return;
+    onEndSession?.();
+  };
+
+  const sessionMeta = session
+    ? [
+        session.name,
+        session.date ? formatTournamentDate(session.date) : '',
+        session.venue || '',
+        sessionOpen ? 'Session open' : 'Session ended',
+      ].filter(Boolean).join(' · ')
+    : 'No session';
+
   return (
     <div className="bnr-play">
       <header className="cc-play-header">
         <div className="cc-play-header-top">
           <div className="cc-play-title">
-            <p className="cc-play-kicker">USAPL 10-Ball Break & Run</p>
+            <p className="cc-play-kicker">Front Range Pool League 10-Ball Break & Run</p>
             <h1>{tournament.name}</h1>
             <p className="cc-meta">
               {[
-                formatTournamentDate(tournament.tournamentDate),
+                `Started ${formatTournamentDate(tournament.startDate || tournament.tournamentDate)}`,
                 `Member ${formatMoney(tournament.memberFee ?? tournament.tournamentFee)}`,
                 `Others ${formatMoney(tournament.openFee)}`,
                 `Reserve ${formatMoney(tournament.reserve)}`,
                 live ? 'In progress' : 'Complete',
               ].filter(Boolean).join(' · ')}
             </p>
+            <p className="cc-meta">{sessionMeta}</p>
           </div>
           <div className="cc-play-actions">
             <button type="button" className="tb-btn-new" onClick={() => openBreakAndRunTv(tournament.id)}>
@@ -106,12 +139,20 @@ export default function BreakAndRunPlay({
             type="button"
             className="btn-primary"
             onClick={() => setRecordFor(tournament.players[0] || true)}
-            disabled={!tournament.players.length}
+            disabled={!tournament.players.length || !sessionOpen}
           >
             Record turn
           </button>
+          <button type="button" className="tb-btn-new" onClick={handleStartSession}>
+            {sessionOpen ? 'Start next session' : 'Start session'}
+          </button>
+          {sessionOpen ? (
+            <button type="button" className="tb-btn-new" onClick={handleEndSession}>
+              End session
+            </button>
+          ) : null}
           <p className="bnr-toolbar-note">
-            Zero payable balls earns one rebuy. Once any payable ball is earned, no rebuy.
+            One continuous pot. No payout → unlimited rebuys this session. Cash out → done until the next session starts.
           </p>
           <form className="bnr-add-pot" onSubmit={handleReserve}>
             <label>
@@ -146,6 +187,7 @@ export default function BreakAndRunPlay({
         tournament={tournament}
         live={live}
         onAdd={() => setShowAdd(true)}
+        onPayRebuy={(p) => onPayRebuy?.(p.id)}
         onRecord={(p) => setRecordFor(p)}
       />
       <BreakAndRunTurns turns={tournament.turns} />

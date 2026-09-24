@@ -4,7 +4,7 @@ export const USAPL_BALL_COUNT = 10;
 /** @deprecated use USAPL_BALL_COUNT */
 export const LEGENDS_BALL_COUNT = USAPL_BALL_COUNT;
 
-export const DEFAULT_EVENT_NAME = 'USAPL 10-Ball Break & Run';
+export const DEFAULT_EVENT_NAME = 'Front Range Pool League 10-Ball Break & Run';
 
 export function parseMoneyFee(value, fallback) {
   const n = Number(value);

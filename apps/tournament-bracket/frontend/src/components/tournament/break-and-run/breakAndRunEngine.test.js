@@ -4,8 +4,11 @@ import {
   addPlayer,
   addToPot,
   createBreakAndRun,
+  endSession,
+  payRebuy,
   recordTurn,
   setReserve,
+  startSession,
   undoLast,
 } from './breakAndRunEngine.js';
 import { money } from './breakAndRunMath.js';
@@ -162,30 +165,124 @@ describe('break and run engine', () => {
     assert.equal(after.turns[0].amountWon, 0);
   });
 
-  it('bust with payable balls blocks rebuy', () => {
+  it('bust with balls still allows rebuy because payout was $0', () => {
     const start = pot(2);
     const after = recordTurn(start, start.players[0].id, {
       payableBalls: 3,
       outcome: 'bust',
     });
     assert.equal(after.totalPaidOut, 0);
-    assert.throws(
-      () => recordTurn(after, after.players[0].id, { payableBalls: 1, outcome: 'cash-out' }),
-      /no rebuy/i,
-    );
-  });
-
-  it('zero balls still allows one rebuy even after a bust with no payable balls', () => {
-    const start = pot(2);
-    const first = recordTurn(start, start.players[0].id, {
-      payableBalls: 0,
-      outcome: 'bust',
-    });
-    const rebuy = recordTurn(first, first.players[0].id, {
-      payableBalls: 2,
+    const paid = payRebuy(after, after.players[0].id);
+    const rebuy = recordTurn(paid, paid.players[0].id, {
+      payableBalls: 1,
       outcome: 'cash-out',
     });
     assert.equal(rebuy.turns[0].isRebuyTurn, true);
-    assert.ok(rebuy.totalPaidOut > 0);
+    assert.equal(rebuy.turns[0].amountWon, 3);
+  });
+
+  it('allows unlimited rebuys after unpaid attempts', () => {
+    let state = pot(2);
+    state = recordTurn(state, state.players[0].id, {
+      payableBalls: 0,
+      outcome: 'scratch-break',
+    });
+    state = payRebuy(state, state.players[0].id);
+    state = recordTurn(state, state.players[0].id, {
+      payableBalls: 0,
+      outcome: 'bust',
+    });
+    state = payRebuy(state, state.players[0].id);
+    state = recordTurn(state, state.players[0].id, {
+      payableBalls: 0,
+      outcome: 'scratch-break',
+    });
+    assert.equal(state.players[0].runs, 3);
+    assert.equal(state.players[0].buyIns, 3);
+  });
+
+  it('requires paying the rebuy before recording the rebuy try', () => {
+    const start = pot(2);
+    const scratched = recordTurn(start, start.players[0].id, {
+      payableBalls: 0,
+      outcome: 'scratch-break',
+    });
+    assert.throws(
+      () => recordTurn(scratched, scratched.players[0].id, { payableBalls: 1, outcome: 'cash-out' }),
+      /rebuy first/i,
+    );
+    const paid = payRebuy(scratched, scratched.players[0].id);
+    assert.equal(paid.currentPot, 30);
+    const tryTurn = recordTurn(paid, paid.players[0].id, {
+      payableBalls: 1,
+      outcome: 'cash-out',
+    });
+    assert.equal(tryTurn.turns[0].isRebuyTurn, true);
+    assert.equal(tryTurn.turns[0].amountWon, 3);
+  });
+
+  it('locks the player for the rest of the session after a cash-out payout', () => {
+    const start = pot(2);
+    const cashed = recordTurn(
+      start,
+      start.players[0].id,
+      { payableBalls: 2, outcome: 'cash-out' },
+    );
+    assert.ok(cashed.turns[0].amountWon > 0);
+    assert.throws(
+      () => payRebuy(cashed, cashed.players[0].id),
+      /finished for this session/i,
+    );
+    assert.throws(
+      () => recordTurn(
+        cashed,
+        cashed.players[0].id,
+        { payableBalls: 1, outcome: 'cash-out' },
+      ),
+      /finished for this session/i,
+    );
+  });
+
+  it('lets a cashed-out player play again after the next session starts', () => {
+    let state = pot(2);
+    state = recordTurn(state, state.players[0].id, { payableBalls: 2, outcome: 'cash-out' });
+    const potAfterCash = state.currentPot;
+    const firstSessionId = state.currentSessionId;
+    state = startSession(state, { name: 'Night 2' });
+    assert.notEqual(state.currentSessionId, firstSessionId);
+    assert.equal(state.currentPot, potAfterCash);
+    assert.equal(state.sessions.filter((s) => s.status === 'closed').length, 1);
+    assert.equal(state.sessions.filter((s) => s.status === 'open').length, 1);
+    state = recordTurn(state, state.players[0].id, { payableBalls: 1, outcome: 'cash-out' });
+    assert.equal(state.turns[0].attempt, 1);
+    assert.equal(state.turns[0].sessionId, state.currentSessionId);
+    assert.equal(state.turns[0].isRebuyTurn, false);
+  });
+
+  it('blocks turns after a session ends until a new session starts', () => {
+    let state = pot(2);
+    state = endSession(state);
+    assert.throws(
+      () => recordTurn(state, state.players[0].id, { payableBalls: 1, outcome: 'cash-out' }),
+      /session has ended/i,
+    );
+    state = startSession(state, { name: 'Next' });
+    const after = recordTurn(state, state.players[0].id, { payableBalls: 1, outcome: 'cash-out' });
+    assert.equal(after.turns[0].attempt, 1);
+  });
+
+  it('stamps each turn with the current calendar day when recorded', () => {
+    const start = pot(1);
+    const at = new Date('2026-09-22T18:30:00.000Z');
+    const after = recordTurn(
+      start,
+      start.players[0].id,
+      { payableBalls: 0, outcome: 'scratch-break' },
+      { at: at.toISOString() },
+    );
+    assert.equal(after.turns[0].date, '2026-09-22');
+    assert.equal(after.turns[0].at, at.toISOString());
+    assert.ok(after.turns[0].sessionId);
+    assert.equal(after.currentSessionId, after.turns[0].sessionId);
   });
 });

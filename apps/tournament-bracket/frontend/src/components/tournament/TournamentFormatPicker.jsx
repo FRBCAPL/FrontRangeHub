@@ -14,7 +14,7 @@ export default function TournamentFormatPicker({ onCashClimb, onBreakAndRun, onS
           <span>Round robin, 3-loss cut, then King of the Hill at 3 players.</span>
         </button>
         <button type="button" className="cc-format-btn" onClick={onBreakAndRun}>
-          <strong>USAPL 10-Ball Break & Run</strong>
+          <strong>Front Range Pool League 10-Ball Break & Run</strong>
           <span>Member or that day’s tournament vs open rate. Pot − reserve ÷ 10 per ball.</span>
         </button>
         <button type="button" className="cc-format-btn" onClick={onSingleElim}>

@@ -26,7 +26,7 @@ export default function BreakAndRunRulesModal({ onClose, publicFacing = false })
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="bnr-rules-title">
       <div className="cc-modal cc-edit-modal bnr-rules-modal" onClick={(e) => e.stopPropagation()}>
         <header className="bnr-rules-head">
-          <h3 id="bnr-rules-title">USAPL 10-Ball Break & Run</h3>
+          <h3 id="bnr-rules-title">Front Range Pool League 10-Ball Break & Run</h3>
           <p className="cc-modal-meta"><Lines text={USAPL_BREAK_AND_RUN_TAGLINE} /></p>
         </header>
         <div className="bnr-rules-body">

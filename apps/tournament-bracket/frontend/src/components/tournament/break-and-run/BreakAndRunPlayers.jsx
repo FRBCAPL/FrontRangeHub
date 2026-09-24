@@ -8,6 +8,14 @@ function entryLabel(player) {
     : 'Open';
 }
 
+function playerFee(tournament, player) {
+  const kind = String(player?.entryKind || '').toLowerCase();
+  const member = kind === 'member' || kind === 'tournament' || kind === 'usapl';
+  return member
+    ? Number(tournament?.memberFee ?? tournament?.tournamentFee) || 0
+    : Number(tournament?.openFee) || 0;
+}
+
 function turnBlurb(turn) {
   if (!turn) return '';
   if (turn.scratchOnBreak || turn.outcome === 'scratch-break') return 'scratch on the break · no payout';
@@ -24,18 +32,27 @@ function turnBlurb(turn) {
   return bits.join(' · ');
 }
 
-function todayLine(status) {
-  if (!status.first) return 'No turn yet today';
-  const first = turnBlurb(status.first);
-  if (status.rebuyTurn) return `${first} · rebuy ${turnBlurb(status.rebuyTurn)}`;
-  if (status.rebuyGranted && status.canTurn) return `${first} · one rebuy today`;
-  return first;
+function statusLine(status, fee) {
+  if (status.sessionDone) {
+    return `${turnBlurb(status.last)} · done for this session`;
+  }
+  if (!status.last) return 'No turns yet';
+  const last = turnBlurb(status.last);
+  if (status.needsRebuyPay && fee > 0) {
+    return `${last} · rebuy available · ${formatMoney(fee)}`;
+  }
+  if (status.isRebuyTurn && status.canTurn && status.rebuyPaid) {
+    return `${last} · rebuy paid · record the try`;
+  }
+  if (status.reason) return `${last} · ${status.reason}`;
+  return last;
 }
 
 export default function BreakAndRunPlayers({
   tournament,
   live,
   onRecord,
+  onPayRebuy,
   onAdd,
 }) {
   const today = systemTurnDate();
@@ -54,6 +71,10 @@ export default function BreakAndRunPlayers({
         <ul>
           {players.map((p) => {
             const day = playerDayStatus(tournament, p.id, today);
+            const fee = playerFee(tournament, p);
+            const showPayRebuy = live && day.needsRebuyPay && fee > 0;
+            const showRecordRebuy = live && day.canTurn && day.isRebuyTurn && (day.rebuyPaid || fee <= 0);
+            const showRecord = live && day.canTurn && !day.isRebuyTurn;
             return (
               <li key={p.id}>
                 <div>
@@ -67,18 +88,42 @@ export default function BreakAndRunPlayers({
                     {' · '}
                     won {formatMoney(p.won)}
                   </span>
-                  <span>{todayLine(day)}</span>
+                  <span>{statusLine(day, fee)}</span>
                 </div>
                 {live ? (
                   <div className="bnr-row-actions">
-                    <button
-                      type="button"
-                      className="tb-btn-new"
-                      onClick={() => onRecord?.(p)}
-                      disabled={!day.canTurn}
-                    >
-                      {day.isRebuyTurn ? 'Record rebuy turn' : 'Record turn'}
-                    </button>
+                    {showPayRebuy ? (
+                      <button
+                        type="button"
+                        className="tb-btn-new"
+                        onClick={() => onPayRebuy?.(p)}
+                      >
+                        Rebuy {formatMoney(fee)}
+                      </button>
+                    ) : null}
+                    {showRecordRebuy ? (
+                      <button
+                        type="button"
+                        className="tb-btn-new"
+                        onClick={() => onRecord?.(p)}
+                      >
+                        Record rebuy try
+                      </button>
+                    ) : null}
+                    {showRecord ? (
+                      <button
+                        type="button"
+                        className="tb-btn-new"
+                        onClick={() => onRecord?.(p)}
+                      >
+                        Record turn
+                      </button>
+                    ) : null}
+                    {!day.canTurn && !showPayRebuy ? (
+                      <button type="button" className="tb-btn-new" disabled>
+                        {day.sessionDone ? 'Done this session' : 'Unavailable'}
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
               </li>

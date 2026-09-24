@@ -1,24 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { formatMoney, previewTurn } from './breakAndRunEngine.js';
 import { canTakeTurn, playerDayStatus, systemTurnDate } from './breakAndRunTurns.js';
-
-const OUTCOMES = [
-  {
-    id: 'cash-out',
-    label: 'Cash out',
-    hint: 'Paid for payable balls earned (and early 10 if that ended the run).',
-  },
-  {
-    id: 'bust',
-    label: 'Bust — continued and missed',
-    hint: 'Kept shooting after making balls, then missed/scratched/fouled. $0 even if balls were made.',
-  },
-  {
-    id: 'scratch-break',
-    label: 'Scratch on the break',
-    hint: 'Attempt over immediately. $0.',
-  },
-];
+import './BreakAndRun.css';
 
 export default function BreakAndRunRecordModal({ tournament, playerId: initialPlayerId, onSubmit, onCancel }) {
   const today = systemTurnDate();
@@ -26,12 +9,14 @@ export default function BreakAndRunRecordModal({ tournament, playerId: initialPl
   const [outcome, setOutcome] = useState('cash-out');
   const [payableBalls, setPayableBalls] = useState('0');
   const [earlyTen, setEarlyTen] = useState(false);
+  const [bustBalls, setBustBalls] = useState('0');
 
   useEffect(() => {
     setPlayerId(initialPlayerId || tournament?.players?.[0]?.id || '');
     setOutcome('cash-out');
     setPayableBalls('0');
     setEarlyTen(false);
+    setBustBalls('0');
   }, [tournament?.id, initialPlayerId]);
 
   if (!tournament) return null;
@@ -40,22 +25,21 @@ export default function BreakAndRunRecordModal({ tournament, playerId: initialPl
   const busted = outcome === 'bust';
   const balls = scratchOnBreak
     ? 0
-    : Math.max(0, Math.min(tournament.ballCount, Math.round(Number(payableBalls) || 0)));
+    : busted
+      ? Math.max(0, Math.min(tournament.ballCount, Math.round(Number(bustBalls) || 0)))
+      : Math.max(0, Math.min(tournament.ballCount, Math.round(Number(payableBalls) || 0)));
   const calledTen = scratchOnBreak || busted ? false : earlyTen;
   const preview = previewTurn(tournament, playerId, {
     payableBalls: balls,
     earlyTen: calledTen,
     outcome,
   });
-  const gate = canTakeTurn(tournament, playerId, today);
+  const gate = canTakeTurn(tournament, playerId);
   const day = playerDayStatus(tournament, playerId, today);
 
   const handleOutcome = (next) => {
     setOutcome(next);
-    if (next === 'scratch-break') {
-      setPayableBalls('0');
-      setEarlyTen(false);
-    }
+    if (next === 'scratch-break') setEarlyTen(false);
     if (next === 'bust') setEarlyTen(false);
   };
 
@@ -94,86 +78,143 @@ export default function BreakAndRunRecordModal({ tournament, playerId: initialPl
 
   return (
     <div className="cc-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true" aria-labelledby="bnr-run-title">
-      <form className="cc-modal cc-edit-modal" onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit}>
-        <h3 id="bnr-run-title">{gate.isRebuyTurn ? 'Record rebuy turn' : 'Record turn'}</h3>
-        <p className="cc-modal-meta">
-          {today} · {formatMoney(preview.perBall)} per ball
-          {preview.reserve > 0 ? ` · reserve ${formatMoney(preview.reserve)}` : ''}
-          {preview.rebuyFee ? ` · rebuy ${formatMoney(preview.rebuyFee)} goes in first` : ''}
-          {' · press your luck: cash out or continue'}
-        </p>
-        <label>
-          Player
-          <select value={playerId} onChange={(e) => setPlayerId(e.target.value)}>
-            {tournament.players.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
-        </label>
-        {gate.isRebuyTurn ? (
-          <p className="cc-modal-meta">Zero payable balls on the first attempt, so this is their one rebuy for {today}.</p>
-        ) : null}
-        {day.first && !gate.ok ? (
-          <p className="cc-modal-meta">{day.reason}</p>
-        ) : null}
+      <form
+        className="cc-modal cc-edit-modal bnr-record-modal"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit}
+      >
+        <header className="bnr-record-head">
+          <h3 id="bnr-run-title">{gate.isRebuyTurn ? 'Record rebuy try' : 'Record turn'}</h3>
+          <p className="cc-modal-meta">
+            {today} · {formatMoney(preview.perBall)} per ball
+            {preview.reserve > 0 ? ` · reserve ${formatMoney(preview.reserve)}` : ''}
+            {preview.rebuyFee ? ` · rebuy ${formatMoney(preview.rebuyFee)} already in pot` : ''}
+            {' · press your luck: cash out or continue'}
+          </p>
+        </header>
 
-        <fieldset className="bnr-outcome-fieldset">
-          <legend>How did the run end?</legend>
-          {OUTCOMES.map((opt) => (
-            <label key={opt.id} className="cc-winner-pick">
-              <input
-                type="radio"
-                name="bnr-outcome"
-                checked={outcome === opt.id}
-                onChange={() => handleOutcome(opt.id)}
-              />
-              <span>
-                <strong>{opt.label}</strong>
-                <span className="cc-modal-meta">{opt.hint}</span>
-              </span>
-            </label>
-          ))}
-        </fieldset>
-
-        {!scratchOnBreak ? (
-          <>
-            <label>
-              {busted ? 'Payable balls made before the miss (history only)' : 'Payable balls (break + called)'}
-              <input
-                type="number"
-                min="0"
-                max={tournament.ballCount}
-                step="1"
-                value={payableBalls}
-                onChange={(e) => setPayableBalls(e.target.value)}
-              />
-            </label>
-            <p className="cc-modal-meta">
-              {busted
-                ? 'Optional. Does not pay — shows what was at risk when they continued and missed.'
-                : 'Count balls pocketed on the break and legally called balls. Do not count a called early 10 here.'}
-            </p>
-          </>
-        ) : null}
-
-        {outcome === 'cash-out' ? (
-          <label className="cc-winner-pick">
-            <input
-              type="checkbox"
-              checked={calledTen}
-              onChange={(e) => setEarlyTen(e.target.checked)}
-            />
-            Called early 10-ball ended the run (2× per ball, paid with cash-out)
+        <div className="bnr-record-body">
+          <label>
+            Player
+            <select value={playerId} onChange={(e) => setPlayerId(e.target.value)}>
+              {tournament.players.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </label>
+        {gate.isRebuyTurn ? (
+          <p className="cc-modal-meta">
+            Rebuy is paid. Recording this attempt for {today} (today’s date).
+          </p>
         ) : null}
+          {day.first && !gate.ok ? (
+            <p className="cc-modal-meta">{day.reason}</p>
+          ) : null}
 
-        <p className="cc-modal-meta">
-          {previewLine}
-          {' · '}
-          pot after {formatMoney(preview.potAfter)}
-          {busted && balls > 0 ? ' · rebuy blocked (earned a payable ball)' : ''}
-        </p>
-        <div className="form-actions">
+          <fieldset className="bnr-outcome-fieldset">
+            <legend>How did the run end?</legend>
+
+            <div className={`bnr-outcome-card${outcome === 'cash-out' ? ' is-selected' : ''}`}>
+              <label className="cc-winner-pick bnr-outcome-pick">
+                <input
+                  type="radio"
+                  name="bnr-outcome"
+                  checked={outcome === 'cash-out'}
+                  onChange={() => handleOutcome('cash-out')}
+                />
+                <span>
+                  <strong>Cash out</strong>
+                  <span className="cc-modal-meta">Paid for payable balls earned (and early 10 if that ended the run). Ends play for this session.</span>
+                </span>
+              </label>
+              {outcome === 'cash-out' ? (
+                <div className="bnr-outcome-fields">
+                  <div className="bnr-outcome-cash-row">
+                    <label className="bnr-outcome-balls">
+                      Payable balls
+                      <input
+                        type="number"
+                        min="0"
+                        max={tournament.ballCount}
+                        step="1"
+                        value={payableBalls}
+                        onChange={(e) => setPayableBalls(e.target.value)}
+                      />
+                    </label>
+                    <label className="cc-winner-pick bnr-outcome-early-ten">
+                      <input
+                        type="checkbox"
+                        checked={calledTen}
+                        onChange={(e) => setEarlyTen(e.target.checked)}
+                      />
+                      Called early 10 (2×)
+                    </label>
+                  </div>
+                  <p className="cc-modal-meta">
+                    Break + called balls. Do not count a called early 10 in the ball count.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            <div className={`bnr-outcome-card${outcome === 'bust' ? ' is-selected' : ''}`}>
+              <label className="cc-winner-pick bnr-outcome-pick">
+                <input
+                  type="radio"
+                  name="bnr-outcome"
+                  checked={outcome === 'bust'}
+                  onChange={() => handleOutcome('bust')}
+                />
+                <span>
+                  <strong>Bust — continued and missed</strong>
+                  <span className="cc-modal-meta">Kept shooting after making balls, then missed/scratched/fouled. $0 even if balls were made.</span>
+                </span>
+              </label>
+              {outcome === 'bust' ? (
+                <div className="bnr-outcome-fields">
+                  <label className="bnr-outcome-balls">
+                    Balls at risk (optional)
+                    <input
+                      type="number"
+                      min="0"
+                      max={tournament.ballCount}
+                      step="1"
+                      value={bustBalls}
+                      onChange={(e) => setBustBalls(e.target.value)}
+                    />
+                  </label>
+                  <p className="cc-modal-meta">
+                    History only · does not pay. Bust pays $0 so they may rebuy again.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            <div className={`bnr-outcome-card${outcome === 'scratch-break' ? ' is-selected' : ''}`}>
+              <label className="cc-winner-pick bnr-outcome-pick">
+                <input
+                  type="radio"
+                  name="bnr-outcome"
+                  checked={outcome === 'scratch-break'}
+                  onChange={() => handleOutcome('scratch-break')}
+                />
+                <span>
+                  <strong>Scratch on the break</strong>
+                  <span className="cc-modal-meta">Attempt over immediately. $0.</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <p className="cc-modal-meta bnr-record-preview">
+            {previewLine}
+            {' · '}
+            pot after {formatMoney(preview.potAfter)}
+            {busted && balls > 0 ? ' · $0 · may rebuy' : ''}
+          </p>
+        </div>
+
+        <div className="form-actions bnr-record-actions">
           <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
           <button type="submit" className="btn-primary" disabled={!gate.ok}>Save turn</button>
         </div>
