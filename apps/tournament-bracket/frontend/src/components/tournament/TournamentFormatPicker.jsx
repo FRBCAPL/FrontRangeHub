@@ -1,4 +1,6 @@
 import React from 'react';
+import BreakAndRunLogo from './break-and-run/BreakAndRunLogo.jsx';
+import './break-and-run/BreakAndRun.css';
 
 export default function TournamentFormatPicker({ onCashClimb, onBreakAndRun, onSingleElim, onDoubleElim, onBack }) {
   return (
@@ -13,9 +15,12 @@ export default function TournamentFormatPicker({ onCashClimb, onBreakAndRun, onS
           <strong>Cash Climb</strong>
           <span>Round robin, 3-loss cut, then King of the Hill at 3 players.</span>
         </button>
-        <button type="button" className="cc-format-btn" onClick={onBreakAndRun}>
-          <strong>Front Range Pool League 10-Ball Break & Run</strong>
-          <span>Member or that day’s tournament vs open rate. Pot − reserve ÷ 10 per ball.</span>
+        <button type="button" className="cc-format-btn bnr-format-btn" onClick={onBreakAndRun}>
+          <BreakAndRunLogo size="thumb" />
+          <span className="bnr-format-copy">
+            <strong>Front Range Pool League 10-Ball Break & Run</strong>
+            <span>Member or that day’s tournament vs open rate. Pot − reserve ÷ 10 per ball.</span>
+          </span>
         </button>
         <button type="button" className="cc-format-btn" onClick={onSingleElim}>
           <strong>Single elimination</strong>

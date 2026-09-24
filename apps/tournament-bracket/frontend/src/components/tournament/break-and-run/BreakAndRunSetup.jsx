@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import BreakAndRunAddPlayerModal from './BreakAndRunAddPlayerModal.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
+import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import { eventSnapshot, formatMoney, todayDateInput } from './breakAndRunEngine.js';
 import { DEFAULT_EVENT_NAME } from './breakAndRunPayout.js';
 import '../CreateTournamentForm.css';
@@ -68,7 +69,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
   return (
     <>
       <form className="create-tournament-form cc-setup bnr-setup" onSubmit={handleSubmit}>
-        <h3>Front Range Pool League 10-Ball Break & Run</h3>
+        <BreakAndRunLogo size="header" className="bnr-setup-logo" />
         <p className="cc-setup-note">
           Payable pot = pot − reserve, then ÷ 10 per ball. Reserve stays until you change it.
         </p>

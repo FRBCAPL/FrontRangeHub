@@ -4,6 +4,7 @@ import {
   USAPL_BREAK_AND_RUN_RULES,
   USAPL_BREAK_AND_RUN_TAGLINE,
 } from './breakAndRunRules.js';
+import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import './BreakAndRun.css';
 
 function Lines({ text }) {
@@ -22,7 +23,8 @@ export default function BreakAndRunRulesModal({ onClose }) {
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="bnr-rules-title">
       <div className="cc-modal cc-edit-modal bnr-rules-modal" onClick={(e) => e.stopPropagation()}>
         <header className="bnr-rules-head">
-          <h3 id="bnr-rules-title">Front Range Pool League 10-Ball Break & Run</h3>
+          <BreakAndRunLogo size="header" className="bnr-rules-logo" />
+          <h3 id="bnr-rules-title" className="bnr-rules-sr-only">Front Range Pool League Break & Run Pot</h3>
           <p className="cc-modal-meta"><Lines text={USAPL_BREAK_AND_RUN_TAGLINE} /></p>
         </header>
         <div className="bnr-rules-body">

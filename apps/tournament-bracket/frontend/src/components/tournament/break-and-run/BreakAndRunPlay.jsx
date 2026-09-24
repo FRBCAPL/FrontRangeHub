@@ -6,6 +6,7 @@ import BreakAndRunTurns from './BreakAndRunTurns.jsx';
 import BreakAndRunLedger from './BreakAndRunLedger.jsx';
 import BreakAndRunRecordModal from './BreakAndRunRecordModal.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
+import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import { currentSession } from './breakAndRunTurns.js';
 import { eventSnapshot, formatMoney, formatTournamentDate } from './breakAndRunEngine.js';
 import { openBreakAndRunPhone, openBreakAndRunTv } from './breakAndRunDisplay.js';
@@ -93,9 +94,9 @@ export default function BreakAndRunPlay({
   return (
     <div className="bnr-play">
       <header className="cc-play-header">
+        <BreakAndRunLogo size="header" className="bnr-play-logo" />
         <div className="cc-play-header-top">
           <div className="cc-play-title">
-            <p className="cc-play-kicker">Front Range Pool League 10-Ball Break & Run</p>
             <h1>{tournament.name}</h1>
             <p className="cc-meta">
               {[

@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { formatMoney } from './breakAndRunEngine.js';
 import { buildBreakAndRunPublicBoard } from './breakAndRunDisplay.js';
 import { basicRulesWithFees } from './breakAndRunRules.js';
+import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
 import BreakAndRunPublicTicker from './BreakAndRunPublicTicker.jsx';
 import './BreakAndRunPublic.css';
+import './BreakAndRun.css';
 
 function RuleBody({ text }) {
   const lines = String(text || '').split(/\r?\n/);
@@ -43,7 +45,7 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
   return (
     <div className={`bnr-public bnr-public-${variant}${board.live ? '' : ' is-complete'}`}>
       <header className="bnr-public-header">
-        <p className="bnr-public-brand">Front Range Pool League · 10-Ball Break & Run</p>
+        <BreakAndRunLogo size="hero" className="bnr-public-logo" />
         <h1>{board.name}</h1>
         <p className="bnr-public-meta">
           {[

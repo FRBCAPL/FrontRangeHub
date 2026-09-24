@@ -2,6 +2,91 @@
   max-width: 560px;
 }
 
+.bnr-logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.bnr-logo-hero {
+  width: min(100%, 28rem);
+  margin: 0 auto 14px;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.bnr-logo-header {
+  width: min(100%, 16rem);
+  margin: 0 0 12px;
+}
+
+.bnr-logo-thumb {
+  width: 4.5rem;
+  height: auto;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.bnr-play .bnr-logo-header,
+.bnr-setup .bnr-logo-header,
+.bnr-setup-logo,
+.bnr-play-logo {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 12px;
+}
+
+.bnr-setup-logo {
+  margin-bottom: 14px;
+}
+
+.bnr-play-logo {
+  margin-bottom: 14px;
+}
+
+.bnr-play .cc-play-header-top {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.bnr-play .cc-play-title {
+  width: 100%;
+  text-align: center;
+}
+
+.bnr-play .cc-play-title h1,
+.bnr-play .cc-play-title .cc-meta {
+  text-align: center;
+}
+
+.bnr-play .cc-play-actions {
+  justify-content: center;
+}
+
+.bnr-format-btn {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
+}
+
+.bnr-format-btn .bnr-format-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bnr-format-btn .bnr-format-copy strong {
+  margin-bottom: 0;
+}
+
 .bnr-preview {
   margin: 8px 0 16px;
   padding: 12px 14px;
@@ -293,6 +378,22 @@
 .bnr-rules-head {
   flex-shrink: 0;
   text-align: center;
+}
+
+.bnr-rules-logo {
+  margin: 0 auto 10px;
+}
+
+.bnr-rules-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .bnr-rules-head h3 {
