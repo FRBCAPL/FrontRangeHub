@@ -1,8 +1,6 @@
 import React from 'react';
 import {
-  USAPL_BREAK_AND_RUN_EXAMPLE,
   USAPL_BREAK_AND_RUN_OPERATOR_EXAMPLE,
-  USAPL_BREAK_AND_RUN_PUBLIC_RULES,
   USAPL_BREAK_AND_RUN_RULES,
   USAPL_BREAK_AND_RUN_TAGLINE,
 } from './breakAndRunRules.js';
@@ -18,10 +16,8 @@ function Lines({ text }) {
   ));
 }
 
-export default function BreakAndRunRulesModal({ onClose, publicFacing = false }) {
-  const rules = publicFacing ? USAPL_BREAK_AND_RUN_PUBLIC_RULES : USAPL_BREAK_AND_RUN_RULES;
-  const example = publicFacing ? USAPL_BREAK_AND_RUN_EXAMPLE : USAPL_BREAK_AND_RUN_OPERATOR_EXAMPLE;
-
+/** Same full rules for operator “Player rules” and public TV/phone “Full rules”. */
+export default function BreakAndRunRulesModal({ onClose }) {
   return (
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="bnr-rules-title">
       <div className="cc-modal cc-edit-modal bnr-rules-modal" onClick={(e) => e.stopPropagation()}>
@@ -31,7 +27,7 @@ export default function BreakAndRunRulesModal({ onClose, publicFacing = false })
         </header>
         <div className="bnr-rules-body">
           <ol className="bnr-rules-list">
-            {rules.map((rule, index) => (
+            {USAPL_BREAK_AND_RUN_RULES.map((rule, index) => (
               <li key={rule.title}>
                 <div className="bnr-rules-item-head">
                   <span className="bnr-rules-num" aria-hidden="true">{index + 1}.</span>
@@ -43,7 +39,7 @@ export default function BreakAndRunRulesModal({ onClose, publicFacing = false })
               </li>
             ))}
           </ol>
-          <p className="cc-setup-note"><Lines text={example} /></p>
+          <p className="cc-setup-note"><Lines text={USAPL_BREAK_AND_RUN_OPERATOR_EXAMPLE} /></p>
         </div>
         <div className="form-actions bnr-rules-actions">
           <button type="button" className="btn-primary" onClick={onClose}>Close</button>
