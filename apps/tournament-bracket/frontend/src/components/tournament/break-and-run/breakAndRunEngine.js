@@ -14,13 +14,19 @@ import {
 } from './breakAndRunPayout.js';
 import {
   canTakeTurn,
+  currentSession,
   hasPendingRebuyPayment,
+  isPlayerInSession,
   normalizeTurn,
+  sessionPlayerIdList,
   systemTurnDate,
 } from './breakAndRunTurns.js';
-import { ensureSessions, endSession as endSessionCore, startSession as startSessionCore } from './breakAndRunSessions.js';
+import { ensureSessions, endSession as endSessionCore, startSession as startSessionCore, updateCurrentSession as updateCurrentSessionCore } from './breakAndRunSessions.js';
+import { advanceAtTableAfterTurn, setAtTablePlayer as setAtTablePlayerCore } from './breakAndRunTable.js';
 
 export { formatMoney, potView };
+export { playersNeedingCarryDecision } from './breakAndRunSessions.js';
+export { isPlayerInSession, sessionPlayerIdList } from './breakAndRunTurns.js';
 
 export const BREAK_AND_RUN_KIND = 'break-and-run';
 
@@ -157,6 +163,13 @@ export function sanitizeBreakAndRun(raw) {
     ledger: Array.isArray(raw.ledger) ? raw.ledger : [],
     sessions: Array.isArray(raw.sessions) ? raw.sessions : [],
     currentSessionId: raw.currentSessionId || '',
+    sessionPlayerIds: Array.isArray(raw.sessionPlayerIds)
+      ? raw.sessionPlayerIds.map((id) => String(id || '').trim()).filter(Boolean)
+      : players.map((p) => String(p.id)),
+    pendingCarryIds: Array.isArray(raw.pendingCarryIds)
+      ? raw.pendingCarryIds.map((id) => String(id || '').trim()).filter(Boolean)
+      : [],
+    atTablePlayerId: String(raw.atTablePlayerId || '').trim(),
     grossCollected: money(raw.grossCollected),
     currentPot: money(raw.currentPot),
     totalPaidOut: money(raw.totalPaidOut),
@@ -246,6 +259,20 @@ export function createBreakAndRun(config) {
   return state;
 }
 
+function enrollInOpenSession(state, playerId) {
+  const session = currentSession(state);
+  if (!session || session.status !== 'open') return state;
+  const id = String(playerId || '').trim();
+  if (!id) return state;
+  const ids = sessionPlayerIdList(state);
+  if (ids.includes(id)) {
+    state.sessionPlayerIds = ids;
+    return state;
+  }
+  state.sessionPlayerIds = [...ids, id];
+  return state;
+}
+
 export function addPlayer(state, player, { buyInNow = true } = {}) {
   const next = clone(sanitizeBreakAndRun(state));
   if (next.status !== 'in-progress') throw new Error('This pot is closed.');
@@ -256,6 +283,7 @@ export function addPlayer(state, player, { buyInNow = true } = {}) {
   }
   next.players = [...next.players, added];
   if (buyInNow) return recordBuyIn(next, added.id);
+  enrollInOpenSession(next, added.id);
   return next;
 }
 
@@ -283,7 +311,27 @@ export function recordBuyIn(state, playerId, count = 1, extras = {}) {
       ? `Rebuy · $0 last attempt · ${formatMoney(amount)}`
       : `${entryKindOf(player) === 'member' ? 'Member' : 'Open'} entry ${formatMoney(amount)}`,
   });
+  if (!isRebuy) enrollInOpenSession(next, player.id);
   return next;
+}
+
+/** Enroll an existing roster player into the open session (pays entry fee). */
+export function joinSession(state, playerId) {
+  const next = clone(sanitizeBreakAndRun(state));
+  if (next.status !== 'in-progress') throw new Error('This pot is closed.');
+  const session = currentSession(next);
+  if (!session || session.status !== 'open') {
+    throw new Error('Start a session before joining players.');
+  }
+  const player = findPlayer(next, playerId);
+  if (!player) throw new Error('Pick a player.');
+  if (isPlayerInSession(next, player.id)) {
+    throw new Error('That player is already in this session.');
+  }
+  return recordBuyIn(next, player.id, 1, {
+    date: systemTurnDate(),
+    sessionId: next.currentSessionId,
+  });
 }
 
 /** Pay rebuy fee into the pot for the next attempt. Record the try separately. */
@@ -315,10 +363,16 @@ export function startSession(state, config = {}) {
   return startSessionCore(clean, config);
 }
 
-export function endSession(state) {
+export function updateCurrentSession(state, config = {}) {
   const clean = sanitizeBreakAndRun(state);
   if (!clean || clean.status !== 'in-progress') throw new Error('This pot is closed.');
-  return endSessionCore(clean);
+  return updateCurrentSessionCore(clean, config);
+}
+
+export function endSession(state, options = {}) {
+  const clean = sanitizeBreakAndRun(state);
+  if (!clean || clean.status !== 'in-progress') throw new Error('This pot is closed.');
+  return endSessionCore(clean, options);
 }
 
 export function addToPot(state, amount, note = '') {
@@ -437,7 +491,13 @@ export function recordTurn(state, playerId, ballsMadeOrDetails, extras = {}) {
     isRebuyTurn: turn.isRebuyTurn,
     note: noteParts.join(' · '),
   });
-  return next;
+  return advanceAtTableAfterTurn(next, player.id);
+}
+
+export function setAtTablePlayer(state, playerId = '') {
+  const clean = sanitizeBreakAndRun(state);
+  if (!clean) throw new Error('No pot loaded.');
+  return setAtTablePlayerCore(clean, playerId);
 }
 
 export function recordRun(state, playerId, ballsMade, extras) {

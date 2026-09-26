@@ -1,5 +1,7 @@
 import { eventSnapshot, formatMoney, formatTournamentDate, sanitizeBreakAndRun } from './breakAndRunEngine.js';
-import { formatTurnDate } from './breakAndRunTurns.js';
+import { formatSessionDetails, hasOpenBreakAndRunSession } from './breakAndRunSessions.js';
+import { currentSession, formatTurnDate } from './breakAndRunTurns.js';
+import { buildTableLineup } from './breakAndRunTable.js';
 import { tournamentFromEventRow } from '../cash-climb/cashClimbSaved.js';
 
 export const BREAK_AND_RUN_TV_BASE = '/tournament-bracket/break-and-run/tv';
@@ -84,11 +86,8 @@ function turnLine(turn) {
   return bits.join(' · ');
 }
 
-export function buildBreakAndRunPublicBoard(tournament) {
-  const clean = sanitizeBreakAndRun(tournament);
-  if (!clean) return null;
-  const snapshot = eventSnapshot(clean);
-  const turns = (clean.turns || []).slice(0, 8).map((turn) => ({
+function mapTurn(turn) {
+  return {
     id: turn.id,
     playerName: turn.playerName,
     dateLabel: formatTurnDate(turn.date),
@@ -98,23 +97,57 @@ export function buildBreakAndRunPublicBoard(tournament) {
     detail: turnLine(turn),
     amountWon: turn.amountWon,
     amountLabel: turn.amountWon > 0 ? formatMoney(turn.amountWon) : 'No payout',
-  }));
+  };
+}
+
+function mapWinner(turn) {
+  const balls = Number(turn.payableBalls ?? turn.ballsMade) || 0;
+  const ballLabel = balls > 0
+    ? `${balls} ball${balls === 1 ? '' : 's'}${turn.earlyTen ? ' · early 10' : ''}`
+    : '';
+  return {
+    id: turn.id,
+    playerName: turn.playerName,
+    amountLabel: formatMoney(turn.amountWon),
+    detail: turnLine(turn),
+    ballLabel,
+  };
+}
+
+function sessionTurns(clean, sessionId) {
+  const sid = String(sessionId || '').trim();
+  if (!sid) return [];
+  return (clean.turns || []).filter((turn) => String(turn.sessionId || '') === sid);
+}
+
+export function buildBreakAndRunPublicBoard(tournament) {
+  const clean = sanitizeBreakAndRun(tournament);
+  if (!clean) return null;
+  const snapshot = eventSnapshot(clean);
+  const session = currentSession(clean);
+  const sessionOpen = hasOpenBreakAndRunSession(clean);
+  const potLive = clean.status === 'in-progress';
+  const turns = (clean.turns || []).slice(0, 12).map(mapTurn);
   const winners = (clean.turns || [])
     .filter((turn) => Number(turn.amountWon) > 0)
     .slice(0, 12)
-    .map((turn) => ({
-      id: turn.id,
-      playerName: turn.playerName,
-      amountLabel: formatMoney(turn.amountWon),
-      detail: turnLine(turn),
-    }));
+    .map(mapWinner);
+  const sessionLabel = formatSessionDetails(session, { includeVenue: false });
+  const sessionVenue = String(session?.venue || '').trim();
   return {
     id: clean.id,
     name: clean.name,
     dateLabel: formatTournamentDate(clean.startDate || clean.tournamentDate),
     startDateLabel: formatTournamentDate(clean.startDate || clean.tournamentDate),
+    sessionLabel,
+    sessionName: session?.name || '',
+    sessionDateLabel: sessionLabel,
+    sessionVenue,
+    sessionOpen,
     status: clean.status,
-    live: clean.status === 'in-progress',
+    potLive,
+    live: sessionOpen,
+    statusLabel: sessionOpen ? 'Live' : (potLive ? 'Between sessions' : 'Complete'),
     currentPot: snapshot.currentPot,
     perBall: snapshot.perBall,
     earlyTenPays: snapshot.earlyTenPays,
@@ -129,3 +162,52 @@ export function buildBreakAndRunPublicBoard(tournament) {
     winners,
   };
 }
+
+/** TV board: current open session only — pot + session stats, no rules/history dump. */
+export function buildBreakAndRunTvBoard(tournament) {
+  const clean = sanitizeBreakAndRun(tournament);
+  if (!clean) return null;
+  const session = currentSession(clean);
+  const sessionOpen = hasOpenBreakAndRunSession(clean);
+  if (!sessionOpen || !session) {
+    return {
+      id: clean.id,
+      name: clean.name,
+      sessionOpen: false,
+      live: false,
+      currentPot: eventSnapshot(clean).currentPot,
+    };
+  }
+  const snapshot = eventSnapshot(clean);
+  const turnsInSession = sessionTurns(clean, session.id);
+  const sessionPaidOut = turnsInSession.reduce((sum, turn) => sum + (Number(turn.amountWon) || 0), 0);
+  const sessionAttempts = turnsInSession.length;
+  const winners = turnsInSession
+    .filter((turn) => Number(turn.amountWon) > 0)
+    .slice(0, 10)
+    .map(mapWinner);
+  const turns = turnsInSession.slice(0, 12).map(mapTurn);
+  const lineup = buildTableLineup(clean);
+  return {
+    id: clean.id,
+    name: clean.name,
+    sessionLabel: formatSessionDetails(session, { includeVenue: false }),
+    sessionVenue: String(session.venue || '').trim(),
+    sessionOpen: true,
+    live: true,
+    statusLabel: 'Live',
+    currentPot: snapshot.currentPot,
+    perBall: snapshot.perBall,
+    earlyTenPays: snapshot.earlyTenPays,
+    fullRunPays: snapshot.fullRunPays,
+    sessionPaidOut,
+    sessionAttempts,
+    playerCount: snapshot.playerCount,
+    turns,
+    winners,
+    atTable: lineup.atTable,
+    upNext: lineup.upNext,
+  };
+}
+
+export { hasOpenBreakAndRunSession };

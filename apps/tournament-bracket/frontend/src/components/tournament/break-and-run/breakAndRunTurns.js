@@ -33,6 +33,18 @@ function sessionIdOf(state) {
   return String(state?.currentSessionId || '').trim();
 }
 
+/** Who is enrolled to play in the current session. Legacy events without the list = full roster. */
+export function sessionPlayerIdList(state) {
+  if (!Array.isArray(state?.sessionPlayerIds)) {
+    return (state?.players || []).map((p) => String(p.id));
+  }
+  return state.sessionPlayerIds.map((id) => String(id || '').trim()).filter(Boolean);
+}
+
+export function isPlayerInSession(state, playerId) {
+  return sessionPlayerIdList(state).includes(String(playerId || ''));
+}
+
 export function currentSession(state) {
   const id = sessionIdOf(state);
   if (!id) return null;
@@ -131,6 +143,14 @@ export function canTakeTurn(state, playerId) {
       attempt: 1,
       isRebuyTurn: false,
       reason: 'This session has ended. Start a new session to continue.',
+    };
+  }
+  if (!isPlayerInSession(state, playerId)) {
+    return {
+      ok: false,
+      attempt: 1,
+      isRebuyTurn: false,
+      reason: 'Not in this session. Join this session to take a turn.',
     };
   }
   const chron = playerTurnsChronological(state?.turns, playerId, sid);

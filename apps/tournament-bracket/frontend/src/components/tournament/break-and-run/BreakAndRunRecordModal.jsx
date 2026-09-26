@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { formatMoney, previewTurn } from './breakAndRunEngine.js';
+import { formatMoney, previewTurn, sessionPlayerIdList } from './breakAndRunEngine.js';
 import { canTakeTurn, playerDayStatus, systemTurnDate } from './breakAndRunTurns.js';
 import './BreakAndRun.css';
 
-export default function BreakAndRunRecordModal({ tournament, playerId: initialPlayerId, onSubmit, onCancel }) {
+export default function BreakAndRunRecordModal({
+  tournament,
+  playerId: initialPlayerId,
+  onSubmit,
+  onCancel,
+  onAtTableChange,
+}) {
   const today = systemTurnDate();
   const [playerId, setPlayerId] = useState(initialPlayerId || tournament?.players?.[0]?.id || '');
   const [outcome, setOutcome] = useState('cash-out');
@@ -12,14 +18,22 @@ export default function BreakAndRunRecordModal({ tournament, playerId: initialPl
   const [bustBalls, setBustBalls] = useState('0');
 
   useEffect(() => {
-    setPlayerId(initialPlayerId || tournament?.players?.[0]?.id || '');
+    const enrolled = sessionPlayerIdList(tournament).map(String);
+    const preferred = initialPlayerId && enrolled.includes(String(initialPlayerId))
+      ? String(initialPlayerId)
+      : (enrolled[0] || tournament?.players?.[0]?.id || '');
+    setPlayerId(preferred);
     setOutcome('cash-out');
     setPayableBalls('0');
     setEarlyTen(false);
     setBustBalls('0');
-  }, [tournament?.id, initialPlayerId]);
+  }, [tournament?.id, tournament?.sessionPlayerIds, initialPlayerId]);
 
   if (!tournament) return null;
+
+  const enrolledIds = new Set(sessionPlayerIdList(tournament));
+  const sessionPlayers = (tournament.players || []).filter((p) => enrolledIds.has(String(p.id)));
+  const selectable = sessionPlayers.length ? sessionPlayers : (tournament.players || []);
 
   const scratchOnBreak = outcome === 'scratch-break';
   const busted = outcome === 'bust';
@@ -96,8 +110,15 @@ export default function BreakAndRunRecordModal({ tournament, playerId: initialPl
         <div className="bnr-record-body">
           <label>
             Player
-            <select value={playerId} onChange={(e) => setPlayerId(e.target.value)}>
-              {tournament.players.map((p) => (
+            <select
+              value={playerId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setPlayerId(id);
+                onAtTableChange?.(id);
+              }}
+            >
+              {selectable.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>

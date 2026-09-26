@@ -238,6 +238,10 @@
   margin-bottom: 20px;
 }
 
+.bnr-toolbar > button {
+  flex-shrink: 0;
+}
+
 .bnr-toolbar .btn-primary {
   padding: 10px 18px;
   border: none;
@@ -257,25 +261,37 @@
   display: flex;
   gap: 8px;
   align-items: end;
-  flex: 1;
+  flex: 1 1 16rem;
+  min-width: min(100%, 16rem);
 }
 
 .bnr-add-pot label {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 10rem;
   margin: 0;
   color: #94a3b8;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .bnr-add-pot input {
   display: block;
+  box-sizing: border-box;
   width: 100%;
+  min-width: 10rem;
   margin-top: 6px;
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid rgba(99, 102, 241, 0.4);
   background: rgba(15, 23, 42, 0.8);
   color: #e0e7ff;
+}
+
+.bnr-add-pot .tb-btn-new {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .bnr-section-head {
@@ -354,12 +370,258 @@
 }
 
 .bnr-toolbar-note {
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 100%;
+  min-width: 0;
   margin: 0;
   color: #94a3b8;
   font-size: 0.88rem;
   line-height: 1.35;
+}
+
+.bnr-session-modal {
+  width: min(32rem, 100%);
+  max-width: 520px;
+}
+
+.bnr-session-head h3 {
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+.bnr-session-head .cc-modal-meta {
+  text-align: center;
+}
+
+.bnr-session-body {
+  display: grid;
+  gap: 12px;
+  margin: 10px 0 4px;
+}
+
+.bnr-session-body label {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.bnr-session-body input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: rgba(15, 23, 42, 0.8);
+  color: #e0e7ff;
+}
+
+.bnr-session-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bnr-session-actions {
+  margin-top: 8px;
+}
+
+/* End-session modal (styles live here so Vite always has them; buttons also use inline colors). */
+.bnr-end-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 16px 24px;
+  overflow-y: auto;
+  background: rgba(2, 6, 23, 0.78);
+}
+
+.bnr-end-panel {
+  width: min(28rem, 100%);
+  margin: 0 auto 24px;
+  padding: 16px 18px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: #0f172a;
+  color: #e0e7ff;
+  box-sizing: border-box;
+}
+
+.bnr-end-head h3 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.bnr-end-head p {
+  margin: 0 0 14px;
+  color: #86efac;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.bnr-end-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.bnr-end-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 50vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+
+.bnr-end-player {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.bnr-end-player legend {
+  padding: 0 4px;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.bnr-end-player label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  color: #cbd5e1;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.bnr-end-player label.is-selected {
+  color: #86efac;
+  font-weight: 600;
+}
+
+.bnr-end-player input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  flex: none;
+}
+
+.bnr-end-player label > span {
+  white-space: nowrap;
+}
+
+.bnr-add-session-modal {
+  width: min(32rem, calc(100vw - 32px));
+  max-width: min(32rem, calc(100vw - 32px));
+  max-height: min(90vh, 40rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bnr-add-session-modal .add-player-modal-header {
+  flex: 0 0 auto;
+}
+
+.bnr-add-session-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px 16px;
+}
+
+.bnr-add-roster h4,
+.bnr-add-new h4 {
+  margin: 0 0 6px;
+  color: #f8fafc;
+  font-size: 1rem;
+}
+
+.bnr-add-filter {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.bnr-add-filter input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: rgba(15, 23, 42, 0.8);
+  color: #e0e7ff;
+}
+
+.bnr-add-roster-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.bnr-add-roster-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.bnr-add-roster-list li:last-child {
+  border-bottom: none;
+}
+
+.bnr-add-roster-list li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bnr-add-roster-list li span {
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.bnr-add-roster-list .tb-btn-new {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.bnr-add-roster-empty {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .bnr-session-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .bnr-rules-modal {

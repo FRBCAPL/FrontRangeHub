@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { supabase, SUPABASE_ANON_KEY, SUPABASE_URL } from '@shared/config/supabase.js';
 import { savedEventSummary, tournamentFromEventRow } from '../cash-climb/cashClimbSaved.js';
+import { isBreakAndRunSessionLive } from './breakAndRunSessions.js';
 
 export const BREAK_AND_RUN_EVENTS_TABLE = 'break_and_run_events';
 
@@ -164,7 +165,14 @@ export async function listLiveBreakAndRunEvents() {
       .limit(12));
     rows = Array.isArray(pub.data) ? pub.data : [];
   }
-  return rows.map(savedEventSummary).map(withKind).filter((item) => item && item.status === 'in-progress');
+  return rows
+    .map(savedEventSummary)
+    .map(withKind)
+    .filter((item) => (
+      item
+      && item.status === 'in-progress'
+      && isBreakAndRunSessionLive(item.tournament)
+    ));
 }
 
 export async function listSavedBreakAndRunEvents() {

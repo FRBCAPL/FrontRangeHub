@@ -55,12 +55,13 @@ describe('break and run turns', () => {
     assert.equal(canTakeTurn(afterWin, start.players[0].id).sessionDone, true);
   });
 
-  it('resets eligibility when a new session starts', () => {
+  it('does not auto-enroll cashed-out players in the next session', () => {
     const start = pot();
-    const cashed = recordTurn(start, start.players[0].id, { payableBalls: 1 });
-    assert.equal(canTakeTurn(cashed, start.players[0].id).ok, false);
-    const next = startSession(cashed, { name: 'Next night' });
-    assert.equal(canTakeTurn(next, start.players[0].id).ok, true);
-    assert.equal(canTakeTurn(next, start.players[0].id).isRebuyTurn, false);
+    const playerId = start.players[0].id;
+    const cashed = recordTurn(start, playerId, { payableBalls: 1 });
+    assert.equal(canTakeTurn(cashed, playerId).ok, false);
+    const next = startSession(cashed, { name: 'Next night', venue: 'Legends' });
+    assert.equal(canTakeTurn(next, playerId).ok, false);
+    assert.match(canTakeTurn(next, playerId).reason, /not in this session/i);
   });
 });

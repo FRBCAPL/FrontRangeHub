@@ -42,18 +42,29 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
     );
   }
 
+  const shellState = board.live ? '' : (board.potLive ? ' is-between' : ' is-complete');
+
   return (
-    <div className={`bnr-public bnr-public-${variant}${board.live ? '' : ' is-complete'}`}>
+    <div className={`bnr-public bnr-public-${variant}${shellState}`}>
       <header className="bnr-public-header">
         <BreakAndRunLogo size="hero" className="bnr-public-logo" />
         <h1>{board.name}</h1>
+        {board.sessionLabel ? (
+          <p className="bnr-public-session">{board.sessionLabel}</p>
+        ) : null}
+        {board.sessionVenue ? (
+          <p className="bnr-public-location">at {board.sessionVenue}</p>
+        ) : null}
         <p className="bnr-public-meta">
           {[
-            board.dateLabel,
-            board.live ? 'Live' : 'Complete',
+            board.statusLabel || (board.live ? 'Live' : 'Complete'),
             board.playerCount ? `${board.playerCount} player${board.playerCount === 1 ? '' : 's'}` : '',
           ].filter(Boolean).join(' · ')}
         </p>
+        <p className="bnr-public-entry-note">Entry is in person at the table</p>
+        <button type="button" className="bnr-public-rules-btn" onClick={() => setShowRules(true)}>
+          Full rules
+        </button>
       </header>
 
       <BreakAndRunPublicTicker winners={board.winners} />
@@ -86,11 +97,8 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
       </div>
 
       <section className="bnr-public-basics" aria-label="Basic rules">
-        <div className="bnr-public-section-head">
+        <div className="bnr-public-section-head bnr-public-section-head-centered">
           <h2>How it works</h2>
-          <button type="button" className="bnr-public-rules-btn" onClick={() => setShowRules(true)}>
-            Full rules
-          </button>
         </div>
         <div className="bnr-public-rule-grid">
           {basicRules.map((rule) => (

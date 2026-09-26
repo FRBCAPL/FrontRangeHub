@@ -5,13 +5,16 @@ import {
   addToPot,
   createBreakAndRun,
   endSession,
+  joinSession,
   payRebuy,
   recordTurn,
   setReserve,
   startSession,
+  updateCurrentSession,
   undoLast,
 } from './breakAndRunEngine.js';
 import { money } from './breakAndRunMath.js';
+import { canTakeTurn } from './breakAndRunTurns.js';
 
 function pot(players = 2) {
   return createBreakAndRun({
@@ -243,31 +246,88 @@ describe('break and run engine', () => {
     );
   });
 
-  it('lets a cashed-out player play again after the next session starts', () => {
+  it('lets a cashed-out player play again after joining the next session', () => {
     let state = pot(2);
     state = recordTurn(state, state.players[0].id, { payableBalls: 2, outcome: 'cash-out' });
     const potAfterCash = state.currentPot;
     const firstSessionId = state.currentSessionId;
-    state = startSession(state, { name: 'Night 2' });
+    const playerId = state.players[0].id;
+    state = endSession(state, { carryIds: [] });
+    state = startSession(state, {
+      name: 'Night 2',
+      date: '2026-09-25',
+      startTime: '19:00',
+      endTime: '23:00',
+      venue: 'Legends',
+    });
     assert.notEqual(state.currentSessionId, firstSessionId);
     assert.equal(state.currentPot, potAfterCash);
     assert.equal(state.sessions.filter((s) => s.status === 'closed').length, 1);
     assert.equal(state.sessions.filter((s) => s.status === 'open').length, 1);
-    state = recordTurn(state, state.players[0].id, { payableBalls: 1, outcome: 'cash-out' });
+    assert.deepEqual(state.sessionPlayerIds, []);
+    const open = state.sessions.find((s) => s.status === 'open');
+    assert.equal(open.name, 'Night 2');
+    assert.equal(open.date, '2026-09-25');
+    assert.equal(open.startTime, '19:00');
+    assert.equal(open.endTime, '23:00');
+    assert.equal(open.venue, 'Legends');
+    assert.throws(
+      () => recordTurn(state, playerId, { payableBalls: 1, outcome: 'cash-out' }),
+      /not in this session/i,
+    );
+    state = joinSession(state, playerId);
+    assert.ok(state.sessionPlayerIds.includes(String(playerId)));
+    state = recordTurn(state, playerId, { payableBalls: 1, outcome: 'cash-out' });
     assert.equal(state.turns[0].attempt, 1);
     assert.equal(state.turns[0].sessionId, state.currentSessionId);
     assert.equal(state.turns[0].isRebuyTurn, false);
   });
 
-  it('blocks turns after a session ends until a new session starts', () => {
+  it('carries only selected open turns into the next session', () => {
     let state = pot(2);
-    state = endSession(state);
+    const keepId = state.players[0].id;
+    const dropId = state.players[1].id;
+    state = endSession(state, { carryIds: [keepId] });
+    assert.deepEqual(state.pendingCarryIds, [String(keepId)]);
+    state = startSession(state, { name: 'Night 2', venue: 'Legends' });
+    assert.deepEqual(state.sessionPlayerIds, [String(keepId)]);
+    assert.ok(canTakeTurn(state, keepId).ok);
+    assert.equal(canTakeTurn(state, dropId).ok, false);
+    assert.match(canTakeTurn(state, dropId).reason, /not in this session/i);
+  });
+
+  it('updates current session details without resetting eligibility', () => {
+    let state = pot(2);
+    state = recordTurn(state, state.players[0].id, { payableBalls: 2, outcome: 'cash-out' });
+    const sessionId = state.currentSessionId;
+    state = updateCurrentSession(state, {
+      name: 'Friday night',
+      date: '2026-09-26',
+      startTime: '18:30',
+      endTime: '22:00',
+      venue: 'Legends Brews & Cues',
+    });
+    assert.equal(state.currentSessionId, sessionId);
+    const session = state.sessions.find((s) => s.id === sessionId);
+    assert.equal(session.name, 'Friday night');
+    assert.equal(session.venue, 'Legends Brews & Cues');
+    assert.equal(session.startTime, '18:30');
     assert.throws(
       () => recordTurn(state, state.players[0].id, { payableBalls: 1, outcome: 'cash-out' }),
+      /finished for this session/i,
+    );
+  });
+
+  it('blocks turns after a session ends until a new session starts with carried players', () => {
+    let state = pot(2);
+    const playerId = state.players[0].id;
+    state = endSession(state, { carryIds: [playerId] });
+    assert.throws(
+      () => recordTurn(state, playerId, { payableBalls: 1, outcome: 'cash-out' }),
       /session has ended/i,
     );
-    state = startSession(state, { name: 'Next' });
-    const after = recordTurn(state, state.players[0].id, { payableBalls: 1, outcome: 'cash-out' });
+    state = startSession(state, { name: 'Next', venue: 'Legends' });
+    const after = recordTurn(state, playerId, { payableBalls: 1, outcome: 'cash-out' });
     assert.equal(after.turns[0].attempt, 1);
   });
 

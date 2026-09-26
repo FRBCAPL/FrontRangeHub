@@ -8,12 +8,15 @@ import {
   createBreakAndRun,
   endSession,
   formatMoney,
+  joinSession,
   recordTurn,
   payRebuy,
   reopenEvent,
   sanitizeBreakAndRun,
+  setAtTablePlayer,
   setReserve,
   startSession,
+  updateCurrentSession,
   undoLast,
 } from './breakAndRunEngine.js';
 import { loadBreakAndRun, saveBreakAndRun, clearBreakAndRun } from './breakAndRunStore.js';
@@ -127,11 +130,14 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
       tournament={tournament}
       onAddPlayer={(player) => run((t) => addPlayer(t, player))}
       onRecord={(playerId, details) => run((t) => recordTurn(t, playerId, details))}
+      onSetAtTable={(playerId) => run((t) => setAtTablePlayer(t, playerId))}
       onPayRebuy={(playerId) => run((t) => payRebuy(t, playerId))}
+      onJoinSession={(playerId) => run((t) => joinSession(t, playerId))}
       onAddToPot={(amount, note) => run((t) => addToPot(t, amount, note))}
       onSetReserve={(amount) => run((t) => setReserve(t, amount))}
-      onStartSession={() => run((t) => startSession(t))}
-      onEndSession={() => run((t) => endSession(t))}
+      onStartSession={(details) => run((t) => startSession(t, details))}
+      onUpdateSession={(details) => run((t) => updateCurrentSession(t, details))}
+      onEndSession={(options) => run((t) => endSession(t, options))}
       onUndo={() => run((t) => undoLast(t))}
       onComplete={() => {
         const leftover = formatMoney(tournament.currentPot);

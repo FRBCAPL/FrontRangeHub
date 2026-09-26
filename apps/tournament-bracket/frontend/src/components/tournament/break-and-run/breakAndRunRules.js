@@ -51,7 +51,7 @@ export function basicRulesWithFees({
 export const USAPL_BREAK_AND_RUN_RULES = [
   {
     title: 'Continuous pot',
-    body: 'Front Range Pool League Break & Run is one continuous pot across dates and locations. \nMoney left after payouts stays in the pot for future sessions.',
+    body: 'Front Range Pool League Break & Run is one continuous pot across dates, events, and locations. \nMoney left after payouts stays in the pot for future sessions.',
   },
   {
     title: 'Entry',
@@ -59,11 +59,11 @@ export const USAPL_BREAK_AND_RUN_RULES = [
   },
   {
     title: 'Sessions',
-    body: 'Operators start and end play sessions (for example a night, venue, or timeframe). \nThe pot carries forward between sessions.',
+    body: 'A session is one play window for Break & Run — usually a night or event — that the operator starts and ends.\nDuring a session, a cash-out ends that player’s play until the next session starts.\nA $0 result (scratch, bust, or no payout) still allows rebuys in the same session.\nEnding a session does not close the pot. The pot carries forward to the next session.',
   },
   {
     title: 'Rebuys',
-    body: 'If the last attempt paid $0 (scratch, bust, or zero balls), the player may rebuy as many times as they want in the current session — each rebuy is a new entry fee into the pot. If the player cashes out and receives a payout, they are finished for that session and may play again when the next session starts.',
+    body: 'If the last attempt paid $0 (scratch, bust, or zero balls), the player may rebuy as many times as they want in the current session — each rebuy is a new entry fee into the pot.\nIf the player cashes out and receives a payout, they are finished for that session and may play again when the next session starts.',
   },
   {
     title: 'Pot & ball value',

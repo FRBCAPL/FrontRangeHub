@@ -1,6 +1,6 @@
 import React from 'react';
-import { formatMoney } from './breakAndRunEngine.js';
-import { playerDayStatus, systemTurnDate } from './breakAndRunTurns.js';
+import { formatMoney, sessionPlayerIdList } from './breakAndRunEngine.js';
+import { currentSession, playerDayStatus, systemTurnDate } from './breakAndRunTurns.js';
 
 function entryLabel(player) {
   return player?.entryKind === 'member' || player?.entryKind === 'tournament' || player?.entryKind === 'usapl'
@@ -36,7 +36,7 @@ function statusLine(status, fee) {
   if (status.sessionDone) {
     return `${turnBlurb(status.last)} · done for this session`;
   }
-  if (!status.last) return 'No turns yet';
+  if (!status.last) return 'Ready for a turn';
   const last = turnBlurb(status.last);
   if (status.needsRebuyPay && fee > 0) {
     return `${last} · rebuy available · ${formatMoney(fee)}`;
@@ -48,6 +48,7 @@ function statusLine(status, fee) {
   return last;
 }
 
+/** Active session list: carried forward + bought into this session only. */
 export default function BreakAndRunPlayers({
   tournament,
   live,
@@ -56,20 +57,30 @@ export default function BreakAndRunPlayers({
   onAdd,
 }) {
   const today = systemTurnDate();
-  const players = tournament?.players || [];
+  const session = currentSession(tournament);
+  const sessionOpen = session?.status === 'open';
+  const enrolledIds = new Set(sessionPlayerIdList(tournament));
+  const sessionPlayers = (tournament?.players || []).filter((p) => enrolledIds.has(String(p.id)));
+
   return (
-    <section className="bnr-players" aria-label="Players">
+    <section className="bnr-players" aria-label="This session">
       <div className="bnr-section-head">
-        <h2>Players</h2>
-        {live && onAdd ? (
+        <h2>This session</h2>
+        {live && sessionOpen && onAdd ? (
           <button type="button" className="tb-btn-new" onClick={onAdd}>Add player</button>
         ) : null}
       </div>
-      {!players.length ? (
-        <p className="cc-setup-note">No players yet. Add someone and their entry goes into the pot.</p>
+      {!sessionOpen ? (
+        <p className="cc-setup-note">
+          Start a session to play. Carried-forward players load automatically; everyone else joins with Add player.
+        </p>
+      ) : !sessionPlayers.length ? (
+        <p className="cc-setup-note">
+          No one in this session yet. Add a player to buy in, or pick someone from the pot roster.
+        </p>
       ) : (
         <ul>
-          {players.map((p) => {
+          {sessionPlayers.map((p) => {
             const day = playerDayStatus(tournament, p.id, today);
             const fee = playerFee(tournament, p);
             const showPayRebuy = live && day.needsRebuyPay && fee > 0;
