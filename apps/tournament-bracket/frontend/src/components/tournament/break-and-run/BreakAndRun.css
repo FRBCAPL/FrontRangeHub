@@ -160,6 +160,40 @@
   font-size: 0.9rem;
 }
 
+.bnr-money-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 6px;
+}
+
+.bnr-money-row div {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.bnr-money-row span {
+  display: block;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.bnr-money-row strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 1.1rem;
+  color: #fde68a;
+}
+
+.bnr-money-note {
+  margin: 0 0 14px;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
 .bnr-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -376,6 +410,66 @@
   color: #94a3b8;
   font-size: 0.88rem;
   line-height: 1.35;
+}
+
+.bnr-sessions {
+  margin: 12px 0 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.bnr-sessions h2 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  color: #e0e7ff;
+}
+
+.bnr-sessions .cc-setup-note {
+  margin: 0 0 10px;
+}
+
+.bnr-sessions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.bnr-sessions-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(2, 6, 23, 0.35);
+}
+
+.bnr-sessions-list li.is-current {
+  border-color: rgba(129, 140, 248, 0.55);
+}
+
+.bnr-sessions-list li > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bnr-sessions-list strong {
+  color: #f8fafc;
+}
+
+.bnr-sessions-list span {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.bnr-sessions-list .tb-btn-new {
+  flex-shrink: 0;
 }
 
 .bnr-session-modal {
@@ -869,6 +963,10 @@
 @media (max-width: 560px) {
   .bnr-stats {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .bnr-money-row {
+    grid-template-columns: 1fr;
   }
 
   .bnr-players li,

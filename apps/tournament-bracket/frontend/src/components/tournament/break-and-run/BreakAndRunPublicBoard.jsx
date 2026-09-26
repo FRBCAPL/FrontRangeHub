@@ -135,7 +135,7 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
         )}
       </section>
 
-      {showRules ? <BreakAndRunRulesModal onClose={() => setShowRules(false)} publicFacing /> : null}
+      {showRules ? <BreakAndRunRulesModal onClose={() => setShowRules(false)} /> : null}
     </div>
   );
 }

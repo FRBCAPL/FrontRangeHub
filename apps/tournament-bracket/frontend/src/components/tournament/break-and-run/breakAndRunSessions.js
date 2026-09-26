@@ -198,13 +198,14 @@ export function startSession(state, config = {}) {
   return next;
 }
 
-export function updateCurrentSession(state, config = {}) {
+export function updateSession(state, sessionId, config = {}) {
   const next = JSON.parse(JSON.stringify(state));
   const ensured = ensureSessions(next);
   next.sessions = ensured.sessions;
   next.currentSessionId = ensured.currentSessionId;
-  const session = next.sessions.find((s) => s.id === next.currentSessionId);
-  if (!session) throw new Error('No session to update.');
+  const id = String(sessionId || '').trim();
+  const session = next.sessions.find((s) => String(s.id) === id);
+  if (!session) throw new Error('Session not found.');
   const details = sessionPayload(config, session.name);
   session.name = details.name;
   session.date = details.date;
@@ -224,6 +225,11 @@ export function updateCurrentSession(state, config = {}) {
     ...(next.ledger || []),
   ];
   return next;
+}
+
+export function updateCurrentSession(state, config = {}) {
+  const ensured = ensureSessions(state);
+  return updateSession(state, ensured.currentSessionId, config);
 }
 
 export function endSession(state, { carryIds } = {}) {

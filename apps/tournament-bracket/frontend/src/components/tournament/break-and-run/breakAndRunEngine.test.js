@@ -11,6 +11,8 @@ import {
   setReserve,
   startSession,
   updateCurrentSession,
+  updateEventDetails,
+  updateSession,
   undoLast,
 } from './breakAndRunEngine.js';
 import { money } from './breakAndRunMath.js';
@@ -32,7 +34,7 @@ describe('break and run engine', () => {
   it('opens a pot from member entries', () => {
     const event = pot(4);
     assert.equal(event.kind, 'break-and-run');
-    assert.equal(event.currentPot, 40);
+    assert.equal(event.currentPot, 36);
     assert.equal(event.ballCount, 10);
     assert.equal(event.players[0].buyIns, 1);
     assert.equal(event.players[0].paidIn, 10);
@@ -46,7 +48,7 @@ describe('break and run engine', () => {
         { name: 'Open', entryKind: 'open' },
       ],
     });
-    assert.equal(event.currentPot, 30);
+    assert.equal(event.currentPot, 27);
     assert.equal(event.players[1].paidIn, 20);
   });
 
@@ -94,14 +96,24 @@ describe('break and run engine', () => {
   it('pays a partial run and keeps unpaid ball shares in the pot', () => {
     const start = pot(5);
     const after = recordTurn(start, start.players[0].id, { payableBalls: 3 });
-    assert.equal(after.totalPaidOut, 15);
-    assert.equal(money(after.currentPot + after.totalPaidOut), 50);
+    assert.equal(after.totalPaidOut, 13.5);
+    assert.equal(money(after.currentPot + after.totalPaidOut), 45);
+  });
+
+  it('holds admin fees out of the payable pot', () => {
+    const event = createBreakAndRun({
+      players: [{ name: 'Open', entryKind: 'open' }],
+    });
+    assert.equal(event.players[0].paidIn, 20);
+    assert.equal(event.currentPot, 18);
+    assert.equal(event.ledger[0].adminFee, 2);
+    assert.equal(event.ledger[0].potAmount, 18);
   });
 
   it('adds later player entries to the live pot', () => {
     let event = pot(1);
     event = addPlayer(event, { name: 'Late', entryKind: 'tournament' });
-    assert.equal(event.currentPot, 20);
+    assert.equal(event.currentPot, 18);
   });
 
   it('undoes the last payout', () => {
@@ -115,9 +127,9 @@ describe('break and run engine', () => {
 
   it('can add or take house money from the pot', () => {
     const added = addToPot(pot(2), 5, 'Seed');
-    assert.equal(added.currentPot, 25);
+    assert.equal(added.currentPot, 23);
     const taken = addToPot(added, -5, 'House');
-    assert.equal(taken.currentPot, 20);
+    assert.equal(taken.currentPot, 18);
   });
 
   it('scratch on the break pays nothing even if balls were entered', () => {
@@ -128,7 +140,7 @@ describe('break and run engine', () => {
       scratchOnBreak: true,
     });
     assert.equal(after.totalPaidOut, 0);
-    assert.equal(after.currentPot, 20);
+    assert.equal(after.currentPot, 18);
     assert.equal(after.turns[0].scratchOnBreak, true);
     assert.equal(after.turns[0].outcome, 'scratch-break');
     assert.equal(after.turns[0].earlyTen, false);
@@ -181,7 +193,7 @@ describe('break and run engine', () => {
       outcome: 'cash-out',
     });
     assert.equal(rebuy.turns[0].isRebuyTurn, true);
-    assert.equal(rebuy.turns[0].amountWon, 3);
+    assert.equal(rebuy.turns[0].amountWon, 2.7);
   });
 
   it('allows unlimited rebuys after unpaid attempts', () => {
@@ -215,13 +227,13 @@ describe('break and run engine', () => {
       /rebuy first/i,
     );
     const paid = payRebuy(scratched, scratched.players[0].id);
-    assert.equal(paid.currentPot, 30);
+    assert.equal(paid.currentPot, 27);
     const tryTurn = recordTurn(paid, paid.players[0].id, {
       payableBalls: 1,
       outcome: 'cash-out',
     });
     assert.equal(tryTurn.turns[0].isRebuyTurn, true);
-    assert.equal(tryTurn.turns[0].amountWon, 3);
+    assert.equal(tryTurn.turns[0].amountWon, 2.7);
   });
 
   it('locks the player for the rest of the session after a cash-out payout', () => {
@@ -316,6 +328,37 @@ describe('break and run engine', () => {
       () => recordTurn(state, state.players[0].id, { payableBalls: 1, outcome: 'cash-out' }),
       /finished for this session/i,
     );
+  });
+
+  it('renames the event without changing the pot', () => {
+    let state = pot(2);
+    const potBefore = state.currentPot;
+    state = updateEventDetails(state, {
+      name: 'Saturday Legends pot',
+      tournamentDate: '2026-09-27',
+    });
+    assert.equal(state.name, 'Saturday Legends pot');
+    assert.equal(state.tournamentDate, '2026-09-27');
+    assert.equal(state.currentPot, potBefore);
+    assert.match(state.ledger[0].note, /Event renamed/i);
+  });
+
+  it('renames a closed past session by id', () => {
+    let state = pot(2);
+    const firstId = state.currentSessionId;
+    state = endSession(state, { carryIds: [] });
+    state = startSession(state, { name: 'Night 2', venue: 'Legends' });
+    state = updateSession(state, firstId, {
+      name: 'Opening Friday',
+      date: '2026-09-20',
+      startTime: '19:00',
+      endTime: '23:00',
+      venue: 'Legends Brews & Cues',
+    });
+    const past = state.sessions.find((s) => s.id === firstId);
+    assert.equal(past.name, 'Opening Friday');
+    assert.equal(past.status, 'closed');
+    assert.equal(state.sessions.find((s) => s.status === 'open')?.name, 'Night 2');
   });
 
   it('blocks turns after a session ends until a new session starts with carried players', () => {

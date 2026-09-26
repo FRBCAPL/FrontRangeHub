@@ -55,6 +55,25 @@ export function resolveTurnOutcome({ outcome, scratchOnBreak, busted } = {}) {
   return 'cash-out';
 }
 
+/** House admin cut per rules: $1 of each $10 entry, $2 of each $20 (10% of entry fees). */
+export function adminFeeFromEntryAmount(entryAmount) {
+  return money(Number(entryAmount) * 0.1);
+}
+
+/** Portion of an entry that goes into the Break & Run pot (entry − admin). */
+export function entryAmountToPot(entryAmount) {
+  const amount = money(entryAmount);
+  return money(amount - adminFeeFromEntryAmount(amount));
+}
+
+export function totalEntryFees(players = []) {
+  return money((players || []).reduce((sum, p) => sum + (Number(p?.paidIn) || 0), 0));
+}
+
+export function totalAdminFees(players = []) {
+  return adminFeeFromEntryAmount(totalEntryFees(players));
+}
+
 export function potView(currentPot, reserve = 0, ballCount = USAPL_BALL_COUNT) {
   const potCents = toCents(currentPot);
   const reserveHeld = fromCents(clampReserveCents(potCents, toCents(reserve)));

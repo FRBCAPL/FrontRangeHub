@@ -67,6 +67,16 @@ export function breakAndRunDisplayEventId(pathname) {
   return '';
 }
 
+/**
+ * Prefer React Router param, then parse the URL path.
+ * Needed when App.jsx renders TV/phone outside the matched Route (useParams empty).
+ */
+export function resolveBreakAndRunDisplayEventId(routeParam = '', pathname = '') {
+  const fromParam = String(routeParam || '').trim();
+  if (fromParam) return fromParam;
+  return breakAndRunDisplayEventId(pathname);
+}
+
 export function tournamentFromDisplayRow(row) {
   if (!row) return null;
   const fromCloud = tournamentFromEventRow(row);

@@ -47,11 +47,11 @@ export function basicRulesWithFees({
   });
 }
 
-/** Official / full rules — continuous pot with play sessions. */
+/** Official / full rules — player-facing (operator tips live in setup / play UI, not here). */
 export const USAPL_BREAK_AND_RUN_RULES = [
   {
     title: 'Continuous pot',
-    body: 'Front Range Pool League Break & Run is one continuous pot across dates, events, and locations. \nMoney left after payouts stays in the pot for future sessions.',
+    body: 'Front Range Pool League Break & Run is one continuous pot across dates, venues, and sessions.\nMoney left after payouts stays in the pot so ball values can grow over time.',
   },
   {
     title: 'Entry',
@@ -59,7 +59,7 @@ export const USAPL_BREAK_AND_RUN_RULES = [
   },
   {
     title: 'Sessions',
-    body: 'A session is one play window for Break & Run — usually a night or event — that the operator starts and ends.\nDuring a session, a cash-out ends that player’s play until the next session starts.\nA $0 result (scratch, bust, or no payout) still allows rebuys in the same session.\nEnding a session does not close the pot. The pot carries forward to the next session.',
+    body: 'A session is one play window — usually a night or event.\nDuring a session, a cash-out ends your play until the next session starts.\nA $0 result (scratch, bust, or no payout) still allows rebuys in the same session.\nEnding a session does not close the pot. The pot and reserve carry forward to the next session.',
   },
   {
     title: 'Rebuys',
@@ -91,7 +91,7 @@ export const USAPL_BREAK_AND_RUN_RULES = [
   },
   {
     title: 'Early 10-ball',
-    body: 'A legally pocketed called 10-ball before the 10 is the lowest-numbered ball earns 2× the current per-ball value, immediately ends the run, and pays the accumulated amount including the double-value 10. \nIf the player pockets their called ball and the 10 is accidentally pocketed on the same shot, the 10 is spotted with no payout for the 10, and the run may continue or cash out. \nIf the 10 is accidentally pocketed but the called ball is missed, the 10 is spotted, the run ends, and the accumulated payout is lost.',
+    body: 'A legally pocketed called 10-ball before the 10 is the lowest-numbered ball earns 2× the current per-ball value, immediately ends the run, and pays the accumulated amount including the double-value 10. \nIf the player pockets their called ball and the 10 is accidentally pocketed on the same shot, the 10 is spotted with no payout for the 10, and the run may continue or cash out. \nIf the 10 is accidentally pocketed but the called ball is missed, the run ends, and the accumulated payout is lost.',
   },
   {
     title: 'Remaining pot',
@@ -99,11 +99,12 @@ export const USAPL_BREAK_AND_RUN_RULES = [
   },
 ];
 
-export const USAPL_BREAK_AND_RUN_OPERATOR_EXAMPLE =
-  'Example: Pot = $500, reserve = $100 → payable $400 → $40 per ball.\nCash out 5 balls + early 10 = $280, then done for this session.\nBust after making 5 = $0 paid; they may rebuy again this session.\nScratch on the break = $0 and rebuy allowed.\n\nReserve: an amount held back from payouts to help fund future sessions if someone wins the entire pot. \nLeftover pot and reserve carry forward between sessions.\n\nAdministration fee: $1 from each $10 entry and $2 from each $20 entry. \nThat fee does not go into the Break & Run pot.';
+/** Player-facing example under full rules (no operator how-to tips). */
+export const USAPL_BREAK_AND_RUN_EXAMPLE =
+  'Example: Pot = $500, reserve = $100 → payable $400 → $40 per ball.\nCash out 5 balls + early 10 = $280, then done for this session.\nBust after making 5 = $0 paid; they may rebuy again this session.\nScratch on the break = $0 and rebuy allowed.\n\nReserve: an amount held back from payouts so the pot is not emptied in one run. Leftover pot and reserve carry forward between sessions.\n\nAdministration fee: $1 from each $10 entry and $2 from each $20 entry. That fee does not go into the Break & Run pot.';
 
-/** Same full rules + example for operator “Player rules” and public TV/phone “Full rules”. */
-export const USAPL_BREAK_AND_RUN_EXAMPLE = USAPL_BREAK_AND_RUN_OPERATOR_EXAMPLE;
+/** @deprecated Prefer USAPL_BREAK_AND_RUN_EXAMPLE — kept for older imports. */
+export const USAPL_BREAK_AND_RUN_OPERATOR_EXAMPLE = USAPL_BREAK_AND_RUN_EXAMPLE;
 export const USAPL_BREAK_AND_RUN_PUBLIC_RULES = USAPL_BREAK_AND_RUN_RULES;
 
 export const USAPL_BREAK_AND_RUN_TAGLINE =

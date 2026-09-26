@@ -31,10 +31,12 @@ export default function useBreakAndRunLive(eventId = '') {
   useEffect(() => {
     let cancelled = false;
     const hydrate = async () => {
+      setLoading(true);
       const local = loadBreakAndRun();
       const wanted = String(eventId || '').trim();
       let cloud = null;
       if (wanted) {
+        // URL pinned to a specific pot — never substitute a different live event.
         cloud = (await loadBreakAndRunEventById(wanted)).tournament;
       } else {
         cloud = (await loadLiveBreakAndRunEvent()).tournament;

@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  USAPL_BREAK_AND_RUN_OPERATOR_EXAMPLE,
+  USAPL_BREAK_AND_RUN_EXAMPLE,
   USAPL_BREAK_AND_RUN_RULES,
   USAPL_BREAK_AND_RUN_TAGLINE,
 } from './breakAndRunRules.js';
@@ -17,7 +17,7 @@ function Lines({ text }) {
   ));
 }
 
-/** Same full rules for operator “Player rules” and public TV/phone “Full rules”. */
+/** Full player rules — same content for operator “Player rules” and public TV/phone “Full rules”. */
 export default function BreakAndRunRulesModal({ onClose }) {
   return (
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="bnr-rules-title">
@@ -41,7 +41,7 @@ export default function BreakAndRunRulesModal({ onClose }) {
               </li>
             ))}
           </ol>
-          <p className="cc-setup-note"><Lines text={USAPL_BREAK_AND_RUN_OPERATOR_EXAMPLE} /></p>
+          <p className="cc-setup-note"><Lines text={USAPL_BREAK_AND_RUN_EXAMPLE} /></p>
         </div>
         <div className="form-actions bnr-rules-actions">
           <button type="button" className="btn-primary" onClick={onClose}>Close</button>

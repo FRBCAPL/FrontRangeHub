@@ -7,6 +7,7 @@ import {
   isCashClimbHubEvent,
   isBreakAndRunHubEvent,
   hubFormatLabel,
+  hubEventDetailLine,
 } from './tournamentHubEvents.js';
 
 describe('tournament hub events', () => {
@@ -38,5 +39,18 @@ describe('tournament hub events', () => {
     assert.equal(hubFormatLabel(current.find((item) => item.id === 'bnr-1')), 'Break and Run');
     assert.equal(isCashClimbHubEvent(current.find((item) => item.id === 'el-2')), false);
     assert.equal(isBreakAndRunHubEvent(current.find((item) => item.id === 'bnr-1')), true);
+  });
+
+  it('includes pot amount for Break and Run rows', () => {
+    const line = hubEventDetailLine({
+      kind: 'break-and-run',
+      type: 'break-and-run',
+      status: 'in-progress',
+      tournamentDate: '2026-09-24',
+      tournament: { currentPot: 162 },
+    });
+    assert.match(line, /Break and Run/);
+    assert.match(line, /In progress/);
+    assert.match(line, /Pot \$162/);
   });
 });

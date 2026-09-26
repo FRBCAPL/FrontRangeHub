@@ -1,13 +1,16 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import BreakAndRunPublicBoard from './BreakAndRunPublicBoard.jsx';
+import { resolveBreakAndRunDisplayEventId } from './breakAndRunDisplay.js';
 import useBreakAndRunLive from './useBreakAndRunLive.js';
 import './BreakAndRunPublic.css';
 
 export default function BreakAndRunPhoneView() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { eventId: routeId } = useParams();
-  const { tournament, loading } = useBreakAndRunLive(routeId || '');
+  const eventId = resolveBreakAndRunDisplayEventId(routeId, location.pathname);
+  const { tournament, loading } = useBreakAndRunLive(eventId);
 
   return (
     <div className="bnr-public-shell bnr-public-shell-phone">

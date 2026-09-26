@@ -3,7 +3,7 @@ import BreakAndRunAddPlayerModal from './BreakAndRunAddPlayerModal.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import { eventSnapshot, formatMoney, todayDateInput } from './breakAndRunEngine.js';
-import { DEFAULT_EVENT_NAME } from './breakAndRunPayout.js';
+import { DEFAULT_EVENT_NAME, entryAmountToPot } from './breakAndRunPayout.js';
 import '../CreateTournamentForm.css';
 import '../cash-climb/CashClimb.css';
 import './BreakAndRun.css';
@@ -42,7 +42,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
         buyIns: 1,
         paidIn: isMemberEntry(p.entryKind) ? mFee : oFee,
       })),
-      currentPot: entries + seed,
+      currentPot: entryAmountToPot(entries) + seed,
       grossCollected: entries + seed,
       totalPaidOut: 0,
     });
@@ -72,12 +72,19 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
         <BreakAndRunLogo size="header" className="bnr-setup-logo" />
         <p className="cc-setup-note">
           Payable pot = pot − reserve, then ÷ 10 per ball. Reserve stays until you change it.
+          This starts the continuous Break & Run pot. For later nights, open this pot and use Start next session
+          instead of creating another pot — that keeps payouts growing.
         </p>
         <button type="button" className="tb-btn-new" onClick={() => setShowRules(true)}>Player rules</button>
         <div className="cc-field-row">
           <label>
-            Event name
-            <input value={name} onChange={(e) => setName(e.target.value)} />
+            Pot / event name
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={DEFAULT_EVENT_NAME}
+              required
+            />
           </label>
           <label className="cc-date-field">
             Start date

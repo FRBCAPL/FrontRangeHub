@@ -7,7 +7,7 @@ import CashClimbApp from './cash-climb/CashClimbApp';
 import BreakAndRunApp from './break-and-run/BreakAndRunApp.jsx';
 import { loadCashClimb, saveCashClimb, clearCashClimb } from './cash-climb/cashClimbStore';
 import { loadBreakAndRun, saveBreakAndRun, clearBreakAndRun } from './break-and-run/breakAndRunStore.js';
-import { sanitizeBreakAndRun } from './break-and-run/breakAndRunEngine.js';
+import { sanitizeBreakAndRun, formatMoney as formatBreakAndRunMoney } from './break-and-run/breakAndRunEngine.js';
 import {
   listSavedBreakAndRunEvents,
   listLiveBreakAndRunEvents,
@@ -282,6 +282,16 @@ export default function TournamentBracketApp() {
   };
 
   const startNewBreakAndRun = () => {
+    const existing = loadBreakAndRun();
+    if (existing && existing.status !== 'completed' && existing.status !== 'ended') {
+      const potLabel = formatBreakAndRunMoney(existing.currentPot);
+      const ok = window.confirm(
+        `A Break & Run pot is already open (${potLabel}).\n\n` +
+          'For the next play night, open that pot from Current Tournaments and use Start next session so money stays in one continuous pot.\n\n' +
+          'Start setup for a brand-new separate pot anyway?'
+      );
+      if (!ok) return;
+    }
     setBreakAndRunIntent('new');
     setLeaveTo('new');
     setScreen('break-and-run');

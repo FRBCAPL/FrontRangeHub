@@ -16,7 +16,8 @@ import {
   setAtTablePlayer,
   setReserve,
   startSession,
-  updateCurrentSession,
+  updateEventDetails,
+  updateSession,
   undoLast,
 } from './breakAndRunEngine.js';
 import { loadBreakAndRun, saveBreakAndRun, clearBreakAndRun } from './breakAndRunStore.js';
@@ -91,8 +92,11 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
   const handleStart = (config) => {
     const previous = loadBreakAndRun();
     if (previous && previous.status !== 'completed' && previous.status !== 'ended') {
+      const potLabel = formatMoney(previous.currentPot);
       const ok = window.confirm(
-        'Start this new Break and Run? The event on this tablet stays in Current Tournaments. It will not be erased.'
+        `A Break & Run pot is already open (${potLabel}).\n\n` +
+          'Normal play: open that pot and use Start next session so money stays in one continuous pot.\n\n' +
+          'Start a brand-new separate pot anyway? The open one stays in Current Tournaments and is not erased.'
       );
       if (!ok) return;
       parkLiveBreakAndRunEvent(previous);
@@ -102,8 +106,11 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
 
   const handleNew = () => {
     if (tournament && tournament.status === 'in-progress') {
+      const potLabel = formatMoney(tournament.currentPot);
       const ok = window.confirm(
-        'Leave this pot on this tablet? It stays in Current Tournaments so you can open it again.'
+        `Leave this continuous pot (${potLabel}) and set up a brand-new separate pot?\n\n` +
+          'For the next play night, prefer Start next session so entries keep growing this pot.\n\n' +
+          'Continue? This pot stays in Current Tournaments so you can open it again.'
       );
       if (!ok) return;
       parkLiveBreakAndRunEvent(tournament);
@@ -136,7 +143,8 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
       onAddToPot={(amount, note) => run((t) => addToPot(t, amount, note))}
       onSetReserve={(amount) => run((t) => setReserve(t, amount))}
       onStartSession={(details) => run((t) => startSession(t, details))}
-      onUpdateSession={(details) => run((t) => updateCurrentSession(t, details))}
+      onUpdateSession={(sessionId, details) => run((t) => updateSession(t, sessionId, details))}
+      onUpdateEvent={(details) => run((t) => updateEventDetails(t, details))}
       onEndSession={(options) => run((t) => endSession(t, options))}
       onUndo={() => run((t) => undoLast(t))}
       onComplete={() => {

@@ -13,9 +13,24 @@ export default function BreakAndRunPotBoard({ snapshot, gameName }) {
       <p className="bnr-split">
         Seed {formatMoney(snapshot.startingSeed)} (one-time)
         {' · '}
-        Entries {formatMoney(snapshot.entryFees)}
-        {' · '}
         Reserve {formatMoney(snapshot.reserve)}
+      </p>
+      <div className="bnr-money-row" aria-label="Fees collected">
+        <div>
+          <span>Entry fees collected</span>
+          <strong>{formatMoney(snapshot.entryFees)}</strong>
+        </div>
+        <div>
+          <span>Admin fees</span>
+          <strong>{formatMoney(snapshot.adminFees)}</strong>
+        </div>
+        <div>
+          <span>Entries</span>
+          <strong>{snapshot.buyInCount ?? 0}</strong>
+        </div>
+      </div>
+      <p className="bnr-money-note">
+        Admin is $1 of each $10 entry and $2 of each $20 — held out of the pot (not paid on balls).
       </p>
       <div className="bnr-stats">
         <div>

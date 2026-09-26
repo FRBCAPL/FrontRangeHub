@@ -1,7 +1,14 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { fromCents, toCents } from './breakAndRunMath.js';
-import { potView, turnPayoutCents } from './breakAndRunPayout.js';
+import {
+  adminFeeFromEntryAmount,
+  entryAmountToPot,
+  potView,
+  totalAdminFees,
+  totalEntryFees,
+  turnPayoutCents,
+} from './breakAndRunPayout.js';
 
 describe('USAPL 10-ball payout', () => {
   it('divides the full pot by 10 when reserve is zero', () => {
@@ -43,5 +50,19 @@ describe('USAPL 10-ball payout', () => {
 
   it('pays nothing for a scratch or zero payable balls', () => {
     assert.equal(turnPayoutCents({ potCents: toCents(500), reserveCents: toCents(100), payableBalls: 0 }), 0);
+  });
+
+  it('admin fee is $1 of $10 and $2 of $20', () => {
+    assert.equal(adminFeeFromEntryAmount(10), 1);
+    assert.equal(adminFeeFromEntryAmount(20), 2);
+    assert.equal(entryAmountToPot(10), 9);
+    assert.equal(entryAmountToPot(20), 18);
+    const players = [
+      { paidIn: 10 },
+      { paidIn: 20 },
+      { paidIn: 30 },
+    ];
+    assert.equal(totalEntryFees(players), 60);
+    assert.equal(totalAdminFees(players), 6);
   });
 });

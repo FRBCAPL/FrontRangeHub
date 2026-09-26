@@ -11,6 +11,10 @@ import {
   parseMoneyFee,
   resolveTurnOutcome,
   turnPayoutCents,
+  totalEntryFees,
+  totalAdminFees,
+  adminFeeFromEntryAmount,
+  entryAmountToPot,
 } from './breakAndRunPayout.js';
 import {
   canTakeTurn,
@@ -21,7 +25,7 @@ import {
   sessionPlayerIdList,
   systemTurnDate,
 } from './breakAndRunTurns.js';
-import { ensureSessions, endSession as endSessionCore, startSession as startSessionCore, updateCurrentSession as updateCurrentSessionCore } from './breakAndRunSessions.js';
+import { ensureSessions, endSession as endSessionCore, startSession as startSessionCore, updateCurrentSession as updateCurrentSessionCore, updateSession as updateSessionCore } from './breakAndRunSessions.js';
 import { advanceAtTableAfterTurn, setAtTablePlayer as setAtTablePlayerCore } from './breakAndRunTable.js';
 
 export { formatMoney, potView };
@@ -215,6 +219,8 @@ export function createBreakAndRun(config) {
     });
   }).filter((p) => p.name);
   const collected = money(players.reduce((sum, p) => sum + p.paidIn, 0));
+  const adminHeld = totalAdminFees(players);
+  const entriesToPot = entryAmountToPot(collected);
   const seed = money(config?.startingSeed ?? config?.startingLeftover);
   const state = sanitizeBreakAndRun({
     name: config?.name || DEFAULT_EVENT_NAME,
@@ -232,7 +238,7 @@ export function createBreakAndRun(config) {
     turns: [],
     ledger: [],
     grossCollected: money(collected + Math.max(0, seed)),
-    currentPot: money(collected + seed),
+    currentPot: money(entriesToPot + seed),
     totalPaidOut: 0,
   });
   if (seed) {
@@ -253,7 +259,9 @@ export function createBreakAndRun(config) {
     pushLedger(state, {
       type: 'open',
       amount: collected,
-      note: `${players.length} ${players.length === 1 ? 'entry' : 'entries'} into the pot`,
+      adminFee: adminHeld,
+      potAmount: entriesToPot,
+      note: `${players.length} ${players.length === 1 ? 'entry' : 'entries'} · ${formatMoney(entriesToPot)} to pot · admin ${formatMoney(adminHeld)}`,
     });
   }
   return state;
@@ -294,22 +302,26 @@ export function recordBuyIn(state, playerId, count = 1, extras = {}) {
   const player = findPlayer(next, playerId);
   if (!player) throw new Error('Pick a player.');
   const amount = money(playerEntryFee(next, player) * n);
+  const adminFee = adminFeeFromEntryAmount(amount);
+  const potAmount = entryAmountToPot(amount);
   player.buyIns += n;
   player.paidIn = money(player.paidIn + amount);
   next.grossCollected = money(next.grossCollected + amount);
-  next.currentPot = money(next.currentPot + amount);
+  next.currentPot = money(next.currentPot + potAmount);
   const isRebuy = extras.type === 'rebuy' || extras.isRebuy;
   pushLedger(next, {
     type: isRebuy ? 'rebuy' : 'buy-in',
     playerId: player.id,
     playerName: player.name,
     amount,
+    adminFee,
+    potAmount,
     date: extras.date || systemTurnDate(),
     sessionId: extras.sessionId || next.currentSessionId || '',
     turnId: extras.turnId || '',
     note: isRebuy
-      ? `Rebuy · $0 last attempt · ${formatMoney(amount)}`
-      : `${entryKindOf(player) === 'member' ? 'Member' : 'Open'} entry ${formatMoney(amount)}`,
+      ? `Rebuy · $0 last attempt · ${formatMoney(amount)} · ${formatMoney(potAmount)} to pot · admin ${formatMoney(adminFee)}`
+      : `${entryKindOf(player) === 'member' ? 'Member' : 'Open'} entry ${formatMoney(amount)} · ${formatMoney(potAmount)} to pot · admin ${formatMoney(adminFee)}`,
   });
   if (!isRebuy) enrollInOpenSession(next, player.id);
   return next;
@@ -365,8 +377,33 @@ export function startSession(state, config = {}) {
 
 export function updateCurrentSession(state, config = {}) {
   const clean = sanitizeBreakAndRun(state);
-  if (!clean || clean.status !== 'in-progress') throw new Error('This pot is closed.');
+  if (!clean) throw new Error('Event not found.');
   return updateCurrentSessionCore(clean, config);
+}
+
+export function updateSession(state, sessionId, config = {}) {
+  const clean = sanitizeBreakAndRun(state);
+  if (!clean) throw new Error('Event not found.');
+  return updateSessionCore(clean, sessionId, config);
+}
+
+/** Rename / retitle the continuous pot event (shown on Current Tournaments). */
+export function updateEventDetails(state, config = {}) {
+  const next = clone(sanitizeBreakAndRun(state));
+  if (!next) throw new Error('Event not found.');
+  const name = String(config.name || '').trim() || DEFAULT_EVENT_NAME;
+  const dateRaw = String(config.tournamentDate || config.startDate || next.tournamentDate || '').slice(0, 10);
+  next.name = name;
+  if (dateRaw) {
+    next.tournamentDate = dateRaw;
+    next.startDate = dateRaw;
+  }
+  pushLedger(next, {
+    type: 'event-update',
+    amount: 0,
+    note: `Event renamed · ${name}${dateRaw ? ` · ${formatTournamentDate(dateRaw)}` : ''}`,
+  });
+  return next;
 }
 
 export function endSession(state, options = {}) {
@@ -512,7 +549,10 @@ export function undoLast(state) {
   const player = last.playerId ? findPlayer(next, last.playerId) : null;
   if (last.type === 'buy-in' || last.type === 'rebuy') {
     const amount = money(last.amount);
-    next.currentPot = money(next.currentPot - amount);
+    const potAmount = money(
+      last.potAmount != null ? last.potAmount : entryAmountToPot(amount)
+    );
+    next.currentPot = money(next.currentPot - potAmount);
     next.grossCollected = money(next.grossCollected - amount);
     if (player) {
       player.buyIns = Math.max(0, player.buyIns - 1);
@@ -567,7 +607,7 @@ export function previewTurn(state, playerId, details = {}) {
   let rebuyFee = 0;
   if (player && gate.isRebuyTurn && !hasPendingRebuyPayment(clean, player.id)) {
     rebuyFee = playerEntryFee(clean, player);
-    pot = money(pot + rebuyFee);
+    pot = money(pot + entryAmountToPot(rebuyFee));
   }
   const outcome = parsed.outcome || 'cash-out';
   const scratchOnBreak = outcome === 'scratch-break';
@@ -613,6 +653,8 @@ export function potAfterRun(state, ballsMade) {
 export function eventSnapshot(state) {
   const clean = sanitizeBreakAndRun(state);
   const view = potView(clean.currentPot, clean.reserve, clean.ballCount);
+  const entryFees = totalEntryFees(clean.players);
+  const adminFees = totalAdminFees(clean.players);
   return {
     ...view,
     memberFee: clean.memberFee,
@@ -620,7 +662,8 @@ export function eventSnapshot(state) {
     openFee: clean.openFee,
     continuingPot: true,
     startingSeed: clean.startingSeed,
-    entryFees: money(clean.players.reduce((sum, p) => sum + (Number(p.paidIn) || 0), 0)),
+    entryFees,
+    adminFees,
     playerCount: clean.players.length,
     buyInCount: clean.players.reduce((sum, p) => sum + p.buyIns, 0),
     grossCollected: clean.grossCollected,

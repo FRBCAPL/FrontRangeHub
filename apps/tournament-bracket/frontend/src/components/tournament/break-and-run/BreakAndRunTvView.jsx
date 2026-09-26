@@ -1,7 +1,10 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatMoney } from './breakAndRunEngine.js';
-import { buildBreakAndRunTvBoard } from './breakAndRunDisplay.js';
+import {
+  buildBreakAndRunTvBoard,
+  resolveBreakAndRunDisplayEventId,
+} from './breakAndRunDisplay.js';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import BreakAndRunPublicTicker from './BreakAndRunPublicTicker.jsx';
 import useBreakAndRunLive from './useBreakAndRunLive.js';
@@ -216,8 +219,10 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
 
 export default function BreakAndRunTvView() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { eventId: routeId } = useParams();
-  const { tournament, loading } = useBreakAndRunLive(routeId || '');
+  const eventId = resolveBreakAndRunDisplayEventId(routeId, location.pathname);
+  const { tournament, loading } = useBreakAndRunLive(eventId);
 
   const goBack = () => {
     if (window.opener && !window.opener.closed) {

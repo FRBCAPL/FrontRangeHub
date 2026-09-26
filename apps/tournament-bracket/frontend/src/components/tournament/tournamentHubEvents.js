@@ -1,4 +1,7 @@
 import { elimFormatLabel } from './elimStatus.js';
+import { formatMoney } from './break-and-run/breakAndRunMath.js';
+import { savedStatusLabel } from './cash-climb/cashClimbSaved.js';
+import { formatTournamentDate } from './cash-climb/cashClimbEngine.js';
 
 export function isCurrentStatus(status) {
   return status !== 'completed' && status !== 'ended';
@@ -20,6 +23,27 @@ export function hubFormatLabel(item) {
   if (isCashClimbHubEvent(item)) return 'Cash Climb';
   if (isBreakAndRunHubEvent(item)) return 'Break and Run';
   return elimFormatLabel(item?.type) || 'Tournament';
+}
+
+/** One-line meta under the event name on Current / Completed lists. */
+export function hubEventDetailLine(item) {
+  const bits = [
+    hubFormatLabel(item),
+    savedStatusLabel(item?.status),
+    item?.tournamentDate ? formatTournamentDate(item.tournamentDate) : '',
+  ];
+  if (isBreakAndRunHubEvent(item)) {
+    const pot = Number(item?.tournament?.currentPot);
+    if (Number.isFinite(pot)) bits.push(`Pot ${formatMoney(pot)}`);
+  } else if (isCashClimbHubEvent(item)) {
+    const prize = Number(
+      item?.tournament?.prizePool
+      ?? item?.tournament?.totalPrizePool
+      ?? item?.tournament?.stats?.prizePool
+    );
+    if (Number.isFinite(prize) && prize > 0) bits.push(`Prize ${formatMoney(prize)}`);
+  }
+  return bits.filter(Boolean).join(' • ');
 }
 
 export function summaryFromLocal(tournament, kind) {

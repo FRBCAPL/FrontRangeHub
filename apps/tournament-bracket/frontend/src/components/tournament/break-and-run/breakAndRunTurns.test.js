@@ -28,7 +28,7 @@ describe('break and run turns', () => {
     assert.equal(turn.payableBalls, 0);
     assert.equal(turn.amountWon, 0);
     assert.ok(turn.sessionId);
-    assert.equal(afterMiss.currentPot, 20);
+    assert.equal(afterMiss.currentPot, 18);
     assert.equal(afterMiss.players[0].buyIns, 1);
     const status = playerDayStatus(afterMiss, start.players[0].id, date);
     assert.equal(status.rebuyGranted, true);

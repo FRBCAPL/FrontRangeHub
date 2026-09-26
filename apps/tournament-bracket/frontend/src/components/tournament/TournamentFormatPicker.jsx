@@ -19,7 +19,7 @@ export default function TournamentFormatPicker({ onCashClimb, onBreakAndRun, onS
           <BreakAndRunLogo size="thumb" />
           <span className="bnr-format-copy">
             <strong>Front Range Pool League 10-Ball Break & Run</strong>
-            <span>Member or that day’s tournament vs open rate. Pot − reserve ÷ 10 per ball.</span>
+            <span>One continuous pot. Sessions for each night. Pot − reserve ÷ 10 per ball.</span>
           </span>
         </button>
         <button type="button" className="cc-format-btn" onClick={onSingleElim}>

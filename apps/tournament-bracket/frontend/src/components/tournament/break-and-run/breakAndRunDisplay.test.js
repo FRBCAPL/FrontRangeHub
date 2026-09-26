@@ -7,6 +7,7 @@ import {
   buildBreakAndRunPublicBoard,
   buildBreakAndRunTvBoard,
   isBreakAndRunDisplayPath,
+  resolveBreakAndRunDisplayEventId,
 } from './breakAndRunDisplay.js';
 import { createBreakAndRun, endSession, recordTurn, startSession, updateCurrentSession } from './breakAndRunEngine.js';
 
@@ -55,6 +56,9 @@ describe('break and run public display', () => {
     assert.equal(breakAndRunDisplayEventId('/tournament-bracket/break-and-run/tv/abc%201'), 'abc 1');
     assert.equal(breakAndRunTvHash('x'), '/tournament-bracket/break-and-run/tv/x');
     assert.equal(breakAndRunPhoneHash('x'), '/tournament-bracket/break-and-run/view/x');
+    assert.equal(resolveBreakAndRunDisplayEventId('', '/tournament-bracket/break-and-run/view/abc'), 'abc');
+    assert.equal(resolveBreakAndRunDisplayEventId('from-param', '/tournament-bracket/break-and-run/view/abc'), 'from-param');
+    assert.equal(resolveBreakAndRunDisplayEventId('', '/tournament-bracket/break-and-run/tv/night%202'), 'night 2');
   });
 
   it('marks live only while a session is open', () => {

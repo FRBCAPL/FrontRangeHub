@@ -8,6 +8,8 @@ import BreakAndRunRecordModal from './BreakAndRunRecordModal.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
 import BreakAndRunSessionModal from './BreakAndRunSessionModal.jsx';
 import BreakAndRunEndSessionModal from './BreakAndRunEndSessionModal.jsx';
+import BreakAndRunEditEventModal from './BreakAndRunEditEventModal.jsx';
+import BreakAndRunSessionsPanel from './BreakAndRunSessionsPanel.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import { currentSession } from './breakAndRunTurns.js';
 import { formatSessionDetails, playersNeedingCarryDecision } from './breakAndRunSessions.js';
@@ -28,6 +30,7 @@ export default function BreakAndRunPlay({
   onSetReserve,
   onStartSession,
   onUpdateSession,
+  onUpdateEvent,
   onEndSession,
   onUndo,
   onComplete,
@@ -38,6 +41,7 @@ export default function BreakAndRunPlay({
 }) {
   const [showAdd, setShowAdd] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showEditEvent, setShowEditEvent] = useState(false);
   const [sessionModal, setSessionModal] = useState(null);
   const [endSessionModal, setEndSessionModal] = useState(null);
   const [recordFor, setRecordFor] = useState(null);
@@ -128,8 +132,8 @@ export default function BreakAndRunPlay({
   const handleSessionSubmit = (details) => {
     if (sessionModal?.mode === 'start') {
       onStartSession?.(details);
-    } else {
-      onUpdateSession?.(details);
+    } else if (sessionModal?.session?.id) {
+      onUpdateSession?.(sessionModal.session.id, details);
     }
     setSessionModal(null);
   };
@@ -155,6 +159,9 @@ export default function BreakAndRunPlay({
             <p className="cc-meta">{sessionMeta}</p>
           </div>
           <div className="cc-play-actions">
+            <button type="button" className="tb-btn-new" onClick={() => setShowEditEvent(true)}>
+              Rename pot
+            </button>
             <button type="button" className="tb-btn-new" onClick={() => openBreakAndRunTv(tournament.id)}>
               Open TV
             </button>
@@ -163,7 +170,7 @@ export default function BreakAndRunPlay({
             </button>
             <button type="button" className="tb-btn-new" onClick={() => setShowRules(true)}>Player rules</button>
             {onLeave ? <button type="button" className="tb-btn-new" onClick={onLeave}>Back</button> : null}
-            {onNew ? <button type="button" className="tb-btn-new" onClick={onNew}>New tournament</button> : null}
+            {onNew ? <button type="button" className="tb-btn-new" onClick={onNew}>New separate pot</button> : null}
             {live && onComplete ? (
               <button type="button" className="tb-btn-new" onClick={onComplete}>Complete</button>
             ) : null}
@@ -192,25 +199,18 @@ export default function BreakAndRunPlay({
             disabled={!tournament.players.length || !sessionOpen}
           >
             Record turn
-          </button>          <button type="button" className="tb-btn-new" onClick={handleStartSessionClick}>
+          </button>
+          <button type="button" className="tb-btn-new" onClick={handleStartSessionClick}>
             {sessionOpen ? 'Start next session' : 'Start session'}
           </button>
-          {session ? (
-            <button
-              type="button"
-              className="tb-btn-new"
-              onClick={() => setSessionModal({ mode: 'edit', session })}
-            >
-              Edit session details
-            </button>
-          ) : null}
           {sessionOpen ? (
             <button type="button" className="tb-btn-new" onClick={handleEndSession}>
               End session
             </button>
           ) : null}
           <p className="bnr-toolbar-note">
-            One continuous pot. No payout → unlimited rebuys this session. Cash out → done this session.
+            One continuous pot across nights. For the next play night use Start next session — money stays here.
+            No payout → unlimited rebuys this session. Cash out → done this session.
             Ending a session asks which open turns to carry forward. The next session list only shows
             carried players plus anyone who buys in with Add player.
           </p>
@@ -242,6 +242,12 @@ export default function BreakAndRunPlay({
           </form>
         </div>
       ) : null}
+
+      <BreakAndRunSessionsPanel
+        sessions={tournament.sessions || []}
+        currentSessionId={tournament.currentSessionId}
+        onEdit={(row) => setSessionModal({ mode: 'edit', session: row })}
+      />
 
       <BreakAndRunPlayers
         tournament={tournament}
@@ -294,8 +300,18 @@ export default function BreakAndRunPlay({
           onConfirm={handleEndSessionConfirm}
         />
       ) : null}
+      {showEditEvent ? (
+        <BreakAndRunEditEventModal
+          isOpen
+          tournament={tournament}
+          onCancel={() => setShowEditEvent(false)}
+          onSubmit={(details) => {
+            onUpdateEvent?.(details);
+            setShowEditEvent(false);
+          }}
+        />
+      ) : null}
       {showRules ? <BreakAndRunRulesModal onClose={() => setShowRules(false)} /> : null}
     </div>
   );
 }
-

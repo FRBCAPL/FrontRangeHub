@@ -44,7 +44,7 @@ export default function BreakAndRunSessionModal({
     e.preventDefault();
     const trimmedName = String(name || '').trim();
     if (!trimmedName) {
-      alert('Enter a session or event name.');
+      alert('Enter a session name.');
       return;
     }
     if (!date) {
@@ -77,13 +77,13 @@ export default function BreakAndRunSessionModal({
           <p className="cc-modal-meta">
             {mode === 'start'
               ? 'Starts a new play window with players carried forward from the last session. Everyone else joins separately. The pot carries forward.'
-              : 'Shown on the public board so players know when and where this session is.'}
+              : 'Rename this play night and update when/where it shows on the public board.'}
           </p>
         </header>
 
         <div className="bnr-session-body">
           <label>
-            Session / event name
+            Session name
             <input
               type="text"
               value={name}
