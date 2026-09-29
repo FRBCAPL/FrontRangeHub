@@ -1,6 +1,7 @@
 import React from 'react';
-import { formatMoney, sessionPlayerIdList } from './breakAndRunEngine.js';
+import { formatMoney, isAttemptStarted, previewTurn, sessionPlayerIdList } from './breakAndRunEngine.js';
 import { currentSession, playerDayStatus, systemTurnDate } from './breakAndRunTurns.js';
+import { describeCalledTurn } from './breakAndRunCalledTurn.js';
 
 function entryLabel(player) {
   return player?.entryKind === 'member' || player?.entryKind === 'tournament' || player?.entryKind === 'usapl'
@@ -8,7 +9,7 @@ function entryLabel(player) {
     : 'Open';
 }
 
-function playerFee(tournament, player) {
+export function playerFee(tournament, player) {
   const kind = String(player?.entryKind || '').toLowerCase();
   const member = kind === 'member' || kind === 'tournament' || kind === 'usapl';
   return member
@@ -18,6 +19,10 @@ function playerFee(tournament, player) {
 
 function turnBlurb(turn) {
   if (!turn) return '';
+  const called = describeCalledTurn(turn);
+  if (called) {
+    return `${called} · ${turn.amountWon > 0 ? `won ${formatMoney(turn.amountWon)}` : 'no payout'}`;
+  }
   if (turn.scratchOnBreak || turn.outcome === 'scratch-break') return 'scratch on the break · no payout';
   if (turn.busted || turn.outcome === 'bust') {
     const balls = turn.payableBalls ?? turn.ballsMade;
@@ -54,6 +59,8 @@ export default function BreakAndRunPlayers({
   live,
   onRecord,
   onPayRebuy,
+  onStartAttempt,
+  onCancelAttempt,
   onAdd,
 }) {
   const today = systemTurnDate();
@@ -86,10 +93,18 @@ export default function BreakAndRunPlayers({
             const showPayRebuy = live && day.needsRebuyPay && fee > 0;
             const showRecordRebuy = live && day.canTurn && day.isRebuyTurn && (day.rebuyPaid || fee <= 0);
             const showRecord = live && day.canTurn && !day.isRebuyTurn;
+            const started = isAttemptStarted(tournament, p.id);
+            const showStart = Boolean(onStartAttempt) && !started && (showRecord || showRecordRebuy);
+            const playingFor = started ? previewTurn(tournament, p.id, { outcome: 'bust' }).payablePot : 0;
             return (
-              <li key={p.id}>
+              <li key={p.id} className={started ? 'is-shooting' : undefined}>
                 <div>
                   <strong>{p.name}</strong>
+                  {started ? (
+                    <span className="bnr-shooting-badge">
+                      Shooting · playing for {formatMoney(playingFor)} payable
+                    </span>
+                  ) : null}
                   <span>
                     {entryLabel(p)}
                     {' · '}
@@ -103,6 +118,21 @@ export default function BreakAndRunPlayers({
                 </div>
                 {live ? (
                   <div className="bnr-row-actions">
+                    {showStart ? (
+                      <button
+                        type="button"
+                        className="btn-primary bnr-start-attempt"
+                        onClick={() => onStartAttempt(p)}
+                        title="Tap as the player breaks — locks the pot for this attempt"
+                      >
+                        Start attempt
+                      </button>
+                    ) : null}
+                    {started && onCancelAttempt ? (
+                      <button type="button" className="tb-btn-new" onClick={onCancelAttempt}>
+                        Cancel start
+                      </button>
+                    ) : null}
                     {showPayRebuy ? (
                       <button
                         type="button"

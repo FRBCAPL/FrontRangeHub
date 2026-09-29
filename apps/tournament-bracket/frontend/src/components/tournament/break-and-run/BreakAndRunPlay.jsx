@@ -1,19 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import BreakAndRunAddPlayerModal from './BreakAndRunAddPlayerModal.jsx';
 import BreakAndRunPotBoard from './BreakAndRunPotBoard.jsx';
+import BreakAndRunMoneyDetails from './BreakAndRunMoneyDetails.jsx';
+import BreakAndRunShooterCard from './BreakAndRunShooterCard.jsx';
+import BreakAndRunMoreMenu from './BreakAndRunMoreMenu.jsx';
 import BreakAndRunPlayers from './BreakAndRunPlayers.jsx';
 import BreakAndRunTurns from './BreakAndRunTurns.jsx';
 import BreakAndRunLedger from './BreakAndRunLedger.jsx';
 import BreakAndRunRecordModal from './BreakAndRunRecordModal.jsx';
+import BreakAndRunCalledRecordModal from './BreakAndRunCalledRecordModal.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
 import BreakAndRunSessionModal from './BreakAndRunSessionModal.jsx';
 import BreakAndRunEndSessionModal from './BreakAndRunEndSessionModal.jsx';
 import BreakAndRunEditEventModal from './BreakAndRunEditEventModal.jsx';
-import BreakAndRunSessionsPanel from './BreakAndRunSessionsPanel.jsx';
+import BreakAndRunSessionCard from './BreakAndRunSessionCard.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import { currentSession } from './breakAndRunTurns.js';
-import { formatSessionDetails, playersNeedingCarryDecision } from './breakAndRunSessions.js';
-import { eventSnapshot, formatMoney, formatTournamentDate } from './breakAndRunEngine.js';
+import { playersNeedingCarryDecision } from './breakAndRunSessions.js';
+import { eventSnapshot, formatMoney, formatTournamentDate, isCalledPayoutMode } from './breakAndRunEngine.js';
 import { openBreakAndRunPhone, openBreakAndRunTv } from './breakAndRunDisplay.js';
 import '../cash-climb/CashClimb.css';
 import '../cash-climb/CashClimbSavedEvents.css';
@@ -24,9 +28,12 @@ export default function BreakAndRunPlay({
   onAddPlayer,
   onRecord,
   onSetAtTable,
+  onStartAttempt,
+  onCancelAttempt,
   onPayRebuy,
   onJoinSession,
   onAddToPot,
+  onTopUpSeed,
   onSetReserve,
   onStartSession,
   onUpdateSession,
@@ -45,38 +52,13 @@ export default function BreakAndRunPlay({
   const [sessionModal, setSessionModal] = useState(null);
   const [endSessionModal, setEndSessionModal] = useState(null);
   const [recordFor, setRecordFor] = useState(null);
-  const [potDelta, setPotDelta] = useState('');
-  const [reserveDraft, setReserveDraft] = useState(String(tournament.reserve ?? ''));
   const snapshot = eventSnapshot(tournament);
+  const calledMode = isCalledPayoutMode(tournament);
+  const RecordModal = calledMode ? BreakAndRunCalledRecordModal : BreakAndRunRecordModal;
   const live = tournament.status === 'in-progress';
   const session = currentSession(tournament);
   const sessionOpen = session?.status === 'open';
   const carryPlayers = sessionOpen ? playersNeedingCarryDecision(tournament) : [];
-
-  useEffect(() => {
-    setReserveDraft(String(tournament.reserve ?? ''));
-  }, [tournament.id, tournament.reserve]);
-
-  const handleAddPot = (e) => {
-    e.preventDefault();
-    const amount = Number(potDelta);
-    if (!Number.isFinite(amount) || amount === 0) {
-      alert('Enter an amount to add or take.');
-      return;
-    }
-    onAddToPot(amount, amount > 0 ? 'Added to pot' : 'Taken from pot');
-    setPotDelta('');
-  };
-
-  const handleReserve = (e) => {
-    e.preventDefault();
-    const amount = Number(reserveDraft);
-    if (!Number.isFinite(amount) || amount < 0) {
-      alert('Enter a reserve of $0 or more.');
-      return;
-    }
-    onSetReserve?.(amount);
-  };
 
   const openStartSessionModal = () => {
     setSessionModal({
@@ -138,7 +120,18 @@ export default function BreakAndRunPlay({
     setSessionModal(null);
   };
 
-  const sessionMeta = formatSessionDetails(session, { includeStatus: true }) || 'No session details yet';
+  const sessionCard = (
+    <BreakAndRunSessionCard
+      tournament={tournament}
+      session={session}
+      live={live}
+      onAddPlayer={() => setShowAdd(true)}
+      onStartSession={openStartSessionModal}
+      onStartNext={handleStartSessionClick}
+      onEndSession={handleEndSession}
+      onEdit={(row) => setSessionModal({ mode: 'edit', session: row })}
+    />
+  );
 
   return (
     <div className="bnr-play">
@@ -152,108 +145,66 @@ export default function BreakAndRunPlay({
                 `Started ${formatTournamentDate(tournament.startDate || tournament.tournamentDate)}`,
                 `Member ${formatMoney(tournament.memberFee ?? tournament.tournamentFee)}`,
                 `Others ${formatMoney(tournament.openFee)}`,
-                `Reserve ${formatMoney(tournament.reserve)}`,
                 live ? 'In progress' : 'Complete',
               ].filter(Boolean).join(' · ')}
             </p>
-            <p className="cc-meta">{sessionMeta}</p>
           </div>
           <div className="cc-play-actions">
-            <button type="button" className="tb-btn-new" onClick={() => setShowEditEvent(true)}>
-              Rename pot
-            </button>
             <button type="button" className="tb-btn-new" onClick={() => openBreakAndRunTv(tournament.id)}>
               Open TV
             </button>
-            <button type="button" className="tb-btn-new" onClick={() => openBreakAndRunPhone(tournament.id)}>
-              Open phone display
-            </button>
             <button type="button" className="tb-btn-new" onClick={() => setShowRules(true)}>Player rules</button>
             {onLeave ? <button type="button" className="tb-btn-new" onClick={onLeave}>Back</button> : null}
-            {onNew ? <button type="button" className="tb-btn-new" onClick={onNew}>New separate pot</button> : null}
-            {live && onComplete ? (
-              <button type="button" className="tb-btn-new" onClick={onComplete}>Complete</button>
-            ) : null}
-            {!live && onReopen ? (
-              <button type="button" className="tb-btn-new" onClick={onReopen}>Reopen</button>
-            ) : null}
-            {onRemove ? (
-              <button type="button" className="tb-btn-new cc-saved-remove" onClick={onRemove}>Remove</button>
-            ) : null}
+            <BreakAndRunMoreMenu
+              items={[
+                { label: 'Rename pot', onClick: () => setShowEditEvent(true) },
+                { label: 'Open phone display', onClick: () => openBreakAndRunPhone(tournament.id) },
+                onNew && { label: 'New separate pot', onClick: onNew },
+                live && onComplete && { label: 'Complete pot', onClick: onComplete },
+                !live && onReopen && { label: 'Reopen pot', onClick: onReopen },
+                onRemove && { label: 'Remove pot', onClick: onRemove, danger: true },
+              ]}
+            />
           </div>
         </div>
       </header>
 
-      <BreakAndRunPotBoard snapshot={snapshot} gameName="10-Ball" />
+      {sessionOpen ? null : sessionCard}
 
-      {live ? (
-        <div className="bnr-toolbar">
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => {
-              const first = tournament.players[0];
-              if (first?.id) onSetAtTable?.(first.id);
-              setRecordFor(first || true);
-            }}
-            disabled={!tournament.players.length || !sessionOpen}
-          >
-            Record turn
-          </button>
-          <button type="button" className="tb-btn-new" onClick={handleStartSessionClick}>
-            {sessionOpen ? 'Start next session' : 'Start session'}
-          </button>
-          {sessionOpen ? (
-            <button type="button" className="tb-btn-new" onClick={handleEndSession}>
-              End session
-            </button>
-          ) : null}
-          <p className="bnr-toolbar-note">
-            One continuous pot across nights. For the next play night use Start next session — money stays here.
-            No payout → unlimited rebuys this session. Cash out → done this session.
-            Ending a session asks which open turns to carry forward. The next session list only shows
-            carried players plus anyone who buys in with Add player.
-          </p>
-          <form className="bnr-add-pot" onSubmit={handleReserve}>
-            <label>
-              Reserve held ($)
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={reserveDraft}
-                onChange={(e) => setReserveDraft(e.target.value)}
-              />
-            </label>
-            <button type="submit" className="tb-btn-new">Set reserve</button>
-          </form>
-          <form className="bnr-add-pot" onSubmit={handleAddPot}>
-            <label>
-              Adjust pot ($)
-              <input
-                type="number"
-                step="0.01"
-                value={potDelta}
-                onChange={(e) => setPotDelta(e.target.value)}
-                placeholder="+ seed or − house"
-              />
-            </label>
-            <button type="submit" className="tb-btn-new">Apply</button>
-          </form>
-        </div>
+      {live && sessionOpen ? (
+        <BreakAndRunShooterCard
+          tournament={tournament}
+          calledMode={calledMode}
+          sessionOpen={sessionOpen}
+          onStartSession={openStartSessionModal}
+          onAddPlayer={() => setShowAdd(true)}
+          onPick={(id) => onSetAtTable?.(id)}
+          onStartAttempt={(id) => onStartAttempt?.(id)}
+          onCancelAttempt={() => onCancelAttempt?.()}
+          onPayRebuy={(id) => onPayRebuy?.(id)}
+          onRecord={(p) => setRecordFor(p || true)}
+        />
       ) : null}
 
-      <BreakAndRunSessionsPanel
-        sessions={tournament.sessions || []}
-        currentSessionId={tournament.currentSessionId}
-        onEdit={(row) => setSessionModal({ mode: 'edit', session: row })}
-      />
+      <BreakAndRunPotBoard snapshot={snapshot} onTopUpSeed={live ? onTopUpSeed : undefined}>
+        <BreakAndRunMoneyDetails
+          tournament={tournament}
+          snapshot={snapshot}
+          live={live}
+          onAddToPot={onAddToPot}
+          onSetReserve={onSetReserve}
+        />
+      </BreakAndRunPotBoard>
+
+      {sessionOpen ? sessionCard : null}
 
       <BreakAndRunPlayers
         tournament={tournament}
         live={live}
         onAdd={() => setShowAdd(true)}
         onPayRebuy={(p) => onPayRebuy?.(p.id)}
+        onStartAttempt={calledMode ? (p) => onStartAttempt?.(p.id) : undefined}
+        onCancelAttempt={calledMode ? onCancelAttempt : undefined}
         onRecord={(p) => {
           if (p?.id) onSetAtTable?.(p.id);
           setRecordFor(p);
@@ -272,7 +223,7 @@ export default function BreakAndRunPlay({
         onJoin={(player) => onJoinSession?.(player.id)}
       />
       {recordFor ? (
-        <BreakAndRunRecordModal
+        <RecordModal
           tournament={tournament}
           playerId={recordFor?.id}
           onCancel={() => setRecordFor(null)}
@@ -311,7 +262,12 @@ export default function BreakAndRunPlay({
           }}
         />
       ) : null}
-      {showRules ? <BreakAndRunRulesModal onClose={() => setShowRules(false)} /> : null}
+      {showRules ? (
+        <BreakAndRunRulesModal
+          payoutMode={calledMode ? 'called-ball' : 'flat'}
+          onClose={() => setShowRules(false)}
+        />
+      ) : null}
     </div>
   );
 }

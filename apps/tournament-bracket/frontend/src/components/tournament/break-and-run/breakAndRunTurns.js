@@ -74,7 +74,23 @@ export function normalizeTurn(turn) {
     scratchOnBreak,
     busted: turn.busted,
   });
+  const called = turn.payoutMode === 'called-ball'
+    ? {
+      payoutMode: 'called-ball',
+      calledOutcome: String(turn.calledOutcome || ''),
+      calledBalls: Math.max(0, Math.round(Number(turn.calledBalls) || 0)),
+      breakBalls: Math.max(0, Math.round(Number(turn.breakBalls) || 0)),
+      extraBalls: Math.max(0, Math.round(Number(turn.extraBalls) || 0)),
+      finalTen: Boolean(turn.finalTen),
+      bank: money(turn.bank),
+      earlyTenBonus: money(turn.earlyTenBonus),
+      lockedPot: money(turn.lockedPot),
+      normalBall: money(turn.normalBall),
+      luckyBall: money(turn.luckyBall),
+    }
+    : {};
   return {
+    ...called,
     id: turn.id || '',
     playerId: String(turn.playerId || ''),
     playerName: String(turn.playerName || ''),

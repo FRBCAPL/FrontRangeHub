@@ -23,10 +23,11 @@ export function payablePotCents(potCents, reserveCents = 0) {
   return Math.max(0, pot - clampReserveCents(pot, reserveCents));
 }
 
+/** Per-ball value in cents, rounded down to a whole dollar; leftover cents stay in the pot. */
 export function perBallCents(payableCents, ballCount = USAPL_BALL_COUNT) {
   const pot = Math.max(0, Math.round(Number(payableCents) || 0));
   const n = Math.max(1, Math.round(Number(ballCount) || USAPL_BALL_COUNT));
-  return Math.round(pot / n);
+  return Math.floor(pot / n / 100) * 100;
 }
 
 export function turnPayoutCents({

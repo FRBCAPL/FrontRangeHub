@@ -26,9 +26,31 @@ import {
   systemTurnDate,
 } from './breakAndRunTurns.js';
 import { ensureSessions, endSession as endSessionCore, startSession as startSessionCore, updateCurrentSession as updateCurrentSessionCore, updateSession as updateSessionCore } from './breakAndRunSessions.js';
-import { advanceAtTableAfterTurn, setAtTablePlayer as setAtTablePlayerCore } from './breakAndRunTable.js';
+import {
+  advanceAtTableAfterTurn,
+  moveToBackOfLine,
+  restoreLinePosition,
+  setAtTablePlayer as setAtTablePlayerCore,
+} from './breakAndRunTable.js';
+import {
+  CALLED_PAYOUT_MODE,
+  calledPotView,
+  isCalledPayoutMode,
+  normalizePayoutMode,
+} from './breakAndRunCalledPayout.js';
+import {
+  calledTurnResult,
+  isAttemptStarted,
+  lockedPotFor,
+  newAttemptLock,
+  sanitizeAttemptLock,
+  seedTopUpNeeded,
+  seedTotal,
+} from './breakAndRunCalledTurn.js';
 
 export { formatMoney, potView };
+export { isAttemptStarted, seedTopUpNeeded } from './breakAndRunCalledTurn.js';
+export { CALLED_PAYOUT_MODE, FLAT_PAYOUT_MODE, isCalledPayoutMode } from './breakAndRunCalledPayout.js';
 export { playersNeedingCarryDecision } from './breakAndRunSessions.js';
 export { isPlayerInSession, sessionPlayerIdList } from './breakAndRunTurns.js';
 
@@ -60,7 +82,7 @@ function clone(state) {
   return JSON.parse(JSON.stringify(state));
 }
 
-/** member = USAPL member or that day's tournament player (same fee). */
+/** member = Front Range Pool League member or a player in an event that day (same fee). */
 function entryKindOf(p) {
   const kind = String(p?.entryKind || '').toLowerCase();
   if (kind === 'open') return 'open';
@@ -110,7 +132,7 @@ function parseTurnDetails(ballsMadeOrDetails, extras = {}) {
 }
 
 function normalizePlayer(p) {
-  return {
+  const player = {
     id: p?.id || uid(),
     name: String(p?.name || '').trim(),
     email: p?.email || '',
@@ -123,10 +145,20 @@ function normalizePlayer(p) {
     won: money(p?.won),
     runs: Math.max(0, Math.round(Number(p?.runs) || 0)),
   };
+  if (p?.queuedAt != null && Number.isFinite(Number(p.queuedAt))) {
+    player.queuedAt = Number(p.queuedAt);
+  }
+  return player;
 }
 
 function findPlayer(state, playerId) {
   return (state.players || []).find((p) => String(p.id) === String(playerId)) || null;
+}
+
+/** Pot view for the pot's payout mode (called-ball rules or legacy flat per-ball). */
+function viewForState(state, pot) {
+  if (isCalledPayoutMode(state)) return calledPotView(pot);
+  return { payoutMode: 'flat', ...potView(pot, state.reserve, state.ballCount) };
 }
 
 function payoutArgs(state, potOverride) {
@@ -144,6 +176,7 @@ export function sanitizeBreakAndRun(raw) {
   const openFee = parseMoneyFee(raw.openFee ?? raw.buyIn, 20);
   const players = (raw.players || []).map(normalizePlayer).filter((p) => p.name);
   const status = raw.status === 'completed' || raw.status === 'ended' ? raw.status : 'in-progress';
+  const payoutMode = normalizePayoutMode(raw.payoutMode);
   const withMeta = {
     id: raw.id || uid(),
     kind: BREAK_AND_RUN_KIND,
@@ -159,7 +192,8 @@ export function sanitizeBreakAndRun(raw) {
     tournamentFee: memberFee,
     openFee,
     buyIn: openFee,
-    reserve: money(raw.reserve),
+    payoutMode,
+    reserve: payoutMode === CALLED_PAYOUT_MODE ? 0 : money(raw.reserve),
     continuingPot: true,
     players,
     startingSeed: money(raw.startingSeed ?? raw.startingLeftover),
@@ -174,6 +208,7 @@ export function sanitizeBreakAndRun(raw) {
       ? raw.pendingCarryIds.map((id) => String(id || '').trim()).filter(Boolean)
       : [],
     atTablePlayerId: String(raw.atTablePlayerId || '').trim(),
+    attemptLock: sanitizeAttemptLock(raw.attemptLock),
     grossCollected: money(raw.grossCollected),
     currentPot: money(raw.currentPot),
     totalPaidOut: money(raw.totalPaidOut),
@@ -205,7 +240,8 @@ function pushLedger(state, entry) {
 export function createBreakAndRun(config) {
   const memberFee = parseMoneyFee(config?.memberFee ?? config?.tournamentFee, 10);
   const openFee = parseMoneyFee(config?.openFee ?? config?.buyIn, 20);
-  const reserve = money(config?.reserve);
+  const payoutMode = normalizePayoutMode(config?.payoutMode);
+  const reserve = payoutMode === CALLED_PAYOUT_MODE ? 0 : money(config?.reserve);
   const players = (config?.players || []).map((p) => {
     const kind = entryKindOf(p);
     const fee = kind === 'member' ? memberFee : openFee;
@@ -231,6 +267,7 @@ export function createBreakAndRun(config) {
     ballCount: USAPL_BALL_COUNT,
     memberFee,
     openFee,
+    payoutMode,
     reserve,
     continuingPot: true,
     players,
@@ -309,6 +346,8 @@ export function recordBuyIn(state, playerId, count = 1, extras = {}) {
   next.grossCollected = money(next.grossCollected + amount);
   next.currentPot = money(next.currentPot + potAmount);
   const isRebuy = extras.type === 'rebuy' || extras.isRebuy;
+  // Rebuyers were already sent to the back when their $0 attempt was recorded.
+  const lineEntry = isRebuy ? {} : { prevQueuedAt: moveToBackOfLine(next, player.id) };
   pushLedger(next, {
     type: isRebuy ? 'rebuy' : 'buy-in',
     playerId: player.id,
@@ -316,6 +355,7 @@ export function recordBuyIn(state, playerId, count = 1, extras = {}) {
     amount,
     adminFee,
     potAmount,
+    ...lineEntry,
     date: extras.date || systemTurnDate(),
     sessionId: extras.sessionId || next.currentSessionId || '',
     turnId: extras.turnId || '',
@@ -430,6 +470,7 @@ export function addToPot(state, amount, note = '') {
 export function setReserve(state, reserveAmount) {
   const next = clone(sanitizeBreakAndRun(state));
   if (next.status !== 'in-progress') throw new Error('This pot is closed.');
+  if (isCalledPayoutMode(next)) throw new Error('This pot sets its own reserve: 20% once the pot is over $100.');
   const value = money(reserveAmount);
   if (value < 0) throw new Error('Reserve cannot be negative.');
   next.reserve = value;
@@ -455,19 +496,12 @@ export function recordTurn(state, playerId, ballsMadeOrDetails, extras = {}) {
   if (gate.isRebuyTurn && fee > 0 && !hasPendingRebuyPayment(next, player.id)) {
     throw new Error('Take the rebuy first so their entry fee is in the pot.');
   }
-  const outcome = details.outcome || 'cash-out';
-  const scratchOnBreak = outcome === 'scratch-break';
-  const busted = outcome === 'bust';
-  const earlyTen = scratchOnBreak || busted ? false : Boolean(details.earlyTen);
-  const payableBalls = scratchOnBreak
-    ? 0
-    : Math.max(0, Math.min(next.ballCount, details.payableBalls));
-  const paid = fromCents(turnPayoutCents({
-    ...payoutArgs(next),
-    payableBalls,
-    earlyTen,
-    outcome,
-  }));
+  const result = isCalledPayoutMode(next)
+    ? calledTurnResult(next, player.id, ballsMadeOrDetails && typeof ballsMadeOrDetails === 'object'
+      ? ballsMadeOrDetails
+      : { ...extras })
+    : flatTurnResult(next, details);
+  const { outcome, scratchOnBreak, busted, earlyTen, payableBalls, paid } = result;
   if (paid > 0) {
     next.currentPot = money(next.currentPot - paid);
     next.totalPaidOut = money(next.totalPaidOut + paid);
@@ -487,6 +521,7 @@ export function recordTurn(state, playerId, ballsMadeOrDetails, extras = {}) {
     scratchOnBreak,
     busted,
     outcome,
+    ...(result.fields || {}),
     amountWon: paid,
     attempt: gate.attempt,
     isRebuyTurn: gate.isRebuyTurn,
@@ -497,7 +532,53 @@ export function recordTurn(state, playerId, ballsMadeOrDetails, extras = {}) {
     `Turn ${turn.attempt}`,
     turn.isRebuyTurn ? 'rebuy' : 'first attempt',
     turnDate,
+    ...result.noteParts,
   ];
+  noteParts.push(paid > 0 ? `won ${formatMoney(paid)}` : 'no payout');
+  if (paid > 0) noteParts.push('finished for this session');
+  else noteParts.push('to the end of the line if they rebuy');
+  noteParts.push('remaining pot continues');
+  const lineEntry = paid > 0 ? {} : { prevQueuedAt: moveToBackOfLine(next, player.id) };
+  pushLedger(next, {
+    type: paid > 0 ? 'payout' : 'turn',
+    playerId: player.id,
+    playerName: player.name,
+    amount: paid,
+    ...lineEntry,
+    ballsMade: payableBalls,
+    payableBalls,
+    earlyTen,
+    scratchOnBreak,
+    busted,
+    outcome,
+    ...(result.fields || {}),
+    date: turnDate,
+    sessionId: turn.sessionId,
+    turnId: turn.id,
+    attempt: turn.attempt,
+    isRebuyTurn: turn.isRebuyTurn,
+    note: noteParts.join(' · '),
+  });
+  // The next shooter is locked only when the operator taps Start attempt.
+  next.attemptLock = null;
+  return advanceAtTableAfterTurn(next, player.id);
+}
+
+function flatTurnResult(state, details) {
+  const outcome = details.outcome || 'cash-out';
+  const scratchOnBreak = outcome === 'scratch-break';
+  const busted = outcome === 'bust';
+  const earlyTen = scratchOnBreak || busted ? false : Boolean(details.earlyTen);
+  const payableBalls = scratchOnBreak
+    ? 0
+    : Math.max(0, Math.min(state.ballCount, details.payableBalls));
+  const paid = fromCents(turnPayoutCents({
+    ...payoutArgs(state),
+    payableBalls,
+    earlyTen,
+    outcome,
+  }));
+  const noteParts = [];
   if (scratchOnBreak) noteParts.push('scratch on the break');
   else if (busted) {
     noteParts.push('bust · continued and missed');
@@ -507,34 +588,55 @@ export function recordTurn(state, playerId, ballsMadeOrDetails, extras = {}) {
     noteParts.push(`${payableBalls} payable ball${payableBalls === 1 ? '' : 's'}`);
     if (earlyTen) noteParts.push('called early 10 (2×)');
   }
-  noteParts.push(paid > 0 ? `won ${formatMoney(paid)}` : 'no payout');
-  if (paid > 0) noteParts.push('finished for this session');
-  noteParts.push('remaining pot continues');
+  return { outcome, scratchOnBreak, busted, earlyTen, payableBalls, paid, noteParts, fields: null };
+}
+
+/** Add league seed so a called-ball pot is back to at least $100. */
+export function topUpSeed(state) {
+  const next = clone(sanitizeBreakAndRun(state));
+  if (next.status !== 'in-progress') throw new Error('This pot is closed.');
+  const amount = seedTopUpNeeded(next);
+  if (amount <= 0) throw new Error('The pot is already at least $100.');
+  next.currentPot = money(next.currentPot + amount);
+  next.grossCollected = money(next.grossCollected + amount);
   pushLedger(next, {
-    type: paid > 0 ? 'payout' : 'turn',
-    playerId: player.id,
-    playerName: player.name,
-    amount: paid,
-    ballsMade: payableBalls,
-    payableBalls,
-    earlyTen,
-    scratchOnBreak,
-    busted,
-    outcome,
-    date: turnDate,
-    sessionId: turn.sessionId,
-    turnId: turn.id,
-    attempt: turn.attempt,
-    isRebuyTurn: turn.isRebuyTurn,
-    note: noteParts.join(' · '),
+    type: 'seed-top-up',
+    amount,
+    note: `League seed ${formatMoney(amount)} · pot back to ${formatMoney(next.currentPot)}`,
   });
-  return advanceAtTableAfterTurn(next, player.id);
+  return next;
 }
 
 export function setAtTablePlayer(state, playerId = '') {
   const clean = sanitizeBreakAndRun(state);
   if (!clean) throw new Error('No pot loaded.');
   return setAtTablePlayerCore(clean, playerId);
+}
+
+/**
+ * Operator taps Start attempt as the player breaks: puts them at the table and
+ * locks the payout values. Entries paid before this count; later ones go to the next attempt.
+ */
+export function startAttempt(state, playerId, now = new Date()) {
+  const next = clone(sanitizeBreakAndRun(state));
+  if (next.status !== 'in-progress') throw new Error('This pot is closed.');
+  const player = findPlayer(next, playerId);
+  if (!player) throw new Error('Pick a player.');
+  const gate = canTakeTurn(next, player.id);
+  if (!gate.ok) throw new Error(gate.reason);
+  if (gate.isRebuyTurn && playerEntryFee(next, player) > 0 && !hasPendingRebuyPayment(next, player.id)) {
+    throw new Error('Take the rebuy first so their entry fee is in the pot.');
+  }
+  next.atTablePlayerId = String(player.id);
+  next.attemptLock = newAttemptLock(next, player.id, now);
+  return next;
+}
+
+/** Undo a Start attempt tap (e.g. wrong player) without touching the ledger. */
+export function cancelAttempt(state) {
+  const next = clone(sanitizeBreakAndRun(state));
+  next.attemptLock = null;
+  return next;
 }
 
 export function recordRun(state, playerId, ballsMade, extras) {
@@ -547,6 +649,9 @@ export function undoLast(state) {
   const [last, ...rest] = next.ledger || [];
   if (!last || last.type === 'open' || last.type === 'seed') throw new Error('Nothing to undo.');
   const player = last.playerId ? findPlayer(next, last.playerId) : null;
+  if (player && Object.prototype.hasOwnProperty.call(last, 'prevQueuedAt')) {
+    restoreLinePosition(player, last.prevQueuedAt);
+  }
   if (last.type === 'buy-in' || last.type === 'rebuy') {
     const amount = money(last.amount);
     const potAmount = money(
@@ -572,7 +677,7 @@ export function undoLast(state) {
     } else if (player) {
       next.turns = (next.turns || []).slice(1);
     }
-  } else if (last.type === 'add-pot' || last.type === 'take') {
+  } else if (last.type === 'add-pot' || last.type === 'take' || last.type === 'seed-top-up') {
     const amount = money(last.amount);
     next.currentPot = money(next.currentPot - amount);
     if (amount > 0) next.grossCollected = money(next.grossCollected - amount);
@@ -609,6 +714,9 @@ export function previewTurn(state, playerId, details = {}) {
     rebuyFee = playerEntryFee(clean, player);
     pot = money(pot + entryAmountToPot(rebuyFee));
   }
+  if (isCalledPayoutMode(clean)) {
+    return previewCalledTurn(clean, playerId, details, { pot, rebuyFee, gate });
+  }
   const outcome = parsed.outcome || 'cash-out';
   const scratchOnBreak = outcome === 'scratch-break';
   const busted = outcome === 'bust';
@@ -621,7 +729,7 @@ export function previewTurn(state, playerId, details = {}) {
     outcome,
   }));
   return {
-    ...potView(pot, clean.reserve, clean.ballCount),
+    ...viewForState(clean, pot),
     rebuyFee,
     payout,
     potAfter: money(pot - payout),
@@ -630,9 +738,35 @@ export function previewTurn(state, playerId, details = {}) {
   };
 }
 
+function previewCalledTurn(clean, playerId, details, { pot, rebuyFee, gate }) {
+  const rebuyToPot = money(pot - clean.currentPot);
+  const lockedPot = money(lockedPotFor(clean, playerId) + rebuyToPot);
+  let result;
+  let error = '';
+  try {
+    result = calledTurnResult(clean, playerId, details, lockedPot);
+  } catch (err) {
+    error = err.message || 'Check the ball counts.';
+    result = calledTurnResult(clean, playerId, { outcome: 'bust' }, lockedPot);
+  }
+  return {
+    ...result.view,
+    ...result.fields,
+    lockedPot,
+    attemptStarted: isAttemptStarted(clean, playerId),
+    rebuyFee,
+    payout: error ? 0 : result.paid,
+    potAfter: money(pot - (error ? 0 : result.paid)),
+    isRebuyTurn: Boolean(gate.isRebuyTurn),
+    outcome: result.fields.calledOutcome,
+    error,
+  };
+}
+
 export function potAfterTurn(state, details = {}, playerId) {
   if (playerId) return previewTurn(state, playerId, details).potAfter;
   const clean = sanitizeBreakAndRun(state);
+  if (isCalledPayoutMode(clean)) return previewTurn(clean, '', details).potAfter;
   const parsed = parseTurnDetails(details, details);
   const scratchOnBreak = Boolean(parsed.scratchOnBreak);
   const paid = fromCents(turnPayoutCents({
@@ -652,11 +786,13 @@ export function potAfterRun(state, ballsMade) {
 
 export function eventSnapshot(state) {
   const clean = sanitizeBreakAndRun(state);
-  const view = potView(clean.currentPot, clean.reserve, clean.ballCount);
+  const view = viewForState(clean, clean.currentPot);
   const entryFees = totalEntryFees(clean.players);
   const adminFees = totalAdminFees(clean.players);
   return {
     ...view,
+    seedTotal: seedTotal(clean),
+    seedTopUpNeeded: seedTopUpNeeded(clean),
     memberFee: clean.memberFee,
     tournamentFee: clean.memberFee,
     openFee: clean.openFee,

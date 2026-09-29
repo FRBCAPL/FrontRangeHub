@@ -166,7 +166,7 @@ export default function BreakAndRunAddPlayerModal({
                   checked={entryKind === 'member'}
                   onChange={() => setEntryKind('member')}
                 />
-                USAPL member or that day’s tournament · {formatMoney(memberRate)}
+                Front Range Pool League member or in an event that day · {formatMoney(memberRate)}
               </label>
               <label className="cc-winner-pick">
                 <input

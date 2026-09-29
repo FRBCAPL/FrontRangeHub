@@ -1,0 +1,138 @@
+.bnr-session-card {
+  margin: 0 0 20px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.bnr-session-card.is-open {
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: rgba(12, 74, 110, 0.25);
+}
+
+.bnr-session-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.bnr-session-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+}
+
+.bnr-session-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.bnr-session-name {
+  margin: 4px 0 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.bnr-session-details {
+  margin: 4px 0 0;
+  color: #cbd5e1;
+}
+
+.bnr-session-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bnr-session-stats li {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  text-align: center;
+}
+
+.bnr-session-stats strong {
+  display: block;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.bnr-session-stats span {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.bnr-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.bnr-session-more {
+  margin-top: 12px;
+}
+
+.bnr-session-more summary {
+  cursor: pointer;
+  color: #cbd5e1;
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.bnr-session-help {
+  margin: 6px 0 0;
+  padding-left: 20px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.bnr-session-past {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bnr-session-past li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.bnr-session-past li div {
+  display: grid;
+}
+
+.bnr-session-past span {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+@media (max-width: 560px) {
+  .bnr-session-actions .bnr-op-btn {
+    flex: 1 1 100%;
+  }
+}

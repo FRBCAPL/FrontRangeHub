@@ -1,8 +1,11 @@
 import React from 'react';
 import { formatMoney } from './breakAndRunEngine.js';
 import { formatTurnDate } from './breakAndRunTurns.js';
+import { describeCalledTurn } from './breakAndRunCalledTurn.js';
 
 function turnDetail(turn) {
+  const called = describeCalledTurn(turn);
+  if (called) return called;
   if (turn.scratchOnBreak || turn.outcome === 'scratch-break') return 'Scratch on the break';
   if (turn.busted || turn.outcome === 'bust') {
     const balls = turn.payableBalls ?? turn.ballsMade;

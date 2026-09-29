@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatMoney } from './breakAndRunEngine.js';
 import {
   buildBreakAndRunTvBoard,
+  payoutRateTiles,
+  potBreakdownLine,
   resolveBreakAndRunDisplayEventId,
 } from './breakAndRunDisplay.js';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
@@ -111,12 +113,15 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
         </header>
         <section className="bnr-tv-pot">
           <p className="bnr-tv-kicker">Pot carries forward</p>
-          <p className="bnr-tv-pot-amount">{formatMoney(board.currentPot)}</p>
+          <p className="bnr-tv-pot-amount">{formatMoney(board.displayPot)}</p>
+          {potBreakdownLine(board) ? <p className="bnr-tv-pot-note">{potBreakdownLine(board)}</p> : null}
           <p className="bnr-tv-pot-note">Start a session on the operator tablet to go live.</p>
         </section>
       </div>
     );
   }
+
+  const rateTiles = payoutRateTiles(board);
 
   return (
     <div ref={ref} className={className}>
@@ -147,21 +152,16 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
       <section className="bnr-tv-pot" aria-label="Current pot">
         <div className="bnr-tv-pot-hero">
           <p className="bnr-tv-kicker">In the pot</p>
-          <p className="bnr-tv-pot-amount">{formatMoney(board.currentPot)}</p>
+          <p className="bnr-tv-pot-amount">{formatMoney(board.displayPot)}</p>
+          {potBreakdownLine(board) ? <p className="bnr-tv-pot-note">{potBreakdownLine(board)}</p> : null}
         </div>
-        <div className="bnr-tv-rates">
-          <div>
-            <span>Per ball</span>
-            <strong>{formatMoney(board.perBall)}</strong>
-          </div>
-          <div>
-            <span>Early 10</span>
-            <strong>{formatMoney(board.earlyTenPays)}</strong>
-          </div>
-          <div>
-            <span>Clear rack</span>
-            <strong>{formatMoney(board.fullRunPays)}</strong>
-          </div>
+        <div className={`bnr-tv-rates${rateTiles.length === 4 ? ' is-four' : ''}`}>
+          {rateTiles.map((tile) => (
+            <div key={tile.key} className={tile.highlight ? 'is-highlight' : undefined}>
+              <span>{tile.label}</span>
+              <strong>{formatMoney(tile.value)}</strong>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -180,6 +180,9 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
                 <span>
                   {board.atTable.isRebuy ? `Rebuy · try #${board.atTable.attempt}` : 'First try'}
                 </span>
+                {board.playingFor > 0 ? (
+                  <span className="bnr-tv-playing-for">Playing for {formatMoney(board.playingFor)}</span>
+                ) : null}
               </p>
             ) : (
               <p className="bnr-tv-empty">Waiting for the next shooter…</p>

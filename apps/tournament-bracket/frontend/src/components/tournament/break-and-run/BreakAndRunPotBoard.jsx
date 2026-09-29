@@ -1,55 +1,57 @@
 import React from 'react';
 import { formatMoney } from './breakAndRunEngine.js';
+import './BreakAndRunOperator.css';
 
-export default function BreakAndRunPotBoard({ snapshot, gameName }) {
+function rateChips(snapshot, called) {
+  return called
+    ? [
+      ['Called ball', snapshot.normalBall],
+      ['Lucky ball', snapshot.luckyBall],
+      ['Early 10 bonus', snapshot.earlyTenPays],
+      ['Final 10 wins', snapshot.finalTenPays, true],
+    ]
+    : [
+      ['Per ball', snapshot.perBall],
+      ['Called early 10', snapshot.earlyTenPays],
+      ['Clear the rack', snapshot.fullRunPays, true],
+    ];
+}
+
+/** Compact pot strip: what can be won + the live ball values. Bookkeeping goes in `children`. */
+export default function BreakAndRunPotBoard({ snapshot, onTopUpSeed, children }) {
   if (!snapshot) return null;
+  const called = snapshot.payoutMode === 'called-ball';
+  const headline = called ? snapshot.payablePot : snapshot.currentPot;
+  const subline = called
+    ? (snapshot.reserve > 0
+      ? `Total ${formatMoney(snapshot.currentPot)} · ${formatMoney(snapshot.reserve)} reserve held back`
+      : 'No reserve until the pot is over $100')
+    : `Payable ${formatMoney(snapshot.payablePot)} after reserve`;
+
   return (
-    <section className="bnr-board" aria-label="Pot">
-      <p className="bnr-kicker">{gameName} · Remaining pot continues</p>
-      <p className="bnr-pot">{formatMoney(snapshot.currentPot)}</p>
-      <p className="bnr-sub">
-        in the pot · payable {formatMoney(snapshot.payablePot)} after reserve
-      </p>
-      <p className="bnr-split">
-        Seed {formatMoney(snapshot.startingSeed)} (one-time)
-        {' · '}
-        Reserve {formatMoney(snapshot.reserve)}
-      </p>
-      <div className="bnr-money-row" aria-label="Fees collected">
-        <div>
-          <span>Entry fees collected</span>
-          <strong>{formatMoney(snapshot.entryFees)}</strong>
-        </div>
-        <div>
-          <span>Admin fees</span>
-          <strong>{formatMoney(snapshot.adminFees)}</strong>
-        </div>
-        <div>
-          <span>Entries</span>
-          <strong>{snapshot.buyInCount ?? 0}</strong>
-        </div>
+    <section className="bnr-pot-strip" aria-label="Pot">
+      <div className="bnr-pot-strip-head">
+        <span className="bnr-pot-strip-label">In the pot</span>
+        <strong className="bnr-pot-strip-amount">{formatMoney(headline)}</strong>
+        <span className="bnr-pot-strip-sub">{subline}</span>
       </div>
-      <p className="bnr-money-note">
-        Admin is $1 of each $10 entry and $2 of each $20 — held out of the pot (not paid on balls).
-      </p>
-      <div className="bnr-stats">
-        <div>
-          <span>Per ball</span>
-          <strong>{formatMoney(snapshot.perBall)}</strong>
+      {called && snapshot.seedTopUpNeeded > 0 && onTopUpSeed ? (
+        <div className="bnr-seed-alert" role="status">
+          <span>Pot is under $100.</span>
+          <button type="button" className="tb-btn-new" onClick={onTopUpSeed}>
+            Add {formatMoney(snapshot.seedTopUpNeeded)} seed
+          </button>
         </div>
-        <div>
-          <span>Called early 10</span>
-          <strong>{formatMoney(snapshot.earlyTenPays)}</strong>
-        </div>
-        <div>
-          <span>Clear the rack</span>
-          <strong>{formatMoney(snapshot.fullRunPays)}</strong>
-        </div>
-        <div>
-          <span>Paid out</span>
-          <strong>{formatMoney(snapshot.totalPaidOut)}</strong>
-        </div>
-      </div>
+      ) : null}
+      <ul className={`bnr-rate-chips${called ? ' is-four' : ''}`}>
+        {rateChips(snapshot, called).map(([label, value, highlight]) => (
+          <li key={label} className={highlight ? 'is-highlight' : undefined}>
+            <span>{label}</span>
+            <strong>{formatMoney(value)}</strong>
+          </li>
+        ))}
+      </ul>
+      {children}
     </section>
   );
 }

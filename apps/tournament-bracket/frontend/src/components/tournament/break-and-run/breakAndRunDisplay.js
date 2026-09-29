@@ -1,7 +1,15 @@
-import { eventSnapshot, formatMoney, formatTournamentDate, sanitizeBreakAndRun } from './breakAndRunEngine.js';
+import {
+  eventSnapshot,
+  formatMoney,
+  formatTournamentDate,
+  isAttemptStarted,
+  previewTurn,
+  sanitizeBreakAndRun,
+} from './breakAndRunEngine.js';
 import { formatSessionDetails, hasOpenBreakAndRunSession } from './breakAndRunSessions.js';
 import { currentSession, formatTurnDate } from './breakAndRunTurns.js';
 import { buildTableLineup } from './breakAndRunTable.js';
+import { describeCalledTurn } from './breakAndRunCalledTurn.js';
 import { tournamentFromEventRow } from '../cash-climb/cashClimbSaved.js';
 
 export const BREAK_AND_RUN_TV_BASE = '/tournament-bracket/break-and-run/tv';
@@ -85,6 +93,7 @@ export function tournamentFromDisplayRow(row) {
 
 function turnLine(turn) {
   if (!turn) return '';
+  if (turn.payoutMode === 'called-ball') return describeCalledTurn(turn);
   if (turn.scratchOnBreak || turn.outcome === 'scratch-break') return 'Scratch on the break';
   if (turn.busted || turn.outcome === 'bust') {
     const balls = turn.payableBalls ?? turn.ballsMade;
@@ -112,15 +121,60 @@ function mapTurn(turn) {
 
 function mapWinner(turn) {
   const balls = Number(turn.payableBalls ?? turn.ballsMade) || 0;
-  const ballLabel = balls > 0
+  let ballLabel = balls > 0
     ? `${balls} ball${balls === 1 ? '' : 's'}${turn.earlyTen ? ' · early 10' : ''}`
     : '';
+  if (turn.finalTen) ballLabel = 'Final 10';
+  else if (turn.earlyTen && !balls) ballLabel = 'Early 10';
   return {
     id: turn.id,
     playerName: turn.playerName,
     amountLabel: formatMoney(turn.amountWon),
     detail: turnLine(turn),
     ballLabel,
+    finalTen: Boolean(turn.finalTen),
+  };
+}
+
+/** Small note under the public pot amount, e.g. "+ $23 reserve held back · carries forward". */
+export function potBreakdownLine(board) {
+  if (!board || board.payoutMode !== 'called-ball' || !(board.reserve > 0)) return '';
+  return `+ ${formatMoney(board.reserve)} reserve held back · carries forward`;
+}
+
+/** Rate tiles for the public/TV boards: [{ key, label, value, highlight }]. */
+export function payoutRateTiles(board) {
+  if (!board) return [];
+  if (board.payoutMode === 'called-ball') {
+    return [
+      { key: 'called', label: 'Called ball', value: board.perBall },
+      { key: 'lucky', label: 'Lucky ball', value: board.luckyBall },
+      { key: 'early', label: 'Early 10 bonus', value: board.earlyTenPays },
+      { key: 'final', label: 'Final 10 wins', value: board.finalTenPays, highlight: true },
+    ];
+  }
+  return [
+    { key: 'per', label: 'Per ball', value: board.perBall },
+    { key: 'early', label: 'Early 10', value: board.earlyTenPays },
+    { key: 'full', label: 'Clear rack', value: board.fullRunPays },
+  ];
+}
+
+/** Values shown on every public display, for either payout mode. */
+function payoutFields(snapshot) {
+  const called = snapshot.payoutMode === 'called-ball';
+  return {
+    payoutMode: snapshot.payoutMode || 'flat',
+    currentPot: snapshot.currentPot,
+    /** Big "In the pot" number on public screens: what can be won (reserve excluded). */
+    displayPot: called ? snapshot.payablePot : snapshot.currentPot,
+    payablePot: snapshot.payablePot,
+    reserve: snapshot.reserve ?? 0,
+    perBall: snapshot.perBall,
+    luckyBall: snapshot.luckyBall ?? 0,
+    earlyTenPays: snapshot.earlyTenPays,
+    fullRunPays: snapshot.fullRunPays,
+    finalTenPays: snapshot.finalTenPays ?? snapshot.fullRunPays,
   };
 }
 
@@ -158,10 +212,7 @@ export function buildBreakAndRunPublicBoard(tournament) {
     potLive,
     live: sessionOpen,
     statusLabel: sessionOpen ? 'Live' : (potLive ? 'Between sessions' : 'Complete'),
-    currentPot: snapshot.currentPot,
-    perBall: snapshot.perBall,
-    earlyTenPays: snapshot.earlyTenPays,
-    fullRunPays: snapshot.fullRunPays,
+    ...payoutFields(snapshot),
     totalPaidOut: snapshot.totalPaidOut,
     startingSeed: snapshot.startingSeed,
     entryFees: snapshot.entryFees,
@@ -185,7 +236,7 @@ export function buildBreakAndRunTvBoard(tournament) {
       name: clean.name,
       sessionOpen: false,
       live: false,
-      currentPot: eventSnapshot(clean).currentPot,
+      ...payoutFields(eventSnapshot(clean)),
     };
   }
   const snapshot = eventSnapshot(clean);
@@ -198,6 +249,10 @@ export function buildBreakAndRunTvBoard(tournament) {
     .map(mapWinner);
   const turns = turnsInSession.slice(0, 12).map(mapTurn);
   const lineup = buildTableLineup(clean);
+  const atTableId = lineup.atTable?.id;
+  const playingFor = atTableId && isAttemptStarted(clean, atTableId)
+    ? previewTurn(clean, atTableId, { outcome: 'bust' }).payablePot
+    : 0;
   return {
     id: clean.id,
     name: clean.name,
@@ -206,16 +261,14 @@ export function buildBreakAndRunTvBoard(tournament) {
     sessionOpen: true,
     live: true,
     statusLabel: 'Live',
-    currentPot: snapshot.currentPot,
-    perBall: snapshot.perBall,
-    earlyTenPays: snapshot.earlyTenPays,
-    fullRunPays: snapshot.fullRunPays,
+    ...payoutFields(snapshot),
     sessionPaidOut,
     sessionAttempts,
     playerCount: snapshot.playerCount,
     turns,
     winners,
     atTable: lineup.atTable,
+    playingFor,
     upNext: lineup.upNext,
   };
 }

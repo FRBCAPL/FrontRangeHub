@@ -4,6 +4,7 @@ import BreakAndRunPlay from './BreakAndRunPlay.jsx';
 import {
   addPlayer,
   addToPot,
+  cancelAttempt,
   completeEvent,
   createBreakAndRun,
   endSession,
@@ -13,9 +14,12 @@ import {
   payRebuy,
   reopenEvent,
   sanitizeBreakAndRun,
+  seedTopUpNeeded,
   setAtTablePlayer,
   setReserve,
+  startAttempt,
   startSession,
+  topUpSeed,
   updateEventDetails,
   updateSession,
   undoLast,
@@ -89,6 +93,26 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
     }
   };
 
+  const handleRecord = (playerId, details) => {
+    try {
+      const next = recordTurn(tournament, playerId, details);
+      const need = seedTopUpNeeded(next);
+      if (need > 0) {
+        const ok = window.confirm(
+          `The pot is now ${formatMoney(next.currentPot)}.\n\n` +
+            `Add ${formatMoney(need)} league seed to bring it back to $100?`
+        );
+        if (ok) {
+          persist(topUpSeed(next));
+          return;
+        }
+      }
+      persist(next);
+    } catch (err) {
+      alert(err.message || 'Could not record the turn.');
+    }
+  };
+
   const handleStart = (config) => {
     const previous = loadBreakAndRun();
     if (previous && previous.status !== 'completed' && previous.status !== 'ended') {
@@ -136,8 +160,11 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
     <BreakAndRunPlay
       tournament={tournament}
       onAddPlayer={(player) => run((t) => addPlayer(t, player))}
-      onRecord={(playerId, details) => run((t) => recordTurn(t, playerId, details))}
+      onRecord={handleRecord}
+      onTopUpSeed={() => run((t) => topUpSeed(t))}
       onSetAtTable={(playerId) => run((t) => setAtTablePlayer(t, playerId))}
+      onStartAttempt={(playerId) => run((t) => startAttempt(t, playerId))}
+      onCancelAttempt={() => run((t) => cancelAttempt(t))}
       onPayRebuy={(playerId) => run((t) => payRebuy(t, playerId))}
       onJoinSession={(playerId) => run((t) => joinSession(t, playerId))}
       onAddToPot={(amount, note) => run((t) => addToPot(t, amount, note))}

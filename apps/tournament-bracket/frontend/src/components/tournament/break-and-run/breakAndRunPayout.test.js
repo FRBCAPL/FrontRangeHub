@@ -52,6 +52,14 @@ describe('USAPL 10-ball payout', () => {
     assert.equal(turnPayoutCents({ potCents: toCents(500), reserveCents: toCents(100), payableBalls: 0 }), 0);
   });
 
+  it('rounds the per-ball value down to a whole dollar', () => {
+    const view = potView(187.5, 0, 10);
+    assert.equal(view.perBall, 18);
+    assert.equal(view.earlyTenPays, 36);
+    assert.equal(view.fullRunPays, 180);
+    assert.equal(potView(9.99, 0, 10).perBall, 0);
+  });
+
   it('admin fee is $1 of $10 and $2 of $20', () => {
     assert.equal(adminFeeFromEntryAmount(10), 1);
     assert.equal(adminFeeFromEntryAmount(20), 2);

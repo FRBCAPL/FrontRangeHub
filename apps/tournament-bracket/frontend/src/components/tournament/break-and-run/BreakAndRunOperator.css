@@ -1,0 +1,310 @@
+/* Operator page: at-the-table card, compact pot strip, money details, More menu. */
+
+.bnr-op-btn {
+  min-height: 48px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.7);
+  color: #e0e7ff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bnr-op-btn:hover {
+  filter: brightness(1.15);
+}
+
+.bnr-op-btn.is-go {
+  border: none;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+}
+
+.bnr-op-btn.is-quiet {
+  min-height: 40px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: transparent;
+  color: #cbd5e1;
+}
+
+/* At the table */
+.bnr-shooter {
+  margin: 0 0 16px;
+  padding: 18px 18px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: rgba(6, 78, 59, 0.35);
+  text-align: center;
+}
+
+.bnr-shooter.is-shooting {
+  border: 2px solid #facc15;
+  background: rgba(6, 78, 59, 0.5);
+  box-shadow: 0 0 22px rgba(250, 204, 21, 0.3);
+}
+
+.bnr-shooter.is-idle {
+  border-style: dashed;
+}
+
+.bnr-shooter-kicker {
+  margin: 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #86efac;
+}
+
+.bnr-shooter-name {
+  margin: 2px 0 0;
+  font-size: clamp(1.8rem, 6vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.bnr-shooter-sub {
+  margin: 2px 0 0;
+  color: #94a3b8;
+}
+
+.bnr-shooter-status {
+  margin: 10px 0 0;
+  color: #cbd5e1;
+}
+
+.bnr-shooter-status.is-live {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fde68a;
+}
+
+.bnr-shooter-hint {
+  margin: 6px 0 0;
+  color: #cbd5e1;
+}
+
+.bnr-shooter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.bnr-shooter-next {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.bnr-shooter-next-label {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.bnr-shooter-next ol {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bnr-shooter-next button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.6);
+  color: #e0e7ff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bnr-shooter-next button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bnr-shooter-next small {
+  font-size: 0.7rem;
+  color: #fde68a;
+  text-transform: uppercase;
+}
+
+/* Pot strip */
+.bnr-pot-strip {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.bnr-pot-strip-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+}
+
+.bnr-pot-strip-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #86efac;
+}
+
+.bnr-pot-strip-amount {
+  font-size: clamp(1.8rem, 6vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+}
+
+.bnr-pot-strip-sub {
+  flex-basis: 100%;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.bnr-rate-chips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bnr-rate-chips.is-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bnr-rate-chips li {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  text-align: center;
+}
+
+.bnr-rate-chips li.is-highlight {
+  background: rgba(15, 23, 42, 0.6);
+  outline: 1px solid rgba(250, 204, 21, 0.6);
+}
+
+.bnr-rate-chips span {
+  display: block;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.bnr-rate-chips strong {
+  font-size: 1.15rem;
+  color: #e0e7ff;
+}
+
+.bnr-rate-chips li.is-highlight strong {
+  color: #fde68a;
+}
+
+/* Money details */
+.bnr-money-details {
+  margin-top: 12px;
+}
+
+.bnr-money-details summary {
+  cursor: pointer;
+  color: #cbd5e1;
+  font-weight: 600;
+  padding: 4px 0;
+}
+
+.bnr-money-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 10px 0 8px;
+}
+
+.bnr-money-grid div {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.bnr-money-grid dt {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.bnr-money-grid dd {
+  margin: 2px 0 0;
+  font-weight: 700;
+  color: #fde68a;
+}
+
+.bnr-money-forms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* More menu */
+.bnr-more {
+  position: relative;
+}
+
+.bnr-more-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  min-width: 200px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #0f172a;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.bnr-more-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #e0e7ff;
+  text-align: left;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.bnr-more-menu button:hover {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.bnr-more-menu button.is-danger {
+  color: #fca5a5;
+}
+
+@media (max-width: 560px) {
+  .bnr-rate-chips,
+  .bnr-rate-chips.is-four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

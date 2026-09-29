@@ -1,10 +1,11 @@
 import { formatMoney } from './breakAndRunMath.js';
+import { calledBasicRules } from './breakAndRunCalledRules.js';
 
-/** Public display cards — keep USAPL member wording on Entry. */
+/** Public "How it works" cards — short versions of the full rules. */
 export const USAPL_BREAK_AND_RUN_BASIC_RULES = [
   {
     title: 'Entry',
-    body: 'Open to everyone.\nUSAPL Members & Tournament players · member rate.\nEveryone else · open rate.\nOne attempt per entry.',
+    body: 'Open to everyone.\nFront Range Pool League Members & players in an event that day · member rate.\nEveryone else · open rate.\nOne attempt per entry — pay for one attempt at a time.',
   },
   {
     title: 'Press your luck',
@@ -16,17 +17,23 @@ export const USAPL_BREAK_AND_RUN_BASIC_RULES = [
   },
   {
     title: 'Rebuy',
-    body: 'No payout on the last try → rebuy again anytime this session.\nCash out → done for this session. Play again when the next session starts.',
+    body: 'No payout on the last try → rebuy anytime this session and go to the end of the line.\nCash out → done for this session. Play again when the next session starts.',
   },
 ];
 
 /** Fill Entry / Per ball cards with live fees and payout amounts. */
 export function basicRulesWithFees({
+  payoutMode,
   memberFee = 10,
   openFee = 20,
   perBall = 0,
+  luckyBall = 0,
   earlyTenPays = 0,
+  finalTenPays = 0,
 } = {}) {
+  if (payoutMode === 'called-ball') {
+    return calledBasicRules({ memberFee, openFee, perBall, luckyBall, earlyTenPays, finalTenPays });
+  }
   const member = formatMoney(memberFee);
   const open = formatMoney(openFee);
   const per = formatMoney(perBall);
@@ -55,27 +62,27 @@ export const USAPL_BREAK_AND_RUN_RULES = [
   },
   {
     title: 'Entry',
-    body: '$10: Front Range Pool League Members and players entered in a tournament that day. \n$20: Open entry for everyone else. \nEach entry receives one Break & Run attempt.',
+    body: '$10: Front Range Pool League Members and players entered in an event that day. \n$20: Open entry for everyone else. \nEach entry pays for one Break & Run attempt. \nYou may only pay for one attempt at a time — no buying multiple attempts in advance.', 
   },
   {
     title: 'Sessions',
-    body: 'A session is one play window — usually a night or event.\nDuring a session, a cash-out ends your play until the next session starts.\nA $0 result (scratch, bust, or no payout) still allows rebuys in the same session.\nEnding a session does not close the pot. The pot and reserve carry forward to the next session.',
+    body: 'A session is one play window(not a league session) — usually a night or event.\nDuring a session, a cash-out ends your play until the next session starts.\nA $0 result (scratch, bust, or no payout) still allows rebuys in the same session.\nEnding a session does not close the pot. The pot and reserve carry forward to the next session.',
   },
   {
     title: 'Rebuys',
-    body: 'If the last attempt paid $0 (scratch, bust, or zero balls), the player may rebuy as many times as they want in the current session — each rebuy is a new entry fee into the pot.\nIf the player cashes out and receives a payout, they are finished for that session and may play again when the next session starts.',
+    body: 'If the last attempt paid $0 (scratch, bust, or zero balls), the player may rebuy as many times as they want in the current session — each rebuy is a new entry fee into the pot.\nRebuys are allowed, but you pay for each new attempt only after your last one is finished. \nWhen you rebuy, you go to the end of the line for your next turn.,\nIf the player cashes out and receives a payout, they are finished for that session(no rebuys allowed) and may play again when the next session starts.',
   },
   {
     title: 'Pot & ball value',
-    body: 'The payable pot divided by 10 determines the value of each ball. \nEach payable ball is worth 1× the current per-ball value.\n Money remaining after a successful cash-out carries over.',
+    body: 'The payable pot divided by 10 determines the value of each ball, rounded down to the nearest whole dollar. \nEach payable ball is worth 1× the current per-ball value.\n Money remaining after a successful cash-out carries over.',
   },
   {
     title: 'Cash out or continue',
-    body: 'After earning at least one payable ball, the player may cash out or continue. \nCash out before the next shot to end the run and collect all payable balls earned. \nIf they continue, all money from that run stays at risk. \nA miss, scratch, or foul after continuing ends the run with no payout for that attempt. \nOnce the next shot begins, they cannot cash out the previous amount after that shot’s result.',
+    body: 'After earning at least one payable ball, the player must choose to either cash out or continue. \nCash out before the next shot to end the run and collect all payable balls earned. \nContinue, and all money from that run stays at risk. \nA miss, scratch, or foul after continuing ends the run with no payout for that attempt. \nOnce the next shot begins, players cannot cash out the previous amount after that shot’s result.',
   },
   {
     title: 'Legal break',
-    body: 'The cue ball must contact the 1-ball first, and a ball pocketed or at least 4 object balls must contact a rail.',
+    body: 'The cue ball must contact the 1-ball first, and a ball pocketed or at least 4 object balls must contact a rail. \n Failure to complete a legal break results in end of turn.',
   },
   {
     title: 'Balls on the break',
@@ -87,7 +94,7 @@ export const USAPL_BREAK_AND_RUN_RULES = [
   },
   {
     title: 'After the break',
-    body: 'All shots after the break are call shot. \nThe cue ball must contact the lowest-numbered ball on the table first. \nCombination shots are allowed if the lowest-numbered ball is contacted first. \nEach legally pocketed called ball adds 1× the current per-ball value. \nAfter each successful shot, the player may cash out or continue. \nA miss, scratch, or foul ends the run and forfeits the entire accumulated payout from that attempt.',
+    body: 'All shots after the break are call shot(ball & pocket). \nThe cue ball must contact the lowest-numbered ball on the table first. \nCombination shots are allowed if the lowest-numbered ball is contacted first. \nEach legally pocketed ball adds 1× the current per-ball value. \nAfter each successful shot, the player may cash out or continue. \nA miss, scratch, or foul ends the run and forfeits the entire accumulated payout from that attempt.',
   },
   {
     title: 'Early 10-ball',

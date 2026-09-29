@@ -4,6 +4,7 @@ import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import { eventSnapshot, formatMoney, todayDateInput } from './breakAndRunEngine.js';
 import { DEFAULT_EVENT_NAME, entryAmountToPot } from './breakAndRunPayout.js';
+import { CALLED_PAYOUT_MODE, SEED_FLOOR } from './breakAndRunCalledPayout.js';
 import '../CreateTournamentForm.css';
 import '../cash-climb/CashClimb.css';
 import './BreakAndRun.css';
@@ -17,8 +18,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
   const [tournamentDate, setTournamentDate] = useState(todayDateInput);
   const [memberFee, setMemberFee] = useState('10');
   const [openFee, setOpenFee] = useState('20');
-  const [startingSeed, setStartingSeed] = useState('');
-  const [reserve, setReserve] = useState('');
+  const [startingSeed, setStartingSeed] = useState(String(SEED_FLOOR));
   const [players, setPlayers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [showRules, setShowRules] = useState(false);
@@ -28,7 +28,6 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
     const mFee = Number(memberFee) || 0;
     const oFee = Number(openFee) || 0;
     const seed = Number(startingSeed) || 0;
-    const held = Number(reserve) || 0;
     const entries = players.reduce((sum, p) => sum + (isMemberEntry(p.entryKind) ? mFee : oFee), 0);
     return eventSnapshot({
       name,
@@ -36,7 +35,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
       memberFee: mFee,
       openFee: oFee,
       startingSeed: seed,
-      reserve: held,
+      payoutMode: CALLED_PAYOUT_MODE,
       players: players.map((p) => ({
         ...p,
         buyIns: 1,
@@ -46,7 +45,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
       grossCollected: entries + seed,
       totalPaidOut: 0,
     });
-  }, [name, tournamentDate, memberFee, openFee, startingSeed, reserve, players]);
+  }, [name, tournamentDate, memberFee, openFee, startingSeed, players]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -61,7 +60,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
       memberFee: Number(memberFee) || 0,
       openFee: Number(openFee) || 0,
       startingSeed: Number(startingSeed) || 0,
-      reserve: Number(reserve) || 0,
+      payoutMode: CALLED_PAYOUT_MODE,
       players,
     });
   };
@@ -71,7 +70,8 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
       <form className="create-tournament-form cc-setup bnr-setup" onSubmit={handleSubmit}>
         <BreakAndRunLogo size="header" className="bnr-setup-logo" />
         <p className="cc-setup-note">
-          Payable pot = pot − reserve, then ÷ 10 per ball. Reserve stays until you change it.
+          Once the pot is over $100, 20% is held in reserve (never dropping payable below $100). Called balls pay payable ÷ 10, lucky balls pay a discounted
+          value, and a Final 10 wins the payable pot. League seed keeps the pot at $100 or more.
           This starts the continuous Break & Run pot. For later nights, open this pot and use Start next session
           instead of creating another pot — that keeps payouts growing.
         </p>
@@ -100,7 +100,7 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
         </div>
         <div className="cc-field-row">
           <label>
-            Member / that day’s tournament ($)
+            League member / in an event that day ($)
             <input type="number" min="0" step="0.01" value={memberFee} onChange={(e) => setMemberFee(e.target.value)} />
           </label>
           <label>
@@ -117,32 +117,26 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
               step="0.01"
               value={startingSeed}
               onChange={(e) => setStartingSeed(e.target.value)}
-              placeholder="One-time"
-            />
-          </label>
-          <label>
-            Reserve held ($)
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={reserve}
-              onChange={(e) => setReserve(e.target.value)}
-              placeholder="Not paid on turns"
+              placeholder={String(SEED_FLOOR)}
             />
           </label>
         </div>
-        <p className="players-count">Seed is one-time. Reserve is withheld from ball math and can be changed later.</p>
+        <p className="players-count">
+          League seed money. Whenever a payout drops the pot under $100, you will be asked to top it back up.
+        </p>
         <div className="bnr-preview">
           <p><strong>Opening pot</strong> {formatMoney(preview.currentPot)}</p>
           <p>
             Payable {formatMoney(preview.payablePot)}
             {' · '}
             reserve {formatMoney(preview.reserve)}
+          </p>
+          <p>
+            Called ball {formatMoney(preview.normalBall)}
             {' · '}
-            per ball {formatMoney(preview.perBall)}
+            lucky ball {formatMoney(preview.luckyBall)}
             {' · '}
-            early 10 {formatMoney(preview.earlyTenPays)}
+            Final 10 wins {formatMoney(preview.finalTenPays)}
           </p>
           <p>Seed {formatMoney(preview.startingSeed)} · entries {formatMoney(preview.entryFees)}</p>
         </div>

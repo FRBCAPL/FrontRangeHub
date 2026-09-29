@@ -96,7 +96,7 @@ describe('break and run engine', () => {
   it('pays a partial run and keeps unpaid ball shares in the pot', () => {
     const start = pot(5);
     const after = recordTurn(start, start.players[0].id, { payableBalls: 3 });
-    assert.equal(after.totalPaidOut, 13.5);
+    assert.equal(after.totalPaidOut, 12);
     assert.equal(money(after.currentPot + after.totalPaidOut), 45);
   });
 
@@ -193,7 +193,7 @@ describe('break and run engine', () => {
       outcome: 'cash-out',
     });
     assert.equal(rebuy.turns[0].isRebuyTurn, true);
-    assert.equal(rebuy.turns[0].amountWon, 2.7);
+    assert.equal(rebuy.turns[0].amountWon, 2);
   });
 
   it('allows unlimited rebuys after unpaid attempts', () => {
@@ -233,7 +233,7 @@ describe('break and run engine', () => {
       outcome: 'cash-out',
     });
     assert.equal(tryTurn.turns[0].isRebuyTurn, true);
-    assert.equal(tryTurn.turns[0].amountWon, 2.7);
+    assert.equal(tryTurn.turns[0].amountWon, 2);
   });
 
   it('locks the player for the rest of the session after a cash-out payout', () => {

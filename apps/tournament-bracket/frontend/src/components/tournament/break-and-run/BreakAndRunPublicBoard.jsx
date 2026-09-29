@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { formatMoney } from './breakAndRunEngine.js';
-import { buildBreakAndRunPublicBoard } from './breakAndRunDisplay.js';
+import { buildBreakAndRunPublicBoard, payoutRateTiles, potBreakdownLine } from './breakAndRunDisplay.js';
 import { basicRulesWithFees } from './breakAndRunRules.js';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
@@ -25,11 +25,15 @@ function RuleBody({ text }) {
 export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', emptyMessage }) {
   const [showRules, setShowRules] = useState(false);
   const board = buildBreakAndRunPublicBoard(tournament);
+  const called = board?.payoutMode === 'called-ball';
   const basicRules = basicRulesWithFees({
+    payoutMode: board?.payoutMode,
     memberFee: board?.memberFee,
     openFee: board?.openFee,
     perBall: board?.perBall,
+    luckyBall: board?.luckyBall,
     earlyTenPays: board?.earlyTenPays,
+    finalTenPays: board?.finalTenPays,
   });
 
   if (!board) {
@@ -71,25 +75,22 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
 
       <section className="bnr-public-pot" aria-label="Current pot">
         <p className="bnr-public-pot-label">In the pot</p>
-        <p className="bnr-public-pot-value">{formatMoney(board.currentPot)}</p>
+        <p className="bnr-public-pot-value">{formatMoney(board.displayPot)}</p>
+        {potBreakdownLine(board) ? <p className="bnr-public-pot-sub">{potBreakdownLine(board)}</p> : null}
         <p className="bnr-public-pot-sub">
-          Cash out or continue · miss after continuing loses it all · early 10 pays 2×
+          {called
+            ? 'Clear the rack and make the Final 10: WIN THE POT'
+            : 'Cash out or continue · miss after continuing loses it all · early 10 pays 2×'}
         </p>
       </section>
 
       <div className="bnr-public-stats">
-        <div>
-          <span>Per ball</span>
-          <strong>{formatMoney(board.perBall)}</strong>
-        </div>
-        <div>
-          <span>Called early 10</span>
-          <strong>{formatMoney(board.earlyTenPays)}</strong>
-        </div>
-        <div>
-          <span>Clear the rack</span>
-          <strong>{formatMoney(board.fullRunPays)}</strong>
-        </div>
+        {payoutRateTiles(board).map((tile) => (
+          <div key={tile.key} className={tile.highlight ? 'is-highlight' : undefined}>
+            <span>{tile.label}</span>
+            <strong>{formatMoney(tile.value)}</strong>
+          </div>
+        ))}
         <div>
           <span>Paid out</span>
           <strong>{formatMoney(board.totalPaidOut)}</strong>
@@ -135,7 +136,12 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
         )}
       </section>
 
-      {showRules ? <BreakAndRunRulesModal onClose={() => setShowRules(false)} /> : null}
+      {showRules ? (
+        <BreakAndRunRulesModal
+          payoutMode={called ? 'called-ball' : 'flat'}
+          onClose={() => setShowRules(false)}
+        />
+      ) : null}
     </div>
   );
 }

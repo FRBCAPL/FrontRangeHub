@@ -194,6 +194,83 @@
   line-height: 1.35;
 }
 
+.bnr-seed-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  border-radius: 10px;
+  background: rgba(250, 204, 21, 0.1);
+  color: #fde68a;
+  font-weight: 600;
+}
+
+.bnr-players li.is-shooting {
+  border-color: #facc15;
+  background: rgba(6, 78, 59, 0.45);
+}
+
+.bnr-record-warning {
+  color: #fde68a;
+}
+
+.bnr-shooting-badge {
+  color: #fde68a;
+  font-weight: 700;
+}
+
+.bnr-counter-group {
+  display: grid;
+  gap: 8px;
+}
+
+.bnr-counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bnr-counter-label {
+  display: grid;
+  font-weight: 600;
+}
+
+.bnr-counter-label small {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.bnr-counter-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bnr-counter-controls button {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(15, 23, 42, 0.6);
+  color: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.bnr-counter-controls strong {
+  min-width: 1.5em;
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.bnr-record-error {
+  color: #fca5a5;
+}
+
 .bnr-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -385,6 +462,21 @@
 
 .bnr-row-actions .tb-btn-new {
   margin-top: 0;
+}
+
+.bnr-row-actions .bnr-start-attempt {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-weight: 700;
+  opacity: 1;
+  cursor: pointer;
+}
+
+.bnr-row-actions .bnr-start-attempt:hover {
+  filter: brightness(1.1);
 }
 
 .bnr-in {
