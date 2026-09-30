@@ -1,0 +1,146 @@
+﻿/* At-the-table card: shared by the TV and phone displays. */
+
+.bnr-tv-at-table {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: rgba(6, 78, 59, 0.45);
+}
+
+.bnr-tv-at-table .bnr-tv-kicker {
+  margin-bottom: 4px;
+}
+
+.bnr-tv-at-table-name {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vh, 2.4rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.bnr-tv-at-table-name span {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(0.85rem, 1.8vh, 1.1rem);
+  font-weight: 600;
+  color: #86efac;
+}
+
+.bnr-tv-at-table-name .bnr-tv-playing-for {
+  font-size: clamp(1rem, 2.4vh, 1.5rem);
+  font-weight: 800;
+  color: #fde68a;
+}
+
+.bnr-tv-at-table {
+  text-align: center;
+}
+
+/* Name stays centered in the card; the bank badge sits in the right-hand column. */
+.bnr-tv-at-table-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.bnr-tv-at-table-top .bnr-tv-at-table-name {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.bnr-tv-at-table-top .bnr-tv-bank-badge {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.bnr-tv-bank-badge {
+  flex-shrink: 0;
+  padding: clamp(8px, 1.4vh, 14px) clamp(14px, 2vw, 24px);
+  border-radius: 14px;
+  border: 2px solid #facc15;
+  background: rgba(250, 204, 21, 0.14);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.25);
+  text-align: center;
+}
+
+.bnr-tv-bank-badge span {
+  display: block;
+  color: #fde68a;
+  font-size: clamp(0.75rem, 1.5vh, 0.95rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bnr-tv-bank-badge strong {
+  display: block;
+  color: #fde68a;
+  font-size: clamp(2rem, 6vh, 3.6rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bnr-tv-at-table-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bnr-tv-at-table-stats div {
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(8, 17, 30, 0.55);
+  border: 1px solid rgba(134, 239, 172, 0.2);
+  text-align: center;
+}
+
+.bnr-tv-at-table-stats span {
+  display: block;
+  color: #94a3b8;
+  font-size: clamp(0.62rem, 1.2vh, 0.78rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bnr-tv-at-table-stats strong {
+  display: block;
+  margin-top: 2px;
+  color: #fff;
+  font-size: clamp(1rem, 2.4vh, 1.45rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.bnr-tv-at-table-stats div.is-highlight {
+  border-color: rgba(250, 204, 21, 0.6);
+  background: rgba(250, 204, 21, 0.12);
+}
+
+.bnr-tv-at-table-stats div.is-highlight strong {
+  color: #fde68a;
+}
+
+.bnr-tv-at-table-stats-note {
+  margin: 8px 0 0;
+  color: #86efac;
+  font-size: clamp(0.85rem, 1.8vh, 1.05rem);
+  font-weight: 600;
+}
+
+.bnr-tv.bnr-tv-is-tiny .bnr-tv-at-table-top {
+  grid-template-columns: 1fr;
+}
+
+.bnr-tv.bnr-tv-is-tiny .bnr-tv-at-table-top > * {
+  grid-column: 1;
+  justify-self: center;
+}

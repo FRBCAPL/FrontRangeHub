@@ -3,38 +3,18 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { formatMoney } from './breakAndRunEngine.js';
 import {
   buildBreakAndRunTvBoard,
+  liveFeedItems,
   payoutRateTiles,
   potBreakdownLine,
   resolveBreakAndRunDisplayEventId,
 } from './breakAndRunDisplay.js';
+import BreakAndRunAtTableCard from './BreakAndRunAtTableCard.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import BreakAndRunPublicTicker from './BreakAndRunPublicTicker.jsx';
 import useBreakAndRunLive from './useBreakAndRunLive.js';
 import useBreakAndRunTvFit, { breakAndRunTvFitClass } from './useBreakAndRunTvFit.js';
 import './BreakAndRunPublic.css';
 import './BreakAndRunTv.css';
-
-function liveFeedItems(turns, winners) {
-  const turnItems = turns
-    .filter((turn) => !(turn.amountWon > 0))
-    .map((turn) => ({
-      id: `t-${turn.id}`,
-      name: turn.playerName,
-      amount: turn.amountLabel,
-      detail: [turn.attemptLabel, turn.detail].filter(Boolean).join(' · '),
-      isMiss: true,
-    }));
-  const payoutItems = winners.map((win) => ({
-    id: `w-${win.id}`,
-    name: win.playerName,
-    amount: win.amountLabel,
-    detail: win.ballLabel || '',
-  }));
-  return [
-    ...(turnItems.length ? [{ heading: 'Recent turns' }, ...turnItems] : []),
-    ...(payoutItems.length ? [{ heading: 'Payouts' }, ...payoutItems] : []),
-  ];
-}
 
 function WinnerRows({ winners }) {
   if (!winners.length) {
@@ -71,27 +51,6 @@ function UpNextRows({ players }) {
         </li>
       ))}
     </ol>
-  );
-}
-
-function AtTableStats({ live }) {
-  if (!live) {
-    return <p className="bnr-tv-at-table-stats-note">Values lock when they break</p>;
-  }
-  const tiles = [
-    { key: 'called', label: 'Called ball', value: formatMoney(live.normalBall) },
-    { key: 'lucky', label: 'Lucky ball', value: formatMoney(live.luckyBall) },
-    { key: 'balls', label: 'Balls made', value: String(live.totalBalls) },
-  ];
-  return (
-    <div className="bnr-tv-at-table-stats" aria-label="Player stats">
-      {tiles.map((tile) => (
-        <div key={tile.key} className={tile.highlight ? 'is-highlight' : undefined}>
-          <span>{tile.label}</span>
-          <strong>{tile.value}</strong>
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -196,36 +155,7 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
 
       <div className="bnr-tv-columns">
         <section className="bnr-tv-card bnr-tv-card-session" aria-label="At the table">
-          <div className="bnr-tv-at-table">
-            <p className="bnr-tv-kicker">At the table</p>
-            {board.atTable ? (
-              <>
-                <div className="bnr-tv-at-table-top">
-                  <p className="bnr-tv-at-table-name">
-                    {board.atTable.name}
-                    <span>
-                      {board.atTable.isRebuy ? `Rebuy · try #${board.atTable.attempt}` : 'First try'}
-                    </span>
-                    {board.playingFor > 0 ? (
-                      <span className="bnr-tv-playing-for">Playing for {formatMoney(board.playingFor)}</span>
-                    ) : null}
-                  </p>
-                  {board.attemptLive ? (
-                    <div className="bnr-tv-bank-badge" aria-label="Bank">
-                      <span>Bank</span>
-                      <strong>{formatMoney(board.attemptLive.bank)}</strong>
-                    </div>
-                  ) : null}
-                </div>
-                {board.payoutMode === 'called-ball' ? <AtTableStats live={board.attemptLive} /> : null}
-              </>
-            ) : (
-              <p className="bnr-tv-at-table-name">
-                You Could Be Next
-                <span>Buy in to take a shot at the pot</span>
-              </p>
-            )}
-          </div>
+          <BreakAndRunAtTableCard board={board} />
 
           <div className={`bnr-tv-up-next-block${board.upNext.length ? '' : ' is-empty'}`}>
             <div className="bnr-tv-card-head">

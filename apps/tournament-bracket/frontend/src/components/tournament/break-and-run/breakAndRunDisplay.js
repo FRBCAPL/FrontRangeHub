@@ -139,6 +139,29 @@ function mapWinner(turn) {
   };
 }
 
+/** Live ticker feed for the TV/phone boards: $0 turns, then payouts, each under a tag. */
+export function liveFeedItems(turns = [], winners = []) {
+  const turnItems = turns
+    .filter((turn) => !(turn.amountWon > 0))
+    .map((turn) => ({
+      id: `t-${turn.id}`,
+      name: turn.playerName,
+      amount: turn.amountLabel,
+      detail: [turn.attemptLabel, turn.detail].filter(Boolean).join(' · '),
+      isMiss: true,
+    }));
+  const payoutItems = winners.map((win) => ({
+    id: `w-${win.id}`,
+    name: win.playerName,
+    amount: win.amountLabel,
+    detail: win.ballLabel || '',
+  }));
+  return [
+    ...(turnItems.length ? [{ heading: 'Recent turns' }, ...turnItems] : []),
+    ...(payoutItems.length ? [{ heading: 'Payouts' }, ...payoutItems] : []),
+  ];
+}
+
 /** Small note under the public pot amount, e.g. "+ $23 reserve held back · carries forward". */
 export function potBreakdownLine(board) {
   if (!board || board.payoutMode !== 'called-ball' || !(board.reserve > 0)) return '';

@@ -1,35 +1,97 @@
 import React, { useState } from 'react';
 import { formatMoney } from './breakAndRunEngine.js';
-import { buildBreakAndRunPublicBoard, payoutRateTiles, potBreakdownLine } from './breakAndRunDisplay.js';
+import {
+  buildBreakAndRunPublicBoard,
+  buildBreakAndRunTvBoard,
+  liveFeedItems,
+  payoutRateTiles,
+  potBreakdownLine,
+} from './breakAndRunDisplay.js';
 import { basicRulesWithFees } from './breakAndRunRules.js';
+import BreakAndRunAtTableCard from './BreakAndRunAtTableCard.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
 import BreakAndRunRuleText from './BreakAndRunRuleText.jsx';
 import BreakAndRunPublicTicker from './BreakAndRunPublicTicker.jsx';
 import './BreakAndRunPublic.css';
 import './BreakAndRun.css';
+import './BreakAndRunPhone.css';
 
-function RuleBody({ text }) {
+function RateTiles({ board }) {
   return (
-    <p>
-      <BreakAndRunRuleText text={text} />
-    </p>
+    <div className="bnr-phone-rates">
+      {payoutRateTiles(board).map((tile) => (
+        <div key={tile.key} className={tile.highlight ? 'is-highlight' : undefined}>
+          <span>{tile.label}</span>
+          <strong>{formatMoney(tile.value)}</strong>
+        </div>
+      ))}
+    </div>
   );
 }
 
+function UpNextList({ players }) {
+  if (!players.length) return <p className="bnr-phone-empty">No one else waiting.</p>;
+  return (
+    <ol className="bnr-phone-up-next">
+      {players.map((player, index) => (
+        <li key={player.id}>
+          <span className="bnr-phone-num">{index + 1}</span>
+          <div>
+            <strong>{player.name}</strong>
+            <span>{player.isRebuy ? `Rebuy · try #${player.attempt}` : 'First try'}</span>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function PayoutList({ winners, emptyText }) {
+  if (!winners.length) return <p className="bnr-phone-empty">{emptyText}</p>;
+  return (
+    <ul className="bnr-phone-payouts">
+      {winners.map((win) => (
+        <li key={win.id}>
+          <div>
+            <strong>{win.playerName}</strong>
+            <span>{win.detail}</span>
+          </div>
+          <em>{win.amountLabel}</em>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function HowItWorks({ board }) {
+  const rules = basicRulesWithFees({
+    payoutMode: board.payoutMode,
+    memberFee: board.memberFee,
+    openFee: board.openFee,
+    perBall: board.perBall,
+    luckyBall: board.luckyBall,
+    earlyTenPays: board.earlyTenPays,
+    finalTenPays: board.finalTenPays,
+  });
+  return (
+    <details className="bnr-phone-card bnr-phone-how">
+      <summary>How it works</summary>
+      {rules.map((rule) => (
+        <article key={rule.title}>
+          <h3>{rule.title}</h3>
+          <p><BreakAndRunRuleText text={rule.body} /></p>
+        </article>
+      ))}
+    </details>
+  );
+}
+
+/** Public board: same live picture as the TV; stacks on phones, splits into columns on wider screens. */
 export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', emptyMessage }) {
   const [showRules, setShowRules] = useState(false);
   const board = buildBreakAndRunPublicBoard(tournament);
-  const called = board?.payoutMode === 'called-ball';
-  const basicRules = basicRulesWithFees({
-    payoutMode: board?.payoutMode,
-    memberFee: board?.memberFee,
-    openFee: board?.openFee,
-    perBall: board?.perBall,
-    luckyBall: board?.luckyBall,
-    earlyTenPays: board?.earlyTenPays,
-    finalTenPays: board?.finalTenPays,
-  });
+  const tv = board?.live ? buildBreakAndRunTvBoard(tournament) : null;
 
   if (!board) {
     return (
@@ -41,95 +103,88 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
     );
   }
 
-  const shellState = board.live ? '' : (board.potLive ? ' is-between' : ' is-complete');
+  const live = Boolean(tv?.sessionOpen);
+  const called = board.payoutMode === 'called-ball';
+  const badge = live ? 'Live' : (board.potLive ? 'Between sessions' : 'Complete');
+  const winners = live ? tv.winners : board.winners;
 
   return (
-    <div className={`bnr-public bnr-public-${variant}${shellState}`}>
-      <header className="bnr-public-header">
-        <BreakAndRunLogo size="hero" className="bnr-public-logo" />
-        <h1>{board.name}</h1>
-        {board.sessionLabel ? (
-          <p className="bnr-public-session">{board.sessionLabel}</p>
-        ) : null}
-        {board.sessionVenue ? (
-          <p className="bnr-public-location">at {board.sessionVenue}</p>
-        ) : null}
-        <p className="bnr-public-meta">
-          {[
-            board.statusLabel || (board.live ? 'Live' : 'Complete'),
-            board.playerCount ? `${board.playerCount} player${board.playerCount === 1 ? '' : 's'}` : '',
-          ].filter(Boolean).join(' · ')}
-        </p>
-        <p className="bnr-public-entry-note">Entry is in person at the table</p>
-        <button type="button" className="bnr-public-rules-btn" onClick={() => setShowRules(true)}>
+    <div className={`bnr-phone${live ? '' : ' is-idle'}`}>
+      <header className="bnr-phone-header">
+        <BreakAndRunLogo size="header" className="bnr-phone-logo" />
+        <div className="bnr-phone-title">
+          <p className={`bnr-phone-badge${live ? '' : ' is-wait'}`}>{badge}</p>
+          <h1>{board.sessionLabel || board.name}</h1>
+          {board.sessionVenue ? <p className="bnr-phone-venue">at {board.sessionVenue}</p> : null}
+        </div>
+        <button type="button" className="bnr-phone-rules-btn" onClick={() => setShowRules(true)}>
           Full rules
         </button>
       </header>
 
-      <BreakAndRunPublicTicker winners={board.winners} />
+      {live ? (
+        <BreakAndRunPublicTicker
+          items={liveFeedItems(tv.turns, tv.winners)}
+          label="Live"
+          emptyText="Waiting for the first attempt…"
+        />
+      ) : null}
 
-      <section className="bnr-public-pot" aria-label="Current pot">
-        <p className="bnr-public-pot-label">In the pot</p>
-        <p className="bnr-public-pot-value">{formatMoney(board.displayPot)}</p>
-        {potBreakdownLine(board) ? <p className="bnr-public-pot-sub">{potBreakdownLine(board)}</p> : null}
-        <p className="bnr-public-pot-sub">
-          {called
-            ? 'Clear the rack and make the Final 10: WIN THE POT'
-            : 'Cash out or continue · miss after continuing loses it all · early 10 pays 2×'}
-        </p>
-      </section>
+      <div className="bnr-phone-body">
+        <div className="bnr-phone-main">
+          <section className="bnr-phone-card bnr-phone-pot" aria-label="Current pot">
+            <div className="bnr-phone-card-head">
+              <h2>{live ? 'This session' : 'Pot carries forward'}</h2>
+              {live ? (
+                <span>{tv.sessionAttempts} attempt{tv.sessionAttempts === 1 ? '' : 's'}</span>
+              ) : null}
+            </div>
+            <p className="bnr-phone-kicker">In the pot</p>
+            <p className="bnr-phone-pot-amount">{formatMoney(board.displayPot)}</p>
+            {potBreakdownLine(board) ? <p className="bnr-phone-note">{potBreakdownLine(board)}</p> : null}
+            {!live && board.potLive ? (
+              <p className="bnr-phone-note">The next session goes live when the operator starts it.</p>
+            ) : null}
+            <RateTiles board={board} />
+          </section>
 
-      <div className="bnr-public-stats">
-        {payoutRateTiles(board).map((tile) => (
-          <div key={tile.key} className={tile.highlight ? 'is-highlight' : undefined}>
-            <span>{tile.label}</span>
-            <strong>{formatMoney(tile.value)}</strong>
-          </div>
-        ))}
-        <div>
-          <span>Paid out</span>
-          <strong>{formatMoney(board.totalPaidOut)}</strong>
+          {live ? (
+            <>
+              <div className="bnr-phone-metrics" aria-label="Session snapshot">
+                <div><span>Attempts</span><strong>{tv.sessionAttempts}</strong></div>
+                <div><span>Paid out</span><strong>{formatMoney(tv.sessionPaidOut)}</strong></div>
+                <div><span>Players</span><strong>{tv.playerCount}</strong></div>
+              </div>
+
+              <section className="bnr-phone-card bnr-phone-table" aria-label="At the table">
+                <BreakAndRunAtTableCard board={tv} />
+                <div className="bnr-phone-card-head bnr-phone-sub-head">
+                  <h3>Up next</h3>
+                  <span>{tv.upNext.length}</span>
+                </div>
+                <UpNextList players={tv.upNext} />
+              </section>
+            </>
+          ) : null}
+        </div>
+
+        <div className="bnr-phone-side">
+          <section className="bnr-phone-card bnr-phone-payout-card" aria-label="Payouts">
+            <div className="bnr-phone-card-head">
+              <h2>Payouts</h2>
+              <span>{winners.length} winner{winners.length === 1 ? '' : 's'}</span>
+            </div>
+            <PayoutList
+              winners={winners}
+              emptyText={live ? 'No payouts yet this session.' : 'No payouts yet.'}
+            />
+          </section>
+
+          <HowItWorks board={board} />
         </div>
       </div>
 
-      <section className="bnr-public-basics" aria-label="Basic rules">
-        <div className="bnr-public-section-head bnr-public-section-head-centered">
-          <h2>How it works</h2>
-        </div>
-        <div className="bnr-public-rule-grid">
-          {basicRules.map((rule) => (
-            <article key={rule.title} className="bnr-public-rule-card">
-              <h3>{rule.title}</h3>
-              <RuleBody text={rule.body} />
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="bnr-public-turns" aria-label="Recent turns">
-        <div className="bnr-public-section-head">
-          <h2>Recent turns</h2>
-        </div>
-        {!board.turns.length ? (
-          <p className="bnr-public-empty-inline">No turns yet tonight.</p>
-        ) : (
-          <ol>
-            {board.turns.map((turn) => (
-              <li key={turn.id}>
-                <div>
-                  <strong>{turn.playerName}</strong>
-                  <span>
-                    {turn.dateLabel} · {turn.attemptLabel} · {turn.detail}
-                  </span>
-                </div>
-                <em className={turn.amountWon > 0 ? 'bnr-public-in' : 'bnr-public-out'}>
-                  {turn.amountLabel}
-                </em>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
+      <p className="bnr-phone-footer">Entry is in person at the table</p>
 
       {showRules ? (
         <BreakAndRunRulesModal
