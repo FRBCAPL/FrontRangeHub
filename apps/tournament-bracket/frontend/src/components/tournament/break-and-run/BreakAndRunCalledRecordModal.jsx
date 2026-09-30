@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { formatMoney, previewTurn, sessionPlayerIdList } from './breakAndRunEngine.js';
 import { canTakeTurn, playerDayStatus, systemTurnDate } from './breakAndRunTurns.js';
-import { BallsStep, BreakStep, EndStep, SummaryStep } from './BreakAndRunRecordSteps.jsx';
+import { BallsStep, BreakStep, EndStep, SummaryStep, VerifyStep } from './BreakAndRunRecordSteps.jsx';
 import './BreakAndRun.css';
 import './BreakAndRunWizard.css';
 
@@ -12,6 +12,17 @@ const STEP_LABELS = [
   ['balls', 'Balls'],
   ['summary', 'Save'],
 ];
+// Live-tracker flow: the break is already scored, so start at the result and verify the counts.
+const TRACKED_STEP_LABELS = [
+  ['end', 'Result'],
+  ['balls', 'Verify'],
+  ['summary', 'Save'],
+];
+
+function liveTallyFor(tournament, playerId) {
+  const lock = tournament?.attemptLock;
+  return lock?.tally && String(lock.playerId) === String(playerId) ? lock.tally : null;
+}
 
 const needsBalls = (outcome) => outcome === 'cash-out' || outcome === 'early-ten';
 
@@ -28,18 +39,35 @@ export default function BreakAndRunCalledRecordModal({
   const [breakResult, setBreakResult] = useState('');
   const [outcome, setOutcome] = useState('');
   const [counts, setCounts] = useState(EMPTY_COUNTS);
+  const [tracked, setTracked] = useState(false);
+  // Saves hand back a fresh array each time; compare the ids so a save doesn't wipe the wizard.
+  const sessionKey = sessionPlayerIdList(tournament).join(',');
 
   useEffect(() => {
     const enrolled = sessionPlayerIdList(tournament).map(String);
     const preferred = initialPlayerId && enrolled.includes(String(initialPlayerId))
       ? String(initialPlayerId)
       : (enrolled[0] || tournament?.players?.[0]?.id || '');
+    const liveTally = liveTallyFor(tournament, preferred);
     setPlayerId(preferred);
-    setStep('break');
-    setBreakResult('');
+    setTracked(Boolean(liveTally));
+    setStep(liveTally ? 'end' : 'break');
+    setBreakResult(liveTally ? 'legal' : '');
     setOutcome('');
-    setCounts(EMPTY_COUNTS);
-  }, [tournament?.id, tournament?.sessionPlayerIds, initialPlayerId]);
+    setCounts(liveTally ? { ...EMPTY_COUNTS, ...liveTally } : EMPTY_COUNTS);
+  }, [tournament?.id, sessionKey, initialPlayerId]);
+
+  const choosePlayer = (id) => {
+    setPlayerId(id);
+    onAtTableChange?.(id);
+    if (tracked && !liveTallyFor(tournament, id)) {
+      setTracked(false);
+      setStep('break');
+      setBreakResult('');
+      setOutcome('');
+      setCounts(EMPTY_COUNTS);
+    }
+  };
 
   if (!tournament) return null;
 
@@ -84,13 +112,21 @@ export default function BreakAndRunCalledRecordModal({
     else if (step === 'balls') setStep('summary');
   };
 
+  const firstStep = tracked ? 'end' : 'break';
+
   const goBack = () => {
     if (step === 'end') setStep('break');
     else if (step === 'balls') setStep('end');
     else if (step === 'summary') {
-      if (scratch) setStep('break');
+      if (scratch) setStep(firstStep);
       else setStep(needsBalls(outcome) ? 'balls' : 'end');
     }
+  };
+
+  const handleTrackedScratch = () => {
+    setBreakResult('scratch');
+    setOutcome('');
+    setStep('summary');
   };
 
   const handleBreakResult = (value) => {
@@ -102,6 +138,7 @@ export default function BreakAndRunCalledRecordModal({
   };
 
   const handleOutcome = (value) => {
+    if (tracked) setBreakResult('legal');
     setOutcome(value);
     setStep(needsBalls(value) ? 'balls' : 'summary');
   };
@@ -121,7 +158,7 @@ export default function BreakAndRunCalledRecordModal({
   };
 
   const skipped = (key) => key === 'balls' && (scratch || (outcome && !needsBalls(outcome)))
-    || (key === 'end' && scratch);
+    || (key === 'end' && scratch && !tracked);
 
   return (
     <div className="cc-modal-overlay" onClick={onCancel} role="dialog" aria-modal="true" aria-labelledby="bnr-run-title">
@@ -136,10 +173,7 @@ export default function BreakAndRunCalledRecordModal({
             <span className="bnr-rules-sr-only">Player</span>
             <select
               value={playerId}
-              onChange={(e) => {
-                setPlayerId(e.target.value);
-                onAtTableChange?.(e.target.value);
-              }}
+              onChange={(e) => choosePlayer(e.target.value)}
             >
               {selectable.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -148,7 +182,7 @@ export default function BreakAndRunCalledRecordModal({
           </label>
           <p className="cc-modal-meta">
             Called {formatMoney(preview.normalBall)} · lucky {formatMoney(preview.luckyBall)}
-            {` · payable ${formatMoney(preview.payablePot)}`}
+            {` · pot ${formatMoney(preview.payablePot)}`}
             {preview.rebuyFee ? ` · rebuy ${formatMoney(preview.rebuyFee)} in pot` : ''}
           </p>
           {!gate.ok ? <p className="cc-modal-meta bnr-record-error">{day.reason || gate.reason}</p> : null}
@@ -156,7 +190,7 @@ export default function BreakAndRunCalledRecordModal({
             <p className="cc-modal-meta bnr-record-warning">{notStartedWarning}</p>
           ) : null}
           <ol className="bnr-wizard-steps" aria-label="Steps">
-            {STEP_LABELS.map(([key, label]) => (
+            {(tracked ? TRACKED_STEP_LABELS : STEP_LABELS).map(([key, label]) => (
               <li
                 key={key}
                 className={[
@@ -180,8 +214,23 @@ export default function BreakAndRunCalledRecordModal({
               onBreakBalls={(value) => setCounts((prev) => ({ ...prev, breakBalls: value }))}
             />
           ) : null}
-          {step === 'end' ? <EndStep outcome={outcome} preview={preview} onOutcome={handleOutcome} /> : null}
-          {step === 'balls' ? (
+          {step === 'end' ? (
+            <EndStep
+              outcome={scratch ? '' : outcome}
+              preview={preview}
+              onOutcome={handleOutcome}
+              onScratch={tracked ? handleTrackedScratch : undefined}
+              scratchSelected={scratch}
+            />
+          ) : null}
+          {step === 'balls' && tracked ? (
+            <VerifyStep
+              counts={counts}
+              preview={preview}
+              onCount={(key, value) => setCounts((prev) => ({ ...prev, [key]: value }))}
+            />
+          ) : null}
+          {step === 'balls' && !tracked ? (
             <BallsStep
               counts={counts}
               preview={preview}
@@ -198,7 +247,7 @@ export default function BreakAndRunCalledRecordModal({
         </div>
 
         <div className="form-actions bnr-record-actions">
-          {step === 'break' ? (
+          {step === firstStep ? (
             <button type="button" className="btn-secondary" onClick={onCancel}>Cancel</button>
           ) : (
             <button type="button" className="btn-secondary" onClick={goBack}>Back</button>

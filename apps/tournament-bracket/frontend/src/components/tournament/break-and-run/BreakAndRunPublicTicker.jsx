@@ -6,34 +6,59 @@ function tickerSeconds(travelPx) {
   return Math.max(14, Math.min(90, travel / 55));
 }
 
-export default function BreakAndRunPublicTicker({ winners = [] }) {
+function winnerItems(winners) {
+  return winners.map((w) => ({
+    id: w.id,
+    name: w.playerName,
+    amount: w.amountLabel,
+    detail: w.ballLabel || '',
+  }));
+}
+
+/**
+ * Scrolling one-line crawl. Pass `winners` for the payouts ticker, or `items`
+ * ({ id, name, amount, detail, isMiss }) with a `label` for other feeds.
+ * An item with `heading` renders as an inline group tag instead of an entry.
+ */
+export default function BreakAndRunPublicTicker({
+  winners = [],
+  items: itemsProp,
+  label = 'Payouts',
+  emptyText = 'Waiting for the first payout',
+  className = '',
+}) {
   const maskRef = useRef(null);
-  const trackRef = useRef(null);
+  const runRef = useRef(null);
+  const [repeats, setRepeats] = useState(2);
   const [style, setStyle] = useState({
     animation: 'bnr-public-ticker-crawl 20s linear infinite',
     '--bnr-ticker-start': '100%',
     '--bnr-ticker-end': '-100%',
   });
 
+  const items = useMemo(() => itemsProp || winnerItems(winners), [itemsProp, winners]);
+
   const copy = useMemo(
-    () => winners
-      .map((w) => `${w.playerName} ${w.amountLabel}${w.ballLabel ? ` (${w.ballLabel})` : ''}`)
+    () => items
+      .map((it) => (it.heading
+        ? `${it.heading}:`
+        : `${it.name} ${it.amount}${it.detail ? ` (${it.detail})` : ''}`))
       .join(' · '),
-    [winners],
+    [items],
   );
 
   useLayoutEffect(() => {
     const measure = () => {
       const mask = maskRef.current;
-      const track = trackRef.current;
-      if (!mask || !track) return;
-      const startPx = Math.max(1, mask.clientWidth);
-      const endPx = Math.max(1, track.scrollWidth);
-      const duration = tickerSeconds(startPx + endPx);
+      const run = runRef.current;
+      if (!mask || !run) return;
+      const runPx = Math.max(1, run.offsetWidth);
+      // Enough back-to-back copies that the strip never shows empty space.
+      setRepeats(Math.max(2, Math.ceil(mask.clientWidth / runPx) + 1));
       setStyle({
-        animation: `bnr-public-ticker-crawl ${duration}s linear infinite`,
-        '--bnr-ticker-start': `${startPx}px`,
-        '--bnr-ticker-end': `-${endPx}px`,
+        animation: `bnr-public-ticker-crawl ${tickerSeconds(runPx)}s linear infinite`,
+        '--bnr-ticker-start': '0px',
+        '--bnr-ticker-end': `-${runPx}px`,
       });
     };
 
@@ -47,32 +72,47 @@ export default function BreakAndRunPublicTicker({ winners = [] }) {
       ro?.disconnect();
       window.removeEventListener('resize', measure);
     };
-  }, [winners, copy]);
+  }, [copy]);
 
-  if (!winners.length) {
+  const rootClass = `bnr-public-ticker${className ? ` ${className}` : ''}`;
+
+  if (!items.length) {
     return (
-      <footer className="bnr-public-ticker bnr-public-ticker-empty" aria-label="Recent payouts">
-        <span className="bnr-public-ticker-label">Payouts</span>
-        <p className="bnr-public-ticker-idle">Waiting for the first payout</p>
+      <footer className={`${rootClass} bnr-public-ticker-empty`} aria-label={label}>
+        <span className="bnr-public-ticker-label">{label}</span>
+        <p className="bnr-public-ticker-idle">{emptyText}</p>
       </footer>
     );
   }
 
   return (
-    <footer className="bnr-public-ticker" aria-label={`Recent payouts: ${copy}`}>
-      <span className="bnr-public-ticker-label">Payouts</span>
+    <footer className={rootClass} aria-label={`${label}: ${copy}`}>
+      <span className="bnr-public-ticker-label">{label}</span>
       <div className="bnr-public-ticker-mask" ref={maskRef}>
-        <div className="bnr-public-ticker-track" ref={trackRef} style={style}>
-          {winners.map((win, index) => (
-            <span className="bnr-public-ticker-item" key={`${win.id}-${index}`}>
-              {index > 0 ? (
-                <span className="bnr-public-ticker-sep" aria-hidden="true">
-                  <BreakAndRunTenBallSep />
+        <div className="bnr-public-ticker-track" style={style}>
+          {Array.from({ length: repeats }, (_, copyIndex) => (
+            <span
+              className="bnr-public-ticker-run"
+              key={copyIndex}
+              ref={copyIndex === 0 ? runRef : undefined}
+              aria-hidden={copyIndex > 0 ? 'true' : undefined}
+            >
+              {items.map((it, index) => (it.heading ? (
+                <span className="bnr-public-ticker-group" key={`h-${it.heading}-${index}`}>
+                  {it.heading}
                 </span>
-              ) : null}
-              <strong>{win.playerName}</strong>
-              <em>{win.amountLabel}</em>
-              {win.ballLabel ? <span className="bnr-public-ticker-detail">{win.ballLabel}</span> : null}
+              ) : (
+                <span className="bnr-public-ticker-item" key={`${it.id}-${index}`}>
+                  {index > 0 && !items[index - 1].heading ? (
+                    <span className="bnr-public-ticker-sep" aria-hidden="true">
+                      <BreakAndRunTenBallSep />
+                    </span>
+                  ) : null}
+                  <strong>{it.name}</strong>
+                  <em className={it.isMiss ? 'is-miss' : undefined}>{it.amount}</em>
+                  {it.detail ? <span className="bnr-public-ticker-detail">{it.detail}</span> : null}
+                </span>
+              )))}
             </span>
           ))}
         </div>

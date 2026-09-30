@@ -61,11 +61,20 @@ export function BreakStep({ breakResult, breakBalls, luckyBall, onBreakResult, o
   );
 }
 
-export function EndStep({ outcome, preview, onOutcome }) {
+export function EndStep({ outcome, preview, onOutcome, onScratch, scratchSelected = false }) {
   return (
     <div className="bnr-step">
       <h4>How did the attempt end?</h4>
       <div className="bnr-step-choices">
+        {onScratch ? (
+          <Choice
+            selected={scratchSelected}
+            onClick={onScratch}
+            title="Scratch / foul on the break"
+            hint="Attempt over · $0 · may rebuy"
+            tone="bad"
+          />
+        ) : null}
         <Choice
           selected={outcome === 'cash-out'}
           onClick={() => onOutcome('cash-out')}
@@ -120,6 +129,37 @@ export function BallsStep({ counts, preview, onCount }) {
         {counts.breakBalls ? ` · includes ${counts.breakBalls} from the break` : ''}
       </p>
       <p className="cc-modal-meta">A 10 that drops by accident is spotted and pays nothing — don’t count it.</p>
+    </div>
+  );
+}
+
+/** Check the live-tracker counts before saving; every counter stays editable. */
+export function VerifyStep({ counts, preview, onCount }) {
+  return (
+    <div className="bnr-step">
+      <h4>Check the balls from the live tracker</h4>
+      <Counter
+        label="Balls made on the break"
+        hint={`${formatMoney(preview.luckyBall)} each`}
+        value={counts.breakBalls}
+        onChange={(value) => onCount('breakBalls', value)}
+      />
+      <Counter
+        label="Called balls made"
+        hint={`${formatMoney(preview.normalBall)} each`}
+        value={counts.calledBalls}
+        onChange={(value) => onCount('calledBalls', value)}
+      />
+      <Counter
+        label="Extra balls that dropped"
+        hint={`on made called shots · ${formatMoney(preview.luckyBall)} each`}
+        value={counts.extraBalls}
+        onChange={(value) => onCount('extraBalls', value)}
+      />
+      <p className="bnr-step-bank">
+        Bank <strong>{formatMoney(preview.bank)}</strong>
+      </p>
+      <p className="cc-modal-meta">Fix any count that is off, then tap Next.</p>
     </div>
   );
 }

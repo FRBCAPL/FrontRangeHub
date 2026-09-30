@@ -1,4 +1,4 @@
-import { canTakeTurn } from './breakAndRunTurns.js';
+import { canTakeTurn, hasActiveEntry } from './breakAndRunTurns.js';
 
 function clone(state) {
   return JSON.parse(JSON.stringify(state));
@@ -30,12 +30,12 @@ export function restoreLinePosition(player, previous) {
   else player.queuedAt = previous;
 }
 
-/** Players who can still take a turn this session, in line order. */
+/** Players with a paid attempt waiting this session, in line order. */
 export function eligibleTablePlayers(state) {
   if (!state || state.status === 'completed' || state.status === 'ended') return [];
   return (state.players || [])
     .map((player, index) => ({ player, key: lineQueueKey(player, index) }))
-    .filter(({ player }) => canTakeTurn(state, player.id).ok)
+    .filter(({ player }) => hasActiveEntry(state, player.id))
     .sort((a, b) => a.key - b.key)
     .map(({ player }) => {
       const gate = canTakeTurn(state, player.id);

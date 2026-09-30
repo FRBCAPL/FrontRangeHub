@@ -722,6 +722,11 @@
   flex: 0 0 auto;
 }
 
+.bnr-add-tabs {
+  flex: 0 0 auto;
+  margin: 0 16px 12px;
+}
+
 .bnr-add-session-body {
   display: flex;
   flex-direction: column;

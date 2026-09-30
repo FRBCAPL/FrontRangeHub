@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatMoney } from './breakAndRunEngine.js';
+import { useShowMore } from './BreakAndRunActivityTabs.jsx';
 
 function when(at) {
   if (!at) return '';
@@ -8,20 +9,24 @@ function when(at) {
   return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
 
-export default function BreakAndRunLedger({ ledger = [], live, onUndo }) {
+export default function BreakAndRunLedger({ ledger = [], live, onUndo, embedded = false }) {
+  const { visible, toggle } = useShowMore(ledger);
+  const canUndo = live && ledger[0] && ledger[0].type !== 'open' && ledger[0].type !== 'seed' && onUndo;
   return (
     <section className="bnr-ledger" aria-label="Pot history">
-      <div className="bnr-section-head">
-        <h2>Pot history</h2>
-        {live && ledger[0] && ledger[0].type !== 'open' && ledger[0].type !== 'seed' && onUndo ? (
-          <button type="button" className="tb-btn-new" onClick={onUndo}>Undo last</button>
-        ) : null}
-      </div>
+      {embedded && !canUndo ? null : (
+        <div className="bnr-section-head">
+          {embedded ? <span /> : <h2>Pot history</h2>}
+          {canUndo ? (
+            <button type="button" className="tb-btn-new" onClick={onUndo}>Undo last</button>
+          ) : null}
+        </div>
+      )}
       {!ledger.length ? (
         <p className="cc-setup-note">Entries, seed, and payouts show up here as the night goes.</p>
       ) : (
         <ol>
-          {ledger.map((row) => (
+          {visible.map((row) => (
             <li key={row.id}>
               <div>
                 <strong>{row.playerName || row.note || row.type}</strong>
@@ -35,6 +40,7 @@ export default function BreakAndRunLedger({ ledger = [], live, onUndo }) {
           ))}
         </ol>
       )}
+      {toggle}
     </section>
   );
 }

@@ -16,6 +16,8 @@ export default function BreakAndRunRecordModal({
   const [payableBalls, setPayableBalls] = useState('0');
   const [earlyTen, setEarlyTen] = useState(false);
   const [bustBalls, setBustBalls] = useState('0');
+  // Saves hand back a fresh array each time; compare the ids so a save doesn't wipe the form.
+  const sessionKey = sessionPlayerIdList(tournament).join(',');
 
   useEffect(() => {
     const enrolled = sessionPlayerIdList(tournament).map(String);
@@ -27,7 +29,7 @@ export default function BreakAndRunRecordModal({
     setPayableBalls('0');
     setEarlyTen(false);
     setBustBalls('0');
-  }, [tournament?.id, tournament?.sessionPlayerIds, initialPlayerId]);
+  }, [tournament?.id, sessionKey, initialPlayerId]);
 
   if (!tournament) return null;
 

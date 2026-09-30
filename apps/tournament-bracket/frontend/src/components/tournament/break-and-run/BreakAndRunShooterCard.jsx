@@ -1,5 +1,6 @@
 import React from 'react';
-import { formatMoney, isAttemptStarted, previewTurn } from './breakAndRunEngine.js';
+import { attemptLiveView, formatMoney, isAttemptStarted, previewTurn } from './breakAndRunEngine.js';
+import BreakAndRunTallyPanel from './BreakAndRunTallyPanel.jsx';
 import { buildTableLineup } from './breakAndRunTable.js';
 import { playerDayStatus, systemTurnDate } from './breakAndRunTurns.js';
 import { playerFee } from './BreakAndRunPlayers.jsx';
@@ -25,6 +26,8 @@ export default function BreakAndRunShooterCard({
   onPick,
   onStartAttempt,
   onCancelAttempt,
+  onAdjustTally,
+  onSaveTurn,
   onPayRebuy,
   onRecord,
 }) {
@@ -47,7 +50,8 @@ export default function BreakAndRunShooterCard({
     return (
       <section className="bnr-shooter is-idle" aria-label="At the table">
         <p className="bnr-shooter-kicker">At the table</p>
-        <p className="bnr-shooter-hint">No one is waiting to shoot. Add a player to buy in.</p>
+        <p className="bnr-shooter-name">No active buy ins</p>
+        <p className="bnr-shooter-hint">Add a player or take a rebuy to open the table.</p>
         <div className="bnr-shooter-actions">
           <button type="button" className="bnr-op-btn is-go" onClick={onAddPlayer}>Add player</button>
         </div>
@@ -66,14 +70,25 @@ export default function BreakAndRunShooterCard({
 
   return (
     <section className={`bnr-shooter${started ? ' is-shooting' : ''}`} aria-label="At the table">
-      <p className="bnr-shooter-kicker">{chosen ? 'At the table' : 'Up first'}</p>
+      <p className="bnr-shooter-kicker">{chosen ? 'At the table' : 'Next up'}</p>
       <p className="bnr-shooter-name">{shooter.name}</p>
       <p className="bnr-shooter-sub">
         {shooter.isRebuy ? `Rebuy · try #${shooter.attempt}` : 'First try'}
       </p>
 
       {started ? (
-        <p className="bnr-shooter-status is-live">Shooting · playing for {formatMoney(payable)}</p>
+        <>
+          <p className="bnr-shooter-status is-live">Shooting · playing for {formatMoney(payable)}</p>
+          <BreakAndRunTallyPanel
+            key={tournament.attemptLock?.startedAt}
+            tournament={tournament}
+            playerId={shooter.id}
+            playerName={shooter.name}
+            live={attemptLiveView(tournament)}
+            onAdjust={onAdjustTally}
+            onSave={onSaveTurn}
+          />
+        </>
       ) : needsRebuy ? (
         <p className="bnr-shooter-status">Take the {formatMoney(fee)} rebuy before they break.</p>
       ) : calledMode ? (
@@ -93,18 +108,24 @@ export default function BreakAndRunShooterCard({
             Start attempt
           </button>
         ) : null}
-        <button
-          type="button"
-          className={`bnr-op-btn${started || !calledMode ? ' is-go' : ''}`}
-          onClick={() => onRecord(player)}
-        >
-          Record turn
-        </button>
         {started ? (
-          <button type="button" className="bnr-op-btn is-quiet" onClick={onCancelAttempt}>
-            Cancel start
+          <>
+            <button type="button" className="bnr-op-btn is-quiet" onClick={() => onRecord(player)}>
+              Use full form
+            </button>
+            <button type="button" className="bnr-op-btn is-quiet" onClick={onCancelAttempt}>
+              Cancel start
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className={`bnr-op-btn${calledMode ? '' : ' is-go'}`}
+            onClick={() => onRecord(player)}
+          >
+            Record turn
           </button>
-        ) : null}
+        )}
       </div>
 
       {upNext.length ? (

@@ -4,20 +4,15 @@ import { buildBreakAndRunPublicBoard, payoutRateTiles, potBreakdownLine } from '
 import { basicRulesWithFees } from './breakAndRunRules.js';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
+import BreakAndRunRuleText from './BreakAndRunRuleText.jsx';
 import BreakAndRunPublicTicker from './BreakAndRunPublicTicker.jsx';
 import './BreakAndRunPublic.css';
 import './BreakAndRun.css';
 
 function RuleBody({ text }) {
-  const lines = String(text || '').split(/\r?\n/);
   return (
     <p>
-      {lines.map((line, i) => (
-        <React.Fragment key={i}>
-          {i > 0 ? <br /> : null}
-          {line}
-        </React.Fragment>
-      ))}
+      <BreakAndRunRuleText text={text} />
     </p>
   );
 }

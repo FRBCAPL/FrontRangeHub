@@ -62,6 +62,7 @@ export default function BreakAndRunPlayers({
   onStartAttempt,
   onCancelAttempt,
   onAdd,
+  embedded = false,
 }) {
   const today = systemTurnDate();
   const session = currentSession(tournament);
@@ -71,12 +72,14 @@ export default function BreakAndRunPlayers({
 
   return (
     <section className="bnr-players" aria-label="This session">
-      <div className="bnr-section-head">
-        <h2>This session</h2>
-        {live && sessionOpen && onAdd ? (
-          <button type="button" className="tb-btn-new" onClick={onAdd}>Add player</button>
-        ) : null}
-      </div>
+      {embedded && !(live && sessionOpen && onAdd) ? null : (
+        <div className="bnr-section-head">
+          {embedded ? <span /> : <h2>This session</h2>}
+          {live && sessionOpen && onAdd ? (
+            <button type="button" className="tb-btn-new" onClick={onAdd}>Add player</button>
+          ) : null}
+        </div>
+      )}
       {!sessionOpen ? (
         <p className="cc-setup-note">
           Start a session to play. Carried-forward players load automatically; everyone else joins with Add player.
@@ -102,7 +105,7 @@ export default function BreakAndRunPlayers({
                   <strong>{p.name}</strong>
                   {started ? (
                     <span className="bnr-shooting-badge">
-                      Shooting · playing for {formatMoney(playingFor)} payable
+                      Shooting · playing for {formatMoney(playingFor)}
                     </span>
                   ) : null}
                   <span>

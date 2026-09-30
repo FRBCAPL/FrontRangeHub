@@ -14,23 +14,26 @@ import useBreakAndRunTvFit, { breakAndRunTvFitClass } from './useBreakAndRunTvFi
 import './BreakAndRunPublic.css';
 import './BreakAndRunTv.css';
 
-function TurnRows({ turns, emptyLabel }) {
-  if (!turns.length) {
-    return <p className="bnr-tv-empty">{emptyLabel}</p>;
-  }
-  return (
-    <ul className="bnr-tv-rows">
-      {turns.map((turn) => (
-        <li key={turn.id}>
-          <div className="bnr-tv-row-main">
-            <strong>{turn.playerName}</strong>
-            <span>{turn.attemptLabel} · {turn.detail}</span>
-          </div>
-          <em className={turn.amountWon > 0 ? 'is-pay' : 'is-miss'}>{turn.amountLabel}</em>
-        </li>
-      ))}
-    </ul>
-  );
+function liveFeedItems(turns, winners) {
+  const turnItems = turns
+    .filter((turn) => !(turn.amountWon > 0))
+    .map((turn) => ({
+      id: `t-${turn.id}`,
+      name: turn.playerName,
+      amount: turn.amountLabel,
+      detail: [turn.attemptLabel, turn.detail].filter(Boolean).join(' · '),
+      isMiss: true,
+    }));
+  const payoutItems = winners.map((win) => ({
+    id: `w-${win.id}`,
+    name: win.playerName,
+    amount: win.amountLabel,
+    detail: win.ballLabel || '',
+  }));
+  return [
+    ...(turnItems.length ? [{ heading: 'Recent turns' }, ...turnItems] : []),
+    ...(payoutItems.length ? [{ heading: 'Payouts' }, ...payoutItems] : []),
+  ];
 }
 
 function WinnerRows({ winners }) {
@@ -68,6 +71,27 @@ function UpNextRows({ players }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+function AtTableStats({ live }) {
+  if (!live) {
+    return <p className="bnr-tv-at-table-stats-note">Values lock when they break</p>;
+  }
+  const tiles = [
+    { key: 'called', label: 'Called ball', value: formatMoney(live.normalBall) },
+    { key: 'lucky', label: 'Lucky ball', value: formatMoney(live.luckyBall) },
+    { key: 'balls', label: 'Balls made', value: String(live.totalBalls) },
+  ];
+  return (
+    <div className="bnr-tv-at-table-stats" aria-label="Player stats">
+      {tiles.map((tile) => (
+        <div key={tile.key} className={tile.highlight ? 'is-highlight' : undefined}>
+          <span>{tile.label}</span>
+          <strong>{tile.value}</strong>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -122,6 +146,7 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
   }
 
   const rateTiles = payoutRateTiles(board);
+  const feedItems = liveFeedItems(board.turns, board.winners);
 
   return (
     <div ref={ref} className={className}>
@@ -150,6 +175,10 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
       </header>
 
       <section className="bnr-tv-pot" aria-label="Current pot">
+        <div className="bnr-tv-card-head bnr-tv-pot-head">
+          <h2>This session</h2>
+          <span>{board.sessionAttempts} attempt{board.sessionAttempts === 1 ? '' : 's'}</span>
+        </div>
         <div className="bnr-tv-pot-hero">
           <p className="bnr-tv-kicker">In the pot</p>
           <p className="bnr-tv-pot-amount">{formatMoney(board.displayPot)}</p>
@@ -166,42 +195,44 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
       </section>
 
       <div className="bnr-tv-columns">
-        <section className="bnr-tv-card bnr-tv-card-session" aria-label="This session">
-          <div className="bnr-tv-card-head">
-            <h2>This session</h2>
-            <span>{board.sessionAttempts} attempt{board.sessionAttempts === 1 ? '' : 's'}</span>
-          </div>
-
+        <section className="bnr-tv-card bnr-tv-card-session" aria-label="At the table">
           <div className="bnr-tv-at-table">
             <p className="bnr-tv-kicker">At the table</p>
             {board.atTable ? (
-              <p className="bnr-tv-at-table-name">
-                {board.atTable.name}
-                <span>
-                  {board.atTable.isRebuy ? `Rebuy · try #${board.atTable.attempt}` : 'First try'}
-                </span>
-                {board.playingFor > 0 ? (
-                  <span className="bnr-tv-playing-for">Playing for {formatMoney(board.playingFor)}</span>
-                ) : null}
-              </p>
+              <>
+                <div className="bnr-tv-at-table-top">
+                  <p className="bnr-tv-at-table-name">
+                    {board.atTable.name}
+                    <span>
+                      {board.atTable.isRebuy ? `Rebuy · try #${board.atTable.attempt}` : 'First try'}
+                    </span>
+                    {board.playingFor > 0 ? (
+                      <span className="bnr-tv-playing-for">Playing for {formatMoney(board.playingFor)}</span>
+                    ) : null}
+                  </p>
+                  {board.attemptLive ? (
+                    <div className="bnr-tv-bank-badge" aria-label="Bank">
+                      <span>Bank</span>
+                      <strong>{formatMoney(board.attemptLive.bank)}</strong>
+                    </div>
+                  ) : null}
+                </div>
+                {board.payoutMode === 'called-ball' ? <AtTableStats live={board.attemptLive} /> : null}
+              </>
             ) : (
-              <p className="bnr-tv-empty">Waiting for the next shooter…</p>
+              <p className="bnr-tv-at-table-name">
+                You Could Be Next
+                <span>Buy in to take a shot at the pot</span>
+              </p>
             )}
           </div>
 
-          <div className="bnr-tv-up-next-block">
+          <div className={`bnr-tv-up-next-block${board.upNext.length ? '' : ' is-empty'}`}>
             <div className="bnr-tv-card-head">
               <h3>Up next</h3>
               <span>{board.upNext.length}</span>
             </div>
             <UpNextRows players={board.upNext} />
-          </div>
-
-          <div className="bnr-tv-recent-block">
-            <div className="bnr-tv-card-head">
-              <h3>Recent turns</h3>
-            </div>
-            <TurnRows turns={board.turns} emptyLabel="Waiting for the first attempt…" />
           </div>
         </section>
         <section className="bnr-tv-card" aria-label="Session winners">
@@ -214,7 +245,11 @@ function TvBoard({ tournament, emptyMessage, onClose }) {
       </div>
 
       <div className="bnr-tv-ticker-wrap">
-        <BreakAndRunPublicTicker winners={board.winners} />
+        <BreakAndRunPublicTicker
+          items={feedItems}
+          label="Live"
+          emptyText="Waiting for the first attempt…"
+        />
       </div>
     </div>
   );

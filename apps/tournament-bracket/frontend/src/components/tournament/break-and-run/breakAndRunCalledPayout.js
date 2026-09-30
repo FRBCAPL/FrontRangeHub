@@ -2,16 +2,16 @@ import { fromCents, toCents } from './breakAndRunMath.js';
 
 /**
  * Called-ball payout rules (Front Range Pool League working ruleset):
- * - Reserve is 20% of the pot once it is over $100; payable = pot − reserve.
+ * - No reserve: the payable pot is the whole pot, rounded down to a whole dollar.
  * - Called ball = payable ÷ 10, rounded down to a whole dollar.
  * - Lucky ball (break / extra balls on a made called shot) = 25% of a called ball,
  *   rounded down to $5, min $5, max $20, never more than a called ball.
  * - Early 10 = bank + 25% of (payable − bank), rounded down to a whole dollar.
- * - Final 10 = the whole payable pot, rounded down to a whole dollar.
+ * - Final 10 = the whole payable pot. League seed tops the pot back up to $100.
  */
 export const FLAT_PAYOUT_MODE = 'flat';
 export const CALLED_PAYOUT_MODE = 'called-ball';
-export const CALLED_RESERVE_RATE = 0.2;
+export const CALLED_RESERVE_RATE = 0;
 export const SEED_FLOOR = 100;
 /** Ordinary balls before the 10 (1–9). */
 export const ORDINARY_BALL_COUNT = 9;
@@ -41,21 +41,14 @@ export function isCalledPayoutMode(stateOrMode) {
   return normalizePayoutMode(mode) === CALLED_PAYOUT_MODE;
 }
 
-/**
- * No reserve at $100 or less. Above $100 the reserve is 20% of the pot, but never
- * more than the amount over $100 — so the payable pot never shrinks as the pot grows.
- * Reserve and payable are whole dollars; leftover cents stay in the pot and carry forward.
- */
-export function calledReserveCents(potCents) {
-  const pot = cents(potCents);
-  const floor = SEED_FLOOR * DOLLAR;
-  if (pot <= floor) return 0;
-  return wholeDollarsDown(Math.min(pot * CALLED_RESERVE_RATE, pot - floor));
+/** Called-ball pots hold nothing back; kept so views and saved turns still carry a reserve field. */
+export function calledReserveCents() {
+  return 0;
 }
 
+/** Whole dollars only; leftover cents stay in the pot and carry forward. */
 export function calledPayableCents(potCents) {
-  const pot = cents(potCents);
-  return wholeDollarsDown(Math.max(0, pot - calledReserveCents(pot)));
+  return wholeDollarsDown(potCents);
 }
 
 export function normalBallCents(payableCents) {

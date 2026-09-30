@@ -7,6 +7,7 @@ import BreakAndRunMoreMenu from './BreakAndRunMoreMenu.jsx';
 import BreakAndRunPlayers from './BreakAndRunPlayers.jsx';
 import BreakAndRunTurns from './BreakAndRunTurns.jsx';
 import BreakAndRunLedger from './BreakAndRunLedger.jsx';
+import BreakAndRunActivityTabs from './BreakAndRunActivityTabs.jsx';
 import BreakAndRunRecordModal from './BreakAndRunRecordModal.jsx';
 import BreakAndRunCalledRecordModal from './BreakAndRunCalledRecordModal.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
@@ -17,7 +18,13 @@ import BreakAndRunSessionCard from './BreakAndRunSessionCard.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import { currentSession } from './breakAndRunTurns.js';
 import { playersNeedingCarryDecision } from './breakAndRunSessions.js';
-import { eventSnapshot, formatMoney, formatTournamentDate, isCalledPayoutMode } from './breakAndRunEngine.js';
+import {
+  eventSnapshot,
+  formatMoney,
+  formatTournamentDate,
+  isCalledPayoutMode,
+  sessionPlayerIdList,
+} from './breakAndRunEngine.js';
 import { openBreakAndRunPhone, openBreakAndRunTv } from './breakAndRunDisplay.js';
 import '../cash-climb/CashClimb.css';
 import '../cash-climb/CashClimbSavedEvents.css';
@@ -30,6 +37,7 @@ export default function BreakAndRunPlay({
   onSetAtTable,
   onStartAttempt,
   onCancelAttempt,
+  onAdjustTally,
   onPayRebuy,
   onJoinSession,
   onAddToPot,
@@ -181,6 +189,8 @@ export default function BreakAndRunPlay({
           onPick={(id) => onSetAtTable?.(id)}
           onStartAttempt={(id) => onStartAttempt?.(id)}
           onCancelAttempt={() => onCancelAttempt?.()}
+          onAdjustTally={(key, delta) => onAdjustTally?.(key, delta)}
+          onSaveTurn={(playerId, details) => onRecord(playerId, details)}
           onPayRebuy={(id) => onPayRebuy?.(id)}
           onRecord={(p) => setRecordFor(p || true)}
         />
@@ -198,20 +208,43 @@ export default function BreakAndRunPlay({
 
       {sessionOpen ? sessionCard : null}
 
-      <BreakAndRunPlayers
-        tournament={tournament}
-        live={live}
-        onAdd={() => setShowAdd(true)}
-        onPayRebuy={(p) => onPayRebuy?.(p.id)}
-        onStartAttempt={calledMode ? (p) => onStartAttempt?.(p.id) : undefined}
-        onCancelAttempt={calledMode ? onCancelAttempt : undefined}
-        onRecord={(p) => {
-          if (p?.id) onSetAtTable?.(p.id);
-          setRecordFor(p);
-        }}
+      <BreakAndRunActivityTabs
+        tabs={[
+          {
+            id: 'players',
+            label: 'Players',
+            count: sessionPlayerIdList(tournament).length,
+            render: () => (
+              <BreakAndRunPlayers
+                embedded
+                tournament={tournament}
+                live={live}
+                onAdd={() => setShowAdd(true)}
+                onPayRebuy={(p) => onPayRebuy?.(p.id)}
+                onStartAttempt={calledMode ? (p) => onStartAttempt?.(p.id) : undefined}
+                onCancelAttempt={calledMode ? onCancelAttempt : undefined}
+                onRecord={(p) => {
+                  if (p?.id) onSetAtTable?.(p.id);
+                  setRecordFor(p);
+                }}
+              />
+            ),
+          },
+          {
+            id: 'turns',
+            label: 'Turns',
+            count: (tournament.turns || []).length,
+            render: () => <BreakAndRunTurns embedded turns={tournament.turns} />,
+          },
+          {
+            id: 'ledger',
+            label: 'Pot history',
+            render: () => (
+              <BreakAndRunLedger embedded ledger={tournament.ledger} live={live} onUndo={onUndo} />
+            ),
+          },
+        ]}
       />
-      <BreakAndRunTurns turns={tournament.turns} />
-      <BreakAndRunLedger ledger={tournament.ledger} live={live} onUndo={onUndo} />
 
       <BreakAndRunAddPlayerModal
         isOpen={showAdd}

@@ -150,6 +150,11 @@
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
 }
 
+.bnr-tv-pot-head {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
 .bnr-tv-kicker {
   margin: 0;
   text-transform: uppercase;
@@ -220,7 +225,7 @@
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) clamp(16rem, 28vw, 26rem);
   gap: clamp(10px, 1.6vw, 18px);
 }
 
@@ -293,6 +298,116 @@
   color: #fde68a;
 }
 
+.bnr-tv-at-table {
+  text-align: center;
+}
+
+/* Name stays centered in the card; the bank badge sits in the right-hand column. */
+.bnr-tv-at-table-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.bnr-tv-at-table-top .bnr-tv-at-table-name {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.bnr-tv-at-table-top .bnr-tv-bank-badge {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.bnr-tv-bank-badge {
+  flex-shrink: 0;
+  padding: clamp(8px, 1.4vh, 14px) clamp(14px, 2vw, 24px);
+  border-radius: 14px;
+  border: 2px solid #facc15;
+  background: rgba(250, 204, 21, 0.14);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.25);
+  text-align: center;
+}
+
+.bnr-tv-bank-badge span {
+  display: block;
+  color: #fde68a;
+  font-size: clamp(0.75rem, 1.5vh, 0.95rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bnr-tv-bank-badge strong {
+  display: block;
+  color: #fde68a;
+  font-size: clamp(2rem, 6vh, 3.6rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bnr-tv-at-table-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.bnr-tv-at-table-stats div {
+  min-width: 0;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(8, 17, 30, 0.55);
+  border: 1px solid rgba(134, 239, 172, 0.2);
+  text-align: center;
+}
+
+.bnr-tv-at-table-stats span {
+  display: block;
+  color: #94a3b8;
+  font-size: clamp(0.62rem, 1.2vh, 0.78rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bnr-tv-at-table-stats strong {
+  display: block;
+  margin-top: 2px;
+  color: #fff;
+  font-size: clamp(1rem, 2.4vh, 1.45rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.bnr-tv-at-table-stats div.is-highlight {
+  border-color: rgba(250, 204, 21, 0.6);
+  background: rgba(250, 204, 21, 0.12);
+}
+
+.bnr-tv-at-table-stats div.is-highlight strong {
+  color: #fde68a;
+}
+
+.bnr-tv-at-table-stats-note {
+  margin: 8px 0 0;
+  color: #86efac;
+  font-size: clamp(0.85rem, 1.8vh, 1.05rem);
+  font-weight: 600;
+}
+
+.bnr-tv.bnr-tv-is-tiny .bnr-tv-at-table-top {
+  grid-template-columns: 1fr;
+}
+
+.bnr-tv.bnr-tv-is-tiny .bnr-tv-at-table-top > * {
+  grid-column: 1;
+  justify-self: center;
+}
+
 .bnr-tv-up-next-block,
 .bnr-tv-recent-block {
   min-height: 0;
@@ -303,9 +418,21 @@
 }
 
 .bnr-tv-up-next-block {
-  flex: 0 1 auto;
-  max-height: 42%;
-  margin-bottom: 8px;
+  flex: 1 1 auto;
+}
+
+.bnr-tv-up-next-block .bnr-tv-card-head {
+  justify-content: center;
+}
+
+.bnr-tv-up-next-block.is-empty {
+  flex-shrink: 0;
+  max-height: none;
+}
+
+.bnr-tv-up-next-block.is-empty .bnr-tv-empty {
+  margin: 2px 0 4px;
+  text-align: center;
 }
 
 .bnr-tv-card-session {
@@ -324,6 +451,8 @@
 .bnr-tv-up-next li {
   display: flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 10px;
   padding: clamp(5px, 0.9vh, 10px) 2px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.14);

@@ -70,8 +70,8 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
       <form className="create-tournament-form cc-setup bnr-setup" onSubmit={handleSubmit}>
         <BreakAndRunLogo size="header" className="bnr-setup-logo" />
         <p className="cc-setup-note">
-          Once the pot is over $100, 20% is held in reserve (never dropping payable below $100). Called balls pay payable ÷ 10, lucky balls pay a discounted
-          value, and a Final 10 wins the payable pot. League seed keeps the pot at $100 or more.
+          The whole pot is in play. Called balls pay pot ÷ 10, lucky balls pay a discounted value,
+          and a Final 10 wins the pot. League seed keeps the pot at $100 or more.
           This starts the continuous Break & Run pot. For later nights, open this pot and use Start next session
           instead of creating another pot — that keeps payouts growing.
         </p>
@@ -126,11 +126,6 @@ export default function BreakAndRunSetup({ onStart, onCancel }) {
         </p>
         <div className="bnr-preview">
           <p><strong>Opening pot</strong> {formatMoney(preview.currentPot)}</p>
-          <p>
-            Payable {formatMoney(preview.payablePot)}
-            {' · '}
-            reserve {formatMoney(preview.reserve)}
-          </p>
           <p>
             Called ball {formatMoney(preview.normalBall)}
             {' · '}

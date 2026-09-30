@@ -9,7 +9,7 @@ import {
 import { formatSessionDetails, hasOpenBreakAndRunSession } from './breakAndRunSessions.js';
 import { currentSession, formatTurnDate } from './breakAndRunTurns.js';
 import { buildTableLineup } from './breakAndRunTable.js';
-import { describeCalledTurn } from './breakAndRunCalledTurn.js';
+import { attemptLiveView, describeCalledTurn } from './breakAndRunCalledTurn.js';
 import { tournamentFromEventRow } from '../cash-climb/cashClimbSaved.js';
 
 export const BREAK_AND_RUN_TV_BASE = '/tournament-bracket/break-and-run/tv';
@@ -93,7 +93,10 @@ export function tournamentFromDisplayRow(row) {
 
 function turnLine(turn) {
   if (!turn) return '';
-  if (turn.payoutMode === 'called-ball') return describeCalledTurn(turn);
+  if (turn.payoutMode === 'called-ball') {
+    if (turn.busted) return turn.bank > 0 ? `Bust · ${formatMoney(turn.bank)}` : 'Bust';
+    return describeCalledTurn(turn);
+  }
   if (turn.scratchOnBreak || turn.outcome === 'scratch-break') return 'Scratch on the break';
   if (turn.busted || turn.outcome === 'bust') {
     const balls = turn.payableBalls ?? turn.ballsMade;
@@ -268,6 +271,7 @@ export function buildBreakAndRunTvBoard(tournament) {
     turns,
     winners,
     atTable: lineup.atTable,
+    attemptLive: atTableId && isAttemptStarted(clean, atTableId) ? attemptLiveView(clean) : null,
     playingFor,
     upNext: lineup.upNext,
   };

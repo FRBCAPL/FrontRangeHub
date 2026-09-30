@@ -7,6 +7,7 @@ import {
   endSession,
   joinSession,
   payRebuy,
+  playersNeedingCarryDecision,
   recordTurn,
   setReserve,
   startSession,
@@ -306,6 +307,21 @@ describe('break and run engine', () => {
     assert.ok(canTakeTurn(state, keepId).ok);
     assert.equal(canTakeTurn(state, dropId).ok, false);
     assert.match(canTakeTurn(state, dropId).reason, /not in this session/i);
+  });
+
+  it('only asks to carry players with a paid entry not yet played', () => {
+    let state = pot(2);
+    const bustedId = String(state.players[0].id);
+    const waitingId = String(state.players[1].id);
+    state = recordTurn(state, bustedId, { payableBalls: 0, outcome: 'bust' });
+    assert.deepEqual(playersNeedingCarryDecision(state).map((p) => String(p.id)), [waitingId]);
+    const unpaid = endSession(state, { carryIds: [bustedId, waitingId] });
+    assert.deepEqual(unpaid.pendingCarryIds, [waitingId]);
+    state = payRebuy(state, bustedId);
+    assert.deepEqual(
+      playersNeedingCarryDecision(state).map((p) => String(p.id)).sort(),
+      [bustedId, waitingId].sort(),
+    );
   });
 
   it('updates current session details without resetting eligibility', () => {

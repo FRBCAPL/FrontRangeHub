@@ -187,6 +187,26 @@ export function canTakeTurn(state, playerId) {
   return { ok: true, attempt: nextAttempt, isRebuyTurn: true };
 }
 
+function rebuyFee(state, playerId) {
+  const player = (state?.players || []).find((p) => String(p.id) === String(playerId));
+  const kind = String(player?.entryKind || '').toLowerCase();
+  const member = kind === 'member' || kind === 'tournament' || kind === 'usapl';
+  return member
+    ? Number(state?.memberFee ?? state?.tournamentFee) || 0
+    : Number(state?.openFee) || 0;
+}
+
+/**
+ * A paid attempt waiting to be shot: an unplayed first try, a paid rebuy, or a rebuy
+ * on a free pot. A $0 result with no rebuy paid yet is not in line.
+ */
+export function hasActiveEntry(state, playerId) {
+  const gate = canTakeTurn(state, playerId);
+  if (!gate.ok) return false;
+  if (!gate.isRebuyTurn) return true;
+  return hasPendingRebuyPayment(state, playerId) || rebuyFee(state, playerId) <= 0;
+}
+
 export function playerDayStatus(state, playerId, date, now = new Date()) {
   const sid = sessionIdOf(state);
   const chron = playerTurnsChronological(state?.turns, playerId, sid);

@@ -15,33 +15,24 @@ import {
 const dollars = (valueCents) => valueCents / 100;
 
 describe('called-ball payout rules', () => {
-  it('no reserve at $100 or less; above $100 it never drops payable below $100', () => {
-    assert.equal(dollars(calledPayableCents(toCents(90))), 90);
-    assert.equal(dollars(calledPayableCents(toCents(100))), 100);
-    assert.equal(dollars(calledPayableCents(toCents(110))), 100);
-    assert.equal(dollars(calledPayableCents(toCents(125))), 100);
-    assert.equal(dollars(calledPayableCents(toCents(150))), 120);
-  });
-
-  it('holds 20% of the pot as reserve on bigger pots', () => {
-    assert.equal(dollars(calledPayableCents(toCents(625))), 500);
+  it('holds no reserve: the whole pot is payable', () => {
+    for (const pot of [90, 100, 150, 625, 2000]) {
+      assert.equal(dollars(calledPayableCents(toCents(pot))), pot);
+    }
     const view = calledPotView(625);
-    assert.equal(view.reserve, 125);
-    assert.equal(view.payablePot, 500);
+    assert.equal(view.reserve, 0);
+    assert.equal(view.payablePot, 625);
+    assert.equal(view.finalTenPays, 625);
   });
 
-  it('rounds reserve and payable down to whole dollars; cents stay in the pot', () => {
-    const small = calledPotView(123.45);
-    assert.equal(small.reserve, 23);
-    assert.equal(small.payablePot, 100);
-    assert.equal(small.currentPot, 123.45);
-    const big = calledPotView(637.9);
-    assert.equal(big.reserve, 127);
-    assert.equal(big.payablePot, 510);
+  it('payable is whole dollars; cents stay in the pot', () => {
+    const view = calledPotView(123.45);
+    assert.equal(view.payablePot, 123);
+    assert.equal(view.currentPot, 123.45);
     assert.equal(calledPotView(99.6).payablePot, 99);
   });
 
-  it('called ball is payable ÷ 10 rounded down to a whole dollar', () => {
+  it('called ball is pot ÷ 10 rounded down to a whole dollar', () => {
     assert.equal(dollars(normalBallCents(toCents(200))), 20);
     assert.equal(dollars(normalBallCents(toCents(537))), 53);
     assert.equal(dollars(normalBallCents(toCents(1000))), 100);
@@ -64,9 +55,9 @@ describe('called-ball payout rules', () => {
     assert.equal(dollars(luckyBallCents(0)), 0);
   });
 
-  it('called ball plus one extra ball on a $500 payable pot adds $60', () => {
+  it('called ball plus one extra ball on a $500 pot adds $60', () => {
     const result = calledTurnPayoutCents({
-      potCents: toCents(625),
+      potCents: toCents(500),
       outcome: 'cash-out',
       calledBalls: 1,
       extraBalls: 1,
@@ -77,7 +68,7 @@ describe('called-ball payout rules', () => {
   it('early 10 pays bank + 25% of what is left', () => {
     assert.equal(dollars(earlyTenBonusCents(toCents(500), toCents(130))), 92);
     const result = calledTurnPayoutCents({
-      potCents: toCents(625),
+      potCents: toCents(500),
       outcome: 'early-ten',
       calledBalls: 2,
       breakBalls: 3,
@@ -86,21 +77,20 @@ describe('called-ball payout rules', () => {
     assert.equal(dollars(result.payoutCents), 222);
   });
 
-  it('early 10 with an empty bank pays 25% of payable', () => {
-    const result = calledTurnPayoutCents({ potCents: toCents(625), outcome: 'early-ten' });
+  it('early 10 with an empty bank pays 25% of the pot', () => {
+    const result = calledTurnPayoutCents({ potCents: toCents(500), outcome: 'early-ten' });
     assert.equal(dollars(result.payoutCents), 125);
   });
 
-  it('final 10 wins the whole payable pot rounded down to whole dollars', () => {
+  it('final 10 wins the whole pot rounded down to whole dollars', () => {
     assert.equal(dollars(finalTenCents(toCents(349.6))), 349);
     const result = calledTurnPayoutCents({
-      potCents: toCents(437),
+      potCents: toCents(437.5),
       outcome: 'final-ten',
       calledBalls: 2,
       breakBalls: 7,
     });
-    // pot 437 → reserve $87 → payable $350
-    assert.equal(dollars(result.payoutCents), 350);
+    assert.equal(dollars(result.payoutCents), 437);
   });
 
   it('bust and scratch on the break pay nothing', () => {

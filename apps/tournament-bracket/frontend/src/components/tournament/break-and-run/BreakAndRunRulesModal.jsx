@@ -10,17 +10,8 @@ import {
   CALLED_RULES_TAGLINE,
 } from './breakAndRunCalledRules.js';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
+import Lines from './BreakAndRunRuleText.jsx';
 import './BreakAndRun.css';
-
-function Lines({ text }) {
-  const lines = String(text || '').split(/\r?\n/);
-  return lines.map((line, i) => (
-    <React.Fragment key={i}>
-      {i > 0 ? <br /> : null}
-      {line}
-    </React.Fragment>
-  ));
-}
 
 /**
  * Full player rules — same content for operator “Player rules” and public TV/phone “Full rules”.

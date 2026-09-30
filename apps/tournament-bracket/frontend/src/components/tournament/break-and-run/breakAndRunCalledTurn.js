@@ -21,21 +21,65 @@ function count(value) {
  * It remembers the newest ledger row at that moment; entries by other players
  * after it only count toward the next attempt.
  */
+export const TALLY_KEYS = ['breakBalls', 'calledBalls', 'extraBalls'];
+
+function emptyTally() {
+  return { breakBalls: 0, calledBalls: 0, extraBalls: 0 };
+}
+
 export function newAttemptLock(state, playerId, now = new Date()) {
   return {
     playerId: String(playerId),
     ledgerTopId: state?.ledger?.[0]?.id || '',
     startedAt: now.toISOString(),
+    tally: emptyTally(),
   };
 }
 
 export function sanitizeAttemptLock(raw) {
   const lock = raw && typeof raw === 'object' ? raw : null;
   if (!lock || !lock.playerId) return null;
+  const tally = emptyTally();
+  TALLY_KEYS.forEach((key) => { tally[key] = count(lock.tally?.[key]); });
   return {
     playerId: String(lock.playerId),
     ledgerTopId: String(lock.ledgerTopId || ''),
     startedAt: String(lock.startedAt || ''),
+    tally,
+  };
+}
+
+/** Lock with one live ball counter moved by `delta`; balls before the 10 stay within 0–9. */
+export function adjustLockTally(lock, key, delta) {
+  if (!lock || !TALLY_KEYS.includes(key)) return lock;
+  const tally = { ...emptyTally(), ...lock.tally };
+  const others = TALLY_KEYS.filter((k) => k !== key).reduce((sum, k) => sum + count(tally[k]), 0);
+  const nextValue = count(tally[key]) + Math.round(Number(delta) || 0);
+  tally[key] = Math.max(0, Math.min(ORDINARY_BALL_COUNT - others, nextValue));
+  return { ...lock, tally };
+}
+
+/**
+ * Live view of the started attempt: locked ball values plus the running bank.
+ * Null when no called-ball attempt is started.
+ */
+export function attemptLiveView(state) {
+  const lock = state?.attemptLock;
+  if (!lock || !isCalledPayoutMode(state)) return null;
+  const tally = { ...emptyTally(), ...lock.tally };
+  const lockedPot = lockedPotFor(state, lock.playerId);
+  const view = calledPotView(lockedPot);
+  const result = calledTurnPayoutCents({ potCents: toCents(lockedPot), outcome: 'cash-out', ...tally });
+  return {
+    playerId: lock.playerId,
+    ...tally,
+    luckyBalls: tally.breakBalls + tally.extraBalls,
+    totalBalls: tally.breakBalls + tally.calledBalls + tally.extraBalls,
+    lockedPot: view.payablePot,
+    normalBall: view.normalBall,
+    luckyBall: view.luckyBall,
+    finalTenPays: view.finalTenPays,
+    bank: fromCents(result.bankCents),
   };
 }
 
@@ -88,7 +132,7 @@ function noteFor(parsed, result) {
     case 'early-ten':
       return ['called early 10', ballBits, `bank ${bank} + 25% bonus ${formatMoney(fromCents(result.earlyTenBonusCents))}`];
     case 'final-ten':
-      return ['FINAL 10 · won the payable pot'];
+      return ['FINAL 10 · won the pot'];
     default:
       return ['cashed out', ballBits];
   }

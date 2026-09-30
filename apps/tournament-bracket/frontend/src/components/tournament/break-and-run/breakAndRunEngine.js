@@ -39,6 +39,7 @@ import {
   normalizePayoutMode,
 } from './breakAndRunCalledPayout.js';
 import {
+  adjustLockTally,
   calledTurnResult,
   isAttemptStarted,
   lockedPotFor,
@@ -49,7 +50,7 @@ import {
 } from './breakAndRunCalledTurn.js';
 
 export { formatMoney, potView };
-export { isAttemptStarted, seedTopUpNeeded } from './breakAndRunCalledTurn.js';
+export { attemptLiveView, isAttemptStarted, seedTopUpNeeded } from './breakAndRunCalledTurn.js';
 export { CALLED_PAYOUT_MODE, FLAT_PAYOUT_MODE, isCalledPayoutMode } from './breakAndRunCalledPayout.js';
 export { playersNeedingCarryDecision } from './breakAndRunSessions.js';
 export { isPlayerInSession, sessionPlayerIdList } from './breakAndRunTurns.js';
@@ -346,8 +347,8 @@ export function recordBuyIn(state, playerId, count = 1, extras = {}) {
   next.grossCollected = money(next.grossCollected + amount);
   next.currentPot = money(next.currentPot + potAmount);
   const isRebuy = extras.type === 'rebuy' || extras.isRebuy;
-  // Rebuyers were already sent to the back when their $0 attempt was recorded.
-  const lineEntry = isRebuy ? {} : { prevQueuedAt: moveToBackOfLine(next, player.id) };
+  // Paying (entry or rebuy) is what puts a player in line, so they join at the back.
+  const lineEntry = { prevQueuedAt: moveToBackOfLine(next, player.id) };
   pushLedger(next, {
     type: isRebuy ? 'rebuy' : 'buy-in',
     playerId: player.id,
@@ -470,7 +471,7 @@ export function addToPot(state, amount, note = '') {
 export function setReserve(state, reserveAmount) {
   const next = clone(sanitizeBreakAndRun(state));
   if (next.status !== 'in-progress') throw new Error('This pot is closed.');
-  if (isCalledPayoutMode(next)) throw new Error('This pot sets its own reserve: 20% once the pot is over $100.');
+  if (isCalledPayoutMode(next)) throw new Error('This pot has no reserve — the whole pot is in play.');
   const value = money(reserveAmount);
   if (value < 0) throw new Error('Reserve cannot be negative.');
   next.reserve = value;
@@ -629,6 +630,14 @@ export function startAttempt(state, playerId, now = new Date()) {
   }
   next.atTablePlayerId = String(player.id);
   next.attemptLock = newAttemptLock(next, player.id, now);
+  return next;
+}
+
+/** Live +/- on the started attempt's ball counter (breakBalls, calledBalls, extraBalls). */
+export function adjustAttemptTally(state, key, delta) {
+  const next = clone(sanitizeBreakAndRun(state));
+  if (!next.attemptLock) throw new Error('Tap Start attempt first.');
+  next.attemptLock = adjustLockTally(next.attemptLock, key, delta);
   return next;
 }
 

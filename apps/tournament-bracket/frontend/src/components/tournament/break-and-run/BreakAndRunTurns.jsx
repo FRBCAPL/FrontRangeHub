@@ -2,6 +2,7 @@ import React from 'react';
 import { formatMoney } from './breakAndRunEngine.js';
 import { formatTurnDate } from './breakAndRunTurns.js';
 import { describeCalledTurn } from './breakAndRunCalledTurn.js';
+import { useShowMore } from './BreakAndRunActivityTabs.jsx';
 
 function turnDetail(turn) {
   const called = describeCalledTurn(turn);
@@ -19,19 +20,22 @@ function turnDetail(turn) {
   return bits.join(' · ');
 }
 
-export default function BreakAndRunTurns({ turns = [] }) {
+export default function BreakAndRunTurns({ turns = [], embedded = false }) {
+  const { visible, toggle } = useShowMore(turns);
   return (
     <section className="bnr-turns" aria-label="Player turns">
-      <div className="bnr-section-head">
-        <h2>Turns</h2>
-      </div>
+      {embedded ? null : (
+        <div className="bnr-section-head">
+          <h2>Turns</h2>
+        </div>
+      )}
       {!turns.length ? (
         <p className="cc-setup-note">
           Each turn records cash out, bust, or scratch on the break. Bust pays $0 even if balls were made. Remaining money stays in the pot.
         </p>
       ) : (
         <ol>
-          {turns.map((turn) => (
+          {visible.map((turn) => (
             <li key={turn.id}>
               <div>
                 <strong>{turn.playerName}</strong>
@@ -52,6 +56,7 @@ export default function BreakAndRunTurns({ turns = [] }) {
           ))}
         </ol>
       )}
+      {toggle}
     </section>
   );
 }

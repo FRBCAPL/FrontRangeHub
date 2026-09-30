@@ -328,6 +328,13 @@
   color: #e2e8f0;
 }
 
+.bnr-public-ticker-run {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding-right: 3rem;
+}
+
 .bnr-public-ticker-item {
   display: inline-flex;
   align-items: center;
@@ -379,6 +386,36 @@
 
 .bnr-public-ticker-empty {
   border-color: rgba(148, 163, 184, 0.25);
+}
+
+.bnr-public-ticker-empty .bnr-public-ticker-label {
+  position: static;
+  transform: none;
+  flex-shrink: 0;
+  margin: 0 12px 0 8px;
+}
+
+.bnr-public-ticker-item em.is-miss {
+  color: #fca5a5;
+}
+
+.bnr-public-ticker-group {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 14px 0 28px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  color: #fde68a;
+  font-size: 0.78em;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.bnr-public-ticker-group:first-child {
+  margin-left: 0;
 }
 
 @keyframes bnr-public-ticker-crawl {

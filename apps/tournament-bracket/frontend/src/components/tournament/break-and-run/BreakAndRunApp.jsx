@@ -4,6 +4,7 @@ import BreakAndRunPlay from './BreakAndRunPlay.jsx';
 import {
   addPlayer,
   addToPot,
+  adjustAttemptTally,
   cancelAttempt,
   completeEvent,
   createBreakAndRun,
@@ -165,6 +166,7 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
       onSetAtTable={(playerId) => run((t) => setAtTablePlayer(t, playerId))}
       onStartAttempt={(playerId) => run((t) => startAttempt(t, playerId))}
       onCancelAttempt={() => run((t) => cancelAttempt(t))}
+      onAdjustTally={(key, delta) => run((t) => adjustAttemptTally(t, key, delta))}
       onPayRebuy={(playerId) => run((t) => payRebuy(t, playerId))}
       onJoinSession={(playerId) => run((t) => joinSession(t, playerId))}
       onAddToPot={(amount, note) => run((t) => addToPot(t, amount, note))}

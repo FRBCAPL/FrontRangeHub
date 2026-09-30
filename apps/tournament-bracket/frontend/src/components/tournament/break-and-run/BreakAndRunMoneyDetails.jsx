@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { formatMoney } from './breakAndRunEngine.js';
 import './BreakAndRunOperator.css';
 
-/** Folded bookkeeping: fees, seed, reserve, and manual pot adjustments. */
+/** Folded bookkeeping: fees, seed, reserve (flat pots only), and manual pot adjustments. */
 export default function BreakAndRunMoneyDetails({ tournament, snapshot, live, onAddToPot, onSetReserve }) {
   const called = snapshot.payoutMode === 'called-ball';
   const [potDelta, setPotDelta] = useState('');
@@ -35,13 +35,13 @@ export default function BreakAndRunMoneyDetails({ tournament, snapshot, live, on
 
   const rows = [
     ['Total pot', formatMoney(snapshot.currentPot)],
-    ['Reserve', formatMoney(snapshot.reserve)],
+    called ? null : ['Reserve', formatMoney(snapshot.reserve)],
     [called ? 'League seed (total)' : 'Seed (one-time)', formatMoney(called ? snapshot.seedTotal : snapshot.startingSeed)],
     ['Paid out', formatMoney(snapshot.totalPaidOut)],
     ['Entry fees collected', formatMoney(snapshot.entryFees)],
     ['Admin fees', formatMoney(snapshot.adminFees)],
     ['Entries', String(snapshot.buyInCount ?? 0)],
-  ];
+  ].filter(Boolean);
 
   return (
     <details className="bnr-money-details">
@@ -56,7 +56,7 @@ export default function BreakAndRunMoneyDetails({ tournament, snapshot, live, on
       </dl>
       <p className="bnr-money-note">
         Admin is $1 of each $10 entry and $2 of each $20 — held out of the pot (not paid on balls).
-        {called ? ' Reserve is 20% of the pot once it is over $100 and carries forward.' : ''}
+        {called ? ' The whole pot is in play; league seed keeps it at $100 or more.' : ''}
       </p>
       {live ? (
         <div className="bnr-money-forms">

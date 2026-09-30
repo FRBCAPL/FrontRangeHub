@@ -1,6 +1,6 @@
 import { money } from './breakAndRunMath.js';
 import { systemTurnDate } from './breakAndRunTurns.js';
-import { canTakeTurn, sessionPlayerIdList } from './breakAndRunTurns.js';
+import { hasActiveEntry, sessionPlayerIdList } from './breakAndRunTurns.js';
 
 function uid() {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -12,13 +12,16 @@ function normalizeIdList(value) {
   return value.map((id) => String(id || '').trim()).filter(Boolean);
 }
 
-/** Players enrolled in the open session who can still take a turn. */
+/**
+ * Players enrolled in the open session with a paid entry not yet played:
+ * an unplayed first try, or a paid rebuy. A $0 result with no rebuy paid yet
+ * owes nothing, so there is no turn to carry.
+ */
 export function playersNeedingCarryDecision(state) {
   if (!state) return [];
-  return (state.players || []).filter((player) => {
-    if (!sessionPlayerIdList(state).includes(String(player.id))) return false;
-    return Boolean(canTakeTurn(state, player.id).ok);
-  });
+  return (state.players || []).filter((player) => (
+    sessionPlayerIdList(state).includes(String(player.id)) && hasActiveEntry(state, player.id)
+  ));
 }
 
 

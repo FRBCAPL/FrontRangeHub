@@ -23,9 +23,7 @@ export default function BreakAndRunPotBoard({ snapshot, onTopUpSeed, children })
   const called = snapshot.payoutMode === 'called-ball';
   const headline = called ? snapshot.payablePot : snapshot.currentPot;
   const subline = called
-    ? (snapshot.reserve > 0
-      ? `Total ${formatMoney(snapshot.currentPot)} · ${formatMoney(snapshot.reserve)} reserve held back`
-      : 'No reserve until the pot is over $100')
+    ? 'Balls pay pot ÷ 10 · Final 10 wins it all'
     : `Payable ${formatMoney(snapshot.payablePot)} after reserve`;
 
   return (

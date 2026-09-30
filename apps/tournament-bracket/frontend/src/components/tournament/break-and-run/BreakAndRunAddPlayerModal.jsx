@@ -3,6 +3,7 @@ import { formatMoney } from './breakAndRunMath.js';
 import { isPlayerInSession } from './breakAndRunEngine.js';
 import '../AddPlayerModal.css';
 import './BreakAndRun.css';
+import './BreakAndRunActivityTabs.css';
 
 function capitalizeName(value) {
   return String(value || '').replace(/(^|\s)(\S)/g, (_, space, letter) => space + letter.toUpperCase());
@@ -38,6 +39,7 @@ export default function BreakAndRunAddPlayerModal({
   const [name, setName] = useState('');
   const [entryKind, setEntryKind] = useState('open');
   const [filter, setFilter] = useState('');
+  const [tab, setTab] = useState('new');
 
   const available = useMemo(() => {
     const roster = tournament?.players || [];
@@ -57,6 +59,7 @@ export default function BreakAndRunAddPlayerModal({
     setName('');
     setEntryKind('open');
     setFilter('');
+    setTab('new');
   };
 
   const handleClose = () => {
@@ -98,10 +101,33 @@ export default function BreakAndRunAddPlayerModal({
           <button type="button" className="add-player-modal-close" onClick={handleClose} aria-label="Close">&times;</button>
         </div>
 
+        {tournament ? (
+          <div className="bnr-activity-tabs bnr-add-tabs" role="tablist" aria-label="Add player">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'new'}
+              className={tab === 'new' ? 'is-active' : undefined}
+              onClick={() => setTab('new')}
+            >
+              New player
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'roster'}
+              className={tab === 'roster' ? 'is-active' : undefined}
+              onClick={() => setTab('roster')}
+            >
+              Previous players
+              <span className="bnr-activity-count">{available.length}</span>
+            </button>
+          </div>
+        ) : null}
+
         <div className="bnr-add-session-body">
-          {tournament ? (
+          {tournament && tab === 'roster' ? (
             <section className="bnr-add-roster" aria-label="Pot roster">
-              <h4>From the pot roster</h4>
               <p className="cc-setup-note">
                 Players already on this pot. Joining buys into this session and puts them on the active list.
               </p>
@@ -143,11 +169,14 @@ export default function BreakAndRunAddPlayerModal({
               ) : (
                 <p className="cc-setup-note">Everyone on the roster is already in this session.</p>
               )}
+              <div className="add-player-modal-actions">
+                <button type="button" className="btn-secondary" onClick={handleClose}>Done</button>
+              </div>
             </section>
           ) : null}
 
+          {!tournament || tab === 'new' ? (
           <section className="bnr-add-new" aria-label="New player">
-            {tournament ? <h4>New player</h4> : null}
             <form onSubmit={handleSubmit} className="add-player-modal-form">
               <label>
                 Name <span className="required">*</span>
@@ -156,6 +185,7 @@ export default function BreakAndRunAddPlayerModal({
                   value={name}
                   onChange={(e) => setName(capitalizeName(e.target.value))}
                   placeholder="Player name"
+                  autoFocus
                 />
               </label>
               <p className="cc-setup-note">Entry goes into the pot. Each entry is one attempt.</p>
@@ -183,6 +213,7 @@ export default function BreakAndRunAddPlayerModal({
               </div>
             </form>
           </section>
+          ) : null}
         </div>
       </div>
     </div>

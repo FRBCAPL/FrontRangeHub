@@ -1,9 +1,8 @@
 import { formatMoney } from './breakAndRunMath.js';
 
 export const CALLED_RULES_TAGLINE =
-  'Called balls pay full value. \n Break & uncalled balls pay discounted value. \n'
-  + 'Cash out or risk it all and keep shooting.\n'
-  + 'Miss or foul and your bank goes to $0.\n'
+  'Called balls pay full value. Break/Lucky balls pay discounted value. \n'
+  + 'Cash out or risk it all and keep shooting. Miss or foul and your bank goes to $0.\n'
   + 'Call the 10 early and make it: Win your bank + early ten bonus\n'
   + 'Clear the rack and make the Final 10: WIN THE POT.';
 
@@ -64,64 +63,74 @@ export const CALLED_BREAK_AND_RUN_RULES = [
   {
     title: 'Continuous pot & sessions',
     body: 'The Break & Run is one continuous pot across nights and venues. \nA session is one play window, usually a night or event.\n'
-      + 'Money left after payouts, including the reserve, carries forward to the next attempt and session.\n'
+      + 'Money left after payouts carries forward to the next attempt and session.\n'
       + 'Front Range Pool League adds seed money so the pot is never below $100.',
   },
   {
-    title: 'Payable pot & locked values',
-    body: 'Payable Pot = Total Pot − Protected Reserve. \nWhen the pot is over $100, the Protected Reserve is 20% of the pot, but it never brings the Payable Pot below $100. \nAt $100 or less there is no reserve. The reserve is never available for payout during the attempt.\n'
-      + 'Before each attempt: the entry/rebuy is collected, the admin fee is removed, the rest is added to the pot, the Payable Pot is calculated, and all payout values are locked for that attempt.\n'
+    title: 'The pot & locked values',
+    body: 'The whole pot is in play — nothing is held back. Payouts use whole dollars only.\n'
+      + 'Before each attempt: the entry/rebuy is collected, the admin fee is removed, the rest is added to the pot, and all payout values are locked for that attempt.\n'
       + 'Entries or rebuys received after an attempt begins affects future attempts only.\n'
       + 'Any payout is deducted from the pot. The remaining balance carries forward.',
   },
   {
     title: 'Normal (called) ball value',
-    body: 'Normal Ball Value = Payable Pot ÷ 10, rounded down to the nearest whole dollar.\n'
+    body: 'Normal Ball Value = Pot ÷ 10, rounded down to the nearest whole dollar.\n'
       + 'Examples: $200 → $20 · $500 → $50 · $537 → $53 · $1,000 → $100.',
   },
   {
     title: 'Discounted (lucky) ball value',
-    body: 'Balls pocketed without being successfully called earn the Discounted Ball Value: 25% of the Normal Ball Value, rounded down to the nearest $5, minimum $5, maximum $20, and never more than the Normal Ball Value.\n'
-      + 'Examples (payable pot → discounted ball): $200 → $5 · $400 → $10 · $600 → $15 · $800 or more → $20.\n'
-      + 'It applies to ordinary balls legally pocketed on the break, and to additional ordinary balls that fall along with a successfully made called ball.',
+    body: '**Lucky Ball: Object balls that drop along with a successfully made called ball.**\n\n'
+    + 'Balls pocketed on the break and lucky balls earn the Discounted Ball Value.\n'
+    + 'The difference isn’t lost. It stays in the pot, and finishing the run with the Final 10 wins the entire pot.\n'
+    +'Discounted Ball Value = 25% of the Normal Ball Value, rounded down to the nearest $5, minimum $5, maximum $20, and never more than the Normal Ball Value.\n'
+    + 'Examples (pot → discounted ball): $200 → $5 · $400 → $10 · $600 → $15 · $800 or more → $20.\n'
+    
+    ,
   },
   {
     title: 'The break',
-    body: 'The cue ball must contact the 1-ball first. A legal break requires at least one object ball pocketed, or at least four object balls driven to a rail.\n'
-      + 'Balls pocketed on the break do not need to be called. Each ordinary ball legally pocketed on the break earns one Discounted Ball Value.\n'
+    body: 'The cue ball must contact the 1-ball first.\n'
+      + 'A legal break requires at least one object ball pocketed, or at least four object balls driven to a rail.\n'
+      + 'Balls pocketed on the break do not need to be called. \nEach ordinary ball legally pocketed on the break earns one Discounted Ball Value.\n'
       + 'If the 10 is pocketed on an otherwise legal break, it is spotted, earns no payout, and the attempt continues.\n'
       + 'A legal dry break lets the player continue from the layout with $0 banked.\n'
-      + 'A scratch or foul on the break ends the attempt at $0. The player may rebuy.',
+      + 'A scratch or foul on the break ends the attempt at $0. \nThe player may rebuy.',
   },
   {
     title: 'Called shots after the break',
-    body: 'Every shot after the break is call shot. The cue ball must first contact the lowest-numbered ball on the table. Combinations and caroms are allowed if the lowest ball is contacted first.\n'
+    body: 'Every shot after the break is call shot.\n'
+    + 'The cue ball must first contact the lowest-numbered ball on the table. \n'
+    + 'Combinations and caroms are allowed if the lowest ball is contacted first.\n'
       + 'A successfully pocketed called ordinary ball earns one full Normal Ball Value.\n'
-      + 'Additional ordinary balls pocketed on that same successful shot each earn one Discounted Ball Value and stay down.\n'
-      + 'Example ($500 payable): called ball made +$50, one extra ball falls +$10 → $60 added to the bank.\n'
-      + 'The called ball must be made for any other balls on that shot to pay. If the called ball is missed — even if other balls fall — the attempt ends at $0.',
+      + 'Additional ordinary balls pocketed on that same successful shot(lucky balls)each earn one Discounted Ball Value and stay down.\n'
+      + 'Example ($500 pot): called ball made +$50, one extra ball falls +$10 → $60 added to the bank.\n'
+      + '**The called ball must be made for any other balls on that shot to pay.**\n'
+      +'**If the called ball is missed — even if other balls fall — the attempt ends at $0.**',
   },
   {
     title: 'Cash out or continue',
-    body: 'After the player has a positive bank and completes a successful shot or break, they choose CASH OUT or CONTINUE. A player may cash out after the break if they earned Discounted Ball Value.\n'
+    body: 'After the player has a positive bank and completes a successful shot or break, they choose CASH OUT or CONTINUE. \nA player may cash out after the break if they earned Discounted Ball Value.\n'
       + 'Cashing out pays the current bank and ends the player’s participation for that session.\n'
-      + 'A player with a $0 bank cannot voluntarily end the attempt to get a $0 result and a rebuy. If the attempt is legally alive, play continues.\n'
+      + 'A player with a $0 bank cannot voluntarily end the attempt to get a $0 result and a rebuy. \nIf the attempt is legally alive, play continues.\n'
       + 'Continuing puts the entire bank at risk. Once the next shot begins, the decision to continue is final.\n'
-      + 'A missed called shot, scratch, or foul ends the attempt and the bank returns to $0. No payout is made, and the player may rebuy.',
+      + 'A missed called shot, scratch, or foul ends the attempt and the bank returns to $0. \nNo payout is made, and the player may rebuy.',
   },
   {
     title: 'Early 10-ball',
-    body: 'An Early 10 is a legally called and pocketed 10-ball while one or more other object balls remain on the table. It is an automatic cash-out.\n'
-      + 'Remaining Payable Pot = Locked Payable Pot − Current Bank. Early 10 Bonus = 25% of the Remaining Payable Pot, rounded down to the nearest whole dollar.\n'
+    body: 'An Early 10 is a legally called and pocketed 10-ball while one or more other object balls remain on the table. \n'
+    + 'It is an automatic cash-out.\n'
+      + 'Remaining Pot = Locked Pot − Current Bank. \n'
+      + 'Early 10 Bonus = 25% of the Remaining Pot, rounded down to the nearest whole dollar.\n'
       + 'The player receives Current Bank + Early 10 Bonus, and the attempt ends.\n'
-      + 'Example: $500 payable, $130 bank → $370 remaining → 25% = $92 → Early 10 pays $222.\n'
-      + 'An Early 10 cannot win the entire Payable Pot.',
+      + 'Example: $500 pot, $130 bank → $370 remaining → 25% = $92 → Early 10 pays $222.\n'
+      + 'An Early 10 cannot win the entire pot.',
   },
   {
     title: 'Final 10 — WIN THE POT',
     body: 'The Final 10 is the 10-ball when it is the only object ball left on the table.\n'
-      + 'If the player legally calls and pockets the Final 10 during the same uninterrupted attempt, THE PLAYER WINS THE ENTIRE LOCKED PAYABLE POT (rounded down to the whole dollar).\n'
-      + 'This applies no matter how the other balls left the table — on the break, called, or as extra balls on good shots — as long as the attempt stayed legally alive.\n'
+      + 'If the player legally calls and pockets the Final 10 during the same uninterrupted attempt,\n THE PLAYER WINS THE ENTIRE LOCKED POT (rounded down to the whole dollar).\n'
+      + 'Front Range Pool League then re-seeds the pot to $100 for the next attempt.\n'
       + 'Discounted payouts only affect what you can cash out early. They never reduce the jackpot.\n'
       + 'Finish the rack. Make the Final 10. Win the pot.',
   },
