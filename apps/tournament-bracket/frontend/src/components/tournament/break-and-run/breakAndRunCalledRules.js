@@ -54,8 +54,8 @@ export const CALLED_BREAK_AND_RUN_RULES = [
     title: 'Entry & rebuys',
     body: 'Entry:\n'
       + '$10 per attempt: Front Range Pool League members or players entered in an event that day.\n'
-      + '$20 per attempt: Open entry for everyone else.\n\n'
-      + 'Each entry purchases one attempt. You pay for one attempt at a time.\n'
+      + '$20 per attempt: Open entry for everyone else.\n'
+      + 'Each entry purchases one attempt. \nYou pay for one attempt at a time.\n\n'
       + 'If an attempt results in a $0 payout, the player may rebuy. \nRebuys are unlimited as long as the immediately preceding attempt paid $0. \nA rebuy goes to the end of the line.\n\n'
       + 'Once a player cashes out and receives any payout, that player is finished for the session.\n'
       + 'Simple version: $0 = you can rebuy. Get paid = you’re done.',
@@ -95,16 +95,16 @@ export const CALLED_BREAK_AND_RUN_RULES = [
       + 'Balls pocketed on the break do not need to be called. \nEach ordinary ball legally pocketed on the break earns one Discounted Ball Value.\n'
       + 'If the 10 is pocketed on an otherwise legal break, it is spotted, earns no payout, and the attempt continues.\n'
       + 'A legal dry break lets the player continue from the layout with $0 banked.\n'
-      + 'A scratch or foul on the break ends the attempt at $0. \nThe player may rebuy.',
+      + 'A scratch or foul on the break ends the attempt at $0 and the player may rebuy.',
   },
   {
     title: 'Called shots after the break',
-    body: 'Every shot after the break is call shot.\n'
+    body: 'Every shot after the break is call shot. \nPlayer must call the ball and the pocket before each shot attempt.\n'
     + 'The cue ball must first contact the lowest-numbered ball on the table. \n'
     + 'Combinations and caroms are allowed if the lowest ball is contacted first.\n'
       + 'A successfully pocketed called ordinary ball earns one full Normal Ball Value.\n'
       + 'Additional ordinary balls pocketed on that same successful shot(lucky balls)each earn one Discounted Ball Value and stay down.\n'
-      + 'Example ($500 pot): called ball made +$50, one extra ball falls +$10 → $60 added to the bank.\n'
+      + 'Example ($500 pot): called ball made +$50, one extra ball falls +$10 → $60 added to the bank.\n\n'
       + '**The called ball must be made for any other balls on that shot to pay.**\n'
       +'**If the called ball is missed — even if other balls fall — the attempt ends at $0.**',
   },
@@ -143,7 +143,7 @@ export const CALLED_BREAK_AND_RUN_RULES = [
   {
     title: 'Referee & player decisions',
     body: 'Every attempt is witnessed by a designated Front Range Pool League official/referee, who verifies breaks, called shots, pocketed balls, fouls, payout values, Early 10s, Final 10s, and cash-out decisions.\n'
-      + 'With money banked, the official asks before the next shot: “You’re at $___ — cash out or continue?” The player must clearly choose before shooting.\n'
+      + 'With money banked, the official asks before the next shot: “You’re at $___ — cash out or continue?”\n The player must clearly choose before shooting.\n'
       + 'Beginning the next shot means the player chose to continue, and the entire bank is at risk.\n'
       + 'The official’s ruling is final.',
   },
