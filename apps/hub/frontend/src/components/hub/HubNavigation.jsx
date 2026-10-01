@@ -102,7 +102,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     location.pathname.startsWith('/tournament-bracket') &&
     location.pathname !== '/tournament-bracket/tv' &&
     !location.pathname.startsWith('/tournament-bracket/break-and-run/tv') &&
-    !location.pathname.startsWith('/tournament-bracket/break-and-run/view');
+    !location.pathname.startsWith('/tournament-bracket/break-and-run/view') &&
+    !location.pathname.startsWith('/tournament-bracket/break-and-run/rules');
   const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName);
   const handleHamburgerClick = (event) => {
     event.preventDefault();

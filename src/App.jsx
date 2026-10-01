@@ -110,9 +110,10 @@ import CashClimbSubmitPage from '@apps/tournament-bracket/frontend/src/component
 import ElimSubmitPage from '@apps/tournament-bracket/frontend/src/components/tournament/ElimSubmitPage.jsx';
 import BreakAndRunTvView from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunTvView.jsx';
 import BreakAndRunPhoneView from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunPhoneView.jsx';
+import BreakAndRunRulesTvView from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunRulesTvView.jsx';
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isElimSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
-import { isBreakAndRunDisplayPath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
+import { isBreakAndRunDisplayPath, isBreakAndRunRulesTvPath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
 import { isTournamentOperator, peekLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 import EstateAdminGate from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateAdminGate';
 import EstateCaseEntry from '@apps/estate-inventory/frontend/src/components/estate-inventory/EstateCaseEntry';
@@ -189,6 +190,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/tournament-bracket/tv': '#/tournament-bracket/tv',
   '/tournament-bracket/break-and-run/tv': '#/tournament-bracket/break-and-run/tv',
   '/tournament-bracket/break-and-run/view': '#/tournament-bracket/break-and-run/view',
+  '/tournament-bracket/break-and-run/rules': '#/tournament-bracket/break-and-run/rules',
   '/tournament-bracket/how-it-works': '#/tournament-bracket/how-it-works',
   '/tournament-bracket/submit': '#/tournament-bracket/submit',
   '/tournament-bracket/elim': '#/tournament-bracket/elim',
@@ -632,7 +634,8 @@ function AppContent() {
 
   // Break & Run TV / phone: cloud Realtime + optional same-browser storage, no hub nav
   if (isBreakAndRunDisplayPath(location.pathname)) {
-    const isTv = location.pathname.includes('/break-and-run/tv');
+    const isRulesTv = isBreakAndRunRulesTvPath(location.pathname);
+    const isTv = isRulesTv || location.pathname.includes('/break-and-run/tv');
     return (
       <div style={{
         position: 'fixed',
@@ -650,7 +653,7 @@ function AppContent() {
         display: 'flex',
         flexDirection: 'column'
       }}>
-        {isTv ? <BreakAndRunTvView /> : <BreakAndRunPhoneView />}
+        {isRulesTv ? <BreakAndRunRulesTvView /> : isTv ? <BreakAndRunTvView /> : <BreakAndRunPhoneView />}
       </div>
     );
   }

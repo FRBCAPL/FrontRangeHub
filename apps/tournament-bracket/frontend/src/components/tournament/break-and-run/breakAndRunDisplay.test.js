@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   breakAndRunDisplayEventId,
   breakAndRunPhoneHash,
+  breakAndRunRulesTvHash,
   breakAndRunTvHash,
   buildBreakAndRunPublicBoard,
   buildBreakAndRunTvBoard,
@@ -59,6 +60,9 @@ describe('break and run public display', () => {
     assert.equal(resolveBreakAndRunDisplayEventId('', '/tournament-bracket/break-and-run/view/abc'), 'abc');
     assert.equal(resolveBreakAndRunDisplayEventId('from-param', '/tournament-bracket/break-and-run/view/abc'), 'from-param');
     assert.equal(resolveBreakAndRunDisplayEventId('', '/tournament-bracket/break-and-run/tv/night%202'), 'night 2');
+    assert.equal(isBreakAndRunDisplayPath('/tournament-bracket/break-and-run/rules/abc'), true);
+    assert.equal(breakAndRunRulesTvHash('x'), '/tournament-bracket/break-and-run/rules/x');
+    assert.equal(breakAndRunDisplayEventId('/tournament-bracket/break-and-run/rules/abc%201'), 'abc 1');
   });
 
   it('marks live only while a session is open', () => {

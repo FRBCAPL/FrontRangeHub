@@ -14,6 +14,7 @@ import { tournamentFromEventRow } from '../cash-climb/cashClimbSaved.js';
 
 export const BREAK_AND_RUN_TV_BASE = '/tournament-bracket/break-and-run/tv';
 export const BREAK_AND_RUN_PHONE_BASE = '/tournament-bracket/break-and-run/view';
+export const BREAK_AND_RUN_RULES_TV_BASE = '/tournament-bracket/break-and-run/rules';
 
 export function breakAndRunTvHash(eventId = '') {
   const id = String(eventId || '').trim();
@@ -47,6 +48,18 @@ export function openBreakAndRunPhone(eventId = '') {
   if (!opened) window.location.assign(url);
 }
 
+export function breakAndRunRulesTvHash(eventId = '') {
+  const id = String(eventId || '').trim();
+  return id ? `${BREAK_AND_RUN_RULES_TV_BASE}/${encodeURIComponent(id)}` : BREAK_AND_RUN_RULES_TV_BASE;
+}
+
+export function openBreakAndRunRulesTv(eventId = '') {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const url = `${origin}/#${breakAndRunRulesTvHash(eventId)}`;
+  const opened = window.open(url, 'frontrange-break-and-run-rules-tv');
+  if (!opened) window.location.assign(url);
+}
+
 export function isBreakAndRunTvPath(pathname) {
   return String(pathname || '').startsWith(BREAK_AND_RUN_TV_BASE);
 }
@@ -55,13 +68,19 @@ export function isBreakAndRunPhonePath(pathname) {
   return String(pathname || '').startsWith(BREAK_AND_RUN_PHONE_BASE);
 }
 
+export function isBreakAndRunRulesTvPath(pathname) {
+  return String(pathname || '').startsWith(BREAK_AND_RUN_RULES_TV_BASE);
+}
+
 export function isBreakAndRunDisplayPath(pathname) {
-  return isBreakAndRunTvPath(pathname) || isBreakAndRunPhonePath(pathname);
+  return isBreakAndRunTvPath(pathname)
+    || isBreakAndRunPhonePath(pathname)
+    || isBreakAndRunRulesTvPath(pathname);
 }
 
 export function breakAndRunDisplayEventId(pathname) {
   const path = String(pathname || '');
-  const bases = [BREAK_AND_RUN_TV_BASE, BREAK_AND_RUN_PHONE_BASE];
+  const bases = [BREAK_AND_RUN_TV_BASE, BREAK_AND_RUN_PHONE_BASE, BREAK_AND_RUN_RULES_TV_BASE];
   for (const base of bases) {
     if (!path.startsWith(base)) continue;
     const rest = path.slice(base.length).replace(/^\//, '');

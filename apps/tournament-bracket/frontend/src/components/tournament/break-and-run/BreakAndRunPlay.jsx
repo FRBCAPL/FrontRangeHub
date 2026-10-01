@@ -26,7 +26,7 @@ import {
   isCalledPayoutMode,
   sessionPlayerIdList,
 } from './breakAndRunEngine.js';
-import { openBreakAndRunPhone, openBreakAndRunTv } from './breakAndRunDisplay.js';
+import { openBreakAndRunPhone, openBreakAndRunRulesTv, openBreakAndRunTv } from './breakAndRunDisplay.js';
 import '../cash-climb/CashClimb.css';
 import '../cash-climb/CashClimbSavedEvents.css';
 import './BreakAndRun.css';
@@ -166,6 +166,14 @@ export default function BreakAndRunPlay({
               Open TV
             </button>
             <button type="button" className="tb-btn-new" onClick={() => setShowRules(true)}>Player rules</button>
+            <button
+              type="button"
+              className="tb-btn-new"
+              onClick={() => openBreakAndRunRulesTv(tournament.id)}
+              title="Open the player rules as a rotating TV display"
+            >
+              Rules TV
+            </button>
             {onLeave ? <button type="button" className="tb-btn-new" onClick={onLeave}>Back</button> : null}
             <BreakAndRunMoreMenu
               items={[
