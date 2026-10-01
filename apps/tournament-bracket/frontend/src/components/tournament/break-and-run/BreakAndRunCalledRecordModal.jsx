@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { formatMoney, previewTurn, sessionPlayerIdList } from './breakAndRunEngine.js';
 import { canTakeTurn, playerDayStatus, systemTurnDate } from './breakAndRunTurns.js';
 import { BallsStep, BreakStep, EndStep, SummaryStep, VerifyStep } from './BreakAndRunRecordSteps.jsx';
+import useBreakAndRunConfirm from './BreakAndRunConfirmDialog.jsx';
 import './BreakAndRun.css';
 import './BreakAndRunWizard.css';
 
@@ -40,6 +41,7 @@ export default function BreakAndRunCalledRecordModal({
   const [outcome, setOutcome] = useState('');
   const [counts, setCounts] = useState(EMPTY_COUNTS);
   const [tracked, setTracked] = useState(false);
+  const [confirm, confirmDialog] = useBreakAndRunConfirm();
   // Saves hand back a fresh array each time; compare the ids so a save doesn't wipe the wizard.
   const sessionKey = sessionPlayerIdList(tournament).join(',');
 
@@ -143,7 +145,7 @@ export default function BreakAndRunCalledRecordModal({
     setStep(needsBalls(value) ? 'balls' : 'summary');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (step !== 'summary') {
       if (canAdvance) goNext();
@@ -153,8 +155,24 @@ export default function BreakAndRunCalledRecordModal({
     if (!gate.ok) return alert(gate.reason);
     if (preview.error) return alert(preview.error);
     if (cashOutEmpty) return alert('A $0 bank cannot cash out. Go back and record the balls, or choose Missed or fouled.');
-    if (notStartedWarning && !window.confirm(`${notStartedWarning}\n\nSave this turn anyway?`)) return undefined;
-    return onSubmit(playerId, details);
+    if (notStartedWarning) {
+      const ok = await confirm({
+        title: 'Attempt not started',
+        message: `${notStartedWarning}\n\nSave this turn anyway?`,
+        confirmLabel: 'Save anyway',
+      });
+      if (!ok) return;
+    }
+    if (finalOutcome === 'early-ten' && preview.bank <= 0) {
+      const ok = await confirm({
+        title: 'Early 10 with no balls?',
+        message: `${player?.name || 'This player'} has a $0 bank — no balls made before the 10.\n\nThis Early 10 pays ${formatMoney(preview.payout)}. Is that right?`,
+        confirmLabel: `Yes, pay ${formatMoney(preview.payout)}`,
+        cancelLabel: 'Go back',
+      });
+      if (!ok) return;
+    }
+    onSubmit(playerId, details);
   };
 
   const skipped = (key) => key === 'balls' && (scratch || (outcome && !needsBalls(outcome)))
@@ -259,6 +277,7 @@ export default function BreakAndRunCalledRecordModal({
           )}
         </div>
       </form>
+      {confirmDialog}
     </div>
   );
 }

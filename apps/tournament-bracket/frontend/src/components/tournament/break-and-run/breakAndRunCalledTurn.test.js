@@ -81,6 +81,22 @@ describe('break and run called-ball pots', () => {
     assert.equal(seedTopUpNeeded(state), 100);
   });
 
+  it('final 10 records all nine balls; missing ones count as called', () => {
+    let state = calledPot(473);
+    state = recordTurn(state, state.players[0].id, { outcome: 'final-ten', breakBalls: 2 });
+    assert.equal(state.turns[0].breakBalls, 2);
+    assert.equal(state.turns[0].calledBalls, 7);
+    assert.equal(state.turns[0].extraBalls, 0);
+    assert.equal(state.turns[0].amountWon, 500);
+  });
+
+  it('early 10 with a $0 bank stays legal and pays 25% of the pot', () => {
+    let state = calledPot(473);
+    state = recordTurn(state, state.players[0].id, { outcome: 'early-ten' });
+    assert.equal(state.turns[0].bank, 0);
+    assert.equal(state.turns[0].amountWon, 125);
+  });
+
   it('tops the pot back up to $100 after a jackpot, and undo removes the seed', () => {
     let state = calledPot(100);
     state = recordTurn(state, state.players[0].id, { outcome: 'final-ten' });

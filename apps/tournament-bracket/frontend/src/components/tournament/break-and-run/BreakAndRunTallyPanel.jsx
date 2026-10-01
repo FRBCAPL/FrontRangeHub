@@ -47,6 +47,11 @@ export default function BreakAndRunTallyPanel({ tournament, playerId, playerName
       <div className="bnr-tally is-confirm" aria-label="Confirm turn">
         <SummaryStep outcome={pending} counts={details} preview={preview} playerName={playerName} />
         {preview.error ? <p className="cc-modal-meta bnr-record-error">{preview.error}</p> : null}
+        {pending === 'early-ten' && live.bank <= 0 ? (
+          <p className="cc-modal-meta bnr-record-warning">
+            No balls tracked before the 10 — check this is right before saving.
+          </p>
+        ) : null}
         <div className="bnr-tally-confirm-actions">
           <button type="button" className="bnr-op-btn is-quiet" onClick={() => setPending('')}>
             Back

@@ -110,12 +110,17 @@ export function parseCalledDetails(raw = {}) {
   else if (outcome === 'cash-out' && raw.finalTen) outcome = 'final-ten';
   else if (outcome === 'cash-out' && raw.earlyTen) outcome = 'early-ten';
   const scratch = outcome === 'scratch-break';
-  const calledBalls = scratch ? 0 : count(raw.calledBalls);
+  let calledBalls = scratch ? 0 : count(raw.calledBalls);
   const breakBalls = scratch ? 0 : count(raw.breakBalls);
   const extraBalls = scratch ? 0 : count(raw.extraBalls);
-  const total = calledBalls + breakBalls + extraBalls;
+  let total = calledBalls + breakBalls + extraBalls;
   if (total > ORDINARY_BALL_COUNT) {
     throw new Error(`Balls before the 10 cannot add up to more than ${ORDINARY_BALL_COUNT}.`);
+  }
+  // A Final 10 means all nine ordinary balls are down; any not entered were called balls.
+  if (outcome === 'final-ten' && total < ORDINARY_BALL_COUNT) {
+    calledBalls += ORDINARY_BALL_COUNT - total;
+    total = ORDINARY_BALL_COUNT;
   }
   return { outcome, calledBalls, breakBalls, extraBalls, total };
 }

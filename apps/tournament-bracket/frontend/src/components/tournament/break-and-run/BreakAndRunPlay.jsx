@@ -16,6 +16,7 @@ import BreakAndRunEndSessionModal from './BreakAndRunEndSessionModal.jsx';
 import BreakAndRunEditEventModal from './BreakAndRunEditEventModal.jsx';
 import BreakAndRunSessionCard from './BreakAndRunSessionCard.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
+import useBreakAndRunConfirm from './BreakAndRunConfirmDialog.jsx';
 import { currentSession } from './breakAndRunTurns.js';
 import { playersNeedingCarryDecision } from './breakAndRunSessions.js';
 import {
@@ -60,6 +61,7 @@ export default function BreakAndRunPlay({
   const [sessionModal, setSessionModal] = useState(null);
   const [endSessionModal, setEndSessionModal] = useState(null);
   const [recordFor, setRecordFor] = useState(null);
+  const [confirm, confirmDialog] = useBreakAndRunConfirm();
   const snapshot = eventSnapshot(tournament);
   const calledMode = isCalledPayoutMode(tournament);
   const RecordModal = calledMode ? BreakAndRunCalledRecordModal : BreakAndRunRecordModal;
@@ -81,7 +83,7 @@ export default function BreakAndRunPlay({
     });
   };
 
-  const requestEndSession = ({ thenStart = false } = {}) => {
+  const requestEndSession = async ({ thenStart = false } = {}) => {
     if (!sessionOpen) {
       if (thenStart) openStartSessionModal();
       return;
@@ -90,11 +92,13 @@ export default function BreakAndRunPlay({
       setEndSessionModal({ thenStart });
       return;
     }
-    const ok = window.confirm(
-      thenStart
+    const ok = await confirm({
+      title: thenStart ? 'Start the next session?' : 'End this session?',
+      message: thenStart
         ? 'End this session and start the next? No players still have an open turn. The pot carries forward.'
-        : 'End this session? No more turns until you start the next session. The pot stays open and carries forward.'
-    );
+        : 'No more turns until you start the next session. The pot stays open and carries forward.',
+      confirmLabel: thenStart ? 'End and start next' : 'End session',
+    });
     if (!ok) return;
     onEndSession?.({ carryIds: [] });
     if (thenStart) openStartSessionModal();
@@ -301,6 +305,7 @@ export default function BreakAndRunPlay({
           onClose={() => setShowRules(false)}
         />
       ) : null}
+      {confirmDialog}
     </div>
   );
 }

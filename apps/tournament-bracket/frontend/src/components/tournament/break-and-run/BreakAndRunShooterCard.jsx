@@ -105,7 +105,7 @@ export default function BreakAndRunShooterCard({
         ) : null}
         {calledMode && !started && !needsRebuy ? (
           <button type="button" className="bnr-op-btn is-go" onClick={() => onStartAttempt(shooter.id)}>
-            Start attempt
+            Start attempt · lock pot
           </button>
         ) : null}
         {started ? (

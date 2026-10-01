@@ -34,14 +34,17 @@ import {
   deleteBreakAndRunEvent,
 } from './breakAndRunCloud.js';
 import { preferTournamentCopy, withTournamentTimestamp, tournamentTime } from '../cash-climb/cashClimbSaved.js';
+import useBreakAndRunConfirm from './BreakAndRunConfirmDialog.jsx';
 
 export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
   const [tournament, setTournament] = useState(() => (intent === 'new' ? null : loadBreakAndRun()));
   const tournamentRef = useRef(tournament);
   tournamentRef.current = tournament;
+  const [confirm, confirmDialog] = useBreakAndRunConfirm();
 
   const persist = useCallback((next) => {
     const stamped = withTournamentTimestamp(next);
+    tournamentRef.current = stamped;
     setTournament(stamped);
     saveBreakAndRun(stamped);
     syncBreakAndRunCloud(stamped);
@@ -94,49 +97,69 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
     }
   };
 
-  const handleRecord = (playerId, details) => {
+  // The turn is saved first so a pending question can never lose it.
+  const handleRecord = async (playerId, details) => {
+    let next;
     try {
-      const next = recordTurn(tournament, playerId, details);
-      const need = seedTopUpNeeded(next);
-      if (need > 0) {
-        const ok = window.confirm(
-          `The pot is now ${formatMoney(next.currentPot)}.\n\n` +
-            `Add ${formatMoney(need)} league seed to bring it back to $100?`
-        );
-        if (ok) {
-          persist(topUpSeed(next));
-          return;
-        }
-      }
-      persist(next);
+      next = recordTurn(tournament, playerId, details);
     } catch (err) {
       alert(err.message || 'Could not record the turn.');
+      return;
+    }
+    const need = seedTopUpNeeded(next);
+    if (need <= 0) {
+      persist(next);
+      return;
+    }
+    if (next.turns?.[0]?.finalTen) {
+      persist(topUpSeed(next));
+      return;
+    }
+    persist(next);
+    const ok = await confirm({
+      title: 'Add league seed?',
+      message: `The pot is now ${formatMoney(next.currentPot)}.\n\nAdd ${formatMoney(need)} league seed to bring it back to $100?`,
+      confirmLabel: `Add ${formatMoney(need)} seed`,
+      cancelLabel: 'Not now',
+    });
+    if (!ok) return;
+    try {
+      const latest = tournamentRef.current;
+      if (seedTopUpNeeded(latest) > 0) persist(topUpSeed(latest));
+    } catch (err) {
+      alert(err.message || 'Could not add the seed.');
     }
   };
 
-  const handleStart = (config) => {
+  const handleStart = async (config) => {
     const previous = loadBreakAndRun();
     if (previous && previous.status !== 'completed' && previous.status !== 'ended') {
       const potLabel = formatMoney(previous.currentPot);
-      const ok = window.confirm(
-        `A Break & Run pot is already open (${potLabel}).\n\n` +
+      const ok = await confirm({
+        title: 'A pot is already open',
+        message:
+          `A Break & Run pot is already open (${potLabel}).\n\n` +
           'Normal play: open that pot and use Start next session so money stays in one continuous pot.\n\n' +
-          'Start a brand-new separate pot anyway? The open one stays in Current Tournaments and is not erased.'
-      );
+          'Start a brand-new separate pot anyway? The open one stays in Current Tournaments and is not erased.',
+        confirmLabel: 'Start a new pot',
+      });
       if (!ok) return;
       parkLiveBreakAndRunEvent(previous);
     }
     persist(createBreakAndRun(config));
   };
 
-  const handleNew = () => {
+  const handleNew = async () => {
     if (tournament && tournament.status === 'in-progress') {
       const potLabel = formatMoney(tournament.currentPot);
-      const ok = window.confirm(
-        `Leave this continuous pot (${potLabel}) and set up a brand-new separate pot?\n\n` +
+      const ok = await confirm({
+        title: 'Leave this pot?',
+        message:
+          `Leave this continuous pot (${potLabel}) and set up a brand-new separate pot?\n\n` +
           'For the next play night, prefer Start next session so entries keep growing this pot.\n\n' +
-          'Continue? This pot stays in Current Tournaments so you can open it again.'
-      );
+          'This pot stays in Current Tournaments so you can open it again.',
+        confirmLabel: 'Set up a new pot',
+      });
       if (!ok) return;
       parkLiveBreakAndRunEvent(tournament);
     }
@@ -146,18 +169,40 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
 
   const handleRemove = async () => {
     if (!tournament?.id) return;
-    const ok = window.confirm('Remove this Break and Run from the database and this tablet? This cannot be undone.');
+    const ok = await confirm({
+      title: 'Remove this Break & Run?',
+      message: 'Remove this Break and Run from the database and this tablet? This cannot be undone.',
+      confirmLabel: 'Remove',
+      tone: 'danger',
+    });
     if (!ok) return;
     await deleteBreakAndRunEvent(tournament.id);
     clearBreakAndRun();
     setTournament(null);
   };
 
+  const handleComplete = async () => {
+    const leftover = formatMoney(tournament.currentPot);
+    const ok = await confirm({
+      title: 'Mark complete?',
+      message: `Mark this Break & Run complete? Leftover ${leftover} stays in the pot until you reopen it.`,
+      confirmLabel: 'Mark complete',
+    });
+    if (!ok) return;
+    run((t) => completeEvent(t));
+  };
+
   if (!tournament) {
-    return <BreakAndRunSetup onStart={handleStart} onCancel={onLeave} />;
+    return (
+      <>
+        <BreakAndRunSetup onStart={handleStart} onCancel={onLeave} />
+        {confirmDialog}
+      </>
+    );
   }
 
   return (
+    <>
     <BreakAndRunPlay
       tournament={tournament}
       onAddPlayer={(player) => run((t) => addPlayer(t, player))}
@@ -176,18 +221,13 @@ export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
       onUpdateEvent={(details) => run((t) => updateEventDetails(t, details))}
       onEndSession={(options) => run((t) => endSession(t, options))}
       onUndo={() => run((t) => undoLast(t))}
-      onComplete={() => {
-        const leftover = formatMoney(tournament.currentPot);
-        const ok = window.confirm(
-          `Mark this Break & Run complete? Leftover ${leftover} stays in the pot until you reopen it.`
-        );
-        if (!ok) return;
-        run((t) => completeEvent(t));
-      }}
+      onComplete={handleComplete}
       onReopen={() => run((t) => reopenEvent(t))}
       onNew={handleNew}
       onLeave={onLeave}
       onRemove={handleRemove}
     />
+    {confirmDialog}
+    </>
   );
 }

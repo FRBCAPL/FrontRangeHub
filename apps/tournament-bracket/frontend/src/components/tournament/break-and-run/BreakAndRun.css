@@ -217,6 +217,39 @@
   color: #fde68a;
 }
 
+/* In-app confirm: sits above any open Break & Run modal. */
+.bnr-confirm-overlay {
+  z-index: 1400;
+}
+
+.bnr-confirm {
+  width: min(440px, calc(100% - 24px));
+}
+
+.bnr-confirm h3 {
+  margin: 0 0 10px;
+  color: #fff;
+  font-size: 1.15rem;
+}
+
+.bnr-confirm-text {
+  margin: 0 0 10px;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.bnr-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.bnr-confirm-actions .bnr-confirm-danger {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
 .bnr-shooting-badge {
   color: #fde68a;
   font-weight: 700;

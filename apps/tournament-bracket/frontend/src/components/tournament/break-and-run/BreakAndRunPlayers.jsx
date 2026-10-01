@@ -128,7 +128,7 @@ export default function BreakAndRunPlayers({
                         onClick={() => onStartAttempt(p)}
                         title="Tap as the player breaks — locks the pot for this attempt"
                       >
-                        Start attempt
+                        Start attempt · lock pot
                       </button>
                     ) : null}
                     {started && onCancelAttempt ? (
