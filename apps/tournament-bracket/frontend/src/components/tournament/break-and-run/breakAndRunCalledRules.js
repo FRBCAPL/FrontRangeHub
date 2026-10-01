@@ -99,7 +99,8 @@ export const CALLED_BREAK_AND_RUN_RULES = [
   },
   {
     title: 'Called shots after the break',
-    body: 'Every shot after the break is call shot. \nPlayer must call the ball and the pocket before each shot attempt.\n'
+    body: 'Every shot after the break is call shot.\n Push outs are not permitted.\n'
+    + 'Player must call the ball and the pocket before each shot attempt.\n'
     + 'The cue ball must first contact the lowest-numbered ball on the table. \n'
     + 'Combinations and caroms are allowed if the lowest ball is contacted first.\n'
       + 'A successfully pocketed called ordinary ball earns one full Normal Ball Value.\n'
@@ -146,6 +147,13 @@ export const CALLED_BREAK_AND_RUN_RULES = [
       + 'With money banked, the official asks before the next shot: “You’re at $___ — cash out or continue?”\n The player must clearly choose before shooting.\n'
       + 'Beginning the next shot means the player chose to continue, and the entire bank is at risk.\n'
       + 'The official’s ruling is final.',
+  },
+  {
+    title: 'Governing rules',
+    body: 'The current Official Rules of CueSports International (CSI) govern standard rules of play and fouls except where modified by these Front Range Pool League 10-Ball Break & Run rules.\n'
+      + 'These Break & Run rules take precedence wherever they differ.\n'
+      + 'Rules that require an opponent or continuation of play after the shooter’s inning ends do not apply.\n'
+      + 'Push-outs are not permitted.',
   },
 ];
 
