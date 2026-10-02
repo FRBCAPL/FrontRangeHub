@@ -99,12 +99,12 @@ export const CALLED_BREAK_AND_RUN_RULES = [
   },
   {
     title: 'Called shots after the break',
-    body: 'Every shot after the break is call shot.\n Push outs are not permitted.\n'
+    body: 'Every shot after the break is call shot.\n Push-outs are not permitted.\n'
     + 'Player must call the ball and the pocket before each shot attempt.\n'
     + 'The cue ball must first contact the lowest-numbered ball on the table. \n'
     + 'Combinations and caroms are allowed if the lowest ball is contacted first.\n'
       + 'A successfully pocketed called ordinary ball earns one full Normal Ball Value.\n'
-      + 'Additional ordinary balls pocketed on that same successful shot(lucky balls)each earn one Discounted Ball Value and stay down.\n'
+      + 'Additional ordinary balls pocketed on that same successful shot (lucky balls) each earn one Discounted Ball Value and stay down.\n'
       + 'Example ($500 pot): called ball made +$50, one extra ball falls +$10 → $60 added to the bank.\n\n'
       + '**The called ball must be made for any other balls on that shot to pay.**\n'
       +'**If the called ball is missed — even if other balls fall — the attempt ends at $0.**',
