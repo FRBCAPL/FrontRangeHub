@@ -769,6 +769,7 @@ function AppContent() {
           showLadderUserViewToggle={!isPreviewMode && isAdminState && location.pathname === '/ladder'}
           ladderUserViewActive={viewAsUserLadder}
           onToggleLadderUserView={() => setViewAsUserLadder(v => !v)}
+          onLoginSuccess={isPreviewMode || location.pathname === '/embed-preview' ? undefined : handleLoginSuccess}
         />
         ) : null}
 
