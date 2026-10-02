@@ -7,7 +7,7 @@ export const BREAK_AND_RUN_EVENTS_TABLE = 'break_and_run_events';
 
 const PUBLIC_KEY = '__FRPH_BREAK_AND_RUN_PUBLIC__';
 
-function publicClient() {
+export function publicClient() {
   const store = typeof globalThis !== 'undefined' ? globalThis : window;
   if (!store[PUBLIC_KEY]) {
     store[PUBLIC_KEY] = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -173,6 +173,62 @@ export async function listLiveBreakAndRunEvents() {
       && item.status === 'in-progress'
       && isBreakAndRunSessionLive(item.tournament)
     ));
+}
+
+/**
+ * Pot, fees, and sessions only — no turns or ledger, which grow all season.
+ * Enough for the pot amount, ball values, and live status on polled pages.
+ */
+const POT_SUMMARY_SELECT = [
+  'id',
+  'status',
+  'updated_at',
+  'name:payload->>name',
+  'payloadStatus:payload->>status',
+  'payoutMode:payload->>payoutMode',
+  'currentPot:payload->currentPot',
+  'reserve:payload->reserve',
+  'memberFee:payload->memberFee',
+  'tournamentFee:payload->tournamentFee',
+  'openFee:payload->openFee',
+  'buyIn:payload->buyIn',
+  'currentSessionId:payload->>currentSessionId',
+  'sessions:payload->sessions',
+].join(', ');
+
+function potSummaryFromRow(row) {
+  if (!row?.id) return null;
+  const { payloadStatus, status, ...rest } = row;
+  const summary = Object.fromEntries(Object.entries(rest).filter(([, value]) => value != null));
+  return {
+    ...summary,
+    id: String(row.id),
+    status: payloadStatus || status || 'in-progress',
+    sessions: Array.isArray(row.sessions) ? row.sessions : [],
+  };
+}
+
+/** Every pot still running, with or without a session open (homepage logo). Light rows — see POT_SUMMARY_SELECT. */
+export async function listOpenBreakAndRunPots() {
+  const query = (client) => client
+    .from(BREAK_AND_RUN_EVENTS_TABLE)
+    .select(POT_SUMMARY_SELECT)
+    .eq('status', 'in-progress')
+    .order('updated_at', { ascending: false })
+    .limit(12);
+  const authed = await swallow(() => query(supabase));
+  let rows = Array.isArray(authed.data) ? authed.data : [];
+  if (!rows.length) {
+    const pub = await swallow(() => query(publicClient()));
+    rows = Array.isArray(pub.data) ? pub.data : [];
+  }
+  return rows.map(potSummaryFromRow).filter((t) => t && t.status !== 'completed' && t.status !== 'ended');
+}
+
+/** Most recently updated open pot, light row only (how-it-works page). */
+export async function loadOpenBreakAndRunPotSummary() {
+  const pots = await listOpenBreakAndRunPots();
+  return pots[0] || null;
 }
 
 export async function listSavedBreakAndRunEvents() {

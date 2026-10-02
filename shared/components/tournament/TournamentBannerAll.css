@@ -9,7 +9,17 @@
   gap: 0.6rem;
 }
 
+.tba-bnr-logo .tba-bnr-live {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #dc2626;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(2, 6, 23, 0.85);
+}
+
 .tba-bnr-logo {
+  position: relative;
   flex-shrink: 0;
   display: block;
   padding: 0;
@@ -26,7 +36,7 @@
 
 .tba-bnr-logo img {
   display: block;
-  height: 3.4rem;
+  height: 5.5rem;
   width: auto;
 }
 
@@ -302,8 +312,17 @@
 .tba-modal-foot {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 1rem 1rem;
   flex-shrink: 0;
+}
+
+.tba-modal-link {
+  margin-right: auto;
+  color: #86efac;
+  font-weight: 700;
+  text-decoration: underline;
 }
 
 .tba-modal-done {
@@ -329,7 +348,7 @@
   }
 
   .tba-bnr-logo img {
-    height: 2.6rem;
+    height: 4.2rem;
   }
 
   .tba-title {

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loadHomepageTournamentBanner } from './homepageTournamentBannerData.js';
+import { breakAndRunListItem, loadHomepageTournamentBanner } from './homepageTournamentBannerData.js';
+import { useBreakAndRunLiveCheck } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/useBreakAndRunLiveNow.js';
 import HomepageTournamentListModal from './HomepageTournamentListModal.jsx';
+import { BREAK_AND_RUN_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunGuide.js';
 import breakAndRunLogo from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/brand/break-and-run-logo.jpg';
 import './TournamentBannerAll.css';
 
@@ -9,7 +11,7 @@ const POLL_MS = 20000;
 
 /**
  * Landing-page banner: ladder events in registration, plus live Cash Climb / elim.
- * Live Break & Runs get their own logo button with a separate list.
+ * Open Break & Run pots get their own logo button (with a Live pill while a session is playing).
  * Tapping either opens a short list modal instead of leaving the homepage.
  */
 const TournamentBannerAll = () => {
@@ -21,6 +23,7 @@ const TournamentBannerAll = () => {
   useEffect(() => {
     let cancelled = false;
     const fetchBanner = async () => {
+      if (document.hidden) return;
       try {
         const next = await loadHomepageTournamentBanner();
         if (!cancelled) setBanner(next.items.length || next.breakAndRuns.length ? next : null);
@@ -33,16 +36,24 @@ const TournamentBannerAll = () => {
     };
     fetchBanner();
     const timer = setInterval(fetchBanner, POLL_MS);
+    document.addEventListener('visibilitychange', fetchBanner);
     return () => {
       cancelled = true;
       clearInterval(timer);
+      document.removeEventListener('visibilitychange', fetchBanner);
     };
   }, []);
+
+  const bnrPots = banner?.breakAndRuns || [];
+  const isLive = useBreakAndRunLiveCheck(bnrPots.map((item) => item.tournament));
 
   if (loading || !banner) return null;
 
   const items = banner.items || [];
-  const breakAndRuns = banner.breakAndRuns || [];
+  const breakAndRuns = bnrPots
+    .map((item) => breakAndRunListItem(item, isLive(item.tournament)))
+    .sort((a, b) => Number(b.live) - Number(a.live));
+  const bnrLiveCount = breakAndRuns.filter((item) => item.live).length;
   const listItems = banner.hasLive ? items.filter((item) => item.live) : items;
   const pickEvent = (item) => {
     setOpenList(null);
@@ -53,7 +64,9 @@ const TournamentBannerAll = () => {
   const badgeLabel = banner.hasLive
     ? (liveCount === 1 ? 'Live Tournament' : `Live Tournaments · ${liveCount}`)
     : (items.length === 1 ? 'Upcoming Tournament' : `Upcoming Tournaments · ${items.length}`);
-  const bnrLabel = breakAndRuns.length === 1 ? 'Live Break & Run' : `Live Break & Runs · ${breakAndRuns.length}`;
+  const bnrLabel = bnrLiveCount
+    ? (bnrLiveCount === 1 ? 'Live Break & Run' : `Live Break & Runs · ${bnrLiveCount}`)
+    : 'Break & Run pot';
 
   return (
     <div className="tba-shell">
@@ -66,6 +79,7 @@ const TournamentBannerAll = () => {
           title={bnrLabel}
         >
           <img src={breakAndRunLogo} alt="" decoding="async" />
+          {bnrLiveCount ? <em className="tba-pill tba-bnr-live">Live</em> : null}
         </button>
       ) : null}
       {items.length ? (
@@ -94,8 +108,9 @@ const TournamentBannerAll = () => {
       ) : null}
       {openList === 'bnr' ? (
         <HomepageTournamentListModal
-          title="Live Break & Runs"
+          title={bnrLiveCount ? 'Live Break & Run' : 'Break & Run pot'}
           items={breakAndRuns}
+          footerLink={{ href: `#${BREAK_AND_RUN_GUIDE_HASH}`, label: 'How the Break & Run works' }}
           onClose={() => setOpenList(null)}
           onPick={pickEvent}
         />

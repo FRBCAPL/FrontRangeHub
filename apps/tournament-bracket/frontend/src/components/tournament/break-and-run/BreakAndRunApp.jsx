@@ -35,12 +35,21 @@ import {
 } from './breakAndRunCloud.js';
 import { preferTournamentCopy, withTournamentTimestamp, tournamentTime } from '../cash-climb/cashClimbSaved.js';
 import useBreakAndRunConfirm from './BreakAndRunConfirmDialog.jsx';
+import { hasOpenBreakAndRunSession } from './breakAndRunSessions.js';
+import { announceBreakAndRunOperator } from './breakAndRunPresence.js';
 
 export default function BreakAndRunApp({ onLeave, intent = 'open' }) {
   const [tournament, setTournament] = useState(() => (intent === 'new' ? null : loadBreakAndRun()));
   const tournamentRef = useRef(tournament);
   tournamentRef.current = tournament;
   const [confirm, confirmDialog] = useBreakAndRunConfirm();
+
+  const potId = tournament?.id ? String(tournament.id) : '';
+  const sessionOpen = hasOpenBreakAndRunSession(tournament);
+  useEffect(() => {
+    if (!potId || !sessionOpen) return undefined;
+    return announceBreakAndRunOperator(potId);
+  }, [potId, sessionOpen]);
 
   const persist = useCallback((next) => {
     const stamped = withTournamentTimestamp(next);

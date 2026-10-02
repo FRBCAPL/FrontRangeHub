@@ -4,9 +4,9 @@ import { cashClimbSubmitHash } from '@apps/tournament-bracket/frontend/src/compo
 import { listLiveElimEvents } from '@apps/tournament-bracket/frontend/src/components/tournament/elimCloud.js';
 import { elimFormatLabel } from '@apps/tournament-bracket/frontend/src/components/tournament/elimStatus.js';
 import { elimSubmitHash } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
-import { listLiveBreakAndRunEvents } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunCloud.js';
+import { listOpenBreakAndRunPots } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunCloud.js';
 import { breakAndRunPhoneHash } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
-import { formatMoney } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunMath.js';
+import { formatDollars } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunGuide.js';
 
 const LADDER_LABELS = {
   '499-under': '499 & Under',
@@ -31,12 +31,31 @@ function detailLine(parts) {
   return parts.filter(Boolean).join(' · ');
 }
 
+/** List-modal row for one open Break & Run pot; `live` comes from useBreakAndRunLiveCheck. */
+export function breakAndRunListItem(item, live) {
+  const t = item.tournament || {};
+  const pot = Number(t.currentPot);
+  const players = t.players?.length || 0;
+  const session = (t.sessions || []).find((s) => String(s.id) === String(t.currentSessionId));
+  return {
+    ...item,
+    live,
+    detail: detailLine([
+      live ? 'Live now' : 'Between sessions',
+      live && session?.venue ? `at ${session.venue}` : '',
+      Number.isFinite(pot) ? `Pot ${formatDollars(pot)}` : '',
+      players ? `${players} player${players === 1 ? '' : 's'}` : '',
+    ]),
+    cta: live ? 'Watch it live' : 'View the pot',
+  };
+}
+
 export async function loadHomepageTournamentBanner() {
-  const [ladderResult, cashResult, elimEvents, bnrEvents] = await Promise.all([
+  const [ladderResult, cashResult, elimEvents, bnrPots] = await Promise.all([
     tournamentService.getAllUpcomingTournaments(8),
     listLiveCashClimbEventsResult(),
     listLiveElimEvents(),
-    listLiveBreakAndRunEvents(),
+    listOpenBreakAndRunPots(),
   ]);
 
   const live = [];
@@ -61,25 +80,14 @@ export async function loadHomepageTournamentBanner() {
       cta: 'Submit a result',
     });
   });
-  const breakAndRuns = [];
-  (bnrEvents || []).forEach((event) => {
-    const players = playerCount(event);
-    const pot = Number(event?.tournament?.currentPot);
-    breakAndRuns.push({
-      id: `bnr-${event.id}`,
-      kind: 'break-and-run',
-      path: breakAndRunPhoneHash(event.id),
-      label: event.name || 'Front Range Pool League 10-Ball Break & Run',
-      detail: detailLine([
-        'Live Break & Run',
-        formatDate(event.startDate || event.tournamentDate),
-        Number.isFinite(pot) ? `Pot ${formatMoney(pot)}` : '',
-        players ? `${players} player${players === 1 ? '' : 's'}` : '',
-      ]),
-      live: true,
-      cta: 'View the pot',
-    });
-  });
+  // Every open pot; whether it's live right now is decided in the banner (schedule + operator presence).
+  const breakAndRuns = (bnrPots || []).map((tournament) => ({
+    id: `bnr-${tournament.id}`,
+    kind: 'break-and-run',
+    path: breakAndRunPhoneHash(tournament.id),
+    label: tournament.name || 'Front Range Pool League 10-Ball Break & Run',
+    tournament,
+  }));
 
   const upcoming = (ladderResult.success && ladderResult.data ? ladderResult.data : []).map((t) => {
     const daysUntil = Math.ceil((new Date(t.tournament_date) - new Date()) / (1000 * 60 * 60 * 24));

@@ -12,6 +12,7 @@ import BreakAndRunAtTableCard from './BreakAndRunAtTableCard.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import BreakAndRunPublicTicker from './BreakAndRunPublicTicker.jsx';
 import useBreakAndRunLive from './useBreakAndRunLive.js';
+import useBreakAndRunLiveNow from './useBreakAndRunLiveNow.js';
 import useBreakAndRunTvFit, { breakAndRunTvFitClass } from './useBreakAndRunTvFit.js';
 import './BreakAndRunPublic.css';
 import './BreakAndRunTv.css';
@@ -63,7 +64,8 @@ function TvCloseButton({ onClose }) {
 }
 
 function TvBoard({ tournament, emptyMessage, onClose }) {
-  const board = buildBreakAndRunTvBoard(tournament);
+  const liveNow = useBreakAndRunLiveNow(tournament);
+  const board = buildBreakAndRunTvBoard(tournament, { liveNow });
   const [ref, fit] = useBreakAndRunTvFit(board?.id || 'empty');
   const className = [
     breakAndRunTvFitClass(fit),

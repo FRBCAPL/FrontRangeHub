@@ -229,12 +229,16 @@ function sessionTurns(clean, sessionId) {
   return (clean.turns || []).filter((turn) => String(turn.sessionId || '') === sid);
 }
 
-export function buildBreakAndRunPublicBoard(tournament) {
+/**
+ * `liveNow` (from useBreakAndRunLiveNow) narrows "open session" to "actually playing now".
+ * Omitted, an open session counts as live.
+ */
+export function buildBreakAndRunPublicBoard(tournament, { liveNow } = {}) {
   const clean = sanitizeBreakAndRun(tournament);
   if (!clean) return null;
   const snapshot = eventSnapshot(clean);
   const session = currentSession(clean);
-  const sessionOpen = hasOpenBreakAndRunSession(clean);
+  const sessionOpen = hasOpenBreakAndRunSession(clean) && (liveNow ?? true);
   const potLive = clean.status === 'in-progress';
   const turns = (clean.turns || []).slice(0, 12).map(mapTurn);
   const winners = (clean.turns || [])
@@ -270,11 +274,11 @@ export function buildBreakAndRunPublicBoard(tournament) {
 }
 
 /** TV board: current open session only — pot + session stats, no rules/history dump. */
-export function buildBreakAndRunTvBoard(tournament) {
+export function buildBreakAndRunTvBoard(tournament, { liveNow } = {}) {
   const clean = sanitizeBreakAndRun(tournament);
   if (!clean) return null;
   const session = currentSession(clean);
-  const sessionOpen = hasOpenBreakAndRunSession(clean);
+  const sessionOpen = hasOpenBreakAndRunSession(clean) && (liveNow ?? true);
   if (!sessionOpen || !session) {
     return {
       id: clean.id,

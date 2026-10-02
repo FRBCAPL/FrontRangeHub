@@ -8,6 +8,8 @@ import {
   potBreakdownLine,
 } from './breakAndRunDisplay.js';
 import { basicRulesWithFees } from './breakAndRunRules.js';
+import { BREAK_AND_RUN_GUIDE_HASH } from './breakAndRunGuide.js';
+import useBreakAndRunLiveNow from './useBreakAndRunLiveNow.js';
 import BreakAndRunAtTableCard from './BreakAndRunAtTableCard.jsx';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
 import BreakAndRunRulesModal from './BreakAndRunRulesModal.jsx';
@@ -90,8 +92,9 @@ function HowItWorks({ board }) {
 /** Public board: same live picture as the TV; stacks on phones, splits into columns on wider screens. */
 export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', emptyMessage }) {
   const [showRules, setShowRules] = useState(false);
-  const board = buildBreakAndRunPublicBoard(tournament);
-  const tv = board?.live ? buildBreakAndRunTvBoard(tournament) : null;
+  const liveNow = useBreakAndRunLiveNow(tournament);
+  const board = buildBreakAndRunPublicBoard(tournament, { liveNow });
+  const tv = board?.live ? buildBreakAndRunTvBoard(tournament, { liveNow }) : null;
 
   if (!board) {
     return (
@@ -117,9 +120,14 @@ export default function BreakAndRunPublicBoard({ tournament, variant = 'phone', 
           <h1>{board.sessionLabel || board.name}</h1>
           {board.sessionVenue ? <p className="bnr-phone-venue">at {board.sessionVenue}</p> : null}
         </div>
-        <button type="button" className="bnr-phone-rules-btn" onClick={() => setShowRules(true)}>
-          Full rules
-        </button>
+        <div className="bnr-phone-head-actions">
+          <a className="bnr-phone-rules-btn" href={`#${BREAK_AND_RUN_GUIDE_HASH}`}>
+            How it works
+          </a>
+          <button type="button" className="bnr-phone-rules-btn" onClick={() => setShowRules(true)}>
+            Full rules
+          </button>
+        </div>
       </header>
 
       {live ? (
