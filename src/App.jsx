@@ -111,6 +111,8 @@ import ElimSubmitPage from '@apps/tournament-bracket/frontend/src/components/tou
 import BreakAndRunTvView from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunTvView.jsx';
 import BreakAndRunPhoneView from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunPhoneView.jsx';
 import BreakAndRunRulesTvView from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunRulesTvView.jsx';
+import BreakAndRunGuide from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunGuide.jsx';
+import { isBreakAndRunGuidePath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunGuide.js';
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isElimSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
 import { isBreakAndRunDisplayPath, isBreakAndRunRulesTvPath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
@@ -191,6 +193,8 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/tournament-bracket/break-and-run/tv': '#/tournament-bracket/break-and-run/tv',
   '/tournament-bracket/break-and-run/view': '#/tournament-bracket/break-and-run/view',
   '/tournament-bracket/break-and-run/rules': '#/tournament-bracket/break-and-run/rules',
+  '/tournament-bracket/break-and-run/how-it-works': '#/tournament-bracket/break-and-run/how-it-works',
+  '/break-and-run': '#/tournament-bracket/break-and-run/how-it-works',
   '/tournament-bracket/how-it-works': '#/tournament-bracket/how-it-works',
   '/tournament-bracket/submit': '#/tournament-bracket/submit',
   '/tournament-bracket/elim': '#/tournament-bracket/elim',
@@ -654,6 +658,25 @@ function AppContent() {
         flexDirection: 'column'
       }}>
         {isRulesTv ? <BreakAndRunRulesTvView /> : isTv ? <BreakAndRunTvView /> : <BreakAndRunPhoneView />}
+      </div>
+    );
+  }
+
+  if (isBreakAndRunGuidePath(location.pathname)) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: '#020617',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        zIndex: 9999,
+        WebkitOverflowScrolling: 'touch',
+      }}>
+        <BreakAndRunGuide />
       </div>
     );
   }
