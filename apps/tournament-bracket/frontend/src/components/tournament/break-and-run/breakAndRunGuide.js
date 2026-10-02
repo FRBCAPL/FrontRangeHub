@@ -23,9 +23,10 @@ export function isBreakAndRunGuidePath(pathname) {
   return String(pathname || '') === BREAK_AND_RUN_GUIDE_HASH;
 }
 
+/** Hash link works on every domain without a server rewrite, so it's what Share copies. */
 export function breakAndRunGuideHref() {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${origin}${BREAK_AND_RUN_GUIDE_SHORT_PATH}`;
+  return `${origin}/#${BREAK_AND_RUN_GUIDE_HASH}`;
 }
 
 export function guideSteps({ memberFee = 10, openFee = 20, perBall = 50, luckyBall = 10 } = {}) {

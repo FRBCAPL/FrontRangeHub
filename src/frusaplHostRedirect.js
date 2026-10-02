@@ -12,6 +12,7 @@ export const FRUSAPL_PATH_TO_HASH = {
   '/rules-1': '#/usapl/rules',
   '/the-hub': '#/',
   '/ladder': '#/ladder',
+  '/break-and-run': '#/tournament-bracket/break-and-run/how-it-works',
   '/auth/callback': '#/auth/callback',
 };
 
