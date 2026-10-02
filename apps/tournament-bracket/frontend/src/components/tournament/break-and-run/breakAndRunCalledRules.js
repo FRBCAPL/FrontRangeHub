@@ -99,8 +99,9 @@ export const CALLED_BREAK_AND_RUN_RULES = [
   },
   {
     title: 'Called shots after the break',
-    body: 'Every shot after the break is call shot.\n Push-outs are not permitted.\n'
+    body: 'Every shot after the break is a called shot.\n' 
     + 'Player must call the ball and the pocket before each shot attempt.\n'
+    + 'Push-outs are not permitted.\n'
     + 'The cue ball must first contact the lowest-numbered ball on the table. \n'
     + 'Combinations and caroms are allowed if the lowest ball is contacted first.\n'
       + 'A successfully pocketed called ordinary ball earns one full Normal Ball Value.\n'

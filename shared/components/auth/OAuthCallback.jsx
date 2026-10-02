@@ -85,8 +85,11 @@ const OAuthCallback = ({ onSuccess }) => {
         // Where to redirect after successful OAuth (set before OAuth by SupabaseLogin)
         const storedReturn = (localStorage.getItem('oauthReturnTo') || '').split('?')[0];
         localStorage.removeItem('oauthReturnTo');
+        const exactReturn = localStorage.getItem('oauthReturnExact') === '1';
+        localStorage.removeItem('oauthReturnExact');
         let redirectPath = '/ladder';
-        if (storedReturn.startsWith('/tournament-bracket')) redirectPath = '/tournament-bracket';
+        if (exactReturn && storedReturn.startsWith('/') && storedReturn !== '/auth/callback') redirectPath = storedReturn;
+        else if (storedReturn.startsWith('/tournament-bracket')) redirectPath = '/tournament-bracket';
         else if (storedReturn.startsWith('/ladder')) redirectPath = '/ladder';
         else if (storedReturn.startsWith('/league')) redirectPath = '/league';
         else if (storedReturn.startsWith('/') && storedReturn !== '/' && storedReturn !== '/hub' && storedReturn !== '/auth/callback') {

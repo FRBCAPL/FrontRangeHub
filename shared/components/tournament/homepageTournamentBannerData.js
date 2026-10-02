@@ -61,11 +61,13 @@ export async function loadHomepageTournamentBanner() {
       cta: 'Submit a result',
     });
   });
+  const breakAndRuns = [];
   (bnrEvents || []).forEach((event) => {
     const players = playerCount(event);
     const pot = Number(event?.tournament?.currentPot);
-    live.push({
+    breakAndRuns.push({
       id: `bnr-${event.id}`,
+      kind: 'break-and-run',
       path: breakAndRunPhoneHash(event.id),
       label: event.name || 'Front Range Pool League 10-Ball Break & Run',
       detail: detailLine([
@@ -108,6 +110,7 @@ export async function loadHomepageTournamentBanner() {
 
   return {
     items,
+    breakAndRuns,
     hasLive,
     hasUrgent: items.some((item) => item.urgent),
     title,

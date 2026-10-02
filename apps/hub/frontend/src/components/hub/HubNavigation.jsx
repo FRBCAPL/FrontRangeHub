@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './HubNavigation.css';
+import HubLoginModal from './HubLoginModal.jsx';
+import './HubLoginModal.css';
 import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
@@ -24,10 +26,12 @@ function hubCenterTitle(pathname, currentAppName, userFirstName) {
   return currentAppName || 'Front Range Pool';
 }
 
-const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, showLadderUserViewToggle, ladderUserViewActive, onToggleLadderUserView }) => {
+const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, showLadderUserViewToggle, ladderUserViewActive, onToggleLadderUserView, onLoginSuccess }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [showLogin, setShowLogin] = React.useState(false);
+  const showLoginButton = !userFirstName && Boolean(onLoginSuccess);
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== 'undefined'
       ? window.matchMedia('(max-width: 768px)').matches
@@ -182,6 +186,16 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   {centerTitle}
                 </span>
               </div>
+              {showLoginButton ? (
+                <button
+                  type="button"
+                  className="hub-login-nav-btn"
+                  onClick={() => setShowLogin(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  🔑 Log in
+                </button>
+              ) : (
               <button 
                 type="button"
                 className="hamburger-btn"
@@ -198,6 +212,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
               >
                 ☰
               </button>
+              )}
             </div>
           </div>
         )}
@@ -231,6 +246,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             <div className="login-nav-info" style={{ display: 'none' }}>
               🎯  Front Range Pool Hub
             </div>
+            {showLoginButton && !isMobile ? (
+              <button type="button" className="hub-login-nav-btn" onClick={() => setShowLogin(true)}>
+                🔑 Log in
+              </button>
+            ) : null}
           </div>
         ) : (
           <>
@@ -349,6 +369,10 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           </div>
         </div>
       )}
+
+      {showLogin ? (
+        <HubLoginModal onClose={() => setShowLogin(false)} onLoginSuccess={onLoginSuccess} />
+      ) : null}
     </div>
   );
 };

@@ -1,0 +1,69 @@
+.hub-login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.hub-login-modal {
+  width: min(26rem, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 1rem 1.1rem 1.2rem;
+  border-radius: 16px;
+  border: 2px solid #e53e3e;
+  background: #0f0f10;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  color: #fff;
+}
+
+.hub-login-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.hub-login-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #fff;
+}
+
+.hub-login-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.8rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+  cursor: pointer;
+}
+
+.hub-login-nav-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #22c55e;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hub-login-nav-btn:hover,
+.hub-login-nav-btn:focus-visible {
+  filter: brightness(1.1);
+}
+
+.mobile-nav .hub-login-nav-btn {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+}

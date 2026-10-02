@@ -5,6 +5,35 @@
   box-sizing: border-box;
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.tba-bnr-logo {
+  flex-shrink: 0;
+  display: block;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  border: 2px solid #86efac;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #020617;
+  box-shadow: 0 4px 18px rgba(74, 222, 128, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.tba-bnr-logo img {
+  display: block;
+  height: 3.4rem;
+  width: auto;
+}
+
+.tba-bnr-logo:hover,
+.tba-bnr-logo:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(250, 204, 21, 0.45);
 }
 
 .tba-banner {
@@ -297,6 +326,10 @@
     border-radius: 999px;
     padding: 0.3rem 0.75rem 0.3rem 0.6rem;
     max-width: 100%;
+  }
+
+  .tba-bnr-logo img {
+    height: 2.6rem;
   }
 
   .tba-title {

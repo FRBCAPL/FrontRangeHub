@@ -20,8 +20,9 @@ function getHashAppPath() {
  * @param {function} onShowSignup - callback to show signup modal
  * @param {boolean} compact - use tighter layout (e.g. when on pool table overlay)
  * @param {function} onShowClaim - callback to show claim ladder modal
+ * @param {string} [oauthReturnTo] - exact path to land on after Google sign-in (skips the ladder default)
  */
-export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, compact = false }) {
+export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, compact = false, oauthReturnTo }) {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -129,7 +130,11 @@ export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, co
     const existingReturn = (() => {
       try { return sessionStorage.getItem('frontrange-login-return') || ''; } catch (_) { return ''; }
     })();
-    if (!existingReturn.startsWith('/tournament-bracket')) {
+    if (oauthReturnTo) {
+      localStorage.setItem('oauthReturnTo', oauthReturnTo);
+      localStorage.setItem('oauthReturnExact', '1');
+    } else if (!existingReturn.startsWith('/tournament-bracket')) {
+      localStorage.removeItem('oauthReturnExact');
       localStorage.setItem('oauthReturnTo', getHashAppPath());
     }
     
