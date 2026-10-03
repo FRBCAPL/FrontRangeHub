@@ -63,6 +63,7 @@ export const CALLED_BREAK_AND_RUN_RULES = [
   {
     title: 'Continuous pot & sessions',
     body: 'The Break & Run is one continuous pot across nights and venues. \nA session is one play window, usually a night or event.\n'
+      + 'Break & Run attempts are typically played on 9-foot tables.\n'
       + 'Money left after payouts carries forward to the next attempt and session.\n'
       + 'Front Range Pool League adds seed money so the pot is never below $100.',
   },

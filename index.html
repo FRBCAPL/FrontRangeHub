@@ -50,6 +50,11 @@
     <script>
       (function () {
         var path = window.location.pathname || '';
+        // Static TV uses relative assets (tv.js, audio/), so it must load from /arcade-tv/
+        if (/^\/arcade-tv\/?$/.test(path) || /^\/arcade\/(tv|leaderboard-tv)\/?$/.test(path)) {
+          window.location.replace('/arcade-tv/' + window.location.search + window.location.hash);
+          return;
+        }
         var match = path.match(/^\/(arcade-kiosk-lite|dues-tracker)\/?$/);
         if (match) {
           window.location.replace('/' + match[1] + '/index.html' + window.location.search + window.location.hash);
