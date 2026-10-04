@@ -477,6 +477,8 @@ const Homepage = ({ canRunTournament = false }) => {
             <span className="tournament-banner-arrow">→</span>
           </div>
 
+          <TrapEmHomeCard />
+
           {/* Dues Tracker – wide banner below the 3 cards */}
           <div className="dues-tracker-banner" onClick={handleNavigateToDuesTracker}>
             <span className="dues-tracker-banner-icon" aria-hidden="true">💰</span>
@@ -552,8 +554,6 @@ const Homepage = ({ canRunTournament = false }) => {
             <span className="arcade-banner-arrow">→</span>
           </div>
         </div>
-
-        <TrapEmHomeCard />
 
         {/* EstateIt — estate inventory (not a league promo) */}
         <div className="legends-tracker-small estateit-home-link">
