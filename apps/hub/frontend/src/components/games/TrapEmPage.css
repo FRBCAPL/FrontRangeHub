@@ -1,0 +1,311 @@
+.trapem-shell {
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse at top, rgba(56, 189, 248, 0.16), transparent 60%),
+    #020617;
+  color: #e2e8f0;
+  padding: clamp(16px, 4vw, 40px) clamp(12px, 4vw, 32px) 48px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.trapem {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(18px, 3vw, 28px);
+}
+
+.trapem h1,
+.trapem h2 {
+  margin: 0;
+  color: #f8fafc;
+}
+
+.trapem p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* Lets \n in trapEmContent.js start a new line. */
+.trapem p,
+.trapem-rule,
+.trapem-outcome span,
+.trapem-tips li {
+  white-space: pre-line;
+}
+
+.trapem-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: -6px;
+}
+
+.trapem-bar button {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.7);
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-height: 0;
+  cursor: pointer;
+}
+
+.trapem-bar button:hover,
+.trapem-bar button:focus-visible {
+  border-color: #7dd3fc;
+}
+
+/* Hero */
+.trapem-hero {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.trapem-ball {
+  width: clamp(5.5rem, 18vw, 8rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #475569, #020617 70%);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), inset -6px -8px 18px rgba(0, 0, 0, 0.6);
+  display: grid;
+  place-items: center;
+  margin-bottom: 6px;
+}
+
+.trapem-ball span {
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #f8fafc;
+  color: #020617;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: clamp(1.4rem, 4.5vw, 2rem);
+}
+
+.trapem-kicker {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+}
+
+.trapem-hero h1 {
+  font-size: clamp(2.4rem, 8vw, 3.8rem);
+  line-height: 1;
+}
+
+.trapem-sub {
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  color: #cbd5e1;
+}
+
+.trapem-tagline {
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  font-weight: 700;
+  color: #facc15;
+}
+
+.trapem-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.trapem-btn {
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: rgba(15, 23, 42, 0.8);
+  color: #f8fafc;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.trapem-btn:hover,
+.trapem-btn:focus-visible {
+  border-color: #7dd3fc;
+}
+
+/* Sections */
+.trapem-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: clamp(16px, 3vw, 24px);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+}
+
+.trapem-section h2 {
+  font-size: clamp(1.3rem, 3.2vw, 1.7rem);
+}
+
+.trapem-lead {
+  text-align: center;
+  font-size: clamp(1rem, 2.2vw, 1.15rem);
+  color: #e2e8f0;
+}
+
+.trapem-note {
+  color: #94a3b8;
+  font-size: 0.92rem;
+}
+
+.trapem-rule {
+  margin: 0;
+  padding: 14px 18px;
+  border: 2px solid #facc15;
+  border-radius: 10px;
+  background: rgba(113, 63, 18, 0.3);
+  color: #fde68a;
+  font-weight: 700;
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+}
+
+.trapem-outcomes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 520px) {
+  .trapem-outcomes {
+    grid-template-columns: 1fr;
+  }
+}
+
+.trapem-outcome {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(125, 211, 252, 0.35);
+}
+
+.trapem-outcome strong {
+  color: #f8fafc;
+}
+
+.trapem-outcome span {
+  font-size: 0.92rem;
+}
+
+.trapem-outcome.is-make { border-color: rgba(74, 222, 128, 0.5); }
+.trapem-outcome.is-miss { border-color: rgba(148, 163, 184, 0.45); }
+.trapem-outcome.is-safe { border-color: rgba(125, 211, 252, 0.5); }
+.trapem-outcome.is-foul { border-color: rgba(248, 113, 113, 0.55); }
+
+.trapem-question {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.7);
+  text-align: center;
+}
+
+.trapem-question-old {
+  color: #64748b;
+  text-decoration: line-through;
+}
+
+.trapem-question-new {
+  color: #f8fafc;
+  font-weight: 800;
+  font-size: clamp(1.05rem, 2.6vw, 1.3rem);
+}
+
+.trapem-question-new em {
+  color: #facc15;
+  font-style: normal;
+}
+
+.trapem-tips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.trapem-tips li::before {
+  content: '• ';
+  color: #7dd3fc;
+  font-weight: 900;
+}
+
+.trapem-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.trapem-chips span {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 252, 0.35);
+  background: rgba(12, 74, 110, 0.3);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+/* Rule to remember */
+.trapem-remember {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: clamp(20px, 4vw, 32px);
+  border-radius: 18px;
+  border: 2px solid #facc15;
+  background: linear-gradient(160deg, rgba(113, 63, 18, 0.4), rgba(2, 6, 23, 0.9));
+}
+
+.trapem-big {
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  font-weight: 900;
+  line-height: 1.05 !important;
+  color: #facc15;
+}
+
+.trapem-motto {
+  font-size: clamp(1.05rem, 2.6vw, 1.3rem);
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+/* Footer */
+.trapem-foot {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.trapem-share {
+  font-size: 0.85rem;
+  color: #64748b;
+  word-break: break-all;
+}

@@ -13,6 +13,7 @@ export const FRUSAPL_PATH_TO_HASH = {
   '/the-hub': '#/',
   '/ladder': '#/ladder',
   '/break-and-run': '#/tournament-bracket/break-and-run/how-it-works',
+  '/trap-em': '#/trap-em',
   '/auth/callback': '#/auth/callback',
 };
 

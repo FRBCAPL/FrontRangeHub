@@ -1,0 +1,114 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import * as T from './trapEmContent.js';
+import './TrapEmPage.css';
+
+/** Renders *text* as a gold highlight. */
+function Highlight({ text }) {
+  return String(text || '').split('*').map((part, i) => (i % 2 ? <em key={i}>{part}</em> : part));
+}
+
+function ShareButton() {
+  const [note, setNote] = useState('');
+  const share = async () => {
+    const url = T.trapEmHref();
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${T.TRAP_EM_TITLE} · 8-Ball`, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setNote('Link copied');
+    } catch {
+      setNote(url);
+    }
+  };
+  return (
+    <button type="button" className="trapem-btn" onClick={share}>
+      {note || 'Share this page'}
+    </button>
+  );
+}
+
+export default function TrapEmPage() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = `${T.TRAP_EM_TITLE} · ${T.TRAP_EM_SUBTITLE}`;
+  }, []);
+
+  return (
+    <div className="trapem-shell">
+      <div className="trapem">
+        <div className="trapem-bar" role="group" aria-label="Page navigation">
+          <button type="button" onClick={() => navigate('/')}>Home</button>
+        </div>
+
+        <header className="trapem-hero">
+          <div className="trapem-ball" aria-hidden="true"><span>8</span></div>
+          <p className="trapem-kicker">{T.TRAP_EM_KICKER}</p>
+          <h1>{T.TRAP_EM_TITLE}</h1>
+          <p className="trapem-sub">{T.TRAP_EM_SUBTITLE}</p>
+          <p className="trapem-tagline">{T.TRAP_EM_TAGLINE}</p>
+          <div className="trapem-actions">
+            <ShareButton />
+          </div>
+        </header>
+
+        <section className="trapem-section">
+          <p className="trapem-lead">{T.TRAP_EM_INTRO}</p>
+        </section>
+
+        <section className="trapem-section" aria-labelledby="trapem-how">
+          <h2 id="trapem-how">{T.TRAP_EM_HOW_TITLE}</h2>
+          <p className="trapem-note">{T.TRAP_EM_HOW_INTRO}</p>
+          <blockquote className="trapem-rule">{T.TRAP_EM_CORE_RULE}</blockquote>
+          <div className="trapem-outcomes">
+            {T.TRAP_EM_OUTCOMES.map((o) => (
+              <div key={o.result} className={`trapem-outcome is-${o.tone}`}>
+                <strong>{o.result}</strong>
+                <span>{o.then}</span>
+              </div>
+            ))}
+          </div>
+          <p className="trapem-note">{T.TRAP_EM_HOW_OUTRO}</p>
+        </section>
+
+        <section className="trapem-section" aria-labelledby="trapem-strategy">
+          <h2 id="trapem-strategy">{T.TRAP_EM_STRATEGY_TITLE}</h2>
+          <p>{T.TRAP_EM_STRATEGY_INTRO}</p>
+          <div className="trapem-question">
+            <p className="trapem-question-old">{T.TRAP_EM_OLD_QUESTION}</p>
+            <p className="trapem-question-new"><Highlight text={T.TRAP_EM_NEW_QUESTION} /></p>
+          </div>
+          <ul className="trapem-tips">
+            {T.TRAP_EM_STRATEGY_TIPS.map((tip) => <li key={tip}>{tip}</li>)}
+          </ul>
+        </section>
+
+        <section className="trapem-section" aria-labelledby="trapem-win">
+          <h2 id="trapem-win">{T.TRAP_EM_WIN_TITLE}</h2>
+          <p>{T.TRAP_EM_WIN_BODY}</p>
+          <p className="trapem-note">{T.TRAP_EM_WIN_NOTE}</p>
+          <div className="trapem-chips">
+            {T.TRAP_EM_STILL_APPLIES.map((item) => <span key={item}>{item}</span>)}
+          </div>
+        </section>
+
+        <section className="trapem-remember" aria-label={T.TRAP_EM_REMEMBER_KICKER}>
+          <p className="trapem-kicker">{T.TRAP_EM_REMEMBER_KICKER}</p>
+          <p className="trapem-big">{T.TRAP_EM_REMEMBER_BIG}</p>
+          <p className="trapem-motto">{T.TRAP_EM_REMEMBER_MOTTO}</p>
+        </section>
+
+        <footer className="trapem-foot">
+          <p className="trapem-share">{T.trapEmHref()}</p>
+          <div className="trapem-actions">
+            <ShareButton />
+            <button type="button" className="trapem-btn" onClick={() => navigate('/')}>Back to home</button>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
