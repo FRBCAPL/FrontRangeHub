@@ -1,0 +1,89 @@
+.trapem-home-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(100%, 560px);
+  margin: 18px auto 0;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  background: linear-gradient(135deg, rgba(12, 74, 110, 0.55), rgba(2, 6, 23, 0.9));
+  color: #e2e8f0;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.trapem-home-card:hover,
+.trapem-home-card:focus-visible {
+  border-color: #7dd3fc;
+  transform: translateY(-1px);
+}
+
+.trapem-home-ball {
+  flex-shrink: 0;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #475569, #020617 70%);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.trapem-home-ball span {
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: #f8fafc;
+  color: #020617;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 0.8rem;
+}
+
+.trapem-home-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.trapem-home-kicker {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #facc15;
+}
+
+.trapem-home-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #f8fafc;
+}
+
+.trapem-home-sub {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+
+.trapem-home-cta {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #7dd3fc;
+}
+
+@media (max-width: 480px) {
+  .trapem-home-card {
+    flex-wrap: wrap;
+  }
+
+  .trapem-home-cta {
+    width: 100%;
+    text-align: right;
+  }
+}
