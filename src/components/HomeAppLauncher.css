@@ -1,0 +1,189 @@
+/* index.css unsets every max-width with !important, so widths here use width: min(...). */
+
+.hal {
+  position: relative;
+  z-index: 4;
+  width: min(100%, 1200px);
+  margin: 2.5rem auto 1.5rem;
+}
+
+.hal-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #e2e8f0;
+}
+
+.hal-heading::before,
+.hal-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(226, 232, 240, 0.35), transparent);
+}
+
+/* Flex instead of grid so a short last row stays centered. */
+.hal-grid {
+  --hal-cols: 1;
+  container-type: inline-size;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.hal-grid > .hal-tile {
+  flex: 0 0 calc((100% - (var(--hal-cols) - 1) * 14px) / var(--hal-cols));
+}
+
+@container (min-width: 434px) {
+  .hal-tile { --hal-cols: 2; }
+}
+
+@container (min-width: 658px) {
+  .hal-tile { --hal-cols: 3; }
+}
+
+@container (min-width: 1106px) {
+  .hal-tile { --hal-cols: 5; }
+}
+
+.hal-tile {
+  --hal-accent: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-height: 220px;
+  padding: 18px 14px 14px;
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--hal-accent) 55%, transparent);
+  background:
+    radial-gradient(ellipse at top, color-mix(in srgb, var(--hal-accent) 16%, transparent), transparent 70%),
+    #0a0a0e;
+  color: #e2e8f0;
+  text-align: center;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.hal-tile:hover,
+.hal-tile:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--hal-accent);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--hal-accent) 30%, transparent);
+  outline: none;
+}
+
+.hal-tile-head {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.hal-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  min-height: 2.6rem;
+}
+
+.hal-badge {
+  position: absolute;
+  top: -6px;
+  right: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #facc15;
+  color: #1a1a1a;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hal-title {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #f8fafc;
+}
+
+.hal-blurb {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #cbd5e1;
+}
+
+.hal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.hal-action {
+  min-height: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--hal-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--hal-accent) 12%, transparent);
+  color: #f1f5f9;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hal-action:hover,
+.hal-action:focus-visible {
+  background: color-mix(in srgb, var(--hal-accent) 28%, transparent);
+  border-color: var(--hal-accent);
+}
+
+.hal-open {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--hal-accent);
+}
+
+/* Small 8-ball used as the Trap 'Em icon */
+.hal-eightball {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #475569, #020617 70%);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.hal-eightball span {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: #f8fafc;
+  color: #020617;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+@media (max-width: 520px) {
+  .hal-tile {
+    min-height: 0;
+  }
+}

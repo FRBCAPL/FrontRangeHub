@@ -16,7 +16,8 @@ import ContactAdminModal from '@apps/ladder/frontend/src/components/ladder/Conta
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
-import TrapEmHomeCard from '@apps/hub/frontend/src/components/games/TrapEmHomeCard.jsx';
+import HomeAppLauncher from './HomeAppLauncher.jsx';
+import { TRAP_EM_PATH, TRAP_EM_SUBTITLE, TRAP_EM_TITLE } from '@apps/hub/frontend/src/components/games/trapEmContent.js';
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
 import { loadHomepageTournamentBanner } from '@shared/components/tournament/homepageTournamentBannerData.js';
 import RotatingFeatureBadge from './RotatingFeatureBadge';
@@ -196,6 +197,62 @@ const Homepage = ({ canRunTournament = false }) => {
     setShowWhatIsLadderModal(false);
     setShowLadderLearnMoreModal(true);
   };
+
+  const launcherTiles = [
+    {
+      id: 'tournaments',
+      icon: '🏆',
+      title: 'Tournaments',
+      blurb: 'Cash Climb, single elimination, and double elimination.',
+      accent: '#22c55e',
+      onOpen: () => handleTournamentCardClick(),
+      actions: [
+        { label: 'How Cash Climb works', onClick: handleNavigateToCashClimbGuide },
+        { label: 'Submit a result', onClick: handleNavigateToCashClimbSubmit },
+        ...(canRunTournament ? [{ label: 'Run event', onClick: handleNavigateToTournamentBracket }] : []),
+      ],
+    },
+    {
+      id: 'trap-em',
+      icon: <span className="hal-eightball"><span>8</span></span>,
+      title: TRAP_EM_TITLE,
+      blurb: TRAP_EM_SUBTITLE,
+      accent: '#38bdf8',
+      badge: 'New',
+      onOpen: () => navigate(TRAP_EM_PATH),
+      actions: [{ label: 'How to play', onClick: () => navigate(TRAP_EM_PATH) }],
+    },
+    {
+      id: 'arcade',
+      icon: '🎮',
+      title: 'Legends Arcade',
+      blurb: 'Search all 410 games on the Legends Brews & Cues cabinet.',
+      accent: '#f472b6',
+      onOpen: () => handleNavigateToArcade('find'),
+      actions: [
+        { label: 'Game Finder', onClick: (e) => handleNavigateToArcadeTab(e, 'find') },
+        { label: 'High Scores', onClick: (e) => handleNavigateToArcadeTab(e, 'leaderboards') },
+        { label: 'Wall TV', onClick: handleNavigateToArcadeTv },
+      ],
+    },
+    {
+      id: 'duezy',
+      icon: '💰',
+      title: 'Duezy',
+      blurb: 'Dues, payments, sanction fees & reports for league operators.',
+      accent: '#818cf8',
+      onOpen: handleNavigateToDuesTracker,
+      actions: [{ label: 'What is Duezy?', onClick: handleWhatIsDuezy }],
+    },
+    {
+      id: 'estate-vault',
+      icon: '🗄️',
+      title: 'Estate Vault',
+      blurb: 'Inventory an estate and manage heirs, auctions & distributions.',
+      accent: '#2dd4bf',
+      onOpen: handleNavigateToEstateIt,
+    },
+  ];
 
   const handleCameraMouseDown = (e) => {
     e.stopPropagation(); // Prevent card click
@@ -443,123 +500,7 @@ const Homepage = ({ canRunTournament = false }) => {
 
           </div>
 
-          <div
-            className="tournament-banner"
-            onClick={handleTournamentCardClick}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleTournamentCardClick(e)}
-          >
-            <span className="tournament-banner-icon" aria-hidden="true">🏆</span>
-            <div className="tournament-banner-content">
-              <h2>Tournaments</h2>
-              <p>Cash Climb, single elimination, and double elimination.</p>
-              <div
-                className="tournament-banner-tags"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-                role="group"
-                aria-label="Tournament shortcuts"
-              >
-                <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToCashClimbGuide}>
-                  How Cash Climb works
-                </button>
-                <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToCashClimbSubmit}>
-                  Submit a result
-                </button>
-                {canRunTournament ? (
-                  <button type="button" className="tournament-banner-tag-btn" onClick={handleNavigateToTournamentBracket}>
-                    Run event
-                  </button>
-                ) : null}
-              </div>
-            </div>
-            <span className="tournament-banner-arrow">→</span>
-          </div>
-
-          <TrapEmHomeCard />
-
-          {/* Dues Tracker – wide banner below the 3 cards */}
-          <div className="dues-tracker-banner" onClick={handleNavigateToDuesTracker}>
-            <span className="dues-tracker-banner-icon" aria-hidden="true">💰</span>
-            <div className="dues-tracker-banner-content">
-              <h2>Duezy</h2>
-              <p>Dues tracking made easy</p>
-              <div className="dues-tracker-banner-actions">
-                <button type="button" className="dues-tracker-banner-learn-btn" onClick={handleWhatIsDuezy}>
-                  What is Duezy?
-                </button>
-              </div>
-              <div className="dues-tracker-banner-tags">
-                <span className="feature-tag dues-highlight-tag">League operator tools</span>
-                <span className="feature-tag">Financial Breakdowns</span>
-                <span className="feature-tag">Export &amp; Reports</span>
-                <span className="feature-tag">FargoRate Import</span>
-                <span className="feature-tag">Dues &amp; Payments</span>
-                <span className="feature-tag">Sanction Fees</span>
-              </div>
-            </div>
-            <span className="dues-tracker-banner-arrow">→</span>
-          </div>
-
-          {/* Arcade – game finder & leaderboards at Legends */}
-          <div
-            className="arcade-banner"
-            onClick={handleNavigateToArcade}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleNavigateToArcade()}
-          >
-            <span className="arcade-banner-icon" aria-hidden="true">🎮</span>
-            <div className="arcade-banner-content">
-              <h2>Legends Brews &amp; Cues Arcade</h2>
-              <p>Find any game on our arcade cabinet — search 410 titles by name</p>
-              <div
-                className="arcade-banner-tags"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-                role="group"
-                aria-label="Arcade shortcuts"
-              >
-                <button
-                  type="button"
-                  className="arcade-banner-tag-btn"
-                  onClick={(e) => handleNavigateToArcadeTab(e, 'find')}
-                >
-                  Game Finder
-                </button>
-                <button
-                  type="button"
-                  className="arcade-banner-tag-btn"
-                  onClick={(e) => handleNavigateToArcadeTab(e, 'leaderboards')}
-                >
-                  High Scores
-                </button>
-                <button
-                  type="button"
-                  className="arcade-banner-tag-btn"
-                  onClick={(e) => handleNavigateToArcadeTab(e, 'find')}
-                >
-                  410 Games
-                </button>
-                <button
-                  type="button"
-                  className="arcade-banner-tag-btn arcade-banner-tag-btn--tv"
-                  onClick={handleNavigateToArcadeTv}
-                >
-                  Wall TV Leaderboard
-                </button>
-              </div>
-            </div>
-            <span className="arcade-banner-arrow">→</span>
-          </div>
-        </div>
-
-        {/* EstateIt — estate inventory (not a league promo) */}
-        <div className="legends-tracker-small estateit-home-link">
-          <button className="legends-tracker-small-btn estateit-home-btn" onClick={handleNavigateToEstateIt}>
-            Estate Vault
-          </button>
+          <HomeAppLauncher tiles={launcherTiles} />
         </div>
 
         {/* Footer Section */}

@@ -34,7 +34,11 @@ export default function TrapEmPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const previousTitle = document.title;
     document.title = `${T.TRAP_EM_TITLE} · ${T.TRAP_EM_SUBTITLE}`;
+    return () => {
+      document.title = previousTitle;
+    };
   }, []);
 
   return (
