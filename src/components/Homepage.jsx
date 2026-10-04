@@ -16,6 +16,7 @@ import ContactAdminModal from '@apps/ladder/frontend/src/components/ladder/Conta
 import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
+import TrapEmHomeCard from '@apps/hub/frontend/src/components/games/TrapEmHomeCard.jsx';
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
 import { loadHomepageTournamentBanner } from '@shared/components/tournament/homepageTournamentBannerData.js';
 import RotatingFeatureBadge from './RotatingFeatureBadge';
@@ -551,6 +552,8 @@ const Homepage = ({ canRunTournament = false }) => {
             <span className="arcade-banner-arrow">→</span>
           </div>
         </div>
+
+        <TrapEmHomeCard />
 
         {/* EstateIt — estate inventory (not a league promo) */}
         <div className="legends-tracker-small estateit-home-link">
