@@ -115,6 +115,9 @@ import BreakAndRunGuide from '@apps/tournament-bracket/frontend/src/components/t
 import { isBreakAndRunGuidePath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunGuide.js';
 import TrapEmPage from '@apps/hub/frontend/src/components/games/TrapEmPage.jsx';
 import { isTrapEmPath } from '@apps/hub/frontend/src/components/games/trapEmContent.js';
+import ConsignmentApp from '@apps/consignment/frontend/src/components/consignment/ConsignmentApp.jsx';
+import ConsignmentPrintTag from '@apps/consignment/frontend/src/components/consignment/ConsignmentPrintTag.jsx';
+import { isConsignmentPath, isConsignmentPrintPath } from '@apps/consignment/frontend/src/utils/consignmentPaths.js';
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isElimSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
 import { isBreakAndRunDisplayPath, isBreakAndRunRulesTvPath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
@@ -198,6 +201,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/tournament-bracket/break-and-run/how-it-works': '#/tournament-bracket/break-and-run/how-it-works',
   '/break-and-run': '#/tournament-bracket/break-and-run/how-it-works',
   '/trap-em': '#/trap-em',
+  '/consignment': '#/consignment',
   '/tournament-bracket/how-it-works': '#/tournament-bracket/how-it-works',
   '/tournament-bracket/submit': '#/tournament-bracket/submit',
   '/tournament-bracket/elim': '#/tournament-bracket/elim',
@@ -301,6 +305,7 @@ function AppContent() {
     }
     const targetHash = PATHNAME_TO_HASH_ROUTE[pathname]
       || (pathname.startsWith('/usapl') ? `#${pathname}` : null)
+      || (pathname === '/consignment' || pathname.startsWith('/consignment/') ? `#${pathname}` : null)
       || (isCashClimbSubmitPath(pathname) ? `#${pathname}` : null)
       || (isElimSubmitPath(pathname) ? `#${pathname}` : null);
     if (targetHash) {
@@ -552,6 +557,7 @@ function AppContent() {
     location.pathname === '/estate-inventory' ||
     location.pathname.startsWith('/estate-inventory/');
   const isUsaplLeague = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
+  const isConsignment = isConsignmentPath(location.pathname) && !isConsignmentPrintPath(location.pathname);
 
   const isFiduciaryLogHost = (() => {
     const host = (window.location.hostname || '').toLowerCase();
@@ -703,6 +709,25 @@ function AppContent() {
     );
   }
 
+  if (isConsignmentPrintPath(location.pathname)) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: '#fff',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        zIndex: 9999,
+        WebkitOverflowScrolling: 'touch',
+      }}>
+        <ConsignmentPrintTag canAdmin={isAuthenticated && isAdmin()} />
+      </div>
+    );
+  }
+
   // Public Cash Climb explainer: phones can scroll; ?tv=1 is a no-scroll projector board
   if (location.pathname === '/tournament-bracket/how-it-works') {
     const isTv = new URLSearchParams(location.search || '').get('tv') === '1';
@@ -798,7 +823,7 @@ function AppContent() {
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';
-          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && !isUsaplLeague && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) && <FloatingLogos />;
+          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && !isUsaplLeague && !isConsignment && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) && <FloatingLogos />;
         })()}
         {!isEstateInventory && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) ? (
                          <HubNavigation 
@@ -818,7 +843,7 @@ function AppContent() {
         />
         ) : null}
 
-                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", overflowX: "hidden", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : "96px" }}>
+                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}${isConsignment ? ' cs-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague || isConsignment ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", overflowX: "hidden", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : isConsignment ? "120px" : "96px" }}>
           <Routes>
             
             {/* League App Routes */}
@@ -1055,6 +1080,27 @@ function AppContent() {
                 <AppRouteWrapper appName="Front Range USA Pool League">
                   <main className="main-app-content">
                     <UsaplApp canAdmin={isAuthenticated && isAdmin()} />
+                  </main>
+                </AppRouteWrapper>
+              }
+            />
+
+            <Route
+              path="/consignment"
+              element={
+                <AppRouteWrapper appName="FRPL Consignment">
+                  <main className="main-app-content">
+                    <ConsignmentApp canAdmin={isAuthenticated && isAdmin()} />
+                  </main>
+                </AppRouteWrapper>
+              }
+            />
+            <Route
+              path="/consignment/*"
+              element={
+                <AppRouteWrapper appName="FRPL Consignment">
+                  <main className="main-app-content">
+                    <ConsignmentApp canAdmin={isAuthenticated && isAdmin()} />
                   </main>
                 </AppRouteWrapper>
               }
@@ -1382,7 +1428,7 @@ function AppContent() {
             {/* Default Route - Homepage */}
             <Route
               path="/"
-              element={<Homepage canRunTournament={canRunTournament} />}
+              element={<Homepage canRunTournament={canRunTournament} canAdmin={isAuthenticated && isAdmin()} />}
             />
             
             {/* Catch-all route */}

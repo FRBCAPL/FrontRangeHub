@@ -12,6 +12,9 @@ function hubCenterTitle(pathname, currentAppName, userFirstName) {
   if (pathname === '/usapl' || String(pathname || '').startsWith('/usapl/')) {
     return 'Front Range USA Pool League';
   }
+  if (pathname === '/consignment' || String(pathname || '').startsWith('/consignment/')) {
+    return 'Consignment';
+  }
   if (pathname === '/hub') return !userFirstName ? 'Ladder - Login' : 'Ladder of Legends';
   if (pathname === '/guest/ladder' || pathname === '/ladder') return 'Ladder of Legends';
   if (pathname === '/cueless') return 'Cueless in the Booth';
@@ -32,6 +35,15 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [showLogin, setShowLogin] = React.useState(false);
   const showLoginButton = !userFirstName && Boolean(onLoginSuccess);
+
+  // Lets app pages (e.g. consignment bidding) open the hub sign-in: window.dispatchEvent(new Event('frpl:open-login'))
+  React.useEffect(() => {
+    if (!onLoginSuccess) return undefined;
+    const open = () => setShowLogin(true);
+    window.addEventListener('frpl:open-login', open);
+    return () => window.removeEventListener('frpl:open-login', open);
+  }, [onLoginSuccess]);
+
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== 'undefined'
       ? window.matchMedia('(max-width: 768px)').matches
@@ -101,6 +113,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
 
   const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || location.pathname.startsWith('/ladder/') || currentAppName === 'Ladder of Legends';
   const isUsaplApp = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
+  const isConsignmentApp = location.pathname === '/consignment' || location.pathname.startsWith('/consignment/');
   const isCuelessApp = location.pathname === '/cueless' || location.pathname.startsWith('/cueless/');
   const isTournamentApp =
     location.pathname.startsWith('/tournament-bracket') &&
@@ -116,7 +129,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
   
   return (
-    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 

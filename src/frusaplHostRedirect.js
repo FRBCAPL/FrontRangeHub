@@ -1,6 +1,6 @@
 const FRUSAPL_HOSTS = new Set(['frusapl.com', 'www.frusapl.com']);
 
-const SKIP_PATH_PREFIXES = ['/dues-tracker', '/arcade', '/estate-vault'];
+const SKIP_PATH_PREFIXES = ['/dues-tracker', '/arcade', '/estate-vault', '/consignment'];
 
 export const FRUSAPL_PATH_TO_HASH = {
   '/': '#/usapl',
@@ -14,6 +14,7 @@ export const FRUSAPL_PATH_TO_HASH = {
   '/ladder': '#/ladder',
   '/break-and-run': '#/tournament-bracket/break-and-run/how-it-works',
   '/trap-em': '#/trap-em',
+  '/consignment': '#/consignment',
   '/auth/callback': '#/auth/callback',
 };
 

@@ -18,6 +18,7 @@ import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
 import HomeAppLauncher from './HomeAppLauncher.jsx';
 import { TRAP_EM_PATH, TRAP_EM_SUBTITLE, TRAP_EM_TITLE } from '@apps/hub/frontend/src/components/games/trapEmContent.js';
+import { CONSIGNMENT_PATH } from '@apps/consignment/frontend/src/data/consignmentConstants.js';
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
 import { loadHomepageTournamentBanner } from '@shared/components/tournament/homepageTournamentBannerData.js';
 import RotatingFeatureBadge from './RotatingFeatureBadge';
@@ -55,7 +56,7 @@ const CUELESS_FEATURE_BADGES = [
   'No League or Ladder Membership Required',
 ];
 
-const Homepage = ({ canRunTournament = false }) => {
+const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
   const navigate = useNavigate();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -221,6 +222,20 @@ const Homepage = ({ canRunTournament = false }) => {
       badge: 'New',
       onOpen: () => navigate(TRAP_EM_PATH),
       actions: [{ label: 'How to play', onClick: () => navigate(TRAP_EM_PATH) }],
+    },
+    {
+      id: 'consignment',
+      icon: '🎱',
+      title: 'FRPL Consignment',
+      blurb: 'Cues and gear for sale at Legends. Scan a tag or submit an item.',
+      accent: '#e53e3e',
+      badge: 'New',
+      onOpen: () => navigate(CONSIGNMENT_PATH),
+      actions: [
+        { label: 'Browse', onClick: () => navigate(CONSIGNMENT_PATH) },
+        { label: 'Sell an item', onClick: () => navigate(`${CONSIGNMENT_PATH}/sell`) },
+        ...(canAdmin ? [{ label: 'Admin', onClick: () => navigate(`${CONSIGNMENT_PATH}/admin`) }] : []),
+      ],
     },
     {
       id: 'arcade',

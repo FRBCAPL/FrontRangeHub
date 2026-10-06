@@ -1,0 +1,60 @@
+.cs-print {
+  min-height: 100vh;
+  margin: 0;
+  padding: 24px;
+  background: #fff;
+  color: #111;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.cs-print-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.cs-print-bar button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cs-tag {
+  width: min(360px, 100%);
+  border: 3px solid #111;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.cs-tag h1 {
+  margin: 4px 0 8px;
+  font-size: 1.35rem;
+}
+
+.cs-tag .cs-tag-id {
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.cs-tag img {
+  width: 180px;
+  height: 180px;
+  margin: 8px auto;
+  display: block;
+}
+
+@media print {
+  .cs-print-bar {
+    display: none;
+  }
+
+  .cs-print {
+    padding: 0;
+  }
+
+  .cs-tag {
+    border-width: 2px;
+  }
+}

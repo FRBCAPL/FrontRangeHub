@@ -78,6 +78,19 @@ export default function TrapEmPage() {
           <p className="trapem-note">{T.TRAP_EM_HOW_OUTRO}</p>
         </section>
 
+        <section className="trapem-section" aria-labelledby="trapem-rules">
+          <h2 id="trapem-rules">{T.TRAP_EM_RULES_TITLE}</h2>
+          <p className="trapem-note">{T.TRAP_EM_RULES_INTRO}</p>
+          <ol className="trapem-rules">
+            {T.TRAP_EM_RULES.map((r) => (
+              <li key={r.title}>
+                <strong>{r.title}</strong>
+                <span>{r.body}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
         <section className="trapem-section" aria-labelledby="trapem-strategy">
           <h2 id="trapem-strategy">{T.TRAP_EM_STRATEGY_TITLE}</h2>
           <p>{T.TRAP_EM_STRATEGY_INTRO}</p>

@@ -246,7 +246,8 @@ html body .hub-navigation.homepage-nav .nav-content {
 .hub-navigation.ladder-app,
 .hub-navigation.cueless-app,
 .hub-navigation.tournament-app,
-.hub-navigation.usapl-nav:not(.homepage-nav) {
+.hub-navigation.usapl-nav:not(.homepage-nav),
+.hub-navigation.consignment-nav:not(.homepage-nav) {
   padding: 0.55rem 0 0.4rem !important;
   min-height: 5.25rem;
 }
@@ -254,7 +255,8 @@ html body .hub-navigation.homepage-nav .nav-content {
 .hub-navigation.ladder-app .nav-content,
 .hub-navigation.cueless-app .nav-content,
 .hub-navigation.tournament-app .nav-content,
-.hub-navigation.usapl-nav:not(.homepage-nav) .nav-content {
+.hub-navigation.usapl-nav:not(.homepage-nav) .nav-content,
+.hub-navigation.consignment-nav:not(.homepage-nav) .nav-content {
   max-width: none !important;
   width: 100% !important;
   margin: 0 !important;
@@ -266,7 +268,8 @@ html body .hub-navigation.homepage-nav .nav-content {
   .hub-navigation.ladder-app .nav-left,
   .hub-navigation.cueless-app .nav-left,
   .hub-navigation.tournament-app .nav-left,
-  .hub-navigation.usapl-nav:not(.homepage-nav) .nav-left {
+  .hub-navigation.usapl-nav:not(.homepage-nav) .nav-left,
+  .hub-navigation.consignment-nav:not(.homepage-nav) .nav-left {
     position: absolute;
     left: 12px;
     top: 50%;
@@ -279,6 +282,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   .hub-navigation.cueless-app .nav-right,
   .hub-navigation.tournament-app .nav-right,
   .hub-navigation.usapl-nav:not(.homepage-nav) .nav-right,
+  .hub-navigation.consignment-nav:not(.homepage-nav) .nav-right,
   .hub-navigation.homepage-nav .nav-right {
     position: absolute;
     right: 12px;
@@ -296,6 +300,11 @@ html body .hub-navigation.homepage-nav .nav-content {
     z-index: 1;
   }
 
+  /* Logged-in Admin / Switch App / Logout sit on the right — keep the title out of them. */
+  .hub-navigation.consignment-nav:not(.homepage-nav) .nav-center {
+    display: none !important;
+  }
+
   .hub-navigation.tournament-app .app-title {
     font-size: clamp(1rem, 2.1vw, 2.15rem) !important;
   }
@@ -304,7 +313,8 @@ html body .hub-navigation.homepage-nav .nav-content {
 .hub-navigation.ladder-app .app-title,
 .hub-navigation.cueless-app .app-title,
 .hub-navigation.tournament-app .app-title,
-.hub-navigation.usapl-nav:not(.homepage-nav) .app-title {
+.hub-navigation.usapl-nav:not(.homepage-nav) .app-title,
+.hub-navigation.consignment-nav:not(.homepage-nav) .app-title {
   white-space: nowrap !important;
   word-break: normal !important;
 }
@@ -323,6 +333,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   }
 
   .hub-navigation.usapl-nav:not(.homepage-nav) .app-title,
+  .hub-navigation.consignment-nav:not(.homepage-nav) .app-title,
   .hub-navigation.tournament-app .app-title {
     white-space: normal !important;
     word-break: break-word !important;
@@ -857,6 +868,16 @@ html body .hub-navigation.homepage-nav .nav-content {
 
   .main-content-wrapper.estateit-shell {
     padding-top: 0 !important;
+  }
+}
+
+.main-content-wrapper.cs-shell {
+  padding-top: 120px !important;
+}
+
+@media (max-width: 768px) {
+  .main-content-wrapper.cs-shell {
+    padding-top: 112px !important;
   }
 }
 

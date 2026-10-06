@@ -1,0 +1,1069 @@
+/* index.css unsets max-width with !important — use width: min(...) instead. */
+
+.cs-app,
+.cs-portal {
+  --cs-accent: #e53e3e;
+  --cs-ink: #e2e8f0;
+  --cs-muted: #94a3b8;
+  --cs-line: rgba(148, 163, 184, 0.28);
+  --cs-card: #0a0a0e;
+  color: var(--cs-ink);
+  font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+}
+
+.cs-app {
+  background:
+    radial-gradient(ellipse at top, rgba(229, 62, 62, 0.16), transparent 55%),
+    #020617;
+  width: 100%;
+  min-height: calc(100vh - 96px);
+  margin: 0;
+  padding: 0 0 64px;
+  box-sizing: border-box;
+  font-family: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+}
+
+.cs-shell {
+  background: #000 !important;
+}
+
+.cs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  justify-content: center;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--cs-line);
+  background: rgba(8, 8, 10, 0.92);
+  position: relative;
+  z-index: 4;
+}
+
+.cs-nav a {
+  color: var(--cs-muted);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 6px 2px 8px;
+  border-bottom: 2px solid transparent;
+}
+
+.cs-nav a.active,
+.cs-nav a:hover {
+  color: var(--cs-ink);
+  border-bottom-color: var(--cs-accent);
+}
+
+.cs-page {
+  width: min(1100px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 22px 0 0;
+}
+
+.cs-kicker {
+  margin: 0 0 6px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--cs-accent);
+}
+
+.cs-page h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.cs-lede {
+  margin: 0 0 18px;
+  color: var(--cs-muted);
+  line-height: 1.5;
+}
+
+.cs-legends {
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #a855f7;
+  background: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.cs-legends.sold {
+  border-color: rgba(148, 163, 184, 0.5);
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+}
+
+.cs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+
+.cs-filters select,
+.cs-field input,
+.cs-field textarea,
+.cs-field select {
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font: inherit;
+}
+
+.cs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.cs-card {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 16px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.cs-card:hover {
+  border-color: var(--cs-accent);
+}
+
+.cs-card img,
+.cs-hero img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: #020617;
+  display: block;
+}
+
+.cs-ph {
+  height: 180px;
+  display: grid;
+  place-items: center;
+  background: #020617;
+  color: var(--cs-muted);
+  font-size: 2.4rem;
+}
+
+.cs-card-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cs-card h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.cs-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--cs-muted);
+}
+
+.cs-price {
+  margin: 6px 0 0;
+  font-weight: 800;
+  color: var(--cs-accent);
+}
+
+.cs-badge {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(229, 62, 62, 0.16);
+  color: #fecaca;
+}
+
+.cs-badge.sold {
+  background: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+}
+
+.cs-badge.auction {
+  background: rgba(168, 85, 247, 0.2);
+  color: #e9d5ff;
+}
+
+.cs-auction-panel {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.cs-auction-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cs-auction-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.25);
+  color: #e9d5ff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cs-countdown {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-countdown.closing {
+  color: #fca5a5;
+}
+
+.cs-auction-price {
+  display: grid;
+  gap: 2px;
+}
+
+.cs-auction-price strong {
+  font-size: 2rem;
+  color: #d8b4fe;
+}
+
+.cs-bid-form {
+  display: grid;
+  gap: 8px;
+}
+
+.cs-bid-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-bid-dollar {
+  font-weight: 800;
+  color: var(--cs-muted);
+}
+
+.cs-bid-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font: inherit;
+  font-size: 1.1rem;
+}
+
+.cs-bid-leading,
+.cs-bid-notice {
+  margin: 0;
+  color: #86efac;
+  font-weight: 700;
+}
+
+.cs-buy-now {
+  justify-self: start;
+  border-color: #a855f7;
+}
+
+.cs-bid-won {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(134, 239, 172, 0.5);
+  background: rgba(134, 239, 172, 0.08);
+}
+
+.cs-bid-won p {
+  margin: 6px 0 0;
+}
+
+.cs-bid-history h3 {
+  margin: 4px 0 8px;
+  font-size: 1rem;
+}
+
+.cs-bid-history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.cs-bid-history li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cs-line);
+}
+
+.cs-bid-history li .cs-meta {
+  grid-column: 1 / -1;
+}
+
+.cs-method {
+  width: min(640px, 100%);
+  margin: 0 auto 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.cs-method-option {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  cursor: pointer;
+  text-align: left;
+}
+
+.cs-method-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cs-method-option span {
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.cs-method-option.active {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.cs-method-option:focus-within {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+}
+
+.cs-candidates {
+  display: grid;
+  gap: 6px;
+}
+
+.cs-candidate {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cs-line);
+  cursor: pointer;
+}
+
+.cs-candidate.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cs-bidders {
+  margin-top: 18px;
+}
+
+.cs-bidders summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cs-bidders ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cs-bidders li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cs-line);
+}
+
+.cs-bidders li button {
+  min-height: 34px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+
+.cs-link-btn {
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #d8b4fe;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-hero {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cs-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cs-thumbs button {
+  padding: 0;
+  border: 2px solid transparent;
+  background: none;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  min-height: 0;
+}
+
+.cs-thumbs button.active {
+  border-color: var(--cs-accent);
+}
+
+.cs-thumbs img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  display: block;
+}
+
+.cs-hero > img {
+  height: min(420px, 55vw);
+  border-radius: 16px;
+}
+
+.cs-form {
+  display: grid;
+  gap: 12px;
+  width: min(640px, 100%);
+}
+
+.cs-page-centered {
+  text-align: center;
+}
+
+.cs-page-centered .cs-form {
+  margin: 0 auto;
+  text-align: left;
+}
+
+.cs-page-centered .cs-form > .cs-btn {
+  justify-self: center;
+}
+
+.cs-field {
+  display: grid;
+  gap: 6px;
+}
+
+.cs-field label {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.cs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.cs-req {
+  margin-left: 4px;
+  color: #fca5a5;
+  font-weight: 800;
+}
+
+.cs-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--cs-muted);
+}
+
+.cs-sellbox {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--cs-accent);
+  background: rgba(229, 62, 62, 0.1);
+}
+
+.cs-static {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--cs-muted);
+}
+
+.cs-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.cs-check input {
+  min-height: 0;
+  width: auto;
+}
+
+.cs-fee-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cs-fee-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--cs-line);
+  font-size: 0.85rem;
+}
+
+.cs-fee-list button {
+  min-height: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(252, 165, 165, 0.5);
+  background: none;
+  color: #fca5a5;
+  cursor: pointer;
+}
+
+.cs-fee-add {
+  display: grid;
+  grid-template-columns: 1.3fr 0.8fr 1fr auto;
+  gap: 6px;
+}
+
+.cs-fee-add select,
+.cs-fee-add input {
+  min-height: 40px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font: inherit;
+  min-width: 0;
+}
+
+.cs-locked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px 0 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--cs-line);
+  font-weight: 800;
+}
+
+.cs-locked .cs-btn-secondary {
+  min-height: 34px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+
+.cs-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.cs-history li {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--cs-line);
+}
+
+.cs-note-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+}
+
+.cs-note-add input {
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font: inherit;
+  min-width: 0;
+}
+
+.cs-due {
+  color: #fcd34d;
+}
+
+.cs-overdue {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
+.cs-margin {
+  margin: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 800;
+  color: #86efac;
+}
+
+.cs-margin.neg {
+  color: #fca5a5;
+}
+
+.cs-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 14px;
+}
+
+.cs-tabs button {
+  min-height: 40px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--cs-line);
+  background: transparent;
+  color: var(--cs-muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-tabs button.active {
+  border-color: var(--cs-accent);
+  background: rgba(229, 62, 62, 0.14);
+  color: var(--cs-ink);
+}
+
+.cs-auction-calc {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.cs-auction-calc strong {
+  color: #d8b4fe;
+  font-size: 1.1rem;
+}
+
+.cs-auction-tag {
+  color: #d8b4fe;
+}
+
+.cs-nav {
+  align-items: center;
+}
+
+.cs-nav a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cs-nav .cs-nav-how {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0 6px;
+  min-height: 0;
+  padding: 4px 12px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  background: rgba(168, 85, 247, 0.12);
+  color: #e9d5ff;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.cs-nav .cs-nav-how span {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #a855f7;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.cs-nav .cs-nav-how:hover {
+  background: rgba(168, 85, 247, 0.22);
+  color: #fff;
+}
+
+.cs-how {
+  width: min(620px, calc(100vw - 28px));
+  box-sizing: border-box;
+}
+
+.cs-how-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.cs-how-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.cs-how-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--cs-line);
+  background: transparent;
+  color: var(--cs-ink);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cs-how .cs-tabs {
+  flex-wrap: wrap;
+}
+
+.cs-how-intro {
+  margin: 4px 0 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cs-how-steps {
+  margin: 0 0 12px;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+  line-height: 1.45;
+  color: var(--cs-ink);
+}
+
+.cs-how-steps li::marker {
+  color: var(--cs-accent);
+  font-weight: 800;
+}
+
+.cs-how-example {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.1);
+  font-size: 0.92rem;
+}
+
+.cs-how-example ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.cs-terms {
+  width: min(640px, 100%);
+  margin: 0 auto 18px;
+  box-sizing: border-box;
+}
+
+.cs-sellbox strong {
+  display: block;
+  font-size: 1.2rem;
+  color: var(--cs-accent);
+}
+
+.cs-agree {
+  display: grid;
+  gap: 8px;
+  white-space: pre-line;
+  font-size: 0.9rem;
+  color: var(--cs-muted);
+}
+
+.cs-agree label {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--cs-ink);
+  font-weight: 700;
+}
+
+.cs-btn,
+.cs-btn-secondary {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid var(--cs-accent);
+}
+
+.cs-btn {
+  background: var(--cs-accent);
+  color: #fff;
+}
+
+.cs-btn-secondary {
+  background: transparent;
+  color: var(--cs-ink);
+}
+
+.cs-error {
+  color: #fca5a5;
+  margin: 0;
+}
+
+.cs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.cs-table th,
+.cs-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--cs-line);
+  vertical-align: top;
+}
+
+.cs-table button {
+  min-height: 0;
+  margin: 0 4px 4px 0;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+.cs-admin-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.cs-table .cs-admin-thumb {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--cs-line);
+  background: #020617;
+  overflow: hidden;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+}
+
+.cs-admin-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cs-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.cs-photo-tile {
+  position: relative;
+  border-radius: 10px;
+  border: 2px solid var(--cs-line);
+  overflow: hidden;
+  background: #020617;
+}
+
+.cs-photo-tile.cover {
+  border-color: #a855f7;
+}
+
+.cs-photo-view {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  min-height: 0;
+}
+
+.cs-photo-view img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  display: block;
+}
+
+.cs-photo-tag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #a855f7;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.cs-photo-actions {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+}
+
+.cs-photo-actions button {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-photo-actions button.danger {
+  flex: 0 0 auto;
+  color: #fca5a5;
+  border-color: rgba(252, 165, 165, 0.5);
+}
+
+.cs-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: zoom-out;
+}
+
+.cs-lightbox img {
+  width: min(100%, 1200px);
+  height: 80vh;
+  object-fit: contain;
+}
+
+/* index.css also unsets max-height, so the overlay scrolls instead of the card. */
+.cs-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cs-modal-card {
+  width: min(640px, 100%);
+  margin: auto 0;
+  box-sizing: border-box;
+  background: var(--cs-card);
+  border: 1px solid var(--cs-line);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.cs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .cs-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cs-fee-add {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cs-table {
+    display: block;
+    overflow-x: auto;
+  }
+}
