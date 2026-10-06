@@ -17,10 +17,10 @@ export const TRAP_EM_TAGLINE = 'Every shot is offense. Every shot is defense.';
 
 export const TRAP_EM_INTRO =
   'Trap ’Em is a strategic variation of 8-Ball where every player gets exactly ONE shot per turn at the table. \n'
-  + 'You’re not just trying to pocket your own ball — you’re trying to leave the table in the worst possible position for your opponent.';
+  + 'You’re not just trying to pocket your own ball — you’re trying to play safe against your opponent.';
 
 export const TRAP_EM_HOW_TITLE = 'How to play';
-export const TRAP_EM_HOW_INTRO = 'Played under the current CSI Official Rules for 8-Ball, with one major change:';
+export const TRAP_EM_HOW_INTRO = 'Played under the current CSI Official Rules for 8-Ball, with a few Trap em specific rules:';
 export const TRAP_EM_HOW_OUTRO = 'Players alternate one shot at a time until the game is won.';
 
 export const TRAP_EM_CORE_RULE = 'Each player gets exactly ONE shot per turn at the table, regardless of the result of that shot.';
@@ -39,15 +39,19 @@ export const TRAP_EM_RULES_INTRO = 'Tap a rule to read it.';
 export const TRAP_EM_RULES = [
   {
     title: 'The break',
-    body: 'If the breaker legally pockets a ball on the break, they get one more shot to try to establish their group. After that shot, the turn passes. If nothing is pocketed, the turn passes right away.',
+    body: 'If the breaker legally pockets a ball on the break, they get one more shot to try to establish their group.\n After that shot, the turn passes. If nothing is pocketed, the turn passes right away.',
   },
   {
     title: 'After the break',
-    body: 'The table is open. To claim a group, call the ball and pocket it legally. A ball that drops without a call does not set the groups, and the table stays open.',
+    body: 'The table is open. To claim a group, call the ball and pocket it legally. \nA ball that drops without a call does not set the groups, and the table stays open.',
   },
   {
     title: '8-ball on the break',
     body: 'Handled the same as CSI 8-Ball.',
+  },
+  {
+    title: 'When to call your shot',
+    body: 'Only two shots need a call: any shot at the 8-ball, and a shot on an open table that you want to set your group. \nPocketing the 8 without calling it, or in a pocket you didn’t call, loses the game. \nOnce groups are set, no other calls are needed except for the 8-ball.',
   },
   {
     title: 'Ball in hand only on a scratch',
@@ -55,11 +59,7 @@ export const TRAP_EM_RULES = [
   },
   {
     title: 'Missed hit or no rail: opponent’s option',
-    body: 'If the shooter misses the object ball completely, or no ball reaches a rail after contact, it is a foul but not ball in hand. The opponent chooses: shoot the table as it lies, or give it back and make the shooter shoot again from where the balls stopped.',
-  },
-  {
-    title: 'When to call your shot',
-    body: 'Only two shots need a call: any shot at the 8-ball, and a shot on an open table that you want to set your group. Pocketing the 8 without calling it, or in a pocket you didn’t call, loses the game. Once groups are set, no other calls are needed. A lucky drop of your own ball counts, and you never have to call safe.',
+    body: 'If the shooter misses the object ball completely, or no ball reaches a rail after contact, it is a foul but not ball in hand. \nThe opponent has the option and may choose: shoot the table as it lies, or give it back and make the shooter shoot again from where the balls stopped.',
   },
   {
     title: 'Pocketing your opponent’s ball',
