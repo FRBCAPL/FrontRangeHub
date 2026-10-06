@@ -43,7 +43,7 @@ export const TRAP_EM_RULES = [
   },
   {
     title: 'After the break',
-    body: 'The table is open. Groups are set the normal CSI way, by the first called ball legally pocketed after the break.',
+    body: 'The table is open. To claim a group, call the ball and pocket it legally. A ball that drops without a call does not set the groups, and the table stays open.',
   },
   {
     title: '8-ball on the break',
@@ -51,15 +51,15 @@ export const TRAP_EM_RULES = [
   },
   {
     title: 'Ball in hand only on a scratch',
-    body: 'Ball in hand is given only when the cue ball is scratched. The incoming player places the cue ball anywhere and takes their one shot. Ball in hand does not add an extra shot.',
+    body: 'Ball in hand is given only when the cue ball is scratched. Ball in hand does not add an extra shot.',
   },
   {
     title: 'Missed hit or no rail: opponent’s option',
-    body: 'If the shooter misses the object ball completely, or no ball reaches a rail after contact, it is a foul but not ball in hand. The opponent chooses: shoot the table as it lies, or give it back and make the shooter shoot again from where the cue ball stopped.',
+    body: 'If the shooter misses the object ball completely, or no ball reaches a rail after contact, it is a foul but not ball in hand. The opponent chooses: shoot the table as it lies, or give it back and make the shooter shoot again from where the balls stopped.',
   },
   {
-    title: 'No need to call safe',
-    body: 'Every turn ends after one shot, so you never have to declare a safety. Called shots still apply, including the 8-ball.',
+    title: 'When to call your shot',
+    body: 'Only two shots need a call: any shot at the 8-ball, and a shot on an open table that you want to set your group. Pocketing the 8 without calling it, or in a pocket you didn’t call, loses the game. Once groups are set, no other calls are needed. A lucky drop of your own ball counts, and you never have to call safe.',
   },
   {
     title: 'Pocketing your opponent’s ball',
@@ -101,7 +101,6 @@ export const TRAP_EM_STILL_APPLIES = [
   'Open table',
   'Establishing groups',
   'Legal shots',
-  'Called shots',
   'Fouls',
   'Ball in hand',
   'The 8-ball',
