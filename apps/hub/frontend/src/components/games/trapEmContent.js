@@ -4,10 +4,13 @@ export function isTrapEmPath(pathname) {
   return String(pathname || '').replace(/\/+$/, '') === TRAP_EM_PATH;
 }
 
-/** Hash link works on every domain without a server rewrite, so it's what Share copies. */
+/**
+ * Share copies the static page (FrontEnd/public/trap-em/, built by scripts/build-trap-em-static.mjs):
+ * real HTML that link previews and AI tools can read. Hash links only ever show them the homepage.
+ */
 export function trapEmHref() {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${origin}/#${TRAP_EM_PATH}`;
+  return `${origin}${TRAP_EM_PATH}/`;
 }
 
 export const TRAP_EM_KICKER = 'Front Range Pool League';
