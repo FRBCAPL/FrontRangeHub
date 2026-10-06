@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as T from './trapEmContent.js';
 import './TrapEmPage.css';
+import TrapEmTableCard from './TrapEmTableCard.jsx';
 
 /** Renders *text* as a gold highlight. */
 function Highlight({ text }) {
@@ -26,6 +27,14 @@ function ShareButton() {
   return (
     <button type="button" className="trapem-btn" onClick={share}>
       {note || 'Share this page'}
+    </button>
+  );
+}
+
+function PrintCardButton() {
+  return (
+    <button type="button" className="trapem-btn" onClick={() => window.print()}>
+      Print table card
     </button>
   );
 }
@@ -56,6 +65,7 @@ export default function TrapEmPage() {
           <p className="trapem-tagline">{T.TRAP_EM_TAGLINE}</p>
           <div className="trapem-actions">
             <ShareButton />
+            <PrintCardButton />
           </div>
         </header>
 
@@ -67,6 +77,7 @@ export default function TrapEmPage() {
           <h2 id="trapem-how">{T.TRAP_EM_HOW_TITLE}</h2>
           <p className="trapem-note">{T.TRAP_EM_HOW_INTRO}</p>
           <blockquote className="trapem-rule">{T.TRAP_EM_CORE_RULE}</blockquote>
+          <p className="trapem-note trapem-exception">{T.TRAP_EM_CORE_EXCEPTION}</p>
           <div className="trapem-outcomes">
             {T.TRAP_EM_OUTCOMES.map((o) => (
               <div key={o.result} className={`trapem-outcome is-${o.tone}`}>
@@ -115,6 +126,21 @@ export default function TrapEmPage() {
           </div>
         </section>
 
+        <section className="trapem-section" aria-labelledby="trapem-format">
+          <h2 id="trapem-format">{T.TRAP_EM_FORMAT_TITLE}</h2>
+          <dl className="trapem-format">
+            {T.TRAP_EM_FORMAT.map((f) => (
+              <div key={f.label}>
+                <dt>{f.label}</dt>
+                <dd>{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="trapem-actions">
+            <PrintCardButton />
+          </div>
+        </section>
+
         <section className="trapem-remember" aria-label={T.TRAP_EM_REMEMBER_KICKER}>
           <p className="trapem-kicker">{T.TRAP_EM_REMEMBER_KICKER}</p>
           <p className="trapem-big">{T.TRAP_EM_REMEMBER_BIG}</p>
@@ -125,10 +151,12 @@ export default function TrapEmPage() {
           <p className="trapem-share">{T.trapEmHref()}</p>
           <div className="trapem-actions">
             <ShareButton />
+            <PrintCardButton />
             <button type="button" className="trapem-btn" onClick={() => navigate('/')}>Back to home</button>
           </div>
         </footer>
       </div>
+      <TrapEmTableCard />
     </div>
   );
 }

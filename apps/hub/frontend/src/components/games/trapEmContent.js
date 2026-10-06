@@ -20,56 +20,76 @@ export const TRAP_EM_INTRO =
   + 'You’re not just trying to pocket your own ball — you’re trying to play safe against your opponent.';
 
 export const TRAP_EM_HOW_TITLE = 'How to play';
-export const TRAP_EM_HOW_INTRO = 'Played under the current CSI Official Rules for 8-Ball, with a few Trap em specific rules:';
+export const TRAP_EM_HOW_INTRO = 'Played under the current CSI Official Rules for 8-Ball, with a few Trap ’Em specific rules:';
 export const TRAP_EM_HOW_OUTRO = 'Players alternate one shot at a time until the game is won.';
 
 export const TRAP_EM_CORE_RULE = 'Each player gets exactly ONE shot per turn at the table, regardless of the result of that shot.';
+export const TRAP_EM_CORE_EXCEPTION = 'The one exception: a ball legally pocketed on the break earns the breaker one more shot.';
 
 export const TRAP_EM_OUTCOMES = [
   { result: 'Pocket a legal ball?', then: 'Your turn is over.', tone: 'make' },
   { result: 'Miss?', then: 'Your turn is over.', tone: 'miss' },
   { result: 'Play a safety?', then: 'Your turn is over.', tone: 'safe' },
   { result: 'Scratch?', then: 'Your turn is over, and your opponent gets ball in hand.', tone: 'foul' },
-  { result: 'Miss the ball or no rail?', then: 'Your turn is over. Your opponent has the option to shoot or make you shoot again.', tone: 'foul' },
+  { result: 'Bad hit or no rail?', then: 'Your turn is over. Your opponent may shoot it as it lies or make you shoot again.', tone: 'foul' },
 ];
 
 export const TRAP_EM_RULES_TITLE = 'Rules';
 export const TRAP_EM_RULES_INTRO = 'Tap a rule to read it.';
 
+/** `short` is the one-line version printed on the table card. */
 export const TRAP_EM_RULES = [
   {
     title: 'The break',
     body: 'If the breaker legally pockets a ball on the break, they get one more shot to try to establish their group.\n After that shot, the turn passes. If nothing is pocketed, the turn passes right away.',
+    short: 'Pocket a ball on the break and you get one more shot to set your group.',
   },
   {
     title: 'After the break',
     body: 'The table is open. To claim a group, call the ball and pocket it legally. \nA ball that drops without a call does not set the groups, and the table stays open.',
+    short: 'Open table. Call it and pocket it to claim a group.',
   },
   {
     title: '8-ball on the break',
     body: 'Handled the same as CSI 8-Ball.',
+    short: 'Same as CSI 8-Ball.',
   },
   {
     title: 'When to call your shot',
     body: 'Only two shots need a call: any shot at the 8-ball, and a shot on an open table that you want to set your group. \nPocketing the 8 without calling it, or in a pocket you didn’t call, loses the game. \nOnce groups are set, no other calls are needed except for the 8-ball.',
+    short: 'Call the 8, and call open-table shots to set groups. 8 uncalled or in the wrong pocket loses.',
   },
   {
     title: 'Ball in hand only on a scratch',
     body: 'Ball in hand is given only when the cue ball is scratched. Ball in hand does not add an extra shot.',
+    short: 'Only a scratch gives ball in hand. Still one shot.',
   },
   {
-    title: 'Missed hit or no rail: opponent’s option',
-    body: 'If the shooter misses the object ball completely, or no ball reaches a rail after contact, it is a foul but not ball in hand. \nThe opponent has the option and may choose: shoot the table as it lies, or give it back and make the shooter shoot again from where the balls stopped.',
+    title: 'Bad hit or no rail: opponent’s option',
+    body: 'If the shooter fails to hit a ball of their own group first, or no ball reaches a rail after contact, it is a foul but not ball in hand. \nThe opponent may shoot the table as it lies, or make the shooter shoot again from where the balls stopped. \nThat shot is the shooter’s one shot, and then the turn passes as normal. \nOn an open table, any ball except the 8 counts as the shooter’s group.',
+    short: 'Wrong ball first or no rail: opponent shoots as it lies, or makes you shoot again from there.',
   },
   {
     title: 'Pocketing your opponent’s ball',
     body: 'On a legal shot it is not a foul. The ball stays down, and your turn is over like any other shot.',
+    short: 'Not a foul on a legal shot. It stays down.',
   },
   {
     title: 'Stalemate',
     body: 'If neither player can make progress, the CSI stalemate rule applies: re-rack, and the original breaker breaks again.',
+    short: 'CSI stalemate rule applies.',
   },
 ];
+
+export const TRAP_EM_FORMAT_TITLE = 'Tournament format';
+export const TRAP_EM_FORMAT = [
+  { label: 'Race', value: 'Race to 3 (race to 2 for shorter brackets)' },
+  { label: 'Breaks', value: 'Alternate breaks (standard CSI)' },
+  { label: 'Stalemates', value: 'CSI rules' },
+  { label: 'Everything else', value: 'CSI match procedures' },
+];
+
+export const TRAP_EM_CARD_TITLE = 'Trap ’Em · Table card';
 
 export const TRAP_EM_STRATEGY_TITLE = 'The strategy';
 export const TRAP_EM_STRATEGY_INTRO =

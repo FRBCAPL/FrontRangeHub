@@ -327,6 +327,46 @@
   }
 }
 
+.trapem-exception {
+  margin-top: -4px;
+  text-align: center;
+  font-style: italic;
+}
+
+.trapem-format {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.trapem-format div {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.trapem-format dt {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #facc15;
+}
+
+.trapem-format dd {
+  margin: 3px 0 0;
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .trapem-format {
+    grid-template-columns: 1fr;
+  }
+}
+
 .trapem-chips {
   display: flex;
   flex-wrap: wrap;
