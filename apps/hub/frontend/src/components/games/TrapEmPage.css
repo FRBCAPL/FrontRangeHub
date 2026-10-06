@@ -257,49 +257,73 @@
 }
 
 .trapem-rules {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: trapem-rule;
-  display: grid;
-  gap: 10px;
-}
-
-.trapem-rules li {
-  counter-increment: trapem-rule;
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 10px 14px 10px 48px;
+  gap: 8px;
+}
+
+.trapem-rules details {
   border-radius: 12px;
   background: rgba(2, 6, 23, 0.7);
   border: 1px solid rgba(148, 163, 184, 0.2);
-  line-height: 1.5;
 }
 
-.trapem-rules li::before {
-  content: counter(trapem-rule);
-  position: absolute;
-  left: 12px;
-  top: 10px;
-  width: 26px;
-  height: 26px;
+.trapem-rules details[open] {
+  border-color: rgba(250, 204, 21, 0.5);
+}
+
+.trapem-rules summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  min-height: 44px;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-weight: 700;
+  color: #f8fafc;
+  list-style: none;
+}
+
+.trapem-rules summary::-webkit-details-marker {
+  display: none;
+}
+
+.trapem-rules summary::after {
+  content: '+';
+  margin-left: auto;
+  font-size: 1.2rem;
+  color: #facc15;
+}
+
+.trapem-rules details[open] summary::after {
+  content: '−';
+}
+
+.trapem-rule-num {
+  flex-shrink: 0;
+  min-width: 1.8rem;
+  height: 1.8rem;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #facc15;
-  color: #0f172a;
-  font-weight: 900;
   font-size: 0.85rem;
+  background: rgba(250, 204, 21, 0.18);
+  color: #facc15;
 }
 
-.trapem-rules strong {
-  color: #f8fafc;
-}
-
-.trapem-rules span {
+.trapem-rule-body {
+  margin: 0;
+  padding: 0 14px 14px 52px;
+  color: #cbd5e1;
+  line-height: 1.55;
   font-size: 0.95rem;
+}
+
+@media (max-width: 520px) {
+  .trapem-rule-body {
+    padding-left: 14px;
+  }
 }
 
 .trapem-chips {

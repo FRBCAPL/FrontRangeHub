@@ -34,7 +34,7 @@ export const TRAP_EM_OUTCOMES = [
 ];
 
 export const TRAP_EM_RULES_TITLE = 'Rules';
-export const TRAP_EM_RULES_INTRO = 'How the one-shot rule works in the situations that come up most.';
+export const TRAP_EM_RULES_INTRO = 'Tap a rule to read it.';
 
 export const TRAP_EM_RULES = [
   {
