@@ -1,18 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import {
-  CONSIGNMENT_DAYS,
-  CONSIGNMENT_PATH,
-  DEFAULT_AUCTION_LISTING_FEE,
-  DEFAULT_CONSIGNMENT_FEE,
-  itemLabel,
-} from '../../data/consignmentConstants.js';
+import { CONSIGNMENT_DAYS, CONSIGNMENT_PATH, itemLabel } from '../../data/consignmentConstants.js';
 import { loadSettings, submitItem } from '../../services/consignmentService.js';
 import { uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { currentUserEmail } from '../../services/consignmentSellerService.js';
-import { DEFAULT_COMMISSION_PCT } from '../../utils/consignmentAuctionMath.js';
+import { DEFAULT_FEE_POLICY, feePolicyFrom } from '../../utils/consignmentFeePolicy.js';
 import { SALE_METHODS } from './ConsignmentSubmitPricing.jsx';
 import ConsignmentSellWizard from './ConsignmentSellWizard.jsx';
+import ConsignmentSellGate from './ConsignmentSellGate.jsx';
+import useSellerAccess from '../../hooks/useSellerAccess.js';
 import {
   auctionAgreementTemplate,
   consignmentAgreementTemplate,
@@ -52,10 +48,8 @@ export default function ConsignmentSubmit() {
     sale_method: searchParams.get('method') === 'auction' ? 'auction' : 'fixed',
   }));
   const [files, setFiles] = useState([]);
-  const [fee, setFee] = useState(DEFAULT_CONSIGNMENT_FEE);
   const [days, setDays] = useState(CONSIGNMENT_DAYS);
-  const [auctionFee, setAuctionFee] = useState(DEFAULT_AUCTION_LISTING_FEE);
-  const [commission, setCommission] = useState(DEFAULT_COMMISSION_PCT);
+  const [policy, setPolicy] = useState(DEFAULT_FEE_POLICY);
   const [agreementText, setAgreementText] = useState(() => fillConsignmentAgreement(DEFAULT_CONSIGNMENT_AGREEMENT, null));
   const [auctionAgreement, setAuctionAgreement] = useState(() => fillAuctionAgreement(DEFAULT_AUCTION_AGREEMENT, null));
   const isAuction = form.sale_method === 'auction';
@@ -63,15 +57,15 @@ export default function ConsignmentSubmit() {
   const [error, setError] = useState('');
   const [done, setDone] = useState(null);
   const [wizardOpen, setWizardOpen] = useState(() => searchParams.has('method'));
+  const access = useSellerAccess();
 
   useEffect(() => {
+    if (!access.seller) return;
     loadSettings()
       .then((row) => {
         if (!row) return;
-        if (row.default_consignment_fee != null) setFee(Number(row.default_consignment_fee));
         if (row.consignment_days) setDays(Number(row.consignment_days));
-        if (row.auction_listing_fee != null) setAuctionFee(Number(row.auction_listing_fee));
-        if (row.auction_commission_pct != null) setCommission(Number(row.auction_commission_pct));
+        setPolicy(feePolicyFrom(row));
         setAgreementText(fillConsignmentAgreement(consignmentAgreementTemplate(row), row));
         setAuctionAgreement(fillAuctionAgreement(auctionAgreementTemplate(row), row));
       })
@@ -79,7 +73,7 @@ export default function ConsignmentSubmit() {
     currentUserEmail().then((email) => {
       if (email) setForm((prev) => (prev.seller_email ? prev : { ...prev, seller_email: email }));
     });
-  }, []);
+  }, [access.seller]);
 
   const set = (key) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -126,6 +120,8 @@ export default function ConsignmentSubmit() {
     }
   };
 
+  if (!done && !access.seller) return <ConsignmentSellGate access={access} />;
+
   if (done) {
     return (
       <div className="cs-page cs-page-centered">
@@ -133,7 +129,7 @@ export default function ConsignmentSubmit() {
         <p className="cs-lede">
           Thanks. Your request is in as <strong>{itemLabel({ ...done, category: form.category })}</strong>.
           FRPL will review it and contact you. If we accept the item, you'll bring it to Legends
-          and pay the {done.sale_method === 'auction' ? 'auction listing fee' : 'consignment fee'} then — nothing is charged online.
+          and pay the listing fee then — nothing is charged online.
         </p>
         <p className="cs-lede">Check its progress anytime under <strong>My items</strong> (log in with the same email).</p>
         <Link className="cs-btn" to={`${CONSIGNMENT_PATH}/my-items`}>My items</Link>{' '}
@@ -182,8 +178,8 @@ export default function ConsignmentSubmit() {
           setMethod={setMethod}
           files={files}
           setFiles={setFiles}
-          terms={{ fee, days, auctionFee, commission }}
-          commission={commission}
+          policy={policy}
+          days={days}
           agreementText={isAuction ? auctionAgreement : agreementText}
           busy={busy}
           submitError={error}

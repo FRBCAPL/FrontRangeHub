@@ -17,10 +17,12 @@ import {
   updateItem,
 } from '../../services/consignmentService.js';
 import ConsignmentAgreementSettings from './ConsignmentAgreementSettings.jsx';
+import ConsignmentSellersPanel from './ConsignmentSellersPanel.jsx';
 import { expireOverdueItems } from '../../services/consignmentFeesService.js';
 import { clearSellerPaid } from '../../services/consignmentPayoutService.js';
 import ConsignmentSellerPaidModal from './ConsignmentSellerPaidModal.jsx';
 import { consignmentTagPath } from '../../utils/consignmentPaths.js';
+import { feePolicyFrom } from '../../utils/consignmentFeePolicy.js';
 import ConsignmentAdminEditModal from './ConsignmentAdminEditModal.jsx';
 import ConsignmentAdminRow from './ConsignmentAdminRow.jsx';
 import ConsignmentRenewModal from './ConsignmentRenewModal.jsx';
@@ -47,6 +49,7 @@ export default function ConsignmentAdmin() {
   const [auctioning, setAuctioning] = useState(null);
   const [settings, setSettings] = useState(null);
   const [tab, setTab] = useState(linkedTab);
+  const policy = feePolicyFrom(settings);
 
   // The Admin Inbox links here with ?tab= / ?status=; follow them even when already on this page.
   useEffect(() => {
@@ -115,6 +118,7 @@ export default function ConsignmentAdmin() {
         expired items have {graceDays} days for pickup. Seller contact never appears on the public shop.
       </p>
       <ConsignmentAgreementSettings settings={settings} onError={setError} />
+      <ConsignmentSellersPanel defaultOpen={params.get('sellers') === '1'} />
       <div className="cs-tabs" role="tablist">
         <button type="button" role="tab" aria-selected={tab === 'items'} className={tab === 'items' ? 'active' : ''} onClick={() => setTab('items')}>
           Items
@@ -165,6 +169,7 @@ export default function ConsignmentAdmin() {
           item={auctioning}
           settings={settings}
           isRelist={Boolean(auctioning.auction && auctioning.auction.status !== 'cancelled')}
+          previousReserve={auctioning.auction?.opening_bid}
           onClose={(saved) => { setAuctioning(null); if (saved) refresh(); }}
         />
       ) : null}
@@ -175,6 +180,7 @@ export default function ConsignmentAdmin() {
           approving={approving}
           defaultFee={defaultFee}
           consignmentDays={consignmentDays}
+          policy={policy}
           onClose={() => { setEdit(null); refresh(); }}
           onSave={(patch) => updateItem(edit.id, patch)}
         />
@@ -184,6 +190,7 @@ export default function ConsignmentAdmin() {
           item={renewing}
           defaultFee={defaultFee}
           consignmentDays={consignmentDays}
+          policy={policy}
           onClose={() => { setRenewing(null); refresh(); }}
         />
       ) : null}

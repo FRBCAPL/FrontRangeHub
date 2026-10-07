@@ -10,7 +10,7 @@ export function describeEvent(event) {
     case 'status_change':
       return `Status: ${statusLabel(d.from)} → ${statusLabel(d.to)}`;
     case 'payout_change':
-      return `Seller Payout: ${money(d.from)} → ${money(d.to)}${d.consent ? ` (seller agreed: ${d.consent})` : ''}`;
+      return `Agreed price / payout: ${money(d.from)} → ${money(d.to)}${d.consent ? ` (seller agreed: ${d.consent})` : ''}`;
     case 'price_change':
       return `FRPL Retail Price: ${money(d.from)} → ${money(d.to)}`;
     case 'seller_paid':

@@ -13,6 +13,13 @@ import { DEFAULT_COMMISSION_PCT } from '../../utils/consignmentAuctionMath.js';
 import ConsignmentEditAuctionFields from './ConsignmentEditAuctionFields.jsx';
 import { updateAuctionTerms } from '../../services/consignmentAuctionAdminService.js';
 import { formatDollars, frplRevenue } from '../../utils/consignmentMoney.js';
+import {
+  DEFAULT_FEE_POLICY,
+  listingFee,
+  originalListingFee,
+  saleSplit,
+  usesShelfCommission,
+} from '../../utils/consignmentFeePolicy.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
 import { deleteConsignmentPhotos, uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { intakePatch, recordFee } from '../../services/consignmentFeesService.js';
@@ -49,10 +56,15 @@ export default function ConsignmentAdminEditModal({
   approving = false,
   defaultFee = DEFAULT_CONSIGNMENT_FEE,
   consignmentDays = CONSIGNMENT_DAYS,
+  policy = DEFAULT_FEE_POLICY,
   onClose,
   onSave,
 }) {
   const isAuction = item.sale_method === 'auction' && !approving;
+  // Every approval uses the commission model; older listed items keep the markup math.
+  const commissionModel = approving || usesShelfCommission(item);
+  const commissionPct = Number(item.commission_pct ?? policy.shelfCommissionPct);
+  const initialRetail = item.selling_price ?? (approving ? item.seller_payout : '');
   const activeAuction = isAuction && ACTIVE_AUCTION.includes(item.auction?.status) ? item.auction : null;
   const termsEditable = isAuction
     && ['pending', 'available'].includes(item.status)
@@ -69,8 +81,10 @@ export default function ConsignmentAdminEditModal({
     specs: item.specs || '',
     seller_payout: isAuction ? startReserve : item.seller_payout,
     requested_buy_now: startBuyNow,
-    selling_price: item.selling_price ?? '',
-    consignment_fee: item.consignment_fee ?? defaultFee,
+    selling_price: initialRetail ?? '',
+    consignment_fee: commissionModel
+      ? (item.consignment_fee ?? listingFee(initialRetail || item.seller_payout, 'fixed', policy))
+      : (item.consignment_fee ?? defaultFee),
     status: approving ? 'available' : item.status,
     photo_urls: item.photo_urls || [],
   });
@@ -88,7 +102,15 @@ export default function ConsignmentAdminEditModal({
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const retail = numOrNull(form.selling_price);
-  const margin = retail != null ? frplRevenue(retail, form.seller_payout) : null;
+  const policyFee = listingFee(retail ?? form.seller_payout, 'fixed', policy);
+  const creditedFee = approving
+    ? (numOrNull(form.consignment_fee) ?? 0)
+    : (originalListingFee(item.fees, 'fixed') || Number(item.consignment_fee) || 0);
+  const atRetail = commissionModel && retail != null ? saleSplit(retail, commissionPct, creditedFee) : null;
+  const margin = retail != null
+    ? (atRetail ? atRetail.frplFromSale : frplRevenue(retail, form.seller_payout))
+    : null;
+  const belowAgreed = retail != null && retail < Number(form.seller_payout);
 
   const addPhotos = async (files) => {
     if (!files.length) return;
@@ -106,7 +128,11 @@ export default function ConsignmentAdminEditModal({
   const save = async (e) => {
     e.preventDefault();
     if (needsRetail && retail == null) {
-      setError('Set the FRPL Retail Price before listing this item.');
+      setError('Set the shop price before listing this item.');
+      return;
+    }
+    if (approving && Number(form.consignment_fee) > 0 && !feePaid) {
+      setError('The listing fee is paid at drop-off. Collect it before the item goes in the case.');
       return;
     }
     const reserve = Number(form.seller_payout);
@@ -139,7 +165,11 @@ export default function ConsignmentAdminEditModal({
       }
       if (termsChanged) await updateAuctionTerms(item.id, { reserve, buyNow });
       if (approving) {
-        Object.assign(patch, { consignment_fee: fee, sale_method: 'fixed' }, intakePatch(consignmentDays));
+        Object.assign(
+          patch,
+          { consignment_fee: fee, sale_method: 'fixed', commission_pct: commissionPct },
+          intakePatch(consignmentDays),
+        );
       } else if (!isAuction && expiresOn !== toDateInput(item.expires_at)) {
         patch.expires_at = fromDateInput(expiresOn);
       }
@@ -166,8 +196,8 @@ export default function ConsignmentAdminEditModal({
         </h2>
         {approving ? (
           <p className="cs-hint">
-            Set the FRPL Retail Price and consignment fee. The item goes live in the shop when you save,
-            and its {consignmentDays}-day window starts today.
+            Confirm the shop price and collect the listing fee. The item goes live in the shop when you save,
+            and its {consignmentDays}-day window starts today. FRPL earns {commissionPct}% of the sale, with the listing fee credited.
           </p>
         ) : null}
         <ConsignmentPhotoManager
@@ -238,18 +268,21 @@ export default function ConsignmentAdminEditModal({
         <>
         <div className="cs-row">
           <div className="cs-field">
-            <label>Seller Payout ($)</label>
+            <label>{commissionModel ? 'Agreed price ($)' : 'Seller Payout ($)'}</label>
             {payoutLocked ? (
               <div className="cs-locked">
                 <span>{formatDollars(form.seller_payout)}</span>
-                <button type="button" className="cs-btn-secondary" onClick={() => setChangingPayout(true)}>Change payout</button>
+                <button type="button" className="cs-btn-secondary" onClick={() => setChangingPayout(true)}>
+                  {commissionModel ? 'Change agreed price' : 'Change payout'}
+                </button>
               </div>
             ) : (
               <input type="number" step="0.01" min="0" value={form.seller_payout} onChange={set('seller_payout')} />
             )}
+            {commissionModel ? <p className="cs-hint">The seller’s price. It can’t sell for less without their OK.</p> : null}
           </div>
           <div className="cs-field">
-            <label>FRPL Retail Price ($)</label>
+            <label>{commissionModel ? 'Shop price ($)' : 'FRPL Retail Price ($)'}</label>
             <input
               type="number"
               step="0.01"
@@ -261,24 +294,41 @@ export default function ConsignmentAdminEditModal({
           </div>
         </div>
         <div className="cs-field">
-          <label>FRPL Sale Margin at retail</label>
+          <label>{commissionModel ? 'If it sells at the shop price' : 'FRPL Sale Margin at retail'}</label>
           <p className={`cs-margin${margin != null && margin < 0 ? ' neg' : ''}`}>
             {margin == null ? '—' : formatDollars(margin)}
           </p>
+          {atRetail ? (
+            <p className="cs-hint">
+              FRPL {commissionPct}% = {formatDollars(atRetail.commission)}
+              {atRetail.credit ? ` − ${formatDollars(atRetail.credit)} listing fee` : ''} = {formatDollars(atRetail.frplFromSale)} from the sale.
+              Seller is paid {formatDollars(atRetail.sellerFromSale)}.
+            </p>
+          ) : null}
         </div>
-        {margin != null && margin < 0 ? (
-          <p className="cs-error">Retail price is below the Seller Payout.</p>
+        {belowAgreed ? (
+          <p className="cs-error">
+            {commissionModel ? 'Shop price is below the agreed price.' : 'Retail price is below the Seller Payout.'}
+          </p>
         ) : null}
         </>
         )}
         {approving ? (
           <div className="cs-row">
             <div className="cs-field">
-              <label>Consignment fee ($)</label>
+              <label>Listing fee ($)</label>
               <input type="number" step="0.01" min="0" value={form.consignment_fee} onChange={set('consignment_fee')} />
+              {commissionModel && Number(form.consignment_fee) !== policyFee ? (
+                <p className="cs-hint">
+                  Policy fee for this price: {formatDollars(policyFee)}.{' '}
+                  <button type="button" className="cs-btn-secondary" onClick={() => setForm((prev) => ({ ...prev, consignment_fee: policyFee }))}>
+                    Use it
+                  </button>
+                </p>
+              ) : null}
               <label className="cs-check">
                 <input type="checkbox" checked={feePaid} onChange={(e) => setFeePaid(e.target.checked)} />
-                Fee paid now
+                Fee paid now (required before it goes in the case)
               </label>
             </div>
             <div className="cs-field">

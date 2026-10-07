@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CONSENT_METHODS, itemLabel } from '../../data/consignmentConstants.js';
 import { changePayout } from '../../services/consignmentPayoutService.js';
+import { usesShelfCommission } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 
 export default function ConsignmentPayoutModal({ item, currentPayout, onClose, onChanged }) {
@@ -10,6 +11,8 @@ export default function ConsignmentPayoutModal({ item, currentPayout, onClose, o
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const lowering = Number(amount) < Number(currentPayout);
+  const label = usesShelfCommission(item) ? 'agreed price' : 'Seller Payout';
+  const title = usesShelfCommission(item) ? 'Agreed price' : 'Seller Payout';
 
   const save = async (e) => {
     e.preventDefault();
@@ -29,13 +32,13 @@ export default function ConsignmentPayoutModal({ item, currentPayout, onClose, o
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-payout-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-payout-title">Change Seller Payout · {itemLabel(item)}</h2>
+        <h2 id="cs-payout-title">Change {label} · {itemLabel(item)}</h2>
         <p className="cs-hint">
-          Current Seller Payout: <strong>{formatDollars(currentPayout)}</strong>. FRPL can lower its own margin
-          anytime, but lowering the seller's payout requires their agreement.
+          Current {label}: <strong>{formatDollars(currentPayout)}</strong>. Raising it is fine anytime,
+          but lowering it requires the seller&apos;s agreement.
         </p>
         <div className="cs-field">
-          <label>New Seller Payout ($)</label>
+          <label>New {label} ($)</label>
           <input type="number" step="0.01" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} required />
         </div>
         {lowering ? (
@@ -57,7 +60,7 @@ export default function ConsignmentPayoutModal({ item, currentPayout, onClose, o
         </div>
         {error ? <p className="cs-error">{error}</p> : null}
         <div className="cs-actions">
-          <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save payout'}</button>
+          <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : `Save ${title.toLowerCase()}`}</button>
           <button className="cs-btn-secondary" type="button" onClick={onClose}>Cancel</button>
         </div>
       </form>

@@ -20,7 +20,7 @@ export function sellStepError(stepId, form) {
   if (stepId === 'price') {
     const payout = Number(form.seller_payout);
     if (!(payout > 0)) {
-      return form.sale_method === 'auction' ? 'Enter your reserve (the lowest price you’ll accept).' : 'Enter how much you’d like to receive.';
+      return form.sale_method === 'auction' ? 'Enter your reserve (the lowest price you’ll accept).' : 'Enter your price.';
     }
     if (form.sale_method === 'auction' && form.buy_now_price !== '' && Number(form.buy_now_price) <= payout) {
       return 'Buy It Now must be higher than the reserve.';

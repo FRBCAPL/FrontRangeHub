@@ -62,9 +62,11 @@ export function intakePatch(days) {
 }
 
 /** Records a renewal fee, extends the window, and puts an expired item back on sale. */
-export async function renewItem(item, { amount, days, paymentMethod }) {
-  await recordFee(item.id, { kind: 'renewal', amount, days, paymentMethod });
+/** `itemPatch` carries extra columns to update with the renewal (e.g. a lowered shop price). */
+export async function renewItem(item, { amount, days, paymentMethod, note = null, itemPatch = null }) {
+  await recordFee(item.id, { kind: 'renewal', amount, days, paymentMethod, note });
   await patchItem(item.id, {
+    ...itemPatch,
     status: 'available',
     expires_at: renewedExpiry(item.expires_at, days).toISOString(),
   });

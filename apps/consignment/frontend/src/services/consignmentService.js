@@ -1,5 +1,5 @@
 import { supabase } from '@shared/config/supabase.js';
-import { frplRevenue } from '../utils/consignmentMoney.js';
+import { shelfSaleSplit } from '../utils/consignmentFeePolicy.js';
 import { deleteConsignmentPhotos } from './consignmentPhotos.js';
 import { loadFeesForItems } from './consignmentFeesService.js';
 import { loadLatestAuctionsForItems } from './consignmentAuctionAdminService.js';
@@ -146,12 +146,12 @@ export async function purgeExpiredSoldPhotos() {
 
 export async function markSold(item, { actualSellingPrice, paymentMethod, transactionFee = null }) {
   const actual = Number(actualSellingPrice);
-  const payout = Number(item.seller_payout);
+  const split = shelfSaleSplit(item, actual);
   const patch = {
     status: 'sold',
     actual_selling_price: actual,
-    seller_payout_paid: payout,
-    frpl_revenue: frplRevenue(actual, payout),
+    seller_payout_paid: split.sellerFromSale,
+    frpl_revenue: split.frplFromSale,
     sold_at: new Date().toISOString(),
     payment_method: paymentMethod,
   };

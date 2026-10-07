@@ -6,11 +6,11 @@ function Req() {
   return <span className="cs-req" aria-label="required">*</span>;
 }
 
-export function StepMethod({ form, setMethod, terms }) {
+export function StepMethod({ form, setMethod }) {
   return (
     <>
       <SaleMethodPicker value={form.sale_method} onChange={setMethod} />
-      <SellTerms method={form.sale_method} {...terms} />
+      <SellTerms method={form.sale_method} />
     </>
   );
 }
@@ -74,6 +74,6 @@ export function StepItem({ form, set }) {
   );
 }
 
-export function StepPrice({ form, set, commission }) {
-  return <PriceFields method={form.sale_method} form={form} set={set} commission={commission} />;
+export function StepPrice({ form, set, policy }) {
+  return <PriceFields method={form.sale_method} form={form} set={set} policy={policy} />;
 }

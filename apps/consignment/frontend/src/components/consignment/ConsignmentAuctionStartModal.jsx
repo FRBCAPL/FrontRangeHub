@@ -1,7 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import { DEFAULT_AUCTION_LISTING_FEE, itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CONSENT_METHODS, itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { startAuction } from '../../services/consignmentAuctionAdminService.js';
-import { auctionSplit, DEFAULT_COMMISSION_PCT, openingBid } from '../../utils/consignmentAuctionMath.js';
+import { loadFeesForItems } from '../../services/consignmentFeesService.js';
+import { openingBid } from '../../utils/consignmentAuctionMath.js';
+import {
+  feePolicyFrom,
+  listingFee,
+  originalListingFee,
+  repeatCount,
+  repeatListingFee,
+  saleSplit,
+} from '../../utils/consignmentFeePolicy.js';
 import {
   AUCTION_LENGTH_OPTIONS,
   auctionEndLabel,
@@ -12,33 +21,58 @@ import {
   toLocalInputValue,
 } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentAuctionFeeFields from './ConsignmentAuctionFeeFields.jsx';
 
-export default function ConsignmentAuctionStartModal({ item, settings, isRelist = false, onClose }) {
-  const commissionDefault = Number(settings?.auction_commission_pct ?? DEFAULT_COMMISSION_PCT);
+export default function ConsignmentAuctionStartModal({ item, settings, isRelist = false, previousReserve = null, onClose }) {
+  const policy = feePolicyFrom(settings);
   const daysDefault = AUCTION_LENGTH_OPTIONS.includes(Number(settings?.auction_default_days))
     ? Number(settings.auction_default_days)
     : DEFAULT_AUCTION_DAYS;
   const lowerNeedsConsent = !(item.status === 'pending' && !item.intake_at);
   const sellerChoseAuction = item.sale_method === 'auction';
   const agreedAmount = Number(item.seller_payout) || 0;
+  const lastReserve = Number(previousReserve) || agreedAmount;
 
+  const [fees, setFees] = useState(item.fees || null);
   const [reserve, setReserve] = useState(item.seller_payout ?? '');
-  const [commission, setCommission] = useState(commissionDefault);
+  const [commission, setCommission] = useState(policy.auctionCommissionPct);
   const [buyNow, setBuyNow] = useState(item.requested_buy_now ?? '');
   const [days, setDays] = useState(daysDefault);
   const [snap, setSnap] = useState(true);
   const [endsAt, setEndsAt] = useState(() => toLocalInputValue(defaultAuctionEnd(new Date(), daysDefault)));
-  const [fee, setFee] = useState(settings?.auction_listing_fee ?? DEFAULT_AUCTION_LISTING_FEE);
+  const [manualFee, setManualFee] = useState(null);
   const [feePaid, setFeePaid] = useState(true);
   const [method, setMethod] = useState(PAYMENT_METHODS[0]);
+  const [consent, setConsent] = useState(CONSENT_METHODS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (fees) return;
+    loadFeesForItems([item.id])
+      .then((byItem) => setFees(byItem[item.id] || []))
+      .catch((err) => { setFees([]); setError(err.message); });
+  }, [item.id]);
+
   const opening = useMemo(() => openingBid(reserve), [reserve]);
-  const loweringBlocked = lowerNeedsConsent && opening > 0 && opening < agreedAmount;
-  const atOpening = auctionSplit(opening, commission);
-  const atBuyNow = buyNow !== '' ? auctionSplit(buyNow, commission) : null;
+  const needsConsent = lowerNeedsConsent && opening > 0 && opening < agreedAmount;
+  const originalFee = originalListingFee(fees, 'auction');
+  const rule = isRelist
+    ? repeatListingFee({
+      originalFee: originalFee || listingFee(lastReserve, 'auction', policy),
+      previousPrice: lastReserve,
+      newPrice: opening,
+      priorRepeats: repeatCount(fees, 'auction'),
+      policy,
+    })
+    : null;
+  const autoFee = rule ? rule.amount : listingFee(opening, 'auction', policy);
+  const fee = manualFee ?? autoFee;
+  const credit = originalFee || (isRelist ? 0 : Number(fee) || 0);
+  const atOpening = saleSplit(opening, commission, credit);
+  const atBuyNow = buyNow !== '' ? saleSplit(buyNow, commission, credit) : null;
   const lengthHours = endsAt ? hoursBetween(new Date(), endsAt) : 0;
+  const feeUnpaid = Number(fee) > 0 && !feePaid;
 
   const resetEnd = (nextDays, nextSnap) => {
     setEndsAt(toLocalInputValue(defaultAuctionEnd(new Date(), nextDays, { snapToWeekday: nextSnap })));
@@ -58,6 +92,8 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
         feeKind: isRelist ? 'relist' : 'auction_listing',
         feePaidNow: feePaid,
         paymentMethod: method,
+        consent: needsConsent ? consent : null,
+        feeNote: rule?.free ? rule.reason : null,
       });
       onClose(true);
     } catch (err) {
@@ -66,6 +102,9 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
       setBusy(false);
     }
   };
+
+  const splitLine = (s) => `seller ${formatDollars(s.sellerFromSale)} · FRPL ${formatDollars(s.frplFromSale)}`
+    + (s.credit ? ` (${commission}% minus the ${formatDollars(s.credit)} listing fee)` : '');
 
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-auction-title">
@@ -76,8 +115,8 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
         </p>
         {!sellerChoseAuction ? (
           <p className="cs-due">
-            This item came in as a consignment with a Seller Payout of {formatDollars(agreedAmount)}. As an auction, that becomes
-            the reserve and the seller receives {100 - Number(commission)}% of the final price. Confirm the reserve with the seller.
+            This item came in as a consignment with an agreed price of {formatDollars(agreedAmount)}. As an auction, that becomes
+            the reserve and FRPL earns the greater of the listing fee or {commission}%. Confirm the reserve with the seller.
           </p>
         ) : null}
 
@@ -85,23 +124,29 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
           <div className="cs-field">
             <label>Reserve / opening bid ($)</label>
             <input type="number" step="0.01" min="1" value={reserve} onChange={(e) => setReserve(e.target.value)} required />
+            {isRelist ? (
+              <p className="cs-hint">
+                Last reserve {formatDollars(lastReserve)}. Lowering it {policy.freeRepeatDropPct}% or more makes the first relist free.
+              </p>
+            ) : null}
           </div>
           <div className="cs-field">
             <label>FRPL commission (%)</label>
             <input type="number" step="0.5" min="0" max="99" value={commission} onChange={(e) => setCommission(e.target.value)} required />
           </div>
         </div>
-        {loweringBlocked ? (
-          <p className="cs-error">
-            That’s below the agreed {formatDollars(agreedAmount)}. Get the seller’s OK with “Change payout” on the item first.
-          </p>
+        {needsConsent ? (
+          <div className="cs-field">
+            <label>Below the agreed {formatDollars(agreedAmount)}. How did the seller agree?</label>
+            <select value={consent} onChange={(e) => setConsent(e.target.value)}>
+              {CONSENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
         ) : null}
 
         <div className="cs-auction-calc">
           <div>Bidding starts at <strong>{opening ? formatDollars(opening) : '—'}</strong></div>
-          {opening ? (
-            <div className="cs-meta">At the reserve: seller {formatDollars(atOpening.seller)} · FRPL {formatDollars(atOpening.commission)}</div>
-          ) : null}
+          {opening ? <div className="cs-meta">At the reserve: {splitLine(atOpening)}</div> : null}
         </div>
 
         <div className="cs-field">
@@ -109,7 +154,7 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
           <input type="number" step="5" min="0" value={buyNow} onChange={(e) => setBuyNow(e.target.value)} placeholder="Leave blank for none" />
           {atBuyNow ? (
             <span className="cs-hint">
-              At Buy It Now: seller {formatDollars(atBuyNow.seller)} · FRPL {formatDollars(atBuyNow.commission)}. Disappears once bidding reaches this price.
+              At Buy It Now: {splitLine(atBuyNow)}. Disappears once bidding reaches this price.
               {Number(buyNow) <= opening ? ' Must be higher than the reserve.' : ''}
             </span>
           ) : null}
@@ -138,26 +183,22 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
           Ends {formatDateTime(endsAt)} ({Math.round((lengthHours / 24) * 10) / 10} days). Bids in the final minutes extend it.
         </p>
 
-        <div className="cs-row">
-          <div className="cs-field">
-            <label>{isRelist ? 'Relist' : 'Listing'} fee ($)</label>
-            <input type="number" step="0.01" min="0" value={fee} onChange={(e) => setFee(e.target.value)} />
-          </div>
-          <div className="cs-field">
-            <label>Payment method</label>
-            <select value={method} onChange={(e) => setMethod(e.target.value)} disabled={!feePaid}>
-              {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-        </div>
-        <label className="cs-check">
-          <input type="checkbox" checked={feePaid} onChange={(e) => setFeePaid(e.target.checked)} />
-          Fee paid now
-        </label>
+        <ConsignmentAuctionFeeFields
+          isRelist={isRelist}
+          fee={fee}
+          onFeeChange={setManualFee}
+          reason={fees ? (rule ? rule.reason : `${policy.auctionFeePct}% of the reserve, ${formatDollars(policy.auctionFeeMin)}–${formatDollars(policy.auctionFeeMax)}. Not refunded.`) : 'Checking fee history…'}
+          feePaid={feePaid}
+          setFeePaid={setFeePaid}
+          method={method}
+          setMethod={setMethod}
+        />
 
         {error ? <p className="cs-error">{error}</p> : null}
         <div className="cs-actions">
-          <button className="cs-btn" type="submit" disabled={busy || !opening || loweringBlocked}>{busy ? 'Starting…' : 'Start auction'}</button>
+          <button className="cs-btn" type="submit" disabled={busy || !opening || !fees || feeUnpaid}>
+            {busy ? 'Starting…' : 'Start auction'}
+          </button>
           <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)}>Cancel</button>
         </div>
       </form>

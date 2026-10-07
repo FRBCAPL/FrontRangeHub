@@ -1,6 +1,7 @@
 import { supabase } from '@shared/config/supabase.js';
 import { openingBid } from '../utils/consignmentAuctionMath.js';
 import { recordFee } from './consignmentFeesService.js';
+import { changePayout } from './consignmentPayoutService.js';
 
 const MISSING = 'Run supabase-migrations/consignment-auctions-2026-10.sql in the Supabase SQL editor, then refresh.';
 const ACTIVE = ['draft', 'live', 'awaiting_payment'];
@@ -96,6 +97,7 @@ export async function loadAuctionSettings() {
  */
 export async function startAuction(item, {
   reserve, commissionPct, buyNowPrice, endsAt, listingFee, feeKind = 'auction_listing', feePaidNow, paymentMethod,
+  consent = null, feeNote = null,
 }) {
   const min = Number(reserve);
   const opening = openingBid(min);
@@ -109,9 +111,15 @@ export async function startAuction(item, {
   if (min !== current) {
     const canLowerFreely = item.status === 'pending' && !item.intake_at;
     if (min < current && !canLowerFreely) {
-      throw new Error('Lowering below the agreed amount needs the seller’s OK. Use “Change payout” on the item first.');
+      if (!consent) throw new Error('Lowering below the agreed amount needs the seller’s OK.');
+      await changePayout(item.id, {
+        newPayout: min,
+        consent,
+        note: `Reserve lowered to relist (${current} → ${min})`,
+      });
+    } else {
+      await patchItem(item.id, { seller_payout: min });
     }
-    await patchItem(item.id, { seller_payout: min });
   }
 
   const now = new Date().toISOString();
@@ -150,8 +158,11 @@ export async function startAuction(item, {
     throw err;
   }
 
-  if (feePaidNow && Number(listingFee) > 0) {
-    await recordFee(item.id, { kind: feeKind, amount: listingFee, paymentMethod, note: `Auction ending ${end.toLocaleDateString('en-US')}` });
+  const feeAmount = Number(listingFee) || 0;
+  const note = [`Auction ending ${end.toLocaleDateString('en-US')}`, feeNote].filter(Boolean).join(' · ');
+  // $0 relists are recorded too: they mark the free relist as used.
+  if (feeAmount > 0 ? feePaidNow : feeKind === 'relist') {
+    await recordFee(item.id, { kind: feeKind, amount: feeAmount, paymentMethod: feeAmount > 0 ? paymentMethod : null, note });
   }
   return auction;
 }

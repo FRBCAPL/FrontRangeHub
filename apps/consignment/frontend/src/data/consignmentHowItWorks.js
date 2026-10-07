@@ -1,13 +1,8 @@
 /**
  * Text for the public "How it works" window. Edit freely.
- * {placeholders} are filled from consignment settings: fee, days, graceDays,
- * auctionFee, commission, payDays, softClose. The auction example ({ex...}) is calculated from
- * EXAMPLE_RESERVE, EXAMPLE_HIGH_BID and EXAMPLE_BUY_NOW using the current commission.
- * Never mention the fixed-price consignment markup here — only the auction commission is public.
+ * {placeholders} are filled from the public settings: days, graceDays, payDays, softClose.
+ * Fees and commission stay out of this public text; approved sellers see them in the seller agreements.
  */
-export const EXAMPLE_RESERVE = 500;
-export const EXAMPLE_HIGH_BID = 650;
-export const EXAMPLE_BUY_NOW = 800;
 
 export const HOW_IT_WORKS_TABS = [
   {
@@ -28,15 +23,13 @@ export const HOW_IT_WORKS_TABS = [
   {
     id: 'consign',
     label: 'Sell: Consignment',
-    intro: 'You tell us what you want to get. We help sell it.',
+    intro: 'You set the price. We sell it from the case at Legends.',
     steps: [
-      'Submit your item online with photos and your Seller Payout: the amount you want to receive if it sells.',
+      'Selling is open to approved FRPL sellers. Log in and request seller access.',
+      'Submit your item online with photos and your price.',
       'FRPL reviews it and gets in touch. We may accept it, suggest changes, or decline.',
-      {
-        text: 'If accepted, bring it to Legends and pay the consignment fee. Consignment fees start at {fee} for {days} days. FRPL sets the shelf price.',
-        home: 'If accepted, bring it to Legends. FRPL sets the shelf price.',
-      },
-      'When it sells, you receive your Seller Payout. Your payout is never lowered without your agreement.',
+      'If accepted, bring it to Legends and pay the listing fee. It stays in the case for {days} days.',
+      'Your price is never lowered without your OK. Fees and terms are in the consignment agreement.',
       'Not sold after {days} days? Renew it, or pick it up within {graceDays} days.',
     ],
   },
@@ -45,18 +38,13 @@ export const HOW_IT_WORKS_TABS = [
     label: 'Sell: Auction',
     intro: 'You set the reserve. Bidders set the price.',
     steps: [
+      'Selling is open to approved FRPL sellers. Log in and request seller access.',
       'On the Sell page, choose Online auction and enter your reserve: the lowest price you’ll accept. Bidding starts there.',
       'Add an optional Buy It Now price. It disappears once bidding reaches it.',
-      { text: 'If FRPL accepts it, the listing fee is {auctionFee}, paid at drop-off.', home: false },
+      { text: 'If FRPL accepts it, pay the listing fee at drop-off.', home: false },
       'Auctions usually run 7 days and end Sunday at 9 PM, with payment and pickup at Legends.',
       'No bids? Relist it, switch to a fixed-price consignment, or pick it up.',
-    ],
-    exampleTitle: 'Example: {exReserve} reserve, {exBuyNow} Buy It Now',
-    example: [
-      'Sells at the {exReserve} reserve: FRPL’s {commission}% is {exReserveFee}, so you receive {exReserveSeller}.',
-      'Bidding goes to {exHigh}: FRPL’s {commission}% is {exHighFee}, so you receive {exHighSeller}.',
-      'Someone clicks Buy It Now at {exBuyNow}: FRPL’s {commission}% is {exBuyNowFee}, so you receive {exBuyNowSeller}.',
-      'The {auctionFee} listing fee is paid at drop-off. It does not come out of your sale.',
+      'Fees and terms are in the auction agreement.',
     ],
   },
 ];
@@ -84,7 +72,7 @@ export const HOME_PATHS = [
     tab: 'consign',
     icon: '🏷️',
     title: 'Consign',
-    blurb: 'Tell us what you want to receive. FRPL displays it at Legends and handles the sale.',
+    blurb: 'Set your price. FRPL displays it at Legends and handles the sale.',
     cta: 'Sell on consignment',
     to: 'sell',
   },
@@ -105,8 +93,8 @@ export const HOME_COMPARE = [
     title: 'Consignment',
     lines: [
       'Best when you know what you want for it.',
-      'You set your Seller Payout; We help sell it.',
-      'When it sells, you receive your Seller Payout.',
+      'You set the price; it sells from the case at Legends.',
+      'Listing fees apply. See the consignment agreement.',
     ],
   },
   {
@@ -115,8 +103,7 @@ export const HOME_COMPARE = [
     lines: [
       'Best when you want bidders to set the price.',
       'You set the reserve (the opening bid) and an optional Buy It Now.',
-      'You receive at least your reserve price if it sells.',
-      
+      'Listing fees apply. See the auction agreement.',
     ],
   },
 ];

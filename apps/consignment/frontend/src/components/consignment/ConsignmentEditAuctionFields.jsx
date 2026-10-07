@@ -1,13 +1,13 @@
 import React from 'react';
 import { auctionStatusLabel } from '../../data/consignmentConstants.js';
-import { auctionSplit } from '../../utils/consignmentAuctionMath.js';
+import { originalListingFee, saleSplit } from '../../utils/consignmentFeePolicy.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 
-function sellerGets(price, commission) {
+function sellerGets(price, commission, credit) {
   const n = Number(price);
   if (!Number.isFinite(n) || n <= 0) return null;
-  return formatDollars(auctionSplit(n, commission).seller);
+  return formatDollars(saleSplit(n, commission, credit).sellerFromSale);
 }
 
 function AuctionSummary({ auction }) {
@@ -32,8 +32,9 @@ export default function ConsignmentEditAuctionFields({ item, form, set, editable
   const buyNow = auction ? auction.buy_now_price : form.requested_buy_now;
 
   if (editable) {
-    const atReserve = sellerGets(form.seller_payout, commission);
-    const atBuyNow = sellerGets(form.requested_buy_now, commission);
+    const credit = originalListingFee(item.fees, 'auction');
+    const atReserve = sellerGets(form.seller_payout, commission, credit);
+    const atBuyNow = sellerGets(form.requested_buy_now, commission, credit);
     return (
       <>
         <div className="cs-row">

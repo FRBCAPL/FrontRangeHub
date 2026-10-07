@@ -6,7 +6,7 @@ import { StepDetails, StepReview } from './ConsignmentSellReviewSteps.jsx';
 
 /**
  * Guided sell-an-item modal. Form state lives in the parent, so closing and reopening keeps progress.
- * props: form, set, setMethod, files, setFiles, terms, commission, agreementText, busy, submitError, onSubmit, onClose
+ * props: form, set, setMethod, files, setFiles, policy, days, agreementText, busy, submitError, onSubmit, onClose
  */
 export default function ConsignmentSellWizard(props) {
   const { form, busy, submitError, onSubmit, onClose } = props;

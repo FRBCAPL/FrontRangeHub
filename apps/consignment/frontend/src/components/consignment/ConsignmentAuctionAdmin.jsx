@@ -90,6 +90,7 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
           item={relisting.item}
           settings={settings}
           isRelist
+          previousReserve={relisting.opening_bid}
           onClose={closeWith(setRelisting)}
         />
       ) : null}

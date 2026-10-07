@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
 import { bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { setAccountApproval } from '../../services/consignmentAccountsService.js';
+import { setConsignmentSeller } from '../../services/consignmentSellerAccessService.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
 
 /**
@@ -20,16 +21,20 @@ export default function ConsignmentAccountRequestsPanel() {
   };
   useEffect(() => { refresh(); }, []);
 
-  const decide = async (user, approve) => {
+  const decide = async (user, approve, seller = false) => {
     const who = bidderName(user) || 'this account';
-    const ask = approve
-      ? `Approve ${who}? They can sign in and bid on auctions.`
-      : `Decline ${who}? They won't be able to sign in.`;
+    let ask = `Decline ${who}? They won't be able to sign in.`;
+    if (approve) {
+      ask = seller
+        ? `Approve ${who} as a buyer and seller? They can sign in, bid, and list items to sell.`
+        : `Approve ${who}? They can sign in and bid on auctions.`;
+    }
     if (!window.confirm(ask)) return;
     setBusyId(user.id);
     setError('');
     try {
       await setAccountApproval(user.id, approve);
+      if (approve && seller) await setConsignmentSeller(user.id, true);
     } catch (err) {
       setError(err.message);
     }
@@ -41,7 +46,10 @@ export default function ConsignmentAccountRequestsPanel() {
   return (
     <details className="cs-history cs-bidders" open>
       <summary>New account requests ({users.length})</summary>
-      <p className="cs-hint">Approved accounts can sign in and bid. Ladder applicants are approved in Ladder admin.</p>
+      <p className="cs-hint">
+        Approved accounts can sign in and bid. “Approve + seller” also lets them list items. Ladder applicants are
+        approved in Ladder admin; give them seller access under Sellers.
+      </p>
       {error ? <p className="cs-error">{error}</p> : null}
       <ul>
         {users.map((user) => {
@@ -61,6 +69,9 @@ export default function ConsignmentAccountRequestsPanel() {
                 <span className="cs-actions">
                   <button type="button" className="cs-btn" disabled={busyId === user.id} onClick={() => decide(user, true)}>
                     Approve
+                  </button>
+                  <button type="button" className="cs-btn" disabled={busyId === user.id} onClick={() => decide(user, true, true)}>
+                    Approve + seller
                   </button>
                   <button type="button" className="cs-btn-secondary" disabled={busyId === user.id} onClick={() => decide(user, false)}>
                     Decline

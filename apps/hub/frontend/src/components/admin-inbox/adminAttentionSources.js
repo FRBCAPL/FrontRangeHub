@@ -20,6 +20,7 @@ export const ATTENTION_GROUPS = [
     app: 'Consignment & Auctions',
     icon: '🏷️',
     items: [
+      { key: 'consignment_seller_requests', label: 'Seller access requests', to: '/consignment/admin?sellers=1' },
       { key: 'consignment_pending', label: 'New items submitted for review', to: '/consignment/admin?status=pending' },
       { key: 'consignment_expired', label: 'Expired items (renew or return)', to: '/consignment/admin?status=expired' },
       { key: 'consignment_seller_unpaid', label: 'Sold items: seller not paid yet', to: '/consignment/admin?status=seller_unpaid' },

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import useConsignmentAuction from '../../hooks/useConsignmentAuction.js';
-import { loadSettings } from '../../services/consignmentService.js';
+import { loadPublicSettings } from '../../services/consignmentSellerAccessService.js';
 import { addDays } from '../../utils/consignmentDates.js';
 import { formatCountdown, formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
@@ -31,7 +31,7 @@ export default function ConsignmentAuctionPanel({ itemId }) {
   const [payDays, setPayDays] = useState(DEFAULT_PAY_DAYS);
 
   useEffect(() => {
-    loadSettings()
+    loadPublicSettings()
       .then((row) => { if (row?.auction_payment_days) setPayDays(Number(row.auction_payment_days)); })
       .catch(() => {});
   }, []);

@@ -1,5 +1,6 @@
 import { formatDollars } from './consignmentMoney.js';
 import { formatShortDate } from './consignmentDates.js';
+import { saleSplit, usesShelfCommission } from './consignmentFeePolicy.js';
 
 /**
  * Seller-facing summary of an item from my_consignment_items().
@@ -46,10 +47,20 @@ export function sellerItemStatus(item) {
     label: 'For sale at Legends',
     lines: [
       `Shelf price: ${formatDollars(item.selling_price)}`,
-      `You receive: ${formatDollars(item.seller_payout)} when it sells`,
+      shelfPayoutLine(item),
       item.expires_at ? `Listed until ${formatShortDate(item.expires_at)}` : null,
     ].filter(Boolean),
   };
+}
+
+function shelfPayoutLine(item) {
+  if (!usesShelfCommission(item)) return `You receive: ${formatDollars(item.seller_payout)} when it sells`;
+  const fee = Number(item.original_fee) || Number(item.consignment_fee) || 0;
+  const s = saleSplit(item.selling_price, item.commission_pct, fee);
+  const why = s.credit
+    ? `FRPL's ${Number(item.commission_pct)}% minus the ${formatDollars(s.credit)} listing fee you paid`
+    : `FRPL's ${Number(item.commission_pct)}%`;
+  return `You receive: ${formatDollars(s.sellerFromSale)} if it sells at that price (${why})`;
 }
 
 function auctionStatus(item, a) {

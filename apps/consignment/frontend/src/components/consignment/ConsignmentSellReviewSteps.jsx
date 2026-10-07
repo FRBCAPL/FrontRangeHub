@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { categoryLabel, conditionLabel, MAX_PHOTOS } from '../../data/consignmentConstants.js';
+import { listingFee } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { SALE_METHODS } from './ConsignmentSubmitPricing.jsx';
 
@@ -59,7 +60,7 @@ function Row({ label, value }) {
   );
 }
 
-export function StepReview({ form, set, files, agreementText, goTo }) {
+export function StepReview({ form, set, files, agreementText, goTo, policy }) {
   const isAuction = form.sale_method === 'auction';
   const method = SALE_METHODS.find((m) => m.id === form.sale_method)?.label;
   return (
@@ -72,10 +73,11 @@ export function StepReview({ form, set, files, agreementText, goTo }) {
         <Row label="Category" value={`${categoryLabel(form.category)} · ${conditionLabel(form.condition)}`} />
         <Row label="Photos" value={<>{files.length ? `${files.length} added` : 'None'} <EditLink onClick={() => goTo('details')} /></>} />
         <Row
-          label={isAuction ? 'Reserve' : 'You receive'}
+          label={isAuction ? 'Reserve' : 'Your price'}
           value={<>{formatDollars(form.seller_payout)} <EditLink onClick={() => goTo('price')} /></>}
         />
         {isAuction && form.buy_now_price !== '' ? <Row label="Buy It Now" value={formatDollars(form.buy_now_price)} /> : null}
+        <Row label="Listing fee" value={`${formatDollars(listingFee(form.seller_payout, form.sale_method, policy))} at drop-off`} />
       </dl>
       <div className="cs-agree">
         <div className="cs-wiz-agree">{agreementText}</div>
@@ -85,7 +87,7 @@ export function StepReview({ form, set, files, agreementText, goTo }) {
           <span className="cs-req" aria-label="required">*</span>
         </label>
       </div>
-      <p className="cs-hint">Nothing is charged online. If FRPL accepts the item, you pay the fee at drop-off.</p>
+      <p className="cs-hint">Nothing is charged online. If FRPL accepts the item, you pay the listing fee at drop-off. It isn’t refunded if the item doesn’t sell.</p>
     </>
   );
 }

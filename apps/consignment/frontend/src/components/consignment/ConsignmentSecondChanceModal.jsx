@@ -74,7 +74,7 @@ export default function ConsignmentSecondChanceModal({ auction, onClose }) {
         ) : null}
         {split ? (
           <p className="cs-hint">
-            At {formatDollars(split.price)}: seller {formatDollars(split.seller)} · FRPL {formatDollars(split.commission)}
+            At {formatDollars(split.price)}: FRPL {Number(auction.commission_pct)}% = {formatDollars(split.commission)} (listing fee credited at payment)
           </p>
         ) : null}
         {error ? <p className="cs-error">{error}</p> : null}

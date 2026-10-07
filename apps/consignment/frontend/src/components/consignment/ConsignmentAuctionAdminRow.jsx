@@ -24,7 +24,9 @@ function BidInfo({ auction }) {
         Won {formatDollars(auction.winning_bid)}
         {auction.won_via === 'buy_now' ? ' (Buy It Now)' : ''}
         {auction.won_via === 'second_chance' ? ' (second chance)' : ''}
-        <div className="cs-meta">Seller {formatDollars(split.seller)} · FRPL {formatDollars(split.commission)}</div>
+        <div className="cs-meta">
+          FRPL {Number(auction.commission_pct)}% = {formatDollars(split.commission)} · listing fee credited at payment
+        </div>
         <Person label="Winner" user={auction.winner} />
       </>
     );
