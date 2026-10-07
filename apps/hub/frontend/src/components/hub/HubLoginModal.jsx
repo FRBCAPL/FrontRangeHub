@@ -47,7 +47,7 @@ export default function HubLoginModal({ onClose, onLoginSuccess, startOnSignup =
           </button>
         </div>
         {signingUp ? (
-          <HubSignupForm onBack={() => setSigningUp(false)} />
+          <HubSignupForm onBack={() => setSigningUp(false)} returnTo={location.pathname || '/'} />
         ) : (
           <SupabaseLogin
             compact

@@ -115,6 +115,42 @@
   font-size: 0.78rem;
 }
 
+.hub-signup-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #dadce0;
+  background: #fff;
+  color: #3c4043;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.hub-signup-google:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.hub-signup-or {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.1rem 0;
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.hub-signup-or::before,
+.hub-signup-or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
 .hub-signup-error {
   margin: 0;
   color: #f87171;
