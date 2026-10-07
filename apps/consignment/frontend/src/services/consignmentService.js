@@ -24,6 +24,8 @@ export async function loadSettings() {
     .select('*')
     .eq('id', 'frpl')
     .maybeSingle();
+  // Fee settings are for approved sellers and admins only; everyone else gets the defaults.
+  if (error?.code === '42501' || /permission denied/i.test(error?.message || '')) return null;
   if (error) throwNice(error, 'Could not load consignment settings.');
   return data;
 }
