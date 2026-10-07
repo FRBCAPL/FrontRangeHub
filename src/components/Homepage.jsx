@@ -199,7 +199,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
     setShowLadderLearnMoreModal(true);
   };
 
-  const launcherTiles = [
+  const poolTiles = [
     {
       id: 'tournaments',
       icon: '🏆',
@@ -237,6 +237,9 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
         ...(canAdmin ? [{ label: 'Admin', onClick: () => navigate(`${CONSIGNMENT_PATH}/admin`) }] : []),
       ],
     },
+  ];
+
+  const otherTiles = [
     {
       id: 'arcade',
       icon: '🎮',
@@ -515,7 +518,8 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
 
           </div>
 
-          <HomeAppLauncher tiles={launcherTiles} />
+          <HomeAppLauncher tiles={poolTiles} />
+          <HomeAppLauncher title="Beyond the Table" tiles={otherTiles} />
         </div>
 
         {/* Footer Section */}

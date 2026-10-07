@@ -7,6 +7,10 @@
   margin: 2.5rem auto 1.5rem;
 }
 
+.hal + .hal {
+  margin-top: 1rem;
+}
+
 .hal-heading {
   display: flex;
   align-items: center;

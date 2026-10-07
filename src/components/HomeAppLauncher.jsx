@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import './HomeAppLauncher.css';
 
 /**
@@ -44,9 +44,10 @@ function LauncherTile({ tile }) {
 }
 
 export default function HomeAppLauncher({ title = 'More from Front Range Pool', tiles = [] }) {
+  const headingId = useId();
   return (
-    <section className="hal" aria-labelledby="hal-title">
-      <h2 id="hal-title" className="hal-heading">{title}</h2>
+    <section className="hal" aria-labelledby={headingId}>
+      <h2 id={headingId} className="hal-heading">{title}</h2>
       <div className="hal-grid">
         {tiles.map((tile) => <LauncherTile key={tile.id} tile={tile} />)}
       </div>
