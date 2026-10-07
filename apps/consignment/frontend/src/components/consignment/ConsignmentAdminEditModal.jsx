@@ -4,6 +4,7 @@ import {
   CONDITIONS,
   CONSIGNMENT_DAYS,
   DEFAULT_CONSIGNMENT_FEE,
+  itemLabel,
   PAYMENT_METHODS,
   statusLabel,
   STATUSES,
@@ -160,7 +161,7 @@ export default function ConsignmentAdminEditModal({
     <div className="cs-modal" role="dialog" aria-labelledby="cs-edit-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-edit-title">
-          {approving ? 'Approve' : 'Edit'} {item.item_number}
+          {approving ? 'Approve' : 'Edit'} {itemLabel(item)}
           {isAuction ? <span className="cs-badge auction" style={{ marginLeft: 8 }}>Online auction</span> : null}
         </h2>
         {approving ? (

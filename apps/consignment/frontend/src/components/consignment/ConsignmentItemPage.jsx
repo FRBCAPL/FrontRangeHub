@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { brandModelLabel, categoryLabel, conditionLabel } from '../../data/consignmentConstants.js';
+import { brandModelLabel, categoryLabel, conditionLabel, itemLabel } from '../../data/consignmentConstants.js';
 import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import { loadPublicItem } from '../../services/consignmentService.js';
 import { itemPriceLabel } from '../../utils/consignmentMoney.js';
 import ConsignmentAuctionPanel from './ConsignmentAuctionPanel.jsx';
+import ConsignmentPhotoZoom from './ConsignmentPhotoZoom.jsx';
 
 export default function ConsignmentItemPage() {
   const { itemNumber } = useParams();
   const [item, setItem] = useState(null);
   const [photo, setPhoto] = useState(0);
+  const [zooming, setZooming] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -40,13 +42,18 @@ export default function ConsignmentItemPage() {
 
   return (
     <div className="cs-page">
-      <p className="cs-kicker">{item.item_number}</p>
+      <p className="cs-kicker">{itemLabel(item)}</p>
       <h1>{item.name}</h1>
       <span className={`cs-legends${item.status === 'sold' ? ' sold' : ''}`}>
         {item.status === 'sold' ? 'Sold' : 'Available at Legends Brews & Cues'}
       </span>
       <div className="cs-hero">
-        {current ? <img src={current} alt={item.name} /> : <div className="cs-ph">🎱</div>}
+        {current ? (
+          <button type="button" className="cs-hero-zoom" onClick={() => setZooming(true)} aria-label="Open photo to zoom">
+            <img src={current} alt={item.name} />
+            <span className="cs-hero-zoom-hint" aria-hidden="true">Tap to zoom</span>
+          </button>
+        ) : <div className="cs-ph">🎱</div>}
         {photos.length > 1 ? (
           <div className="cs-thumbs">
             {photos.map((src, i) => (
@@ -57,6 +64,14 @@ export default function ConsignmentItemPage() {
           </div>
         ) : null}
       </div>
+      {zooming && photos.length ? (
+        <ConsignmentPhotoZoom
+          photos={photos}
+          start={Math.min(photo, photos.length - 1)}
+          alt={item.name}
+          onClose={() => setZooming(false)}
+        />
+      ) : null}
       {isAuction ? <ConsignmentAuctionPanel itemId={item.id} /> : <p className="cs-price">{itemPriceLabel(item)}</p>}
       <p className="cs-meta">
         {categoryLabel(item.category)}

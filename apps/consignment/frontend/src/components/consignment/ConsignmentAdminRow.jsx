@@ -1,5 +1,5 @@
 import React from 'react';
-import { auctionStatusLabel, brandModelLabel, EXPIRING_SOON_DAYS, statusLabel } from '../../data/consignmentConstants.js';
+import { auctionStatusLabel, brandModelLabel, EXPIRING_SOON_DAYS, itemLabel, statusLabel } from '../../data/consignmentConstants.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars, revenueSummary } from '../../utils/consignmentMoney.js';
 import { daysUntil, formatShortDate, pickupDeadline } from '../../utils/consignmentDates.js';
@@ -77,10 +77,10 @@ export default function ConsignmentAdminRow({ item, graceDays, actions }) {
   const isAuction = item.sale_method === 'auction';
   return (
     <tr>
-      <td>{item.item_number}</td>
+      <td>{itemLabel(item)}</td>
       <td>
         <div className="cs-admin-item">
-          <button type="button" className="cs-admin-thumb" onClick={() => edit(item)} aria-label={`Photos for ${item.item_number}`}>
+          <button type="button" className="cs-admin-thumb" onClick={() => edit(item)} aria-label={`Photos for ${itemLabel(item)}`}>
             {item.photo_urls?.[0] ? <img src={item.photo_urls[0]} alt="" /> : <span>🎱</span>}
           </button>
           <div>

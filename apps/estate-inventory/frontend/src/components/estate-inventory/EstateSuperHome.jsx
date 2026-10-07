@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { signOutEstateVault } from '@shared/services/estateVaultSession.js';
 import {
   stayOnPrHome,
@@ -43,7 +43,11 @@ const TABS = [
  */
 const EstateSuperHome = ({ session }) => {
   const navigate = useNavigate();
-  const [tab, setTab] = useState('estates');
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState(() => {
+    const linked = params.get('tab');
+    return TABS.some((t) => t.id === linked) ? linked : 'estates';
+  });
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState('');
 

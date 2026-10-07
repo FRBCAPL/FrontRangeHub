@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { itemLabel } from '../../data/consignmentConstants.js';
 import { bidderName, defaultAuction } from '../../services/consignmentAuctionAdminService.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
@@ -27,7 +28,7 @@ export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-adefault-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-adefault-title">Winner didn’t pay · {auction.item?.item_number}</h2>
+        <h2 id="cs-adefault-title">Winner didn’t pay · {itemLabel(auction.item)}</h2>
         <p className="cs-hint">
           {bidderName(auction.winner) || 'The winner'} won at {formatDollars(auction.winning_bid)}.
           Payment {overdue ? 'was due' : 'is due'} {formatDateTime(auction.payment_due_at)}.

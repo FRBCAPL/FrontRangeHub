@@ -1,0 +1,156 @@
+.cs-home {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cs-home a.cs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.cs-home-hero {
+  text-align: center;
+  padding: 8px 0 0;
+}
+
+.cs-home-hero .cs-lede {
+  width: min(680px, 100%);
+  margin: 0 auto 14px;
+}
+
+.cs-home-hero .cs-legends {
+  margin: 0;
+}
+
+.cs-home-paths {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.cs-home-path {
+  --path-accent: var(--cs-accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 16px 16px;
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--path-accent) 55%, transparent);
+  background:
+    radial-gradient(ellipse at top, color-mix(in srgb, var(--path-accent) 16%, transparent), transparent 70%),
+    var(--cs-card);
+  text-align: center;
+}
+
+.cs-home-path.is-buying { --path-accent: #22c55e; }
+.cs-home-path.is-consign { --path-accent: #e53e3e; }
+.cs-home-path.is-auction { --path-accent: #a855f7; }
+
+.cs-home-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.cs-home-path h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.cs-home-path p {
+  margin: 0;
+  color: var(--cs-muted);
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.cs-home-path-actions {
+  margin-top: auto;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-home-path .cs-btn {
+  background: var(--path-accent);
+  border-color: var(--path-accent);
+}
+
+.cs-home-more {
+  color: var(--cs-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cs-home-more:hover {
+  color: var(--cs-ink);
+}
+
+.cs-home-section {
+  padding: clamp(16px, 3vw, 22px);
+  border-radius: 16px;
+  border: 1px solid var(--cs-line);
+  background: rgba(10, 10, 14, 0.75);
+  scroll-margin-top: 90px;
+}
+
+.cs-home-section h2 {
+  margin: 0 0 6px;
+  font-size: clamp(1.2rem, 3vw, 1.5rem);
+}
+
+.cs-home-intro {
+  margin: 0 0 10px;
+  color: #fef9c3;
+  font-weight: 700;
+}
+
+.cs-home-steps {
+  margin: 0 0 12px;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.cs-home-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cs-home-compare-col {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+}
+
+.cs-home-compare-col.is-consign { border-color: rgba(229, 62, 62, 0.55); }
+.cs-home-compare-col.is-auction { border-color: rgba(168, 85, 247, 0.55); }
+
+.cs-home-compare-col h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.cs-home-compare-col ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 5px;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.cs-home-foot {
+  text-align: center;
+}

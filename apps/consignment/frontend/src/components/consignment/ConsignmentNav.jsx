@@ -10,10 +10,10 @@ export default function ConsignmentNav({ canAdmin = false }) {
   const closeHow = useCallback(() => setShowHow(false), []);
   return (
     <nav className="cs-nav" aria-label="FRPL Consignment">
+      <NavLink to={`${CONSIGNMENT_PATH}/home`}>Home</NavLink>
       <NavLink to={CONSIGNMENT_PATH} end>Shop</NavLink>
       <NavLink to={`${CONSIGNMENT_PATH}/sell`}>Sell an item</NavLink>
       {canAdmin ? <NavLink to={`${CONSIGNMENT_PATH}/admin`}>Admin</NavLink> : null}
-      <NavLink to="/">Home</NavLink>
       <button type="button" className="cs-nav-how" onClick={() => setShowHow(true)}>
         <span aria-hidden="true">?</span> How it works
       </button>

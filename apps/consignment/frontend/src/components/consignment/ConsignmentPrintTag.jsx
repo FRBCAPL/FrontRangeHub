@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { brandModelLabel, conditionLabel, CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
+import { brandModelLabel, conditionLabel, CONSIGNMENT_PATH, itemLabel } from '../../data/consignmentConstants.js';
 import { loadAdminItemByNumber, loadPublicItem } from '../../services/consignmentService.js';
 import { itemPriceLabel } from '../../utils/consignmentMoney.js';
 import { consignmentItemHref, consignmentTagItemNumber } from '../../utils/consignmentPaths.js';
@@ -45,13 +45,13 @@ export default function ConsignmentPrintTag({ canAdmin = false }) {
         <button type="button" onClick={() => navigate(`${CONSIGNMENT_PATH}/admin`)}>Back to admin</button>
       </div>
       <article className="cs-tag">
-        <div className="cs-tag-id">{item.item_number}</div>
+        <div className="cs-tag-id">{itemLabel(item)}</div>
         <h1>{item.name}</h1>
         <p>{brandModelLabel(item) ? `${brandModelLabel(item)} · ` : ''}{conditionLabel(item.condition)}</p>
         {item.specs ? <p>{item.specs}</p> : null}
         <p><strong>{itemPriceLabel(item)}</strong></p>
         <p>Available at Legends Brews & Cues</p>
-        <img src={qr} alt={`QR code for ${item.item_number}`} />
+        <img src={qr} alt={`QR code for ${itemLabel(item)}`} />
         <p>{item.sale_method === 'auction' ? 'Scan to bid online' : 'Scan for photos & details'}</p>
       </article>
     </div>

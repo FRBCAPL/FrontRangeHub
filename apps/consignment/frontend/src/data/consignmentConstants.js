@@ -69,6 +69,25 @@ export const PUBLIC_STATUSES = ['available', 'sold'];
 
 export const PAYMENT_METHODS = ['Cash', 'Card', 'Venmo', 'Cash App', 'Check', 'Other'];
 
+const CATEGORY_TAGS = {
+  cues: 'Cue',
+  shafts: 'Shaft',
+  break_jump: 'Break/Jump Cue',
+  cases: 'Case',
+  balls_accessories: 'Accessory',
+  other: 'Item',
+};
+
+/**
+ * Display label like "Cue #0002". The stored item_number (FRPL-0002) stays the ID for URLs,
+ * QR tags and lookups; the counter is shared, so the number alone is still unique.
+ */
+export function itemLabel(item) {
+  const num = String(item?.item_number || '').replace(/^FRPL-/i, '');
+  if (!num) return '';
+  return `${CATEGORY_TAGS[item?.category] || 'Item'} #${num}`;
+}
+
 export function categoryLabel(id) {
   return CATEGORIES.find((c) => c.id === id)?.label || id || 'Other';
 }

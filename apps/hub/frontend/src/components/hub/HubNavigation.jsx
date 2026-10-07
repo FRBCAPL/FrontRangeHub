@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './HubNavigation.css';
 import HubLoginModal from './HubLoginModal.jsx';
 import './HubLoginModal.css';
+import AdminAlertsBell from '../admin-inbox/AdminAlertsBell.jsx';
+import useAdminAttention from '../admin-inbox/useAdminAttention.js';
+import { ADMIN_INBOX_PATH } from '../admin-inbox/adminAttentionService.js';
 import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
@@ -35,6 +38,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [showLogin, setShowLogin] = React.useState(false);
   const showLoginButton = !userFirstName && Boolean(onLoginSuccess);
+  const attention = useAdminAttention(Boolean(isAdmin && userFirstName));
 
   // Lets app pages (e.g. consignment bidding) open the hub sign-in: window.dispatchEvent(new Event('frpl:open-login'))
   React.useEffect(() => {
@@ -216,6 +220,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={isMobileMenuOpen}
                 style={{
+                  position: 'relative',
                   width: '50px',
                   display: 'flex',
                   justifyContent: 'center',
@@ -224,6 +229,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 }}
               >
                 ☰
+                {isAdmin && attention.total ? (
+                  <span className="aib-badge" aria-label={`${attention.total} admin alerts`}>
+                    {attention.total > 99 ? '99+' : attention.total}
+                  </span>
+                ) : null}
               </button>
               )}
             </div>
@@ -299,6 +309,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     {ladderUserViewActive ? '👤 Admin view' : '👤 User view'}
                   </button>
                 )}
+                {isAdmin && <AdminAlertsBell attention={attention} />}
                 {/* Admin dropdown */}
                 {(isAdmin || isSuperAdmin) && (
                   <div className="admin-dropdown">
@@ -308,6 +319,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     <div className="dropdown-menu">
                       {isAdmin && (
                         <>
+                          <button onClick={() => navigate(ADMIN_INBOX_PATH)} className="dropdown-item">
+                            🔔 Admin Inbox{attention.total ? ` (${attention.total})` : ''}
+                          </button>
                           <button onClick={handlePlayerManagementClick} className="dropdown-item">
                             👥 Players
                           </button>
@@ -351,6 +365,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 <h4>Admin</h4>
                 {isAdmin && (
                   <>
+                    <button onClick={() => { navigate(ADMIN_INBOX_PATH); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
+                      🔔 Admin Inbox{attention.total ? ` (${attention.total})` : ''}
+                    </button>
                     <button onClick={() => { handlePlayerManagementClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
                       👥 Players
                     </button>

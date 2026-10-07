@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PAYMENT_METHODS } from '../../data/consignmentConstants.js';
+import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { renewItem } from '../../services/consignmentFeesService.js';
 import { formatShortDate, renewedExpiry } from '../../utils/consignmentDates.js';
 
@@ -28,7 +28,7 @@ export default function ConsignmentRenewModal({ item, defaultFee, consignmentDay
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-renew-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-renew-title">Renew {item.item_number}</h2>
+        <h2 id="cs-renew-title">Renew {itemLabel(item)}</h2>
         <p className="cs-hint">
           Currently ends {formatShortDate(item.expires_at)}. Renewing records the fee
           {item.status === 'expired' ? ' and puts the item back in the shop' : ''}.

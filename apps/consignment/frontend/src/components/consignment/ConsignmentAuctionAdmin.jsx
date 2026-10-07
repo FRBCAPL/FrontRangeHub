@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AUCTION_STATUSES } from '../../data/consignmentConstants.js';
+import { AUCTION_STATUSES, itemLabel } from '../../data/consignmentConstants.js';
 import {
   cancelAuction,
   convertToFixedPrice,
@@ -12,11 +12,12 @@ import ConsignmentAuctionPaidModal from './ConsignmentAuctionPaidModal.jsx';
 import ConsignmentAuctionDefaultModal from './ConsignmentAuctionDefaultModal.jsx';
 import ConsignmentSecondChanceModal from './ConsignmentSecondChanceModal.jsx';
 import ConsignmentBidderStatusPanel from './ConsignmentBidderStatusPanel.jsx';
+import ConsignmentAccountRequestsPanel from './ConsignmentAccountRequestsPanel.jsx';
 
 const REFRESH_MS = 30000;
 
-export default function ConsignmentAuctionAdmin({ settings }) {
-  const [status, setStatus] = useState('live');
+export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
+  const [status, setStatus] = useState(initialStatus || 'live');
   const [rows, setRows] = useState([]);
   const [error, setError] = useState('');
   const [relisting, setRelisting] = useState(null);
@@ -47,9 +48,9 @@ export default function ConsignmentAuctionAdmin({ settings }) {
   };
 
   const actions = {
-    cancel: run(cancelAuction, (a) => `Cancel the auction for ${a.item?.item_number}? The item goes back to Pending.`),
-    toFixed: run(convertToFixedPrice, (a) => `Move ${a.item?.item_number} to fixed price? It goes back to Pending so you can set a retail price with Approve.`),
-    returned: run(returnToSeller, (a) => `Mark ${a.item?.item_number} as returned to the seller?`),
+    cancel: run(cancelAuction, (a) => `Cancel the auction for ${itemLabel(a.item)}? The item goes back to Pending.`),
+    toFixed: run(convertToFixedPrice, (a) => `Move ${itemLabel(a.item)} to fixed price? It goes back to Pending so you can set a retail price with Approve.`),
+    returned: run(returnToSeller, (a) => `Mark ${itemLabel(a.item)} as returned to the seller?`),
     relist: setRelisting,
     paid: setPaying,
     unpaid: setUnpaid,
@@ -58,6 +59,7 @@ export default function ConsignmentAuctionAdmin({ settings }) {
 
   return (
     <>
+      <ConsignmentAccountRequestsPanel />
       <div className="cs-filters">
         <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter auctions">
           {AUCTION_STATUSES.filter((s) => s.id !== 'draft').map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}

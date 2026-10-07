@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CONSIGNMENT_DAYS,
   DEFAULT_CONSIGNMENT_FEE,
   EXPIRING_SOON_DAYS,
+  itemLabel,
   PICKUP_GRACE_DAYS,
   STATUSES,
 } from '../../data/consignmentConstants.js';
@@ -29,7 +30,10 @@ import ConsignmentAuctionStartModal from './ConsignmentAuctionStartModal.jsx';
 
 export default function ConsignmentAdmin() {
   const navigate = useNavigate();
-  const [status, setStatus] = useState('pending');
+  const [params] = useSearchParams();
+  const linkedTab = params.get('tab') === 'auctions' ? 'auctions' : 'items';
+  const linkedStatus = params.get('status');
+  const [status, setStatus] = useState(linkedTab === 'items' && linkedStatus ? linkedStatus : 'pending');
   const [rows, setRows] = useState([]);
   const [error, setError] = useState('');
   const [defaultFee, setDefaultFee] = useState(DEFAULT_CONSIGNMENT_FEE);
@@ -42,7 +46,13 @@ export default function ConsignmentAdmin() {
   const [payingSeller, setPayingSeller] = useState(null);
   const [auctioning, setAuctioning] = useState(null);
   const [settings, setSettings] = useState(null);
-  const [tab, setTab] = useState('items');
+  const [tab, setTab] = useState(linkedTab);
+
+  // The Admin Inbox links here with ?tab= / ?status=; follow them even when already on this page.
+  useEffect(() => {
+    setTab(linkedTab);
+    if (linkedTab === 'items' && linkedStatus) setStatus(linkedStatus);
+  }, [linkedTab, linkedStatus]);
 
   const refresh = () => loadAdminItems(status).then(setRows).catch((err) => setError(err.message));
 
@@ -76,7 +86,7 @@ export default function ConsignmentAdmin() {
     sellerPaid: setPayingSeller,
     auction: setAuctioning,
     undoSellerPaid: (item) => {
-      if (!window.confirm(`Mark ${item.item_number} as NOT paid to the seller?`)) return;
+      if (!window.confirm(`Mark ${itemLabel(item)} as NOT paid to the seller?`)) return;
       clearSellerPaid(item.id).then(refresh).catch((err) => setError(err.message));
     },
   };
@@ -88,7 +98,7 @@ export default function ConsignmentAdmin() {
 
   const deletePhotos = async (item) => {
     const n = item.photo_urls?.length || 0;
-    if (!window.confirm(`Delete ${n} photo${n === 1 ? '' : 's'} for ${item.item_number}? This can't be undone.`)) return;
+    if (!window.confirm(`Delete ${n} photo${n === 1 ? '' : 's'} for ${itemLabel(item)}? This can't be undone.`)) return;
     try {
       await clearItemPhotos(item);
       refresh();
@@ -113,7 +123,13 @@ export default function ConsignmentAdmin() {
           Auctions
         </button>
       </div>
-      {tab === 'auctions' ? <ConsignmentAuctionAdmin settings={settings} /> : null}
+      {tab === 'auctions' ? (
+        <ConsignmentAuctionAdmin
+          key={linkedTab === 'auctions' ? linkedStatus || '' : ''}
+          settings={settings}
+          initialStatus={linkedTab === 'auctions' ? linkedStatus : null}
+        />
+      ) : null}
       {tab === 'items' ? (
         <>
           <div className="cs-filters">

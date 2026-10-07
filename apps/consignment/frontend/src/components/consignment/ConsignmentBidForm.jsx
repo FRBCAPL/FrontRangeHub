@@ -18,7 +18,10 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
     return (
       <div className="cs-bid-form">
         <button type="button" className="cs-btn" onClick={openHubLogin}>Log in to bid</button>
-        <p className="cs-hint">Use your FRPL account. Bidding is free; you only pay if you win.</p>
+        <p className="cs-hint">
+          Use your FRPL account. New? Choose Sign Up in the sign-in window; FRPL approves new accounts before
+          they can bid. Bidding is free; you only pay if you win.
+        </p>
       </div>
     );
   }

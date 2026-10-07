@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { itemLabel } from '../../data/consignmentConstants.js';
 import {
   bidderName,
   loadSecondChanceCandidates,
@@ -44,7 +45,7 @@ export default function ConsignmentSecondChanceModal({ auction, onClose }) {
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-second-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-second-title">Offer to another bidder · {auction.item?.item_number}</h2>
+        <h2 id="cs-second-title">Offer to another bidder · {itemLabel(auction.item)}</h2>
         <p className="cs-hint">
           Contact the bidder first. Each bidder is offered the item at their own highest bid. Save only after they accept;
           they then have the normal payment window.

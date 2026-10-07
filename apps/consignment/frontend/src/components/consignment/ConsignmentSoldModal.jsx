@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PAYMENT_METHODS } from '../../data/consignmentConstants.js';
+import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { feesTotal, formatDollars, frplRevenue, priceWithTaxLabel } from '../../utils/consignmentMoney.js';
 
 export default function ConsignmentSoldModal({ item, onClose, onSave }) {
@@ -35,7 +35,7 @@ export default function ConsignmentSoldModal({ item, onClose, onSave }) {
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-sold-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-sold-title">Mark {item.item_number} sold</h2>
+        <h2 id="cs-sold-title">Mark {itemLabel(item)} sold</h2>
         <p className="cs-hint">
           FRPL Retail Price {priceWithTaxLabel(item.selling_price)}. Seller Payout stays {formatDollars(item.seller_payout)}.
         </p>

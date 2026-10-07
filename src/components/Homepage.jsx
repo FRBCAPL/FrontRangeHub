@@ -232,6 +232,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       badge: CONSIGNMENT_COMING_SOON ? 'Coming soon' : 'New',
       onOpen: () => navigate(CONSIGNMENT_PATH),
       actions: [
+        { label: 'How it works', onClick: () => navigate(`${CONSIGNMENT_PATH}/home`) },
         { label: 'Browse', onClick: () => navigate(CONSIGNMENT_PATH) },
         { label: 'Sell an item', onClick: () => navigate(`${CONSIGNMENT_PATH}/sell`) },
         ...(canAdmin ? [{ label: 'Admin', onClick: () => navigate(`${CONSIGNMENT_PATH}/admin`) }] : []),

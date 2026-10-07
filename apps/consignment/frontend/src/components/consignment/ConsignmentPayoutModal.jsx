@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CONSENT_METHODS } from '../../data/consignmentConstants.js';
+import { CONSENT_METHODS, itemLabel } from '../../data/consignmentConstants.js';
 import { changePayout } from '../../services/consignmentPayoutService.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 
@@ -29,7 +29,7 @@ export default function ConsignmentPayoutModal({ item, currentPayout, onClose, o
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-payout-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-payout-title">Change Seller Payout · {item.item_number}</h2>
+        <h2 id="cs-payout-title">Change Seller Payout · {itemLabel(item)}</h2>
         <p className="cs-hint">
           Current Seller Payout: <strong>{formatDollars(currentPayout)}</strong>. FRPL can lower its own margin
           anytime, but lowering the seller's payout requires their agreement.

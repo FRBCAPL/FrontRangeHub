@@ -1,12 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import SupabaseLogin from '@shared/components/modal/modal/SupabaseLogin';
+import HubSignupForm from './HubSignupForm.jsx';
 import './HubLoginModal.css';
 
-/** Sign-in from the nav bar on any page (Google or email + password). */
+/** Sign-in from the nav bar on any page (Google or email + password), with a general sign-up view. */
 export default function HubLoginModal({ onClose, onLoginSuccess }) {
   const location = useLocation();
+  const [signingUp, setSigningUp] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -33,10 +35,19 @@ export default function HubLoginModal({ onClose, onLoginSuccess }) {
     <div className="hub-login-overlay" role="dialog" aria-modal="true" aria-labelledby="hub-login-title" onClick={onClose}>
       <div className="hub-login-modal" onClick={(e) => e.stopPropagation()}>
         <div className="hub-login-head">
-          <h2 id="hub-login-title">Sign in</h2>
+          <h2 id="hub-login-title">{signingUp ? 'Create an account' : 'Sign in'}</h2>
           <button type="button" className="hub-login-close" onClick={onClose} aria-label="Close">×</button>
         </div>
-        <SupabaseLogin compact onSuccess={handleSuccess} oauthReturnTo={location.pathname || '/'} />
+        {signingUp ? (
+          <HubSignupForm onBack={() => setSigningUp(false)} />
+        ) : (
+          <SupabaseLogin
+            compact
+            onSuccess={handleSuccess}
+            onShowSignup={() => setSigningUp(true)}
+            oauthReturnTo={location.pathname || '/'}
+          />
+        )}
       </div>
     </div>,
     document.body

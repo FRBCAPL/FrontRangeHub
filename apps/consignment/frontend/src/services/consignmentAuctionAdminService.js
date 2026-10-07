@@ -55,7 +55,7 @@ export async function loadAdminAuctions(status = 'live') {
   await supabase.rpc('close_due_consignment_auctions');
   let query = supabase
     .from('consignment_auctions')
-    .select('*, item:consignment_items(id, item_number, name, brand, model, photo_urls, seller_payout, status, sale_method, intake_at)');
+    .select('*, item:consignment_items(id, item_number, category, name, brand, model, photo_urls, seller_payout, status, sale_method, intake_at)');
   if (status && status !== 'all') query = query.eq('status', status);
   query = status === 'live'
     ? query.order('ends_at', { ascending: true })

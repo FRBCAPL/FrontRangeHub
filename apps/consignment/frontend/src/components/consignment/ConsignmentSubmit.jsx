@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   CATEGORIES,
   CONDITIONS,
@@ -7,6 +7,7 @@ import {
   CONSIGNMENT_PATH,
   DEFAULT_AUCTION_LISTING_FEE,
   DEFAULT_CONSIGNMENT_FEE,
+  itemLabel,
   MAX_PHOTOS,
 } from '../../data/consignmentConstants.js';
 import { loadSettings, submitItem } from '../../services/consignmentService.js';
@@ -44,7 +45,11 @@ function Req() {
 }
 
 export default function ConsignmentSubmit() {
-  const [form, setForm] = useState(empty);
+  const [searchParams] = useSearchParams();
+  const [form, setForm] = useState(() => ({
+    ...empty,
+    sale_method: searchParams.get('method') === 'auction' ? 'auction' : 'fixed',
+  }));
   const [files, setFiles] = useState([]);
   const [fee, setFee] = useState(DEFAULT_CONSIGNMENT_FEE);
   const [days, setDays] = useState(CONSIGNMENT_DAYS);
@@ -116,7 +121,7 @@ export default function ConsignmentSubmit() {
       <div className="cs-page cs-page-centered">
         <h1>Submitted</h1>
         <p className="cs-lede">
-          Thanks. Your request is in as <strong>{done.item_number}</strong>.
+          Thanks. Your request is in as <strong>{itemLabel({ ...done, category: form.category })}</strong>.
           FRPL will review it and contact you. If we accept the item, you'll bring it to Legends
           and pay the {done.sale_method === 'auction' ? 'auction listing fee' : 'consignment fee'} then — nothing is charged online.
         </p>

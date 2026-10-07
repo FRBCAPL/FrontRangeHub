@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PAYMENT_METHODS } from '../../data/consignmentConstants.js';
+import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { bidderName, markAuctionPaid } from '../../services/consignmentAuctionAdminService.js';
 import { auctionSplit } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
@@ -29,7 +29,7 @@ export default function ConsignmentAuctionPaidModal({ auction, onClose }) {
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-apaid-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-apaid-title">Winner paid · {auction.item?.item_number}</h2>
+        <h2 id="cs-apaid-title">Winner paid · {itemLabel(auction.item)}</h2>
         <p className="cs-hint">
           {bidderName(auction.winner) || 'The winner'} paid for {auction.item?.name}. This marks the item sold and records the split.
           Sales tax is handled at the register and is not part of these numbers.

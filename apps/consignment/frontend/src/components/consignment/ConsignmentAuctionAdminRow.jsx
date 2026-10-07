@@ -1,5 +1,5 @@
 import React from 'react';
-import { auctionStatusLabel, brandModelLabel } from '../../data/consignmentConstants.js';
+import { auctionStatusLabel, brandModelLabel, itemLabel } from '../../data/consignmentConstants.js';
 import { bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { auctionSplit } from '../../utils/consignmentAuctionMath.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
@@ -59,7 +59,7 @@ export default function ConsignmentAuctionAdminRow({ auction, actions }) {
   const unsold = ['ended_no_bids', 'defaulted'].includes(auction.status) && itemStillAuction;
   return (
     <tr>
-      <td>{item.item_number}</td>
+      <td>{itemLabel(item)}</td>
       <td>
         <div className="cs-admin-item">
           <span className="cs-admin-thumb">

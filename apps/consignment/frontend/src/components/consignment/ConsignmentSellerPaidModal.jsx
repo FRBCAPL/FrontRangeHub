@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PAYMENT_METHODS } from '../../data/consignmentConstants.js';
+import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { markSellerPaid } from '../../services/consignmentPayoutService.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 
@@ -33,7 +33,7 @@ export default function ConsignmentSellerPaidModal({ item, onClose }) {
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-paid-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-paid-title">Seller paid · {item.item_number}</h2>
+        <h2 id="cs-paid-title">Seller paid · {itemLabel(item)}</h2>
         <p className="cs-hint">
           Pay <strong>{item.seller?.full_name || 'the seller'}</strong>{' '}
           <strong>{formatDollars(item.seller_payout_paid ?? item.seller_payout)}</strong>.

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { DEFAULT_AUCTION_LISTING_FEE, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
+import { DEFAULT_AUCTION_LISTING_FEE, itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { startAuction } from '../../services/consignmentAuctionAdminService.js';
 import { auctionSplit, DEFAULT_COMMISSION_PCT, openingBid } from '../../utils/consignmentAuctionMath.js';
 import {
@@ -70,7 +70,7 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
   return (
     <div className="cs-modal" role="dialog" aria-labelledby="cs-auction-title">
       <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-auction-title">{isRelist ? 'Relist' : 'Start'} auction · {item.item_number}</h2>
+        <h2 id="cs-auction-title">{isRelist ? 'Relist' : 'Start'} auction · {itemLabel(item)}</h2>
         <p className="cs-hint">
           {item.name}. {sellerChoseAuction ? 'The seller asked for an auction. ' : ''}The auction goes live as soon as you save.
         </p>

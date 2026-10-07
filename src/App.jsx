@@ -79,6 +79,7 @@ import Dashboard from "@apps/singles-league/frontend/src/components/dashboard/Da
 import MatchChat from "@apps/singles-league/frontend/src/components/chat/MatchChat.jsx";
 import AdminDashboard from "@apps/singles-league/frontend/src/components/dashboard/AdminDashboard.jsx";
 import PlatformAdminDashboard from "@shared/components/PlatformAdminDashboard";
+import AdminInbox from "@apps/hub/frontend/src/components/admin-inbox/AdminInbox.jsx";
 import SupabaseLogin from "@shared/components/modal/modal/SupabaseLogin";
 import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';
@@ -999,6 +1000,21 @@ function AppContent() {
                      <div className="admin-app-content">
                        <AdminDashboard userToken={userToken} />
                      </div>
+                   </AppRouteWrapper>
+                 ) : (
+                   <Navigate to="/" />
+                 )
+               }
+             />
+
+             <Route
+               path="/admin/inbox"
+               element={
+                 isAuthenticated && isAdmin() ? (
+                   <AppRouteWrapper appName="Admin Inbox">
+                     <main className="main-app-content">
+                       <AdminInbox />
+                     </main>
                    </AppRouteWrapper>
                  ) : (
                    <Navigate to="/" />

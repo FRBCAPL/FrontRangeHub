@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import ConsignmentNav from './ConsignmentNav.jsx';
 import ConsignmentStorefront from './ConsignmentStorefront.jsx';
+import ConsignmentHome from './ConsignmentHome.jsx';
 import ConsignmentItemPage from './ConsignmentItemPage.jsx';
 import ConsignmentSubmit from './ConsignmentSubmit.jsx';
 import ConsignmentAdmin from './ConsignmentAdmin.jsx';
@@ -37,6 +38,7 @@ export default function ConsignmentApp({ canAdmin = false }) {
         : null}
       <Routes>
         <Route index element={<ConsignmentStorefront />} />
+        <Route path="home" element={<ConsignmentHome />} />
         <Route path="item/:itemNumber" element={<ConsignmentItemPage />} />
         <Route path="sell" element={<ConsignmentSubmit />} />
         <Route
