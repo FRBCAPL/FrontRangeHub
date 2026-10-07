@@ -77,6 +77,7 @@ export default function TrapEmPage() {
           <h2 id="trapem-how">{T.TRAP_EM_HOW_TITLE}</h2>
           <p className="trapem-note">{T.TRAP_EM_HOW_INTRO}</p>
           <blockquote className="trapem-rule">{T.TRAP_EM_CORE_RULE}</blockquote>
+          <p className="trapem-note trapem-exception">{T.TRAP_EM_INNING_NOTE}</p>
           <p className="trapem-note trapem-exception">{T.TRAP_EM_CORE_EXCEPTION}</p>
           <div className="trapem-outcomes">
             {T.TRAP_EM_OUTCOMES.map((o) => (

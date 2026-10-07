@@ -21,6 +21,7 @@ export default function TrapEmTableCard() {
       <div className="trapem-card-core">
         <strong>{T.TRAP_EM_REMEMBER_BIG}</strong>
         <span>{T.TRAP_EM_CORE_RULE}</span>
+        <span>{T.TRAP_EM_INNING_NOTE}</span>
         <span>{T.TRAP_EM_CORE_EXCEPTION}</span>
       </div>
 

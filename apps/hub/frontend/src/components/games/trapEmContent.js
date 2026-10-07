@@ -19,21 +19,22 @@ export const TRAP_EM_SUBTITLE = 'An 8-Ball game of offense & defense';
 export const TRAP_EM_TAGLINE = 'Every shot is offense. Every shot is defense.';
 
 export const TRAP_EM_INTRO =
-  'Trap ’Em is a strategic variation of 8-Ball where every player gets exactly ONE shot per turn at the table. \n'
+  'Trap ’Em is a strategic variation of 8-Ball where every player gets exactly ONE shot per inning. \n'
   + 'You’re not just trying to pocket your own ball — you’re trying to play safe against your opponent.';
 
 export const TRAP_EM_HOW_TITLE = 'How to play';
 export const TRAP_EM_HOW_INTRO = 'Played under the current CSI Official Rules for 8-Ball, with a few Trap ’Em specific rules:';
-export const TRAP_EM_HOW_OUTRO = 'Players alternate one shot at a time until the game is won.';
+export const TRAP_EM_HOW_OUTRO = 'Players alternate one shot at a time, inning after inning, until the game is won.';
 
-export const TRAP_EM_CORE_RULE = 'Each player gets exactly ONE shot per turn at the table, regardless of the result of that shot.';
+export const TRAP_EM_CORE_RULE = 'Each player gets exactly ONE shot per inning, regardless of the result of that shot.';
+export const TRAP_EM_INNING_NOTE = 'Like baseball, an inning is one turn for each player. In Trap ’Em every turn is a single shot, so an inning is one shot each.';
 export const TRAP_EM_CORE_EXCEPTION = 'The one exception: a ball legally pocketed on the break earns the breaker one more shot.';
 
 export const TRAP_EM_OUTCOMES = [
   { result: 'Pocket a legal ball?', then: 'Your turn is over.', tone: 'make' },
   { result: 'Miss?', then: 'Your turn is over.', tone: 'miss' },
   { result: 'Play a safety?', then: 'Your turn is over.', tone: 'safe' },
-  { result: 'Scratch?', then: 'Your turn is over, and your opponent gets ball in hand.', tone: 'foul' },
+  { result: 'Scratch or cue ball off the table?', then: 'Your turn is over, and your opponent gets ball in hand.', tone: 'foul' },
   { result: 'Bad hit or no rail?', then: 'Your turn is over. Your opponent may shoot it as it lies or make you shoot again.', tone: 'foul' },
 ];
 
@@ -63,14 +64,19 @@ export const TRAP_EM_RULES = [
     short: 'Call the 8, and call open-table shots to set groups. 8 uncalled or in the wrong pocket loses.',
   },
   {
-    title: 'Ball in hand only on a scratch',
-    body: 'Ball in hand is given only when the cue ball is scratched. Ball in hand does not add an extra shot.',
-    short: 'Only a scratch gives ball in hand. Still one shot.',
+    title: 'Ball in hand only on a cue-ball scratch',
+    body: 'Pocketing the cue ball or driving it off the table gives the opponent ball in hand. Ball in hand does not add an extra shot. \nAll other fouls give the opponent the choice in rule 6. \nCSI loss-of-game fouls still apply.',
+    short: 'Cue ball pocketed or off the table = ball in hand. Still one shot. Other fouls: see rule 6.',
   },
   {
     title: 'Bad hit or no rail: opponent’s option',
-    body: 'If the shooter fails to hit a ball of their own group first, or no ball reaches a rail after contact, it is a foul but not ball in hand. \nThe opponent may shoot the table as it lies, or make the shooter shoot again from where the balls stopped. \nThat shot is the shooter’s one shot, and then the turn passes as normal. \nOn an open table, any ball except the 8 counts as the shooter’s group.',
-    short: 'Wrong ball first or no rail: opponent shoots as it lies, or makes you shoot again from there.',
+    body: 'The cue ball must first hit a ball of the shooter’s group, or the 8 once their group is cleared. On an open table, any ball except the 8. \nAfter that contact, a ball must be pocketed or some ball must hit a rail. If not, it is a foul but not ball in hand. \nThe opponent may shoot the table as it lies, or make the shooter shoot again from where the balls stopped. \nA shoot-again shot follows the same rules, so if it is also a foul, the opponent chooses again.',
+    short: 'Wrong ball first, or nothing pocketed and no rail: opponent shoots as it lies, or makes you shoot again.',
+  },
+  {
+    title: 'Three fouls in a row',
+    body: 'Like the 10-Ball three-foul rule, but the penalty is ball in hand instead of loss of game. \nIf the same player fouls on three of their own shots in a row, including shoot-again shots, the opponent gets ball in hand. \nThe opponent must tell the player when they are on two fouls. Without that warning, the third foul does not count toward the rule. \nA legal shot by that player resets the count.',
+    short: '3 fouls in a row (with a warning at 2) = ball in hand.',
   },
   {
     title: 'Pocketing your opponent’s ball',
