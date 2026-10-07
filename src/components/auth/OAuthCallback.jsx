@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import supabaseAuthService from '../../services/supabaseAuthService.js';
 import { supabase } from '../../config/supabase';
 import { peekLoginReturn, clearLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
+import { estateOAuthCallbackHash } from '@shared/utils/estateAuthLanding.js';
 
 let oauthCallbackStarted = false;
 let oauthResolvedReturnPath = '';
@@ -13,8 +14,8 @@ function resolveOAuthReturnPathOnce() {
   if (stored.startsWith('/tournament-bracket')) oauthResolvedReturnPath = '/tournament-bracket';
   else if (stored.startsWith('/ladder')) oauthResolvedReturnPath = '/ladder';
   else if (stored.startsWith('/league')) oauthResolvedReturnPath = '/league';
-  else if (stored && stored !== '/' && stored !== '/hub' && stored !== '/auth/callback') oauthResolvedReturnPath = stored;
-  else oauthResolvedReturnPath = '/ladder';
+  else if (stored.startsWith('/') && stored !== '/hub' && stored !== '/auth/callback') oauthResolvedReturnPath = stored;
+  else oauthResolvedReturnPath = '/';
   return oauthResolvedReturnPath;
 }
 
