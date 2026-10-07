@@ -118,7 +118,7 @@ export const TRAP_EM_STRATEGY_TIPS = [
 ];
 
 export const TRAP_EM_WIN_TITLE = 'Winning the game';
-export const TRAP_EM_WIN_BODY = 'Same as standard 8-Ball: legally pocket your group, then legally pocket the 8-ball.';
+export const TRAP_EM_WIN_BODY = 'Once every ball in your group is off the table, legally pocket the 8-ball.';
 export const TRAP_EM_LOSS_TITLE = 'You lose the game if you:';
 export const TRAP_EM_LOSS = [
   'Pocket the 8 before your group is cleared (except on the break).',

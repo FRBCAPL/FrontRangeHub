@@ -47,7 +47,7 @@ export default function TrapEmTableCard() {
       </ul>
 
       <p className="trapem-card-foot">
-        <strong>Win:</strong> legally pocket your group, then the 8.{' '}
+        <strong>Win:</strong> once your group is down (by anyone), legally pocket the 8.{' '}
         <strong>Lose:</strong> {T.TRAP_EM_LOSS.map((l) => l.replace(/\.$/, '')).join(' · ')}.
         <br />
         {T.TRAP_EM_WIN_NOTE}
