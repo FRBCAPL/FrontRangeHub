@@ -104,7 +104,7 @@ export const TRAP_EM_STRATEGY_TITLE = 'The strategy';
 export const TRAP_EM_STRATEGY_INTRO =
   'In regular 8-Ball, making a ball lets you keep shooting, so position play is about leaving yourself a shot.\n '
   + 'In Trap ’Em, your opponent comes to the table after every shot.';
-export const TRAP_EM_OLD_QUESTION = 'Can I make my ball?';
+export const TRAP_EM_OLD_QUESTION = 'Can I make my ball & get position?';
 /** Text between the asterisks is highlighted in gold. */
 export const TRAP_EM_NEW_QUESTION = 'Can I make my ball *and* leave my opponent trapped?';
 
@@ -119,19 +119,15 @@ export const TRAP_EM_STRATEGY_TIPS = [
 
 export const TRAP_EM_WIN_TITLE = 'Winning the game';
 export const TRAP_EM_WIN_BODY = 'Same as standard 8-Ball: legally pocket your group, then legally pocket the 8-ball.';
-export const TRAP_EM_WIN_NOTE = 'All normal CSI 8-Ball rules still apply unless changed by the Trap ’Em rules above:';
+export const TRAP_EM_LOSS_TITLE = 'You lose the game if you:';
+export const TRAP_EM_LOSS = [
+  'Pocket the 8 before your group is cleared.',
+  'Pocket the 8 without calling it, or in a pocket you didn’t call.',
+  'Scratch or foul on the shot that pockets the 8.',
+  'Drive the 8 off the table.',
+];
+export const TRAP_EM_WIN_NOTE = 'Everything not covered above follows CSI 8-Ball rules.';
 
 export const TRAP_EM_REMEMBER_KICKER = 'The rule to remember';
 export const TRAP_EM_REMEMBER_BIG = 'ONE TURN. ONE SHOT.';
 export const TRAP_EM_REMEMBER_MOTTO = 'Make it. Miss it. Trap ’em.';
-
-export const TRAP_EM_STILL_APPLIES = [
-  'The break',
-  'Open table',
-  'Establishing groups',
-  'Legal shots',
-  'Fouls',
-  'Ball in hand',
-  'The 8-ball',
-  'Loss of game',
-];

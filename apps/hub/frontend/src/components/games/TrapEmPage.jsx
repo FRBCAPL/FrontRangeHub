@@ -59,7 +59,6 @@ export default function TrapEmPage() {
 
         <header className="trapem-hero">
           <div className="trapem-ball" aria-hidden="true"><span>8</span></div>
-          <p className="trapem-kicker">{T.TRAP_EM_KICKER}</p>
           <h1>{T.TRAP_EM_TITLE}</h1>
           <p className="trapem-sub">{T.TRAP_EM_SUBTITLE}</p>
           <p className="trapem-tagline">{T.TRAP_EM_TAGLINE}</p>
@@ -121,10 +120,13 @@ export default function TrapEmPage() {
         <section className="trapem-section" aria-labelledby="trapem-win">
           <h2 id="trapem-win">{T.TRAP_EM_WIN_TITLE}</h2>
           <p>{T.TRAP_EM_WIN_BODY}</p>
-          <p className="trapem-note">{T.TRAP_EM_WIN_NOTE}</p>
-          <div className="trapem-chips">
-            {T.TRAP_EM_STILL_APPLIES.map((item) => <span key={item}>{item}</span>)}
+          <div className="trapem-loss">
+            <strong>{T.TRAP_EM_LOSS_TITLE}</strong>
+            <ul>
+              {T.TRAP_EM_LOSS.map((item) => <li key={item}>{item}</li>)}
+            </ul>
           </div>
+          <p className="trapem-note">{T.TRAP_EM_WIN_NOTE}</p>
         </section>
 
         <section className="trapem-section" aria-labelledby="trapem-format">

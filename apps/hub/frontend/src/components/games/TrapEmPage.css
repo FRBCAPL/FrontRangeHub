@@ -367,21 +367,30 @@
   }
 }
 
-.trapem-chips {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
+.trapem-loss {
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(248, 113, 113, 0.45);
 }
 
-.trapem-chips span {
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(125, 211, 252, 0.35);
-  background: rgba(12, 74, 110, 0.3);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #e2e8f0;
+.trapem-loss strong {
+  color: #fca5a5;
+}
+
+.trapem-loss ul {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  line-height: 1.5;
+}
+
+.trapem-loss li::before {
+  content: '✕ ';
+  color: #f87171;
+  font-weight: 900;
 }
 
 /* Rule to remember */

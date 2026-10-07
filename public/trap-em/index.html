@@ -61,9 +61,10 @@
     em{color:#facc15;font-style:normal}
     ul.tips{margin:0;padding:0;list-style:none;display:grid;gap:6px}
     ul.tips li::before{content:"• ";color:#7dd3fc;font-weight:900}
-    .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
-    .chips span{padding:5px 12px;border-radius:999px;border:1px solid rgba(125,211,252,.35);background:rgba(12,74,110,.3);
-      font-size:.85rem;font-weight:600;color:#e2e8f0}
+    .loss{padding:12px 16px;border-radius:12px;background:rgba(2,6,23,.7);border:1px solid rgba(248,113,113,.45)}
+    .loss strong{color:#fca5a5}
+    .loss ul{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+    .loss li::before{content:"✕ ";color:#f87171;font-weight:900}
     dl{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     dl div{padding:10px 14px;border-radius:12px;background:rgba(2,6,23,.7);border:1px solid rgba(148,163,184,.2);text-align:center}
     dt{font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#facc15}
@@ -86,7 +87,6 @@
 
     <header>
       <div class="ball" aria-hidden="true"><span>8</span></div>
-      <p class="kicker">Front Range Pool League</p>
       <h1>Trap ’Em</h1>
       <p class="sub">An 8-Ball game of offense &amp; defense</p>
       <p class="tagline">Every shot is offense. Every shot is defense.</p>
@@ -131,7 +131,7 @@
       <h2 id="strategy">The strategy</h2>
       <p>In regular 8-Ball, making a ball lets you keep shooting, so position play is about leaving yourself a shot.<br>In Trap ’Em, your opponent comes to the table after every shot.</p>
       <div class="question">
-        <p class="old">Can I make my ball?</p>
+        <p class="old">Can I make my ball &amp; get position?</p>
         <p class="new">Can I make my ball <em>and</em> leave my opponent trapped?</p>
       </div>
       <ul class="tips">
@@ -147,17 +147,16 @@
     <section aria-labelledby="win">
       <h2 id="win">Winning the game</h2>
       <p class="center">Same as standard 8-Ball: legally pocket your group, then legally pocket the 8-ball.</p>
-      <p class="note center">All normal CSI 8-Ball rules still apply unless changed by the Trap ’Em rules above:</p>
-      <div class="chips">
-          <span>The break</span>
-          <span>Open table</span>
-          <span>Establishing groups</span>
-          <span>Legal shots</span>
-          <span>Fouls</span>
-          <span>Ball in hand</span>
-          <span>The 8-ball</span>
-          <span>Loss of game</span>
+      <div class="loss">
+        <strong>You lose the game if you:</strong>
+        <ul>
+          <li>Pocket the 8 before your group is cleared.</li>
+          <li>Pocket the 8 without calling it, or in a pocket you didn’t call.</li>
+          <li>Scratch or foul on the shot that pockets the 8.</li>
+          <li>Drive the 8 off the table.</li>
+        </ul>
       </div>
+      <p class="note center">Everything not covered above follows CSI 8-Ball rules.</p>
     </section>
 
     <section aria-labelledby="format">

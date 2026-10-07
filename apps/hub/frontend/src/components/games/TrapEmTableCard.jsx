@@ -47,7 +47,10 @@ export default function TrapEmTableCard() {
       </ul>
 
       <p className="trapem-card-foot">
-        {T.TRAP_EM_WIN_BODY} All other CSI 8-Ball rules apply. · {T.TRAP_EM_KICKER}
+        <strong>Win:</strong> legally pocket your group, then the 8.{' '}
+        <strong>Lose:</strong> {T.TRAP_EM_LOSS.map((l) => l.replace(/\.$/, '')).join(' · ')}.
+        <br />
+        {T.TRAP_EM_WIN_NOTE}
       </p>
     </div>,
     document.body,
