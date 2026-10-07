@@ -210,7 +210,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   onClick={() => setShowLogin(true)}
                   style={{ marginRight: '1rem' }}
                 >
-                  🔑 Sign up / Log in
+                  <span className="hub-login-nav-part">🔑 Sign up</span> <span className="hub-login-nav-part">/ Log in</span>
                 </button>
               ) : (
               <button 
@@ -271,7 +271,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             </div>
             {showLoginButton && !isMobile ? (
               <button type="button" className="hub-login-nav-btn" onClick={() => setShowLogin(true)}>
-                🔑 Sign up / Log in
+                <span className="hub-login-nav-part">🔑 Sign up</span> <span className="hub-login-nav-part">/ Log in</span>
               </button>
             ) : null}
           </div>

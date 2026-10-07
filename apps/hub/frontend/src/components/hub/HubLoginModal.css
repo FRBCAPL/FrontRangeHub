@@ -215,3 +215,23 @@
   padding: 6px 12px;
   font-size: 0.82rem;
 }
+
+.hub-login-nav-part,
+.mobile-brand-above-title .hub-login-nav-btn .hub-login-nav-part {
+  font-size: inherit !important;
+  line-height: inherit !important;
+  white-space: nowrap !important;
+  margin: 0 !important;
+}
+
+/* Narrow phone nav squeezes the button; let the label wrap to two lines instead of spilling out. */
+@media (max-width: 480px) {
+  .hub-login-nav-btn {
+    flex: 0 0 auto;
+    width: 6.2rem;
+    padding: 5px 6px;
+    white-space: normal;
+    line-height: 1.15;
+    text-align: center;
+  }
+}

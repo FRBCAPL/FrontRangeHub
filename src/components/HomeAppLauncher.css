@@ -17,7 +17,7 @@
   margin: 0 auto;
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 1240px) {
   .hal-row {
     display: flex;
     gap: 20px;
@@ -102,16 +102,78 @@
   flex: 0 0 calc((100% - (var(--hal-cols) - 1) * 14px) / var(--hal-cols));
 }
 
-@container (min-width: 434px) {
+/* Each section has three tiles, so three columns is the most it needs. */
+@container (min-width: 420px) {
   .hal-tile { --hal-cols: 2; }
 }
 
-@container (min-width: 658px) {
+@container (min-width: 560px) {
   .hal-tile { --hal-cols: 3; }
 }
 
-@container (min-width: 1106px) {
-  .hal-tile { --hal-cols: 5; }
+/* Phones: small tiles become full-width rows (icon left, text and shortcuts right). */
+@container (max-width: 419px) {
+  .hal:not(.hal--featured) .hal-tile {
+    position: relative;
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    column-gap: 12px;
+    row-gap: 4px;
+    align-items: start;
+    padding: 12px 12px 12px 10px;
+    text-align: left;
+  }
+
+  .hal:not(.hal--featured) .hal-tile > * {
+    grid-column: 2;
+  }
+
+  .hal:not(.hal--featured) .hal-tile > .hal-tile-head {
+    grid-column: 1;
+    grid-row: 1 / span 4;
+    position: static;
+    align-self: center;
+  }
+
+  .hal:not(.hal--featured) .hal-icon {
+    font-size: 1.8rem;
+  }
+
+  .hal:not(.hal--featured) .hal-badge {
+    top: 6px;
+    right: 8px;
+  }
+
+  .hal:not(.hal--featured) .hal-title {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+
+  .hal:not(.hal--featured) .hal-tile:has(.hal-badge) .hal-title {
+    padding-right: 5.5rem;
+  }
+
+  .hal:not(.hal--featured) .hal-blurb {
+    font-size: 0.8rem;
+  }
+
+  .hal:not(.hal--featured) .hal-actions {
+    justify-content: flex-start;
+    gap: 5px;
+  }
+
+  .hal:not(.hal--featured) .hal-action {
+    padding: 5px 9px;
+    font-size: 0.72rem;
+  }
+
+  .hal:not(.hal--featured) .hal-open {
+    display: none;
+  }
+
+  .hal--featured .hal-tile {
+    padding: 14px 12px 12px;
+  }
 }
 
 .hal-tile {
@@ -261,7 +323,14 @@
   height: 2.7rem;
 }
 
-@container (min-width: 658px) {
+/* Featured: one per row on phones, two on tablets (third centered), three from ~760px. */
+.hal--featured .hal-tile { --hal-cols: 1; }
+
+@container (min-width: 560px) {
+  .hal--featured .hal-tile { --hal-cols: 2; }
+}
+
+@container (min-width: 760px) {
   .hal--featured .hal-tile { --hal-cols: 3; }
 }
 
@@ -289,7 +358,9 @@
 }
 
 @media (max-width: 520px) {
-  .hal-tile {
-    min-height: 0;
+  .hal-heading {
+    gap: 10px;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
   }
 }
