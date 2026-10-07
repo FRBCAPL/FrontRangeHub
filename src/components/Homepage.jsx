@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
-import bcaplLogo from '../assets/bcapl_logo.png';
 import frontRangeLogo from '../assets/logo.png';
 import usaplLogo from '../assets/usapl_logo.png';
-import usaplNationalsLogo from '../assets/usapl_nationals_logo_color.png';
-import fargorateLogo from '../assets/fargorate-logo.png';
 import cuelessLogo from '../assets/Culess pic.jpg';
 import DraggableModal from './modal/DraggableModal';
 import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
@@ -21,8 +18,6 @@ import { TRAP_EM_PATH, TRAP_EM_SUBTITLE, TRAP_EM_TITLE } from '@apps/hub/fronten
 import { CONSIGNMENT_COMING_SOON, CONSIGNMENT_PATH } from '@apps/consignment/frontend/src/data/consignmentConstants.js';
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
 import { loadHomepageTournamentBanner } from '@shared/components/tournament/homepageTournamentBannerData.js';
-import RotatingFeatureBadge from './RotatingFeatureBadge';
-import HomepageUsaplActions from './HomepageUsaplActions.jsx';
 import { LADDER_ONE_LINER } from '@shared/utils/utils/ladderEntryCopy.js';
 import {
   CUELESS_TAGLINE,
@@ -33,28 +28,6 @@ import {
 import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
-
-const LADDER_FEATURE_BADGES = [
-  'Singles Play',
-  'Flexible Schedule',
-  'Play Anyday/Anywhere',
-  'BCAPL Sanctioned',
-  'Registration',
-  'Player Tools',
-  'Statistics',
-];
-
-const CUELESS_PROMO_LINES = ['Got game?', 'Want it streamed?', 'We got you covered!'];
-
-const CUELESS_FEATURE_BADGES = [
-  'Live Streaming',
-  'At Legends Brews & Cues',
-  'On-Location Available',
-  'Equipment Provided',
-  '"Expert" Commentary',
-  'Unfiltered & Real',
-  'No League or Ladder Membership Required',
-];
 
 const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
   const navigate = useNavigate();
@@ -198,6 +171,59 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
     setShowWhatIsLadderModal(false);
     setShowLadderLearnMoreModal(true);
   };
+
+  const openExternal = (url) => (e) => {
+    e.stopPropagation();
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const featuredTiles = [
+    {
+      id: 'usapl',
+      icon: <img src={usaplLogo} alt="" className="hal-logo" />,
+      title: 'Front Range USA Pool League',
+      blurb: 'Sign up, standings, schedules, and dues — all in one place.',
+      highlight: '1 in 12 Teams Win a Trip to Las Vegas!',
+      accent: '#e53e3e',
+      onOpen: handleNavigateToUSAPool,
+      actions: [
+        { label: 'Sign up', onClick: () => navigate('/usapl/signup') },
+        { label: 'Divisions', onClick: () => navigate('/usapl/divisions') },
+        { label: 'Pay dues', onClick: () => navigate('/usapl/dues') },
+        { label: 'Vegas Cup', onClick: () => navigate('/usapl/vegas-cup') },
+      ],
+    },
+    {
+      id: 'ladder',
+      icon: <img src={frontRangeLogo} alt="" className="hal-logo" />,
+      title: 'Ladder of Legends',
+      blurb: LADDER_ONE_LINER,
+      highlight: 'Singles · Flexible schedule · BCAPL sanctioned',
+      accent: '#a855f7',
+      onOpen: handleNavigateToHub,
+      actions: [
+        { label: 'Player login', onClick: handleLadderPlayerLogin },
+        { label: 'New player? Start here', onClick: handleLadderNewPlayer },
+        { label: 'What is it?', onClick: handleWhatIsLadder },
+        { label: 'View the ladder', onClick: handleViewLadder },
+        { label: 'Schedule a match', onClick: () => setShowMatchScheduling(true) },
+        { label: 'Calendar', onClick: handleMatchCalendar },
+      ],
+    },
+    {
+      id: 'cueless',
+      icon: <img src={cuelessLogo} alt="" className="hal-logo hal-logo--photo" />,
+      title: 'Cueless in the Booth',
+      blurb: CUELESS_CARD_BLURB,
+      highlight: CUELESS_TAGLINE,
+      accent: '#22c55e',
+      onOpen: () => navigate('/cueless'),
+      actions: [
+        { label: 'Clips on Facebook', onClick: openExternal(CUELESS_FEATURED_FACEBOOK_REEL) },
+        { label: 'Full streams on YouTube', onClick: openExternal(CUELESS_FULL_MATCH_PLAYLIST_URL) },
+      ],
+    },
+  ];
 
   const poolTiles = [
     {
@@ -356,171 +382,11 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       <div className="homepage-container">
         {/* Main Navigation Cards */}
         <div className="homepage-navigation">
-          <div className="nav-cards">
-            {/* USA Pool Website Card */}
-            <div
-              className="nav-card usapool-card"
-              onClick={handleNavigateToUSAPool}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handleNavigateToUSAPool()}
-            >
-              <div className="nav-card-logos">
-                <img src={bcaplLogo} alt="BCAPL Logo" className="league-logo" />
-                <img src={frontRangeLogo} alt="Front Range Logo" className="league-logo" />
-                <img src={fargorateLogo} alt="Fargorate Logo" className="league-logo" />
-                <img src={usaplLogo} alt="USAPL Logo" className="league-logo" />
-                <img src={usaplNationalsLogo} alt="USAPL Nationals Logo" className="league-logo" />
-              </div>
-              <div className="nav-card-content">
-                <h2>Front Range USA Pool League</h2>
-                <p className="usapool-card-blurb">Sign up, standings, schedules, and dues — all in one place.</p>
-                <div className="nav-card-features">
-                  <div className="feature-tag-row usapool-highlight-row">
-                    <span id="vegas-trip-tag" className="feature-tag vegas-tag rotating-feature-badge">
-                      1 in 12 Teams Win a Trip to Las Vegas!
-                    </span>
-                  </div>
-                </div>
-                <HomepageUsaplActions onOpen={navigate} />
-                {/* Bottom logos for iframe - BCA and National Championship */}
-                <div className="bottom-logos">
-                  <img src={bcaplLogo} alt="BCAPL Logo" className="bottom-logo" />
-                  <img src={usaplNationalsLogo} alt="USAPL Nationals Logo" className="bottom-logo" />
-                </div>
-              </div>
-              <div className="nav-card-arrow">→</div>
-            </div>
-
-            {/* Ladder Card */}
-            <div
-              className="nav-card hub-card ladder-home-card"
-              onClick={handleNavigateToHub}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handleNavigateToHub()}
-            >
-              <div className="nav-card-logos ladder-home-logos">
-                <img src={frontRangeLogo} alt="Front Range Logo" className="league-logo ladder-home-logo-left" />
-                <img src={bcaplLogo} alt="BCAPL Logo" className="league-logo ladder-home-logo-right" />
-              </div>
-              <div className="nav-card-content hub-card-ladder-content">
-                <div className="hub-card-ladder-heading">
-                  <h2>Ladder of Legends</h2>
-                  <p className="hub-card-ladder-pitch">{LADDER_ONE_LINER}</p>
-                </div>
-                <div className="ladder-entry-ctas" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" className="ladder-entry-cta primary" onClick={handleLadderPlayerLogin}>
-                    Player login / <br />Ladder Access
-                  </button>
-                  <button type="button" className="ladder-entry-cta secondary" onClick={handleLadderNewPlayer}>
-                    New player? <br />Start here
-                  </button>
-                </div>
-                <div className="ladder-home-tags">
-                  <RotatingFeatureBadge
-                    className="feature-tag ladder-rotating-badge"
-                    items={LADDER_FEATURE_BADGES}
-                    intervalMs={3400}
-                  />
-                </div>
-                <div className="ladder-home-page-btns" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" className="quick-action-button what-is-ladder-btn" onClick={handleWhatIsLadder}>
-                    What is the Ladder of Legends?
-                  </button>
-                  <button type="button" className="quick-action-button view-ladder-btn" onClick={handleViewLadder}>
-                    View The Ladder of Legends
-                  </button>
-                  <button type="button" className="quick-action-button match-scheduling-btn" onClick={() => setShowMatchScheduling(true)}>
-                    Schedule A Ladder Match
-                  </button>
-                  <button type="button" className="quick-action-button calendar-btn" onClick={handleMatchCalendar}>
-                    Ladder of Legends Calendar
-                  </button>
-                </div>
-                <p className="hub-card-ladder-tap">Or tap anywhere else on this card to open the ladder app</p>
-              </div>
-              <div className="nav-card-arrow">→</div>
-            </div>
-
-            {/* Cueless in the Booth – 4-sided rotating cube logos */}
-            <div
-              className="nav-card future-card cueless-card cueless-home-card"
-              onClick={() => navigate('/cueless')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && navigate('/cueless')}
-            >
-              <div className="nav-card-logos cueless-cube-logos">
-                <div className="cueless-cube cueless-cube-left">
-                  <div className="cueless-cube-inner">
-                    <div className="cueless-cube-face front"><img src={cuelessLogo} alt="" /></div>
-                    <div className="cueless-cube-face right"><img src={cuelessLogo} alt="" /></div>
-                    <div className="cueless-cube-face back"><img src={cuelessLogo} alt="" /></div>
-                    <div className="cueless-cube-face left"><img src={cuelessLogo} alt="" /></div>
-                  </div>
-                </div>
-                <div className="cueless-cube cueless-cube-right">
-                  <div className="cueless-cube-inner">
-                    <div className="cueless-cube-face front"><img src={cuelessLogo} alt="" /></div>
-                    <div className="cueless-cube-face right"><img src={cuelessLogo} alt="" /></div>
-                    <div className="cueless-cube-face back"><img src={cuelessLogo} alt="" /></div>
-                    <div className="cueless-cube-face left"><img src={cuelessLogo} alt="" /></div>
-                  </div>
-                </div>
-              </div>
-              <div className="cueless-clapper-icon">🎬</div>
-              <div className="cueless-camera-icon">🎥</div>
-                <div className="nav-card-content">
-                  <h2>Cueless in the Booth</h2>
-                  <RotatingFeatureBadge
-                    className="feature-tag cueless-highlight-tag cueless-promo-badge"
-                    items={CUELESS_PROMO_LINES}
-                    intervalMs={2200}
-                    ariaHidden
-                  />
-                  <div className="cueless-home-highlights">
-                    <span className="feature-tag cueless-highlight-tag">{CUELESS_TAGLINE}</span>
-                  </div>
-                  <p>{CUELESS_CARD_BLURB}</p>
-                  <div
-                    className="cueless-card-watch"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    role="group"
-                    aria-label="Watch featured Cueless clips"
-                  >
-                    <a
-                      href={CUELESS_FEATURED_FACEBOOK_REEL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cueless-watch-link cueless-watch-link--fb"
-                    >
-                      More clips on Facebook
-                    </a>
-                    <a
-                      href={CUELESS_FULL_MATCH_PLAYLIST_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cueless-watch-link cueless-watch-link--yt"
-                    >
-                      Full streams on YouTube
-                    </a>
-                  </div>
-                  <div className="nav-card-features cueless-home-features">
-                    <RotatingFeatureBadge
-                      className="feature-tag cueless-highlight-tag cueless-rotating-badge"
-                      items={CUELESS_FEATURE_BADGES}
-                      intervalMs={2600}
-                    />
-                  </div>
-                </div>
-            </div>
-
+          <HomeAppLauncher featured title="" tiles={featuredTiles} />
+          <div className="hal-row">
+            <HomeAppLauncher tiles={poolTiles} />
+            <HomeAppLauncher title="Beyond the Table" tiles={otherTiles} />
           </div>
-
-          <HomeAppLauncher tiles={poolTiles} />
-          <HomeAppLauncher title="Beyond the Table" tiles={otherTiles} />
         </div>
 
         {/* Footer Section */}

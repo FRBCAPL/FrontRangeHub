@@ -4,18 +4,75 @@
   position: relative;
   z-index: 4;
   width: min(100%, 1200px);
-  margin: 2.5rem auto 1.5rem;
+  margin: 1.25rem auto 0.75rem;
 }
 
 .hal + .hal {
   margin-top: 1rem;
 }
 
+/* Two launcher sections side by side on wide screens (three tiles each). */
+.hal-row {
+  width: min(100%, 1200px);
+  margin: 0 auto;
+}
+
+@media (min-width: 1100px) {
+  .hal-row {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+  }
+
+  .hal-row > .hal {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0.6rem 0 0.75rem;
+  }
+
+  .hal-row .hal-heading {
+    margin-bottom: 0.5rem;
+  }
+
+  .hal-row .hal-tile {
+    --hal-cols: 3 !important;
+    gap: 5px;
+    padding: 12px 10px 10px;
+  }
+
+  .hal-row .hal-icon {
+    font-size: 1.6rem;
+    min-height: 1.9rem;
+  }
+
+  .hal-row .hal-title {
+    font-size: 1rem;
+  }
+
+  .hal-row .hal-blurb {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .hal-row .hal-actions {
+    gap: 4px;
+  }
+
+  .hal-row .hal-action {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  .hal-row .hal-open {
+    padding-top: 4px;
+  }
+}
+
 .hal-heading {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 0 0 1.1rem;
+  margin: 0 0 0.75rem;
   font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: 0.22em;
@@ -62,9 +119,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  min-height: 220px;
-  padding: 18px 14px 14px;
+  gap: 6px;
+  padding: 14px 12px 12px;
   border-radius: 16px;
   border: 2px solid color-mix(in srgb, var(--hal-accent) 55%, transparent);
   background:
@@ -93,11 +149,11 @@
 }
 
 .hal-icon {
-  font-size: 2.2rem;
+  font-size: 1.9rem;
   line-height: 1;
   display: grid;
   place-items: center;
-  min-height: 2.6rem;
+  min-height: 2.2rem;
 }
 
 .hal-badge {
@@ -161,6 +217,52 @@
   font-size: 0.8rem;
   font-weight: 800;
   color: var(--hal-accent);
+}
+
+.hal-highlight {
+  margin: 2px 0 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--hal-accent) 18%, transparent);
+  color: #fef9c3;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.hal-logo {
+  height: 3rem;
+  width: auto;
+  max-width: 9rem;
+  object-fit: contain;
+}
+
+.hal-logo--photo {
+  border-radius: 8px;
+}
+
+.hal--featured {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.hal--featured .hal-tile {
+  padding: 16px 14px 12px;
+}
+
+.hal--featured .hal-title {
+  font-size: 1.3rem;
+}
+
+.hal--featured .hal-blurb {
+  font-size: 0.9rem;
+}
+
+.hal--featured .hal-logo {
+  height: 2.7rem;
+}
+
+@container (min-width: 658px) {
+  .hal--featured .hal-tile { --hal-cols: 3; }
 }
 
 /* Small 8-ball used as the Trap 'Em icon */

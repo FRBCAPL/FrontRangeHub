@@ -3,7 +3,8 @@ import './HomeAppLauncher.css';
 
 /**
  * Matching tiles for the Front Range Pool apps under the main destination cards.
- * tiles: [{ id, icon, title, blurb, accent, badge?, onOpen, actions?: [{ label, onClick }] }]
+ * tiles: [{ id, icon, title, blurb, accent, badge?, highlight?, onOpen, actions?: [{ label, onClick }] }]
+ * featured: larger tiles, three per row (the main destinations).
  */
 function LauncherTile({ tile }) {
   const open = () => tile.onOpen?.();
@@ -23,6 +24,7 @@ function LauncherTile({ tile }) {
       </div>
       <h3 className="hal-title">{tile.title}</h3>
       <p className="hal-blurb">{tile.blurb}</p>
+      {tile.highlight ? <p className="hal-highlight">{tile.highlight}</p> : null}
       {tile.actions?.length ? (
         <div
           className="hal-actions"
@@ -43,11 +45,11 @@ function LauncherTile({ tile }) {
   );
 }
 
-export default function HomeAppLauncher({ title = 'More from Front Range Pool', tiles = [] }) {
+export default function HomeAppLauncher({ title = 'More from Front Range Pool', tiles = [], featured = false }) {
   const headingId = useId();
   return (
-    <section className="hal" aria-labelledby={headingId}>
-      <h2 id={headingId} className="hal-heading">{title}</h2>
+    <section className={`hal${featured ? ' hal--featured' : ''}`} aria-labelledby={title ? headingId : undefined}>
+      {title ? <h2 id={headingId} className="hal-heading">{title}</h2> : null}
       <div className="hal-grid">
         {tiles.map((tile) => <LauncherTile key={tile.id} tile={tile} />)}
       </div>
