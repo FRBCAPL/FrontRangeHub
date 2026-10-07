@@ -5,13 +5,13 @@ import AuthServiceStatus from './AuthServiceStatus.jsx';
 const SHOW_FACEBOOK = false; // Hidden while not working; OAuth code kept for future use
 
 function getHashAppPath() {
-  if (typeof window === 'undefined') return '/ladder';
+  if (typeof window === 'undefined') return '/';
   const hash = window.location.hash || '';
   if (hash.startsWith('#/')) {
     const path = hash.slice(1).split('?')[0] || '/';
-    return path === '/auth/callback' ? '/ladder' : path;
+    return path === '/auth/callback' ? '/' : path;
   }
-  return window.location.pathname || '/ladder';
+  return window.location.pathname || '/';
 }
 
 /**
@@ -20,7 +20,7 @@ function getHashAppPath() {
  * @param {function} onShowSignup - callback to show signup modal
  * @param {boolean} compact - use tighter layout (e.g. when on pool table overlay)
  * @param {function} onShowClaim - callback to show claim ladder modal
- * @param {string} [oauthReturnTo] - exact path to land on after Google sign-in (skips the ladder default)
+ * @param {string} [oauthReturnTo] - exact path to land on after Google sign-in (otherwise the current page; homepage by default)
  */
 export default function SupabaseLogin({ onSuccess, onShowSignup, onShowClaim, compact = false, oauthReturnTo }) {
   const [message, setMessage] = useState("");

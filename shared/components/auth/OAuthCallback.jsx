@@ -87,12 +87,12 @@ const OAuthCallback = ({ onSuccess }) => {
         localStorage.removeItem('oauthReturnTo');
         const exactReturn = localStorage.getItem('oauthReturnExact') === '1';
         localStorage.removeItem('oauthReturnExact');
-        let redirectPath = '/ladder';
+        let redirectPath = '/';
         if (exactReturn && storedReturn.startsWith('/') && storedReturn !== '/auth/callback') redirectPath = storedReturn;
         else if (storedReturn.startsWith('/tournament-bracket')) redirectPath = '/tournament-bracket';
         else if (storedReturn.startsWith('/ladder')) redirectPath = '/ladder';
         else if (storedReturn.startsWith('/league')) redirectPath = '/league';
-        else if (storedReturn.startsWith('/') && storedReturn !== '/' && storedReturn !== '/hub' && storedReturn !== '/auth/callback') {
+        else if (storedReturn.startsWith('/') && storedReturn !== '/hub' && storedReturn !== '/auth/callback') {
           redirectPath = storedReturn;
         }
         
