@@ -18,7 +18,7 @@ import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
 import HomeAppLauncher from './HomeAppLauncher.jsx';
 import { TRAP_EM_PATH, TRAP_EM_SUBTITLE, TRAP_EM_TITLE } from '@apps/hub/frontend/src/components/games/trapEmContent.js';
-import { CONSIGNMENT_PATH } from '@apps/consignment/frontend/src/data/consignmentConstants.js';
+import { CONSIGNMENT_COMING_SOON, CONSIGNMENT_PATH } from '@apps/consignment/frontend/src/data/consignmentConstants.js';
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
 import { loadHomepageTournamentBanner } from '@shared/components/tournament/homepageTournamentBannerData.js';
 import RotatingFeatureBadge from './RotatingFeatureBadge';
@@ -229,7 +229,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       title: 'FRPL Consignment',
       blurb: 'Cues and gear for sale at Legends. Scan a tag or submit an item.',
       accent: '#e53e3e',
-      badge: 'New',
+      badge: CONSIGNMENT_COMING_SOON ? 'Coming soon' : 'New',
       onOpen: () => navigate(CONSIGNMENT_PATH),
       actions: [
         { label: 'Browse', onClick: () => navigate(CONSIGNMENT_PATH) },
