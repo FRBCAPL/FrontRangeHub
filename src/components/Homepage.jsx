@@ -230,7 +230,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       blurb: 'Cues and gear for sale at Legends. Scan a tag or submit an item.',
       accent: '#e53e3e',
       badge: CONSIGNMENT_COMING_SOON ? 'Coming soon' : 'New',
-      onOpen: () => navigate(CONSIGNMENT_PATH),
+      onOpen: () => navigate(`${CONSIGNMENT_PATH}/home`),
       actions: [
         { label: 'How it works', onClick: () => navigate(`${CONSIGNMENT_PATH}/home`) },
         { label: 'Browse', onClick: () => navigate(CONSIGNMENT_PATH) },
