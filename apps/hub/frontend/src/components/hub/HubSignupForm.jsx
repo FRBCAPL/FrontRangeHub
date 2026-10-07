@@ -42,7 +42,7 @@ export default function HubSignupForm({ onBack }) {
     return (
       <div className="hub-signup">
         <p className="hub-signup-done">{done}</p>
-        <button type="button" className="hub-signup-btn" onClick={onBack}>Back to sign in</button>
+        <button type="button" className="hub-signup-btn" onClick={onBack}>Back to log in</button>
       </div>
     );
   }
@@ -79,9 +79,9 @@ export default function HubSignupForm({ onBack }) {
         {busy ? 'Creating account…' : 'Create account'}
       </button>
       <p className="hub-signup-alt">
-        Prefer Google? Go back and use the Google button. Google sign-ups are approved the same way.
+        Prefer Google? Use the Google button on the Log in tab. Google sign-ups are approved the same way.
       </p>
-      <button type="button" className="hub-signup-link" onClick={onBack}>Already have an account? Sign in</button>
+      <button type="button" className="hub-signup-link" onClick={onBack}>Already have an account? Log in</button>
     </form>
   );
 }

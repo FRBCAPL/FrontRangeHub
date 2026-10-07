@@ -6,9 +6,9 @@ import HubSignupForm from './HubSignupForm.jsx';
 import './HubLoginModal.css';
 
 /** Sign-in from the nav bar on any page (Google or email + password), with a general sign-up view. */
-export default function HubLoginModal({ onClose, onLoginSuccess }) {
+export default function HubLoginModal({ onClose, onLoginSuccess, startOnSignup = false }) {
   const location = useLocation();
-  const [signingUp, setSigningUp] = useState(false);
+  const [signingUp, setSigningUp] = useState(startOnSignup);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -35,8 +35,16 @@ export default function HubLoginModal({ onClose, onLoginSuccess }) {
     <div className="hub-login-overlay" role="dialog" aria-modal="true" aria-labelledby="hub-login-title" onClick={onClose}>
       <div className="hub-login-modal" onClick={(e) => e.stopPropagation()}>
         <div className="hub-login-head">
-          <h2 id="hub-login-title">{signingUp ? 'Create an account' : 'Sign in'}</h2>
+          <h2 id="hub-login-title">{signingUp ? 'Create an account' : 'Log in'}</h2>
           <button type="button" className="hub-login-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <div className="hub-login-tabs" role="tablist">
+          <button type="button" role="tab" aria-selected={!signingUp} className={signingUp ? '' : 'is-active'} onClick={() => setSigningUp(false)}>
+            Log in
+          </button>
+          <button type="button" role="tab" aria-selected={signingUp} className={signingUp ? 'is-active' : ''} onClick={() => setSigningUp(true)}>
+            Sign up
+          </button>
         </div>
         {signingUp ? (
           <HubSignupForm onBack={() => setSigningUp(false)} />
