@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import supabaseDataService from '@shared/services/services/supabaseDataService.js';
 import { bidderName } from '../../services/consignmentAuctionAdminService.js';
+import { setAccountApproval } from '../../services/consignmentAccountsService.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
 
 /**
@@ -27,11 +28,12 @@ export default function ConsignmentAccountRequestsPanel() {
     if (!window.confirm(ask)) return;
     setBusyId(user.id);
     setError('');
-    const result = approve
-      ? await supabaseDataService.approveUser(user.id)
-      : await supabaseDataService.rejectUser(user.id);
+    try {
+      await setAccountApproval(user.id, approve);
+    } catch (err) {
+      setError(err.message);
+    }
     setBusyId(null);
-    if (!result.success) setError(result.error || 'Could not update the account.');
     refresh();
   };
 
