@@ -1,0 +1,271 @@
+/* Sell page intro + guided sell-an-item modal. */
+
+.cs-sell-how {
+  list-style: none;
+  width: min(640px, 100%);
+  margin: 0 auto 18px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.cs-sell-how li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cs-ink);
+}
+
+.cs-sell-how li span {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(229, 62, 62, 0.18);
+  color: #fecaca;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.cs-sell-choices {
+  width: min(640px, 100%);
+  margin: 0 auto 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.cs-sell-choice {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.cs-sell-choice:hover,
+.cs-sell-choice:focus-visible {
+  border-color: var(--cs-accent);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.cs-sell-choice strong {
+  font-size: 1.1rem;
+}
+
+.cs-sell-choice span {
+  color: var(--cs-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.cs-sell-choice em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--cs-accent);
+}
+
+.cs-sell-resume {
+  width: min(640px, 100%);
+  margin: 0 auto 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #a855f7;
+  background: rgba(168, 85, 247, 0.12);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.cs-sell-resume p {
+  margin: 0;
+}
+
+/* Modal */
+.cs-wiz {
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.cs-wiz .cs-how-head {
+  margin: 0;
+  align-items: flex-start;
+}
+
+.cs-wiz-count {
+  margin: 0 0 2px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cs-accent);
+}
+
+.cs-wiz-progress {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.cs-wiz-progress li {
+  flex: 1 1 0;
+}
+
+.cs-wiz-progress button {
+  width: 100%;
+  min-height: 0;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  cursor: default;
+}
+
+.cs-wiz-progress li.done button {
+  cursor: pointer;
+}
+
+.cs-wiz-progress span {
+  display: block;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--cs-line);
+}
+
+.cs-wiz-progress li.done span {
+  background: rgba(229, 62, 62, 0.6);
+}
+
+.cs-wiz-progress li.current span {
+  background: var(--cs-accent);
+}
+
+.cs-wiz-body {
+  display: grid;
+  gap: 12px;
+}
+
+.cs-wiz-body .cs-method {
+  margin-bottom: 0;
+}
+
+.cs-wiz-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid var(--cs-line);
+}
+
+.cs-wiz-nav .cs-btn {
+  min-width: 8rem;
+}
+
+.cs-wiz-photos {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 8px;
+}
+
+.cs-wiz-photos li {
+  position: relative;
+}
+
+.cs-wiz-photos img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  background: #020617;
+}
+
+.cs-wiz-photos button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px !important;
+  min-width: 0 !important;
+  height: 24px;
+  min-height: 0;
+  padding: 0 !important;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cs-wiz-review {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cs-wiz-review-row {
+  display: grid;
+  grid-template-columns: 8.5rem 1fr;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cs-line);
+}
+
+.cs-wiz-review dt {
+  color: var(--cs-muted);
+  font-size: 0.85rem;
+}
+
+.cs-wiz-review dd {
+  margin: 0;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.cs-wiz-edit {
+  min-height: 0;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #c084fc;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.cs-wiz-agree {
+  max-height: 14rem !important;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+}
+
+@media (max-width: 480px) {
+  .cs-wiz-review-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

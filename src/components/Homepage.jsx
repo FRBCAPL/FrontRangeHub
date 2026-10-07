@@ -14,6 +14,7 @@ import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
 import HomeAppLauncher from './HomeAppLauncher.jsx';
+import useBreakAndRunTile from './useBreakAndRunTile.jsx';
 import { TRAP_EM_PATH, TRAP_EM_SUBTITLE, TRAP_EM_TITLE } from '@apps/hub/frontend/src/components/games/trapEmContent.js';
 import { CONSIGNMENT_COMING_SOON, CONSIGNMENT_PATH } from '@apps/consignment/frontend/src/data/consignmentConstants.js';
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
@@ -29,7 +30,7 @@ import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/com
 import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 
-const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
+const Homepage = ({ canRunTournament = false }) => {
   const navigate = useNavigate();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -51,6 +52,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
   const [isLogoDragging, setIsLogoDragging] = useState(false);
   const [logoDragStart, setLogoDragStart] = useState({ x: 0, y: 0 });
   const [isInIframe, setIsInIframe] = useState(false);
+  const breakAndRun = useBreakAndRunTile(navigate);
 
   const handleNavigateToHub = () => {
     navigate('/ladder');
@@ -230,15 +232,15 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       id: 'tournaments',
       icon: '🏆',
       title: 'Tournaments',
-      blurb: 'Cash Climb, single elimination, and double elimination.',
+      blurb: 'Cash Climb, single & double elimination.',
       accent: '#22c55e',
       onOpen: () => handleTournamentCardClick(),
       actions: [
-        { label: 'How Cash Climb works', onClick: handleNavigateToCashClimbGuide },
-        { label: 'Submit a result', onClick: handleNavigateToCashClimbSubmit },
-        ...(canRunTournament ? [{ label: 'Run event', onClick: handleNavigateToTournamentBracket }] : []),
+        { label: 'Cash Climb', onClick: handleNavigateToCashClimbGuide },
+        { label: 'Submit result', onClick: handleNavigateToCashClimbSubmit },
       ],
     },
+    breakAndRun.tile,
     {
       id: 'trap-em',
       icon: <span className="hal-eightball"><span>8</span></span>,
@@ -247,22 +249,25 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       accent: '#38bdf8',
       badge: 'New',
       onOpen: () => navigate(TRAP_EM_PATH),
-      actions: [{ label: 'How to play', onClick: () => navigate(TRAP_EM_PATH) }],
+      actions: [
+        { label: 'How to play', onClick: () => navigate(`${TRAP_EM_PATH}?section=how`) },
+        { label: 'Rules', onClick: () => navigate(`${TRAP_EM_PATH}?section=rules`) },
+        { label: 'Strategy', onClick: () => navigate(`${TRAP_EM_PATH}?section=strategy`) },
+        { label: 'Tournament format', onClick: () => navigate(`${TRAP_EM_PATH}?section=format`) },
+      ],
     },
     {
       id: 'consignment',
       icon: '🎱',
       title: 'FRPL Consignment',
-      blurb: 'Cues and gear for sale at Legends. Scan a tag or submit an item.',
+      blurb: 'Cues & gear for sale at Legends.',
       accent: '#e53e3e',
       badge: CONSIGNMENT_COMING_SOON ? 'Coming soon' : 'New',
       onOpen: () => navigate(`${CONSIGNMENT_PATH}/home`),
       actions: [
         { label: 'How it works', onClick: () => navigate(`${CONSIGNMENT_PATH}/home`) },
         { label: 'Browse', onClick: () => navigate(CONSIGNMENT_PATH) },
-        { label: 'Sell an item', onClick: () => navigate(`${CONSIGNMENT_PATH}/sell`) },
-        ...(canAdmin ? [{ label: 'Admin', onClick: () => navigate(`${CONSIGNMENT_PATH}/admin`) }] : []),
-      ],
+        { label: 'Sell', onClick: () => navigate(`${CONSIGNMENT_PATH}/sell`) },      ],
     },
   ];
 
@@ -271,7 +276,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       id: 'arcade',
       icon: '🎮',
       title: 'Legends Arcade',
-      blurb: 'Search all 410 games on the Legends Brews & Cues cabinet.',
+      blurb: 'Find any of 410 games on the Legends cabinet.',
       accent: '#f472b6',
       onOpen: () => handleNavigateToArcade('find'),
       actions: [
@@ -284,18 +289,27 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       id: 'duezy',
       icon: '💰',
       title: 'Duezy',
-      blurb: 'Dues, payments, sanction fees & reports for league operators.',
+      blurb: 'Dues & payments for league operators.',
       accent: '#818cf8',
       onOpen: handleNavigateToDuesTracker,
-      actions: [{ label: 'What is Duezy?', onClick: handleWhatIsDuezy }],
+      actions: [
+        { label: 'What is Duezy?', onClick: handleWhatIsDuezy },
+        { label: 'Learn more', onClick: handleDuezyLearnMore },
+        { label: 'Log in', onClick: handleNavigateToDuesTracker },
+      ],
     },
     {
       id: 'estate-vault',
       icon: '🗄️',
       title: 'Estate Vault',
-      blurb: 'Inventory an estate and manage heirs, auctions & distributions.',
+      blurb: 'Inventory estates, heirs & distributions.',
       accent: '#2dd4bf',
       onOpen: handleNavigateToEstateIt,
+      actions: [
+        { label: 'Manage an estate', onClick: () => navigate('/estateit/owner') },
+        { label: 'Invited', onClick: () => navigate('/estateit/enter') },
+        { label: 'Learn more', onClick: handleNavigateToEstateIt },
+      ],
     },
   ];
 
@@ -395,6 +409,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
         </footer>
       </div>
 
+      {breakAndRun.modal}
       {publicTournamentListOpen ? (
         <HomepageTournamentListModal
           title={publicTournamentListTitle}

@@ -1,0 +1,120 @@
+/* Seller "My items" page + "You" row in bid history. */
+
+.cs-bid-history li.is-mine > span:first-child {
+  color: #fecaca;
+  font-weight: 800;
+}
+
+.cs-mine-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px 16px;
+  border: 1px dashed var(--cs-line);
+  border-radius: 16px;
+  text-align: center;
+}
+
+.cs-mine-empty p {
+  margin: 0;
+}
+
+.cs-mine-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  gap: 12px;
+}
+
+.cs-mine-card {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--cs-line);
+  border-radius: 16px;
+  background: var(--cs-card);
+  text-align: left;
+}
+
+.cs-mine-card img,
+.cs-mine-ph {
+  width: 110px;
+  height: 110px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: #020617;
+}
+
+.cs-mine-ph {
+  display: grid;
+  place-items: center;
+  font-size: 2rem;
+}
+
+.cs-mine-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cs-mine-body h3 {
+  margin: 2px 0 0;
+  font-size: 1.02rem;
+}
+
+.cs-mine-body h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cs-mine-body h3 a:hover {
+  color: var(--cs-accent);
+}
+
+.cs-mine-num {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--cs-muted);
+  letter-spacing: 0.04em;
+}
+
+.cs-mine-badge {
+  align-self: flex-start;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cs-mine-badge.tone-live { background: rgba(34, 197, 94, 0.18); color: #bbf7d0; }
+.cs-mine-badge.tone-sold { background: rgba(168, 85, 247, 0.2); color: #e9d5ff; }
+.cs-mine-badge.tone-pending { background: rgba(250, 204, 21, 0.16); color: #fef08a; }
+.cs-mine-badge.tone-warn { background: rgba(229, 62, 62, 0.18); color: #fecaca; }
+.cs-mine-badge.tone-muted { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
+
+.cs-mine-lines {
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 420px) {
+  .cs-mine-card {
+    grid-template-columns: 76px 1fr;
+  }
+
+  .cs-mine-card img,
+  .cs-mine-ph {
+    width: 76px;
+    height: 76px;
+  }
+}

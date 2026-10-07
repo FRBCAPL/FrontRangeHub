@@ -50,6 +50,21 @@ export function breakAndRunListItem(item, live) {
   };
 }
 
+function toBreakAndRunItems(pots) {
+  return (pots || []).map((tournament) => ({
+    id: `bnr-${tournament.id}`,
+    kind: 'break-and-run',
+    path: breakAndRunPhoneHash(tournament.id),
+    label: tournament.name || 'Front Range Pool League 10-Ball Break & Run',
+    tournament,
+  }));
+}
+
+/** Open Break & Run pots only (homepage Break & Run tile). */
+export async function loadBreakAndRunItems() {
+  return toBreakAndRunItems(await listOpenBreakAndRunPots());
+}
+
 export async function loadHomepageTournamentBanner() {
   const [ladderResult, cashResult, elimEvents, bnrPots] = await Promise.all([
     tournamentService.getAllUpcomingTournaments(8),
@@ -81,13 +96,7 @@ export async function loadHomepageTournamentBanner() {
     });
   });
   // Every open pot; whether it's live right now is decided in the banner (schedule + operator presence).
-  const breakAndRuns = (bnrPots || []).map((tournament) => ({
-    id: `bnr-${tournament.id}`,
-    kind: 'break-and-run',
-    path: breakAndRunPhoneHash(tournament.id),
-    label: tournament.name || 'Front Range Pool League 10-Ball Break & Run',
-    tournament,
-  }));
+  const breakAndRuns = toBreakAndRunItems(bnrPots);
 
   const upcoming = (ladderResult.success && ladderResult.data ? ladderResult.data : []).map((t) => {
     const daysUntil = Math.ceil((new Date(t.tournament_date) - new Date()) / (1000 * 60 * 60 * 24));

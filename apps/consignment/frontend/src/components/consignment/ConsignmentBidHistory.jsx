@@ -13,8 +13,8 @@ export default function ConsignmentBidHistory({ bids }) {
       <h3>Bid history ({bids.length})</h3>
       <ul>
         {shown.map((b) => (
-          <li key={`${b.created_at}-${b.amount}`}>
-            <span>{b.bidder_label}</span>
+          <li key={`${b.created_at}-${b.amount}`} className={b.is_mine ? 'is-mine' : undefined}>
+            <span>{b.is_mine ? 'You' : b.bidder_label}</span>
             <strong>{formatDollars(b.amount)}{b.is_buy_now ? ' · Buy It Now' : ''}</strong>
             <span className="cs-meta">{formatDateTime(b.created_at)}</span>
           </li>

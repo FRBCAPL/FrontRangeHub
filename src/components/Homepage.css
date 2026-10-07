@@ -160,6 +160,18 @@
   margin-bottom: 0.75rem;
 }
 
+/* No tournament banner: pull the title up under the nav (the wrapper's top padding is sized for a banner). */
+@media (min-width: 769px) {
+  .homepage:not(.iframe-mode):has(> .home-tournament-banner-wrap:empty) {
+    padding-top: 0;
+    margin-top: -12px;
+  }
+
+  .homepage:not(.iframe-mode):has(> .home-tournament-banner-wrap:empty) .section-title {
+    margin-top: 0;
+  }
+}
+
 .homepage.iframe-mode .home-tournament-banner-wrap {
   width: 100%;
   margin: 0 0 0.25rem;
@@ -225,7 +237,11 @@
 
 /* Navigation Cards */
 .homepage-navigation {
-  margin-bottom: 60px;
+  margin-bottom: 1rem;
+}
+
+.homepage-footer p {
+  margin: 0.4rem 0 0.6rem;
 }
 
 .section-title {

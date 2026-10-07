@@ -938,8 +938,15 @@
 }
 
 .cs-how-close {
-  width: 36px;
-  height: 36px;
+  flex: 0 0 auto;
+  width: 40px !important;
+  min-width: 0 !important;
+  height: 40px;
+  min-height: 0 !important;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 999px;
   border: 1px solid var(--cs-line);
   background: transparent;

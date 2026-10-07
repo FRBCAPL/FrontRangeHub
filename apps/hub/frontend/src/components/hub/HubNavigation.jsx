@@ -6,6 +6,7 @@ import './HubLoginModal.css';
 import AdminAlertsBell from '../admin-inbox/AdminAlertsBell.jsx';
 import useAdminAttention from '../admin-inbox/useAdminAttention.js';
 import { ADMIN_INBOX_PATH } from '../admin-inbox/adminAttentionService.js';
+import useNavSideWidth from './useNavSideWidth.js';
 import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
@@ -16,7 +17,7 @@ function hubCenterTitle(pathname, currentAppName, userFirstName) {
     return 'Front Range USA Pool League';
   }
   if (pathname === '/consignment' || String(pathname || '').startsWith('/consignment/')) {
-    return 'Consignment';
+    return 'Consignment Shop';
   }
   if (pathname === '/hub') return !userFirstName ? 'Ladder - Login' : 'Ladder of Legends';
   if (pathname === '/guest/ladder' || pathname === '/ladder') return 'Ladder of Legends';
@@ -126,6 +127,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     !location.pathname.startsWith('/tournament-bracket/break-and-run/view') &&
     !location.pathname.startsWith('/tournament-bracket/break-and-run/rules');
   const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName);
+  const fullName = [userFirstName, userLastName].filter(Boolean).join(' ');
+  const navRootRef = React.useRef(null);
+  useNavSideWidth(navRootRef, isConsignmentApp && !isMobile, [userFirstName, isAdmin, isSuperAdmin]);
   const handleHamburgerClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -133,7 +137,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
   
   return (
-    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div ref={navRootRef} className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
@@ -287,6 +291,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 gap: '0.5rem',
                 order: 3
               }}>
+                <span className="hub-nav-greeting" title={fullName}>
+                  Hi, <strong>{userFirstName}</strong>
+                </span>
                 {/* Ladder: User view toggle (admin only) – next to Admin */}
                 {showLadderUserViewToggle && onToggleLadderUserView && (
                   <button
@@ -359,6 +366,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
       {isMobile && isMobileMenuOpen && userFirstName && (
         <div className="mobile-menu-dropdown">
           <div className="mobile-menu-content">
+            <p className="hub-nav-greeting hub-nav-greeting--menu">
+              Signed in as <strong>{fullName}</strong>
+            </p>
             {/* Admin options */}
             {(isAdmin || isSuperAdmin) && (
               <div className="mobile-admin-section">

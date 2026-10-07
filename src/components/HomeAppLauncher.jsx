@@ -48,7 +48,11 @@ function LauncherTile({ tile }) {
 export default function HomeAppLauncher({ title = 'More from Front Range Pool', tiles = [], featured = false }) {
   const headingId = useId();
   return (
-    <section className={`hal${featured ? ' hal--featured' : ''}`} aria-labelledby={title ? headingId : undefined}>
+    <section
+      className={`hal${featured ? ' hal--featured' : ''}${tiles.length === 4 ? ' hal--four' : ''}`}
+      style={{ '--hal-count': tiles.length }}
+      aria-labelledby={title ? headingId : undefined}
+    >
       {title ? <h2 id={headingId} className="hal-heading">{title}</h2> : null}
       <div className="hal-grid">
         {tiles.map((tile) => <LauncherTile key={tile.id} tile={tile} />)}

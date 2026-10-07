@@ -1,19 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  CATEGORIES,
-  CONDITIONS,
   CONSIGNMENT_DAYS,
   CONSIGNMENT_PATH,
   DEFAULT_AUCTION_LISTING_FEE,
   DEFAULT_CONSIGNMENT_FEE,
   itemLabel,
-  MAX_PHOTOS,
 } from '../../data/consignmentConstants.js';
 import { loadSettings, submitItem } from '../../services/consignmentService.js';
 import { uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
+import { currentUserEmail } from '../../services/consignmentSellerService.js';
 import { DEFAULT_COMMISSION_PCT } from '../../utils/consignmentAuctionMath.js';
-import { PriceFields, SaleMethodPicker, SellTerms } from './ConsignmentSubmitPricing.jsx';
+import { SALE_METHODS } from './ConsignmentSubmitPricing.jsx';
+import ConsignmentSellWizard from './ConsignmentSellWizard.jsx';
 import {
   auctionAgreementTemplate,
   consignmentAgreementTemplate,
@@ -40,9 +39,11 @@ const empty = {
   agreement: false,
 };
 
-function Req() {
-  return <span className="cs-req" aria-label="required">*</span>;
-}
+const HOW_STEPS = [
+  'Tell us about your item and what you want for it.',
+  'FRPL reviews it and contacts you.',
+  'If accepted, drop it off at Legends and we handle the sale.',
+];
 
 export default function ConsignmentSubmit() {
   const [searchParams] = useSearchParams();
@@ -61,6 +62,7 @@ export default function ConsignmentSubmit() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(null);
+  const [wizardOpen, setWizardOpen] = useState(() => searchParams.has('method'));
 
   useEffect(() => {
     loadSettings()
@@ -74,6 +76,9 @@ export default function ConsignmentSubmit() {
         setAuctionAgreement(fillAuctionAgreement(auctionAgreementTemplate(row), row));
       })
       .catch((err) => setError(err.message));
+    currentUserEmail().then((email) => {
+      if (email) setForm((prev) => (prev.seller_email ? prev : { ...prev, seller_email: email }));
+    });
   }, []);
 
   const set = (key) => (e) => {
@@ -81,13 +86,17 @@ export default function ConsignmentSubmit() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const setMethod = (m) => setForm((prev) => (prev.sale_method === m ? prev : { ...prev, sale_method: m, agreement: false }));
+
+  const start = (m) => {
+    if (m) setMethod(m);
+    setWizardOpen(true);
+  };
+
+  const closeWizard = useCallback(() => setWizardOpen(false), []);
+
+  const onSubmit = async () => {
     setError('');
-    if (isAuction && form.buy_now_price !== '' && Number(form.buy_now_price) <= Number(form.seller_payout)) {
-      setError('Buy It Now must be higher than the reserve.');
-      return;
-    }
     setBusy(true);
     try {
       const photo_urls = await uploadConsignmentPhotos(files);
@@ -108,6 +117,7 @@ export default function ConsignmentSubmit() {
         photo_urls,
         agreement_accepted: form.agreement,
       });
+      setWizardOpen(false);
       setDone(data);
     } catch (err) {
       setError(err.message);
@@ -125,93 +135,62 @@ export default function ConsignmentSubmit() {
           FRPL will review it and contact you. If we accept the item, you'll bring it to Legends
           and pay the {done.sale_method === 'auction' ? 'auction listing fee' : 'consignment fee'} then — nothing is charged online.
         </p>
-        <Link className="cs-btn" to={CONSIGNMENT_PATH}>Back to shop</Link>
+        <p className="cs-lede">Check its progress anytime under <strong>My items</strong> (log in with the same email).</p>
+        <Link className="cs-btn" to={`${CONSIGNMENT_PATH}/my-items`}>My items</Link>{' '}
+        <Link className="cs-btn cs-btn-secondary" to={CONSIGNMENT_PATH}>Back to shop</Link>
       </div>
     );
   }
 
+  const inProgress = Boolean(form.name || form.seller_payout || files.length);
+
   return (
-    <div className="cs-page cs-page-centered">
+    <div className="cs-page cs-page-centered cs-sell-start">
       <p className="cs-kicker">Sell through FRPL</p>
-      <h1>Submit an item</h1>
-      <p className="cs-lede">
-        <strong>You tell us what you want to get. We help sell it.</strong>
-      </p>
-      <SaleMethodPicker value={form.sale_method} onChange={(m) => setForm((prev) => (prev.sale_method === m ? prev : { ...prev, sale_method: m, agreement: false }))} />
-      <SellTerms method={form.sale_method} fee={fee} days={days} auctionFee={auctionFee} commission={commission} />
-      <form className="cs-form" onSubmit={onSubmit}>
-        <div className="cs-row">
-          <div className="cs-field">
-            <label htmlFor="cs-seller">Your name <Req /></label>
-            <input id="cs-seller" required value={form.seller_name} onChange={set('seller_name')} />
-          </div>
-          <div className="cs-field">
-            <label htmlFor="cs-phone">Phone <Req /></label>
-            <input id="cs-phone" value={form.seller_phone} onChange={set('seller_phone')} />
-          </div>
+      <h1>Sell an item</h1>
+      <p className="cs-lede"><strong>You tell us what you want to get. We help sell it.</strong></p>
+
+      <ol className="cs-sell-how">
+        {HOW_STEPS.map((text, i) => (
+          <li key={text}><span>{i + 1}</span>{text}</li>
+        ))}
+      </ol>
+
+      {inProgress ? (
+        <div className="cs-sell-resume">
+          <p>You have a listing in progress{form.name ? `: ${form.name}` : ''}.</p>
+          <button type="button" className="cs-btn" onClick={() => start()}>Continue your listing</button>
         </div>
-        <div className="cs-field">
-          <label htmlFor="cs-email">Email <Req /></label>
-          <input id="cs-email" type="email" value={form.seller_email} onChange={set('seller_email')} />
-          <p className="cs-hint">Phone or email — at least one is required.</p>
-        </div>
-        <div className="cs-field">
-          <label htmlFor="cs-name">Item name <Req /></label>
-          <input id="cs-name" required value={form.name} onChange={set('name')} />
-        </div>
-        <div className="cs-row">
-          <div className="cs-field">
-            <label htmlFor="cs-brand">Brand</label>
-            <input id="cs-brand" value={form.brand} onChange={set('brand')} />
-          </div>
-          <div className="cs-field">
-            <label htmlFor="cs-model">Model number/name</label>
-            <input id="cs-model" value={form.model} onChange={set('model')} />
-          </div>
-        </div>
-        <div className="cs-row">
-          <div className="cs-field">
-            <label htmlFor="cs-cat">Category</label>
-            <select id="cs-cat" value={form.category} onChange={set('category')}>
-              {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </div>
-          <div className="cs-field">
-            <label htmlFor="cs-cond">Condition</label>
-            <select id="cs-cond" value={form.condition} onChange={set('condition')}>
-              {CONDITIONS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </div>
-        </div>
-        <div className="cs-field">
-          <label htmlFor="cs-specs">Specifications</label>
-          <textarea id="cs-specs" rows={3} value={form.specs} onChange={set('specs')} placeholder="Weight, length, wrap, tip, joint…" />
-        </div>
-        <div className="cs-field">
-          <label htmlFor="cs-desc">Description</label>
-          <textarea id="cs-desc" rows={4} value={form.description} onChange={set('description')} />
-        </div>
-        <div className="cs-field">
-          <label htmlFor="cs-photos">Photos (up to {MAX_PHOTOS})</label>
-          <input
-            id="cs-photos"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            onChange={(e) => setFiles([...e.target.files].slice(0, MAX_PHOTOS))}
-          />
-        </div>
-        <PriceFields method={form.sale_method} form={form} set={set} commission={commission} />
-        <div className="cs-agree">
-          {isAuction ? auctionAgreement : agreementText}
-          <label>
-            <input type="checkbox" checked={form.agreement} onChange={set('agreement')} required />
-            I agree to the {isAuction ? 'online auction' : 'consignment'} terms above <Req />
-          </label>
-        </div>
-        {error ? <p className="cs-error">{error}</p> : null}
-        <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Submitting…' : 'Submit for review'}</button>
-      </form>
+      ) : null}
+
+      <div className="cs-sell-choices">
+        {SALE_METHODS.map((m) => (
+          <button key={m.id} type="button" className="cs-sell-choice" onClick={() => start(m.id)}>
+            <strong>{m.label}</strong>
+            <span>{m.blurb}</span>
+            <em>Start →</em>
+          </button>
+        ))}
+      </div>
+      <p className="cs-hint">Takes about 3 minutes. Nothing is charged online.</p>
+      {error && !wizardOpen ? <p className="cs-error">{error}</p> : null}
+
+      {wizardOpen ? (
+        <ConsignmentSellWizard
+          form={form}
+          set={set}
+          setMethod={setMethod}
+          files={files}
+          setFiles={setFiles}
+          terms={{ fee, days, auctionFee, commission }}
+          commission={commission}
+          agreementText={isAuction ? auctionAgreement : agreementText}
+          busy={busy}
+          submitError={error}
+          onSubmit={onSubmit}
+          onClose={closeWizard}
+        />
+      ) : null}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import * as T from './trapEmContent.js';
 import './TrapEmPage.css';
 import TrapEmTableCard from './TrapEmTableCard.jsx';
@@ -41,6 +41,17 @@ function PrintCardButton() {
 
 export default function TrapEmPage() {
   const navigate = useNavigate();
+  const { search } = useLocation();
+
+  // ?section=how|rules|strategy|win|format jumps to that heading (homepage shortcuts).
+  useEffect(() => {
+    const section = new URLSearchParams(search).get('section');
+    if (!section) return undefined;
+    const timer = setTimeout(() => {
+      document.getElementById(`trapem-${section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     const previousTitle = document.title;

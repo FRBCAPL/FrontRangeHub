@@ -11,7 +11,7 @@
   margin-top: 1rem;
 }
 
-/* Two launcher sections side by side on wide screens (three tiles each). */
+/* Two launcher sections side by side on wide screens. */
 .hal-row {
   width: min(100%, 1200px);
   margin: 0 auto;
@@ -24,10 +24,20 @@
     align-items: stretch;
   }
 
+  /* Width proportional to tile count so every tile in the row is the same size. */
   .hal-row > .hal {
-    flex: 1 1 0;
+    flex: var(--hal-count, 3) 1 0;
     min-width: 0;
-    margin: 0.6rem 0 0.75rem;
+    margin: 1.75rem 0 0.75rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Both sections share the row height, and every tile fills it. */
+  .hal-row .hal-grid {
+    flex: 1 1 auto;
+    align-content: stretch;
+    align-items: stretch;
   }
 
   .hal-row .hal-heading {
@@ -35,7 +45,7 @@
   }
 
   .hal-row .hal-tile {
-    --hal-cols: 3 !important;
+    --hal-cols: var(--hal-count, 3) !important;
     gap: 5px;
     padding: 12px 10px 10px;
   }
@@ -43,6 +53,15 @@
   .hal-row .hal-icon {
     font-size: 1.6rem;
     min-height: 1.9rem;
+  }
+
+  .hal-row .hal-logo {
+    height: 1.9rem;
+  }
+
+  .hal-row .hal-highlight {
+    padding: 2px 8px;
+    font-size: 0.72rem;
   }
 
   .hal-row .hal-title {
@@ -61,6 +80,7 @@
   .hal-row .hal-action {
     padding: 4px 8px;
     font-size: 0.7rem;
+    white-space: nowrap;
   }
 
   .hal-row .hal-open {
@@ -102,13 +122,18 @@
   flex: 0 0 calc((100% - (var(--hal-cols) - 1) * 14px) / var(--hal-cols));
 }
 
-/* Each section has three tiles, so three columns is the most it needs. */
+/* Three-tile sections top out at three columns; four-tile sections go 2×2, then four across. */
 @container (min-width: 420px) {
   .hal-tile { --hal-cols: 2; }
 }
 
 @container (min-width: 560px) {
   .hal-tile { --hal-cols: 3; }
+  .hal--four .hal-tile { --hal-cols: 2; }
+}
+
+@container (min-width: 800px) {
+  .hal--four .hal-tile { --hal-cols: 4; }
 }
 
 /* Phones: small tiles become full-width rows (icon left, text and shortcuts right). */
@@ -137,6 +162,11 @@
 
   .hal:not(.hal--featured) .hal-icon {
     font-size: 1.8rem;
+  }
+
+  .hal:not(.hal--featured) .hal-logo {
+    width: 100%;
+    height: auto;
   }
 
   .hal:not(.hal--featured) .hal-badge {

@@ -9,43 +9,6 @@
   gap: 0.6rem;
 }
 
-.tba-bnr-logo .tba-bnr-live {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: #dc2626;
-  color: #fff;
-  box-shadow: 0 0 0 2px rgba(2, 6, 23, 0.85);
-}
-
-.tba-bnr-logo {
-  position: relative;
-  flex-shrink: 0;
-  display: block;
-  padding: 0;
-  margin: 0;
-  min-width: 0;
-  border: 2px solid #86efac;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #020617;
-  box-shadow: 0 4px 18px rgba(74, 222, 128, 0.35);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.2s ease;
-}
-
-.tba-bnr-logo img {
-  display: block;
-  height: 5.5rem;
-  width: auto;
-}
-
-.tba-bnr-logo:hover,
-.tba-bnr-logo:focus-visible {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(250, 204, 21, 0.45);
-}
-
 .tba-banner {
   width: 100%;
   max-width: 100%;
@@ -345,10 +308,6 @@
     border-radius: 999px;
     padding: 0.3rem 0.75rem 0.3rem 0.6rem;
     max-width: 100%;
-  }
-
-  .tba-bnr-logo img {
-    height: 4.2rem;
   }
 
   .tba-title {

@@ -300,9 +300,18 @@ html body .hub-navigation.homepage-nav .nav-content {
     z-index: 1;
   }
 
-  /* Logged-in Admin / Switch App / Logout sit on the right — keep the title out of them. */
+  /* Logged-in greeting / Admin / Switch App / Logout sit on the right — keep the title out of them. */
   .hub-navigation.consignment-nav:not(.homepage-nav) .nav-center {
-    display: none !important;
+    width: calc(100vw - 2 * var(--cs-nav-side, 300px)) !important;
+    max-width: calc(100vw - 2 * var(--cs-nav-side, 300px)) !important;
+    margin: 0 auto;
+    padding: 0 8px !important;
+    box-sizing: border-box;
+    z-index: 1;
+  }
+
+  .hub-navigation.consignment-nav[data-title-cramped]:not(.homepage-nav) .nav-center {
+    visibility: hidden;
   }
 
   .hub-navigation.tournament-app .app-title {
@@ -493,6 +502,25 @@ html body .hub-navigation.homepage-nav .nav-content {
   background: linear-gradient(135deg, #c53030, #a52a2a);
   transform: translateY(-1px);
   box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);
+}
+
+.hub-nav-greeting {
+  margin: 0 0.35rem 0 0;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.hub-nav-greeting strong {
+  color: #fff;
+  font-weight: 800;
+}
+
+.hub-nav-greeting--menu {
+  margin: 0;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  white-space: normal;
 }
 
 .switch-app-btn {
