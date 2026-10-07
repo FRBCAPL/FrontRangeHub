@@ -24,18 +24,18 @@ export const TRAP_EM_INTRO =
 
 export const TRAP_EM_HOW_TITLE = 'How to play';
 export const TRAP_EM_HOW_INTRO = 'Played under the current CSI Official Rules for 8-Ball, with a few Trap ’Em specific rules:';
-export const TRAP_EM_HOW_OUTRO = 'Players alternate one shot at a time, inning after inning, until the game is won.';
+export const TRAP_EM_HOW_OUTRO = 'Players alternate innings until the game is won.';
 
 export const TRAP_EM_CORE_RULE = 'Each player gets exactly ONE shot per inning, regardless of the result of that shot.';
 export const TRAP_EM_INNING_NOTE = 'Like baseball, an inning is one turn for each player. In Trap ’Em every turn is a single shot, so an inning is one shot each.';
-export const TRAP_EM_CORE_EXCEPTION = 'The one exception: a ball legally pocketed on the break earns the breaker one more shot.';
+export const TRAP_EM_CORE_EXCEPTION = 'Exceptions: a ball legally pocketed on the break earns one more shot, and after a non-scratch foul your opponent may make you shoot again.';
 
 export const TRAP_EM_OUTCOMES = [
   { result: 'Pocket a legal ball?', then: 'Your turn is over.', tone: 'make' },
   { result: 'Miss?', then: 'Your turn is over.', tone: 'miss' },
   { result: 'Play a safety?', then: 'Your turn is over.', tone: 'safe' },
   { result: 'Scratch or cue ball off the table?', then: 'Your turn is over, and your opponent gets ball in hand.', tone: 'foul' },
-  { result: 'Bad hit or no rail?', then: 'Your turn is over. Your opponent may shoot it as it lies or make you shoot again.', tone: 'foul' },
+  { result: 'Bad hit, no rail, or other foul?', then: 'Your turn is over. Your opponent may shoot it as it lies or make you shoot again.', tone: 'foul' },
 ];
 
 export const TRAP_EM_RULES_TITLE = 'Rules';
@@ -50,7 +50,7 @@ export const TRAP_EM_RULES = [
   },
   {
     title: 'After the break',
-    body: 'The table is open. To claim a group, call the ball and pocket it legally. \nA ball that drops without a call does not set the groups, and the table stays open.',
+    body: 'The table is open. To claim a group, call the ball and pocket it legally. \nThis(and the 8-ball) is the only time you need to call your shot. \nA ball that drops without a call does not set the groups, and the table stays open.',
     short: 'Open table. Call it and pocket it to claim a group.',
   },
   {
@@ -64,18 +64,18 @@ export const TRAP_EM_RULES = [
     short: 'Call the 8, and call open-table shots to set groups. 8 uncalled or in the wrong pocket loses.',
   },
   {
-    title: 'Ball in hand only on a cue-ball scratch',
-    body: 'Pocketing the cue ball or driving it off the table gives the opponent ball in hand. Ball in hand does not add an extra shot. \nAll other fouls give the opponent the choice in rule 6. \nCSI loss-of-game fouls still apply.',
-    short: 'Cue ball pocketed or off the table = ball in hand. Still one shot. Other fouls: see rule 6.',
+    title: 'Ball in hand: cue ball scratched or off the table',
+    body: 'Pocketing the cue ball or driving it off the table gives the opponent ball in hand. Ball in hand does not add an extra shot. \nThree fouls in a row also gives ball in hand (rule 7). \nAll other fouls give the opponent the choice in rule 6. \nCSI loss-of-game fouls still apply.',
+    short: 'Ball in hand, but still one shot. Other fouls: rule 6.',
   },
   {
-    title: 'Bad hit or no rail: opponent’s option',
-    body: 'The cue ball must first hit a ball of the shooter’s group, or the 8 once their group is cleared. On an open table, any ball except the 8. \nAfter that contact, a ball must be pocketed or some ball must hit a rail. If not, it is a foul but not ball in hand. \nThe opponent may shoot the table as it lies, or make the shooter shoot again from where the balls stopped. \nA shoot-again shot follows the same rules, so if it is also a foul, the opponent chooses again.',
-    short: 'Wrong ball first, or nothing pocketed and no rail: opponent shoots as it lies, or makes you shoot again.',
+    title: 'Other fouls: opponent’s option',
+    body: 'Any foul other than a cue-ball scratch or off table is not ball in hand. \nThe opponent may shoot the table as it lies, or make the shooter shoot again from where the balls stopped. \nThe cue ball must first hit a ball of the shooter’s group, or the 8 once their group is cleared (on an open table, any ball except the 8). \nAfter that contact, a ball must be pocketed or some ball must hit a rail. \nA shoot-again shot follows the same rules, so if it is also a foul, the opponent chooses again. \nFouls that lose the game under CSI 8-ball rules still lose.',
+    short: 'Bad hit, no rail, etc.: opponent shoots as it lies, or makes you shoot again.',
   },
   {
     title: 'Three fouls in a row',
-    body: 'Like the 10-Ball three-foul rule, but the penalty is ball in hand instead of loss of game. \nIf the same player fouls on three of their own shots in a row, including shoot-again shots, the opponent gets ball in hand. \nThe opponent must tell the player when they are on two fouls. Without that warning, the third foul does not count toward the rule. \nA legal shot by that player resets the count.',
+    body: 'Like the 10-Ball three-foul rule, but the penalty is ball in hand instead of loss of game. \nIf the same player fouls on three of their own shots in a row, including shoot-again shots, the opponent gets ball in hand. \nThe opponent must tell the player when they are on two fouls.\n Without that warning, the third foul does not count toward the rule. \nA legal shot by that player resets the count.',
     short: '3 fouls in a row (with a warning at 2) = ball in hand.',
   },
   {
@@ -121,7 +121,7 @@ export const TRAP_EM_WIN_TITLE = 'Winning the game';
 export const TRAP_EM_WIN_BODY = 'Same as standard 8-Ball: legally pocket your group, then legally pocket the 8-ball.';
 export const TRAP_EM_LOSS_TITLE = 'You lose the game if you:';
 export const TRAP_EM_LOSS = [
-  'Pocket the 8 before your group is cleared.',
+  'Pocket the 8 before your group is cleared (except on the break).',
   'Pocket the 8 without calling it, or in a pocket you didn’t call.',
   'Scratch or foul on the shot that pockets the 8.',
   'Drive the 8 off the table.',

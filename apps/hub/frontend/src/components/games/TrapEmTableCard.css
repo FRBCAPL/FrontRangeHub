@@ -47,7 +47,7 @@
   }
 
   .trapem-card h2 {
-    margin: 12pt 0 4pt;
+    margin: 9pt 0 4pt;
     font-size: 13pt;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -81,7 +81,7 @@
   }
 
   .trapem-card-foot {
-    margin-top: 14pt;
+    margin-top: 10pt;
     padding-top: 6pt;
     border-top: 1px solid #999;
     font-size: 9.5pt;
