@@ -7,8 +7,8 @@ import ConsignmentItemPage from './ConsignmentItemPage.jsx';
 import ConsignmentSubmit from './ConsignmentSubmit.jsx';
 import ConsignmentMyItems from './ConsignmentMyItems.jsx';
 import ConsignmentAdmin from './ConsignmentAdmin.jsx';
-import ConsignmentComingSoonBanner from './ConsignmentComingSoonBanner.jsx';
-import { CONSIGNMENT_COMING_SOON, CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
+import ConsignmentBetaBanner from './ConsignmentBetaBanner.jsx';
+import { CONSIGNMENT_BETA, CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import './consignment.css';
 import './consignment-seller.css';
 import './consignment-sell-wizard.css';
@@ -36,8 +36,8 @@ export default function ConsignmentApp({ canAdmin = false }) {
   return (
     <div className="cs-app">
       <ConsignmentNav canAdmin={canAdmin} />
-      {CONSIGNMENT_COMING_SOON && !location.pathname.startsWith(`${CONSIGNMENT_PATH}/admin`)
-        ? <ConsignmentComingSoonBanner />
+      {CONSIGNMENT_BETA && !location.pathname.startsWith(`${CONSIGNMENT_PATH}/admin`)
+        ? <ConsignmentBetaBanner />
         : null}
       <Routes>
         <Route index element={<ConsignmentStorefront />} />

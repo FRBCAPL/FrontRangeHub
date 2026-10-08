@@ -1,6 +1,6 @@
 export const CONSIGNMENT_PATH = '/consignment';
-/** Set to false at launch to remove the Coming Soon banner and homepage badge. */
-export const CONSIGNMENT_COMING_SOON = true;
+/** Set to false when consignment leaves beta to remove the Beta banner. */
+export const CONSIGNMENT_BETA = true;
 export const CONSIGNMENT_BUCKET = 'consignment-public';
 export const DEFAULT_CONSIGNMENT_FEE = 25;
 export const CONSIGNMENT_DAYS = 30;
