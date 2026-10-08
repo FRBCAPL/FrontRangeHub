@@ -77,6 +77,7 @@ export function StepReview({ form, set, files, agreementText, goTo, policy }) {
           value={<>{formatDollars(form.seller_payout)} <EditLink onClick={() => goTo('price')} /></>}
         />
         {isAuction && form.buy_now_price !== '' ? <Row label="Buy It Now" value={formatDollars(form.buy_now_price)} /> : null}
+        {isAuction ? null : <Row label="In-store inspection" value={form.allow_inspection ? 'Allowed (ID held)' : 'Not allowed'} />}
         <Row label="Listing fee" value={`${formatDollars(listingFee(form.seller_payout, form.sale_method, policy))} at drop-off`} />
       </dl>
       <div className="cs-agree">

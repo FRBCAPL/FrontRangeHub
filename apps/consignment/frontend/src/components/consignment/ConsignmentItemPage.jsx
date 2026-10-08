@@ -80,9 +80,18 @@ export default function ConsignmentItemPage() {
       </p>
       {item.specs ? <p className="cs-lede" style={{ whiteSpace: 'pre-line' }}>{item.specs}</p> : null}
       {item.description ? <p className="cs-lede" style={{ whiteSpace: 'pre-line' }}>{item.description}</p> : null}
-      {isAuction ? null : (
-        <p className="cs-hint">Ask about this item at Legends. Sales tax is added at checkout — this site does not take payment.</p>
+      {isAuction || item.status === 'sold' ? null : (
+        <p className="cs-inspect">
+          {item.allow_inspection
+            ? 'You can inspect this item at Legends. Ask at the bar; staff will hold your ID while you look it over.'
+            : 'Display only. This item stays in the case until it’s bought.'}
+        </p>
       )}
+      <p className="cs-hint">
+        {isAuction
+          ? 'Sold as-is; all sales final. Look it over at pickup before you pay. If it isn’t as described, you can decline it.'
+          : 'Sold as-is; all sales final. Look it over before you pay at Legends. Sales tax is added at checkout; this site does not take payment.'}
+      </p>
       <div className="cs-actions">
         <Link className="cs-btn-secondary" to={CONSIGNMENT_PATH}>Back to shop</Link>
       </div>

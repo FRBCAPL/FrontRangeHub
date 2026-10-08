@@ -7,7 +7,7 @@ import {
   consignmentAgreementTemplate,
   DEFAULT_AUCTION_AGREEMENT,
   DEFAULT_CONSIGNMENT_AGREEMENT,
-  isOutdatedAgreement,
+  savedAgreementOutdated,
 } from '../../data/consignmentAgreements.js';
 
 function AgreementEditor({ id, label, hint, initial, standard, outdated, onSave, onError }) {
@@ -26,7 +26,8 @@ function AgreementEditor({ id, label, hint, initial, standard, outdated, onSave,
       <label htmlFor={id}>{label}</label>
       {outdated ? (
         <p className="cs-due">
-          Your saved version used the old fee terms, so sellers are seeing the standard text below. Click Save to keep it.
+          Your saved version uses old terms or is missing the liability and unclaimed-property terms, so sellers are seeing
+          the standard text below. Click Save to keep it.
         </p>
       ) : null}
       <textarea id={id} rows={10} value={text} onChange={(e) => { setText(e.target.value); setSaved(false); }} />
@@ -54,7 +55,7 @@ export default function ConsignmentAgreementSettings({ settings, onError }) {
         hint={`${CONSIGNMENT_AGREEMENT_PLACEHOLDERS} are filled in from your consignment settings.`}
         initial={consignmentAgreementTemplate(settings)}
         standard={DEFAULT_CONSIGNMENT_AGREEMENT}
-        outdated={isOutdatedAgreement(settings?.agreement_text)}
+        outdated={savedAgreementOutdated(settings?.agreement_text)}
         onSave={saveAgreementText}
         onError={onError}
       />
@@ -64,7 +65,7 @@ export default function ConsignmentAgreementSettings({ settings, onError }) {
         hint={`${AUCTION_AGREEMENT_PLACEHOLDERS} are filled in from your auction settings.`}
         initial={auctionAgreementTemplate(settings)}
         standard={DEFAULT_AUCTION_AGREEMENT}
-        outdated={isOutdatedAgreement(settings?.auction_agreement_text)}
+        outdated={savedAgreementOutdated(settings?.auction_agreement_text)}
         onSave={saveAuctionAgreementText}
         onError={onError}
       />

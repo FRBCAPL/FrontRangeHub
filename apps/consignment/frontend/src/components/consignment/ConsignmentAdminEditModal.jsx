@@ -87,6 +87,7 @@ export default function ConsignmentAdminEditModal({
       : (item.consignment_fee ?? defaultFee),
     status: approving ? 'available' : item.status,
     photo_urls: item.photo_urls || [],
+    ...('allow_inspection' in item ? { allow_inspection: Boolean(item.allow_inspection) } : {}),
   });
   const [expiresOn, setExpiresOn] = useState(toDateInput(item.expires_at));
   const [feePaid, setFeePaid] = useState(true);
@@ -310,6 +311,16 @@ export default function ConsignmentAdminEditModal({
           <p className="cs-error">
             {commissionModel ? 'Shop price is below the agreed price.' : 'Retail price is below the Seller Payout.'}
           </p>
+        ) : null}
+        {'allow_inspection' in form ? (
+          <label className="cs-check">
+            <input
+              type="checkbox"
+              checked={form.allow_inspection}
+              onChange={(e) => setForm((prev) => ({ ...prev, allow_inspection: e.target.checked }))}
+            />
+            Buyers may inspect it at Legends (ID held)
+          </label>
         ) : null}
         </>
         )}

@@ -51,6 +51,9 @@ export default function ConsignmentPrintTag({ canAdmin = false }) {
         {item.specs ? <p>{item.specs}</p> : null}
         <p><strong>{itemPriceLabel(item)}</strong></p>
         <p>Available at Legends Brews & Cues</p>
+        {item.sale_method === 'auction' ? null : (
+          <p><strong>{item.allow_inspection ? 'Ask to inspect: ID held' : 'Display only'}</strong></p>
+        )}
         <img src={qr} alt={`QR code for ${itemLabel(item)}`} />
         <p>{item.sale_method === 'auction' ? 'Scan to bid online' : 'Scan for photos & details'}</p>
       </article>

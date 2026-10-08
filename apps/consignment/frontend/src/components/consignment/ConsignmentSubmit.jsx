@@ -32,6 +32,7 @@ const empty = {
   sale_method: 'fixed',
   seller_payout: '',
   buy_now_price: '',
+  allow_inspection: false,
   agreement: false,
 };
 
@@ -108,6 +109,7 @@ export default function ConsignmentSubmit() {
         seller_payout: Number(form.seller_payout),
         sale_method: form.sale_method,
         buy_now_price: isAuction && form.buy_now_price !== '' ? Number(form.buy_now_price) : null,
+        allow_inspection: !isAuction && form.allow_inspection,
         photo_urls,
         agreement_accepted: form.agreement,
       });

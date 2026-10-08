@@ -58,6 +58,8 @@ export default function ConsignmentApproveModal({
   const [manualFee, setManualFee] = useState(null);
   const [feePaid, setFeePaid] = useState(true);
   const [method, setMethod] = useState(PAYMENT_METHODS[0]);
+  const hasInspection = 'allow_inspection' in item;
+  const [inspection, setInspection] = useState(Boolean(item.allow_inspection));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -83,6 +85,7 @@ export default function ConsignmentApproveModal({
         commission_pct: commissionPct,
         sale_method: 'fixed',
         status: 'available',
+        ...(hasInspection ? { allow_inspection: inspection } : {}),
         ...intakePatch(consignmentDays),
       });
       if (feeNum > 0) {
@@ -142,6 +145,12 @@ export default function ConsignmentApproveModal({
           <label className="cs-check">
             <input type="checkbox" checked={feePaid} onChange={(e) => setFeePaid(e.target.checked)} />
             Fee paid
+          </label>
+        ) : null}
+        {hasInspection ? (
+          <label className="cs-check">
+            <input type="checkbox" checked={inspection} onChange={(e) => setInspection(e.target.checked)} />
+            Buyers may inspect it (ID held)
           </label>
         ) : null}
         <p className="cs-hint">Goes live in the shop when you approve. The {consignmentDays}-day window starts today.</p>

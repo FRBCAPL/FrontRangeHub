@@ -52,6 +52,13 @@ export function PriceFields({ method, form, set, policy }) {
         <input id="cs-payout" type="number" min="1" step="0.01" required value={form.seller_payout} onChange={set('seller_payout')} />
         <p className="cs-hint">The price buyers see in the case (plus sales tax). FRPL may suggest a different price when it reviews your item.</p>
         <FeePreview price={form.seller_payout} method="fixed" policy={policy} />
+        <label className="cs-check">
+          <input type="checkbox" checked={Boolean(form.allow_inspection)} onChange={set('allow_inspection')} />
+          <span>
+            Let buyers inspect it at Legends. Staff hold the buyer’s ID while they look it over. If unchecked, it stays
+            in the case until it’s bought.
+          </span>
+        </label>
       </div>
     );
   }

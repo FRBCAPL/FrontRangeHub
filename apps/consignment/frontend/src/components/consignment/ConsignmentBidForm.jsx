@@ -51,7 +51,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
       bidCount: auction.bid_count,
     });
     if (problem) { setError(problem); return; }
-    if (!window.confirm(`Place a bid of ${formatDollars(amount)} + tax? Bids are binding.`)) return;
+    if (!window.confirm(`Place a bid of ${formatDollars(amount)} + tax? Bids are binding. Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
     run(() => placeBid(auction.id, amount), (r) => (r?.extended
       ? 'Bid placed. The clock was extended because it was close to the end.'
       : 'Bid placed. You’re the high bidder.'));
@@ -59,7 +59,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
 
   const doBuyNow = () => {
     const price = formatDollars(auction.buy_now_price);
-    if (!window.confirm(`Buy it now for ${price} + tax? This ends the auction and you agree to pay at Legends within ${payDays} days.`)) return;
+    if (!window.confirm(`Buy it now for ${price} + tax? This ends the auction and you agree to pay at Legends within ${payDays} days. Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
     run(() => buyNow(auction.id), 'You bought it! Pay and pick up at Legends.');
   };
 
