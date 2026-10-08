@@ -51,7 +51,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
       bidCount: auction.bid_count,
     });
     if (problem) { setError(problem); return; }
-    if (!window.confirm(`Place a bid of ${formatDollars(amount)}? Bids are binding.`)) return;
+    if (!window.confirm(`Place a bid of ${formatDollars(amount)} + tax? Bids are binding.`)) return;
     run(() => placeBid(auction.id, amount), (r) => (r?.extended
       ? 'Bid placed. The clock was extended because it was close to the end.'
       : 'Bid placed. You’re the high bidder.'));
@@ -59,7 +59,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
 
   const doBuyNow = () => {
     const price = formatDollars(auction.buy_now_price);
-    if (!window.confirm(`Buy it now for ${price} + applicable sales tax? This ends the auction and you agree to pay at Legends within ${payDays} days.`)) return;
+    if (!window.confirm(`Buy it now for ${price} + tax? This ends the auction and you agree to pay at Legends within ${payDays} days.`)) return;
     run(() => buyNow(auction.id), 'You bought it! Pay and pick up at Legends.');
   };
 
@@ -85,7 +85,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
       <p className="cs-hint">Minimum bid {formatDollars(minNext)}.</p>
       {auction.buy_now_price != null ? (
         <button type="button" className="cs-btn-secondary cs-buy-now" onClick={doBuyNow} disabled={busy}>
-          Buy It Now · {formatDollars(auction.buy_now_price)}
+          Buy It Now · {formatDollars(auction.buy_now_price)} + tax
         </button>
       ) : null}
       {error ? <p className="cs-error">{error}</p> : null}

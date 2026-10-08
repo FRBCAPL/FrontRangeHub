@@ -8,7 +8,7 @@ export const AUCTION_AGREEMENT_PLACEHOLDERS = '{auctionFee}, {commission}, {free
 export const DEFAULT_AUCTION_AGREEMENT = `By checking the box you confirm that:
 
 • You own this item and have the right to sell it, and your description and photos are accurate.
-• You are offering it in an online auction run by Front Range Pool League (FRPL), with payment and pickup at Legends Brews & Cues.
+• You are offering it in an online auction run by Front Range Pool League (FRPL), with payment and pickup at Legends Brews & Cues. The buyer pays sales tax on top of the winning bid at the register.
 • Your reserve is the opening bid. The item will not sell for less than your reserve.
 • If you set a Buy It Now price, a buyer can purchase the item at that price until bidding reaches it.
 • The listing fee is {auctionFee}, paid at drop-off before the auction starts. It is not refunded if the item doesn't sell or you cancel.
@@ -31,12 +31,29 @@ export const DEFAULT_CONSIGNMENT_AGREEMENT = `By checking the box you confirm th
 
 const PLACEHOLDER_PREFIX = 'This is a placeholder';
 
-function savedOrDefault(saved, fallback) {
-  const text = String(saved || '').trim();
-  return !text || text.startsWith(PLACEHOLDER_PREFIX) ? fallback : text;
+// Phrases from the agreements written for the old fee model (Seller Payout + markup, flat fee kept separate).
+const OUTDATED_PHRASES = [
+  'Seller Payout',
+  'does not come out',
+  'Consignment fees start',
+  'FRPL sets the shop price',
+  'a new fee applies',
+  'a new listing fee may apply',
+];
+
+/** True when saved agreement text still describes the old fee model. */
+export function isOutdatedAgreement(saved) {
+  const text = String(saved || '');
+  return OUTDATED_PHRASES.some((phrase) => text.includes(phrase));
 }
 
-/** The saved agreement, or the default while the saved one is still the setup placeholder. */
+function savedOrDefault(saved, fallback) {
+  const text = String(saved || '').trim();
+  if (!text || text.startsWith(PLACEHOLDER_PREFIX) || isOutdatedAgreement(text)) return fallback;
+  return text;
+}
+
+/** The saved agreement, or the standard one when nothing current is saved. */
 export function auctionAgreementTemplate(settings) {
   return savedOrDefault(settings?.auction_agreement_text, DEFAULT_AUCTION_AGREEMENT);
 }

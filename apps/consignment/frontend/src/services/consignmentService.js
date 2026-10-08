@@ -7,15 +7,14 @@ import { EXPIRING_SOON_DAYS } from '../data/consignmentConstants.js';
 
 export const SOLD_PHOTO_DAYS = 30;
 
-const MISSING = 'Run the consignment SQL files in supabase-migrations/ (consignment-2026-10.sql, consignment-model-2026-10.sql, then consignment-seller-payout-2026-10.sql, consignment-photos-2026-10.sql, consignment-fees-2026-10.sql, consignment-payouts-2026-10.sql, consignment-auctions-2026-10.sql, consignment-auction-payments-2026-10.sql, consignment-auction-reserve-2026-10.sql, consignment-auction-terms-2026-10.sql) in the Supabase SQL editor, then refresh.';
-
 function missingSchema(error) {
-  return /does not exist|schema cache|consignment_/i.test(error?.message || '');
+  return /does not exist|schema cache|could not find/i.test(error?.message || '');
 }
 
 function throwNice(error, fallback) {
-  if (missingSchema(error)) throw new Error(MISSING);
-  throw new Error(error?.message || fallback);
+  const message = error?.message || fallback;
+  if (missingSchema(error)) throw new Error(`${message}. A database update is missing: run the newest consignment SQL files in supabase-migrations/ in the Supabase SQL editor, then refresh.`);
+  throw new Error(message);
 }
 
 export async function loadSettings() {

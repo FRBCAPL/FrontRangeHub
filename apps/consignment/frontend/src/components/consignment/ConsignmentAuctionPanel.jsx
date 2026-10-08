@@ -13,7 +13,7 @@ function EndedMessage({ auction, iWon, payDays }) {
   if (auction.status === 'ended_no_bids') {
     return <p className="cs-lede">This auction ended with no bids.</p>;
   }
-  const sold = `Sold for ${formatDollars(auction.winning_bid)}${auction.won_via === 'buy_now' ? ' (Buy It Now)' : ''}.`;
+  const sold = `Sold for ${formatDollars(auction.winning_bid)} + tax${auction.won_via === 'buy_now' ? ' (Buy It Now)' : ''}.`;
   if (iWon && auction.status === 'awaiting_payment') {
     const due = addDays(auction.won_at, payDays);
     return (
@@ -60,6 +60,7 @@ export default function ConsignmentAuctionPanel({ itemId }) {
           <div className="cs-auction-price">
             <span>{auction.bid_count ? 'Current bid' : 'Opening bid'}</span>
             <strong>{formatDollars(auction.bid_count ? auction.current_bid : auction.opening_bid)}</strong>
+            <span className="cs-meta">+ tax</span>
             <span className="cs-meta">
               {auction.bid_count} bid{auction.bid_count === 1 ? '' : 's'} · ends {formatDateTime(auction.ends_at)}
             </span>

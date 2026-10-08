@@ -34,7 +34,7 @@ export function formatDollars(n) {
 
 /** Register tax is calculated at Legends — never on this site. */
 export function priceWithTaxLabel(n) {
-  return `${formatDollars(n)} + applicable sales tax`;
+  return `${formatDollars(n)} + tax`;
 }
 
 export function itemPriceLabel(item) {

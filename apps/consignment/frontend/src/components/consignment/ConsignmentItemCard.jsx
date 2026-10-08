@@ -13,7 +13,7 @@ function AuctionLine({ auction }) {
       <>
         <p className="cs-price">
           {auction.bid_count ? 'Bid ' : 'Opening '}
-          {formatDollars(auction.bid_count ? auction.current_bid : auction.opening_bid)}
+          {formatDollars(auction.bid_count ? auction.current_bid : auction.opening_bid)} + tax
         </p>
         <p className="cs-meta">
           {auction.bid_count} bid{auction.bid_count === 1 ? '' : 's'} · {left > 0 ? `ends in ${formatCountdown(left)}` : 'closing'}
@@ -22,20 +22,26 @@ function AuctionLine({ auction }) {
     );
   }
   if (auction.status === 'ended_no_bids') return <p className="cs-price">Auction ended</p>;
-  return <p className="cs-price">Auction ended · {formatDollars(auction.winning_bid)}</p>;
+  return <p className="cs-price">Auction ended · {formatDollars(auction.winning_bid)} + tax</p>;
 }
 
 export default function ConsignmentItemCard({ item, auction }) {
   const photo = item.photo_urls?.[0];
   const isAuction = item.sale_method === 'auction';
   const isSold = item.status === 'sold';
+  const kind = isSold ? 'sold' : isAuction ? 'auction' : 'shelf';
+  const ribbon = {
+    sold: { icon: '✔', label: 'Sold' },
+    auction: { icon: '🔨', label: 'Online auction' },
+    shelf: { icon: '🏪', label: 'In store at Legends' },
+  }[kind];
   return (
-    <Link className="cs-card" to={consignmentItemPath(item.item_number)}>
+    <Link className={`cs-card cs-card-${kind}`} to={consignmentItemPath(item.item_number)}>
+      <div className="cs-card-ribbon">
+        <span aria-hidden="true">{ribbon.icon}</span> {ribbon.label}
+      </div>
       {photo ? <img src={photo} alt="" /> : <div className="cs-ph" aria-hidden="true">🎱</div>}
       <div className="cs-card-body">
-        <span className={`cs-badge${isSold ? ' sold' : ''}${isAuction && !isSold ? ' auction' : ''}`}>
-          {isSold ? 'Sold' : isAuction ? 'Online auction' : 'Available at Legends'}
-        </span>
         <h3>{item.name}</h3>
         <p className="cs-meta">
           {categoryLabel(item.category)}

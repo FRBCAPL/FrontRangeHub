@@ -5,9 +5,12 @@ import {
   auctionAgreementTemplate,
   CONSIGNMENT_AGREEMENT_PLACEHOLDERS,
   consignmentAgreementTemplate,
+  DEFAULT_AUCTION_AGREEMENT,
+  DEFAULT_CONSIGNMENT_AGREEMENT,
+  isOutdatedAgreement,
 } from '../../data/consignmentAgreements.js';
 
-function AgreementEditor({ id, label, hint, initial, onSave, onError }) {
+function AgreementEditor({ id, label, hint, initial, standard, outdated, onSave, onError }) {
   const [text, setText] = useState(initial);
   const [saved, setSaved] = useState(false);
 
@@ -21,10 +24,20 @@ function AgreementEditor({ id, label, hint, initial, onSave, onError }) {
   return (
     <div className="cs-field" style={{ marginBottom: 16 }}>
       <label htmlFor={id}>{label}</label>
-      <textarea id={id} rows={6} value={text} onChange={(e) => { setText(e.target.value); setSaved(false); }} />
+      {outdated ? (
+        <p className="cs-due">
+          Your saved version used the old fee terms, so sellers are seeing the standard text below. Click Save to keep it.
+        </p>
+      ) : null}
+      <textarea id={id} rows={10} value={text} onChange={(e) => { setText(e.target.value); setSaved(false); }} />
       {hint ? <p className="cs-hint">{hint}</p> : null}
       <div className="cs-actions">
         <button type="button" className="cs-btn-secondary" onClick={save}>Save</button>
+        {text !== standard ? (
+          <button type="button" className="cs-btn-secondary" onClick={() => { setText(standard); setSaved(false); }}>
+            Use standard text
+          </button>
+        ) : null}
         {saved ? <span className="cs-hint">Saved.</span> : null}
       </div>
     </div>
@@ -40,6 +53,8 @@ export default function ConsignmentAgreementSettings({ settings, onError }) {
         label="Consignment agreement"
         hint={`${CONSIGNMENT_AGREEMENT_PLACEHOLDERS} are filled in from your consignment settings.`}
         initial={consignmentAgreementTemplate(settings)}
+        standard={DEFAULT_CONSIGNMENT_AGREEMENT}
+        outdated={isOutdatedAgreement(settings?.agreement_text)}
         onSave={saveAgreementText}
         onError={onError}
       />
@@ -48,6 +63,8 @@ export default function ConsignmentAgreementSettings({ settings, onError }) {
         label="Online auction agreement"
         hint={`${AUCTION_AGREEMENT_PLACEHOLDERS} are filled in from your auction settings.`}
         initial={auctionAgreementTemplate(settings)}
+        standard={DEFAULT_AUCTION_AGREEMENT}
+        outdated={isOutdatedAgreement(settings?.auction_agreement_text)}
         onSave={saveAuctionAgreementText}
         onError={onError}
       />

@@ -24,6 +24,7 @@ import ConsignmentSellerPaidModal from './ConsignmentSellerPaidModal.jsx';
 import { consignmentTagPath } from '../../utils/consignmentPaths.js';
 import { feePolicyFrom } from '../../utils/consignmentFeePolicy.js';
 import ConsignmentAdminEditModal from './ConsignmentAdminEditModal.jsx';
+import ConsignmentApproveModal from './ConsignmentApproveModal.jsx';
 import ConsignmentAdminRow from './ConsignmentAdminRow.jsx';
 import ConsignmentRenewModal from './ConsignmentRenewModal.jsx';
 import ConsignmentSoldModal from './ConsignmentSoldModal.jsx';
@@ -43,6 +44,7 @@ export default function ConsignmentAdmin() {
   const [graceDays, setGraceDays] = useState(PICKUP_GRACE_DAYS);
   const [edit, setEdit] = useState(null);
   const [approving, setApproving] = useState(false);
+  const [approvingItem, setApprovingItem] = useState(null);
   const [sold, setSold] = useState(null);
   const [renewing, setRenewing] = useState(null);
   const [payingSeller, setPayingSeller] = useState(null);
@@ -80,7 +82,7 @@ export default function ConsignmentAdmin() {
 
   const actions = {
     edit: (item) => { setApproving(false); setEdit(item); },
-    approve: (item) => { setApproving(true); setEdit(item); },
+    approve: setApprovingItem,
     sold: setSold,
     renew: setRenewing,
     setStatus: (item, next) => setStatusOf(item, next).catch((err) => setError(err.message)),
@@ -171,6 +173,17 @@ export default function ConsignmentAdmin() {
           isRelist={Boolean(auctioning.auction && auctioning.auction.status !== 'cancelled')}
           previousReserve={auctioning.auction?.opening_bid}
           onClose={(saved) => { setAuctioning(null); if (saved) refresh(); }}
+        />
+      ) : null}
+      {approvingItem ? (
+        <ConsignmentApproveModal
+          key={approvingItem.id}
+          item={approvingItem}
+          consignmentDays={consignmentDays}
+          policy={policy}
+          onEditDetails={() => { setApproving(false); setEdit(approvingItem); setApprovingItem(null); }}
+          onClose={() => { setApprovingItem(null); refresh(); }}
+          onSave={(patch) => updateItem(approvingItem.id, patch)}
         />
       ) : null}
       {edit ? (

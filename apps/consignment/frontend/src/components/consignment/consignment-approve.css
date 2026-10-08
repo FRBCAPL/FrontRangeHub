@@ -1,0 +1,39 @@
+.cs-approve {
+  width: min(520px, 100%);
+}
+
+.cs-approve h2 {
+  margin: 0 0 12px;
+}
+
+.cs-approve-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.cs-approve-thumb {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #020617;
+  display: grid;
+  place-items: center;
+  font-size: 1.6rem;
+}
+
+.cs-approve-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cs-approve .cs-link-btn {
+  margin: 6px 0 4px;
+}

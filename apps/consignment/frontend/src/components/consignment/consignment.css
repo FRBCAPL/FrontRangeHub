@@ -197,7 +197,45 @@
   padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 4px;
+}
+
+.cs-card-ribbon {
+  padding: 7px 10px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cs-card-shelf {
+  border-color: rgba(168, 85, 247, 0.65);
+}
+
+.cs-card-shelf .cs-card-ribbon {
+  background: #7e22ce;
+  color: #faf5ff;
+}
+
+.cs-card-auction {
+  border-color: rgba(34, 197, 94, 0.55);
+}
+
+.cs-card-auction .cs-card-ribbon {
+  background: #15803d;
+  color: #f0fdf4;
+}
+
+.cs-card-sold {
+  opacity: 0.8;
+}
+
+.cs-card-sold .cs-card-ribbon {
+  background: #475569;
+  color: #f1f5f9;
 }
 
 .cs-card h3 {
