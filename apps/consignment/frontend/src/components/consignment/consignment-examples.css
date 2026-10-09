@@ -14,14 +14,28 @@
 }
 
 .cs-examples-lede {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   color: #94a3b8;
   font-size: 0.88rem;
 }
 
 .cs-examples .cs-grid {
+  margin-top: 14px;
   text-align: left;
 }
+
+.cs-examples-toggle {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  background: rgba(14, 165, 233, 0.12);
+  color: #7dd3fc;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-examples-toggle:hover { background: rgba(14, 165, 233, 0.24); color: #e0f2fe; }
 
 .cs-card-example { border-color: rgba(56, 189, 248, 0.45); }
 .cs-card-example:hover { border-color: #38bdf8; box-shadow: 0 10px 24px rgba(14, 165, 233, 0.28); }
