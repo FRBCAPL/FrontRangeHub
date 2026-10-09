@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { commissionPctFor, listingFee, saleSplit } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 
@@ -25,9 +25,22 @@ export function SaleMethodPicker({ value, onChange }) {
   );
 }
 
-export function SellTerms({ method }) {
+export function SellTerms({ method, agreementText }) {
+  const [open, setOpen] = useState(false);
   const agreement = method === 'auction' ? 'auction agreement' : 'consignment agreement';
-  return <p className="cs-hint cs-terms">Listing fees apply. Please see the {agreement}.</p>;
+  useEffect(() => setOpen(false), [method]);
+  if (!agreementText) return <p className="cs-hint cs-terms">Listing fees apply. Please see the {agreement}.</p>;
+  return (
+    <div className="cs-terms">
+      <p className="cs-hint">
+        Listing fees apply. Please see the{' '}
+        <button type="button" className="cs-link-btn cs-terms-link" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+          {agreement}
+        </button>.
+      </p>
+      {open ? <div className="cs-wiz-agree cs-terms-text">{agreementText}</div> : null}
+    </div>
+  );
 }
 
 function FeePreview({ price, method, policy }) {

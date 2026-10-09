@@ -6,11 +6,11 @@ function Req() {
   return <span className="cs-req" aria-label="required">*</span>;
 }
 
-export function StepMethod({ form, setMethod }) {
+export function StepMethod({ form, setMethod, agreementText }) {
   return (
     <>
       <SaleMethodPicker value={form.sale_method} onChange={setMethod} />
-      <SellTerms method={form.sale_method} />
+      <SellTerms method={form.sale_method} agreementText={agreementText} />
     </>
   );
 }

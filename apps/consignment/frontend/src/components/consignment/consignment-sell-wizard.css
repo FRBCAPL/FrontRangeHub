@@ -291,6 +291,21 @@
   border-radius: 12px;
 }
 
+.cs-terms .cs-hint { margin-bottom: 8px; }
+
+.cs-terms .cs-terms-link {
+  margin: 0;
+  min-height: 0;
+  text-decoration: underline;
+}
+
+.cs-terms-text {
+  white-space: pre-line;
+  text-align: left;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 480px) {
   .cs-wiz-review-row {
     grid-template-columns: 1fr;
