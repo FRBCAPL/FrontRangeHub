@@ -275,6 +275,7 @@
   font-size: 0.85rem;
   line-height: 1.4;
   color: #cbd5e1;
+  white-space: pre-line;
 }
 
 .hal-actions {
