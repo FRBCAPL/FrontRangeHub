@@ -21,8 +21,6 @@ import HomepageTournamentListModal from '@shared/components/tournament/HomepageT
 import { loadHomepageTournamentBanner } from '@shared/components/tournament/homepageTournamentBannerData.js';
 import { LADDER_ONE_LINER } from '@shared/utils/utils/ladderEntryCopy.js';
 import {
-  CUELESS_TAGLINE,
-  CUELESS_CARD_BLURB,
   CUELESS_FEATURED_FACEBOOK_REEL,
   CUELESS_FULL_MATCH_PLAYLIST_URL,
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
@@ -146,19 +144,9 @@ const Homepage = ({ canRunTournament = false }) => {
     handleNavigateToArcade(tab);
   };
 
-  const handleNavigateToArcadeTv = (e) => {
-    e.stopPropagation();
-    window.location.href = '/arcade/tv';
-  };
-
   const handleWhatIsDuezy = (e) => {
     e.stopPropagation(); // Prevent banner click (navigate)
     setShowWhatIsDuezyModal(true);
-  };
-
-  const handleDuezyLearnMore = (e) => {
-    e.stopPropagation(); // Prevent banner click (navigate)
-    setShowDuezyModal(true);
   };
 
   const handleWhatIsDuezyLearnMore = () => {
@@ -215,26 +203,11 @@ const Homepage = ({ canRunTournament = false }) => {
       ],
     },
     {
-      id: 'cueless',
-      icon: <img src={cuelessLogo} alt="" className="hal-logo hal-logo--photo" />,
-      title: 'Cueless in the Booth',
-      blurb: CUELESS_CARD_BLURB,
-      highlight: CUELESS_TAGLINE,
-      accent: '#22c55e',
-      onOpen: () => navigate('/cueless'),
-      actions: [
-        { label: 'Clips on Facebook', onClick: openExternal(CUELESS_FEATURED_FACEBOOK_REEL) },
-        { label: 'Full streams on YouTube', onClick: openExternal(CUELESS_FULL_MATCH_PLAYLIST_URL) },
-      ],
-    },
-  ];
-
-  const poolTiles = [
-    {
       id: 'consignment',
       icon: '🎱',
       title: 'FRPL Consignment',
       blurb: 'Cues & gear for sale at Legends.',
+      highlight: 'Shop the case · Bid online · Sell your gear',
       accent: '#e53e3e',
       badge: CONSIGNMENT_BETA ? 'Beta' : 'New',
       onOpen: () => navigate(`${CONSIGNMENT_PATH}/home`),
@@ -242,6 +215,21 @@ const Homepage = ({ canRunTournament = false }) => {
         { label: 'How it works', onClick: () => navigate(`${CONSIGNMENT_PATH}/home`) },
         { label: 'Browse', onClick: () => navigate(CONSIGNMENT_PATH) },
         { label: 'Sell', onClick: () => navigate(`${CONSIGNMENT_PATH}/sell`) },
+      ],
+    },
+  ];
+
+  const poolTiles = [
+    {
+      id: 'cueless',
+      icon: <img src={cuelessLogo} alt="" className="hal-logo hal-logo--photo" />,
+      title: 'Cueless in the Booth',
+      blurb: 'Live-streamed pool, broadcast style.',
+      accent: '#22c55e',
+      onOpen: () => navigate('/cueless'),
+      actions: [
+        { label: 'Clips', onClick: openExternal(CUELESS_FEATURED_FACEBOOK_REEL) },
+        { label: 'Streams', onClick: openExternal(CUELESS_FULL_MATCH_PLAYLIST_URL) },
       ],
     },
     {
@@ -268,8 +256,6 @@ const Homepage = ({ canRunTournament = false }) => {
       actions: [
         { label: 'How to play', onClick: () => navigate(`${TRAP_EM_PATH}?section=how`) },
         { label: 'Rules', onClick: () => navigate(`${TRAP_EM_PATH}?section=rules`) },
-        { label: 'Strategy', onClick: () => navigate(`${TRAP_EM_PATH}?section=strategy`) },
-        { label: 'Tournament format', onClick: () => navigate(`${TRAP_EM_PATH}?section=format`) },
       ],
     },
   ];
@@ -285,7 +271,6 @@ const Homepage = ({ canRunTournament = false }) => {
       actions: [
         { label: 'Game Finder', onClick: (e) => handleNavigateToArcadeTab(e, 'find') },
         { label: 'High Scores', onClick: (e) => handleNavigateToArcadeTab(e, 'leaderboards') },
-        { label: 'Wall TV', onClick: handleNavigateToArcadeTv },
       ],
     },
     {
@@ -294,11 +279,10 @@ const Homepage = ({ canRunTournament = false }) => {
       title: 'CueSync',
       blurb: 'Pool hall table management. Import league nights once; tables assign themselves.',
       accent: '#2dd4bf',
-      badge: 'New',
+      badge: 'Beta',
       onOpen: () => window.open(CUESYNC_URL, '_blank', 'noopener,noreferrer'),
       actions: [
         { label: 'Demo', onClick: openExternal(CUESYNC_URL) },
-        { label: 'Register', onClick: openExternal(CUESYNC_URL) },
         { label: 'Sign in', onClick: openExternal(CUESYNC_URL) },
       ],
     },
@@ -310,8 +294,7 @@ const Homepage = ({ canRunTournament = false }) => {
       accent: '#818cf8',
       onOpen: handleNavigateToDuesTracker,
       actions: [
-        { label: 'What is Duezy?', onClick: handleWhatIsDuezy },
-        { label: 'Learn more', onClick: handleDuezyLearnMore },
+        { label: 'What is it?', onClick: handleWhatIsDuezy },
         { label: 'Log in', onClick: handleNavigateToDuesTracker },
       ],
     },
