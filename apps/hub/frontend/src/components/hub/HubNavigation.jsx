@@ -120,6 +120,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const isUsaplApp = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
   const isConsignmentApp = location.pathname === '/consignment' || location.pathname.startsWith('/consignment/');
   const isCuelessApp = location.pathname === '/cueless' || location.pathname.startsWith('/cueless/');
+  const isArcadeApp = location.pathname.startsWith('/arcade/');
   const isTournamentApp =
     location.pathname.startsWith('/tournament-bracket') &&
     location.pathname !== '/tournament-bracket/tv' &&
@@ -129,7 +130,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName);
   const fullName = [userFirstName, userLastName].filter(Boolean).join(' ');
   const navRootRef = React.useRef(null);
-  useNavSideWidth(navRootRef, isConsignmentApp && !isMobile, [userFirstName, isAdmin, isSuperAdmin]);
+  useNavSideWidth(navRootRef, (isConsignmentApp || isArcadeApp) && !isMobile, [userFirstName, isAdmin, isSuperAdmin]);
   const handleHamburgerClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -137,7 +138,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
   
   return (
-    <div ref={navRootRef} className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div ref={navRootRef} className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isArcadeApp ? 'arcade-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
