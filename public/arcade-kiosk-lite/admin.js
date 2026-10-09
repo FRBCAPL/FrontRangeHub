@@ -2,7 +2,7 @@
 (function () {
   var SUPABASE_URL = 'https://vzsbiixeonfmyvjqzvxc.supabase.co';
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6c2JpaXhlb25mbXl2anF6dnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODAzODYsImV4cCI6MjA3NTQ1NjM4Nn0.yGrcfXHsiqEsSMDmIWaDKpNwjIlGYxadk0_FEM4ITUE';
-  var STAFF_PIN = '8675';
+  var STAFF_PIN = '5151';
   var SESSION_KEY = 'frph-arcade-admin-unlocked';
   var MACHINE_ID = 'legends-cabinet-1';
   var activeTab = 'submissions';

@@ -810,7 +810,7 @@ function AppContent() {
         display: 'flex',
         flexDirection: 'column'
       }}>
-        <ArcadeKiosk />
+        <ArcadeKiosk canAdmin={isAuthenticated && isAdminState} />
       </div>
     );
   }
@@ -1124,7 +1124,7 @@ function AppContent() {
 
             {/* Arcade — redirects to kiosk; fullscreen handled above */}
             <Route path="/arcade" element={<Navigate to="/arcade/kiosk" replace />} />
-            <Route path="/arcade/kiosk" element={<ArcadeKiosk />} />
+            <Route path="/arcade/kiosk" element={<ArcadeKiosk canAdmin={isAuthenticated && isAdmin()} />} />
             <Route path="/arcade/tv" element={<ArcadeTvRedirect />} />
             <Route
               path="/arcade/admin"

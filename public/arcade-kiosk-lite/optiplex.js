@@ -3,7 +3,7 @@
   var STORAGE_KEY = 'arcade-events-http';
   var WS_KEY = 'arcade-events-ws';
   var PIN_KEY = 'arcade-admin-pin';
-  var DEFAULT_PIN = '8675';
+  var DEFAULT_PIN = '5151';
 
   function trim(str) {
     return String(str || '').replace(/^\s+|\s+$/g, '');

@@ -29,6 +29,25 @@
   border-bottom: 2px solid transparent;
   border-image: var(--arcade-gradient) 1;
   text-align: center;
+  position: relative;
+}
+
+.arcade-kiosk-admin-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #f472b6;
+  border-radius: 8px;
+  background: rgba(244, 114, 182, 0.12);
+  color: #fbcfe8;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.arcade-kiosk-admin-link:hover {
+  background: rgba(244, 114, 182, 0.25);
 }
 
 .arcade-kiosk-brand {

@@ -1,0 +1,50 @@
+.cueless-spin {
+  --cube-w: 4rem;
+  --cube-h: 2.9rem;
+  display: inline-block;
+  width: var(--cube-w);
+  height: var(--cube-h);
+  margin: 0 auto;
+  perspective: 600px;
+}
+
+.cueless-spin-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: cueless-spin 12s linear infinite;
+}
+
+.cueless-spin-face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 255, 65, 0.35);
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.35);
+  backface-visibility: hidden;
+}
+
+.cueless-spin-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cueless-spin-face.front { transform: rotateY(0deg) translateZ(calc(var(--cube-w) / 2)); }
+.cueless-spin-face.right { transform: rotateY(90deg) translateZ(calc(var(--cube-w) / 2)); }
+.cueless-spin-face.back { transform: rotateY(180deg) translateZ(calc(var(--cube-w) / 2)); }
+.cueless-spin-face.left { transform: rotateY(-90deg) translateZ(calc(var(--cube-w) / 2)); }
+
+@keyframes cueless-spin {
+  from { transform: translateZ(calc(var(--cube-w) / -2)) rotateY(0deg); }
+  to { transform: translateZ(calc(var(--cube-w) / -2)) rotateY(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cueless-spin-inner { animation: none; }
+}

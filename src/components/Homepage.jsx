@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import frontRangeLogo from '../assets/logo.png';
 import usaplLogo from '../assets/usapl_logo.png';
-import cuelessLogo from '../assets/Culess pic.jpg';
+import CuelessCubeLogo from './CuelessCubeLogo';
 import DraggableModal from './modal/DraggableModal';
 import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
@@ -30,7 +30,7 @@ import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/compo
 
 const CUESYNC_URL = 'https://www.cuesync.us';
 
-const Homepage = ({ canRunTournament = false }) => {
+const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
   const navigate = useNavigate();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -222,7 +222,7 @@ const Homepage = ({ canRunTournament = false }) => {
   const poolTiles = [
     {
       id: 'cueless',
-      icon: <img src={cuelessLogo} alt="" className="hal-logo hal-logo--photo" />,
+      icon: <CuelessCubeLogo />,
       title: 'Cueless in the Booth',
       blurb: 'Live-streamed pool, broadcast style.',
       accent: '#22c55e',
@@ -271,6 +271,9 @@ const Homepage = ({ canRunTournament = false }) => {
       actions: [
         { label: 'Game Finder', onClick: (e) => handleNavigateToArcadeTab(e, 'find') },
         { label: 'High Scores', onClick: (e) => handleNavigateToArcadeTab(e, 'leaderboards') },
+        ...(canAdmin
+          ? [{ label: 'Admin', onClick: (e) => { e.stopPropagation(); navigate('/arcade/admin'); } }]
+          : []),
       ],
     },
     {

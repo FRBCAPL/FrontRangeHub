@@ -192,7 +192,7 @@ Then power-on goes straight to the arcade.
 
 ## 6. Staff shortcuts (bookmark on your phone, not on kiosk)
 
-- **Edit scores / maintenance:** `/arcade-kiosk-lite/admin.html` (PIN `8675` in `admin.js` — change before deploy if needed)
+- **Edit scores / maintenance:** `/arcade-kiosk-lite/admin.html` (staff PIN set in `admin.js` / `optiplex.js` — must match `ARCADE_ADMIN_PIN` on the Optiplex)
 - **Hub admin (phone/laptop):** `https://frontrangepool.com/#/arcade/admin` when logged in as admin
 
 ---
