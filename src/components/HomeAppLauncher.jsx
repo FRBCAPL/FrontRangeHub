@@ -3,7 +3,7 @@ import './HomeAppLauncher.css';
 
 /**
  * Matching tiles for the Front Range Pool apps under the main destination cards.
- * tiles: [{ id, icon, title, blurb, accent, badge?, highlight?, onOpen, actions?: [{ label, onClick }] }]
+ * tiles: [{ id, icon, title, blurb, accent, badge?, badgeVariant?, highlight?, onOpen, actions?: [{ label, onClick }] }]
  * featured: larger tiles, three per row (the main destinations).
  */
 function LauncherTile({ tile }) {
@@ -20,7 +20,11 @@ function LauncherTile({ tile }) {
     >
       <div className="hal-tile-head">
         <span className="hal-icon" aria-hidden="true">{tile.icon}</span>
-        {tile.badge ? <span className="hal-badge">{tile.badge}</span> : null}
+        {tile.badge ? (
+          <span className={`hal-badge${tile.badgeVariant ? ` hal-badge--${tile.badgeVariant}` : ''}`}>
+            {tile.badge}
+          </span>
+        ) : null}
       </div>
       <h3 className="hal-title">{tile.title}</h3>
       <p className="hal-blurb">{tile.blurb}</p>

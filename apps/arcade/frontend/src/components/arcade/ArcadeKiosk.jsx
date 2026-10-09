@@ -82,6 +82,13 @@ const ArcadeKiosk = ({ canAdmin = false }) => {
   return (
     <div className="arcade-kiosk">
       <header className="arcade-kiosk-header">
+        <button
+          type="button"
+          className="arcade-kiosk-home-link"
+          onClick={() => navigate('/')}
+        >
+          ← Home
+        </button>
         <div className="arcade-kiosk-brand">
           <span className="arcade-kiosk-icon">🎮</span>
           <div>

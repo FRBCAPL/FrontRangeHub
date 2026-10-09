@@ -15,6 +15,7 @@ import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
 import HomeAppLauncher from './HomeAppLauncher.jsx';
 import useBreakAndRunTile from './useBreakAndRunTile.jsx';
+import useArcadeNewScoreBadge from './useArcadeNewScoreBadge.js';
 import { TRAP_EM_PATH, TRAP_EM_SUBTITLE, TRAP_EM_TITLE } from '@apps/hub/frontend/src/components/games/trapEmContent.js';
 import { CONSIGNMENT_BETA, CONSIGNMENT_PATH } from '@apps/consignment/frontend/src/data/consignmentConstants.js';
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
@@ -32,6 +33,7 @@ const CUESYNC_URL = 'https://www.cuesync.us';
 
 const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
   const navigate = useNavigate();
+  const arcadeNewScoreBadge = useArcadeNewScoreBadge();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSignupForm, setShowSignupForm] = useState(false);
@@ -267,6 +269,8 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       title: 'Legends Arcade',
       blurb: 'Find any of 410 games on the Legends cabinet.',
       accent: '#f472b6',
+      badge: arcadeNewScoreBadge || undefined,
+      badgeVariant: 'arcade',
       onOpen: () => handleNavigateToArcade('find'),
       actions: [
         { label: 'Game Finder', onClick: (e) => handleNavigateToArcadeTab(e, 'find') },

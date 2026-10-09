@@ -7,6 +7,7 @@ const EVENT_WS_KEY = 'arcade-events-ws';
 const ADMIN_PIN_KEY = 'arcade-admin-pin';
 const TOP_SCORES_LIMIT = 10;
 const EVENT_SERVER_TIMEOUT_MS = 4500;
+export const LEGENDS_ARCADE_MACHINE_ID = 'legends-cabinet-1';
 
 /** null = unknown, 'supabase' | 'local' after first probe */
 let supabaseArcadeMode = null;
@@ -512,6 +513,23 @@ class ArcadeService {
   async getTopScore(machineId, gameNumber, gameName) {
     const result = await this.getScores(machineId, gameNumber, gameName);
     return result.data?.[0] || null;
+  }
+
+  /** Newest leaderboard post (Supabase only — no Optiplex LAN probe, safe for the public homepage). */
+  async getLatestScoreAt(machineId = LEGENDS_ARCADE_MACHINE_ID) {
+    try {
+      const { data, error } = await supabase
+        .from('arcade_scores')
+        .select('updated_at')
+        .eq('machine_id', machineId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error || !data?.updated_at) return null;
+      return data.updated_at;
+    } catch {
+      return null;
+    }
   }
 
   async getMachine(machineId) {

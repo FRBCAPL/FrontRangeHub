@@ -174,6 +174,11 @@
     right: 8px;
   }
 
+  .hal:not(.hal--featured) .hal-badge--arcade {
+    left: auto;
+    transform: none;
+  }
+
   .hal:not(.hal--featured) .hal-title {
     margin: 0;
     font-size: 1.05rem;
@@ -181,6 +186,10 @@
 
   .hal:not(.hal--featured) .hal-tile:has(.hal-badge) .hal-title {
     padding-right: 5.5rem;
+  }
+
+  .hal:not(.hal--featured) .hal-tile:has(.hal-badge--arcade) .hal-title {
+    padding-right: 9rem;
   }
 
   .hal:not(.hal--featured) .hal-blurb {
@@ -260,6 +269,18 @@
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+/* Long label: centered on the tile's top edge, above the icon, so the icon stays aligned with other tiles. */
+.hal-badge--arcade {
+  top: -24px;
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #22d3ee, #f472b6, #fbbf24, #a78bfa);
+  color: #06040f;
+  box-shadow: 0 0 10px rgba(244, 114, 182, 0.6);
+  white-space: nowrap;
 }
 
 .hal-title {
