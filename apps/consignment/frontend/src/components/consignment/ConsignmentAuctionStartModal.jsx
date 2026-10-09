@@ -23,7 +23,9 @@ import {
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import ConsignmentAuctionFeeFields from './ConsignmentAuctionFeeFields.jsx';
 
-export default function ConsignmentAuctionStartModal({ item, settings, isRelist = false, previousReserve = null, onClose }) {
+export default function ConsignmentAuctionStartModal({
+  item, settings, isRelist = false, previousReserve = null, previouslyDelivered = false, onClose,
+}) {
   const policy = feePolicyFrom(settings);
   const daysDefault = AUCTION_LENGTH_OPTIONS.includes(Number(settings?.auction_default_days))
     ? Number(settings.auction_default_days)
@@ -44,6 +46,9 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
   const [feePaid, setFeePaid] = useState(true);
   const [method, setMethod] = useState(PAYMENT_METHODS[0]);
   const [consent, setConsent] = useState(CONSENT_METHODS[0]);
+  const [atLegends, setAtLegends] = useState(
+    previouslyDelivered || (item.sale_method === 'fixed' && Boolean(item.intake_at)),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -94,6 +99,7 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
         paymentMethod: method,
         consent: needsConsent ? consent : null,
         feeNote: rule?.free ? rule.reason : null,
+        atLegends,
       });
       onClose(true);
     } catch (err) {
@@ -112,6 +118,16 @@ export default function ConsignmentAuctionStartModal({ item, settings, isRelist 
         <h2 id="cs-auction-title">{isRelist ? 'Relist' : 'Start'} auction · {itemLabel(item)}</h2>
         <p className="cs-hint">
           {item.name}. {sellerChoseAuction ? 'The seller asked for an auction. ' : ''}The auction goes live as soon as you save.
+          {' '}Collect the listing fee first; sellers can pay it by Cash App or Venmo with {itemLabel(item)} in the note.
+        </p>
+        <label className="cs-check">
+          <input type="checkbox" checked={atLegends} onChange={(e) => setAtLegends(e.target.checked)} />
+          Item is already at Legends
+        </label>
+        <p className="cs-hint">
+          {atLegends
+            ? 'The winner gets their pay window as soon as the auction ends.'
+            : `The seller keeps it. When it sells they have ${settings?.auction_delivery_days ?? 3} days to bring it to Legends; the winner's pay window starts when you mark it delivered.`}
         </p>
         {!sellerChoseAuction ? (
           <p className="cs-due">

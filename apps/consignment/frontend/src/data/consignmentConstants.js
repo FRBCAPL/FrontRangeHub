@@ -69,6 +69,51 @@ export const PUBLIC_STATUSES = ['available', 'sold'];
 
 export const PAYMENT_METHODS = ['Cash', 'Card', 'Venmo', 'Cash App', 'Check', 'Other'];
 
+export const MESSAGE_TOPICS = [
+  { id: 'buying', label: 'Buying or bidding' },
+  { id: 'selling', label: 'Selling / my item' },
+  { id: 'payment', label: 'Fees or payout' },
+  { id: 'account', label: 'Account or seller access' },
+  { id: 'problem', label: 'Report a problem' },
+  { id: 'other', label: 'Something else' },
+];
+
+export function messageTopicLabel(id) {
+  return MESSAGE_TOPICS.find((t) => t.id === id)?.label || 'Something else';
+}
+
+/** The venue for drop-off, inspection, payment and pickup. Add `address` to show the street address. */
+export const LEGENDS = {
+  name: 'Legends Brews & Cues',
+  city: 'Colorado Springs',
+  state: 'CO',
+  address: '',
+};
+
+export const LEGENDS_PLACE = `${LEGENDS.name} in ${LEGENDS.city}, ${LEGENDS.state}`;
+
+export const LEGENDS_MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+  [LEGENDS.name, LEGENDS.address, `${LEGENDS.city}, ${LEGENDS.state}`].filter(Boolean).join(', '),
+)}`;
+
+/** Where sellers can pay an auction listing fee online. Sales themselves are paid at Legends, never here. */
+export const LISTING_FEE_PAY = [
+  {
+    id: 'cashapp',
+    name: 'Cash App',
+    handle: '$frusapl',
+    href: 'https://cash.app/$frusapl',
+    qr: '/usapl/frusapl-cashapp-qr.png',
+  },
+  {
+    id: 'venmo',
+    name: 'Venmo',
+    handle: '@duesfrusapl',
+    href: 'https://venmo.com/u/duesfrusapl',
+    qr: '/usapl/frusapl-venmo-qr.png',
+  },
+];
+
 const CATEGORY_TAGS = {
   cues: 'Cue',
   shafts: 'Shaft',

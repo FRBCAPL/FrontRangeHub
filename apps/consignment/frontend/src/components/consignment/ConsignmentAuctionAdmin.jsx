@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { AUCTION_STATUSES, itemLabel } from '../../data/consignmentConstants.js';
 import {
+  auctionNotDelivered,
   cancelAuction,
   convertToFixedPrice,
   loadAdminAuctions,
+  markAuctionDelivered,
   returnToSeller,
 } from '../../services/consignmentAuctionAdminService.js';
 import ConsignmentAuctionAdminRow from './ConsignmentAuctionAdminRow.jsx';
@@ -51,6 +53,8 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
     cancel: run(cancelAuction, (a) => `Cancel the auction for ${itemLabel(a.item)}? The item goes back to Pending.`),
     toFixed: run(convertToFixedPrice, (a) => `Move ${itemLabel(a.item)} to fixed price? It goes back to Pending so you can set a retail price with Approve.`),
     returned: run(returnToSeller, (a) => `Mark ${itemLabel(a.item)} as returned to the seller?`),
+    delivered: run(markAuctionDelivered, (a) => `${itemLabel(a.item)} is at Legends? The winner's ${settings?.auction_payment_days ?? 7}-day window to inspect and pay starts now. Let them know it's ready.`),
+    notDelivered: run(auctionNotDelivered, (a) => `The seller didn't deliver ${itemLabel(a.item)}? This cancels the sale (the winner owes nothing), withdraws the item, keeps the listing fee and removes the seller's selling access.`),
     relist: setRelisting,
     paid: setPaying,
     unpaid: setUnpaid,
@@ -91,6 +95,7 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
           settings={settings}
           isRelist
           previousReserve={relisting.opening_bid}
+          previouslyDelivered={Boolean(relisting.delivered_at)}
           onClose={closeWith(setRelisting)}
         />
       ) : null}

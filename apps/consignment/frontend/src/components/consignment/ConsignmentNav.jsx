@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { NavLink, useLocation } from 'react-router-dom';
 import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import ConsignmentHowItWorksModal from './ConsignmentHowItWorksModal.jsx';
+import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 
 export default function ConsignmentNav({ canAdmin = false }) {
   const [showHow, setShowHow] = useState(false);
@@ -14,6 +15,7 @@ export default function ConsignmentNav({ canAdmin = false }) {
       <NavLink to={CONSIGNMENT_PATH} end>Shop</NavLink>
       <NavLink to={`${CONSIGNMENT_PATH}/sell`}>Sell an item</NavLink>
       <NavLink to={`${CONSIGNMENT_PATH}/my-items`}>My items</NavLink>
+      <ConsignmentContactButton className="cs-nav-link">Contact us</ConsignmentContactButton>
       {canAdmin ? <NavLink to={`${CONSIGNMENT_PATH}/admin`}>Admin</NavLink> : null}
       <button type="button" className="cs-nav-how" onClick={() => setShowHow(true)}>
         <span aria-hidden="true">?</span> How it works

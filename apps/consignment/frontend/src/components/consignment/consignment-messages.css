@@ -1,0 +1,93 @@
+.cs-nav .cs-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  margin: 0;
+  padding: 6px 2px 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--cs-muted);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.cs-nav .cs-nav-link:hover {
+  color: var(--cs-ink);
+  border-bottom-color: var(--cs-accent);
+}
+
+.cs-beta .cs-link-btn {
+  margin: 0;
+  min-height: 0;
+  color: #7dd3fc;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cs-contact textarea {
+  resize: vertical;
+}
+
+.cs-msg-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.cs-msg {
+  padding: 14px;
+  border: 1px solid var(--cs-line);
+  border-left: 4px solid #a855f7;
+  border-radius: 12px;
+  background: var(--cs-card);
+  text-align: left;
+}
+
+.cs-msg-answered {
+  border-left-color: #22c55e;
+}
+
+.cs-msg-closed {
+  border-left-color: #64748b;
+  opacity: 0.8;
+}
+
+.cs-msg-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-msg-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.18);
+  color: #e9d5ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.cs-msg-body {
+  margin: 8px 0;
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.cs-msg a {
+  color: #d8b4fe;
+}
+
+.cs-msg-note {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  resize: vertical;
+}

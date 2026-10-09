@@ -12,6 +12,7 @@ import { CONSIGNMENT_BETA, CONSIGNMENT_PATH } from '../../data/consignmentConsta
 import './consignment.css';
 import './consignment-seller.css';
 import './consignment-sell-wizard.css';
+import './consignment-messages.css';
 
 function scrollConsignmentToTop() {
   window.scrollTo(0, 0);

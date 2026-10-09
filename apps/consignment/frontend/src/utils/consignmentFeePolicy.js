@@ -2,7 +2,7 @@
  * Listing fees and the sale split for shelf (fixed-price) and auction items.
  * Mirrored in supabase-migrations/consignment-fee-policy-2026-10.sql — keep in sync.
  *
- * - Listing fee: a % of the price (shelf) or reserve (auction), clamped to a min/max. Paid at drop-off, never refunded.
+ * - Listing fee: a % of the price (shelf) or reserve (auction), clamped to a min/max. Paid up front (at drop-off, or before an auction goes live), never refunded.
  * - On a sale FRPL earns the greater of the original listing fee or its commission. The fee is already
  *   paid, so the sale only covers commission − fee (never below 0).
  * - Renewals/relists: the first is free when the price/reserve drops by the required %, otherwise

@@ -4,7 +4,8 @@ export const SELL_STEPS = [
   { id: 'item', title: 'What are you selling?' },
   { id: 'details', title: 'Details & photos' },
   { id: 'price', title: 'Set your price' },
-  { id: 'review', title: 'Review & submit' },
+  { id: 'review', title: 'Review your listing' },
+  { id: 'agree', title: 'Agreement & submit' },
 ];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,6 +27,6 @@ export function sellStepError(stepId, form) {
       return 'Buy It Now must be higher than the reserve.';
     }
   }
-  if (stepId === 'review' && !form.agreement) return 'Please agree to the terms to submit.';
+  if (stepId === 'agree' && !form.agreement) return 'Please agree to the terms to submit.';
   return '';
 }

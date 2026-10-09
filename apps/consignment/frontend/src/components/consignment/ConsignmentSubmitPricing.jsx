@@ -37,7 +37,7 @@ function FeePreview({ price, method, policy }) {
   const split = saleSplit(price, pct, fee);
   return (
     <p className="cs-hint">
-      Listing fee <strong>{formatDollars(fee)}</strong> at drop-off. If it sells for {formatDollars(split.price)},
+      Listing fee <strong>{formatDollars(fee)}</strong> {method === 'auction' ? 'before the auction goes live' : 'at drop-off'}. If it sells for {formatDollars(split.price)},
       FRPL’s {pct}% is {formatDollars(split.commission)}
       {split.credit ? `, minus your ${formatDollars(fee)} fee` : ''}, so you’re paid <strong>{formatDollars(split.sellerFromSale)}</strong>.
     </p>

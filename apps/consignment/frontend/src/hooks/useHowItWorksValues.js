@@ -9,6 +9,7 @@ function valuesFrom(row) {
     days: row?.consignment_days ?? CONSIGNMENT_DAYS,
     graceDays: row?.pickup_grace_days ?? PICKUP_GRACE_DAYS,
     payDays: row?.auction_payment_days ?? 7,
+    deliverDays: row?.auction_delivery_days ?? 3,
     softClose: row?.auction_soft_close_minutes ?? DEFAULT_SOFT_CLOSE_MINUTES,
   };
 }

@@ -107,7 +107,64 @@
   font-size: 0.88rem;
 }
 
+.cs-feepay-toggle {
+  justify-self: start;
+  margin-top: 6px;
+}
+
+.cs-feepay {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid rgba(126, 34, 206, 0.45);
+  border-radius: 10px;
+  background: rgba(126, 34, 206, 0.1);
+  display: grid;
+  gap: 8px;
+}
+
+.cs-feepay p {
+  margin: 0;
+}
+
+.cs-feepay-warn {
+  color: #fde68a;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cs-feepay-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cs-feepay-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.cs-feepay-col img {
+  display: block;
+  width: min(180px, 100%);
+  height: auto;
+  padding: 8px;
+  background: #fff;
+  border-radius: 12px;
+}
+
+.cs-feepay .cs-btn-secondary {
+  justify-self: start;
+}
+
 @media (max-width: 420px) {
+  .cs-feepay-pair {
+    grid-template-columns: 1fr;
+  }
+
   .cs-mine-card {
     grid-template-columns: 76px 1fr;
   }

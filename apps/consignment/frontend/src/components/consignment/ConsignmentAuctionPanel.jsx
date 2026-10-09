@@ -15,11 +15,24 @@ function EndedMessage({ auction, iWon, payDays }) {
   }
   const sold = `Sold for ${formatDollars(auction.winning_bid)} + tax${auction.won_via === 'buy_now' ? ' (Buy It Now)' : ''}.`;
   if (iWon && auction.status === 'awaiting_payment') {
-    const due = addDays(auction.won_at, payDays);
+    if ('delivered_at' in auction && !auction.delivered_at) {
+      return (
+        <div className="cs-bid-won">
+          <strong>You won! {sold}</strong>
+          <p>
+            The seller is bringing it to Legends Brews &amp; Cues
+            {auction.delivery_due_at ? ` by ${formatDateTime(auction.delivery_due_at)}` : ''}. FRPL will let you know when it
+            arrives; then you have {payDays} days to look it over and pay at the register (sales tax added). Nothing is
+            due before it arrives.
+          </p>
+        </div>
+      );
+    }
+    const due = auction.payment_due_at || addDays(auction.won_at, payDays);
     return (
       <div className="cs-bid-won">
         <strong>You won! {sold}</strong>
-        <p>Pay and pick up at Legends Brews &amp; Cues by {formatDateTime(due)}. Sales tax is added at the register.</p>
+        <p>It's at Legends Brews &amp; Cues. Look it over, pay and pick it up by {formatDateTime(due)}. Sales tax is added at the register.</p>
       </div>
     );
   }
@@ -73,8 +86,9 @@ export default function ConsignmentAuctionPanel({ itemId }) {
             onBid={refresh}
           />
           <p className="cs-hint">
-            Bids are binding. A bid in the final minutes extends the clock. The winner pays and picks up at Legends
-            within {payDays} days; sales tax is added at the register.
+            Bids are binding. A bid in the final minutes extends the clock. The seller holds the item until it sells, then
+            brings it to Legends; the winner has {payDays} days from its arrival to look it over and pay (sales tax added at
+            the register).
           </p>
         </>
       ) : (

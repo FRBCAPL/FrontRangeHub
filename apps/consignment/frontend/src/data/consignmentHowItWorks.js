@@ -1,6 +1,6 @@
 /**
  * Text for the public "How it works" window. Edit freely.
- * {placeholders} are filled from the public settings: days, graceDays, payDays, softClose.
+ * {placeholders} are filled from the public settings: days, graceDays, payDays, deliverDays, softClose.
  * Fees and commission stay out of this public text; approved sellers see them in the seller agreements.
  */
 
@@ -8,8 +8,9 @@ export const HOW_IT_WORKS_TABS = [
   {
     id: 'buying',
     label: 'Buying',
-    intro: 'Everything here is in the case at Legends Brews & Cues.',
+    intro: 'Fixed-price items are in the case at Legends Brews & Cues in Colorado Springs. Auction items stay with the seller until they sell.',
     steps: [
+      'Everything is in person at Legends in Colorado Springs, CO: inspection, payment and pickup. Nothing is shipped.',
       'Browse here, or scan the QR tag on any item in the case at Legends.',
       'Fixed-price items are bought first come first serve, in person at Legends.',
       'Prices don’t include sales tax; tax is added at the register. This site does not take payment.',
@@ -19,7 +20,7 @@ export const HOW_IT_WORKS_TABS = [
       'Bids go up in $5 steps under $500 and $10 steps at $500 and up.',
       'A bid in the last {softClose} minutes adds {softClose} more minutes, so nobody can snipe it at the buzzer.',
       'Some auctions have Buy It Now. It disappears once bidding reaches that price.',
-      'Won an auction? Pay and pick up at Legends within {payDays} days. If the item isn’t as described, you can decline it at pickup. Winners who don’t pay for an item as described may lose bidding privileges.',
+      'Won an auction? The seller brings it to Legends, and FRPL lets you know when it arrives. Then you have {payDays} days to look it over, pay and pick it up. If it isn’t as described, you can decline it. Winners who don’t pay for an item as described may lose bidding privileges.',
     ],
   },
   {
@@ -28,6 +29,7 @@ export const HOW_IT_WORKS_TABS = [
     intro: 'You set the price. We sell it from the case at Legends.',
     steps: [
       'Selling is open to approved FRPL sellers. Log in and request seller access.',
+      'You’ll need to drop the item off at Legends in Colorado Springs, CO.',
       'Submit your item online with photos and your price.',
       'FRPL reviews it and gets in touch. We may accept it, suggest changes, or decline.',
       'If accepted, bring it to Legends and pay the listing fee. It stays in the case for {days} days.',
@@ -43,12 +45,14 @@ export const HOW_IT_WORKS_TABS = [
     intro: 'You set the reserve. Bidders set the price.',
     steps: [
       'Selling is open to approved FRPL sellers. Log in and request seller access.',
+      'You’ll need to bring the item to Legends in Colorado Springs, CO when it sells.',
       'On the Sell page, choose Online auction and enter your reserve: the lowest price you’ll accept. Bidding starts there.',
       'Add an optional Buy It Now price. It disappears once bidding reaches it.',
-      { text: 'If FRPL accepts it, pay the listing fee at drop-off.', home: false },
-      'Auctions usually run 7 days and end Sunday at 9 PM, with payment and pickup at Legends.',
-      'Sold? Collect your payment at Legends within 7 days of the winner paying.',
-      'No bids? Relist it, switch to a fixed-price consignment, or pick it up within {graceDays} days.',
+      { text: 'If FRPL accepts it, pay the listing fee by Cash App or Venmo from your My items page, or in person at Legends. Your auction goes live once it’s paid.', home: false },
+      'You keep the item while it’s up for auction. Auctions usually run 7 days and end Sunday at 9 PM.',
+      'Sold? Bring it to Legends within {deliverDays} days. The winner looks it over and pays there. Miss the deadline and the sale is cancelled, the fee isn’t refunded, and you lose selling access.',
+      'Collect your payment at Legends within 7 days of the winner paying.',
+      'No bids? Relist it or switch to a fixed-price consignment. Nothing to pick up; it never left your hands.',
       'Fees and terms are in the auction agreement.',
     ],
   },
@@ -60,7 +64,7 @@ export const HOW_IT_WORKS_FOOTER = 'Questions? Ask at the bar at Legends, or mes
 export const HOME_HERO = {
   kicker: 'FRPL Consignment & Auctions',
   title: 'Buy and sell pool gear at Legends',
-  lede: 'Cues, cases and gear from local players, in the case at Legends Brews & Cues. Shop in person, bid online, or let FRPL sell your gear for you.',
+  lede: 'Cues, cases and gear from local players. Shop the case at Legends Brews & Cues in Colorado Springs, bid online, or let FRPL sell your gear for you. All pickups are in person; nothing ships.',
 };
 
 /** `to` is relative to the consignment path; `tab` picks which steps section it points at. */

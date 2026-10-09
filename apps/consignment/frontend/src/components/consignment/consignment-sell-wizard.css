@@ -176,6 +176,34 @@
   min-width: 8rem;
 }
 
+.cs-wiz-nav-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cs-wiz-cancel {
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  color: #fca5a5;
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cs-wiz-cancel:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.cs-sell-resume-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .cs-wiz-photos {
   list-style: none;
   margin: 4px 0 0;
@@ -256,7 +284,7 @@
 }
 
 .cs-wiz-agree {
-  max-height: 14rem !important;
+  max-height: min(48vh, 22rem) !important;
   overflow-y: auto;
   padding: 10px 12px;
   border: 1px solid var(--cs-line);

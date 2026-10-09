@@ -82,13 +82,28 @@ function auctionStatus(item, a) {
           : `No bids yet — opening bid ${formatDollars(a.opening_bid)}`,
         reserve,
         `Ends ${new Date(a.ends_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
+        a.delivered_at ? null : 'Keep it safe and ready: if it sells, you have 3 days to bring it to Legends.',
+      ].filter(Boolean),
+    };
+  }
+  if (a.status === 'awaiting_payment' && 'delivered_at' in a && !a.delivered_at) {
+    const due = a.delivery_due_at
+      ? new Date(a.delivery_due_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      : null;
+    return {
+      tone: 'warn',
+      label: 'Sold — bring it to Legends',
+      lines: [
+        `Winning bid: ${formatDollars(a.winning_bid)}`,
+        due ? `Deliver it to Legends Brews & Cues by ${due}.` : 'Deliver it to Legends Brews & Cues within 3 days.',
+        'If it isn’t delivered on time, the sale is cancelled, the listing fee isn’t refunded and you lose selling access.',
       ],
     };
   }
   if (a.status === 'awaiting_payment') {
     return {
       tone: 'live',
-      label: 'Won — awaiting buyer payment',
+      label: 'At Legends — awaiting buyer payment',
       lines: [`Winning bid: ${formatDollars(a.winning_bid)}`, 'Your payout is figured once the buyer pays.'],
     };
   }
@@ -96,7 +111,7 @@ function auctionStatus(item, a) {
     return { tone: 'warn', label: 'Buyer did not pay', lines: ['FRPL will follow up on next steps.'] };
   }
   if (a.status === 'ended_no_bids') {
-    return { tone: 'warn', label: 'Auction ended — no bids', lines: ['FRPL will contact you about relisting or pickup.'] };
+    return { tone: 'warn', label: 'Auction ended — no bids', lines: [a.delivered_at ? 'FRPL will contact you about relisting or pickup.' : 'FRPL will contact you about relisting.'] };
   }
   return { tone: 'muted', label: 'Auction closed', lines: [] };
 }

@@ -60,7 +60,7 @@ function Row({ label, value }) {
   );
 }
 
-export function StepReview({ form, set, files, agreementText, goTo, policy }) {
+export function StepReview({ form, files, goTo, policy }) {
   const isAuction = form.sale_method === 'auction';
   const method = SALE_METHODS.find((m) => m.id === form.sale_method)?.label;
   return (
@@ -78,8 +78,21 @@ export function StepReview({ form, set, files, agreementText, goTo, policy }) {
         />
         {isAuction && form.buy_now_price !== '' ? <Row label="Buy It Now" value={formatDollars(form.buy_now_price)} /> : null}
         {isAuction ? null : <Row label="In-store inspection" value={form.allow_inspection ? 'Allowed (ID held)' : 'Not allowed'} />}
-        <Row label="Listing fee" value={`${formatDollars(listingFee(form.seller_payout, form.sale_method, policy))} at drop-off`} />
+        <Row
+          label="Listing fee"
+          value={`${formatDollars(listingFee(form.seller_payout, form.sale_method, policy))} ${isAuction ? 'before it goes live (Cash App, Venmo or at Legends)' : 'at drop-off'}`}
+        />
+        {isAuction ? <Row label="The item" value="You keep it until it sells, then bring it to Legends within 3 days" /> : null}
       </dl>
+      <p className="cs-hint">Look it over, then tap Next to read and accept the {isAuction ? 'auction' : 'consignment'} agreement.</p>
+    </>
+  );
+}
+
+export function StepAgree({ form, set, agreementText }) {
+  const isAuction = form.sale_method === 'auction';
+  return (
+    <>
       <div className="cs-agree">
         <div className="cs-wiz-agree">{agreementText}</div>
         <label>
@@ -88,7 +101,10 @@ export function StepReview({ form, set, files, agreementText, goTo, policy }) {
           <span className="cs-req" aria-label="required">*</span>
         </label>
       </div>
-      <p className="cs-hint">Nothing is charged online. If FRPL accepts the item, you pay the listing fee at drop-off. It isn’t refunded if the item doesn’t sell.</p>
+      <p className="cs-hint">
+        Nothing is charged online. If FRPL accepts the item, you pay the listing fee {isAuction ? 'before the auction goes live, by Cash App or Venmo from My items or in person at Legends' : 'at drop-off'}.
+        It isn’t refunded if the item doesn’t sell.
+      </p>
     </>
   );
 }

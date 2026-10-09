@@ -83,8 +83,8 @@ export default function ConsignmentAdminRow({ item, graceDays, actions }) {
   const isAuction = item.sale_method === 'auction';
   return (
     <tr>
-      <td>{itemLabel(item)}</td>
-      <td>
+      <td className="cs-cell-id">{itemLabel(item)}</td>
+      <td className="cs-cell-item">
         <div className="cs-admin-item">
           <button type="button" className="cs-admin-thumb" onClick={() => edit(item)} aria-label={`Photos for ${itemLabel(item)}`}>
             {item.photo_urls?.[0] ? <img src={item.photo_urls[0]} alt="" /> : <span>🎱</span>}
@@ -96,17 +96,17 @@ export default function ConsignmentAdminRow({ item, graceDays, actions }) {
           </div>
         </div>
       </td>
-      <td>
+      <td data-label="Seller">
         {item.seller?.full_name}
         <div className="cs-meta">{item.seller?.phone || item.seller?.email}</div>
       </td>
-      <td><MoneyInfo item={item} /></td>
-      <td>
+      <td data-label="Money"><MoneyInfo item={item} /></td>
+      <td data-label="Status">
         {statusLabel(item.status)}
         {item.status === 'pending' && isAuction ? <div className="cs-meta cs-auction-tag">Auction requested</div> : null}
         {isAuction ? <AuctionInfo auction={item.auction} /> : <WindowInfo item={item} graceDays={graceDays} />}
       </td>
-      <td>
+      <td className="cs-cell-actions">
         {item.status === 'pending' && isAuction ? (
           <>
             <button type="button" className="cs-btn" onClick={() => auction(item)}>Start auction</button>

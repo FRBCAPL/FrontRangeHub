@@ -4,6 +4,7 @@ import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import { currentUserId, onAuthChange, openHubLogin } from '../../services/consignmentAuctionService.js';
 import { currentUserEmail, loadMyItems } from '../../services/consignmentSellerService.js';
 import ConsignmentMyItemCard from './ConsignmentMyItemCard.jsx';
+import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 
 export default function ConsignmentMyItems() {
   const [userId, setUserId] = useState(undefined);
@@ -61,7 +62,8 @@ export default function ConsignmentMyItems() {
               <p className="cs-meta">
                 If you consigned with a different email, contact FRPL and we'll link it.
               </p>
-              <Link className="cs-btn" to={`${CONSIGNMENT_PATH}/sell`}>Sell an item</Link>
+              <Link className="cs-btn" to={`${CONSIGNMENT_PATH}/sell`}>Sell an item</Link>{' '}
+              <ConsignmentContactButton topic="account" />
             </div>
           ) : null}
           {items.length ? (

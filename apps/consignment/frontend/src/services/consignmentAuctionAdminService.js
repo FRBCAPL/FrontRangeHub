@@ -97,7 +97,7 @@ export async function loadAuctionSettings() {
  */
 export async function startAuction(item, {
   reserve, commissionPct, buyNowPrice, endsAt, listingFee, feeKind = 'auction_listing', feePaidNow, paymentMethod,
-  consent = null, feeNote = null,
+  consent = null, feeNote = null, atLegends = false,
 }) {
   const min = Number(reserve);
   const opening = openingBid(min);
@@ -136,10 +136,12 @@ export async function startAuction(item, {
       starts_at: now,
       scheduled_end_at: end.toISOString(),
       ends_at: end.toISOString(),
+      ...(atLegends ? { delivered_at: now } : {}),
     })
     .select()
     .single();
   if (error) {
+    if (/delivered_at/i.test(error.message || '')) throw new Error(DELIVERY_MISSING);
     if (/consignment_auctions_one_active|duplicate key/i.test(error.message || '')) {
       throw new Error('This item already has an active auction.');
     }
@@ -240,6 +242,35 @@ export function secondChanceAuction(auction, bidderId) {
     p_auction_id: auction.id,
     p_bidder_id: bidderId,
   }, 'Could not make the second-chance offer.');
+}
+
+const DELIVERY_MISSING = 'Run supabase-migrations/consignment-auction-delivery-2026-10.sql in the Supabase SQL editor, then refresh.';
+
+async function deliveryRpc(name, args, fallback) {
+  const { data, error } = await supabase.rpc(name, args);
+  if (error) {
+    if (/could not find the function|schema cache/i.test(error.message || '')) throw new Error(DELIVERY_MISSING);
+    throw new Error(error.message || fallback);
+  }
+  return data;
+}
+
+/** The seller brought the item to Legends; the winner's pay window starts now. */
+export function markAuctionDelivered(auction) {
+  return deliveryRpc('mark_consignment_auction_delivered', { p_auction_id: auction.id }, 'Could not mark it delivered.');
+}
+
+/** The seller didn't deliver: cancel the sale, withdraw the item and (by default) remove seller access. */
+export function auctionNotDelivered(auction, { removeSeller = true } = {}) {
+  return deliveryRpc('consignment_auction_not_delivered', {
+    p_auction_id: auction.id,
+    p_remove_seller: Boolean(removeSeller),
+  }, 'Could not cancel the sale.');
+}
+
+/** Won, but the item hasn't reached Legends yet (no pay window until it does). */
+export function awaitingDelivery(auction) {
+  return auction?.status === 'awaiting_payment' && 'delivered_at' in auction && !auction.delivered_at;
 }
 
 /** Other bidders on this auction, best first, each at their own highest bid. */

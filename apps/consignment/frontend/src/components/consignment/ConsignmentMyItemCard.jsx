@@ -4,8 +4,17 @@ import { brandModelLabel, itemLabel } from '../../data/consignmentConstants.js';
 import { consignmentItemPath } from '../../utils/consignmentPaths.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
 import { sellerItemStatus } from '../../utils/consignmentSellerStatus.js';
+import ConsignmentFeePayCodes from './ConsignmentFeePayCodes.jsx';
 
 const PUBLIC = ['available', 'sold'];
+
+/** Auction items whose (re)listing fee may still be due: in review, accepted but not started, or ended unsold. */
+function feeMayBeDue(item) {
+  if (item.sale_method !== 'auction') return false;
+  if (item.status === 'pending') return true;
+  const a = item.auction;
+  return item.status === 'available' && (!a || ['cancelled', 'ended_no_bids', 'defaulted'].includes(a.status));
+}
 
 export default function ConsignmentMyItemCard({ item }) {
   const status = sellerItemStatus(item);
@@ -33,6 +42,7 @@ export default function ConsignmentMyItemCard({ item }) {
           </ul>
         ) : null}
         <p className="cs-meta">Submitted {formatShortDate(item.created_at)}</p>
+        {feeMayBeDue(item) ? <ConsignmentFeePayCodes item={item} /> : null}
       </div>
     </li>
   );

@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { buyNow, openHubLogin, placeBid } from '../../services/consignmentAuctionService.js';
 import { bidError, bidIncrement } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { LEGENDS_PLACE } from '../../data/consignmentConstants.js';
+
+const PICKUP_NOTE = `Pickup is in person at ${LEGENDS_PLACE}; nothing ships.`;
 
 export default function ConsignmentBidForm({ auction, userId, isHighBidder, payDays, onBid }) {
   const minNext = Number(auction.min_next_bid);
@@ -51,7 +54,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
       bidCount: auction.bid_count,
     });
     if (problem) { setError(problem); return; }
-    if (!window.confirm(`Place a bid of ${formatDollars(amount)} + tax? Bids are binding. Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
+    if (!window.confirm(`Place a bid of ${formatDollars(amount)} + tax? Bids are binding. ${PICKUP_NOTE} Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
     run(() => placeBid(auction.id, amount), (r) => (r?.extended
       ? 'Bid placed. The clock was extended because it was close to the end.'
       : 'Bid placed. You’re the high bidder.'));
@@ -59,8 +62,8 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
 
   const doBuyNow = () => {
     const price = formatDollars(auction.buy_now_price);
-    if (!window.confirm(`Buy it now for ${price} + tax? This ends the auction and you agree to pay at Legends within ${payDays} days. Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
-    run(() => buyNow(auction.id), 'You bought it! Pay and pick up at Legends.');
+    if (!window.confirm(`Buy it now for ${price} + tax? This ends the auction. The seller brings it to Legends, and you agree to pay there within ${payDays} days of it arriving. ${PICKUP_NOTE} Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
+    run(() => buyNow(auction.id), 'You bought it! FRPL will let you know when it’s at Legends for you to look over and pay.');
   };
 
   return (

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CONSIGNMENT_DAYS, CONSIGNMENT_PATH, itemLabel } from '../../data/consignmentConstants.js';
+import { CONSIGNMENT_DAYS, CONSIGNMENT_PATH, itemLabel, LEGENDS_PLACE } from '../../data/consignmentConstants.js';
 import { loadSettings, submitItem } from '../../services/consignmentService.js';
 import { uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { currentUserEmail } from '../../services/consignmentSellerService.js';
@@ -39,7 +39,7 @@ const empty = {
 const HOW_STEPS = [
   'Tell us about your item and what you want for it.',
   'FRPL reviews it and contacts you.',
-  'If accepted, drop it off at Legends and we handle the sale.',
+  'If accepted, consignment items go in the case at Legends; auction items stay with you until they sell.',
 ];
 
 export default function ConsignmentSubmit() {
@@ -90,6 +90,16 @@ export default function ConsignmentSubmit() {
 
   const closeWizard = useCallback(() => setWizardOpen(false), []);
 
+  const inProgress = Boolean(form.name || form.seller_payout || files.length);
+
+  const cancelListing = () => {
+    if (inProgress && !window.confirm('Cancel this listing? Everything you entered will be cleared.')) return;
+    setForm((prev) => ({ ...empty, seller_email: prev.seller_email }));
+    setFiles([]);
+    setError('');
+    setWizardOpen(false);
+  };
+
   const onSubmit = async () => {
     setError('');
     setBusy(true);
@@ -130,8 +140,10 @@ export default function ConsignmentSubmit() {
         <h1>Submitted</h1>
         <p className="cs-lede">
           Thanks. Your request is in as <strong>{itemLabel({ ...done, category: form.category })}</strong>.
-          FRPL will review it and contact you. If we accept the item, you'll bring it to Legends
-          and pay the listing fee then — nothing is charged online.
+          FRPL will review it and contact you.{' '}
+          {isAuction
+            ? 'If we accept it, pay the listing fee (Cash App or Venmo from My items, or at Legends) and your auction goes live. Keep the item until it sells.'
+            : 'If we accept the item, you’ll bring it to Legends and pay the listing fee then.'}
         </p>
         <p className="cs-lede">Check its progress anytime under <strong>My items</strong> (log in with the same email).</p>
         <Link className="cs-btn" to={`${CONSIGNMENT_PATH}/my-items`}>My items</Link>{' '}
@@ -139,8 +151,6 @@ export default function ConsignmentSubmit() {
       </div>
     );
   }
-
-  const inProgress = Boolean(form.name || form.seller_payout || files.length);
 
   return (
     <div className="cs-page cs-page-centered cs-sell-start">
@@ -157,7 +167,10 @@ export default function ConsignmentSubmit() {
       {inProgress ? (
         <div className="cs-sell-resume">
           <p>You have a listing in progress{form.name ? `: ${form.name}` : ''}.</p>
-          <button type="button" className="cs-btn" onClick={() => start()}>Continue your listing</button>
+          <div className="cs-sell-resume-actions">
+            <button type="button" className="cs-btn" onClick={() => start()}>Continue your listing</button>
+            <button type="button" className="cs-btn cs-btn-secondary" onClick={cancelListing}>Cancel listing</button>
+          </div>
         </div>
       ) : null}
 
@@ -170,7 +183,9 @@ export default function ConsignmentSubmit() {
           </button>
         ))}
       </div>
-      <p className="cs-hint">Takes about 3 minutes. Nothing is charged online.</p>
+      <p className="cs-hint">
+        Takes about 3 minutes. Nothing is charged online. You’ll need to bring the item to {LEGENDS_PLACE}; nothing ships.
+      </p>
       {error && !wizardOpen ? <p className="cs-error">{error}</p> : null}
 
       {wizardOpen ? (
@@ -187,6 +202,7 @@ export default function ConsignmentSubmit() {
           submitError={error}
           onSubmit={onSubmit}
           onClose={closeWizard}
+          onCancel={cancelListing}
         />
       ) : null}
     </div>

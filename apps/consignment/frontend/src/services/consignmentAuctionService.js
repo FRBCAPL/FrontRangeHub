@@ -45,9 +45,20 @@ export async function currentUserId() {
   return data?.session?.user?.id || null;
 }
 
+/**
+ * Supabase holds its auth lock while these listeners run; a Supabase call made inside one waits on that
+ * lock forever and every later query hangs. setTimeout runs the callback after the lock is released.
+ */
 export function onAuthChange(callback) {
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => callback(session?.user?.id || null));
-  return () => data?.subscription?.unsubscribe();
+  let active = true;
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const id = session?.user?.id || null;
+    setTimeout(() => { if (active) callback(id); }, 0);
+  });
+  return () => {
+    active = false;
+    data?.subscription?.unsubscribe();
+  };
 }
 
 /** The signed-in user's highest bid on this auction (null if none). */

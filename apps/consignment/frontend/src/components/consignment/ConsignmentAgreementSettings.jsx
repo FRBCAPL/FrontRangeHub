@@ -26,7 +26,7 @@ function AgreementEditor({ id, label, hint, initial, standard, outdated, onSave,
       <label htmlFor={id}>{label}</label>
       {outdated ? (
         <p className="cs-due">
-          Your saved version uses old terms or is missing the liability and unclaimed-property terms, so sellers are seeing
+          Your saved version uses old terms or is missing the location, liability or unclaimed-property terms, so sellers are seeing
           the standard text below. Click Save to keep it.
         </p>
       ) : null}

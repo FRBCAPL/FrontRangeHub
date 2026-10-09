@@ -1,6 +1,6 @@
 import React from 'react';
 import { auctionStatusLabel, brandModelLabel, itemLabel } from '../../data/consignmentConstants.js';
-import { bidderName } from '../../services/consignmentAuctionAdminService.js';
+import { awaitingDelivery, bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { auctionSplit } from '../../utils/consignmentAuctionMath.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
@@ -44,6 +44,14 @@ function TimeInfo({ auction }) {
     const extended = auction.ends_at !== auction.scheduled_end_at;
     return <div className="cs-meta">Ends {formatDateTime(auction.ends_at)}{extended ? ' (extended)' : ''}</div>;
   }
+  if (awaitingDelivery(auction)) {
+    const late = new Date(auction.delivery_due_at).getTime() < Date.now();
+    return (
+      <div className={`cs-meta ${late ? 'cs-overdue' : 'cs-due'}`}>
+        {late ? 'Seller delivery overdue since ' : 'Seller delivers to Legends by '}{formatDateTime(auction.delivery_due_at)}
+      </div>
+    );
+  }
   if (auction.status === 'awaiting_payment') {
     const overdue = new Date(auction.payment_due_at).getTime() < Date.now();
     return (
@@ -61,8 +69,8 @@ export default function ConsignmentAuctionAdminRow({ auction, actions }) {
   const unsold = ['ended_no_bids', 'defaulted'].includes(auction.status) && itemStillAuction;
   return (
     <tr>
-      <td>{itemLabel(item)}</td>
-      <td>
+      <td className="cs-cell-id">{itemLabel(item)}</td>
+      <td className="cs-cell-item">
         <div className="cs-admin-item">
           <span className="cs-admin-thumb">
             {item.photo_urls?.[0] ? <img src={item.photo_urls[0]} alt="" /> : <span>🎱</span>}
@@ -74,21 +82,27 @@ export default function ConsignmentAuctionAdminRow({ auction, actions }) {
           </div>
         </div>
       </td>
-      <td>
+      <td data-label="Terms">
         Reserve {formatDollars(auction.opening_bid)}
         <div className="cs-meta">FRPL {Number(auction.commission_pct)}% of sale</div>
         {auction.buy_now_price != null ? <div className="cs-meta">Buy It Now {formatDollars(auction.buy_now_price)}</div> : null}
       </td>
-      <td><BidInfo auction={auction} /></td>
-      <td>
+      <td data-label="Bids"><BidInfo auction={auction} /></td>
+      <td data-label="Status">
         {auctionStatusLabel(auction.status)}
         <TimeInfo auction={auction} />
       </td>
-      <td>
+      <td className="cs-cell-actions">
         {auction.status === 'live' && !auction.bid_count ? (
           <button type="button" className="cs-btn-secondary" onClick={() => actions.cancel(auction)}>Cancel</button>
         ) : null}
-        {auction.status === 'awaiting_payment' ? (
+        {awaitingDelivery(auction) ? (
+          <>
+            <button type="button" className="cs-btn" onClick={() => actions.delivered(auction)}>Delivered</button>
+            <button type="button" className="cs-btn-secondary" onClick={() => actions.notDelivered(auction)}>Not delivered</button>
+          </>
+        ) : null}
+        {auction.status === 'awaiting_payment' && !awaitingDelivery(auction) ? (
           <>
             <button type="button" className="cs-btn" onClick={() => actions.paid(auction)}>Paid</button>
             <button type="button" className="cs-btn-secondary" onClick={() => actions.unpaid(auction)}>Didn’t pay</button>

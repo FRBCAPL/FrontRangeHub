@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { brandModelLabel, categoryLabel, conditionLabel, itemLabel } from '../../data/consignmentConstants.js';
-import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
+import { CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadPublicItem } from '../../services/consignmentService.js';
 import { itemPriceLabel } from '../../utils/consignmentMoney.js';
 import ConsignmentAuctionPanel from './ConsignmentAuctionPanel.jsx';
 import ConsignmentPhotoZoom from './ConsignmentPhotoZoom.jsx';
+import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 
 export default function ConsignmentItemPage() {
   const { itemNumber } = useParams();
@@ -87,13 +88,21 @@ export default function ConsignmentItemPage() {
             : 'Display only. This item stays in the case until it’s bought.'}
         </p>
       )}
+      <p className="cs-meta cs-pickup">
+        📍 Pickup in person at{' '}
+        <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">
+          {LEGENDS.name}, {LEGENDS.address ? `${LEGENDS.address}, ` : ''}{LEGENDS.city}, {LEGENDS.state}
+        </a>
+        . Nothing ships.
+      </p>
       <p className="cs-hint">
         {isAuction
-          ? 'Sold as-is; all sales final. Look it over at pickup before you pay. If it isn’t as described, you can decline it.'
+          ? 'The seller holds this item until the auction ends, then brings it to Legends. Sold as-is; all sales final. Look it over at Legends before you pay. If it isn’t as described, you can decline it.'
           : 'Sold as-is; all sales final. Look it over before you pay at Legends. Sales tax is added at checkout; this site does not take payment.'}
       </p>
       <div className="cs-actions">
         <Link className="cs-btn-secondary" to={CONSIGNMENT_PATH}>Back to shop</Link>
+        <ConsignmentContactButton itemNumber={itemLabel(item)} topic="buying">Ask about this item</ConsignmentContactButton>
       </div>
     </div>
   );
