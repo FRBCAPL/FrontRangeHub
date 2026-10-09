@@ -244,6 +244,29 @@
   margin: 0.4rem 0 0.6rem;
 }
 
+.homepage-footer .homepage-footer-app {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  margin-top: 0.75rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(249, 115, 22, 0.55);
+  background: rgba(249, 115, 22, 0.1);
+  color: #ffedd5;
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.homepage-footer .homepage-footer-app:hover,
+.homepage-footer .homepage-footer-app:focus-visible {
+  background: rgba(249, 115, 22, 0.25);
+  border-color: #f97316;
+}
+
 .section-title {
   color: #fff;
   font-size: 2rem;

@@ -30,6 +30,8 @@ import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/com
 import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 
+const CUESYNC_URL = 'https://www.cuesync.us';
+
 const Homepage = ({ canRunTournament = false }) => {
   const navigate = useNavigate();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
@@ -229,6 +231,20 @@ const Homepage = ({ canRunTournament = false }) => {
 
   const poolTiles = [
     {
+      id: 'consignment',
+      icon: '🎱',
+      title: 'FRPL Consignment',
+      blurb: 'Cues & gear for sale at Legends.',
+      accent: '#e53e3e',
+      badge: CONSIGNMENT_BETA ? 'Beta' : 'New',
+      onOpen: () => navigate(`${CONSIGNMENT_PATH}/home`),
+      actions: [
+        { label: 'How it works', onClick: () => navigate(`${CONSIGNMENT_PATH}/home`) },
+        { label: 'Browse', onClick: () => navigate(CONSIGNMENT_PATH) },
+        { label: 'Sell', onClick: () => navigate(`${CONSIGNMENT_PATH}/sell`) },
+      ],
+    },
+    {
       id: 'tournaments',
       icon: '🏆',
       title: 'Tournaments',
@@ -256,19 +272,6 @@ const Homepage = ({ canRunTournament = false }) => {
         { label: 'Tournament format', onClick: () => navigate(`${TRAP_EM_PATH}?section=format`) },
       ],
     },
-    {
-      id: 'consignment',
-      icon: '🎱',
-      title: 'FRPL Consignment',
-      blurb: 'Cues & gear for sale at Legends.',
-      accent: '#e53e3e',
-      badge: CONSIGNMENT_BETA ? 'Beta' : 'New',
-      onOpen: () => navigate(`${CONSIGNMENT_PATH}/home`),
-      actions: [
-        { label: 'How it works', onClick: () => navigate(`${CONSIGNMENT_PATH}/home`) },
-        { label: 'Browse', onClick: () => navigate(CONSIGNMENT_PATH) },
-        { label: 'Sell', onClick: () => navigate(`${CONSIGNMENT_PATH}/sell`) },      ],
-    },
   ];
 
   const otherTiles = [
@@ -286,6 +289,20 @@ const Homepage = ({ canRunTournament = false }) => {
       ],
     },
     {
+      id: 'cuesync',
+      icon: '📋',
+      title: 'CueSync',
+      blurb: 'Pool hall table management. Import league nights once; tables assign themselves.',
+      accent: '#2dd4bf',
+      badge: 'New',
+      onOpen: () => window.open(CUESYNC_URL, '_blank', 'noopener,noreferrer'),
+      actions: [
+        { label: 'Demo', onClick: openExternal(CUESYNC_URL) },
+        { label: 'Register', onClick: openExternal(CUESYNC_URL) },
+        { label: 'Sign in', onClick: openExternal(CUESYNC_URL) },
+      ],
+    },
+    {
       id: 'duezy',
       icon: '💰',
       title: 'Duezy',
@@ -296,19 +313,6 @@ const Homepage = ({ canRunTournament = false }) => {
         { label: 'What is Duezy?', onClick: handleWhatIsDuezy },
         { label: 'Learn more', onClick: handleDuezyLearnMore },
         { label: 'Log in', onClick: handleNavigateToDuesTracker },
-      ],
-    },
-    {
-      id: 'estate-vault',
-      icon: '🗄️',
-      title: 'Estate Vault',
-      blurb: 'Inventory estates, heirs & distributions.',
-      accent: '#2dd4bf',
-      onOpen: handleNavigateToEstateIt,
-      actions: [
-        { label: 'Manage an estate', onClick: () => navigate('/estateit/owner') },
-        { label: 'Invited', onClick: () => navigate('/estateit/enter') },
-        { label: 'Learn more', onClick: handleNavigateToEstateIt },
       ],
     },
   ];
@@ -405,6 +409,9 @@ const Homepage = ({ canRunTournament = false }) => {
 
         {/* Footer Section */}
         <footer className="homepage-footer">
+          <button type="button" className="homepage-footer-app" onClick={handleNavigateToEstateIt}>
+            <span aria-hidden="true">🗄️</span> Estate Vault
+          </button>
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>
       </div>

@@ -46,6 +46,7 @@
 
   .hal-row .hal-tile {
     --hal-cols: var(--hal-count, 3) !important;
+    min-width: 0;
     gap: 5px;
     padding: 12px 10px 10px;
   }
@@ -80,7 +81,6 @@
   .hal-row .hal-action {
     padding: 4px 8px;
     font-size: 0.7rem;
-    white-space: nowrap;
   }
 
   .hal-row .hal-open {
