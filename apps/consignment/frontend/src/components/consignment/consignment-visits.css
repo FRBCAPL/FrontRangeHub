@@ -1,0 +1,72 @@
+/* Admin Visitors tab. */
+
+.cs-visits h3 {
+  margin: 22px 0 8px;
+  font-size: 1rem;
+  color: var(--cs-ink);
+}
+
+.cs-visits-ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.cs-visits-ranges button {
+  min-height: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cs-line);
+  background: transparent;
+  color: var(--cs-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-visits-ranges button.active {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.16);
+  color: #e0f2fe;
+}
+
+.cs-visit-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.cs-visit-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: var(--cs-card);
+}
+
+.cs-visit-stat strong {
+  font-size: 1.6rem;
+  color: var(--cs-ink);
+  line-height: 1.2;
+}
+
+.cs-visit-num {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.cs-visit-table td .cs-meta {
+  font-size: 0.75rem;
+  word-break: break-all;
+}
+
+.cs-visit-who {
+  word-break: break-all;
+}
+
+.cs-visit-table tr.is-you td {
+  opacity: 0.6;
+}

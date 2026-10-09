@@ -31,11 +31,12 @@ import ConsignmentSoldModal from './ConsignmentSoldModal.jsx';
 import ConsignmentAuctionAdmin from './ConsignmentAuctionAdmin.jsx';
 import ConsignmentAuctionStartModal from './ConsignmentAuctionStartModal.jsx';
 import ConsignmentMessagesPanel from './ConsignmentMessagesPanel.jsx';
+import ConsignmentVisitsPanel from './ConsignmentVisitsPanel.jsx';
 
 export default function ConsignmentAdmin() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const linkedTab = ['auctions', 'messages'].includes(params.get('tab')) ? params.get('tab') : 'items';
+  const linkedTab = ['auctions', 'messages', 'visitors'].includes(params.get('tab')) ? params.get('tab') : 'items';
   const linkedStatus = params.get('status');
   const [status, setStatus] = useState(linkedTab === 'items' && linkedStatus ? linkedStatus : 'pending');
   const [rows, setRows] = useState([]);
@@ -132,8 +133,12 @@ export default function ConsignmentAdmin() {
         <button type="button" role="tab" aria-selected={tab === 'messages'} className={tab === 'messages' ? 'active' : ''} onClick={() => setTab('messages')}>
           Messages
         </button>
+        <button type="button" role="tab" aria-selected={tab === 'visitors'} className={tab === 'visitors' ? 'active' : ''} onClick={() => setTab('visitors')}>
+          Visitors
+        </button>
       </div>
       {tab === 'messages' ? <ConsignmentMessagesPanel /> : null}
+      {tab === 'visitors' ? <ConsignmentVisitsPanel /> : null}
       {tab === 'auctions' ? (
         <ConsignmentAuctionAdmin
           key={linkedTab === 'auctions' ? linkedStatus || '' : ''}

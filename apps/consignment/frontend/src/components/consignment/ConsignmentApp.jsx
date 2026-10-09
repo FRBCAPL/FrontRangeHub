@@ -9,6 +9,7 @@ import ConsignmentMyItems from './ConsignmentMyItems.jsx';
 import ConsignmentAdmin from './ConsignmentAdmin.jsx';
 import ConsignmentBetaBanner from './ConsignmentBetaBanner.jsx';
 import { CONSIGNMENT_BETA, CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
+import useConsignmentPageVisitTracker from '../../hooks/useConsignmentPageVisitTracker.js';
 import './consignment.css';
 import './consignment-seller.css';
 import './consignment-sell-wizard.css';
@@ -24,6 +25,7 @@ function scrollConsignmentToTop() {
 
 export default function ConsignmentApp({ canAdmin = false }) {
   const location = useLocation();
+  useConsignmentPageVisitTracker();
 
   useLayoutEffect(() => {
     scrollConsignmentToTop();
