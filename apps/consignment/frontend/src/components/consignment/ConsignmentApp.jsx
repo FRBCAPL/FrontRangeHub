@@ -13,6 +13,7 @@ import './consignment.css';
 import './consignment-seller.css';
 import './consignment-sell-wizard.css';
 import './consignment-messages.css';
+import './consignment-examples.css';
 
 function scrollConsignmentToTop() {
   window.scrollTo(0, 0);

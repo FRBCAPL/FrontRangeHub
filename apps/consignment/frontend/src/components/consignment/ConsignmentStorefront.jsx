@@ -5,6 +5,7 @@ import { loadAuctionsForItems } from '../../services/consignmentAuctionService.j
 import ConsignmentItemCard from './ConsignmentItemCard.jsx';
 import ConsignmentShopBadges from './ConsignmentShopBadges.jsx';
 import ConsignmentBuyersGuideModal from './ConsignmentBuyersGuideModal.jsx';
+import ConsignmentExampleListings from './ConsignmentExampleListings.jsx';
 import './consignment-shop.css';
 
 export default function ConsignmentStorefront() {
@@ -22,7 +23,8 @@ export default function ConsignmentStorefront() {
     let alive = true;
     setLoading(true);
     loadCatalog({ category, status: catalogStatus })
-      .then(async (list) => {
+      .then(async (all) => {
+        const list = all.filter((r) => !r.is_example);
         const auctionIds = list.filter((r) => r.sale_method === 'auction').map((r) => r.id);
         const byItem = await loadAuctionsForItems(auctionIds);
         if (!alive) return;
@@ -92,6 +94,7 @@ export default function ConsignmentStorefront() {
           ? Array.from({ length: 4 }, (_, i) => <div key={i} className="cs-card cs-card-skeleton" aria-hidden="true" />)
           : items.map((item) => <ConsignmentItemCard key={item.id} item={item} auction={auctions[item.id]} />)}
       </div>
+      <ConsignmentExampleListings />
       {guideOpen ? <ConsignmentBuyersGuideModal onClose={closeGuide} /> : null}
     </div>
   );

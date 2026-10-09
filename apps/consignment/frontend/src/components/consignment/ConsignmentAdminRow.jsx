@@ -81,6 +81,38 @@ function MoneyInfo({ item }) {
 export default function ConsignmentAdminRow({ item, graceDays, actions }) {
   const { edit, approve, sold, renew, setStatus, deletePhotos, printTag, sellerPaid, undoSellerPaid, auction } = actions;
   const isAuction = item.sale_method === 'auction';
+  if (item.is_example) {
+    return (
+      <tr>
+        <td className="cs-cell-id">{itemLabel(item)}</td>
+        <td className="cs-cell-item">
+          <div className="cs-admin-item">
+            <button type="button" className="cs-admin-thumb" onClick={() => edit(item)} aria-label={`Photos for ${itemLabel(item)}`}>
+              {item.photo_urls?.[0] ? <img src={item.photo_urls[0]} alt="" /> : <span>🎱</span>}
+            </button>
+            <div>
+              <strong>{item.name}</strong>
+              <div className="cs-meta">{item.photo_urls?.length || 0} photo(s)</div>
+            </div>
+          </div>
+        </td>
+        <td data-label="Seller">—</td>
+        <td data-label="Money">{isAuction ? 'Example auction' : `Example ${formatDollars(item.selling_price)}`}</td>
+        <td data-label="Status">
+          Example listing{item.status === 'available' ? '' : ' (hidden)'}
+          <div className="cs-meta">Shown in the shop’s Example listings. Not for sale.</div>
+        </td>
+        <td className="cs-cell-actions">
+          <button type="button" className="cs-btn-secondary" onClick={() => edit(item)}>Edit</button>
+          {item.status === 'available' ? (
+            <button type="button" className="cs-btn-secondary" onClick={() => setStatus(item, 'withdrawn')}>Hide</button>
+          ) : (
+            <button type="button" className="cs-btn-secondary" onClick={() => setStatus(item, 'available')}>Show</button>
+          )}
+        </td>
+      </tr>
+    );
+  }
   return (
     <tr>
       <td className="cs-cell-id">{itemLabel(item)}</td>

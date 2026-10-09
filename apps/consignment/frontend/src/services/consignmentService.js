@@ -57,6 +57,20 @@ export async function loadCatalog({ category = 'all', status = 'available' } = {
   return data || [];
 }
 
+/** Permanent example listings (consignment-examples-2026-10.sql). Empty until that file is run. */
+export async function loadExamples() {
+  const { data, error } = await supabase
+    .from('consignment_catalog')
+    .select('*')
+    .eq('is_example', true)
+    .order('created_at', { ascending: true });
+  if (error) {
+    if (missingSchema(error)) return [];
+    throwNice(error, 'Could not load example listings.');
+  }
+  return data || [];
+}
+
 export async function loadPublicItem(itemNumber) {
   const { data, error } = await supabase
     .from('consignment_catalog')

@@ -5,6 +5,7 @@ import { CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignme
 import { loadPublicItem } from '../../services/consignmentService.js';
 import { itemPriceLabel } from '../../utils/consignmentMoney.js';
 import ConsignmentAuctionPanel from './ConsignmentAuctionPanel.jsx';
+import ConsignmentExampleAuctionPanel from './ConsignmentExampleAuctionPanel.jsx';
 import ConsignmentPhotoZoom from './ConsignmentPhotoZoom.jsx';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 
@@ -40,13 +41,26 @@ export default function ConsignmentItemPage() {
   const photos = item.photo_urls || [];
   const current = photos[photo] || photos[0];
   const isAuction = item.sale_method === 'auction';
+  const isExample = Boolean(item.is_example);
+  let auctionPanel = null;
+  if (isAuction) {
+    auctionPanel = isExample
+      ? <ConsignmentExampleAuctionPanel sample={item.example_auction} />
+      : <ConsignmentAuctionPanel itemId={item.id} />;
+  }
 
   return (
     <div className="cs-page">
+      {isExample ? (
+        <p className="cs-example-banner">
+          <strong>Example listing — not for sale.</strong> This shows what {isAuction ? 'an online auction' : 'an item in the case'} looks
+          like. <Link to={CONSIGNMENT_PATH}>See real items in the shop</Link>.
+        </p>
+      ) : null}
       <p className="cs-kicker">{itemLabel(item)}</p>
       <h1>{item.name}</h1>
-      <span className={`cs-legends${item.status === 'sold' ? ' sold' : ''}`}>
-        {item.status === 'sold' ? 'Sold' : 'Available at Legends Brews & Cues'}
+      <span className={`cs-legends${item.status === 'sold' || isExample ? ' sold' : ''}`}>
+        {isExample ? 'Example — not for sale' : item.status === 'sold' ? 'Sold' : 'Available at Legends Brews & Cues'}
       </span>
       <div className="cs-hero">
         {current ? (
@@ -73,7 +87,7 @@ export default function ConsignmentItemPage() {
           onClose={() => setZooming(false)}
         />
       ) : null}
-      {isAuction ? <ConsignmentAuctionPanel itemId={item.id} /> : <p className="cs-price">{itemPriceLabel(item)}</p>}
+      {isAuction ? auctionPanel : <p className="cs-price">{itemPriceLabel(item)}</p>}
       <p className="cs-meta">
         {categoryLabel(item.category)}
         {brandModelLabel(item) ? ` · ${brandModelLabel(item)}` : ''}
@@ -102,7 +116,9 @@ export default function ConsignmentItemPage() {
       </p>
       <div className="cs-actions">
         <Link className="cs-btn-secondary" to={CONSIGNMENT_PATH}>Back to shop</Link>
-        <ConsignmentContactButton itemNumber={itemLabel(item)} topic="buying">Ask about this item</ConsignmentContactButton>
+        {isExample ? null : (
+          <ConsignmentContactButton itemNumber={itemLabel(item)} topic="buying">Ask about this item</ConsignmentContactButton>
+        )}
       </div>
     </div>
   );

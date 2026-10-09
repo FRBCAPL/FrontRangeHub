@@ -38,16 +38,30 @@ function AuctionLine({ auction }) {
   return <Price label="Ended" amount={auction.winning_bid} />;
 }
 
+function ExampleAuctionLine({ sample }) {
+  if (!sample) return <p className="cs-card-price"><strong>Online auction</strong></p>;
+  const bids = Number(sample.bid_count) || 0;
+  return (
+    <>
+      <Price label="Bid" amount={sample.current_bid} />
+      <p className="cs-card-sub">Sample · {bids} bid{bids === 1 ? '' : 's'}</p>
+    </>
+  );
+}
+
 export default function ConsignmentItemCard({ item, auction }) {
   const photo = item.photo_urls?.[0];
   const isAuction = item.sale_method === 'auction';
   const isSold = item.status === 'sold';
-  const kind = isSold ? 'sold' : isAuction ? 'auction' : 'shelf';
+  const kind = item.is_example ? 'example' : isSold ? 'sold' : isAuction ? 'auction' : 'shelf';
   const ribbon = {
+    example: { icon: '👀', label: isAuction ? 'Example auction' : 'Example' },
     sold: { icon: '✔', label: 'Sold' },
     auction: { icon: '🔨', label: 'Online auction' },
     shelf: { icon: '🏪', label: 'In the case' },
   }[kind];
+  let priceLine = <Price amount={item.selling_price} />;
+  if (isAuction) priceLine = item.is_example ? <ExampleAuctionLine sample={item.example_auction} /> : <AuctionLine auction={auction} />;
   const details = [brandModelLabel(item) || categoryLabel(item.category), item.condition ? conditionLabel(item.condition) : '']
     .filter(Boolean)
     .join(' · ');
@@ -63,7 +77,7 @@ export default function ConsignmentItemCard({ item, auction }) {
       <div className="cs-card-body">
         <h3>{item.name}</h3>
         {details ? <p className="cs-card-sub">{details}</p> : null}
-        {isAuction ? <AuctionLine auction={auction} /> : <Price amount={item.selling_price} />}
+        {priceLine}
       </div>
     </Link>
   );

@@ -1,0 +1,55 @@
+/* Example listings: shop section, card ribbon, item-page banner and the frozen sample auction. */
+
+.cs-examples {
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.4);
+  text-align: center;
+}
+
+.cs-examples h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  color: #e2e8f0;
+}
+
+.cs-examples-lede {
+  margin: 0 0 14px;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
+
+.cs-examples .cs-grid {
+  text-align: left;
+}
+
+.cs-card-example { border-color: rgba(56, 189, 248, 0.45); }
+.cs-card-example:hover { border-color: #38bdf8; box-shadow: 0 10px 24px rgba(14, 165, 233, 0.28); }
+.cs-card-example .cs-card-ribbon { background: #0369a1; color: #f0f9ff; }
+
+.cs-example-banner {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  background: rgba(14, 165, 233, 0.12);
+  color: #e0f2fe;
+  line-height: 1.45;
+}
+
+.cs-example-banner a {
+  color: #7dd3fc;
+  font-weight: 700;
+}
+
+.cs-example-bid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+
+.cs-example-bid button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
