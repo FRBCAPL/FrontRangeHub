@@ -107,6 +107,39 @@
   font-size: clamp(1.2rem, 3vw, 1.5rem);
 }
 
+.cs-home-fold > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cs-home-fold > summary::-webkit-details-marker { display: none; }
+
+.cs-home-fold > summary h2 { margin: 0; }
+
+.cs-home-fold-hint::after {
+  content: 'Show ▾';
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--cs-line);
+  color: var(--cs-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cs-home-fold[open] .cs-home-fold-hint::after { content: 'Hide ▴'; }
+
+.cs-home-fold > summary:hover .cs-home-fold-hint::after { color: var(--cs-ink); border-color: var(--cs-muted); }
+
+.cs-home-fold > summary:focus-visible { outline: 2px solid #38bdf8; outline-offset: 4px; border-radius: 8px; }
+
+.cs-home-fold[open] > summary { margin-bottom: 10px; }
+
 .cs-home-intro {
   margin: 0 0 10px;
   color: #fef9c3;

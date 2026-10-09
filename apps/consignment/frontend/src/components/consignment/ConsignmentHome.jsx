@@ -17,8 +17,11 @@ const pathTo = (to) => (to ? `${CONSIGNMENT_PATH}/${to}` : CONSIGNMENT_PATH);
 
 function StepsSection({ tab, fill, cta }) {
   return (
-    <section className="cs-home-section" id={`cs-home-${tab.id}`} aria-labelledby={`cs-home-${tab.id}-title`}>
-      <h2 id={`cs-home-${tab.id}-title`}>{tab.label}</h2>
+    <details className="cs-home-section cs-home-fold" id={`cs-home-${tab.id}`}>
+      <summary>
+        <h2>{tab.label}</h2>
+        <span className="cs-home-fold-hint" aria-hidden="true" />
+      </summary>
       <p className="cs-home-intro">{fill(tab.intro)}</p>
       <ol className="cs-home-steps">
         {homeSteps(tab.steps).map((step) => <li key={step}>{fill(step)}</li>)}
@@ -28,8 +31,15 @@ function StepsSection({ tab, fill, cta }) {
           <Link className="cs-btn" to={pathTo(cta.to)}>{cta.cta}</Link>
         </div>
       ) : null}
-    </section>
+    </details>
   );
+}
+
+function openSection(tabId) {
+  const el = document.getElementById(`cs-home-${tabId}`);
+  if (!el) return;
+  el.open = true;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 export default function ConsignmentHome() {
@@ -53,11 +63,7 @@ export default function ConsignmentHome() {
             <p>{fill(p.blurb)}</p>
             <div className="cs-home-path-actions">
               <Link className="cs-btn" to={pathTo(p.to)}>{p.cta}</Link>
-              <a className="cs-home-more" href={`#cs-home-${p.tab}`} onClick={(e) => {
-                e.preventDefault();
-                document.getElementById(`cs-home-${p.tab}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              >
+              <a className="cs-home-more" href={`#cs-home-${p.tab}`} onClick={(e) => { e.preventDefault(); openSection(p.tab); }}>
                 How it works ↓
               </a>
             </div>
