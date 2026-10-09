@@ -45,9 +45,11 @@
 }
 
 .cs-shop-filters {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
   gap: 8px;
+  margin-left: auto;
 }
 
 .cs-shop-filters select {
@@ -67,8 +69,83 @@
   outline-offset: 1px;
 }
 
+.cs-shop-badges {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cs-shop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cs-shop-badge-case { background: rgba(126, 34, 206, 0.18); border-color: rgba(168, 85, 247, 0.5); color: #e9d5ff; }
+.cs-shop-badge-case:hover, .cs-shop-badge-case.is-active { background: var(--cs-legends-deep); border-color: var(--cs-legends); color: #faf5ff; }
+
+.cs-shop-badge-auction { background: rgba(22, 163, 74, 0.16); border-color: rgba(34, 197, 94, 0.5); color: #bbf7d0; }
+.cs-shop-badge-auction:hover, .cs-shop-badge-auction.is-active { background: #15803d; border-color: #22c55e; color: #f0fdf4; }
+
+.cs-shop-guide-row {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+}
+
+.cs-shop-badge-guide { background: rgba(14, 165, 233, 0.15); border-color: rgba(56, 189, 248, 0.5); color: #bae6fd; }
+.cs-shop-badge-guide:hover { background: #0369a1; border-color: #38bdf8; color: #f0f9ff; }
+
+.cs-guide-section {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--cs-line, rgba(255, 255, 255, 0.12));
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cs-guide-section h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.cs-guide-section ul {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+  line-height: 1.45;
+  font-size: 0.92rem;
+}
+
+.cs-shop-badge:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.cs-shop-badge-count {
+  min-width: 1.5em;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
 .cs-shop-count {
   margin: 12px 0 0;
+  text-align: center;
   color: var(--cs-muted);
   font-size: 0.85rem;
 }
@@ -240,10 +317,10 @@
 
   .cs-shop-filters {
     width: 100%;
+    grid-template-columns: 1fr 1fr;
   }
 
   .cs-shop-filters select {
-    flex: 1 1 0;
     min-width: 0;
   }
 

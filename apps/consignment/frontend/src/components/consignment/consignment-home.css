@@ -20,6 +20,7 @@
 .cs-home-hero .cs-lede {
   width: min(680px, 100%);
   margin: 0 auto 14px;
+  white-space: pre-line;
 }
 
 .cs-home-hero .cs-legends {

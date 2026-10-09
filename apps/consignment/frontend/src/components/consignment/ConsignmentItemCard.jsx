@@ -46,7 +46,7 @@ export default function ConsignmentItemCard({ item, auction }) {
   const ribbon = {
     sold: { icon: '✔', label: 'Sold' },
     auction: { icon: '🔨', label: 'Online auction' },
-    shelf: { icon: '🏪', label: 'In store at Legends' },
+    shelf: { icon: '🏪', label: 'In the case' },
   }[kind];
   const details = [brandModelLabel(item) || categoryLabel(item.category), item.condition ? conditionLabel(item.condition) : '']
     .filter(Boolean)

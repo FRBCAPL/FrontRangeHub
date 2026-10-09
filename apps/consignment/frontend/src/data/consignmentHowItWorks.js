@@ -64,7 +64,7 @@ export const HOW_IT_WORKS_FOOTER = 'Questions? Ask at the bar at Legends, or mes
 export const HOME_HERO = {
   kicker: 'FRPL Consignment & Auctions',
   title: 'Buy and sell pool gear at Legends',
-  lede: 'Cues, cases and gear from local players. Shop the case at Legends Brews & Cues in Colorado Springs, bid online, or let FRPL sell your gear for you. All pickups are in person; nothing ships.',
+  lede: 'Cues, cases and gear from local players.\nBid online or Shop the case at Legends Brews & Cues in Colorado Springs. \nAll pickups are in person; nothing ships.',
 };
 
 /** `to` is relative to the consignment path; `tab` picks which steps section it points at. */
