@@ -62,9 +62,16 @@ export default function ConsignmentItemCard({ item, auction }) {
   }[kind];
   let priceLine = <Price amount={item.selling_price} />;
   if (isAuction) priceLine = item.is_example ? <ExampleAuctionLine sample={item.example_auction} /> : <AuctionLine auction={auction} />;
-  const details = [brandModelLabel(item) || categoryLabel(item.category), item.condition ? conditionLabel(item.condition) : '']
-    .filter(Boolean)
-    .join(' · ');
+  const brand = (item.brand || '').trim();
+  const model = (item.model || '').trim();
+  let makeLabel = 'Category';
+  if (brand && model) makeLabel = 'Brand / Model';
+  else if (brand) makeLabel = 'Brand';
+  else if (model) makeLabel = 'Model';
+  const details = [
+    [makeLabel, brandModelLabel(item) || categoryLabel(item.category)],
+    ['Condition', item.condition ? conditionLabel(item.condition) : ''],
+  ].filter(([, value]) => value);
 
   return (
     <Link className={`cs-card cs-card-${kind}`} to={consignmentItemPath(item.item_number)}>
@@ -76,7 +83,15 @@ export default function ConsignmentItemCard({ item, auction }) {
       </div>
       <div className="cs-card-body">
         <h3>{item.name}</h3>
-        {details ? <p className="cs-card-sub">{details}</p> : null}
+        {details.length ? (
+          <p className="cs-card-sub cs-card-details">
+            {details.map(([label, value]) => (
+              <span key={label}>
+                <span className="cs-card-detail-label">{label}:</span> {value}
+              </span>
+            ))}
+          </p>
+        ) : null}
         {priceLine}
       </div>
     </Link>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { brandModelLabel, categoryLabel, conditionLabel, itemLabel } from '../../data/consignmentConstants.js';
+import { itemLabel } from '../../data/consignmentConstants.js';
 import { CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadPublicItem } from '../../services/consignmentService.js';
 import { itemPriceLabel } from '../../utils/consignmentMoney.js';
@@ -8,6 +8,7 @@ import ConsignmentAuctionPanel from './ConsignmentAuctionPanel.jsx';
 import ConsignmentExampleAuctionPanel from './ConsignmentExampleAuctionPanel.jsx';
 import ConsignmentPhotoZoom from './ConsignmentPhotoZoom.jsx';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
+import ConsignmentItemDetails from './ConsignmentItemDetails.jsx';
 
 export default function ConsignmentItemPage() {
   const { itemNumber } = useParams();
@@ -88,13 +89,7 @@ export default function ConsignmentItemPage() {
         />
       ) : null}
       {isAuction ? auctionPanel : <p className="cs-price">{itemPriceLabel(item)}</p>}
-      <p className="cs-meta">
-        {categoryLabel(item.category)}
-        {brandModelLabel(item) ? ` · ${brandModelLabel(item)}` : ''}
-        {` · ${conditionLabel(item.condition)}`}
-      </p>
-      {item.specs ? <p className="cs-lede" style={{ whiteSpace: 'pre-line' }}>{item.specs}</p> : null}
-      {item.description ? <p className="cs-lede" style={{ whiteSpace: 'pre-line' }}>{item.description}</p> : null}
+      <ConsignmentItemDetails item={item} />
       {isAuction || item.status === 'sold' ? null : (
         <p className="cs-inspect">
           {item.allow_inspection
