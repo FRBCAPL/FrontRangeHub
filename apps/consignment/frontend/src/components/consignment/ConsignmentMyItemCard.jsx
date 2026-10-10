@@ -5,19 +5,27 @@ import { consignmentItemPath } from '../../utils/consignmentPaths.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
 import { sellerItemStatus } from '../../utils/consignmentSellerStatus.js';
 import ConsignmentFeePayCodes from './ConsignmentFeePayCodes.jsx';
+import ConsignmentNextStepPanel from './ConsignmentNextStepPanel.jsx';
 
 const PUBLIC = ['available', 'sold'];
+const UNSOLD = ['ended_no_bids', 'defaulted'];
 
-/** Auction items whose (re)listing fee may still be due: in review, accepted but not started, or ended unsold. */
+/** Auction item waiting on the seller's pick after it didn't sell. */
+function needsNextStep(item) {
+  return 'relist_policy' in item
+    && item.sale_method === 'auction' && item.status === 'available' && UNSOLD.includes(item.auction?.status);
+}
+
+/** Auction items whose listing fee may still be due: in review, or accepted but not started. */
 function feeMayBeDue(item) {
   if (item.sale_method !== 'auction') return false;
   if (item.status === 'pending') return true;
   const a = item.auction;
-  return item.status === 'available' && (!a || ['cancelled', 'ended_no_bids', 'defaulted'].includes(a.status));
+  return item.status === 'available' && (!a || a.status === 'cancelled');
 }
 
-export default function ConsignmentMyItemCard({ item }) {
-  const status = sellerItemStatus(item);
+export default function ConsignmentMyItemCard({ item, settings, onChanged }) {
+  const status = sellerItemStatus(item, settings);
   const subtitle = brandModelLabel(item);
   const title = (
     <>
@@ -43,6 +51,7 @@ export default function ConsignmentMyItemCard({ item }) {
         ) : null}
         <p className="cs-meta">Submitted {formatShortDate(item.created_at)}</p>
         {feeMayBeDue(item) ? <ConsignmentFeePayCodes item={item} /> : null}
+        {needsNextStep(item) ? <ConsignmentNextStepPanel item={item} settings={settings} onDone={onChanged} /> : null}
       </div>
     </li>
   );

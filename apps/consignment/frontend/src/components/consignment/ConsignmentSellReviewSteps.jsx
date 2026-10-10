@@ -60,7 +60,7 @@ function Row({ label, value }) {
   );
 }
 
-export function StepReview({ form, files, goTo, policy }) {
+export function StepReview({ form, files, goTo, policy, deliverDays = 3 }) {
   const isAuction = form.sale_method === 'auction';
   const method = SALE_METHODS.find((m) => m.id === form.sale_method)?.label;
   return (
@@ -82,7 +82,7 @@ export function StepReview({ form, files, goTo, policy }) {
           label="Listing fee"
           value={`${formatDollars(listingFee(form.seller_payout, form.sale_method, policy))} ${isAuction ? 'before it goes live (Cash App, Venmo or at Legends)' : 'at drop-off'}`}
         />
-        {isAuction ? <Row label="The item" value="You keep it until it sells, then bring it to Legends within 3 days" /> : null}
+        {isAuction ? <Row label="The item" value={`You keep it until it sells, then bring it to Legends within ${deliverDays} days`} /> : null}
       </dl>
       <p className="cs-hint">Look it over, then tap Next to read and accept the {isAuction ? 'auction' : 'consignment'} agreement.</p>
     </>

@@ -60,6 +60,13 @@ export function auctionStatusLabel(id) {
 }
 
 export const CONSENT_METHODS = ['In person', 'Text message', 'Email', 'Phone call'];
+export const SELLER_CHOICE_CONSENT = 'Seller chose it on My items';
+
+export const SELLER_CHOICES = {
+  relist: 'Relist',
+  fixed: 'Switch to fixed price',
+  keep: 'Keep it',
+};
 
 export function feeKindLabel(id) {
   return FEE_KINDS.find((k) => k.id === id)?.label || id || '';

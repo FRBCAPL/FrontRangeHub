@@ -5,8 +5,9 @@
  * - Listing fee: a % of the price (shelf) or reserve (auction), clamped to a min/max. Paid up front (at drop-off, or before an auction goes live), never refunded.
  * - On a sale FRPL earns the greater of the original listing fee or its commission. The fee is already
  *   paid, so the sale only covers commission − fee (never below 0).
- * - Renewals/relists: the first is free when the price/reserve drops by the required %, otherwise
- *   repeatFeePct of the original fee. Those fees are never credited toward the commission.
+ * - Shelf renewals: the first is free when the price drops by the required %. Auction relists: every one
+ *   is free when the reserve drops by that %. Otherwise repeatFeePct of the original fee. Those fees are
+ *   never credited toward the commission.
  * - Shelf items with no commission_pct were priced with the old markup model and keep that math.
  */
 
@@ -119,19 +120,30 @@ export function priceDropPct(previousPrice, newPrice) {
 
 /**
  * Renewal (shelf) or relist (auction) fee.
+ * freeEveryTime: auction relists are free on every qualifying drop; shelf renewals only the first time.
  * Returns { amount, free, dropPct, reason } — reason is a short explanation for the admin.
  */
-export function repeatListingFee({ originalFee, previousPrice, newPrice, priorRepeats = 0, policy = DEFAULT_FEE_POLICY }) {
+export function repeatListingFee({
+  originalFee, previousPrice, newPrice, priorRepeats = 0, policy = DEFAULT_FEE_POLICY, freeEveryTime = false,
+}) {
   const dropPct = priceDropPct(previousPrice, newPrice);
-  const qualifiesFree = priorRepeats === 0 && dropPct >= policy.freeRepeatDropPct;
-  if (qualifiesFree) {
-    return { amount: 0, free: true, dropPct, reason: `Free: first time, price lowered ${dropPct}%.` };
+  const freeAvailable = freeEveryTime || priorRepeats === 0;
+  if (freeAvailable && dropPct >= policy.freeRepeatDropPct) {
+    const reason = freeEveryTime ? `Free: price lowered ${dropPct}%.` : `Free: first time, price lowered ${dropPct}%.`;
+    return { amount: 0, free: true, dropPct, reason };
   }
   const amount = round2((Number(originalFee) * policy.repeatFeePct) / 100);
-  const reason = priorRepeats === 0
+  const reason = freeAvailable
     ? `${policy.repeatFeePct}% of the original fee. Lower the price ${policy.freeRepeatDropPct}% or more to make it free.`
     : `${policy.repeatFeePct}% of the original fee (the free one has been used).`;
   return { amount, free: false, dropPct, reason };
+}
+
+/** Auction relist fee: free on every 10%+ reserve drop. Mirrored in consignment-seller-next-step-2026-10.sql. */
+export function auctionRelistFee({ originalFee, previousReserve, newReserve, policy = DEFAULT_FEE_POLICY }) {
+  return repeatListingFee({
+    originalFee, previousPrice: previousReserve, newPrice: newReserve, policy, freeEveryTime: true,
+  });
 }
 
 /** True for shelf items priced with the commission model (vs. the old private markup). */

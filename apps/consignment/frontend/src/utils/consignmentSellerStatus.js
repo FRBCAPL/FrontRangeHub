@@ -5,8 +5,9 @@ import { saleSplit, usesShelfCommission } from './consignmentFeePolicy.js';
 /**
  * Seller-facing summary of an item from my_consignment_items().
  * Returns { tone, label, lines[] } — tone drives the badge color.
+ * settings: consignment_public_settings row (optional), for auction_delivery_days.
  */
-export function sellerItemStatus(item) {
+export function sellerItemStatus(item, settings = null) {
   const a = item.auction;
   const payout = item.seller_payout_paid ?? item.seller_payout;
 
@@ -40,7 +41,7 @@ export function sellerItemStatus(item) {
   if (item.status === 'returned') return { tone: 'muted', label: 'Returned to you', lines: [] };
   if (item.status === 'withdrawn') return { tone: 'muted', label: 'Withdrawn', lines: [] };
 
-  if (item.sale_method === 'auction') return auctionStatus(item, a);
+  if (item.sale_method === 'auction') return auctionStatus(item, a, Number(settings?.auction_delivery_days) || 3);
 
   return {
     tone: 'live',
@@ -63,7 +64,7 @@ function shelfPayoutLine(item) {
   return `You receive: ${formatDollars(s.sellerFromSale)} if it sells at that price (${why})`;
 }
 
-function auctionStatus(item, a) {
+function auctionStatus(item, a, deliverDays) {
   const reserve = `Your reserve: ${formatDollars(item.seller_payout)}`;
   if (!a || a.status === 'cancelled') {
     return { tone: 'pending', label: 'Accepted — auction not started', lines: [reserve] };
@@ -82,7 +83,7 @@ function auctionStatus(item, a) {
           : `No bids yet — opening bid ${formatDollars(a.opening_bid)}`,
         reserve,
         `Ends ${new Date(a.ends_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
-        a.delivered_at ? null : 'Keep it safe and ready: if it sells, you have 3 days to bring it to Legends.',
+        a.delivered_at ? null : `Keep it safe and ready: if it sells, you have ${deliverDays} days to bring it to Legends.`,
       ].filter(Boolean),
     };
   }
@@ -95,7 +96,7 @@ function auctionStatus(item, a) {
       label: 'Sold — bring it to Legends',
       lines: [
         `Winning bid: ${formatDollars(a.winning_bid)}`,
-        due ? `Deliver it to Legends Brews & Cues by ${due}.` : 'Deliver it to Legends Brews & Cues within 3 days.',
+        due ? `Deliver it to Legends Brews & Cues by ${due}.` : `Deliver it to Legends Brews & Cues within ${deliverDays} days.`,
         'If it isn’t delivered on time, the sale is cancelled, the listing fee isn’t refunded and you lose selling access.',
       ],
     };
@@ -107,11 +108,13 @@ function auctionStatus(item, a) {
       lines: [`Winning bid: ${formatDollars(a.winning_bid)}`, 'Your payout is figured once the buyer pays.'],
     };
   }
+  const canChoose = 'relist_policy' in item && item.status === 'available';
   if (a.status === 'defaulted') {
-    return { tone: 'warn', label: 'Buyer did not pay', lines: ['FRPL will follow up on next steps.'] };
+    return { tone: 'warn', label: 'Buyer did not pay', lines: [canChoose ? 'Choose what happens next below.' : 'FRPL will follow up on next steps.'] };
   }
   if (a.status === 'ended_no_bids') {
-    return { tone: 'warn', label: 'Auction ended — no bids', lines: [a.delivered_at ? 'FRPL will contact you about relisting or pickup.' : 'FRPL will contact you about relisting.'] };
+    const fallback = a.delivered_at ? 'FRPL will contact you about relisting or pickup.' : 'FRPL will contact you about relisting.';
+    return { tone: 'warn', label: 'Auction ended — no bids', lines: [canChoose ? 'Choose what happens next below.' : fallback] };
   }
   return { tone: 'muted', label: 'Auction closed', lines: [] };
 }

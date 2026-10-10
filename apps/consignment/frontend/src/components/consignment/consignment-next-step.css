@@ -1,0 +1,98 @@
+/* "What would you like to do?" panel on My items after an unsold auction. */
+
+.cs-next {
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.08);
+  display: grid;
+  gap: 8px;
+}
+
+.cs-next p {
+  margin: 0;
+}
+
+.cs-next-title,
+.cs-next-picked {
+  font-weight: 800;
+  color: #f1f5f9;
+}
+
+.cs-next-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--cs-line, rgba(148, 163, 184, 0.28));
+}
+
+.cs-next-option {
+  min-height: 38px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--cs-muted, #94a3b8);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.cs-next-option:hover {
+  color: var(--cs-ink, #e2e8f0);
+}
+
+.cs-next-option.active {
+  background: linear-gradient(135deg, #e53e3e, #a855f7);
+  color: #fff;
+}
+
+.cs-next-detail {
+  display: grid;
+  gap: 6px;
+}
+
+.cs-next-detail .cs-field {
+  margin: 0;
+}
+
+.cs-next-free,
+.cs-next-fee {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.cs-next-free {
+  background: rgba(34, 197, 94, 0.15);
+  color: #bbf7d0;
+}
+
+.cs-next-fee {
+  background: rgba(250, 204, 21, 0.12);
+  color: #fef08a;
+}
+
+.cs-next-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Admin Auctions tab: the seller's pick above the action buttons. */
+.cs-seller-choice {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(168, 85, 247, 0.12);
+  font-size: 0.85rem;
+}

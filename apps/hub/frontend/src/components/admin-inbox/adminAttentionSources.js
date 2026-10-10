@@ -26,6 +26,7 @@ export const ATTENTION_GROUPS = [
       { key: 'consignment_expired', label: 'Expired items (renew or return)', to: '/consignment/admin?status=expired' },
       { key: 'consignment_seller_unpaid', label: 'Sold items: seller not paid yet', to: '/consignment/admin?status=seller_unpaid' },
       { key: 'auction_no_bids', label: 'Auctions ended with no bids (relist, switch or return)', to: '/consignment/admin?tab=auctions&status=ended_no_bids' },
+      { key: 'auction_seller_choice', label: 'Unsold auctions: seller picked what\u2019s next (confirm it)', to: '/consignment/admin?tab=auctions&status=all' },
       { key: 'auction_delivery', label: 'Won auctions waiting for the seller to deliver', to: '/consignment/admin?tab=auctions&status=awaiting_payment' },
       { key: 'auction_overdue', label: 'Auction winners overdue on payment', to: '/consignment/admin?tab=auctions&status=awaiting_payment' },
     ],

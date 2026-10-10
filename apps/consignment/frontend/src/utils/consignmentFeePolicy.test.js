@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  auctionRelistFee,
   breakEvenPrice,
   DEFAULT_FEE_POLICY,
   feePolicyFrom,
@@ -114,6 +115,18 @@ describe('renewal / relist fees', () => {
 
   it('later times are half even with a drop', () => {
     const r = repeatListingFee({ originalFee: 20, previousPrice: 340, newPrice: 250, priorRepeats: 1 });
+    assert.equal(r.amount, 10);
+    assert.equal(r.free, false);
+  });
+
+  it('auction relists are free on every 10%+ drop', () => {
+    const r = auctionRelistFee({ originalFee: 20, previousReserve: 340, newReserve: 300 });
+    assert.equal(r.amount, 0);
+    assert.equal(r.free, true);
+  });
+
+  it('auction relists without the drop are half', () => {
+    const r = auctionRelistFee({ originalFee: 20, previousReserve: 340, newReserve: 320 });
     assert.equal(r.amount, 10);
     assert.equal(r.free, false);
   });

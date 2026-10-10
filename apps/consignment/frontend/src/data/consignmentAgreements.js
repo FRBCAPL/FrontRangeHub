@@ -26,7 +26,7 @@ export const DEFAULT_AUCTION_AGREEMENT = `By checking the box you confirm that:
 • The winner has {payDays} days from when the item arrives at Legends to pay. If they don't, FRPL may offer the item to the next-highest bidder at their bid, or relist it.
 • The winner looks the item over at Legends before paying. If it isn't as described, they can decline it, and FRPL may offer it to the next-highest bidder or relist it.
 • You can ask FRPL to withdraw the item before the first bid. Once bidding starts, the auction runs to the end and the reserve can't be changed.
-• If the item doesn't sell, or the winner declines or doesn't pay, you can relist it, switch it to a fixed-price consignment, or pick it up from Legends within {graceDays} days (if you delivered it). Your first relist is free if you lower the reserve {freeDrop} or more; otherwise a relist costs {repeatShare} the original listing fee. Relist fees don't count toward FRPL's share.
+• If the item doesn't sell, or the winner declines or doesn't pay, you choose on your My items page: relist it, switch it to a fixed-price consignment, or keep it (pick it up from Legends within {graceDays} days if you delivered it). Every relist is free if you lower the reserve {freeDrop} or more; otherwise a relist costs {repeatShare} the original listing fee. Relist fees don't count toward FRPL's share.
 ${SHARED_TERMS}`;
 
 export const CONSIGNMENT_AGREEMENT_PLACEHOLDERS = '{fee}, {shelfCommission}, {freeDrop}, {repeatShare}, {days}, {graceDays}';
@@ -46,7 +46,8 @@ ${SHARED_TERMS}`;
 
 const PLACEHOLDER_PREFIX = 'This is a placeholder';
 
-// Phrases from the agreements written for the old fee model (Seller Payout + markup, flat fee kept separate).
+// Phrases from agreements written for older rules (Seller Payout + markup, flat fee kept separate,
+// only the first auction relist free).
 const OUTDATED_PHRASES = [
   'Seller Payout',
   'does not come out',
@@ -55,6 +56,7 @@ const OUTDATED_PHRASES = [
   'a new fee applies',
   'a new listing fee may apply',
   'paid at drop-off before the auction starts',
+  'Your first relist is free',
 ];
 
 // Every current agreement must cover these; saved text without them predates the liability and unclaimed terms.

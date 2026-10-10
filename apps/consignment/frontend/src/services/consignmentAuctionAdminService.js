@@ -1,5 +1,5 @@
 import { supabase } from '@shared/config/supabase.js';
-import { MIN_AUCTION_DAYS, meetsMinimumLength } from '../utils/consignmentAuctionDates.js';
+import { auctionEndFrom } from '../utils/consignmentAuctionDates.js';
 import { openingBid } from '../utils/consignmentAuctionMath.js';
 import { recordFee } from './consignmentFeesService.js';
 import { changePayout } from './consignmentPayoutService.js';
@@ -97,7 +97,7 @@ export async function loadAuctionSettings() {
  * payout guard keeps it from selling below the reserve.
  */
 export async function startAuction(item, {
-  reserve, commissionPct, buyNowPrice, endsAt, listingFee, feeKind = 'auction_listing', feePaidNow, paymentMethod,
+  reserve, commissionPct, buyNowPrice, listingFee, feeKind = 'auction_listing', feePaidNow, paymentMethod,
   consent = null, feeNote = null, atLegends = false,
 }) {
   const min = Number(reserve);
@@ -105,9 +105,6 @@ export async function startAuction(item, {
   if (!opening) throw new Error('Enter a valid reserve.');
   const buyNow = buyNowPrice === '' || buyNowPrice == null ? null : Number(buyNowPrice);
   if (buyNow != null && !(buyNow > opening)) throw new Error('Buy It Now must be higher than the reserve.');
-  const end = new Date(endsAt);
-  if (!meetsMinimumLength(end)) throw new Error(`Auctions must run at least ${MIN_AUCTION_DAYS} days. Pick a later end time.`);
-
   const current = Number(item.seller_payout);
   if (min !== current) {
     const canLowerFreely = item.status === 'pending' && !item.intake_at;
@@ -123,7 +120,9 @@ export async function startAuction(item, {
     }
   }
 
-  const now = new Date().toISOString();
+  const startedAt = new Date();
+  const now = startedAt.toISOString();
+  const end = auctionEndFrom(startedAt);
   const { data: auction, error } = await supabase
     .from('consignment_auctions')
     .insert({

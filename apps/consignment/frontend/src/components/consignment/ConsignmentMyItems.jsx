@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import { currentUserId, onAuthChange, openHubLogin } from '../../services/consignmentAuctionService.js';
 import { currentUserEmail, loadMyItems } from '../../services/consignmentSellerService.js';
+import { loadPublicSettings } from '../../services/consignmentSellerAccessService.js';
 import ConsignmentMyItemCard from './ConsignmentMyItemCard.jsx';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 
@@ -12,6 +13,13 @@ export default function ConsignmentMyItems() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    let alive = true;
+    loadPublicSettings().then((row) => { if (alive) setSettings(row); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   const load = useCallback(async (id) => {
     setUserId(id);
@@ -68,7 +76,7 @@ export default function ConsignmentMyItems() {
           ) : null}
           {items.length ? (
             <ul className="cs-mine-list">
-              {items.map((item) => <ConsignmentMyItemCard key={item.id} item={item} />)}
+              {items.map((item) => <ConsignmentMyItemCard key={item.id} item={item} settings={settings} onChanged={() => load(userId)} />)}
             </ul>
           ) : null}
         </>

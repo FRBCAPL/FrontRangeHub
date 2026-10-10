@@ -50,6 +50,7 @@ export default function ConsignmentSubmit() {
   }));
   const [files, setFiles] = useState([]);
   const [days, setDays] = useState(CONSIGNMENT_DAYS);
+  const [deliverDays, setDeliverDays] = useState(3);
   const [policy, setPolicy] = useState(DEFAULT_FEE_POLICY);
   const [agreementText, setAgreementText] = useState(() => fillConsignmentAgreement(DEFAULT_CONSIGNMENT_AGREEMENT, null));
   const [auctionAgreement, setAuctionAgreement] = useState(() => fillAuctionAgreement(DEFAULT_AUCTION_AGREEMENT, null));
@@ -66,6 +67,7 @@ export default function ConsignmentSubmit() {
       .then((row) => {
         if (!row) return;
         if (row.consignment_days) setDays(Number(row.consignment_days));
+        if (row.auction_delivery_days) setDeliverDays(Number(row.auction_delivery_days));
         setPolicy(feePolicyFrom(row));
         setAgreementText(fillConsignmentAgreement(consignmentAgreementTemplate(row), row));
         setAuctionAgreement(fillAuctionAgreement(auctionAgreementTemplate(row), row));
@@ -197,6 +199,7 @@ export default function ConsignmentSubmit() {
           setFiles={setFiles}
           policy={policy}
           days={days}
+          deliverDays={deliverDays}
           agreementText={isAuction ? auctionAgreement : agreementText}
           busy={busy}
           submitError={error}

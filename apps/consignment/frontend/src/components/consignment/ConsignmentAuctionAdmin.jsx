@@ -56,6 +56,11 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
     delivered: run(markAuctionDelivered, (a) => `${itemLabel(a.item)} is at Legends? The winner's ${settings?.auction_payment_days ?? 7}-day window to inspect and pay starts now. Let them know it's ready.`),
     notDelivered: run(auctionNotDelivered, (a) => `The seller didn't deliver ${itemLabel(a.item)}? This cancels the sale (the winner owes nothing), withdraws the item, keeps the listing fee and removes the seller's selling access.`),
     relist: setRelisting,
+    confirmChoice: (a) => {
+      if (a.seller_choice === 'relist') setRelisting({ ...a, sellerReserve: a.seller_choice_reserve });
+      else if (a.seller_choice === 'fixed') actions.toFixed(a);
+      else if (a.seller_choice === 'keep') actions.returned(a);
+    },
     paid: setPaying,
     unpaid: setUnpaid,
     secondChance: setSecondChance,
@@ -96,6 +101,7 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
           isRelist
           previousReserve={relisting.opening_bid}
           previouslyDelivered={Boolean(relisting.delivered_at)}
+          sellerReserve={relisting.sellerReserve ?? null}
           onClose={closeWith(setRelisting)}
         />
       ) : null}

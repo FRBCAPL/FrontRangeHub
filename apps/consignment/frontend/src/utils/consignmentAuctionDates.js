@@ -1,39 +1,11 @@
-export const MIN_AUCTION_DAYS = 7;
-export const AUCTION_LENGTH_OPTIONS = [7, 10, 14];
-export const DEFAULT_AUCTION_DAYS = 7;
-export const AUCTION_END_WEEKDAY = 0;
-export const AUCTION_END_HOUR = 21;
-const DAY_MS = 24 * 60 * 60 * 1000;
-/** Slack so a default end is still a full minimum length when the admin saves a bit later. */
-const SAVE_SLACK_MS = 60 * 60 * 1000;
+/** Every auction runs exactly this long from the moment it starts (late bids can still extend it). */
+export const AUCTION_DAYS = 7;
 
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-/** True when an auction starting now and ending at `end` meets the minimum length. */
-export function meetsMinimumLength(end, now = new Date()) {
-  return new Date(end).getTime() - new Date(now).getTime() >= MIN_AUCTION_DAYS * DAY_MS;
-}
-
-/**
- * Default end for an auction started at `start` running at least `days` days (never under
- * MIN_AUCTION_DAYS). Ends at 9 PM local; with `snapToWeekday`, moves forward to the next Sunday.
- */
-export function defaultAuctionEnd(start, days, { snapToWeekday = true } = {}) {
-  const length = Math.max(Number(days) || 0, MIN_AUCTION_DAYS);
-  const begin = new Date(start);
-  const end = new Date(begin);
-  end.setDate(end.getDate() + length);
-  end.setHours(AUCTION_END_HOUR, 0, 0, 0);
-  if (snapToWeekday) end.setDate(end.getDate() + ((AUCTION_END_WEEKDAY - end.getDay() + 7) % 7));
-  while (end.getTime() - begin.getTime() < length * DAY_MS + SAVE_SLACK_MS) {
-    end.setDate(end.getDate() + (snapToWeekday ? 7 : 1));
-  }
+/** End time for an auction starting at `start`: the same time of day, AUCTION_DAYS later. */
+export function auctionEndFrom(start = new Date()) {
+  const end = new Date(start);
+  end.setDate(end.getDate() + AUCTION_DAYS);
   return end;
-}
-
-export function auctionEndLabel() {
-  const hour = AUCTION_END_HOUR % 12 || 12;
-  return `${WEEKDAYS[AUCTION_END_WEEKDAY]} ${hour} ${AUCTION_END_HOUR >= 12 ? 'PM' : 'AM'}`;
 }
 
 /** Value for <input type="datetime-local"> in local time. */
@@ -62,8 +34,4 @@ export function formatCountdown(ms) {
   if (d > 0) return `${d}d ${h}h`;
   if (h > 0) return `${h}h ${m}m`;
   return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-export function hoursBetween(a, b) {
-  return (new Date(b).getTime() - new Date(a).getTime()) / (60 * 60 * 1000);
 }

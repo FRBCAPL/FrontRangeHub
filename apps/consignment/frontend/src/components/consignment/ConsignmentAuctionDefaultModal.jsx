@@ -43,8 +43,8 @@ export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
           <input value={reason} onChange={(e) => setReason(e.target.value)} />
         </div>
         <p className="cs-hint">
-          Nothing is awarded automatically. Afterward you can offer it to another bidder, relist it, switch it to
-          fixed price, or return it to the seller.
+          Nothing is awarded automatically. Afterward you can offer it to another bidder, or the seller picks
+          relist, fixed price or keep it on My items and you confirm it from the Auctions tab.
         </p>
         {error ? <p className="cs-error">{error}</p> : null}
         <div className="cs-actions">

@@ -1,9 +1,10 @@
 import React from 'react';
-import { auctionStatusLabel, brandModelLabel, itemLabel } from '../../data/consignmentConstants.js';
+import { auctionStatusLabel, brandModelLabel, itemLabel, SELLER_CHOICES } from '../../data/consignmentConstants.js';
 import { awaitingDelivery, bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { auctionSplit } from '../../utils/consignmentAuctionMath.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import './consignment-next-step.css';
 
 function Person({ label, user }) {
   if (!user) return null;
@@ -111,9 +112,18 @@ export default function ConsignmentAuctionAdminRow({ auction, actions }) {
         {auction.status === 'defaulted' && itemStillAuction && auction.bid_count > 1 ? (
           <button type="button" className="cs-btn" onClick={() => actions.secondChance(auction)}>Offer to next bidder</button>
         ) : null}
+        {unsold && auction.seller_choice ? (
+          <div className="cs-seller-choice">
+            <span>
+              Seller picked: <strong>{SELLER_CHOICES[auction.seller_choice]}</strong>
+              {auction.seller_choice === 'relist' ? ` at ${formatDollars(auction.seller_choice_reserve)}` : ''}
+            </span>
+            <button type="button" className="cs-btn" onClick={() => actions.confirmChoice(auction)}>Confirm</button>
+          </div>
+        ) : null}
         {unsold ? (
           <>
-            <button type="button" className="cs-btn" onClick={() => actions.relist(auction)}>Relist</button>
+            <button type="button" className={auction.seller_choice ? 'cs-btn-secondary' : 'cs-btn'} onClick={() => actions.relist(auction)}>Relist</button>
             <button type="button" className="cs-btn-secondary" onClick={() => actions.toFixed(auction)}>Fixed price</button>
             <button type="button" className="cs-btn-secondary" onClick={() => actions.returned(auction)}>Returned</button>
           </>
