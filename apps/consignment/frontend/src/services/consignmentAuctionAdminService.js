@@ -1,4 +1,5 @@
 import { supabase } from '@shared/config/supabase.js';
+import { MIN_AUCTION_DAYS, meetsMinimumLength } from '../utils/consignmentAuctionDates.js';
 import { openingBid } from '../utils/consignmentAuctionMath.js';
 import { recordFee } from './consignmentFeesService.js';
 import { changePayout } from './consignmentPayoutService.js';
@@ -105,7 +106,7 @@ export async function startAuction(item, {
   const buyNow = buyNowPrice === '' || buyNowPrice == null ? null : Number(buyNowPrice);
   if (buyNow != null && !(buyNow > opening)) throw new Error('Buy It Now must be higher than the reserve.');
   const end = new Date(endsAt);
-  if (!(end.getTime() > Date.now() + 60 * 60 * 1000)) throw new Error('The end time must be at least an hour from now.');
+  if (!meetsMinimumLength(end)) throw new Error(`Auctions must run at least ${MIN_AUCTION_DAYS} days. Pick a later end time.`);
 
   const current = Number(item.seller_payout);
   if (min !== current) {

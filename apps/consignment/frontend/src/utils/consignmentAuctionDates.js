@@ -1,27 +1,31 @@
-export const AUCTION_LENGTH_OPTIONS = [3, 5, 7, 10, 14];
+export const MIN_AUCTION_DAYS = 7;
+export const AUCTION_LENGTH_OPTIONS = [7, 10, 14];
 export const DEFAULT_AUCTION_DAYS = 7;
 export const AUCTION_END_WEEKDAY = 0;
 export const AUCTION_END_HOUR = 21;
-const MIN_AUCTION_HOURS = 24;
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Slack so a default end is still a full minimum length when the admin saves a bit later. */
+const SAVE_SLACK_MS = 60 * 60 * 1000;
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+/** True when an auction starting now and ending at `end` meets the minimum length. */
+export function meetsMinimumLength(end, now = new Date()) {
+  return new Date(end).getTime() - new Date(now).getTime() >= MIN_AUCTION_DAYS * DAY_MS;
+}
+
 /**
- * Default end for an auction started at `start` running about `days` days.
- * Ends at 9 PM local; with `snapToWeekday`, moves to the nearest Sunday (within ±3 days),
- * pushing a week later if that would leave less than 24 hours.
+ * Default end for an auction started at `start` running at least `days` days (never under
+ * MIN_AUCTION_DAYS). Ends at 9 PM local; with `snapToWeekday`, moves forward to the next Sunday.
  */
 export function defaultAuctionEnd(start, days, { snapToWeekday = true } = {}) {
+  const length = Math.max(Number(days) || 0, MIN_AUCTION_DAYS);
   const begin = new Date(start);
   const end = new Date(begin);
-  end.setDate(end.getDate() + Number(days));
+  end.setDate(end.getDate() + length);
   end.setHours(AUCTION_END_HOUR, 0, 0, 0);
-  if (snapToWeekday) {
-    let delta = (AUCTION_END_WEEKDAY - end.getDay() + 7) % 7;
-    if (delta > 3) delta -= 7;
-    end.setDate(end.getDate() + delta);
-  }
-  while (end.getTime() - begin.getTime() < MIN_AUCTION_HOURS * 60 * 60 * 1000) {
+  if (snapToWeekday) end.setDate(end.getDate() + ((AUCTION_END_WEEKDAY - end.getDay() + 7) % 7));
+  while (end.getTime() - begin.getTime() < length * DAY_MS + SAVE_SLACK_MS) {
     end.setDate(end.getDate() + (snapToWeekday ? 7 : 1));
   }
   return end;

@@ -107,28 +107,6 @@
 .cs-shop-badge-guide { background: rgba(14, 165, 233, 0.15); border-color: rgba(56, 189, 248, 0.5); color: #bae6fd; }
 .cs-shop-badge-guide:hover { background: #0369a1; border-color: #38bdf8; color: #f0f9ff; }
 
-.cs-guide-section {
-  margin: 0 0 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--cs-line, rgba(255, 255, 255, 0.12));
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.cs-guide-section h3 {
-  margin: 0 0 6px;
-  font-size: 1rem;
-}
-
-.cs-guide-section ul {
-  margin: 0;
-  padding-left: 20px;
-  display: grid;
-  gap: 6px;
-  line-height: 1.45;
-  font-size: 0.92rem;
-}
-
 .cs-shop-badge:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;

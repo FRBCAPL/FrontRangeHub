@@ -18,6 +18,8 @@ import {
   defaultAuctionEnd,
   formatDateTime,
   hoursBetween,
+  meetsMinimumLength,
+  MIN_AUCTION_DAYS,
   toLocalInputValue,
 } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
@@ -77,6 +79,8 @@ export default function ConsignmentAuctionStartModal({
   const atOpening = saleSplit(opening, commission, credit);
   const atBuyNow = buyNow !== '' ? saleSplit(buyNow, commission, credit) : null;
   const lengthHours = endsAt ? hoursBetween(new Date(), endsAt) : 0;
+  const tooShort = !endsAt || !meetsMinimumLength(endsAt);
+  const minEnd = toLocalInputValue(new Date(Date.now() + MIN_AUCTION_DAYS * 24 * 60 * 60 * 1000));
   const feeUnpaid = Number(fee) > 0 && !feePaid;
 
   const resetEnd = (nextDays, nextSnap) => {
@@ -188,16 +192,17 @@ export default function ConsignmentAuctionStartModal({
           </div>
           <div className="cs-field">
             <label>Ends</label>
-            <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} required />
+            <input type="datetime-local" value={endsAt} min={minEnd} onChange={(e) => setEndsAt(e.target.value)} required />
           </div>
         </div>
         <label className="cs-check">
           <input type="checkbox" checked={snap} onChange={(e) => { setSnap(e.target.checked); resetEnd(days, e.target.checked); }} />
-          End on the nearest {auctionEndLabel()}
+          End on the following {auctionEndLabel()}
         </label>
         <p className="cs-hint">
           Ends {formatDateTime(endsAt)} ({Math.round((lengthHours / 24) * 10) / 10} days). Bids in the final minutes extend it.
         </p>
+        {tooShort ? <p className="cs-error">Auctions must run at least {MIN_AUCTION_DAYS} days. Pick a later end time.</p> : null}
 
         <ConsignmentAuctionFeeFields
           isRelist={isRelist}
@@ -212,7 +217,7 @@ export default function ConsignmentAuctionStartModal({
 
         {error ? <p className="cs-error">{error}</p> : null}
         <div className="cs-actions">
-          <button className="cs-btn" type="submit" disabled={busy || !opening || !fees || feeUnpaid}>
+          <button className="cs-btn" type="submit" disabled={busy || !opening || !fees || feeUnpaid || tooShort}>
             {busy ? 'Starting…' : 'Start auction'}
           </button>
           <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)}>Cancel</button>
