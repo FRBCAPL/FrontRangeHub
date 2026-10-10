@@ -8,52 +8,55 @@ export const HOW_IT_WORKS_TABS = [
   {
     id: 'buying',
     label: 'Buying',
+    icon: '🛒',
     intro: 'Fixed-price items are in the case at Legends Brews & Cues in Colorado Springs. Auction items stay with the seller until they sell.',
     steps: [
-      'Everything is in person at Legends in Colorado Springs, CO: inspection, payment and pickup. Nothing is shipped.',
-      'Browse here, or scan the QR tag on any item in the case at Legends.',
-      'Fixed-price items are bought first come first serve, in person at Legends.',
-      'Prices don’t include sales tax; tax is added at the register. This site does not take payment.',
-      'Some items can be inspected at Legends: ask at the bar and staff will hold your ID while you look. You’re responsible for any damage while inspecting.',
-      'All sales are final and items are sold as-is. Look the item over before you pay; if it isn’t as described, you don’t have to buy it.',
-      'Online auctions: log in with your FRPL account to bid. No account? Sign up from the Log in button; FRPL approves new accounts before they can bid.',
-      'Bids go up in $5 steps under $500 and $10 steps at $500 and up.',
-      'A bid in the last {softClose} minutes adds {softClose} more minutes, so nobody can snipe it at the buzzer.',
-      'Some auctions have Buy It Now. It disappears once bidding reaches that price.',
-      'Won an auction? The seller brings it to Legends, and FRPL lets you know when it arrives. Then you have {payDays} days to look it over, pay and pick it up. If it isn’t as described, you can decline it. Winners who don’t pay for an item as described may lose bidding privileges.',
+      { group: 'The basics', icon: '📍', title: 'In person only', text: 'Everything is in person at Legends in Colorado Springs, CO: inspection, payment and pickup. Nothing is shipped.' },
+      { icon: '🔎', title: 'Browse or scan', text: 'Browse here, or scan the QR tag on any item in the case at Legends.' },
+      { icon: '🏃', title: 'First come, first served', text: 'Fixed-price items are bought first come first serve, in person at Legends.' },
+      { icon: '🧾', title: 'Tax at the register', text: 'Prices don’t include sales tax; tax is added at the register. This site does not take payment.' },
+      { icon: '🪪', title: 'Inspect before you buy', text: 'Some items can be inspected at Legends: ask at the bar and staff will hold your ID while you look. You’re responsible for any damage while inspecting.' },
+      { icon: '✅', title: 'Sold as-is', text: 'All sales are final and items are sold as-is. Look the item over before you pay; if it isn’t as described, you don’t have to buy it.' },
+      { group: 'Online auctions', icon: '🔐', title: 'Log in to bid', text: 'Online auctions: log in with your FRPL account to bid. No account? Sign up from the Log in button; FRPL approves new accounts before they can bid.' },
+      { icon: '📈', title: 'Bid steps', text: 'Bids go up in $5 steps under $500 and $10 steps at $500 and up.' },
+      { icon: '⏱️', title: 'No sniping', text: 'A bid in the last {softClose} minutes adds {softClose} more minutes, so nobody can snipe it at the buzzer.' },
+      { icon: '⚡', title: 'Buy It Now', text: 'Some auctions have Buy It Now. It disappears once bidding reaches that price.' },
+      { icon: '🏆', title: 'Won it?', text: 'Won an auction? The seller brings it to Legends, and FRPL lets you know when it arrives. Then you have {payDays} days to look it over, pay and pick it up. If it isn’t as described, you can decline it. Winners who don’t pay for an item as described may lose bidding privileges.' },
     ],
   },
   {
     id: 'consign',
     label: 'Sell: Consignment',
+    icon: '🏷️',
     intro: 'You set the price. We sell it from the case at Legends.',
     steps: [
-      'Selling is open to approved FRPL sellers. Log in and request seller access.',
-      'You’ll need to drop the item off at Legends in Colorado Springs, CO.',
-      'Submit your item online with photos and your price.',
-      'FRPL reviews it and gets in touch. We may accept it, suggest changes, or decline.',
-      'If accepted, bring it to Legends and pay the listing fee. It stays in the case for {days} days.',
-      'Your price is never lowered without your OK. Fees and terms are in the consignment agreement.',
-      'You choose whether buyers may inspect your item at Legends.',
-      'Sold? Collect your payment at Legends within 7 days of the sale.',
-      'Not sold after {days} days? Renew it, or pick it up within {graceDays} days. Items left longer become unclaimed property.',
+      { icon: '🔑', title: 'Get seller access', text: 'Selling is open to approved FRPL sellers. Log in and request seller access.' },
+      { icon: '📍', title: 'Drop off at Legends', text: 'You’ll need to drop the item off at Legends in Colorado Springs, CO.' },
+      { icon: '📸', title: 'Submit it online', text: 'Submit your item online with photos and your price.' },
+      { icon: '👀', title: 'FRPL reviews it', text: 'FRPL reviews it and gets in touch. We may accept it, suggest changes, or decline.' },
+      { icon: '🏪', title: 'Into the case', text: 'If accepted, bring it to Legends and pay the listing fee. It stays in the case for {days} days.' },
+      { icon: '💲', title: 'Your price, your call', text: 'Your price is never lowered without your OK. Fees and terms are in the consignment agreement.' },
+      { icon: '🪪', title: 'Inspection is your choice', text: 'You choose whether buyers may inspect your item at Legends.' },
+      { icon: '💵', title: 'Sold? Get paid', text: 'Sold? Collect your payment at Legends within 7 days of the sale.' },
+      { icon: '🔁', title: 'Didn’t sell?', text: 'Not sold after {days} days? Renew it, or pick it up within {graceDays} days. Items left longer become unclaimed property.' },
     ],
   },
   {
     id: 'auction',
     label: 'Sell: Auction',
+    icon: '🔨',
     intro: 'You set the reserve. Bidders set the price.',
     steps: [
-      'Selling is open to approved FRPL sellers. Log in and request seller access.',
-      'You’ll need to bring the item to Legends in Colorado Springs, CO when it sells.',
-      'On the Sell page, choose Online auction and enter your reserve: the lowest price you’ll accept. Bidding starts there.',
-      'Add an optional Buy It Now price. It disappears once bidding reaches it.',
-      { text: 'If FRPL accepts it, pay the listing fee by Cash App or Venmo from your My items page, or in person at Legends. Your auction goes live once it’s paid.', home: false },
-      'You keep the item while it’s up for auction. Auctions usually run 7 days and end Sunday at 9 PM.',
-      'Sold? Bring it to Legends within {deliverDays} days. The winner looks it over and pays there. Miss the deadline and the sale is cancelled, the fee isn’t refunded, and you lose selling access.',
-      'Collect your payment at Legends within 7 days of the winner paying.',
-      'No bids? Relist it or switch to a fixed-price consignment. Nothing to pick up; it never left your hands.',
-      'Fees and terms are in the auction agreement.',
+      { icon: '🔑', title: 'Get seller access', text: 'Selling is open to approved FRPL sellers. Log in and request seller access.' },
+      { icon: '📍', title: 'Delivered to Legends', text: 'You’ll need to bring the item to Legends in Colorado Springs, CO when it sells.' },
+      { icon: '🎯', title: 'Set your reserve', text: 'On the Sell page, choose Online auction and enter your reserve: the lowest price you’ll accept. Bidding starts there.' },
+      { icon: '⚡', title: 'Optional Buy It Now', text: 'Add an optional Buy It Now price. It disappears once bidding reaches it.' },
+      { icon: '💳', title: 'Pay the listing fee', text: 'If FRPL accepts it, pay the listing fee by Cash App or Venmo from your My items page, or in person at Legends. Your auction goes live once it’s paid.', home: false },
+      { icon: '🗓️', title: 'You keep it meanwhile', text: 'You keep the item while it’s up for auction. Auctions usually run 7 days and end Sunday at 9 PM.' },
+      { icon: '🚚', title: 'Sold? Deliver it', text: 'Sold? Bring it to Legends within {deliverDays} days. The winner looks it over and pays there. Miss the deadline and the sale is cancelled, the fee isn’t refunded, and you lose selling access.' },
+      { icon: '💵', title: 'Get paid', text: 'Collect your payment at Legends within 7 days of the winner paying.' },
+      { icon: '🔁', title: 'No bids?', text: 'No bids? Relist it or switch to a fixed-price consignment. Nothing to pick up; it never left your hands.' },
+      { icon: '📄', title: 'Fees and terms', text: 'Fees and terms are in the auction agreement.' },
     ],
   },
 ];
@@ -118,8 +121,9 @@ export const HOME_COMPARE = [
 ];
 
 /**
- * A step is a string, or { text, home }: `text` is the pop-up version; `home` replaces it on the
- * home page (a string), or hides it there (false).
+ * A step is a string, or { text, home, icon, title, group }: `text` is the pop-up version; `home` replaces it
+ * on the home page (a string), or hides it there (false). `icon`/`title` label the step in the pop-up;
+ * `group` starts a new sub-heading there.
  */
 export const stepText = (step) => (typeof step === 'string' ? step : step.text);
 

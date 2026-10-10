@@ -31,7 +31,7 @@ import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/compo
 
 const CUESYNC_URL = 'https://www.cuesync.us';
 
-const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
+const Homepage = ({ canRunTournament = false }) => {
   const navigate = useNavigate();
   const arcadeNewScoreBadge = useArcadeNewScoreBadge();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
@@ -206,7 +206,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
     },
     {
       id: 'consignment',
-      icon: '🎱',
+      icon: '🏪',
       title: 'FRPL Consignment',
       blurb: 'Cues, cases and gear for sale by local players\nat Legends.',
       highlight: 'Shop the case · Bid online · Sell your gear',
@@ -232,6 +232,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       actions: [
         { label: 'Clips', onClick: openExternal(CUELESS_FEATURED_FACEBOOK_REEL) },
         { label: 'Streams', onClick: openExternal(CUELESS_FULL_MATCH_PLAYLIST_URL) },
+        { label: 'Book Cueless Now!', onClick: (e) => { e.stopPropagation(); navigate('/cueless?section=book'); } },
       ],
     },
     {
@@ -275,9 +276,7 @@ const Homepage = ({ canRunTournament = false, canAdmin = false }) => {
       actions: [
         { label: 'Game Finder', onClick: (e) => handleNavigateToArcadeTab(e, 'find') },
         { label: 'High Scores', onClick: (e) => handleNavigateToArcadeTab(e, 'leaderboards') },
-        ...(canAdmin
-          ? [{ label: 'Admin', onClick: (e) => { e.stopPropagation(); navigate('/arcade/admin'); } }]
-          : []),
+        { label: 'Submit Score', onClick: (e) => handleNavigateToArcadeTab(e, 'submit') },
       ],
     },
     {
