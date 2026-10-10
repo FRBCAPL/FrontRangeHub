@@ -169,6 +169,11 @@
     height: auto;
   }
 
+  .hal:not(.hal--featured) .cueless-spin {
+    --cube-w: 2.5rem;
+    --cube-h: 1.8rem;
+  }
+
   .hal:not(.hal--featured) .hal-badge {
     top: 6px;
     right: 8px;

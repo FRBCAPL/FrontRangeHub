@@ -17,6 +17,11 @@
   animation: cueless-spin 12s linear infinite;
 }
 
+/* index.css shortens every animation to 0.2s on mobile; keep the spin slow. */
+.cueless-spin .cueless-spin-inner {
+  animation-duration: 12s !important;
+}
+
 .cueless-spin-face {
   position: absolute;
   inset: 0;

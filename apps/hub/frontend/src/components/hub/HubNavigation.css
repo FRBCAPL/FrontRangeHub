@@ -887,9 +887,10 @@ html body .hub-navigation.homepage-nav .nav-content {
   padding-top: 0 !important;
 }
 
+/* --hub-nav-h (useHubNavHeightVar) grows the offset when the fixed nav wraps taller. */
 @media (max-width: 768px) {
   .main-content-wrapper {
-    padding-top: 50px !important;
+    padding-top: max(50px, calc(var(--hub-nav-h, 0px) - 6px)) !important;
   }
 
   .main-content-wrapper.estateit-shell {
@@ -899,7 +900,7 @@ html body .hub-navigation.homepage-nav .nav-content {
 
 @media (max-width: 480px) {
   .main-content-wrapper {
-    padding-top: 45px !important;
+    padding-top: max(45px, calc(var(--hub-nav-h, 0px) - 6px)) !important;
   }
 
   .main-content-wrapper.estateit-shell {

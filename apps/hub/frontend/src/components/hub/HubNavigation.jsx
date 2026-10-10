@@ -7,6 +7,7 @@ import AdminAlertsBell from '../admin-inbox/AdminAlertsBell.jsx';
 import useAdminAttention from '../admin-inbox/useAdminAttention.js';
 import { ADMIN_INBOX_PATH } from '../admin-inbox/adminAttentionService.js';
 import useNavSideWidth from './useNavSideWidth.js';
+import useHubNavHeightVar from './useHubNavHeightVar.js';
 import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
@@ -131,6 +132,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const fullName = [userFirstName, userLastName].filter(Boolean).join(' ');
   const navRootRef = React.useRef(null);
   useNavSideWidth(navRootRef, (isConsignmentApp || isArcadeApp) && !isMobile, [userFirstName, isAdmin, isSuperAdmin]);
+  useHubNavHeightVar(navRootRef, !isMobileMenuOpen);
   const handleHamburgerClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
