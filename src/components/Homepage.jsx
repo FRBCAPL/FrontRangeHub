@@ -16,6 +16,7 @@ import TournamentBannerAll from '@shared/components/tournament/TournamentBannerA
 import HomeAppLauncher from './HomeAppLauncher.jsx';
 import useBreakAndRunTile from './useBreakAndRunTile.jsx';
 import useArcadeNewScoreBadge from './useArcadeNewScoreBadge.js';
+import useConsignmentNewBadge from './useConsignmentNewBadge.js';
 import { TRAP_EM_PATH, TRAP_EM_SUBTITLE, TRAP_EM_TITLE } from '@apps/hub/frontend/src/components/games/trapEmContent.js';
 import { CONSIGNMENT_BETA, CONSIGNMENT_PATH } from '@apps/consignment/frontend/src/data/consignmentConstants.js';
 import HomepageTournamentListModal from '@shared/components/tournament/HomepageTournamentListModal.jsx';
@@ -34,6 +35,7 @@ const CUESYNC_URL = 'https://www.cuesync.us';
 const Homepage = ({ canRunTournament = false }) => {
   const navigate = useNavigate();
   const arcadeNewScoreBadge = useArcadeNewScoreBadge();
+  const consignmentNewBadge = useConsignmentNewBadge();
   const [showPublicLadderView, setShowPublicLadderView] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSignupForm, setShowSignupForm] = useState(false);
@@ -212,6 +214,7 @@ const Homepage = ({ canRunTournament = false }) => {
       highlight: 'Shop the case · Bid online · Sell your gear',
       accent: '#e53e3e',
       badge: CONSIGNMENT_BETA ? 'Beta' : 'New',
+      newBadge: consignmentNewBadge || undefined,
       onOpen: () => navigate(`${CONSIGNMENT_PATH}/home`),
       actions: [
         { label: 'How it works', onClick: () => navigate(`${CONSIGNMENT_PATH}/home`) },

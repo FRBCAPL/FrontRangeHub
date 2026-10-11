@@ -6,6 +6,7 @@ import { formatShortDate } from '../../utils/consignmentDates.js';
 import { sellerItemStatus } from '../../utils/consignmentSellerStatus.js';
 import ConsignmentFeePayCodes from './ConsignmentFeePayCodes.jsx';
 import ConsignmentNextStepPanel from './ConsignmentNextStepPanel.jsx';
+import ConsignmentMyListingDetails from './ConsignmentMyListingDetails.jsx';
 
 const PUBLIC = ['available', 'sold'];
 const UNSOLD = ['ended_no_bids', 'defaulted'];
@@ -50,6 +51,7 @@ export default function ConsignmentMyItemCard({ item, settings, onChanged }) {
           </ul>
         ) : null}
         <p className="cs-meta">Submitted {formatShortDate(item.created_at)}</p>
+        <ConsignmentMyListingDetails item={item} onSaved={onChanged} />
         {feeMayBeDue(item) ? <ConsignmentFeePayCodes item={item} /> : null}
         {needsNextStep(item) ? <ConsignmentNextStepPanel item={item} settings={settings} onDone={onChanged} /> : null}
       </div>

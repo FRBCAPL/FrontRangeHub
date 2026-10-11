@@ -107,6 +107,44 @@
   font-size: 0.88rem;
 }
 
+.cs-desc-edit {
+  margin-top: 6px;
+  display: grid;
+  gap: 6px;
+}
+
+.cs-desc-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+}
+
+.cs-desc-text {
+  margin: 0;
+  font-size: 0.88rem;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.cs-desc-edit .cs-meta,
+.cs-desc-saved {
+  margin: 0;
+}
+
+.cs-desc-saved {
+  color: #86efac;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cs-desc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .cs-feepay-toggle {
   justify-self: start;
   margin-top: 6px;

@@ -33,6 +33,25 @@ export async function chooseNextStep(itemId, choice, reserve = null) {
   return data || {};
 }
 
+const LISTING_EDIT_MISSING = 'Run supabase-migrations/consignment-seller-listing-edit-2026-10.sql in the Supabase SQL editor, then refresh.';
+
+/**
+ * Seller edits their own listing. changes: any of name, brand, model, condition, specs, description, photo_urls.
+ * Returns { changed, fields }.
+ */
+export async function updateMyListing(itemId, changes) {
+  const { data, error } = await supabase.rpc('consignment_seller_update_listing', {
+    p_item_id: itemId,
+    p_changes: changes,
+  });
+  if (error) {
+    const msg = error.message || '';
+    if (/consignment_seller_update_listing|schema cache|does not exist/i.test(msg)) throw new Error(LISTING_EDIT_MISSING);
+    throw new Error(msg || 'Could not save your changes.');
+  }
+  return data || {};
+}
+
 export async function currentUserEmail() {
   const { data } = await supabase.auth.getSession();
   return data?.session?.user?.email || '';
