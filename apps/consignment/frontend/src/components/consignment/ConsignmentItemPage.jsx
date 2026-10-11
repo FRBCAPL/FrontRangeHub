@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { itemLabel } from '../../data/consignmentConstants.js';
 import { CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
@@ -16,6 +16,8 @@ export default function ConsignmentItemPage() {
   const [photo, setPhoto] = useState(0);
   const [zooming, setZooming] = useState(false);
   const [error, setError] = useState('');
+  const [auctionAtLegends, setAuctionAtLegends] = useState(false);
+  const onAuction = useCallback((a) => setAuctionAtLegends(Boolean(a?.delivered_at)), []);
 
   useEffect(() => {
     let alive = true;
@@ -47,8 +49,12 @@ export default function ConsignmentItemPage() {
   if (isAuction) {
     auctionPanel = isExample
       ? <ConsignmentExampleAuctionPanel sample={item.example_auction} />
-      : <ConsignmentAuctionPanel itemId={item.id} />;
+      : <ConsignmentAuctionPanel itemId={item.id} onAuction={onAuction} />;
   }
+  let badge = 'Available at Legends Brews & Cues';
+  if (isExample) badge = 'Example — not for sale';
+  else if (item.status === 'sold') badge = 'Sold';
+  else if (isAuction && !auctionAtLegends) badge = 'Online auction · pickup at Legends Brews & Cues';
 
   return (
     <div className="cs-page">
@@ -61,7 +67,7 @@ export default function ConsignmentItemPage() {
       <p className="cs-kicker">{itemLabel(item)}</p>
       <h1>{item.name}</h1>
       <span className={`cs-legends${item.status === 'sold' || isExample ? ' sold' : ''}`}>
-        {isExample ? 'Example — not for sale' : item.status === 'sold' ? 'Sold' : 'Available at Legends Brews & Cues'}
+        {badge}
       </span>
       <div className="cs-hero">
         {current ? (
@@ -106,7 +112,7 @@ export default function ConsignmentItemPage() {
       </p>
       <p className="cs-hint">
         {isAuction
-          ? 'The seller holds this item until the auction ends, then brings it to Legends. Sold as-is; all sales final. Look it over at Legends before you pay. If it isn’t as described, you can decline it.'
+          ? 'Sold as-is; all sales final. Look it over at Legends before you pay. If it isn’t as described, you can decline it.'
           : 'Sold as-is; all sales final. Look it over before you pay at Legends. Sales tax is added at checkout; this site does not take payment.'}
       </p>
       <div className="cs-actions">

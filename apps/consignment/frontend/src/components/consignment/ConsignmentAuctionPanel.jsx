@@ -39,9 +39,14 @@ function EndedMessage({ auction, iWon, payDays }) {
   return <p className="cs-lede">Auction ended. {sold}</p>;
 }
 
-export default function ConsignmentAuctionPanel({ itemId }) {
+/** onAuction(auction): lets the item page follow the latest auction state (e.g. the "at Legends" badge). */
+export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
   const { auction, history, userId, myTopBid, isHighBidder, remaining, loading, error, refresh } = useConsignmentAuction(itemId);
   const [payDays, setPayDays] = useState(DEFAULT_PAY_DAYS);
+
+  useEffect(() => {
+    onAuction?.(auction || null);
+  }, [auction, onAuction]);
 
   useEffect(() => {
     loadPublicSettings()
@@ -70,6 +75,12 @@ export default function ConsignmentAuctionPanel({ itemId }) {
 
       {live ? (
         <>
+          {auction.delivered_at ? (
+            <p className="cs-auction-at-legends">
+              <span aria-hidden="true">📍</span>
+              <span><strong>Available at Legends now.</strong> This item is already at Legends Brews &amp; Cues.</span>
+            </p>
+          ) : null}
           <div className="cs-auction-price">
             <span>{auction.bid_count ? 'Current bid' : 'Opening bid'}</span>
             <strong>{formatDollars(auction.bid_count ? auction.current_bid : auction.opening_bid)}</strong>
