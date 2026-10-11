@@ -1,0 +1,27 @@
+.arcade-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+.arcade-recent-title {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(1rem, 2.4vw, 1.2rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--arcade-neon-lime, #a3e635);
+}
+
+.arcade-recent-list {
+  min-height: 6rem;
+}
+
+.arcade-recent-list .arcade-finder-top-label {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}

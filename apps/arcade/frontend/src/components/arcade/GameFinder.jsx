@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import arcadeService from '@shared/services/arcadeService.js';
 import { searchGames } from '../../utils/searchGames.js';
+import RecentScoresList from './RecentScoresList.jsx';
 import './GameFinder.css';
 
 const gameResultKey = (game) => `${game.number}|${game.name}`;
@@ -55,10 +56,20 @@ const GameFinder = ({ games, machineId, query, onQueryChange, onOpenLeaderboard,
         />
       </div>
 
+      {!query.trim() && (
+        <RecentScoresList
+          games={games}
+          machineId={machineId}
+          refreshKey={topScoreRefreshKey}
+          onOpenLeaderboard={onOpenLeaderboard}
+        />
+      )}
+
       {query.trim() && results.length === 0 && (
         <p className="arcade-finder-empty">No games match &ldquo;{query}&rdquo;</p>
       )}
 
+      {results.length > 0 && (
       <ul className="arcade-finder-results">
         {results.map((game) => {
           const leader = topScores[gameResultKey(game)];
@@ -87,6 +98,7 @@ const GameFinder = ({ games, machineId, query, onQueryChange, onOpenLeaderboard,
           );
         })}
       </ul>
+      )}
     </div>
   );
 };

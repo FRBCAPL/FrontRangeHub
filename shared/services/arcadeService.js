@@ -8,6 +8,8 @@ const ADMIN_PIN_KEY = 'arcade-admin-pin';
 const TOP_SCORES_LIMIT = 10;
 const EVENT_SERVER_TIMEOUT_MS = 4500;
 export const LEGENDS_ARCADE_MACHINE_ID = 'legends-cabinet-1';
+/** How long a posted score counts as "new" (homepage badge + Game Finder list). */
+export const NEW_SCORE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** null = unknown, 'supabase' | 'local' after first probe */
 let supabaseArcadeMode = null;
@@ -529,6 +531,24 @@ class ArcadeService {
       return data.updated_at;
     } catch {
       return null;
+    }
+  }
+
+  /** Scores posted within the "new" window, newest first (Supabase only). */
+  async getRecentScores(machineId = LEGENDS_ARCADE_MACHINE_ID, limit = 5) {
+    try {
+      const since = new Date(Date.now() - NEW_SCORE_WINDOW_MS).toISOString();
+      const { data, error } = await supabase
+        .from('arcade_scores')
+        .select('id, initials, score, game_number, game_name, updated_at')
+        .eq('machine_id', machineId)
+        .gte('updated_at', since)
+        .order('updated_at', { ascending: false })
+        .limit(limit);
+      if (error || !Array.isArray(data)) return [];
+      return data;
+    } catch {
+      return [];
     }
   }
 
