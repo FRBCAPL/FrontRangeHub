@@ -30,8 +30,12 @@ function changedFields(form, original) {
   return changes;
 }
 
-/** My items: the seller edits their listing. Price/reserve isn't here; FRPL changes those with the seller. */
-export default function ConsignmentListingEditModal({ item, onClose, onSaved }) {
+/**
+ * Edits an item's listing (name, brand, model, condition, specs, description, photos).
+ * Sellers save through updateMyListing; admins pass `save` and `admin` (Auctions tab).
+ * Price/reserve isn't here; FRPL changes those with the seller.
+ */
+export default function ConsignmentListingEditModal({ item, onClose, onSaved, save: saveChanges, admin = false }) {
   const [original] = useState(() => initialForm(item));
   const [form, setForm] = useState(original);
   const [busy, setBusy] = useState(false);
@@ -69,7 +73,8 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved }) 
     setBusy(true);
     setError('');
     try {
-      await updateMyListing(item.id, changes);
+      if (saveChanges) await saveChanges(changes);
+      else await updateMyListing(item.id, changes);
       onSaved?.();
       onClose();
     } catch (err) {
@@ -84,8 +89,9 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved }) 
         <form className="cs-modal-card cs-form cs-listing-edit" onSubmit={save} onClick={(e) => e.stopPropagation()}>
           <h2 id="cs-listing-edit-title">Edit {itemLabel(item)}</h2>
           <p className="cs-hint">
-            Changes show in the shop as soon as you save. Keep it accurate; FRPL can see every change.
-            To change the price or reserve, message FRPL.
+            {admin
+              ? 'Changes show in the shop as soon as you save. Reserve, Buy It Now and fees are in the full editor on the Items tab.'
+              : 'Changes show in the shop as soon as you save. Keep it accurate; FRPL can see every change. To change the price or reserve, message FRPL.'}
           </p>
 
           <div className="cs-field">

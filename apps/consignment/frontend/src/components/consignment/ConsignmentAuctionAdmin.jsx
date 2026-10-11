@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { AUCTION_STATUSES, itemLabel } from '../../data/consignmentConstants.js';
 import {
+  adminUpdateListing,
   auctionNotDelivered,
   cancelAuction,
   convertToFixedPrice,
   loadAdminAuctions,
   markAuctionDelivered,
   returnToSeller,
+  setAuctionAtLegends,
 } from '../../services/consignmentAuctionAdminService.js';
+import ConsignmentListingEditModal from './ConsignmentListingEditModal.jsx';
 import ConsignmentAuctionAdminRow from './ConsignmentAuctionAdminRow.jsx';
 import ConsignmentAuctionStartModal from './ConsignmentAuctionStartModal.jsx';
 import ConsignmentAuctionPaidModal from './ConsignmentAuctionPaidModal.jsx';
@@ -26,6 +29,7 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
   const [paying, setPaying] = useState(null);
   const [unpaid, setUnpaid] = useState(null);
   const [secondChance, setSecondChance] = useState(null);
+  const [editingListing, setEditingListing] = useState(null);
   const [bidderKey, setBidderKey] = useState(0);
 
   const refresh = () => loadAdminAuctions(status).then(setRows).catch((err) => setError(err.message));
@@ -64,6 +68,12 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
     paid: setPaying,
     unpaid: setUnpaid,
     secondChance: setSecondChance,
+    editListing: setEditingListing,
+    atLegends: (a, atLegends) => {
+      setError('');
+      setRows((prev) => prev.map((r) => (r.id === a.id ? { ...r, delivered_at: atLegends ? new Date().toISOString() : null } : r)));
+      setAuctionAtLegends(a, atLegends).catch((err) => setError(err.message)).finally(refresh);
+    },
   };
 
   return (
@@ -108,6 +118,15 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
       {paying ? <ConsignmentAuctionPaidModal auction={paying} onClose={closeWith(setPaying)} /> : null}
       {unpaid ? <ConsignmentAuctionDefaultModal auction={unpaid} onClose={closeWith(setUnpaid)} /> : null}
       {secondChance ? <ConsignmentSecondChanceModal auction={secondChance} onClose={closeWith(setSecondChance)} /> : null}
+      {editingListing ? (
+        <ConsignmentListingEditModal
+          item={editingListing.item}
+          admin
+          save={(changes) => adminUpdateListing(editingListing.item.id, changes)}
+          onSaved={refresh}
+          onClose={() => setEditingListing(null)}
+        />
+      ) : null}
       <ConsignmentBidderStatusPanel refreshKey={bidderKey} />
     </>
   );

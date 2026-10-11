@@ -1,5 +1,16 @@
 /* "What would you like to do?" panel on My items after an unsold auction. */
 
+/* Admin Auctions tab: "Item is at Legends" checkbox under the status. */
+.cs-at-legends {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .cs-next {
   margin-top: 8px;
   padding: 12px;

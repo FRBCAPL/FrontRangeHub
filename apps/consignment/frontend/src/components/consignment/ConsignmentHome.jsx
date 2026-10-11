@@ -11,9 +11,26 @@ import {
   HOW_IT_WORKS_TABS,
 } from '../../data/consignmentHowItWorks.js';
 import useHowItWorksValues from '../../hooks/useHowItWorksValues.js';
+import useShopCounts from '../../hooks/useShopCounts.js';
 import './consignment-home.css';
 
 const pathTo = (to) => (to ? `${CONSIGNMENT_PATH}/${to}` : CONSIGNMENT_PATH);
+
+/** Live count on the Consign / Auction cards, linking to the shop filtered to that kind. */
+function PathCount({ tab, counts }) {
+  if (!counts) return null;
+  const [n, show, one, many] = tab === 'consign'
+    ? [counts.case, 'case', 'item in the case now', 'items in the case now']
+    : tab === 'auction'
+      ? [counts.auctions, 'auctions', 'online auction now', 'online auctions now']
+      : [null];
+  if (n == null) return null;
+  return (
+    <Link className="cs-home-count" to={`${CONSIGNMENT_PATH}?show=${show}`}>
+      <strong>{n}</strong> {n === 1 ? one : many}
+    </Link>
+  );
+}
 
 function StepsSection({ tab, fill, cta }) {
   return (
@@ -44,6 +61,7 @@ function openSection(tabId) {
 
 export default function ConsignmentHome() {
   const fill = useHowItWorksValues();
+  const counts = useShopCounts();
   const ctaFor = (tabId) => HOME_PATHS.find((p) => p.tab === tabId);
 
   return (
@@ -60,6 +78,7 @@ export default function ConsignmentHome() {
           <article key={p.tab} className={`cs-home-path is-${p.tab}`}>
             <span className="cs-home-icon" aria-hidden="true">{p.icon}</span>
             <h2>{p.title}</h2>
+            <PathCount tab={p.tab} counts={counts} />
             <p>{fill(p.blurb)}</p>
             <div className="cs-home-path-actions">
               <Link className="cs-btn" to={pathTo(p.to)}>{p.cta}</Link>

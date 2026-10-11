@@ -57,7 +57,7 @@ export async function loadAdminAuctions(status = 'live') {
   await supabase.rpc('close_due_consignment_auctions');
   let query = supabase
     .from('consignment_auctions')
-    .select('*, item:consignment_items(id, item_number, category, name, brand, model, photo_urls, seller_payout, status, sale_method, intake_at)');
+    .select('*, item:consignment_items(id, item_number, category, name, brand, model, condition, specs, description, photo_urls, seller_payout, status, sale_method, intake_at)');
   if (status && status !== 'all') query = query.eq('status', status);
   query = status === 'live'
     ? query.order('ends_at', { ascending: true })
@@ -258,6 +258,32 @@ async function deliveryRpc(name, args, fallback) {
 /** The seller brought the item to Legends; the winner's pay window starts now. */
 export function markAuctionDelivered(auction) {
   return deliveryRpc('mark_consignment_auction_delivered', { p_auction_id: auction.id }, 'Could not mark it delivered.');
+}
+
+/** Statuses where the "Item is at Legends" checkbox applies (before a win; wins use Delivered). */
+export const AT_LEGENDS_STATUSES = ['live', 'ended_no_bids', 'defaulted'];
+
+/**
+ * The seller dropped the item at Legends during the auction (or took it back). If it then sells,
+ * the winner's pay window starts right away instead of waiting on delivery.
+ */
+export async function setAuctionAtLegends(auction, atLegends) {
+  const { data, error } = await supabase
+    .from('consignment_auctions')
+    .update({ delivered_at: atLegends ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+    .eq('id', auction.id)
+    .in('status', AT_LEGENDS_STATUSES)
+    .select('id');
+  if (error) {
+    if (/delivered_at/i.test(error.message || '')) throw new Error(DELIVERY_MISSING);
+    fail(error, 'Could not update where the item is.');
+  }
+  if (!data?.length) throw new Error('This auction has moved on; refresh and use Delivered instead.');
+}
+
+/** Admin edits an item's listing text and photos (same fields sellers can edit). */
+export async function adminUpdateListing(itemId, changes) {
+  await patchItem(itemId, changes);
 }
 
 /** The seller didn't deliver: cancel the sale, withdraw the item and (by default) remove seller access. */

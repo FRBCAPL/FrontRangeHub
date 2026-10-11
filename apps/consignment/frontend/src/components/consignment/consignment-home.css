@@ -62,6 +62,26 @@
   font-size: 1.3rem;
 }
 
+.cs-home-count {
+  padding: 5px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--path-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--path-accent) 18%, transparent);
+  color: var(--cs-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cs-home-count strong {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.cs-home-count:hover {
+  background: color-mix(in srgb, var(--path-accent) 32%, transparent);
+}
+
 .cs-home-path p {
   margin: 0;
   color: var(--cs-muted);

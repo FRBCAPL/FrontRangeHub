@@ -1,6 +1,6 @@
 import React from 'react';
 import { auctionStatusLabel, brandModelLabel, itemLabel, SELLER_CHOICES } from '../../data/consignmentConstants.js';
-import { awaitingDelivery, bidderName } from '../../services/consignmentAuctionAdminService.js';
+import { AT_LEGENDS_STATUSES, awaitingDelivery, bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { auctionSplit } from '../../utils/consignmentAuctionMath.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
@@ -92,6 +92,16 @@ export default function ConsignmentAuctionAdminRow({ auction, actions }) {
       <td data-label="Status">
         {auctionStatusLabel(auction.status)}
         <TimeInfo auction={auction} />
+        {AT_LEGENDS_STATUSES.includes(auction.status) && itemStillAuction && 'delivered_at' in auction ? (
+          <label className="cs-at-legends">
+            <input
+              type="checkbox"
+              checked={Boolean(auction.delivered_at)}
+              onChange={(e) => actions.atLegends(auction, e.target.checked)}
+            />
+            Item is at Legends
+          </label>
+        ) : null}
       </td>
       <td className="cs-cell-actions">
         {auction.status === 'live' && !auction.bid_count ? (
@@ -127,6 +137,9 @@ export default function ConsignmentAuctionAdminRow({ auction, actions }) {
             <button type="button" className="cs-btn-secondary" onClick={() => actions.toFixed(auction)}>Fixed price</button>
             <button type="button" className="cs-btn-secondary" onClick={() => actions.returned(auction)}>Returned</button>
           </>
+        ) : null}
+        {item.id ? (
+          <button type="button" className="cs-btn-secondary" onClick={() => actions.editListing(auction)}>Edit listing</button>
         ) : null}
       </td>
     </tr>

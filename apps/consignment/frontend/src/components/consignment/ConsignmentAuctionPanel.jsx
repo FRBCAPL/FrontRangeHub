@@ -85,11 +85,18 @@ export default function ConsignmentAuctionPanel({ itemId }) {
             payDays={payDays}
             onBid={refresh}
           />
-          <p className="cs-hint">
-            Bids are binding. A bid in the final minutes extends the clock. The seller holds the item until it sells, then
-            brings it to Legends; the winner has {payDays} days from its arrival to look it over and pay (sales tax added at
-            the register).
-          </p>
+          {auction.delivered_at ? (
+            <p className="cs-hint">
+              Bids are binding. A bid in the final minutes extends the clock. <strong>This item is already at Legends</strong>;
+              the winner has {payDays} days from the end of the auction to look it over and pay (sales tax added at the register).
+            </p>
+          ) : (
+            <p className="cs-hint">
+              Bids are binding. A bid in the final minutes extends the clock. The seller holds the item until it sells, then
+              brings it to Legends; the winner has {payDays} days from its arrival to look it over and pay (sales tax added at
+              the register).
+            </p>
+          )}
         </>
       ) : (
         <EndedMessage auction={auction} iWon={iWon} payDays={payDays} />

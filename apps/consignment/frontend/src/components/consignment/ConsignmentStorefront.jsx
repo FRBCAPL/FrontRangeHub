@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CATEGORIES, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadCatalog } from '../../services/consignmentService.js';
 import { loadAuctionsForItems } from '../../services/consignmentAuctionService.js';
@@ -10,7 +11,11 @@ import './consignment-shop.css';
 
 export default function ConsignmentStorefront() {
   const [category, setCategory] = useState('all');
-  const [status, setStatus] = useState('available');
+  const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState(() => {
+    const show = searchParams.get('show');
+    return show === 'case' || show === 'auctions' ? show : 'available';
+  });
   const [rows, setRows] = useState([]);
   const [auctions, setAuctions] = useState({});
   const [error, setError] = useState('');
