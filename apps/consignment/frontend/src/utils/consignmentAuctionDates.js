@@ -23,6 +23,12 @@ export function formatDateTime(value) {
   });
 }
 
+/** Compact end time for cards: "Oct 18, 7:30 PM" (a weekday alone is ambiguous for 7-day auctions). */
+export function formatShortEnd(value) {
+  if (!value) return '';
+  return new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
 /** "3d 4h", "4h 12m", "12:05" (under an hour), or "Ended". */
 export function formatCountdown(ms) {
   if (!(ms > 0)) return 'Ended';

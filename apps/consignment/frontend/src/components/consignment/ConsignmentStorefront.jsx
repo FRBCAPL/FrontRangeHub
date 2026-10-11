@@ -15,6 +15,7 @@ export default function ConsignmentStorefront() {
   const [auctions, setAuctions] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [hasRealAuctions, setHasRealAuctions] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const closeGuide = useCallback(() => setGuideOpen(false), []);
   const catalogStatus = status === 'auctions' || status === 'case' ? 'available' : status;
@@ -28,6 +29,9 @@ export default function ConsignmentStorefront() {
         const auctionIds = list.filter((r) => r.sale_method === 'auction').map((r) => r.id);
         const byItem = await loadAuctionsForItems(auctionIds);
         if (!alive) return;
+        if (category === 'all' && catalogStatus === 'available') {
+          setHasRealAuctions(list.some((r) => r.sale_method === 'auction'));
+        }
         setRows(list);
         setAuctions(byItem);
       })
@@ -94,7 +98,7 @@ export default function ConsignmentStorefront() {
           ? Array.from({ length: 4 }, (_, i) => <div key={i} className="cs-card cs-card-skeleton" aria-hidden="true" />)
           : items.map((item) => <ConsignmentItemCard key={item.id} item={item} auction={auctions[item.id]} />)}
       </div>
-      <ConsignmentExampleListings />
+      <ConsignmentExampleListings hideAuctions={hasRealAuctions} />
       {guideOpen ? <ConsignmentBuyersGuideModal onClose={closeGuide} /> : null}
     </div>
   );

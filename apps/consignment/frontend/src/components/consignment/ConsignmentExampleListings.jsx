@@ -8,9 +8,13 @@ function readHidden() {
   try { return localStorage.getItem(HIDE_KEY) === '1'; } catch { return false; }
 }
 
-/** The shop's permanent example listings, shown below the real items. Hidden until examples exist. */
-export default function ConsignmentExampleListings() {
-  const [examples, setExamples] = useState([]);
+/**
+ * The shop's permanent example listings, shown below the real items. Hidden until examples exist.
+ * hideAuctions: drop the example auctions once real auctions are up.
+ */
+export default function ConsignmentExampleListings({ hideAuctions = false }) {
+  const [allExamples, setExamples] = useState([]);
+  const examples = hideAuctions ? allExamples.filter((r) => r.sale_method !== 'auction') : allExamples;
   const [hidden, setHidden] = useState(readHidden);
 
   useEffect(() => {

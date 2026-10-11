@@ -1,11 +1,41 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { brandModelLabel, categoryLabel, conditionLabel } from '../../data/consignmentConstants.js';
 import { consignmentItemPath } from '../../utils/consignmentPaths.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
-import { formatCountdown } from '../../utils/consignmentAuctionDates.js';
+import { formatCountdown, formatDateTime, formatShortEnd } from '../../utils/consignmentAuctionDates.js';
 
 const ENDING_SOON_MS = 60 * 60 * 1000;
+
+/** Milliseconds until endsAt, refreshed every second in the last hour and every 30s before that. */
+function useTimeLeft(endsAt) {
+  const end = new Date(endsAt).getTime();
+  const [now, setNow] = useState(Date.now);
+  const left = end - now;
+  useEffect(() => {
+    if (!(left > 0)) return undefined;
+    const id = setTimeout(() => setNow(Date.now()), left < ENDING_SOON_MS ? 1000 : 30000);
+    return () => clearTimeout(id);
+  }, [now, left]);
+  return left;
+}
+
+function LiveAuctionLine({ auction }) {
+  const left = useTimeLeft(auction.ends_at);
+  const bids = auction.bid_count;
+  return (
+    <>
+      <Price label={bids ? 'Bid' : 'Opening'} amount={bids ? auction.current_bid : auction.opening_bid} />
+      <p className="cs-card-sub">
+        <span className={`cs-card-clock${left < ENDING_SOON_MS ? ' soon' : ''}`}>
+          {left > 0 ? `⏱ ${formatCountdown(left)}` : 'Closing'}
+        </span>
+        <span title={`Ends ${formatDateTime(auction.ends_at)}`}>Ends {formatShortEnd(auction.ends_at)}</span>
+        <span>{bids} bid{bids === 1 ? '' : 's'}</span>
+      </p>
+    </>
+  );
+}
 
 function Price({ label, amount }) {
   return (
@@ -19,21 +49,7 @@ function Price({ label, amount }) {
 
 function AuctionLine({ auction }) {
   if (!auction) return <p className="cs-card-price"><strong>Online auction</strong></p>;
-  if (auction.status === 'live') {
-    const left = new Date(auction.ends_at).getTime() - Date.now();
-    const bids = auction.bid_count;
-    return (
-      <>
-        <Price label={bids ? 'Bid' : 'Opening'} amount={bids ? auction.current_bid : auction.opening_bid} />
-        <p className="cs-card-sub">
-          <span className={`cs-card-clock${left < ENDING_SOON_MS ? ' soon' : ''}`}>
-            {left > 0 ? `⏱ ${formatCountdown(left)}` : 'Closing'}
-          </span>
-          {bids} bid{bids === 1 ? '' : 's'}
-        </p>
-      </>
-    );
-  }
+  if (auction.status === 'live') return <LiveAuctionLine auction={auction} />;
   if (auction.status === 'ended_no_bids') return <p className="cs-card-price"><strong>Auction ended</strong></p>;
   return <Price label="Ended" amount={auction.winning_bid} />;
 }
