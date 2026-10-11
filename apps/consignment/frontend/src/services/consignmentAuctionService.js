@@ -24,6 +24,13 @@ export async function loadAuctionForItem(itemId) {
   return data;
 }
 
+/** True when the signed-in user consigned this item. False if not, or before the migration runs. */
+export async function isMyItem(itemId) {
+  if (!itemId) return false;
+  const { data, error } = await supabase.rpc('consignment_is_my_item', { p_item_id: itemId });
+  return !error && data === true;
+}
+
 /** Latest public auction per item id, for shop cards. Empty if the auction migration hasn't run. */
 export async function loadAuctionsForItems(itemIds) {
   if (!itemIds?.length) return {};

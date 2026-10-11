@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { buyNow, openHubLogin, placeBid } from '../../services/consignmentAuctionService.js';
+import { buyNow, isMyItem, openHubLogin, placeBid } from '../../services/consignmentAuctionService.js';
 import { bidError, bidIncrement } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { LEGENDS_PLACE } from '../../data/consignmentConstants.js';
@@ -12,10 +12,18 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [mine, setMine] = useState(false);
 
   useEffect(() => {
     setAmount((prev) => (Number(prev) < minNext ? minNext : prev));
   }, [minNext]);
+
+  useEffect(() => {
+    let alive = true;
+    setMine(false);
+    if (userId) isMyItem(auction.item_id).then((yes) => { if (alive) setMine(yes); });
+    return () => { alive = false; };
+  }, [userId, auction.item_id]);
 
   if (!userId) {
     return (
@@ -25,6 +33,15 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
           Use your FRPL account. New? Choose Sign Up in the sign-in window; FRPL approves new accounts before
           they can bid. Bidding is free; you only pay if you win.
         </p>
+      </div>
+    );
+  }
+
+  if (mine) {
+    return (
+      <div className="cs-bid-form">
+        <p className="cs-bid-leading">This is your item, so you can’t bid on it.</p>
+        <p className="cs-hint">Follow the bidding here or on your My items page.</p>
       </div>
     );
   }
