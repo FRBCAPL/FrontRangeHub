@@ -69,8 +69,15 @@ export async function sendReset(email) {
   if (error) throw new Error(friendly(error.message));
 }
 
+/** Always ends the session on this device, even if the server-side sign-out call fails. */
 export async function signOut() {
-  await duezy.auth.signOut();
+  try {
+    const { error } = await duezy.auth.signOut();
+    if (!error) return;
+  } catch {
+    // fall through to local sign-out
+  }
+  await duezy.auth.signOut({ scope: 'local' });
 }
 
 function friendly(message = '') {
