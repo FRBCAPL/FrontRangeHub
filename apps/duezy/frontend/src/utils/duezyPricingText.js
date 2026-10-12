@@ -2,7 +2,7 @@
 import { money } from './duezyMath.js';
 import { priceFor, TRIAL_DIVISIONS } from './duezyPricing.js';
 
-export const PRICING_RULE = 'Leagues are free. You pay for divisions, counted across all your leagues — every league has at least one.';
+export const PRICING_RULE = 'Leagues are free. You pay for divisions, counted across all your leagues — every league has at least one division.';
 
 const per = (interval) => (interval === 'year' ? 'yr' : 'mo');
 
