@@ -1,0 +1,139 @@
+/* Duezy divisions: single/multi picker, division editors, tabs, all-divisions cards. */
+
+.dz-structure { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dz-structure-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--dz-line-strong);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dz-muted);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.dz-structure-opt:hover { transform: translateY(-2px); color: var(--dz-text); }
+.dz-structure-opt strong { color: var(--dz-text); font-size: 1rem; }
+.dz-structure-opt small { font-size: 0.85rem; line-height: 1.35; }
+.dz-structure-icon { font-size: 1.4rem; line-height: 1; color: var(--dz-accent); }
+.dz-structure-opt.is-active {
+  border-color: var(--dz-accent);
+  background: rgba(99, 102, 241, 0.16);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+}
+
+.dz-div-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--dz-line-strong);
+  background: rgba(255, 255, 255, 0.025);
+  animation: dz-pop 0.2s ease-out;
+}
+.dz-div-edit-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--dz-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dz-add-div { border-style: dashed; width: 100%; }
+
+.dz-div-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.dz-div-tabs::-webkit-scrollbar { display: none; }
+.dz-div-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--dz-line-strong);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dz-muted);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dz-div-tab:hover { color: var(--dz-text); }
+.dz-div-tab.is-active { background: var(--dz-grad); color: #fff; border-color: transparent; box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35); }
+.dz-div-tab-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.72rem;
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+}
+.dz-div-tab-count.is-ok { background: rgba(34, 197, 94, 0.85); }
+
+.dz-div-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.dz-div-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--dz-radius);
+  border: 1px solid var(--dz-line);
+  background: var(--dz-surface);
+  color: var(--dz-text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.dz-div-card:hover { transform: translateY(-2px); border-color: var(--dz-line-strong); }
+.dz-div-card-head { display: flex; flex-direction: column; gap: 2px; }
+.dz-div-card-foot { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+.dz-div-card-owe { font-size: 0.8rem; color: #fca5a5; }
+.dz-div-card-ok { font-size: 0.8rem; color: #86efac; }
+
+.dz-div-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  background: rgba(129, 140, 248, 0.16);
+  color: #c7d2fe;
+}
+
+.dz-div-settings-list { list-style: none; margin: 0; padding: 0; }
+.dz-div-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--dz-line);
+  background: rgba(255, 255, 255, 0.025);
+}
+.dz-div-summary > span { display: flex; flex-direction: column; gap: 2px; }
+
+.dz-league-divs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.dz-league-divs span {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--dz-muted);
+}
+
+.dz-full { flex-basis: 100%; margin: 0; }
+
+@media (max-width: 560px) {
+  .dz-structure { grid-template-columns: 1fr; }
+}

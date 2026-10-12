@@ -1,0 +1,46 @@
+/** Billing copy + rules for Duezy screens. `access` is the duezy_billing_status() snapshot (or null). */
+
+export const TRIAL_LIMIT_MESSAGE = 'Your free trial covers up to 2 divisions. Choose a plan in Billing to add more.';
+export const LOCKED_MESSAGE = 'Your leagues are read-only until you choose a plan. Everything is saved — pick a plan in Billing to keep recording.';
+
+/** Turn database errors caused by billing rules into plain English. */
+export function friendlyError(message) {
+  const text = String(message || '');
+  if (/duezy_trial_division_limit/.test(text)) return TRIAL_LIMIT_MESSAGE;
+  if (/row-level security/i.test(text)) return LOCKED_MESSAGE;
+  return text;
+}
+
+/** Can the owner add `count` more divisions right now? */
+export function canAddDivisions(access, count = 1) {
+  if (!access) return true;
+  if (access.can_write === false) return false;
+  const limit = access.division_limit;
+  if (limit === null || limit === undefined) return true;
+  return Number(access.divisions_used || 0) + count <= Number(limit);
+}
+
+/** What (if anything) the top-of-app banner should say. */
+export function billingBanner(access) {
+  if (!access) return null;
+  switch (access.phase) {
+    case 'trial': {
+      const days = Number(access.days_remaining ?? 0);
+      return {
+        tone: days <= 5 ? 'warn' : 'info',
+        text: days <= 0 ? 'Your free trial ends today.' : `Free trial · ${days} ${days === 1 ? 'day' : 'days'} left`,
+        cta: 'See plans',
+      };
+    }
+    case 'grace':
+      return { tone: 'warn', text: 'Your last payment didn’t go through. Update your card to keep recording.', cta: 'Fix billing' };
+    case 'locked':
+      return {
+        tone: 'bad',
+        text: access.status === 'trialing' || access.status === 'none' ? 'Your free trial has ended — your leagues are read-only.' : 'Your plan has ended — your leagues are read-only.',
+        cta: 'Choose a plan',
+      };
+    default:
+      return null;
+  }
+}

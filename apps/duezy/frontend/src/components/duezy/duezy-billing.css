@@ -1,0 +1,83 @@
+/* Duezy billing: trial banner, limit note, plan page. */
+
+.dz-bill-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  background: rgba(99, 102, 241, 0.12);
+  color: #c7d2fe;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.dz-bill-banner.is-warn { border-color: rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.12); color: #fde68a; }
+.dz-bill-banner.is-bad { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.14); color: #fecaca; }
+.dz-bill-banner-cta { color: inherit; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; padding: 0; min-height: 0; }
+
+.dz-bill-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: rgba(234, 179, 8, 0.1);
+  color: #fde68a;
+}
+.dz-bill-note p { margin: 0; font-size: 0.9rem; line-height: 1.45; }
+
+.dz-plan { width: min(640px, 100%); margin: 0 auto; }
+
+.dz-plan-status {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: var(--dz-radius);
+  border: 1px solid var(--dz-line-strong);
+  background: var(--dz-surface);
+}
+.dz-plan-status > span { font-size: 1.6rem; }
+.dz-plan-status div { display: flex; flex-direction: column; gap: 2px; }
+.dz-plan-status small { color: var(--dz-muted); }
+.dz-plan-status.is-active { border-color: rgba(34, 197, 94, 0.35); }
+.dz-plan-status.is-grace { border-color: rgba(234, 179, 8, 0.4); }
+.dz-plan-status.is-locked { border-color: rgba(239, 68, 68, 0.4); }
+
+.dz-plan-rows { list-style: none; margin: 0; padding: 0; }
+.dz-plan-rows li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--dz-line);
+}
+.dz-plan-rows li:last-child { border-bottom: none; }
+.dz-plan-rows strong,
+.dz-plan-yours > strong { font-size: 1.15rem; }
+.dz-plan-rows small,
+.dz-plan-yours small { color: var(--dz-muted); font-weight: 500; font-size: 0.8rem; margin-left: 2px; }
+
+.dz-plan-yours {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.14);
+  border: 1px solid rgba(129, 140, 248, 0.35);
+}
+.dz-plan-yours > strong {
+  font-size: 1.5rem;
+  background: var(--dz-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.dz-segment--sm button { min-height: 34px; padding: 0 12px; font-size: 0.82rem; }

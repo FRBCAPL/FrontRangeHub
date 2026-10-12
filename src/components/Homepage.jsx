@@ -305,6 +305,7 @@ const Homepage = ({ canRunTournament = false }) => {
       actions: [
         { label: 'What is it?', onClick: handleWhatIsDuezy },
         { label: 'Log in', onClick: handleNavigateToDuesTracker },
+        { label: 'New: any league', onClick: () => navigate('/duezy') },
       ],
     },
   ];

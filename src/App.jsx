@@ -2,6 +2,10 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { applyEstateAuthLanding, estateOAuthCallbackHash } from "@shared/utils/estateAuthLanding.js";
 import { applyFrusaplHostRedirect } from "./frusaplHostRedirect.js";
+import { applyDuezyAuthLanding } from "@apps/duezy/frontend/src/utils/duezyAuthLanding.js";
+
+// Duezy (generic) Google sign-in — route #access_token=... to #/duezy/oauth before anything else reads it.
+applyDuezyAuthLanding();
 
 // Estate Vault Google/email confirm — normalize #access_token=... before HashRouter mounts.
 applyEstateAuthLanding();
@@ -119,6 +123,7 @@ import { isTrapEmPath } from '@apps/hub/frontend/src/components/games/trapEmCont
 import ConsignmentApp from '@apps/consignment/frontend/src/components/consignment/ConsignmentApp.jsx';
 import ConsignmentPrintTag from '@apps/consignment/frontend/src/components/consignment/ConsignmentPrintTag.jsx';
 import { isConsignmentPath, isConsignmentPrintPath } from '@apps/consignment/frontend/src/utils/consignmentPaths.js';
+import DuezyApp from '@apps/duezy/frontend/src/components/duezy/DuezyApp.jsx';
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isElimSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
 import { isBreakAndRunDisplayPath, isBreakAndRunRulesTvPath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
@@ -203,6 +208,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/break-and-run': '#/tournament-bracket/break-and-run/how-it-works',
   '/trap-em': '#/trap-em',
   '/consignment': '#/consignment',
+  '/duezy': '#/duezy',
   '/tournament-bracket/how-it-works': '#/tournament-bracket/how-it-works',
   '/tournament-bracket/submit': '#/tournament-bracket/submit',
   '/tournament-bracket/elim': '#/tournament-bracket/elim',
@@ -307,6 +313,7 @@ function AppContent() {
     const targetHash = PATHNAME_TO_HASH_ROUTE[pathname]
       || (pathname.startsWith('/usapl') ? `#${pathname}` : null)
       || (pathname === '/consignment' || pathname.startsWith('/consignment/') ? `#${pathname}` : null)
+      || (pathname.startsWith('/duezy/') ? `#${pathname}` : null)
       || (isCashClimbSubmitPath(pathname) ? `#${pathname}` : null)
       || (isElimSubmitPath(pathname) ? `#${pathname}` : null);
     if (targetHash) {
@@ -811,6 +818,17 @@ function AppContent() {
         flexDirection: 'column'
       }}>
         <ArcadeKiosk canAdmin={isAuthenticated && isAdminState} />
+      </div>
+    );
+  }
+
+  // Generic Duezy — standalone app with its own accounts, no hub nav
+  if (location.pathname === '/duezy' || location.pathname.startsWith('/duezy/')) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, overflowY: 'auto', zIndex: 9999, background: '#0f1117' }}>
+        <Routes>
+          <Route path="/duezy/*" element={<DuezyApp />} />
+        </Routes>
       </div>
     );
   }

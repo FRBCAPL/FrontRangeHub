@@ -1,0 +1,92 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  addTeam as addTeamRow,
+  getLeague,
+  listPayments,
+  listTeams,
+  savePayment,
+  updateLeague,
+  updateTeam as updateTeamRow,
+} from '../services/duezyService.js';
+import { listDivisions, updateDivision } from '../services/duezyDivisionService.js';
+import { indexPayments } from '../utils/duezyMath.js';
+import { divisionUnits, isMultiDivision } from '../utils/duezyDivisions.js';
+
+/** Loads one league with its divisions, teams and payments, and exposes optimistic actions. */
+export default function useDuezyLeague(leagueId) {
+  const [league, setLeague] = useState(null);
+  const [divisions, setDivisions] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    try {
+      const [l, d, t, p] = await Promise.all([getLeague(leagueId), listDivisions(leagueId), listTeams(leagueId), listPayments(leagueId)]);
+      setLeague(l);
+      setDivisions(d);
+      setTeams(t);
+      setPayments(p);
+      setError(l ? '' : 'League not found.');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [leagueId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const paymentIndex = useMemo(() => indexPayments(payments), [payments]);
+  const units = useMemo(() => divisionUnits(league, divisions), [league, divisions]);
+  const multi = isMultiDivision(league, divisions);
+
+  const setPayment = useCallback(
+    async (teamId, week, entry) => {
+      const previous = payments;
+      const optimistic = { id: `tmp-${teamId}-${week}`, team_id: teamId, week, amount: 0, method: null, note: null, ...entry };
+      setPayments((prev) => [...prev.filter((p) => !(p.team_id === teamId && p.week === week)), optimistic]);
+      try {
+        const saved = await savePayment(leagueId, teamId, week, entry);
+        setPayments((prev) => [...prev.filter((p) => !(p.team_id === teamId && p.week === week)), saved]);
+      } catch (e) {
+        setPayments(previous);
+        setError(`Couldn't save that payment: ${e.message}`);
+      }
+    },
+    [leagueId, payments]
+  );
+
+  /** divisionId = null moves the league's own week (single division). */
+  const setWeek = useCallback(
+    async (divisionId, week) => {
+      if (!divisionId) {
+        setLeague((prev) => (prev ? { ...prev, current_week: week } : prev));
+        try { await updateLeague(leagueId, { current_week: week }); } catch { /* viewing still works */ }
+        return;
+      }
+      setDivisions((prev) => prev.map((d) => (d.id === divisionId ? { ...d, current_week: week } : d)));
+      try { await updateDivision(divisionId, { current_week: week }); } catch { /* viewing still works */ }
+    },
+    [leagueId]
+  );
+
+  const addTeam = useCallback(
+    async (team, divisionId = null) => {
+      const created = await addTeamRow(leagueId, team, teams.length, divisionId);
+      setTeams((prev) => [...prev, created]);
+    },
+    [leagueId, teams.length]
+  );
+
+  const updateTeam = useCallback(async (teamId, changes) => {
+    await updateTeamRow(teamId, changes);
+    setTeams((prev) => (changes.archived ? prev.filter((t) => t.id !== teamId) : prev.map((t) => (t.id === teamId ? { ...t, ...changes } : t))));
+  }, []);
+
+  return {
+    league, divisions, units, multi, teams, payments, paymentIndex,
+    error, setError, loading, setPayment, setWeek, addTeam, updateTeam,
+  };
+}
