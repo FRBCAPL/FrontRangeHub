@@ -69,15 +69,33 @@ export async function sendReset(email) {
   if (error) throw new Error(friendly(error.message));
 }
 
-/** Always ends the session on this device, even if the server-side sign-out call fails. */
+/**
+ * Always ends the session on this device. If Supabase refuses (e.g. 403 for a session it already
+ * ended), the stored Duezy session is removed by hand and the page reloads signed out.
+ */
 export async function signOut() {
-  try {
-    const { error } = await duezy.auth.signOut();
-    if (!error) return;
-  } catch {
-    // fall through to local sign-out
+  for (const scope of ['global', 'local']) {
+    try {
+      const { error } = await duezy.auth.signOut({ scope });
+      if (!error) return;
+    } catch {
+      // try the next way
+    }
   }
-  await duezy.auth.signOut({ scope: 'local' });
+  try {
+    // Clears the in-memory session too and tells other tabs, so nothing writes it back.
+    await duezy.auth._removeSession?.();
+  } catch {
+    // fall back to clearing storage by hand
+  }
+  try {
+    Object.keys(window.localStorage)
+      .filter((key) => key.startsWith('duezy-auth'))
+      .forEach((key) => window.localStorage.removeItem(key));
+  } catch {
+    // storage unavailable; reload anyway
+  }
+  window.location.reload();
 }
 
 function friendly(message = '') {
