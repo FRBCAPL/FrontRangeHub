@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createLeague } from '../../services/duezyService.js';
-import { money, parseTeamLines, weeklyDues } from '../../utils/duezyMath.js';
+import { matchesToSave, money, parseTeamLines, weeklyDues } from '../../utils/duezyMath.js';
 import { divisionReady, divisionToSave, newDivisionDraft } from '../../utils/duezyDivisions.js';
 import { DUEZY_PATH, memberWord, sportToSave } from '../../data/duezyOptions.js';
 import DuezyDuesFields from './DuezyDuesFields.jsx';
@@ -9,6 +9,8 @@ import DuezyWizardLeagueStep from './DuezyWizardLeagueStep.jsx';
 import DuezyDivisionsStep from './DuezyDivisionsStep.jsx';
 import DuezyDivisionTeamsStep from './DuezyDivisionTeamsStep.jsx';
 import DuezyTrialLimitNote from './DuezyTrialLimitNote.jsx';
+import DuezyScheduleFields from './DuezyScheduleFields.jsx';
+import { browserTimeZone, scheduleToSave } from '../../utils/duezySchedule.js';
 import useDuezyBilling from '../../hooks/useDuezyBilling.js';
 import { canAddDivisions } from '../../utils/duezyBillingText.js';
 
@@ -73,13 +75,16 @@ export default function DuezySetupWizard() {
         players_per_match: Number(league.players_per_match) || 1,
         total_weeks: Number(league.total_weeks) || 12,
         payment_note: league.payment_note.trim() || null,
+        ...matchesToSave(league),
+        ...scheduleToSave(league, { league: true }),
       };
+      if (!row.timezone && multi && drafts.some((d) => d.start_date)) row.timezone = browserTimeZone();
       const divisions = multi ? drafts.map((d) => ({ ...divisionToSave(d), teams: parseTeamLines(d.teamsText) })) : null;
       const created = await createLeague(row, multi ? [] : teams, divisions);
       refreshBilling();
       navigate(`${DUEZY_PATH}/league/${created.id}`, { replace: true });
     } catch (e) {
-      setError(/duezy_divisions|multi_division/.test(e.message)
+      setError(/duezy_divisions does not exist|relation .*duezy_divisions|multi_division/.test(e.message)
         ? 'Divisions need a quick database update (duezy-divisions SQL). Single-division leagues work in the meantime.'
         : e.message);
       setBusy(false);
@@ -113,14 +118,20 @@ export default function DuezySetupWizard() {
               <span>per week · {money(perTeam * (Number(league.total_weeks) || 0))} for the season</span>
             </div>
           ) : null}
+          <DuezyScheduleFields
+            value={league}
+            onChange={set}
+            dateLabel={multi ? 'First night of play (each division can change it)' : 'First night of play'}
+          />
           <label className="dz-field">
-            <span>How should teams pay you? (optional, shows on reminders)</span>
+            <span>Payment instructions for reminders <em className="dz-muted">(optional)</em></span>
             <input
               value={league.payment_note}
               onChange={(e) => set({ payment_note: e.target.value })}
-              placeholder="e.g. Cash at the table or Venmo @mike-league"
+              placeholder="e.g. Venmo @yourname or cash at the table"
               maxLength={300}
             />
+            <small className="dz-small dz-muted">Added to the end of reminder texts so teams know how to pay you.</small>
           </label>
         </div>
       ) : null}
@@ -137,7 +148,7 @@ export default function DuezySetupWizard() {
         <div className="dz-stack">
           <h2 className="dz-h2">Add your teams</h2>
           <p className="dz-muted">
-            One team per line. Add the captain after a comma if you like. If your league is individuals, list {memberWord(league.sport)} instead.
+            One team per line. Add the captain and their phone or email after commas if you like (Sharks, Bobby, 719-555-0123). If your league is individuals, list {memberWord(league.sport)} instead.
           </p>
           <textarea
             className="dz-textarea"
@@ -162,7 +173,7 @@ export default function DuezySetupWizard() {
           <button type="button" className="dz-btn dz-btn--primary" onClick={next} disabled={!canNext}>Next</button>
         ) : (
           <button type="button" className="dz-btn dz-btn--primary" onClick={finish} disabled={!canNext || busy}>
-            {busy ? 'Setting up…' : 'Start week 1'}
+            {busy ? 'Setting up…' : 'Create league'}
           </button>
         )}
       </div>

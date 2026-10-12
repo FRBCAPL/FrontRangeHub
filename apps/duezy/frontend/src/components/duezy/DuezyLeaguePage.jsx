@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import useDuezyLeague from '../../hooks/useDuezyLeague.js';
 import { money } from '../../utils/duezyMath.js';
-import { allDivisionsStats } from '../../utils/duezyDivisions.js';
+import { allDivisionsStats, unitStats } from '../../utils/duezyDivisions.js';
+import { todayISO } from '../../utils/duezySchedule.js';
 import { DUEZY_PATH, sportOf } from '../../data/duezyOptions.js';
 import DuezyLeagueHero from './DuezyLeagueHero.jsx';
 import DuezyDivisionTabs, { ALL_DIVISIONS } from './DuezyDivisionTabs.jsx';
@@ -14,8 +15,13 @@ export default function DuezyLeaguePage() {
   const [params, setParams] = useSearchParams();
   const data = useDuezyLeague(leagueId);
   const { league, units, multi, teams, paymentIndex, error, setError, loading } = data;
+  const [viewWeeks, setViewWeeks] = useState({});
 
-  const all = useMemo(() => allDivisionsStats(units, teams, paymentIndex), [units, teams, paymentIndex]);
+  const opts = useMemo(
+    () => ({ today: todayISO(league?.timezone), defaultGrace: Number(league?.grace_days) || 0 }),
+    [league?.timezone, league?.grace_days]
+  );
+  const all = useMemo(() => allDivisionsStats(units, teams, paymentIndex, opts), [units, teams, paymentIndex, opts]);
 
   if (loading) return <p className="dz-muted dz-center">Loading…</p>;
   if (!league) return <p className="dz-error">{error || 'League not found.'}</p>;
@@ -23,11 +29,33 @@ export default function DuezyLeaguePage() {
   const sport = sportOf(league.sport);
   const settingsTo = `${DUEZY_PATH}/league/${league.id}/settings`;
   const requested = params.get('div');
-  const selected = multi ? all.per.find((s) => s.unit.id === requested) || null : all.per[0];
-  const showAll = multi && !selected;
+  const current = multi ? all.per.find((s) => s.unit.id === requested) || null : all.per[0];
+  const showAll = multi && !current;
   const openDivision = (id) => setParams(id === ALL_DIVISIONS ? {} : { div: id }, { replace: true });
 
   const behindCounts = Object.fromEntries(all.per.map((s) => [s.unit.id, s.behind.length]));
+
+  let selected = current;
+  let weekNav = null;
+  if (current) {
+    const key = current.unit.id || 'single';
+    const dated = Boolean(current.schedule.dates);
+    const viewWeek = dated ? viewWeeks[key] : null;
+    if (viewWeek && viewWeek !== current.week) {
+      selected = unitStats(current.unit, teams, paymentIndex, all.per.indexOf(current) === 0, { ...opts, viewWeek });
+    }
+    weekNav = {
+      week: selected.week,
+      total: selected.unit.total_weeks,
+      date: dated ? selected.schedule.label(selected.week) : '',
+      currentWeek: current.schedule.currentWeek,
+      started: current.schedule.started,
+      startLabel: dated ? current.schedule.label(1) : '',
+      onChange: dated
+        ? (w) => setViewWeeks((prev) => ({ ...prev, [key]: w }))
+        : (w) => data.setWeek(current.unit.id, w),
+    };
+  }
 
   const hero = showAll ? (
     <DuezyLeagueHero
@@ -48,7 +76,7 @@ export default function DuezyLeaguePage() {
         `${selected.teams.length} teams`,
       ]}
       settingsTo={settingsTo}
-      weekNav={{ week: selected.week, total: selected.unit.total_weeks, onChange: (w) => data.setWeek(selected.unit.id, w) }}
+      weekNav={weekNav}
     />
   );
 

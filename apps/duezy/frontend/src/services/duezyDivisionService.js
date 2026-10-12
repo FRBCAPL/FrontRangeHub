@@ -3,7 +3,7 @@ import { check } from './duezyService.js';
 import { syncQuantity } from './duezyBillingService.js';
 import { DIVISION_SETTING_KEYS } from '../utils/duezyDivisions.js';
 
-const FIELDS = 'id, league_id, name, play_day, dues_amount, dues_basis, players_per_match, total_weeks, current_week, sort_order, archived';
+const FIELDS = '*';
 
 /** Missing table = divisions migration not run yet; treat as "no divisions" so single leagues keep working. */
 function orEmpty(result) {
@@ -44,6 +44,7 @@ export async function updateDivision(id, changes) {
  */
 export async function convertToMulti(league, currentName, newDivision) {
   const settings = Object.fromEntries(DIVISION_SETTING_KEYS.map((k) => [k, league[k]]));
+  if (league.start_date) Object.assign(settings, { start_date: league.start_date, skip_dates: league.skip_dates || [] });
   const first = await addDivision(league.id, { ...settings, name: currentName }, 0);
   check(await duezy.from('duezy_teams').update({ division_id: first.id }).eq('league_id', league.id).is('division_id', null));
   const second = await addDivision(league.id, newDivision, 1);

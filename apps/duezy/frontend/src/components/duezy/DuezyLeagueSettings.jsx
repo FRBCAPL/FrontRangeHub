@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { archiveLeague, getLeague, updateLeague } from '../../services/duezyService.js';
-import { money, weeklyDues } from '../../utils/duezyMath.js';
+import { matchesToSave, money, weeklyDues } from '../../utils/duezyMath.js';
 import { DAYS, DUEZY_PATH, sportToSave } from '../../data/duezyOptions.js';
 import DuezyDuesFields from './DuezyDuesFields.jsx';
 import DuezySportPicker from './DuezySportPicker.jsx';
 import DuezyDivisionSettings from './DuezyDivisionSettings.jsx';
+import DuezyScheduleFields from './DuezyScheduleFields.jsx';
+import { scheduleToSave } from '../../utils/duezySchedule.js';
 
 export default function DuezyLeagueSettings() {
   const { leagueId } = useParams();
@@ -46,6 +48,8 @@ export default function DuezyLeagueSettings() {
         total_weeks: totalWeeks,
         current_week: Math.min(form.current_week, totalWeeks),
         payment_note: form.payment_note.trim() || null,
+        ...matchesToSave(form),
+        ...scheduleToSave(form, { league: true }),
       });
       setSaved(true);
     } catch (err) {
@@ -98,9 +102,23 @@ export default function DuezyLeagueSettings() {
             : `Each team pays ${money(weeklyDues(form))} per week. Changing dues updates what every team owes, including past weeks.`}
         </p>
 
+        <h2 className="dz-h3">{multi ? 'When a team counts as late' : 'Schedule'}</h2>
+        <DuezyScheduleFields value={form} onChange={set} showDates={!multi} />
+        {multi ? (
+          <p className="dz-small dz-muted">
+            This is the default. Each division has its own first night and nights off — use <strong>Add dates</strong> or <strong>Edit</strong> on a division under Divisions below.
+          </p>
+        ) : null}
+
         <label className="dz-field">
-          <span>How teams pay you (shows on reminders)</span>
-          <input value={form.payment_note} onChange={(e) => set({ payment_note: e.target.value })} maxLength={300} />
+          <span>Payment instructions for reminders <em className="dz-muted">(optional)</em></span>
+          <input
+            value={form.payment_note}
+            onChange={(e) => set({ payment_note: e.target.value })}
+            placeholder="e.g. Venmo @yourname or cash at the table"
+            maxLength={300}
+          />
+          <small className="dz-small dz-muted">Added to the end of reminder texts so teams know how to pay you.</small>
         </label>
 
         {error ? <p className="dz-error">{error}</p> : null}

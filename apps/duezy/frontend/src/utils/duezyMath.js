@@ -1,9 +1,16 @@
 /** Pure dues math for Duezy. A payment row: { team_id, week, status, amount }. */
 
+/** 1 = one match a night, 2 = double play (dues for each match). */
+export const matchesPerNight = (unit) => Math.min(4, Math.max(1, Math.round(Number(unit?.matches_per_night) || 1)));
+
+/** Only sends the column once it's been set, so databases without the double-play SQL keep saving. */
+export const matchesToSave = (form) =>
+  form?.matches_per_night === undefined ? {} : { matches_per_night: matchesPerNight(form) };
+
 export function weeklyDues(league) {
   const amount = Number(league?.dues_amount) || 0;
-  if (league?.dues_basis === 'player') return round2(amount * (Number(league.players_per_match) || 1));
-  return round2(amount);
+  const perMatch = league?.dues_basis === 'player' ? amount * (Number(league.players_per_match) || 1) : amount;
+  return round2(perMatch * matchesPerNight(league));
 }
 
 export function round2(n) {
@@ -63,6 +70,27 @@ export function weekSummary(teams, week, dues, paymentIndex) {
   };
 }
 
+/**
+ * Season to date for weeks 1..throughWeek: collected (overpaying counts) vs expected (byes excluded),
+ * plus what the full season is worth.
+ */
+export function seasonSummary(teams, throughWeek, dues, totalWeeks, paymentIndex) {
+  let collected = 0;
+  let expected = 0;
+  teams.forEach((t) => {
+    for (let w = 1; w <= throughWeek; w += 1) {
+      const p = paymentIndex.get(`${t.id}:${w}`);
+      collected += paidFor(p, dues);
+      if (p?.status !== 'bye') expected += dues;
+    }
+  });
+  return {
+    collected: round2(collected),
+    expected: round2(expected),
+    seasonValue: round2(teams.length * dues * (Number(totalWeeks) || 0)),
+  };
+}
+
 export function teamsBehind(teams, throughWeek, dues, paymentIndex) {
   return teams
     .map((team) => ({ team, owed: owedThrough(team.id, throughWeek, dues, paymentIndex) }))
@@ -70,24 +98,49 @@ export function teamsBehind(teams, throughWeek, dues, paymentIndex) {
     .sort((a, b) => b.owed - a.owed || a.team.name.localeCompare(b.team.name));
 }
 
-/** week = null for a multi-division roundup; entries may carry a `division` name. */
+/** Weeks 1..throughWeek not fully paid (byes skipped). */
+export function unpaidWeeks(teamId, throughWeek, dues, paymentIndex) {
+  const weeks = [];
+  for (let w = 1; w <= throughWeek; w += 1) {
+    const p = paymentIndex.get(`${teamId}:${w}`);
+    if (p?.status !== 'bye' && paidFor(p, dues) < dues) weeks.push(w);
+  }
+  return weeks;
+}
+
+/** week = null for a roundup; entries may carry a `division` name and a `when` ("Sep 16, Sep 23"). */
 export function reminderText(league, week, behind) {
   if (!behind.length) return '';
-  const lines = behind.map((x) => `- ${x.team.name}${x.division ? ` (${x.division})` : ''}: ${money(x.owed)}`);
+  const lines = behind.map((x) => `- ${x.team.name}${x.division ? ` (${x.division})` : ''}: ${money(x.owed)}${x.when ? ` — ${x.when}` : ''}`);
   const how = league?.payment_note?.trim() ? `\n${league.payment_note.trim()}` : '';
   const when = week ? ` after week ${week}` : '';
   return `${league?.name || 'League'} dues check${when}:\n${lines.join('\n')}${how}\nThanks!`;
 }
 
-/** "Sharks, Bobby K." per line → [{ name, captain }]. */
+/** A friendly one-team reminder for a text or email; `when` names the nights ("Sep 16, Sep 23"). */
+export function teamReminder(league, team, owed, when = '') {
+  const hi = team.captain ? `Hi ${team.captain.split(/\s+/)[0]}` : 'Hi';
+  const forWhen = when ? ` for ${when}` : '';
+  const how = league?.payment_note?.trim() ? ` ${league.payment_note.trim()}` : '';
+  return `${hi} — quick ${league?.name || 'league'} dues reminder: ${team.name} owes ${money(owed)}${forWhen}.${how} Thanks!`;
+}
+
+const looksLikeContact = (s) => s.includes('@') || s.replace(/\D/g, '').length >= 7;
+
+/** "Sharks, Bobby K., 719-555-0123" per line → [{ name, captain, contact }]. */
 export function parseTeamLines(text) {
   return String(text || '')
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => {
-      const [name, ...rest] = line.split(',');
-      return { name: name.trim().slice(0, 80), captain: rest.join(',').trim().slice(0, 80) || null };
+      const [name, ...rest] = line.split(',').map((p) => p.trim());
+      const contact = rest.length && looksLikeContact(rest[rest.length - 1]) ? rest.pop() : '';
+      return {
+        name: name.slice(0, 80),
+        captain: rest.join(', ').slice(0, 80) || null,
+        contact: contact.slice(0, 120) || null,
+      };
     })
     .filter((t) => t.name);
 }

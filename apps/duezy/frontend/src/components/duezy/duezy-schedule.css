@@ -1,0 +1,48 @@
+.dz-week-nav-wrap {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.dz-week-nav-wrap > .dz-link { align-self: center; }
+.dz-week-note { align-self: center; color: var(--dz-muted); font-size: 0.8rem; }
+
+.dz-owe-late { color: #fca5a5; font-weight: 600; }
+.dz-owe-due { color: #fcd34d; }
+
+.dz-strip .is-unpaid:not(.is-late) {
+  background: transparent;
+  color: var(--dz-muted);
+  box-shadow: inset 0 0 0 1px var(--dz-line-strong);
+}
+
+.dz-behind-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dz-behind-name small { font-size: 0.75rem; }
+
+.dz-skip-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.dz-skip-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--dz-line-strong);
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--dz-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dz-skip-chip:hover { border-color: rgba(239, 68, 68, 0.5); }
+.dz-skip-chip span { color: var(--dz-muted); }
+
+.dz-catchup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-color: rgba(250, 204, 21, 0.35);
+  background: rgba(250, 204, 21, 0.06);
+}
+.dz-catchup p { margin: 0; }

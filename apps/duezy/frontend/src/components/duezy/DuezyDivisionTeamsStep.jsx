@@ -11,7 +11,7 @@ export default function DuezyDivisionTeamsStep({ drafts, word, onChange }) {
   return (
     <div className="dz-stack">
       <h2 className="dz-h2">Add teams to each division</h2>
-      <p className="dz-muted">One team per line. Add the captain after a comma if you like. If a division is individuals, list {word} instead.</p>
+      <p className="dz-muted">One team per line. Add the captain and their phone or email after commas if you like (Sharks, Bobby, 719-555-0123). If a division is individuals, list {word} instead.</p>
       <nav className="dz-div-tabs" aria-label="Division">
         {drafts.map((d) => (
           <button

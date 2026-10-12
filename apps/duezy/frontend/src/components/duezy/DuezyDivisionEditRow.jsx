@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { money, weeklyDues } from '../../utils/duezyMath.js';
+import { matchesPerNight, money, weeklyDues } from '../../utils/duezyMath.js';
 import { divisionReady, divisionToSave } from '../../utils/duezyDivisions.js';
+import { shortDate } from '../../utils/duezySchedule.js';
 import DuezyDivisionCard from './DuezyDivisionCard.jsx';
 
 /** A saved division in Settings: collapsed summary, expands to edit. */
-export default function DuezyDivisionEditRow({ division, index, sport, teamCount, canArchive, onSave }) {
+export default function DuezyDivisionEditRow({ division, index, sport, teamCount, canArchive, defaultGrace = 0, onSave }) {
   const [form, setForm] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -33,12 +34,24 @@ export default function DuezyDivisionEditRow({ division, index, sport, teamCount
         <span>
           <strong>{division.name}</strong>
           <small className="dz-muted">
-            {[division.play_day && `${division.play_day}s`, `${money(weeklyDues(division))}/team weekly`, `${division.total_weeks} weeks`, `${teamCount} teams`]
+            {[
+              division.play_day && `${division.play_day}s`,
+              `${money(weeklyDues(division))}/team weekly`,
+              matchesPerNight(division) > 1 && 'double play',
+              `${division.total_weeks} weeks`,
+              division.start_date && `starts ${shortDate(division.start_date)}`,
+              `${teamCount} teams`,
+            ]
               .filter(Boolean)
               .join(' · ')}
           </small>
         </span>
-        <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setForm({ ...division })}>Edit</button>
+        <span className="dz-div-actions">
+          {!division.start_date ? (
+            <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={() => setForm({ ...division })}>Add dates</button>
+          ) : null}
+          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setForm({ ...division })}>Edit</button>
+        </span>
       </li>
     );
   }
@@ -47,7 +60,7 @@ export default function DuezyDivisionEditRow({ division, index, sport, teamCount
 
   return (
     <li>
-      <DuezyDivisionCard draft={form} sport={sport} index={index} onChange={(c) => setForm((p) => ({ ...p, ...c }))}>
+      <DuezyDivisionCard draft={form} sport={sport} index={index} defaultGrace={defaultGrace} onChange={(c) => setForm((p) => ({ ...p, ...c }))}>
         <p className="dz-small dz-muted">Changing dues updates what every team in this division owes, including past weeks.</p>
         {error ? <p className="dz-error">{error}</p> : null}
         <div className="dz-row">

@@ -2,9 +2,10 @@ import React from 'react';
 import { money, weeklyDues } from '../../utils/duezyMath.js';
 import DuezyDuesFields from './DuezyDuesFields.jsx';
 import DuezyDayPicker from './DuezyDayPicker.jsx';
+import DuezyScheduleFields from './DuezyScheduleFields.jsx';
 
-/** One division's name, night, dues, team size and weeks. Used by the wizard and settings. */
-export default function DuezyDivisionCard({ draft, sport, index, onChange, onRemove, children }) {
+/** One division's name, night, dues, team size, weeks and dates. Used by the wizard and settings. */
+export default function DuezyDivisionCard({ draft, sport, index, defaultGrace = 0, onChange, onRemove, children }) {
   const perTeam = weeklyDues(draft);
   return (
     <div className="dz-div-edit">
@@ -33,6 +34,7 @@ export default function DuezyDivisionCard({ draft, sport, index, onChange, onRem
           Each team pays <strong>{money(perTeam)}</strong> per week · {money(perTeam * (Number(draft.total_weeks) || 0))} for the season
         </p>
       ) : null}
+      <DuezyScheduleFields value={draft} onChange={onChange} graceMode="override" defaultGrace={defaultGrace} />
       {children}
     </div>
   );

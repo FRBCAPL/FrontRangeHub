@@ -1,5 +1,6 @@
 import React from 'react';
-import { money, owedThrough } from '../../utils/duezyMath.js';
+import { money } from '../../utils/duezyMath.js';
+import { teamBalance } from '../../utils/duezyDivisions.js';
 import DuezyTeamDetail from './DuezyTeamDetail.jsx';
 
 const AVATAR_HUES = [245, 190, 160, 320, 30, 275, 205, 350];
@@ -18,10 +19,18 @@ const initials = (name) =>
     .map((w) => w[0].toUpperCase())
     .join('');
 
-export default function DuezyTeamRow({ team, week, dues, paymentIndex, divisions = [], open, onToggle, onSetPayment, onUpdateTeam }) {
+function balanceText({ late, due, dueWhen }) {
+  if (late > 0) return <span className="dz-owe-late">{money(late)} late{due > 0 ? ` · ${money(due)} due` : ''}</span>;
+  if (due > 0) return <span className="dz-owe-due">{money(due)} due{dueWhen ? ` ${dueWhen}` : ''}</span>;
+  return 'all caught up';
+}
+
+export default function DuezyTeamRow({
+  league, team, week, dues, schedule, paymentIndex, divisions = [], quickMethod = null, open, onToggle, onSetPayment, onUpdateTeam,
+}) {
   const payment = paymentIndex.get(`${team.id}:${week}`);
   const status = payment?.status || 'unpaid';
-  const owed = owedThrough(team.id, week, dues, paymentIndex);
+  const balance = teamBalance(team.id, schedule, dues, paymentIndex);
 
   return (
     <li className={`dz-team is-${status}`}>
@@ -35,7 +44,7 @@ export default function DuezyTeamRow({ team, week, dues, paymentIndex, divisions
             <strong>{team.name}</strong>
             <small>
               {team.captain ? `${team.captain} · ` : ''}
-              {owed > 0 ? `owes ${money(owed)}` : 'all caught up'}
+              {balanceText(balance)}
             </small>
           </span>
         </button>
@@ -43,9 +52,11 @@ export default function DuezyTeamRow({ team, week, dues, paymentIndex, divisions
           <button
             type="button"
             className={`dz-chip ${status === 'paid' ? 'is-on is-paid' : ''}`}
-            onClick={() => onSetPayment({ status: 'paid', amount: dues, method: payment?.method || null })}
+            onClick={() => onSetPayment({ status: 'paid', amount: dues, method: quickMethod || payment?.method || null })}
+            title={status === 'paid' && payment?.method ? `Paid with ${payment.method}` : undefined}
           >
             <span aria-hidden="true">✓</span> Paid {money(dues)}
+            {status === 'paid' && payment?.method ? <small className="dz-chip-method">{payment.method}</small> : null}
           </button>
           <button
             type="button"
@@ -65,9 +76,12 @@ export default function DuezyTeamRow({ team, week, dues, paymentIndex, divisions
       </div>
       {open ? (
         <DuezyTeamDetail
+          league={league}
           team={team}
           week={week}
           dues={dues}
+          schedule={schedule}
+          balance={balance}
           payment={payment}
           paymentIndex={paymentIndex}
           divisions={divisions}

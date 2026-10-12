@@ -86,6 +86,7 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
               sport={league.sport}
               teamCount={teamCounts[d.id] || 0}
               canArchive={divisions.length > 1}
+              defaultGrace={Number(league.grace_days) || 0}
               onSave={(changes) => saveExisting(d.id, changes)}
             />
           ))}
@@ -102,7 +103,7 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
               <input value={currentName} onChange={(e) => setCurrentName(e.target.value)} placeholder={`e.g. ${league.play_day || 'Tuesday'} division`} maxLength={60} />
             </label>
           ) : null}
-          <DuezyDivisionCard draft={draft} sport={league.sport} index={multi ? divisions.length : 1} onChange={(c) => setDraft((p) => ({ ...p, ...c }))}>
+          <DuezyDivisionCard draft={draft} sport={league.sport} index={multi ? divisions.length : 1} defaultGrace={Number(league.grace_days) || 0} onChange={(c) => setDraft((p) => ({ ...p, ...c }))}>
             {!allowed ? <DuezyTrialLimitNote access={access} /> : null}
             {allowed && access?.has_subscription ? (
               <p className="dz-small dz-muted">

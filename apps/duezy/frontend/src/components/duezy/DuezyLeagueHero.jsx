@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 /** League header: icon, name, one-line meta, settings link, and (for one division) the week arrows. */
 export default function DuezyLeagueHero({ icon, title, subtitle, meta, settingsTo, weekNav }) {
+  const offCurrent = weekNav?.date && weekNav.week !== weekNav.currentWeek;
   return (
     <section className="dz-hero">
       <span className="dz-hero-icon" aria-hidden="true">{icon}</span>
@@ -14,14 +15,22 @@ export default function DuezyLeagueHero({ icon, title, subtitle, meta, settingsT
       <Link to={settingsTo} className="dz-btn dz-btn--ghost dz-btn--sm dz-hero-settings">Settings</Link>
 
       {weekNav ? (
-        <div className="dz-week-nav">
-          <button type="button" disabled={weekNav.week <= 1} onClick={() => weekNav.onChange(weekNav.week - 1)} aria-label="Previous week">‹</button>
-          <span>
-            <small>Week</small>
-            <strong>{weekNav.week}</strong>
-            <small>of {weekNav.total}</small>
-          </span>
-          <button type="button" disabled={weekNav.week >= weekNav.total} onClick={() => weekNav.onChange(weekNav.week + 1)} aria-label="Next week">›</button>
+        <div className="dz-week-nav-wrap">
+          <div className="dz-week-nav">
+            <button type="button" disabled={weekNav.week <= 1} onClick={() => weekNav.onChange(weekNav.week - 1)} aria-label="Previous week">‹</button>
+            <span>
+              <small>Week</small>
+              <strong>{weekNav.week}</strong>
+              <small>{weekNav.date ? weekNav.date : `of ${weekNav.total}`}</small>
+            </span>
+            <button type="button" disabled={weekNav.week >= weekNav.total} onClick={() => weekNav.onChange(weekNav.week + 1)} aria-label="Next week">›</button>
+          </div>
+          {weekNav.startLabel && !weekNav.started ? <small className="dz-week-note">Season starts {weekNav.startLabel}</small> : null}
+          {offCurrent ? (
+            <button type="button" className="dz-link dz-small" onClick={() => weekNav.onChange(weekNav.currentWeek)}>
+              Back to this week
+            </button>
+          ) : null}
         </div>
       ) : null}
     </section>

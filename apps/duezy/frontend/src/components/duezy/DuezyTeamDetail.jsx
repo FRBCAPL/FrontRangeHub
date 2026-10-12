@@ -1,30 +1,39 @@
 import React, { useState } from 'react';
-import { money, paidFor } from '../../utils/duezyMath.js';
+import { money, paidFor, teamReminder } from '../../utils/duezyMath.js';
 import { METHODS } from '../../data/duezyOptions.js';
 import DuezyMoveTeam from './DuezyMoveTeam.jsx';
+import DuezyTeamEditForm from './DuezyTeamEditForm.jsx';
+import DuezyContactLinks from './DuezyContactLinks.jsx';
 
-function SeasonStrip({ teamId, week, dues, paymentIndex }) {
+export function SeasonStrip({ teamId, week, dues, paymentIndex, schedule }) {
+  const shown = Math.max(week, schedule.started ? schedule.currentWeek : 0);
   return (
     <div className="dz-strip" aria-label="Season so far">
-      {Array.from({ length: week }, (_, i) => {
+      {Array.from({ length: shown }, (_, i) => {
         const w = i + 1;
         const p = paymentIndex.get(`${teamId}:${w}`);
         const status = p?.status || 'unpaid';
-        const title = status === 'partial' ? `Week ${w}: paid ${money(paidFor(p, dues))} of ${money(dues)}` : `Week ${w}: ${status}`;
-        return <span key={w} className={`is-${status}`} title={title}>{w}</span>;
+        const late = status !== 'paid' && status !== 'bye' && w <= schedule.lateThrough;
+        const night = schedule.dates ? `${schedule.label(w)} (week ${w})` : `Week ${w}`;
+        const title = status === 'partial' ? `${night}: paid ${money(paidFor(p, dues))} of ${money(dues)}` : `${night}: ${late ? 'late' : status}`;
+        return <span key={w} className={`is-${status}${late ? ' is-late' : ''}`} title={title}>{w}</span>;
       })}
     </div>
   );
 }
 
-export default function DuezyTeamDetail({ team, week, dues, payment, paymentIndex, divisions = [], onSetPayment, onUpdateTeam }) {
+function reminderFor(league, team, { late, due, lateWhen, dueWhen }) {
+  if (late > 0) return teamReminder(league, team, late, lateWhen);
+  if (due > 0) return teamReminder(league, team, due, dueWhen);
+  return '';
+}
+
+export default function DuezyTeamDetail({ league, team, week, dues, schedule, balance, payment, paymentIndex, divisions = [], onSetPayment, onUpdateTeam }) {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState(payment?.method || METHODS[0]);
   const [note, setNote] = useState(payment?.note || '');
   const [editing, setEditing] = useState(false);
-  const [name, setName] = useState(team.name);
-  const [captain, setCaptain] = useState(team.captain || '');
-  const [busy, setBusy] = useState(false);
+  const weekName = schedule.dates ? schedule.label(week) : `week ${week}`;
 
   const savePayment = () => {
     const n = Number(amount);
@@ -33,15 +42,9 @@ export default function DuezyTeamDetail({ team, week, dues, payment, paymentInde
     setAmount('');
   };
 
-  const saveTeam = async () => {
-    if (!name.trim()) return;
-    setBusy(true);
-    try {
-      await onUpdateTeam({ name: name.trim(), captain: captain.trim() || null });
-      setEditing(false);
-    } finally {
-      setBusy(false);
-    }
+  const saveTeam = async (changes) => {
+    await onUpdateTeam(changes);
+    setEditing(false);
   };
 
   const removeTeam = async () => {
@@ -52,7 +55,8 @@ export default function DuezyTeamDetail({ team, week, dues, payment, paymentInde
   return (
     <div className="dz-team-detail">
       <p className="dz-small dz-muted">Season so far</p>
-      <SeasonStrip teamId={team.id} week={week} dues={dues} paymentIndex={paymentIndex} />
+      <SeasonStrip teamId={team.id} week={week} dues={dues} paymentIndex={paymentIndex} schedule={schedule} />
+      {balance.late > 0 ? <p className="dz-small dz-owe-late">Late for {balance.lateWhen}</p> : null}
 
       {payment?.status === 'partial' ? (
         <p className="dz-small">
@@ -64,7 +68,7 @@ export default function DuezyTeamDetail({ team, week, dues, payment, paymentInde
       ) : null}
 
       <div className="dz-detail-block">
-        <p className="dz-small dz-muted">Record a payment for week {week}</p>
+        <p className="dz-small dz-muted">Record a payment for {weekName}</p>
         <div className="dz-inline-form">
           <div className="dz-money-input">
             <em>$</em>
@@ -81,15 +85,15 @@ export default function DuezyTeamDetail({ team, week, dues, payment, paymentInde
 
       <div className="dz-detail-block">
         {editing ? (
-          <div className="dz-inline-form">
-            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} aria-label="Team name" />
-            <input value={captain} onChange={(e) => setCaptain(e.target.value)} placeholder="Captain (optional)" maxLength={80} aria-label="Captain" />
-            <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={saveTeam} disabled={busy}>Save</button>
-            <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setEditing(false)}>Cancel</button>
-          </div>
+          <DuezyTeamEditForm team={team} onSave={saveTeam} onCancel={() => setEditing(false)} />
         ) : (
           <div className="dz-row dz-row--start">
-            <button type="button" className="dz-link dz-small" onClick={() => setEditing(true)}>Edit team</button>
+            {team.contact ? (
+              <DuezyContactLinks contact={team.contact} message={reminderFor(league, team, balance)} />
+            ) : null}
+            <button type="button" className="dz-link dz-small" onClick={() => setEditing(true)}>
+              {team.contact ? 'Edit team' : 'Edit team / add captain contact'}
+            </button>
             <button type="button" className="dz-link dz-link--danger dz-small" onClick={removeTeam}>Remove team</button>
           </div>
         )}

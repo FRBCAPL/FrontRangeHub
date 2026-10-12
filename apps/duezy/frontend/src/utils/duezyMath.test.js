@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   weeklyDues,
+  matchesToSave,
   money,
   indexPayments,
   owedThrough,
@@ -21,6 +22,14 @@ test('weekly dues by team or by player', () => {
   assert.equal(weeklyDues({ dues_amount: 40, dues_basis: 'team' }), 40);
   assert.equal(weeklyDues({ dues_amount: 8, dues_basis: 'player', players_per_match: 5 }), 40);
   assert.equal(weeklyDues({ dues_amount: 7.5, dues_basis: 'player', players_per_match: 3 }), 22.5);
+});
+
+test('double play charges dues for each match', () => {
+  assert.equal(weeklyDues({ dues_amount: 20, dues_basis: 'team', matches_per_night: 2 }), 40);
+  assert.equal(weeklyDues({ dues_amount: 5, dues_basis: 'player', players_per_match: 4, matches_per_night: 2 }), 40);
+  assert.equal(weeklyDues({ dues_amount: 20, dues_basis: 'team', matches_per_night: null }), 20);
+  assert.deepEqual(matchesToSave({}), {});
+  assert.deepEqual(matchesToSave({ matches_per_night: 2 }), { matches_per_night: 2 });
 });
 
 test('money formatting', () => {
@@ -64,9 +73,11 @@ test('teams behind are sorted by amount and the reminder lists them', () => {
 });
 
 test('parse pasted team lines', () => {
-  assert.deepEqual(parseTeamLines('Sharks, Bobby K.\n\n  Slop Shots \nA, B, C'), [
-    { name: 'Sharks', captain: 'Bobby K.' },
-    { name: 'Slop Shots', captain: null },
-    { name: 'A', captain: 'B, C' },
+  assert.deepEqual(parseTeamLines('Sharks, Bobby K.\n\n  Slop Shots \nA, B, C\nRails, Kim, 719-555-0123\nJets, jo@x.com'), [
+    { name: 'Sharks', captain: 'Bobby K.', contact: null },
+    { name: 'Slop Shots', captain: null, contact: null },
+    { name: 'A', captain: 'B, C', contact: null },
+    { name: 'Rails', captain: 'Kim', contact: '719-555-0123' },
+    { name: 'Jets', captain: null, contact: 'jo@x.com' },
   ]);
 });

@@ -4,7 +4,6 @@ import './Homepage.css';
 import frontRangeLogo from '../assets/logo.png';
 import usaplLogo from '../assets/usapl_logo.png';
 import CuelessCubeLogo from './CuelessCubeLogo';
-import DraggableModal from './modal/DraggableModal';
 import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
 import StandaloneLadderModal from './guest/StandaloneLadderModal';
@@ -14,6 +13,7 @@ import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
 import HomeAppLauncher from './HomeAppLauncher.jsx';
+import { DuezyLearnMoreModal, DuezyWhatIsModal } from './DuezyIntroModals.jsx';
 import useBreakAndRunTile from './useBreakAndRunTile.jsx';
 import useArcadeNewScoreBadge from './useArcadeNewScoreBadge.js';
 import useConsignmentNewBadge from './useConsignmentNewBadge.js';
@@ -151,6 +151,12 @@ const Homepage = ({ canRunTournament = false }) => {
   const handleWhatIsDuezy = (e) => {
     e.stopPropagation(); // Prevent banner click (navigate)
     setShowWhatIsDuezyModal(true);
+  };
+
+  const handleStartDuezy = () => {
+    setShowWhatIsDuezyModal(false);
+    setShowDuezyModal(false);
+    navigate('/duezy');
   };
 
   const handleWhatIsDuezyLearnMore = () => {
@@ -301,11 +307,10 @@ const Homepage = ({ canRunTournament = false }) => {
       title: 'Duezy',
       blurb: 'Dues & payments for league operators.',
       accent: '#818cf8',
-      onOpen: handleNavigateToDuesTracker,
+      onOpen: () => navigate('/duezy'),
       actions: [
         { label: 'What is it?', onClick: handleWhatIsDuezy },
-        { label: 'Log in', onClick: handleNavigateToDuesTracker },
-        { label: 'New: any league', onClick: () => navigate('/duezy') },
+        { label: 'Log in', onClick: () => navigate('/duezy') },
       ],
     },
   ];
@@ -405,6 +410,9 @@ const Homepage = ({ canRunTournament = false }) => {
           <button type="button" className="homepage-footer-app" onClick={handleNavigateToEstateIt}>
             <span aria-hidden="true">🗄️</span> Estate Vault
           </button>
+          <button type="button" className="homepage-footer-app homepage-footer-app--duezy" onClick={handleNavigateToDuesTracker}>
+            <span aria-hidden="true">💰</span> FRUSAPL Duezy
+          </button>
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>
       </div>
@@ -457,53 +465,6 @@ const Homepage = ({ canRunTournament = false }) => {
         onClose={() => setShowMatchScheduling(false)}
       />
 
-      {/* What is Duezy? intro modal – custom compact modal (no DraggableModal so height stays content-sized) */}
-      {showWhatIsDuezyModal && (
-        <div
-          className="what-is-duezy-overlay"
-          onClick={() => setShowWhatIsDuezyModal(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="What is Duezy?"
-        >
-          <div
-            className="what-is-duezy-box"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="what-is-duezy-header">
-              <h2 className="what-is-duezy-title">What is Duezy?</h2>
-              <button
-                type="button"
-                className="what-is-duezy-close"
-                onClick={() => setShowWhatIsDuezyModal(false)}
-                aria-label="Close"
-              >
-                &times;
-              </button>
-            </div>
-            <div className="what-is-duezy-body">
-              <p>
-                Duezy is a dues-tracking app for league operators.<br />
-                 You can track who&apos;s paid, who&apos;s behind, and more. <br />
-                 Record payments (Cash, Venmo, Cash App, Check, etc.).<br />
-                 See where the money goes<br />
-                 (prize fund, sanction fees, league income). <br />
-                 Import divisions and teams from FargoRate LMS, and export or backup your data.
-              </p>
-              <div className="what-is-duezy-actions">
-                <button
-                  type="button"
-                  className="dues-tracker-banner-learn-btn"
-                  onClick={handleWhatIsDuezyLearnMore}
-                >
-                  Learn more
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* What is the Ladder? intro modal – compact */}
       {showWhatIsLadderModal && (
         <div
@@ -552,73 +513,18 @@ const Homepage = ({ canRunTournament = false }) => {
         onViewLadder={() => setShowPublicLadderView(true)}
       />
 
-      {/* Duezy Learn More Modal */}
-      <DraggableModal
+      <DuezyWhatIsModal
+        open={showWhatIsDuezyModal}
+        onClose={() => setShowWhatIsDuezyModal(false)}
+        onLearnMore={handleWhatIsDuezyLearnMore}
+        onStart={handleStartDuezy}
+      />
+
+      <DuezyLearnMoreModal
         open={showDuezyModal}
         onClose={() => setShowDuezyModal(false)}
-        title="Discover Duezy - Making Dues Easy!"
-        borderColor="#6366f1"
-        glowColor="#6366f1"
-        textColor="#fff"
-        maxWidth="640px"
-      >
-        <div style={{ padding: '0.75rem 1.25rem', maxHeight: '85vh', overflowY: 'auto' }}>
-          <h3 style={{ margin: '0 0 0.25rem 0', color: '#fff', fontSize: '1.25rem', fontWeight: 700 }}>
-            Stop chasing. Start knowing.
-          </h3>
-          <p style={{ margin: '0 0 0.6rem 0', fontSize: '1rem', lineHeight: 1.4, color: '#c7d2fe' }}>
-            Duezy gives league operators a single place to see who&apos;s paid, who&apos;s behind, and more. <br />See where every dollar goes—no spreadsheets, no guesswork.
-          </p>
-          <div style={{ marginBottom: '0.6rem' }}>
-            <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#a5b4fc' }}>
-              What you get
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.55, color: '#e0e7ff', fontSize: '0.9rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem 0.75rem', listStylePosition: 'inside' }}>
-              {/* Left column: dues-related */}
-              <li><strong>Know who&apos;s behind—instantly.</strong> See teams owed, amounts due, and payment history at a glance.</li>
-              {/* Right column: division builder */}
-              <li><strong>Smart builder for LMS Leagues.</strong> League Operator account required. Import divisions and teams from LMS reports websites.</li>
-              <li><strong>Record payments in seconds.</strong> Paid, bye week, makeup—one click. No digging through spreedsheets or emails.</li>
-              <li><strong>Custom division builder.</strong> Create/edit divisions with custom dues rates, players/matches-per-week, and much more.</li>
-              <li><strong>Custom payment methods.</strong> Cash, Venmo, Cash App, check, you name it.</li>
-              <li><strong>Easily add/edit teams.</strong> Add teams, add players, edit team names, assign captain, and more.</li>
-              <li><strong>See where the money goes.</strong> Prize fund, sanction fees, league income, parent org—all broken down automatically.</li>
-              {/* Right column: export/archive/report */}
-              <li><strong>Date range reports.</strong> View expected, collected, and owed dues for any date range.</li>
-              <li><strong>Sanction fees, done right.</strong> Track which players are sanctioned, who&apos;s paid, and what you owe.</li>
-              <li><strong>Archive teams.</strong> Preserve history when a team drops—restore later if they return.</li>
-              <li><strong>Enable individual player payments.</strong> Split a week&apos;s dues across multiple players—or enter amounts per player.</li>
-              <li><strong>Export, backup, report.</strong> CSV, Excel, PDF. Full backups. </li>
-            </ul>
-          </div>
-          <div style={{ marginBottom: '0.6rem' }}>
-            <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#a5b4fc' }}>
-              Built to fit your league
-            </p>
-            <p style={{ margin: '0 0 0.35rem 0', fontSize: '1rem', lineHeight: 1.4, color: '#e0e7ff' }}>
-              Duezy adapts to how you run things—not the other way around.
-            </p>
-            <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.55, color: '#e0e7ff', fontSize: '0.9rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem 0.75rem', listStylePosition: 'inside' }}>
-              <li><strong>Customize per division.</strong> Dues rates, players-per-week, matches-per-week—each division can have its own setup. <br /><strong><center>DUEZY is designed to fit your league.</center></strong></li>
-              <li><strong>Your way to split dues.</strong> User default settings or customize each division. Percentage-based (prize fund %, org %) or fixed dollar amounts per team or per player.</li>
-              <li><strong>Custom org labels.</strong> Name your first and second organization (e.g. &quot;Home Office&quot;, &quot;National&quot;) so reports make sense.</li>
-              <li><strong>Double-play support.</strong> Combine and track teams in two divisions at once. One payment entry for both divisions.</li>
-              <li><strong>Division colors.</strong> Color-code divisions in the teams table so you can scan at a glance.</li>
-              <li><strong>Dark or light mode.</strong> Use what works for you.</li>              
-            </ul><center><strong> ~ Try DUEZY Today~ <br />MAKE DUES EASY!</strong></center>
-          </div>
-          <div style={{ padding: '0.6rem 1rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: 10, border: '1px solid rgba(99, 102, 241, 0.35)' }}>
-            <p style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: '#e0e7ff' }}>
-              <a href="/dues-tracker/index.html" className="duezy-learn-more-signup-link">
-                Get started free—sign up with Google or email.
-              </a>
-            </p>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: '#a5b4fc' }}>
-              Built by league operators for league operators. Ditch the spreadsheets and start knowing.
-            </p>
-          </div>
-        </div>
-      </DraggableModal>
+        onStart={handleStartDuezy}
+      />
     </div>
   );
 };

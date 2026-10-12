@@ -8,7 +8,11 @@ import DuezyLeagueSettings from './DuezyLeagueSettings.jsx';
 import DuezyLogo from './DuezyLogo.jsx';
 import DuezyPlanPage from './DuezyPlanPage.jsx';
 import DuezyBillingBanner from './DuezyBillingBanner.jsx';
+import DuezyAdminPage from './DuezyAdminPage.jsx';
+import DuezyAdminAccount from './DuezyAdminAccount.jsx';
+import DuezyAdminLeague from './DuezyAdminLeague.jsx';
 import { DuezyBillingProvider } from '../../hooks/useDuezyBilling.js';
+import useDuezyAdmin from '../../hooks/useDuezyAdmin.js';
 import { completeOAuth, getSession, onAuthChange, signOut } from '../../services/duezyAuthService.js';
 import { DUEZY_OAUTH_ROUTE } from '../../utils/duezyAuthLanding.js';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
@@ -17,6 +21,9 @@ import './duezy-auth.css';
 import './duezy-league.css';
 import './duezy-divisions.css';
 import './duezy-billing.css';
+import './duezy-contact.css';
+import './duezy-schedule.css';
+import './duezy-admin.css';
 
 export default function DuezyApp() {
   const location = useLocation();
@@ -24,6 +31,7 @@ export default function DuezyApp() {
   const [session, setSession] = useState(undefined);
   const [oauthError, setOauthError] = useState('');
   const isOAuthLanding = location.pathname === DUEZY_OAUTH_ROUTE;
+  const isAdmin = useDuezyAdmin(session?.user?.id);
 
   useEffect(() => {
     if (!isOAuthLanding) return;
@@ -59,6 +67,7 @@ export default function DuezyApp() {
               {(session.user?.user_metadata?.full_name || session.user?.email || '?').trim()[0].toUpperCase()}
             </span>
             <span className="dz-header-email">{session.user?.email}</span>
+            {isAdmin ? <Link to={`${DUEZY_PATH}/admin`} className="dz-btn dz-btn--ghost dz-btn--sm">Admin</Link> : null}
             <Link to={`${DUEZY_PATH}/billing`} className="dz-btn dz-btn--ghost dz-btn--sm">Billing</Link>
             <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={signOut}>Log out</button>
           </div>
@@ -79,6 +88,9 @@ export default function DuezyApp() {
               <Route path="billing" element={<DuezyPlanPage />} />
               <Route path="league/:leagueId" element={<DuezyLeaguePage />} />
               <Route path="league/:leagueId/settings" element={<DuezyLeagueSettings />} />
+              <Route path="admin" element={<DuezyAdminPage />} />
+              <Route path="admin/account/:ownerId" element={<DuezyAdminAccount />} />
+              <Route path="admin/league/:leagueId" element={<DuezyAdminLeague />} />
             </Routes>
           </DuezyBillingProvider>
         ) : null}

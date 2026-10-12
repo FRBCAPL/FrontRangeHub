@@ -1,0 +1,42 @@
+.dz-contact-links { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.dz-contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--dz-line-strong);
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--dz-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.dz-contact-btn:hover,
+.dz-contact-btn:focus-visible { background: rgba(129, 140, 248, 0.25); border-color: rgba(129, 140, 248, 0.6); }
+.dz-contact-btn.is-compact { min-height: 28px; padding: 0 9px; font-size: 0.76rem; }
+
+.dz-behind-list li { align-items: center; gap: 10px; }
+.dz-behind-right { display: inline-flex; align-items: center; gap: 10px; }
+
+.dz-chip-method {
+  margin-left: 2px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(5, 46, 22, 0.18);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.dz-quick-method { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.dz-quick-method select {
+  min-height: 32px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid var(--dz-line-strong);
+  background: rgba(15, 23, 42, 0.8);
+  color: var(--dz-text);
+  font-size: 0.85rem;
+}
+.dz-panel-hint { margin: 0 0 10px; }

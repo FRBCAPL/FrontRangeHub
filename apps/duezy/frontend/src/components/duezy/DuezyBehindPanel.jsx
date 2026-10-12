@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { money, reminderText } from '../../utils/duezyMath.js';
+import { money, reminderText, teamReminder } from '../../utils/duezyMath.js';
+import DuezyContactLinks from './DuezyContactLinks.jsx';
 
-export default function DuezyBehindPanel({ league, week, behind }) {
+/** Late teams (past the grace period) with the nights they missed, plus reminder text. */
+export default function DuezyBehindPanel({ league, behind, graceNote = '' }) {
   const [copied, setCopied] = useState(false);
-  const text = reminderText(league, week, behind);
+  const text = reminderText(league, null, behind);
 
   if (!behind.length) {
     return (
       <div className="dz-allgood">
         <span aria-hidden="true">🎉</span>
         <div>
-          <strong>Everyone is caught up</strong>
-          <small>{week ? `No team owes anything through week ${week}.` : 'No team in any division owes anything right now.'}</small>
+          <strong>Nobody is late</strong>
+          <small>{graceNote || 'Every team is paid up through the nights that are due.'}</small>
         </div>
       </div>
     );
@@ -30,18 +32,25 @@ export default function DuezyBehindPanel({ league, week, behind }) {
   return (
     <section className="dz-behind">
       <div className="dz-panel dz-panel--alert">
-        <h3 className="dz-h3">Who's behind</h3>
+        <h3 className="dz-h3">Who's late</h3>
         <ul className="dz-behind-list">
-          {behind.map(({ team, owed, division }) => (
+          {behind.map(({ team, owed, division, when }) => (
             <li key={team.id}>
-              <span>
-                {team.name}
-                {division ? <small className="dz-div-tag">{division}</small> : null}
+              <span className="dz-behind-name">
+                <span>
+                  {team.name}
+                  {division ? <small className="dz-div-tag">{division}</small> : null}
+                </span>
+                {when ? <small className="dz-muted">{when}</small> : null}
               </span>
-              <strong>{money(owed)}</strong>
+              <span className="dz-behind-right">
+                <DuezyContactLinks contact={team.contact} message={teamReminder(league, team, owed, when)} compact />
+                <strong>{money(owed)}</strong>
+              </span>
             </li>
           ))}
         </ul>
+        {graceNote ? <p className="dz-small dz-muted">{graceNote}</p> : null}
       </div>
       <div className="dz-panel">
         <div className="dz-row">
@@ -49,7 +58,12 @@ export default function DuezyBehindPanel({ league, week, behind }) {
           <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
         </div>
         <textarea className="dz-textarea" readOnly rows={Math.min(10, behind.length + 3)} value={text} />
-        <p className="dz-small dz-muted">Paste it into your league's group chat or text thread.</p>
+        <p className="dz-small dz-muted">
+          Paste it into your league's group chat.
+          {behind.some((x) => x.team.contact)
+            ? ' Or tap 💬 next to a team to text that captain directly.'
+            : ' Add a captain phone number to a team to text them directly.'}
+        </p>
       </div>
     </section>
   );

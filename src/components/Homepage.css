@@ -267,6 +267,22 @@
   border-color: #f97316;
 }
 
+.homepage-footer .homepage-footer-app + .homepage-footer-app {
+  margin-left: 8px;
+}
+
+.homepage-footer .homepage-footer-app--duezy {
+  border-color: rgba(129, 140, 248, 0.55);
+  background: rgba(129, 140, 248, 0.1);
+  color: #e0e7ff;
+}
+
+.homepage-footer .homepage-footer-app--duezy:hover,
+.homepage-footer .homepage-footer-app--duezy:focus-visible {
+  background: rgba(129, 140, 248, 0.25);
+  border-color: #818cf8;
+}
+
 .section-title {
   color: #fff;
   font-size: 2rem;

@@ -1,10 +1,12 @@
 import React from 'react';
 import { memberWord } from '../../data/duezyOptions.js';
+import { matchesPerNight } from '../../utils/duezyMath.js';
 
 /** Dues amount / basis / players / weeks — shared by the setup wizard and league settings. */
 export default function DuezyDuesFields({ league, onChange, showTeamSize = false }) {
   const word = memberWord(league.sport);
   const perPlayer = league.dues_basis === 'player';
+  const matches = matchesPerNight(league);
   return (
     <div className="dz-stack">
       <div className="dz-segment" role="radiogroup" aria-label="How dues are charged">
@@ -30,7 +32,7 @@ export default function DuezyDuesFields({ league, onChange, showTeamSize = false
 
       <div className="dz-grid-3">
         <label className="dz-field">
-          <span>{league.dues_basis === 'player' ? `Per ${word.replace(/s$/, '')}, per week` : 'Per team, per week'}</span>
+          <span>{perPlayer ? `Per ${word.replace(/s$/, '')}` : 'Per team'}, per {matches > 1 ? 'match' : 'week'}</span>
           <div className="dz-money-input">
             <em>$</em>
             <input
@@ -67,6 +69,25 @@ export default function DuezyDuesFields({ league, onChange, showTeamSize = false
             onChange={(e) => onChange({ total_weeks: e.target.value })}
           />
         </label>
+      </div>
+
+      <div className="dz-field">
+        <span>Matches each night</span>
+        <div className="dz-segment" role="radiogroup" aria-label="Matches each night">
+          {[[1, 'One match'], [2, 'Double play (2 matches)']].map(([n, label]) => (
+            <button
+              key={n}
+              type="button"
+              role="radio"
+              aria-checked={matches === n}
+              className={matches === n ? 'is-active' : ''}
+              onClick={() => onChange({ matches_per_night: n })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {matches > 1 ? <small className="dz-small dz-muted">Dues are charged for each match, so the weekly amount doubles.</small> : null}
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import { Link, Navigate } from 'react-router-dom';
 import { listLeagues } from '../../services/duezyService.js';
 import { listDivisionsForLeagues } from '../../services/duezyDivisionService.js';
 import { money, weeklyDues } from '../../utils/duezyMath.js';
+import { unitSchedule } from '../../utils/duezyDivisions.js';
+import { todayISO } from '../../utils/duezySchedule.js';
 import { DUEZY_PATH, sportOf } from '../../data/duezyOptions.js';
 
 export default function DuezyLeagueList() {
@@ -41,7 +43,9 @@ export default function DuezyLeagueList() {
         {leagues.map((l) => {
           const sport = sportOf(l.sport);
           const divisions = divisionsByLeague[l.id] || [];
-          const pct = Math.min(100, Math.round((l.current_week / l.total_weeks) * 100));
+          const today = todayISO(l.timezone);
+          const week = unitSchedule(l, { today }).currentWeek;
+          const pct = Math.min(100, Math.round((week / l.total_weeks) * 100));
           return (
             <li key={l.id}>
               <Link to={`${DUEZY_PATH}/league/${l.id}`} className="dz-league-card">
@@ -51,7 +55,7 @@ export default function DuezyLeagueList() {
                     <strong>{l.name}</strong>
                     <span className="dz-muted dz-small">{sport.short} · {divisions.length} divisions</span>
                     <span className="dz-league-divs">
-                      {divisions.map((d) => <span key={d.id}>{d.name} · wk {d.current_week}</span>)}
+                      {divisions.map((d) => <span key={d.id}>{d.name} · wk {unitSchedule(d, { today }).currentWeek}</span>)}
                     </span>
                   </span>
                 ) : (
@@ -60,10 +64,10 @@ export default function DuezyLeagueList() {
                     <span className="dz-muted dz-small">
                       {[sport.short, l.play_day && `${l.play_day}s`, `${money(weeklyDues(l))}/team weekly`].filter(Boolean).join(' · ')}
                     </span>
-                    <span className="dz-league-progress" aria-label={`Week ${l.current_week} of ${l.total_weeks}`}>
+                    <span className="dz-league-progress" aria-label={`Week ${week} of ${l.total_weeks}`}>
                       <span style={{ width: `${pct}%` }} />
                     </span>
-                    <span className="dz-muted dz-small">Week {l.current_week} of {l.total_weeks}</span>
+                    <span className="dz-muted dz-small">Week {week} of {l.total_weeks}</span>
                   </span>
                 )}
                 <span className="dz-league-go" aria-hidden="true">›</span>

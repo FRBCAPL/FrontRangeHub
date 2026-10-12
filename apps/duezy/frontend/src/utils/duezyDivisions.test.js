@@ -9,6 +9,7 @@ import {
   isMultiDivision,
   newDivisionDraft,
   teamsInUnit,
+  unitStats,
   unitWeek,
 } from './duezyDivisions.js';
 
@@ -54,7 +55,53 @@ test('all-divisions stats: each division at its own week and dues', () => {
   assert.equal(per[1].dues, 15);
   assert.equal(summary.collected, 35);
   assert.equal(summary.expected, 55);
-  assert.deepEqual(behind.map((x) => [x.team.name, x.owed, x.division]), [['Hustlers', 40, 'Tue 8-Ball']]);
+  // Without dates, only weeks before the current one are late (week 2 is just "due").
+  assert.deepEqual(behind.map((x) => [x.team.name, x.owed, x.division, x.when]), [['Hustlers', 20, 'Tue 8-Ball', 'week 1']]);
+  assert.equal(per[0].dueTotal, 20);
+});
+
+test('dated division: week follows the calendar, late after the grace period', () => {
+  const dated = { ...tue, start_date: '2026-09-08', skip_dates: ['2026-09-22'], current_week: 1 };
+  const payments = indexPayments([{ team_id: 'a', week: 1, status: 'paid', amount: 20 }]);
+  const onDay = (today, grace) => unitStats(dated, teams.slice(0, 2), payments, false, { today, defaultGrace: grace });
+
+  const beforeSeason = onDay('2026-09-01', 0);
+  assert.equal(beforeSeason.schedule.started, false);
+  assert.equal(beforeSeason.dueTotal, 0);
+  assert.equal(beforeSeason.behind.length, 0);
+
+  const leagueNight = onDay('2026-09-08', 0);
+  assert.equal(leagueNight.schedule.currentWeek, 1);
+  assert.equal(leagueNight.behind.length, 0);
+  assert.equal(leagueNight.dueTotal, 20);
+
+  // Sep 29 = week 3 (Sep 22 skipped). Grace 3: Sep 8 and Sep 15 are late, Sep 29 is only due.
+  const later = onDay('2026-09-29', 3);
+  assert.equal(later.schedule.currentWeek, 3);
+  assert.equal(later.schedule.lateThrough, 2);
+  assert.deepEqual(later.behind.map((x) => [x.team.name, x.owed, x.when]), [
+    ['Hustlers', 40, 'Sep 8, Sep 15'],
+    ['Sharks', 20, 'Sep 15'],
+  ]);
+  assert.equal(later.dueTotal, 40);
+
+  const ownGrace = unitStats({ ...dated, grace_days: 14 }, teams.slice(0, 2), payments, false, { today: '2026-09-29', defaultGrace: 0 });
+  assert.equal(ownGrace.schedule.lateThrough, 1);
+});
+
+test('all-divisions season totals: each division through its own week, byes skipped, overpaying counts', () => {
+  const payments = indexPayments([
+    { team_id: 'a', week: 1, status: 'paid', amount: 30 },
+    { team_id: 'a', week: 2, status: 'paid', amount: 20 },
+    { team_id: 'b', week: 1, status: 'bye', amount: 0 },
+    { team_id: 'c', week: 1, status: 'partial', amount: 10 },
+  ]);
+  const { season, per } = allDivisionsStats([tue, thu], teams.slice(0, 3), payments);
+  // Tue: weeks 1-2, Sharks paid 50, Hustlers bye wk1 → expected 20+20+20 = 60
+  assert.deepEqual(per[0].season, { collected: 50, expected: 60, seasonValue: 2 * 20 * 12 });
+  // Thu: week 1 only, $15/week, 10 weeks
+  assert.deepEqual(per[1].season, { collected: 10, expected: 15, seasonValue: 150 });
+  assert.deepEqual(season, { collected: 60, expected: 75, seasonValue: 630 });
 });
 
 test('roundup reminder names divisions and skips the week', () => {

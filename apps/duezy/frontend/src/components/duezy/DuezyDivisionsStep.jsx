@@ -20,6 +20,7 @@ export default function DuezyDivisionsStep({ drafts, sport, defaults, onChange }
           draft={d}
           sport={sport}
           index={i}
+          defaultGrace={Number(defaults.grace_days) || 0}
           onChange={(changes) => update(d.key, changes)}
           onRemove={drafts.length > 1 ? () => remove(d.key) : null}
         />

@@ -4,6 +4,7 @@ import {
   getLeague,
   listPayments,
   listTeams,
+  markPaidThrough as markPaidRows,
   savePayment,
   updateLeague,
   updateTeam as updateTeamRow,
@@ -80,6 +81,12 @@ export default function useDuezyLeague(leagueId) {
     [leagueId, teams.length]
   );
 
+  const markPaidThrough = useCallback(async (teamIds, throughWeek, dues) => {
+    const saved = await markPaidRows(leagueId, teamIds, throughWeek, dues);
+    const keys = new Set(saved.map((p) => `${p.team_id}:${p.week}`));
+    setPayments((prev) => [...prev.filter((p) => !keys.has(`${p.team_id}:${p.week}`)), ...saved]);
+  }, [leagueId]);
+
   const updateTeam = useCallback(async (teamId, changes) => {
     await updateTeamRow(teamId, changes);
     setTeams((prev) => (changes.archived ? prev.filter((t) => t.id !== teamId) : prev.map((t) => (t.id === teamId ? { ...t, ...changes } : t))));
@@ -87,6 +94,6 @@ export default function useDuezyLeague(leagueId) {
 
   return {
     league, divisions, units, multi, teams, payments, paymentIndex,
-    error, setError, loading, setPayment, setWeek, addTeam, updateTeam,
+    error, setError, loading, setPayment, setWeek, addTeam, updateTeam, markPaidThrough,
   };
 }

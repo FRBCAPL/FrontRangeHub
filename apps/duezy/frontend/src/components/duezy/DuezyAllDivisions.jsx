@@ -1,20 +1,15 @@
 import React from 'react';
 import { money } from '../../utils/duezyMath.js';
-import DuezyWeekSummary from './DuezyWeekSummary.jsx';
+import DuezySeasonSummary from './DuezySeasonSummary.jsx';
 import DuezyBehindPanel from './DuezyBehindPanel.jsx';
 
 /** Combined view: every division at its own current week. */
 export default function DuezyAllDivisions({ league, all, onOpen }) {
-  const { per, summary, behind } = all;
+  const { per, season, behind, dueTotal } = all;
 
   return (
     <>
-      <DuezyWeekSummary
-        summary={summary}
-        behindCount={behind.length}
-        totalOwed={behind.reduce((s, x) => s + x.owed, 0)}
-        title="This week, all divisions"
-      />
+      <DuezySeasonSummary season={season} behind={behind} dueTotal={dueTotal} divisionCount={per.length} />
 
       <ul className="dz-div-cards">
         {per.map((s) => {
@@ -23,18 +18,27 @@ export default function DuezyAllDivisions({ league, all, onOpen }) {
             <li key={s.unit.id}>
               <button type="button" className="dz-div-card" onClick={() => onOpen(s.unit.id)}>
                 <span className="dz-div-card-head">
-                  <strong>{s.unit.name}</strong>
+                  <span className="dz-row">
+                    <strong>{s.unit.name}</strong>
+                    <span className="dz-week-badge">
+                      {s.schedule.dates && !s.schedule.started
+                        ? `Starts ${s.schedule.label(1)}`
+                        : `Week ${s.week}/${s.unit.total_weeks}${s.schedule.dates ? ` · ${s.schedule.label(s.week)}` : ''}`}
+                    </span>
+                  </span>
                   <span className="dz-muted dz-small">
-                    {[s.unit.play_day && `${s.unit.play_day}s`, `Week ${s.week} of ${s.unit.total_weeks}`, `${s.teams.length} teams`].filter(Boolean).join(' · ')}
+                    {[s.unit.play_day && `${s.unit.play_day}s`, `${s.teams.length} teams`].filter(Boolean).join(' · ')}
                   </span>
                 </span>
-                <span className="dz-league-progress" aria-label={`${pct}% collected this week`}>
+                <span className="dz-league-progress" aria-label={`${pct}% collected for week ${s.week}`}>
                   <span style={{ width: `${pct}%` }} />
                 </span>
                 <span className="dz-div-card-foot">
-                  <span>{money(s.summary.collected)} <small className="dz-muted">of {money(s.summary.expected)}</small></span>
+                  <span>
+                    {money(s.summary.collected)} <small className="dz-muted">of {money(s.summary.expected)} · week {s.week}</small>
+                  </span>
                   {s.behind.length ? (
-                    <span className="dz-div-card-owe">{s.behind.length} behind</span>
+                    <span className="dz-div-card-owe">{s.behind.length} late · {money(s.behind.reduce((t, x) => t + x.owed, 0))}</span>
                   ) : (
                     <span className="dz-div-card-ok">All caught up</span>
                   )}
@@ -45,7 +49,7 @@ export default function DuezyAllDivisions({ league, all, onOpen }) {
         })}
       </ul>
 
-      <DuezyBehindPanel league={league} week={null} behind={behind} />
+      <DuezyBehindPanel league={league} behind={behind} graceNote="Each division uses its own dates and grace period." />
     </>
   );
 }
