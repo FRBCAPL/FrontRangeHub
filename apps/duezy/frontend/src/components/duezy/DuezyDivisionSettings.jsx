@@ -8,8 +8,7 @@ import DuezyDivisionEditRow from './DuezyDivisionEditRow.jsx';
 import DuezyTrialLimitNote from './DuezyTrialLimitNote.jsx';
 import useDuezyBilling from '../../hooks/useDuezyBilling.js';
 import { canAddDivisions } from '../../utils/duezyBillingText.js';
-import { nextDivisionCost, priceFor } from '../../utils/duezyPricing.js';
-import { money } from '../../utils/duezyMath.js';
+import { divisionCostNote } from '../../utils/duezyPricingText.js';
 
 /** Settings section: add / edit / archive divisions, or turn a single-division league into several. */
 export default function DuezyDivisionSettings({ league, onConverted }) {
@@ -74,10 +73,6 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
 
   const allowed = canAddDivisions(access, 1);
   const canSaveNew = draft && divisionReady(draft) && (multi || currentName.trim()) && allowed;
-  const used = Number(access?.divisions_used) || 0;
-  const billingInterval = access?.plan_interval === 'year' ? 'year' : 'month';
-  const addedCost = access?.has_subscription ? nextDivisionCost(used, billingInterval) : 0;
-
   return (
     <section className="dz-card dz-stack" ref={sectionRef}>
       <div className="dz-row">
@@ -127,13 +122,7 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
           ) : null}
           <DuezyDivisionCard draft={draft} sport={league.sport} index={multi ? divisions.length : 1} defaultGrace={Number(league.grace_days) || 0} onChange={(c) => setDraft((p) => ({ ...p, ...c }))}>
             {!allowed ? <DuezyTrialLimitNote access={access} /> : null}
-            {allowed && access?.has_subscription ? (
-              <p className="dz-small dz-muted">
-                {addedCost > 0
-                  ? `Your plan goes to ${money(priceFor(used + 1, billingInterval))}/${billingInterval === 'year' ? 'yr' : 'mo'} (+${money(addedCost)}).`
-                  : 'Included in your current plan — no price change.'}
-              </p>
-            ) : null}
+            {allowed && divisionCostNote(access) ? <p className="dz-bill-hint">{divisionCostNote(access)}</p> : null}
             <div className="dz-row">
               <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setDraft(null)} disabled={busy}>Cancel</button>
               <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={saveNew} disabled={!canSaveNew || busy}>

@@ -1,0 +1,40 @@
+/** Plain-English pricing lines. `access` is the duezy_billing_status() snapshot (or null). */
+import { money } from './duezyMath.js';
+import { priceFor, TRIAL_DIVISIONS } from './duezyPricing.js';
+
+export const PRICING_RULE = 'Leagues are free. You pay for divisions, counted across all your leagues — every league has at least one.';
+
+const per = (interval) => (interval === 'year' ? 'yr' : 'mo');
+
+/**
+ * What adding `adding` divisions does to this account, or null when there's nothing to say
+ * (comp, locked, or over the trial limit — the limit note covers that).
+ */
+export function divisionCostNote(access, adding = 1) {
+  if (!access || adding <= 0) return null;
+  const used = Number(access.divisions_used) || 0;
+  if (access.phase === 'trial' && !access.has_subscription) {
+    const limit = Number(access.division_limit) || TRIAL_DIVISIONS;
+    if (used + adding > limit) return null;
+    const after = used + adding;
+    return adding === 1
+      ? `This uses ${after} of your ${limit} free-trial divisions.`
+      : `This uses ${after} of your ${limit} free-trial divisions (${adding} new).`;
+  }
+  if (access.has_subscription && access.phase !== 'comp') {
+    const interval = access.plan_interval === 'year' ? 'year' : 'month';
+    const before = priceFor(Math.max(1, used), interval);
+    const next = priceFor(Math.max(1, used + adding), interval);
+    const what = adding === 1 ? 'This adds 1 division' : `This adds ${adding} divisions`;
+    return next > before
+      ? `${what} — your plan goes from ${money(before)} to ${money(next)}/${per(interval)}.`
+      : `${what} — included in your current plan, no price change.`;
+  }
+  return null;
+}
+
+/** "1 of 2 divisions used" for the trial banner. */
+export function trialUsage(access) {
+  const limit = Number(access?.division_limit) || TRIAL_DIVISIONS;
+  return `${Number(access?.divisions_used) || 0} of ${limit} divisions used`;
+}

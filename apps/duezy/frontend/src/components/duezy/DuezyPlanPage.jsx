@@ -6,6 +6,7 @@ import { money } from '../../utils/duezyMath.js';
 import { PLAN_ROWS, TRIAL_DAYS, TRIAL_DIVISIONS, priceFor } from '../../utils/duezyPricing.js';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import DuezyPlanStatus from './DuezyPlanStatus.jsx';
+import DuezyPlanBreakdown from './DuezyPlanBreakdown.jsx';
 
 export default function DuezyPlanPage() {
   const { access, refresh } = useDuezyBilling();
@@ -59,11 +60,13 @@ export default function DuezyPlanPage() {
         <h1 className="dz-h1">Simple pricing, by division</h1>
         <p className="dz-muted">
           Every account starts with {TRIAL_DAYS} days free for up to {TRIAL_DIVISIONS} divisions — no card needed.
+          Unlimited leagues; you only pay for divisions.
         </p>
       </div>
 
       {notice ? <p className="dz-notice">{notice}</p> : null}
       <DuezyPlanStatus access={access} />
+      <DuezyPlanBreakdown />
 
       <section className="dz-card dz-stack">
         <div className="dz-row">
@@ -87,7 +90,7 @@ export default function DuezyPlanPage() {
           ))}
         </ul>
         <div className="dz-plan-yours">
-          <span>You have <strong>{used}</strong> {used === 1 ? 'division' : 'divisions'}</span>
+          <span>You have <strong>{used}</strong> {used === 1 ? 'division' : 'divisions'} in total</span>
           <strong>{money(priceFor(used, interval))}<small>/{interval === 'year' ? 'yr' : 'mo'}</small></strong>
         </div>
         <p className="dz-small dz-muted">Your bill follows your divisions automatically — add or archive one and it adjusts. Cancel anytime.</p>

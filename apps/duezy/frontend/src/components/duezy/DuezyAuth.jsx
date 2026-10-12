@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { sendReset, signIn, signInWithGoogle, signUp } from '../../services/duezyAuthService.js';
 import { SPORTS } from '../../data/duezyOptions.js';
 import DuezyAuthPreview from './DuezyAuthPreview.jsx';
+import { money } from '../../utils/duezyMath.js';
+import { monthlyPrice } from '../../utils/duezyPricing.js';
 
 const MODES = { login: 'Log in', signup: 'Create account', reset: 'Reset password' };
 
@@ -61,6 +63,7 @@ export default function DuezyAuth({ initialError = '' }) {
           <li><span className="dz-feature-icon">⚡</span><div><strong>Two-minute setup</strong><small>Name your league, set dues, paste your teams.</small></div></li>
           <li><span className="dz-feature-icon">✓</span><div><strong>One tap per team</strong><small>Paid, bye or not yet — every week, right from your phone.</small></div></li>
           <li><span className="dz-feature-icon">💬</span><div><strong>Friendly reminders</strong><small>See who owes and copy a ready-made message for the group chat.</small></div></li>
+          <li><span className="dz-feature-icon">$</span><div><strong>Simple pricing</strong><small>30 days free, then from {money(monthlyPrice(1))}/month. Unlimited leagues — priced by division.</small></div></li>
         </ul>
         <div className="dz-sport-strip" aria-label="Works for any league">
           {SPORTS.slice(0, 8).map((s) => <span key={s.value} title={s.label}>{s.icon}</span>)}

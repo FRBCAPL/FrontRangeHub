@@ -17,7 +17,10 @@ test('trial allows 2 divisions in total; paid has no cap; locked allows none', (
 });
 
 test('banner copy by phase', () => {
-  assert.equal(billingBanner({ phase: 'trial', days_remaining: 18 }).text, 'Free trial · 18 days left');
+  assert.equal(
+    billingBanner({ phase: 'trial', days_remaining: 18, divisions_used: 1, division_limit: 2 }).text,
+    'Free trial · 18 days left · 1 of 2 divisions used'
+  );
   assert.equal(billingBanner({ phase: 'trial', days_remaining: 3 }).tone, 'warn');
   assert.equal(billingBanner({ phase: 'locked', status: 'trialing' }).tone, 'bad');
   assert.equal(billingBanner({ phase: 'active' }), null);

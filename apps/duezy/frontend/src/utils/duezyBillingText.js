@@ -1,4 +1,5 @@
 /** Billing copy + rules for Duezy screens. `access` is the duezy_billing_status() snapshot (or null). */
+import { trialUsage } from './duezyPricingText.js';
 
 export const TRIAL_LIMIT_MESSAGE = 'Your free trial covers up to 2 divisions. Choose a plan in Billing to add more.';
 export const LOCKED_MESSAGE = 'Your leagues are read-only until you choose a plan. Everything is saved — pick a plan in Billing to keep recording.';
@@ -34,7 +35,7 @@ export function billingBanner(access) {
       const days = Number(access.days_remaining ?? 0);
       return {
         tone: days <= 5 ? 'warn' : 'info',
-        text: days <= 0 ? 'Your free trial ends today.' : `Free trial · ${days} ${days === 1 ? 'day' : 'days'} left`,
+        text: `${days <= 0 ? 'Your free trial ends today' : `Free trial · ${days} ${days === 1 ? 'day' : 'days'} left`} · ${trialUsage(access)}`,
         cta: 'See plans',
       };
     }

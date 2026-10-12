@@ -1,4 +1,5 @@
 import React from 'react';
+import { trialUsage } from '../../utils/duezyPricingText.js';
 
 const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '');
 
@@ -12,7 +13,7 @@ export default function DuezyPlanStatus({ access }) {
   let text = '';
   if (phase === 'trial') {
     title = `Free trial · ${access.days_remaining} ${access.days_remaining === 1 ? 'day' : 'days'} left`;
-    text = `Ends ${fmt(access.trial_ends_at)}. Up to 2 divisions while you try it out.`;
+    text = `Ends ${fmt(access.trial_ends_at)}. ${trialUsage(access)} — the trial covers up to 2.`;
   } else if (phase === 'active') {
     icon = '✅';
     title = 'Your plan is active';

@@ -14,6 +14,7 @@ import DuezyDayPicker from './DuezyDayPicker.jsx';
 import { browserTimeZone, scheduleToSave } from '../../utils/duezySchedule.js';
 import useDuezyBilling from '../../hooks/useDuezyBilling.js';
 import { canAddDivisions } from '../../utils/duezyBillingText.js';
+import { divisionCostNote } from '../../utils/duezyPricingText.js';
 
 const STEPS = {
   single: ['Your league', 'Your division', 'Teams'],
@@ -49,7 +50,9 @@ export default function DuezySetupWizard() {
   const perTeam = weeklyDues(league);
   const divisionTeamCount = drafts.reduce((s, d) => s + parseTeamLines(d.teamsText).length, 0);
 
-  const overLimit = !canAddDivisions(access, multi ? Math.max(drafts.length, 1) : 1);
+  const adding = multi ? Math.max(drafts.length, 1) : 1;
+  const overLimit = !canAddDivisions(access, adding);
+  const costNote = divisionCostNote(access, adding);
 
   const canNext =
     (stepName === 'Your league' && league.name.trim()) ||
@@ -182,6 +185,7 @@ export default function DuezySetupWizard() {
       ) : null}
 
       {overLimit ? <DuezyTrialLimitNote access={access} /> : null}
+      {!overLimit && step === steps.length - 1 && costNote ? <p className="dz-bill-hint">{costNote}</p> : null}
       {error ? <p className="dz-error">{error}</p> : null}
 
       <div className="dz-row">
