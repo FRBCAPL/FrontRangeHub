@@ -48,7 +48,7 @@ export default function DuezyTeamDetail({ league, team, week, dues, schedule, ba
   };
 
   const removeTeam = async () => {
-    if (!window.confirm(`Remove ${team.name} from this league? Their payment history is kept.`)) return;
+    if (!window.confirm(`Remove ${team.name}? Their payment history is kept.`)) return;
     await onUpdateTeam({ archived: true });
   };
 

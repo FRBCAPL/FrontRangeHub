@@ -14,7 +14,7 @@ export default function DuezyLeaguePage() {
   const { leagueId } = useParams();
   const [params, setParams] = useSearchParams();
   const data = useDuezyLeague(leagueId);
-  const { league, units, multi, teams, paymentIndex, error, setError, loading } = data;
+  const { league, units, several, teams, paymentIndex, error, setError, loading } = data;
   const [viewWeeks, setViewWeeks] = useState({});
 
   const opts = useMemo(
@@ -29,8 +29,8 @@ export default function DuezyLeaguePage() {
   const sport = sportOf(league.sport);
   const settingsTo = `${DUEZY_PATH}/league/${league.id}/settings`;
   const requested = params.get('div');
-  const current = multi ? all.per.find((s) => s.unit.id === requested) || null : all.per[0];
-  const showAll = multi && !current;
+  const current = several ? all.per.find((s) => s.unit.id === requested) || null : all.per[0];
+  const showAll = several && !current;
   const openDivision = (id) => setParams(id === ALL_DIVISIONS ? {} : { div: id }, { replace: true });
 
   const behindCounts = Object.fromEntries(all.per.map((s) => [s.unit.id, s.behind.length]));
@@ -67,10 +67,11 @@ export default function DuezyLeaguePage() {
   ) : (
     <DuezyLeagueHero
       icon={sport.icon}
-      title={multi ? selected.unit.name : league.name}
-      subtitle={multi ? league.name : ''}
+      title={several ? selected.unit.name : league.name}
+      subtitle={several ? league.name : ''}
       meta={[
-        !multi && sport.short,
+        !several && sport.short,
+        !several && selected.unit.id && selected.unit.name,
         selected.unit.play_day && `${selected.unit.play_day}s`,
         `${money(selected.dues)} per team weekly`,
         `${selected.teams.length} teams`,
@@ -84,7 +85,7 @@ export default function DuezyLeaguePage() {
     <div className="dz-stack dz-stack--lg">
       <Link to={DUEZY_PATH} className="dz-link dz-small">‹ All leagues</Link>
 
-      {multi ? (
+      {several ? (
         <DuezyDivisionTabs divisions={units} active={showAll ? ALL_DIVISIONS : selected.unit.id} onChange={openDivision} behindCounts={behindCounts} />
       ) : null}
 
@@ -97,7 +98,7 @@ export default function DuezyLeaguePage() {
       {showAll ? (
         <DuezyAllDivisions league={league} all={all} onOpen={openDivision} />
       ) : (
-        <DuezyUnitView key={selected.unit.id || 'single'} league={league} stats={selected} data={data} divisions={multi ? units : []} />
+        <DuezyUnitView key={selected.unit.id || 'single'} league={league} stats={selected} data={data} divisions={units} />
       )}
     </div>
   );

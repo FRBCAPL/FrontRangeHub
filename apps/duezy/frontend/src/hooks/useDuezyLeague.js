@@ -42,6 +42,7 @@ export default function useDuezyLeague(leagueId) {
   const paymentIndex = useMemo(() => indexPayments(payments), [payments]);
   const units = useMemo(() => divisionUnits(league, divisions), [league, divisions]);
   const multi = isMultiDivision(league, divisions);
+  const several = units.length > 1;
 
   const setPayment = useCallback(
     async (teamId, week, entry) => {
@@ -59,7 +60,7 @@ export default function useDuezyLeague(leagueId) {
     [leagueId, payments]
   );
 
-  /** divisionId = null moves the league's own week (single division). */
+  /** divisionId = null moves the league's own week (league not yet migrated to division rows). */
   const setWeek = useCallback(
     async (divisionId, week) => {
       if (!divisionId) {
@@ -93,7 +94,7 @@ export default function useDuezyLeague(leagueId) {
   }, []);
 
   return {
-    league, divisions, units, multi, teams, payments, paymentIndex,
+    league, divisions, units, multi, several, teams, payments, paymentIndex,
     error, setError, loading, setPayment, setWeek, addTeam, updateTeam, markPaidThrough,
   };
 }

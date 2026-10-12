@@ -75,7 +75,7 @@ export default function DuezyAdminAccount() {
                 <span>
                   <strong>{l.name}</strong>
                   <small className="dz-muted">
-                    {[l.archived && 'archived', l.multi_division ? `${l.divisions.length} divisions` : '1 division', `${l.teams} teams`, `created ${shortDateTime(l.created_at)}`]
+                    {[l.archived && 'archived', l.divisions.length > 1 ? `${l.divisions.length} divisions` : '1 division', `${l.teams} teams`, `created ${shortDateTime(l.created_at)}`]
                       .filter(Boolean)
                       .join(' · ')}
                   </small>

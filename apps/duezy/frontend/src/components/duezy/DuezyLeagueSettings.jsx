@@ -9,6 +9,11 @@ import DuezyDivisionSettings from './DuezyDivisionSettings.jsx';
 import DuezyScheduleFields from './DuezyScheduleFields.jsx';
 import { scheduleToSave } from '../../utils/duezySchedule.js';
 
+/**
+ * League settings = the organization only (name, sport, late rule, payment note).
+ * Night, dates, dues and weeks belong to divisions (section below). Leagues that predate
+ * division rows still edit those here, labelled as their one division.
+ */
 export default function DuezyLeagueSettings() {
   const { leagueId } = useParams();
   const navigate = useNavigate();
@@ -27,9 +32,32 @@ export default function DuezyLeagueSettings() {
   if (error && !form) return <p className="dz-error">{error}</p>;
   if (!form) return <p className="dz-muted dz-center">Loading…</p>;
 
+  const hasDivisions = Boolean(form.multi_division);
+
   const set = (changes) => {
     setForm((prev) => ({ ...prev, ...changes }));
     setSaved(false);
+  };
+
+  const leagueFields = () => ({
+    name: form.name.trim(),
+    sport: sportToSave(form.sport),
+    payment_note: form.payment_note.trim() || null,
+    ...('grace_days' in form ? scheduleToSave({ grace_days: form.grace_days }, { league: true }) : {}),
+  });
+
+  const legacyDivisionFields = () => {
+    const totalWeeks = Number(form.total_weeks) || 12;
+    return {
+      play_day: form.play_day,
+      dues_amount: Number(form.dues_amount) || 0,
+      dues_basis: form.dues_basis,
+      players_per_match: Number(form.players_per_match) || 1,
+      total_weeks: totalWeeks,
+      current_week: Math.min(form.current_week, totalWeeks),
+      ...matchesToSave(form),
+      ...scheduleToSave(form, { league: true }),
+    };
   };
 
   const save = async (e) => {
@@ -37,20 +65,7 @@ export default function DuezyLeagueSettings() {
     setBusy(true);
     setError('');
     try {
-      const totalWeeks = Number(form.total_weeks) || 12;
-      await updateLeague(leagueId, {
-        name: form.name.trim(),
-        sport: sportToSave(form.sport),
-        play_day: form.play_day,
-        dues_amount: Number(form.dues_amount) || 0,
-        dues_basis: form.dues_basis,
-        players_per_match: Number(form.players_per_match) || 1,
-        total_weeks: totalWeeks,
-        current_week: Math.min(form.current_week, totalWeeks),
-        payment_note: form.payment_note.trim() || null,
-        ...matchesToSave(form),
-        ...scheduleToSave(form, { league: true }),
-      });
+      await updateLeague(leagueId, hasDivisions ? leagueFields() : { ...leagueFields(), ...legacyDivisionFields() });
       setSaved(true);
     } catch (err) {
       setError(err.message);
@@ -69,13 +84,15 @@ export default function DuezyLeagueSettings() {
     }
   };
 
-  const multi = Boolean(form.multi_division);
-
   return (
     <div className="dz-stack dz-stack--lg">
       <form className="dz-card dz-stack" onSubmit={save}>
         <Link to={back} className="dz-link dz-small">Back to {form.name}</Link>
-        <h1 className="dz-h1">League settings</h1>
+        <div>
+          <span className="dz-eyebrow">League</span>
+          <h1 className="dz-h1">League settings</h1>
+          <p className="dz-small dz-muted">These apply to the whole league. Night, dates, dues and weeks are set per division.</p>
+        </div>
 
         <label className="dz-field">
           <span>League name</span>
@@ -85,30 +102,30 @@ export default function DuezyLeagueSettings() {
           <span>What you play</span>
           <DuezySportPicker value={form.sport} onChange={(sport) => set({ sport })} />
         </div>
-        {!multi ? (
-          <label className="dz-field">
-            <span>Night you play</span>
-            <select value={form.play_day || ''} onChange={(e) => set({ play_day: e.target.value })}>
-              {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </label>
-        ) : null}
 
-        <h2 className="dz-h3">{multi ? 'Defaults for new divisions' : 'Dues'}</h2>
-        <DuezyDuesFields league={form} onChange={set} showTeamSize={multi} />
-        <p className="dz-small dz-muted">
-          {multi
-            ? 'New divisions start with these. Each division’s own dues are below.'
-            : `Each team pays ${money(weeklyDues(form))} per week. Changing dues updates what every team owes, including past weeks.`}
-        </p>
-
-        <h2 className="dz-h3">{multi ? 'When a team counts as late' : 'Schedule'}</h2>
-        <DuezyScheduleFields value={form} onChange={set} showDates={!multi} />
-        {multi ? (
-          <p className="dz-small dz-muted">
-            This is the default. Each division has its own first night and nights off — use <strong>Add dates</strong> or <strong>Edit</strong> on a division under Divisions below.
-          </p>
-        ) : null}
+        {hasDivisions ? (
+          <>
+            <h2 className="dz-h3">When a team counts as late</h2>
+            <DuezyScheduleFields value={form} onChange={set} showDates={false} />
+            <p className="dz-small dz-muted">League default — a division can use its own in its settings below.</p>
+          </>
+        ) : (
+          <>
+            <h2 className="dz-h3">Your division</h2>
+            <p className="dz-small dz-muted">This league has one division. Its night, dues and schedule:</p>
+            <label className="dz-field">
+              <span>Night you play</span>
+              <select value={form.play_day || ''} onChange={(e) => set({ play_day: e.target.value })}>
+                {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </label>
+            <DuezyDuesFields league={form} onChange={set} />
+            <p className="dz-small dz-muted">
+              Each team pays {money(weeklyDues(form))} per week. Changing dues updates what every team owes, including past weeks.
+            </p>
+            <DuezyScheduleFields value={form} onChange={set} />
+          </>
+        )}
 
         <label className="dz-field">
           <span>Payment instructions for reminders <em className="dz-muted">(optional)</em></span>
@@ -126,7 +143,7 @@ export default function DuezyLeagueSettings() {
 
         <div className="dz-row">
           <button type="button" className="dz-link dz-link--danger dz-small" onClick={archive}>Archive league</button>
-          <button type="submit" className="dz-btn dz-btn--primary" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
+          <button type="submit" className="dz-btn dz-btn--primary" disabled={busy}>{busy ? 'Saving…' : 'Save league'}</button>
         </div>
       </form>
       <DuezyDivisionSettings league={form} onConverted={() => setForm((prev) => ({ ...prev, multi_division: true }))} />

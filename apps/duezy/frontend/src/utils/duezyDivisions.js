@@ -1,6 +1,9 @@
 /**
- * Divisions for Duezy. A "unit" is what dues are tracked against: a division in a multi-division
- * league, or the league itself (id: null) when it has a single division.
+ * Divisions for Duezy.
+ *   League   = the organization (name, sport, payment note, default grace, timezone).
+ *   Division = teams on one schedule (night, dates, dues, weeks, current week). Every league has at least one.
+ * A "unit" is what dues are tracked against — a division. Leagues created before
+ * duezy-one-division SQL may have no division rows; then the league itself acts as one (id: null).
  */
 import { matchesToSave, owedThrough, round2, seasonSummary, teamsBehind, unpaidWeeks, weekSummary, weeklyDues } from './duezyMath.js';
 import { currentWeekOn, lateThroughOn, scheduleToSave, shortDate, todayISO, weekDates } from './duezySchedule.js';
@@ -123,7 +126,7 @@ export function allDivisionsStats(units, teams, paymentIndex, opts = {}) {
 
 let draftSeq = 0;
 
-/** Editable division in the wizard / settings, pre-filled from the league defaults. */
+/** Editable division in the wizard / settings, pre-filled from another division (or league defaults). */
 export function newDivisionDraft(defaults = {}) {
   draftSeq += 1;
   return {

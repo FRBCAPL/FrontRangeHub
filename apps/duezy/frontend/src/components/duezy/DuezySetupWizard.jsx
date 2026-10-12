@@ -10,12 +10,13 @@ import DuezyDivisionsStep from './DuezyDivisionsStep.jsx';
 import DuezyDivisionTeamsStep from './DuezyDivisionTeamsStep.jsx';
 import DuezyTrialLimitNote from './DuezyTrialLimitNote.jsx';
 import DuezyScheduleFields from './DuezyScheduleFields.jsx';
+import DuezyDayPicker from './DuezyDayPicker.jsx';
 import { browserTimeZone, scheduleToSave } from '../../utils/duezySchedule.js';
 import useDuezyBilling from '../../hooks/useDuezyBilling.js';
 import { canAddDivisions } from '../../utils/duezyBillingText.js';
 
 const STEPS = {
-  single: ['Your league', 'Dues', 'Teams'],
+  single: ['Your league', 'Your division', 'Teams'],
   multi: ['Your league', 'Default dues', 'Divisions', 'Teams'],
 };
 
@@ -33,6 +34,7 @@ export default function DuezySetupWizard() {
     players_per_match: 4,
     total_weeks: 12,
     payment_note: '',
+    division_name: '',
   });
   const [teamsText, setTeamsText] = useState('');
   const [drafts, setDrafts] = useState([]);
@@ -51,7 +53,7 @@ export default function DuezySetupWizard() {
 
   const canNext =
     (stepName === 'Your league' && league.name.trim()) ||
-    ((stepName === 'Dues' || stepName === 'Default dues') && Number(league.dues_amount) > 0 && Number(league.total_weeks) > 0) ||
+    ((stepName === 'Your division' || stepName === 'Default dues') && Number(league.dues_amount) > 0 && Number(league.total_weeks) > 0) ||
     (stepName === 'Divisions' && drafts.length > 0 && drafts.every(divisionReady) && !overLimit) ||
     (stepName === 'Teams' && (multi ? divisionTeamCount > 0 : teams.length > 0) && !overLimit);
 
@@ -60,6 +62,12 @@ export default function DuezySetupWizard() {
       setDrafts([newDivisionDraft(league), newDivisionDraft(league)]);
     }
     setStep(step + 1);
+  };
+
+  /** Single-division league: its one division takes the night, dues and dates; grace stays the league default. */
+  const singleDivision = () => {
+    const { grace_days: _grace, division_name: divisionName, ...rest } = league;
+    return { ...rest, name: divisionName.trim() || `${league.play_day} division` };
   };
 
   const finish = async () => {
@@ -79,13 +87,15 @@ export default function DuezySetupWizard() {
         ...scheduleToSave(league, { league: true }),
       };
       if (!row.timezone && multi && drafts.some((d) => d.start_date)) row.timezone = browserTimeZone();
-      const divisions = multi ? drafts.map((d) => ({ ...divisionToSave(d), teams: parseTeamLines(d.teamsText) })) : null;
-      const created = await createLeague(row, multi ? [] : teams, divisions);
+      const divisions = multi
+        ? drafts.map((d) => ({ ...divisionToSave(d), teams: parseTeamLines(d.teamsText) }))
+        : [{ ...divisionToSave(singleDivision()), teams }];
+      const created = await createLeague(row, [], divisions);
       refreshBilling();
       navigate(`${DUEZY_PATH}/league/${created.id}`, { replace: true });
     } catch (e) {
       setError(/duezy_divisions does not exist|relation .*duezy_divisions|multi_division/.test(e.message)
-        ? 'Divisions need a quick database update (duezy-divisions SQL). Single-division leagues work in the meantime.'
+        ? 'Divisions need a quick database update (duezy-divisions SQL) before new leagues can be created.'
         : e.message);
       setBusy(false);
     }
@@ -106,10 +116,29 @@ export default function DuezySetupWizard() {
         <DuezyWizardLeagueStep league={league} structure={structure} onChange={set} onStructure={setStructure} />
       ) : null}
 
-      {stepName === 'Dues' || stepName === 'Default dues' ? (
+      {stepName === 'Your division' || stepName === 'Default dues' ? (
         <div className="dz-stack">
-          <h2 className="dz-h2">{multi ? 'Default dues for your divisions' : 'How do dues work?'}</h2>
-          {multi ? <p className="dz-muted">Every division starts with these. You can change any of them per division next.</p> : null}
+          <h2 className="dz-h2">{multi ? 'Default dues for your divisions' : 'Your division'}</h2>
+          {multi
+            ? <p className="dz-muted">Every division starts with these. You can change any of them per division next.</p>
+            : <p className="dz-muted">A division is a group of teams on one schedule. You can add more divisions later.</p>}
+          {!multi ? (
+            <>
+              <label className="dz-field">
+                <span>Division name <em className="dz-muted">(optional)</em></span>
+                <input
+                  value={league.division_name}
+                  onChange={(e) => set({ division_name: e.target.value })}
+                  placeholder={`${league.play_day} division`}
+                  maxLength={60}
+                />
+              </label>
+              <div className="dz-field">
+                <span>Night you play</span>
+                <DuezyDayPicker value={league.play_day} onChange={(play_day) => set({ play_day })} />
+              </div>
+            </>
+          ) : null}
           <DuezyDuesFields league={league} onChange={set} showTeamSize={multi} />
           {perTeam > 0 ? (
             <div className="dz-dues-preview">
@@ -123,16 +152,6 @@ export default function DuezySetupWizard() {
             onChange={set}
             dateLabel={multi ? 'First night of play (each division can change it)' : 'First night of play'}
           />
-          <label className="dz-field">
-            <span>Payment instructions for reminders <em className="dz-muted">(optional)</em></span>
-            <input
-              value={league.payment_note}
-              onChange={(e) => set({ payment_note: e.target.value })}
-              placeholder="e.g. Venmo @yourname or cash at the table"
-              maxLength={300}
-            />
-            <small className="dz-small dz-muted">Added to the end of reminder texts so teams know how to pay you.</small>
-          </label>
         </div>
       ) : null}
 

@@ -32,7 +32,7 @@ export default function DuezyUnitView({ league, stats, data, divisions }) {
 
       <section className="dz-panel">
         <div className="dz-row dz-panel-head">
-          <h3 className="dz-h3">{unit.id ? `${unit.name} teams` : 'Teams'}</h3>
+          <h3 className="dz-h3">{divisions.length > 1 ? `${unit.name} teams` : 'Teams'}</h3>
           <DuezyQuickMethod value={quickMethod} onChange={setQuickMethod} />
         </div>
         <p className="dz-muted dz-small dz-panel-hint">Tap a team for history, partial payments and captain contact.</p>

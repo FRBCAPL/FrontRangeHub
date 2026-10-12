@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { listTeams } from '../../services/duezyService.js';
 import { addDivision, convertToMulti, listDivisions, updateDivision } from '../../services/duezyDivisionService.js';
 import { divisionReady, divisionToSave, newDivisionDraft } from '../../utils/duezyDivisions.js';
@@ -19,6 +20,8 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
   const [currentName, setCurrentName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sectionRef = useRef(null);
 
   const multi = Boolean(league.multi_division && divisions?.length);
 
@@ -31,6 +34,14 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
   }, [league.id]);
 
   useEffect(() => { load().catch((e) => setError(e.message)); }, [load]);
+
+  const loaded = Boolean(divisions);
+  useEffect(() => {
+    if (!loaded || searchParams.get('add') !== 'division') return;
+    setDraft((prev) => prev || newDivisionDraft(divisions[divisions.length - 1] || league));
+    setSearchParams({}, { replace: true });
+    requestAnimationFrame(() => sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [loaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!divisions) return null;
 
@@ -68,13 +79,24 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
   const addedCost = access?.has_subscription ? nextDivisionCost(used, billingInterval) : 0;
 
   return (
-    <section className="dz-card dz-stack">
+    <section className="dz-card dz-stack" ref={sectionRef}>
       <div className="dz-row">
-        <h2 className="dz-h3">Divisions</h2>
+        <div>
+          <span className="dz-eyebrow">Divisions</span>
+          <h2 className="dz-h3">{multi && divisions.length > 1 ? `${divisions.length} divisions` : 'Your division'}</h2>
+        </div>
         {!draft ? (
-          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setDraft(newDivisionDraft(league))}>+ Add division</button>
+          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setDraft(newDivisionDraft(divisions[divisions.length - 1] || league))}>+ Add division</button>
         ) : null}
       </div>
+
+      {multi ? (
+        <p className="dz-muted dz-small">
+          {divisions.length > 1
+            ? 'Each division has its own night, dates, dues, team size and weeks.'
+            : 'Night, dates, dues, team size and weeks live here. Add another division if you run different nights, skill levels or formats.'}
+        </p>
+      ) : null}
 
       {multi ? (
         <ul className="dz-stack dz-div-settings-list">

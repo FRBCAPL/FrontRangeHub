@@ -6,6 +6,7 @@ import DuezySetupWizard from './DuezySetupWizard.jsx';
 import DuezyLeaguePage from './DuezyLeaguePage.jsx';
 import DuezyLeagueSettings from './DuezyLeagueSettings.jsx';
 import DuezyLogo from './DuezyLogo.jsx';
+import DuezyHubBadge from './DuezyHubBadge.jsx';
 import DuezyPlanPage from './DuezyPlanPage.jsx';
 import DuezyBillingBanner from './DuezyBillingBanner.jsx';
 import DuezyAdminPage from './DuezyAdminPage.jsx';
@@ -60,6 +61,7 @@ export default function DuezyApp() {
     <div className="dz-app">
       <div className="dz-glow" aria-hidden="true" />
       <header className="dz-header">
+        <div className="dz-header-left"><DuezyHubBadge /></div>
         <Link to={DUEZY_PATH} className="dz-brand" aria-label="Duezy home"><DuezyLogo /></Link>
         {session ? (
           <div className="dz-header-account">
@@ -71,7 +73,7 @@ export default function DuezyApp() {
             <Link to={`${DUEZY_PATH}/billing`} className="dz-btn dz-btn--ghost dz-btn--sm">Billing</Link>
             <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={signOut}>Log out</button>
           </div>
-        ) : null}
+        ) : <span />}
       </header>
 
       <main className="dz-main">
