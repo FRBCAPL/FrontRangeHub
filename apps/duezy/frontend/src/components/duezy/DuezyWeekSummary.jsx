@@ -3,9 +3,22 @@ import { money } from '../../utils/duezyMath.js';
 import DuezyOwedStat from './DuezyOwedStat.jsx';
 import DuezyWeekCashCard from './DuezyWeekCashCard.jsx';
 
-/** Division header: collected this week (ring), cash vs digital + make-ups, and what's still to collect. */
+/** Season-to-date for the division, including money paid ahead for later weeks. */
+function SeasonLine({ season }) {
+  const all = season.collectedAll ?? season.collected;
+  const ahead = Math.max(0, all - season.collected);
+  return (
+    <p className="dz-summary-season">
+      This season: <b>{money(all)}</b> collected
+      {season.expected > 0 ? <> of {money(season.expected)} due so far</> : null}
+      {ahead > 0 ? <> · {money(ahead)} paid ahead</> : null}
+    </p>
+  );
+}
+
+/** Division header: collected this week + season (ring), cash vs digital, and what's still to collect. */
 export default function DuezyWeekSummary({
-  summary, owed, cash, makeups = [], title = 'Collected this week', cashTitle, currentNote = '', onShowLate, onShowMakeups, onOpenTeam,
+  summary, season = null, owed, cash, title = 'Collected this week', cashTitle, currentNote = '', onShowLate, onShowMakeups,
 }) {
   const { paid, partial, bye, makeup = 0, collected, expected } = summary;
   const pct = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 100;
@@ -25,9 +38,10 @@ export default function DuezyWeekSummary({
             {makeup ? <span className="is-makeup">{makeup} make up</span> : null}
             {bye ? <span className="is-bye">{bye} bye</span> : null}
           </div>
+          {season ? <SeasonLine season={season} /> : null}
         </div>
       </div>
-      <DuezyWeekCashCard totals={cash} makeups={makeups} onOpenTeam={onOpenTeam} title={cashTitle} />
+      <DuezyWeekCashCard totals={cash} title={cashTitle} />
       <DuezyOwedStat owed={owed} onShowLate={onShowLate} onShowMakeups={onShowMakeups} currentNote={currentNote} />
     </section>
   );

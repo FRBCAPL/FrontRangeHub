@@ -1,21 +1,25 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { graceLabel } from '../../utils/duezySchedule.js';
 import { weekMethodTotals } from '../../utils/duezyMethodTotals.js';
+import { playersWith } from '../../utils/duezyPayers.js';
 import DuezyWeekSummary from './DuezyWeekSummary.jsx';
 import DuezyBehindPanel from './DuezyBehindPanel.jsx';
 import DuezyCatchUp from './DuezyCatchUp.jsx';
 import DuezyTeamsPanel from './DuezyTeamsPanel.jsx';
 import DuezyDivisionSeason from './DuezyDivisionSeason.jsx';
+import DuezyMakeupModal from './DuezyMakeupModal.jsx';
 
 /**
  * One division (or a single-division league) at its current week.
  * section: 'main' (teams) | 'late' | 'activity'; `tabs` is the tab bar, `activity` the league-wide log.
+ * Editors get the make-ups popup; viewers jump to the Make up filter instead.
  */
 export default function DuezyUnitView({
   league, stats, data, divisions, section = 'main', tabs = null, activity = null, onShowLate, onShowMakeups, onOpenTeam,
   correctRequest = null, filterRequest = null,
 }) {
   const { week, schedule, summary, behind } = stats;
+  const [makeupsOpen, setMakeupsOpen] = useState(false);
   const cash = useMemo(
     () => weekMethodTotals(stats.teams, week, stats.dues, data.paymentIndex),
     [stats.teams, week, stats.dues, data.paymentIndex]
@@ -23,10 +27,15 @@ export default function DuezyUnitView({
   const isCurrent = week === schedule.currentWeek;
   const weekName = schedule.dates ? schedule.label(week) : `week ${week}`;
   const title = isCurrent ? 'Collected this week' : `Collected for ${weekName}`;
-  const cashTitle = isCurrent ? 'Cash collected this week' : `Cash collected for ${weekName}`;
+  const cashTitle = isCurrent ? 'This week by method' : `${weekName} by method`;
   const graceNote = schedule.dates
     ? `Dues are due by ${graceLabel(schedule.grace).toLowerCase()}, late after that.`
     : 'Dues count as late once the next week starts.';
+
+  const addPlayer = (team, name) => {
+    const players = 'players' in team ? playersWith(team, name) : null;
+    if (players) data.updateTeam(team.id, { players }).catch(() => {});
+  };
 
   return (
     <>
@@ -34,15 +43,14 @@ export default function DuezyUnitView({
 
       <DuezyWeekSummary
         summary={summary}
+        season={stats.season}
         title={title}
         cashTitle={cashTitle}
         owed={stats.owed}
         cash={cash}
-        makeups={stats.makeups}
         currentNote={graceNote}
         onShowLate={onShowLate}
-        onShowMakeups={onShowMakeups}
-        onOpenTeam={onOpenTeam}
+        onShowMakeups={data.canEdit ? () => setMakeupsOpen(true) : onShowMakeups}
       />
       <DuezyDivisionSeason season={stats.season} />
 
@@ -51,6 +59,18 @@ export default function DuezyUnitView({
       {section === 'main' ? <DuezyTeamsPanel league={league} stats={stats} data={data} divisions={divisions} correctRequest={correctRequest} filterRequest={filterRequest} /> : null}
       {section === 'late' ? <DuezyBehindPanel league={league} behind={behind} graceNote={graceNote} /> : null}
       {section === 'activity' ? activity : null}
+
+      {makeupsOpen ? (
+        <DuezyMakeupModal
+          league={league}
+          stats={stats}
+          paymentIndex={data.paymentIndex}
+          onSetPayment={(teamId, w, entry) => data.setPayment(teamId, w, entry)}
+          onAddPlayer={addPlayer}
+          onOpenTeam={onOpenTeam ? (teamId, w) => { setMakeupsOpen(false); onOpenTeam(teamId, w); } : null}
+          onClose={() => setMakeupsOpen(false)}
+        />
+      ) : null}
     </>
   );
 }

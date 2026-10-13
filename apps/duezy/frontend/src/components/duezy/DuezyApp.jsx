@@ -32,6 +32,7 @@ import './duezy-ux.css';
 import './duezy-compact.css';
 import './duezy-trust.css';
 import './duezy-reports.css';
+import './duezy-deposits.css';
 import './duezy-prefs.css';
 import './duezy-teams.css';
 import './duezy-team-modal.css';

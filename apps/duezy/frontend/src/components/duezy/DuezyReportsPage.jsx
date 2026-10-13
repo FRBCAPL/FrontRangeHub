@@ -12,6 +12,7 @@ import { todayISO } from '../../utils/duezySchedule.js';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyReportPreview from './DuezyReportPreview.jsx';
+import DuezyDepositsPanel from './DuezyDepositsPanel.jsx';
 import DuezySkeleton from './DuezySkeleton.jsx';
 import DuezyNoAccess from './DuezyNoAccess.jsx';
 
@@ -19,6 +20,7 @@ const REPORTS = [
   { id: 'ledger', label: 'Season ledger' },
   { id: 'history', label: 'Change history' },
   { id: 'methods', label: 'By method' },
+  { id: 'deposits', label: 'Deposits' },
 ];
 const HISTORY_LIMIT = 5000;
 
@@ -66,9 +68,13 @@ export default function DuezyReportsPage() {
   const report = useMemo(() => {
     if (!league) return null;
     if (reportId === 'history') return historyReport({ rows: scope.history, units: scope.units });
-    if (reportId === 'methods') return methodReport(scope);
+    if (reportId === 'methods' || reportId === 'deposits') return methodReport(scope);
     return ledgerReport({ ...scope, today, defaultGrace: grace, includeUpcoming: upcoming });
   }, [league, reportId, scope, today, grace, upcoming]);
+  const leagueTotals = useMemo(
+    () => (reportId === 'deposits' ? methodTotals({ units, teams, payments }) : []),
+    [reportId, units, teams, payments]
+  );
 
   if (loading) return <DuezySkeleton variant="list" label="Loading reports…" />;
   if (!league || !report) return <DuezyNoAccess />;
@@ -97,11 +103,16 @@ export default function DuezyReportsPage() {
       <div>
         <Link to={`${DUEZY_PATH}/league/${league.id}`} className="dz-link dz-small">‹ Back to {league.name}</Link>
         <span className="dz-eyebrow dz-settings-eyebrow">{league.name}</span>
-        <h1 className="dz-h1">Bookkeeping reports</h1>
+        <h1 className="dz-h1">Reports &amp; deposits</h1>
       </div>
 
       <DuezySectionTabs label="Reports" tabs={REPORTS} active={reportId} onChange={(id) => setParam('report', id === 'ledger' ? '' : id)} />
 
+      {reportId === 'deposits' ? (
+        <section className="dz-panel dz-stack">
+          <DuezyDepositsPanel league={league} totals={leagueTotals} canEdit={data.canEdit} today={today} />
+        </section>
+      ) : (
       <section className="dz-panel dz-stack">
         <div className="dz-row dz-row--wrap dz-report-controls">
           {units.length > 1 ? (
@@ -132,6 +143,7 @@ export default function DuezyReportsPage() {
           </button>
         </div>
       </section>
+      )}
     </div>
   );
 }

@@ -13,9 +13,13 @@ function statusLine(payment, dues, late) {
   return late ? `Late · ${money(dues)} owed` : `Not paid yet · ${money(dues)}`;
 }
 
-/** Record one team's payment for any week (tapped in Season so far), not just the page's week. */
+/**
+ * Record one team's payment for any week (tapped in Season so far, or in the make-ups popup),
+ * not just the page's week. `heading` replaces the night label; no onClose = no ×.
+ */
 export default function DuezyWeekPanel({
   league, team, week, dues, schedule, payment, canSavePlayers, onSetPayment, onAddPlayer, onClose, scrollKey = 0,
+  heading = null, extra = null,
 }) {
   const [picking, setPicking] = useState(null);
   const ref = useRef(null);
@@ -37,10 +41,11 @@ export default function DuezyWeekPanel({
     <div className="dz-week-panel" ref={ref} role="group" aria-label={`Record ${night}`}>
       <div className="dz-payer-head">
         <p>
-          <strong>{night}</strong>{' '}
+          <strong>{heading || night}</strong>{' '}
           <span className={late ? 'dz-owe-late' : 'dz-muted'}>· {statusLine(payment, dues, late)}</span>
         </p>
-        <button type="button" className="dz-payer-close" onClick={onClose} aria-label="Close">×</button>
+        {extra}
+        {onClose ? <button type="button" className="dz-payer-close" onClick={onClose} aria-label="Close">×</button> : null}
       </div>
       <DuezyTeamPayButtons
         league={league}

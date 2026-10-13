@@ -59,18 +59,32 @@
 .dz-owed-link { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .dz-owed-link:hover { color: var(--dz-text); text-decoration: underline; }
 
-/* Cash on hand card + make-ups waiting. */
-.dz-cash-card { gap: 4px; justify-content: flex-start; }
-.dz-cash-card > strong { color: #4ade80; }
+/* Week by method card: cash vs digital. */
+.dz-cash-card { gap: 6px; justify-content: flex-start; }
+.dz-cash-split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dz-cash-split > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.dz-cash-split span { font-size: 0.75rem; color: var(--dz-muted); }
+.dz-cash-split strong { font-size: 1.35rem; line-height: 1.15; }
+.dz-cash-split small { font-size: 0.72rem; color: var(--dz-muted); }
+.dz-cash-split .is-cash strong { color: #4ade80; }
+.dz-cash-split .is-digital strong { color: #60a5fa; }
+.dz-cash-bar { display: flex; height: 6px; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, 0.08); }
+.dz-cash-bar .is-cash { background: #4ade80; }
+.dz-cash-bar .is-digital { background: #60a5fa; }
 .dz-cash-list { display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0; list-style: none; font-size: 0.8rem; color: var(--dz-muted); }
 .dz-cash-list li { display: flex; justify-content: space-between; gap: 8px; }
-.dz-cash-list li.dz-cash-sub { margin-bottom: 2px; }
 .dz-cash-list b { color: var(--dz-text); font-weight: 700; }
 .dz-cash-list .is-unrecorded { font-style: italic; }
 .dz-cash-empty { margin: 0; font-size: 0.8rem; color: var(--dz-muted); }
-.dz-cash-makeups { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--dz-line); }
-.dz-cash-makeups ul { display: flex; flex-direction: column; gap: 3px; margin: 3px 0 0; padding: 0; list-style: none; font-size: 0.8rem; }
-.dz-cash-makeups em { font-style: normal; color: #67e8f9; }
+
+.dz-summary-season { margin: 4px 0 0; padding-top: 6px; border-top: 1px solid var(--dz-line); font-size: 0.8rem; color: var(--dz-muted); }
+.dz-summary-season b { color: var(--dz-text); font-weight: 700; }
+
+/* Make-up matches popup. */
+.dz-makeup-modal { max-width: 560px; }
+.dz-makeup-night { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.dz-makeup-night-title { margin: 0; font-size: 0.9rem; color: #67e8f9; }
+.dz-makeup-modal .dz-week-panel { margin: 0; }
 
 /* Season so far: tappable week boxes + the week panel. */
 .dz-strip button {
