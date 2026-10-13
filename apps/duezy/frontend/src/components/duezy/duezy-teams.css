@@ -80,12 +80,6 @@
 .dz-summary-season { margin: 4px 0 0; padding-top: 6px; border-top: 1px solid var(--dz-line); font-size: 0.8rem; color: var(--dz-muted); }
 .dz-summary-season b { color: var(--dz-text); font-weight: 700; }
 
-/* Make-up matches popup. */
-.dz-makeup-modal { max-width: 560px; }
-.dz-makeup-night { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-.dz-makeup-night-title { margin: 0; font-size: 0.9rem; color: #67e8f9; }
-.dz-makeup-modal .dz-week-panel { margin: 0; }
-
 /* Season so far: tappable week boxes + the week panel. */
 .dz-strip button {
   position: relative;

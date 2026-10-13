@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DuezyTeamRow from './DuezyTeamRow.jsx';
 import DuezyAddTeam from './DuezyAddTeam.jsx';
 import DuezyTeamFilters from './DuezyTeamFilters.jsx';
-import { SEARCH_MIN_TEAMS, groupTeams, teamBucket, teamCounts } from '../../utils/duezyTeamGroups.js';
+import { SEARCH_MIN_TEAMS, groupTeams, isSettled, teamBucket, teamCounts } from '../../utils/duezyTeamGroups.js';
 
 /** How long a just-paid row stays put before it moves into the paid group. */
 const SETTLE_MS = 1500;
@@ -85,11 +85,15 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
     [teams, week, paymentIndex, filter, search, hold]
   );
   const paidOpen = showPaid || Boolean(search.trim());
+  const byeCount = paid.filter((t) => teamBucket(t, week, paymentIndex) === 'bye').length;
+  const paidCount = paid.length - byeCount;
+  const groupLabel = [paidCount && `${paidCount} paid`, byeCount && `${byeCount} ${byeCount === 1 ? 'bye' : 'byes'}`]
+    .filter(Boolean).join(' · ');
 
   const toggleTeam = (team) => {
     const opening = openTeamId !== team.id;
     setOpenTeamId(opening ? team.id : '');
-    setPinnedId(opening && teamBucket(team, week, paymentIndex) !== 'paid' ? team.id : '');
+    setPinnedId(opening && !isSettled(teamBucket(team, week, paymentIndex)) ? team.id : '');
     setCorrecting(null);
   };
 
@@ -106,7 +110,7 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
       open={openTeamId === team.id}
       onToggle={() => toggleTeam(team)}
       onSetPayment={(entry) => {
-        if (entry.status === 'paid') settle(team.id);
+        if (isSettled(entry.status)) settle(team.id);
         return data.setPayment(team.id, week, entry);
       }}
       onSetWeekPayment={(w, entry) => data.setPayment(team.id, w, entry)}
@@ -141,7 +145,9 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
           {main.length ? <ul className="dz-team-list">{main.map(row)}</ul> : null}
           {!main.length && !paid.length && emptyText ? <p className="dz-muted dz-small dz-team-empty">{emptyText}</p> : null}
           {!main.length && paid.length && filter === 'all' && !search.trim() ? (
-            <p className="dz-muted dz-small dz-team-empty">Everyone’s paid this week. 🎉</p>
+            <p className="dz-muted dz-small dz-team-empty">
+              {byeCount ? 'Everyone’s paid or on a bye this week. 🎉' : 'Everyone’s paid this week. 🎉'}
+            </p>
           ) : null}
           {paid.length ? (
             <div className="dz-paid-group">
@@ -154,7 +160,7 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
               >
                 <span aria-hidden="true">{paidOpen ? '▾' : '▸'}</span>
                 <span className="dz-paid-check" aria-hidden="true">✓</span>
-                {paid.length} paid
+                {groupLabel}
                 <span className="dz-muted">· {paidOpen ? 'hide' : 'show'}</span>
               </button>
               {paidOpen ? <ul className="dz-team-list">{paid.map(row)}</ul> : null}

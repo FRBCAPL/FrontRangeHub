@@ -23,15 +23,15 @@ test('counts by bucket (partial counts as not paid yet)', () => {
   assert.deepEqual(teamCounts(teams, 2, paymentIndex), { all: 5, open: 2, paid: 2, makeup: 0, bye: 1 });
 });
 
-test('"all" lists teams to collect first, byes next, paid in their own group', () => {
+test('"all" lists teams to collect first; paid and bye teams go in the collapsed group', () => {
   const g = groupTeams(base);
-  assert.deepEqual(ids(g.main), ['c', 'd', 'b']);
-  assert.deepEqual(ids(g.paid), ['a', 'e']);
+  assert.deepEqual(ids(g.main), ['c', 'd']);
+  assert.deepEqual(ids(g.paid), ['a', 'b', 'e']);
 });
 
 test('held teams stay in place until released', () => {
-  const g = groupTeams({ ...base, hold: new Set(['a']) });
-  assert.deepEqual(ids(g.main), ['a', 'c', 'd', 'b']);
+  const g = groupTeams({ ...base, hold: new Set(['a', 'b']) });
+  assert.deepEqual(ids(g.main), ['a', 'b', 'c', 'd']);
   assert.deepEqual(ids(g.paid), ['e']);
 });
 

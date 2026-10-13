@@ -1,6 +1,6 @@
 /**
- * How the team list is split for a week: who still needs collecting first, then make-ups, then byes,
- * paid teams in their own (collapsible) group. Filters and search narrow the list.
+ * How the team list is split for a week: who still needs collecting first, then make-ups;
+ * paid and bye teams in their own (collapsible) group. Filters and search narrow the list.
  */
 
 export const TEAM_FILTERS = ['all', 'open', 'paid', 'makeup', 'bye'];
@@ -29,11 +29,14 @@ export function teamCounts(teams, week, paymentIndex) {
   return counts;
 }
 
+/** Nothing to collect this week: paid, or on a bye. These go in the collapsed group. */
+export const isSettled = (bucket) => bucket === 'paid' || bucket === 'bye';
+
 /**
  * { main, paid } in the teams' own order. `hold` = team ids that stay in `main` even though they're
- * paid (just tapped, or their details are open) so rows don't jump out from under the user.
- * Under "all", byes go after the teams still to collect and paid teams go to the `paid` group;
- * any other filter puts just that bucket in `main`.
+ * settled (just tapped, or their details are open) so rows don't jump out from under the user.
+ * Under "all", make-ups go after the teams still to collect, and paid + bye teams go to the collapsed
+ * `paid` group; any other filter puts just that bucket in `main`.
  */
 export function groupTeams({ teams, week, paymentIndex, filter = 'all', query = '', hold = new Set() }) {
   const visible = teams.filter((t) => matchesSearch(t, query));
@@ -43,13 +46,13 @@ export function groupTeams({ teams, week, paymentIndex, filter = 'all', query = 
     return { main: visible.filter((t) => bucket(t) === filter || (filter === 'open' && hold.has(t.id))), paid: [] };
   }
 
-  const RANK = { open: 0, makeup: 1, bye: 2, paid: 0 };
+  const RANK = { open: 0, makeup: 1, bye: 0, paid: 0 };
   const rank = (t) => RANK[bucket(t)];
   const main = visible
-    .filter((t) => bucket(t) !== 'paid' || hold.has(t.id))
+    .filter((t) => !isSettled(bucket(t)) || hold.has(t.id))
     .map((t, i) => ({ t, i }))
     .sort((a, b) => rank(a.t) - rank(b.t) || a.i - b.i)
     .map(({ t }) => t);
-  const paid = visible.filter((t) => bucket(t) === 'paid' && !hold.has(t.id));
+  const paid = visible.filter((t) => isSettled(bucket(t)) && !hold.has(t.id));
   return { main, paid };
 }

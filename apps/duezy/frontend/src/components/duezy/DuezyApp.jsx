@@ -35,6 +35,7 @@ import './duezy-reports.css';
 import './duezy-deposits.css';
 import './duezy-prefs.css';
 import './duezy-teams.css';
+import './duezy-makeups.css';
 import './duezy-team-modal.css';
 import './duezy-payers.css';
 import './duezy-touch.css';
