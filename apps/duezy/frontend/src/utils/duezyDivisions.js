@@ -100,7 +100,7 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
 }
 
 const SUMMARY_KEYS = ['paid', 'partial', 'bye', 'unpaid', 'collected', 'expected'];
-const SEASON_KEYS = ['collected', 'expected', 'seasonValue'];
+const SEASON_KEYS = ['collected', 'expected', 'seasonValue', 'collectedAll'];
 
 function sumKeys(rows, keys) {
   const out = Object.fromEntries(keys.map((k) => [k, 0]));

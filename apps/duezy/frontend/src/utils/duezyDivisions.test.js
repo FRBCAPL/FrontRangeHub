@@ -98,10 +98,26 @@ test('all-divisions season totals: each division through its own week, byes skip
   ]);
   const { season, per } = allDivisionsStats([tue, thu], teams.slice(0, 3), payments);
   // Tue: weeks 1-2, Sharks paid 50, Hustlers bye wk1 → expected 20+20+20 = 60
-  assert.deepEqual(per[0].season, { collected: 50, expected: 60, seasonValue: 2 * 20 * 12 });
+  assert.deepEqual(per[0].season, { collected: 50, expected: 60, seasonValue: 2 * 20 * 12, collectedAll: 50 });
   // Thu: week 1 only, $15/week, 10 weeks
-  assert.deepEqual(per[1].season, { collected: 10, expected: 15, seasonValue: 150 });
-  assert.deepEqual(season, { collected: 60, expected: 75, seasonValue: 630 });
+  assert.deepEqual(per[1].season, { collected: 10, expected: 15, seasonValue: 150, collectedAll: 10 });
+  assert.deepEqual(season, { collected: 60, expected: 75, seasonValue: 630, collectedAll: 60 });
+});
+
+test('league-wide "collected" always equals the sum of every division ledger (not started, paid early)', () => {
+  const notStarted = { ...tue, start_date: '2026-11-03', skip_dates: [] };
+  const payments = indexPayments([
+    { team_id: 'a', week: 1, status: 'paid', amount: 40 },
+    { team_id: 'b', week: 1, status: 'partial', amount: 20 },
+    { team_id: 'c', week: 6, status: 'paid', amount: 15 },
+  ]);
+  const { season, per } = allDivisionsStats([notStarted, thu], teams.slice(0, 3), payments, { today: '2026-10-12' });
+  assert.equal(per[0].schedule.started, false);
+  assert.equal(per[0].season.collected, 0);
+  assert.equal(per[0].season.collectedAll, 60);
+  assert.equal(per[1].season.collectedAll, 15);
+  assert.equal(season.collectedAll, per.reduce((s, x) => s + x.season.collectedAll, 0));
+  assert.equal(season.collectedAll, 75);
 });
 
 test('roundup reminder names divisions and skips the week', () => {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { sendReset, signIn, signInWithGoogle, signUp } from '../../services/duezyAuthService.js';
+import { offersResend, resendConfirmation, sendReset, signIn, signInWithGoogle, signUp } from '../../services/duezyAuthService.js';
 import { SPORTS } from '../../data/duezyOptions.js';
 import DuezyAuthPreview from './DuezyAuthPreview.jsx';
+import DuezyAuthPricing from './DuezyAuthPricing.jsx';
 import { money } from '../../utils/duezyMath.js';
 import { monthlyPrice } from '../../utils/duezyPricing.js';
 
@@ -15,6 +16,7 @@ export default function DuezyAuth({ initialError = '' }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(initialError);
   const [notice, setNotice] = useState('');
+  const [canResend, setCanResend] = useState(false);
 
   const google = async () => {
     setBusy(true);
@@ -31,6 +33,7 @@ export default function DuezyAuth({ initialError = '' }) {
     setMode(next);
     setError('');
     setNotice('');
+    setCanResend(false);
   };
 
   const submit = async (e) => {
@@ -38,15 +41,34 @@ export default function DuezyAuth({ initialError = '' }) {
     setBusy(true);
     setError('');
     setNotice('');
+    setCanResend(false);
     try {
       if (mode === 'login') await signIn(email, password);
       else if (mode === 'signup') {
         const res = await signUp(email, password, name);
-        if (res.needsConfirm) setNotice('Check your email for a confirmation link, then come back and log in.');
+        if (res.needsConfirm) {
+          setNotice('Check your email for a confirmation link, then come back and log in. (Look in spam too.)');
+          setCanResend(true);
+        }
       } else {
         await sendReset(email);
         setNotice('If that email has an account, a reset link is on its way.');
       }
+    } catch (err) {
+      setError(err.message);
+      setCanResend(offersResend(err.message));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    if (!email.trim()) { setError('Enter your email above first.'); return; }
+    setBusy(true);
+    setError('');
+    try {
+      await resendConfirmation(email);
+      setNotice(`Sent another confirmation email to ${email.trim()}.`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -69,6 +91,7 @@ export default function DuezyAuth({ initialError = '' }) {
           {SPORTS.slice(0, 8).map((s) => <span key={s.value} title={s.label}>{s.icon}</span>)}
         </div>
         <DuezyAuthPreview />
+        <DuezyAuthPricing />
       </section>
 
       <form className="dz-card dz-auth-form" onSubmit={submit}>
@@ -126,6 +149,9 @@ export default function DuezyAuth({ initialError = '' }) {
         </button>
 
         <div className="dz-auth-links">
+          {canResend && mode !== 'reset' ? (
+            <button type="button" className="dz-link" onClick={resend} disabled={busy}>Resend confirmation email</button>
+          ) : null}
           {mode === 'login' ? (
             <button type="button" className="dz-link" onClick={() => switchMode('reset')}>Forgot password?</button>
           ) : null}

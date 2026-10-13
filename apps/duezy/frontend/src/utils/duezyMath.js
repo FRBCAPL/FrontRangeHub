@@ -72,7 +72,7 @@ export function weekSummary(teams, week, dues, paymentIndex) {
 
 /**
  * Season to date for weeks 1..throughWeek: collected (overpaying counts) vs expected (byes excluded),
- * plus what the full season is worth.
+ * plus what the full season is worth and everything collected for any week (early payments included).
  */
 export function seasonSummary(teams, throughWeek, dues, totalWeeks, paymentIndex) {
   let collected = 0;
@@ -84,10 +84,14 @@ export function seasonSummary(teams, throughWeek, dues, totalWeeks, paymentIndex
       if (p?.status !== 'bye') expected += dues;
     }
   });
+  const ids = new Set(teams.map((t) => t.id));
+  let collectedAll = 0;
+  paymentIndex.forEach((p) => { if (ids.has(p.team_id)) collectedAll += paidFor(p, dues); });
   return {
     collected: round2(collected),
     expected: round2(expected),
     seasonValue: round2(teams.length * dues * (Number(totalWeeks) || 0)),
+    collectedAll: round2(collectedAll),
   };
 }
 

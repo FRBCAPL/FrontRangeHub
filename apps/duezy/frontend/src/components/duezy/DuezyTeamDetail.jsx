@@ -4,6 +4,8 @@ import { METHODS } from '../../data/duezyOptions.js';
 import DuezyMoveTeam from './DuezyMoveTeam.jsx';
 import DuezyTeamEditForm from './DuezyTeamEditForm.jsx';
 import DuezyContactLinks from './DuezyContactLinks.jsx';
+import DuezyPaymentHistory from './DuezyPaymentHistory.jsx';
+import { shortStamp } from '../../utils/duezyHistory.js';
 
 export function SeasonStrip({ teamId, week, dues, paymentIndex, schedule }) {
   const shown = Math.max(week, schedule.started ? schedule.currentWeek : 0);
@@ -63,8 +65,14 @@ export default function DuezyTeamDetail({ league, team, week, dues, schedule, ba
           Paid {money(paidFor(payment, dues))} of {money(dues)} this week — {money(dues - paidFor(payment, dues))} carries over.
         </p>
       ) : null}
-      {payment?.method || payment?.note ? (
-        <p className="dz-small dz-muted">{[payment.method, payment.note].filter(Boolean).join(' · ')}</p>
+      {payment?.method || payment?.note || payment?.recorded_by_email ? (
+        <p className="dz-small dz-muted">
+          {[
+            payment.method,
+            payment.note,
+            payment.recorded_by_email && `recorded ${shortStamp(payment.recorded_at || payment.updated_at)} by ${payment.recorded_by_email}`,
+          ].filter(Boolean).join(' · ')}
+        </p>
       ) : null}
 
       <div className="dz-detail-block">
@@ -80,7 +88,14 @@ export default function DuezyTeamDetail({ league, team, week, dues, schedule, ba
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" maxLength={300} />
           <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={savePayment} disabled={!(Number(amount) > 0)}>Save</button>
         </div>
-        <p className="dz-small dz-muted">Less than {money(dues)} is saved as a partial payment.</p>
+        <p className="dz-small dz-muted">
+          Less than {money(dues)} is saved as a partial payment. Duezy records payments you've collected — it doesn't move money.
+        </p>
+        <DuezyPaymentHistory
+          teamId={team.id}
+          weekLabel={(w) => (schedule.dates ? `${schedule.label(w)} (week ${w})` : `Week ${w}`)}
+          refreshKey={payment?.updated_at}
+        />
       </div>
 
       <div className="dz-detail-block">

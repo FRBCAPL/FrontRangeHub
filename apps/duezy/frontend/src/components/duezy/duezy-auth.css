@@ -10,6 +10,21 @@
 .dz-auth-pitch { display: flex; flex-direction: column; gap: 18px; }
 .dz-auth-pitch h1 { font-size: 2.3rem; line-height: 1.12; letter-spacing: -0.03em; margin: 0; }
 
+.dz-auth-pricing {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: var(--dz-radius);
+  border: 1px solid var(--dz-line);
+  background: rgba(255, 255, 255, 0.03);
+}
+.dz-auth-pricing ul { list-style: none; margin: 0; padding: 0; }
+.dz-auth-pricing li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--dz-line); font-size: 0.92rem; }
+.dz-auth-pricing li:last-child { border-bottom: none; }
+.dz-auth-pricing li span:last-child { font-weight: 700; }
+.dz-auth-pricing small { color: var(--dz-muted); font-size: 0.82rem; line-height: 1.45; }
+
 .dz-features { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .dz-features li { display: flex; gap: 12px; align-items: flex-start; }
 .dz-features strong { display: block; }

@@ -98,10 +98,24 @@ export async function signOut() {
   window.location.reload();
 }
 
+/** Send the sign-up confirmation email again. */
+export async function resendConfirmation(email) {
+  const { error } = await duezy.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: redirectUrl() } });
+  if (error) throw new Error(friendly(error.message));
+}
+
+export const EMAIL_SEND_FAILED = 'We couldn\'t send the email just now. Use "Continue with Google" above, or try again in a few minutes.';
+export const NOT_CONFIRMED = 'Check your email and click the confirmation link first.';
+
+/** Errors after which offering "resend confirmation email" makes sense. */
+export const offersResend = (message) => message === NOT_CONFIRMED || message === EMAIL_SEND_FAILED;
+
 function friendly(message = '') {
+  if (/error sending .*email/i.test(message)) return EMAIL_SEND_FAILED;
+  if (/rate limit|for security purposes/i.test(message)) return 'Too many tries — wait a minute and try again.';
   if (/invalid login/i.test(message)) return 'That email and password don\'t match.';
   if (/already registered/i.test(message)) return 'That email already has an account. Try logging in instead.';
-  if (/email not confirmed/i.test(message)) return 'Check your email and click the confirmation link first.';
+  if (/email not confirmed/i.test(message)) return NOT_CONFIRMED;
   if (/password/i.test(message) && /6/.test(message)) return 'Password needs at least 6 characters.';
   return message || 'Something went wrong. Try again.';
 }

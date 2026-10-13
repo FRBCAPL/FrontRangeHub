@@ -97,9 +97,11 @@ export default function DuezySetupWizard() {
       refreshBilling();
       navigate(`${DUEZY_PATH}/league/${created.id}`, { replace: true });
     } catch (e) {
-      setError(/duezy_divisions does not exist|relation .*duezy_divisions|multi_division/.test(e.message)
+      refreshBilling();
+      const reason = /duezy_divisions does not exist|relation .*duezy_divisions|multi_division/.test(e.message)
         ? 'Divisions need a quick database update (duezy-divisions SQL) before new leagues can be created.'
-        : e.message);
+        : e.message;
+      setError(`${reason} Nothing was saved — fix that and press Create league again.`);
       setBusy(false);
     }
   };

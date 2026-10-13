@@ -9,6 +9,7 @@ import DuezyLeagueHero from './DuezyLeagueHero.jsx';
 import DuezyDivisionTabs, { ALL_DIVISIONS } from './DuezyDivisionTabs.jsx';
 import DuezyUnitView from './DuezyUnitView.jsx';
 import DuezyAllDivisions from './DuezyAllDivisions.jsx';
+import DuezyExportButton from './DuezyExportButton.jsx';
 
 export default function DuezyLeaguePage() {
   const { leagueId } = useParams();
@@ -83,7 +84,10 @@ export default function DuezyLeaguePage() {
 
   return (
     <div className="dz-stack dz-stack--lg">
-      <Link to={DUEZY_PATH} className="dz-link dz-small">‹ All leagues</Link>
+      <div className="dz-row">
+        <Link to={DUEZY_PATH} className="dz-link dz-small">‹ All leagues</Link>
+        <DuezyExportButton league={league} units={units} teams={teams} payments={data.payments} />
+      </div>
 
       {several ? (
         <DuezyDivisionTabs divisions={units} active={showAll ? ALL_DIVISIONS : selected.unit.id} onChange={openDivision} behindCounts={behindCounts} />

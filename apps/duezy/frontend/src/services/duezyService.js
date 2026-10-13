@@ -5,6 +5,8 @@ import { friendlyError } from '../utils/duezyBillingText.js';
 /* '*' so leagues/teams still load before the divisions migration adds multi_division / division_id. */
 const LEAGUE_FIELDS = '*';
 const TEAM_FIELDS = '*';
+/** '*' so recorded_by_* columns come through once the payment-history SQL is run (and nothing breaks before). */
+const PAYMENT_FIELDS = '*';
 
 export function check({ data, error }) {
   if (error) throw new Error(friendlyError(error.message));
@@ -32,22 +34,29 @@ const teamRow = (leagueId, t, sortOrder) => ({
 /**
  * Single division: teams = [{ name, captain, contact }].
  * Multi division: divisions = [{ name, play_day, dues..., teams: [{ name, captain, contact }] }]; teams is ignored.
+ * All or nothing: if the divisions or teams can't be saved, the new league is deleted again,
+ * so a retry never leaves a duplicate league (or uses up trial divisions).
  */
 export async function createLeague(league, teams, divisions = null) {
   const multi = Array.isArray(divisions) && divisions.length > 0;
   const created = check(
     await duezy.from('duezy_leagues').insert(multi ? { ...league, multi_division: true } : league).select(LEAGUE_FIELDS).single()
   );
-  let rows = teams.map((t, i) => teamRow(created.id, t, i));
-  if (multi) {
-    const divisionRows = divisions.map(({ teams: _teams, ...d }, i) => ({ ...d, league_id: created.id, sort_order: i }));
-    const savedDivisions = check(await duezy.from('duezy_divisions').insert(divisionRows).select('id, sort_order'));
-    const idByOrder = new Map(savedDivisions.map((d) => [d.sort_order, d.id]));
-    rows = divisions.flatMap((d, di) =>
-      d.teams.map((t, ti) => ({ ...teamRow(created.id, t, ti), division_id: idByOrder.get(di) }))
-    );
+  try {
+    let rows = teams.map((t, i) => teamRow(created.id, t, i));
+    if (multi) {
+      const divisionRows = divisions.map(({ teams: _teams, ...d }, i) => ({ ...d, league_id: created.id, sort_order: i }));
+      const savedDivisions = check(await duezy.from('duezy_divisions').insert(divisionRows).select('id, sort_order'));
+      const idByOrder = new Map(savedDivisions.map((d) => [d.sort_order, d.id]));
+      rows = divisions.flatMap((d, di) =>
+        d.teams.map((t, ti) => ({ ...teamRow(created.id, t, ti), division_id: idByOrder.get(di) }))
+      );
+    }
+    if (rows.length) check(await duezy.from('duezy_teams').insert(rows));
+  } catch (e) {
+    await duezy.from('duezy_leagues').delete().eq('id', created.id);
+    throw e;
   }
-  if (rows.length) check(await duezy.from('duezy_teams').insert(rows));
   syncQuantity();
   return created;
 }
@@ -85,8 +94,20 @@ export async function updateTeam(id, changes) {
 
 export async function listPayments(leagueId) {
   return check(
-    await duezy.from('duezy_payments').select('id, team_id, week, status, amount, method, note, updated_at').eq('league_id', leagueId)
+    await duezy.from('duezy_payments').select(PAYMENT_FIELDS).eq('league_id', leagueId)
   ) || [];
+}
+
+/** Change log for one team (newest first). Empty if the payment-history SQL hasn't been run yet. */
+export async function listPaymentHistory(teamId, limit = 50) {
+  const { data, error } = await duezy
+    .from('duezy_payment_history')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('changed_at', { ascending: false })
+    .limit(limit);
+  if (error) return /duezy_payment_history/.test(error.message) ? null : check({ data, error });
+  return data || [];
 }
 
 /** Mark weeks 1..throughWeek paid for these teams (catching up a league that started mid-season). */
@@ -102,7 +123,7 @@ export async function markPaidThrough(leagueId, teamIds, throughWeek, dues) {
     await duezy
       .from('duezy_payments')
       .upsert(rows, { onConflict: 'team_id,week' })
-      .select('id, team_id, week, status, amount, method, note, updated_at')
+      .select(PAYMENT_FIELDS)
   ) || [];
 }
 
@@ -115,7 +136,7 @@ export async function savePayment(leagueId, teamId, week, { status, amount = 0, 
         { league_id: leagueId, team_id: teamId, week, status, amount, method, note, updated_at: new Date().toISOString() },
         { onConflict: 'team_id,week' }
       )
-      .select('id, team_id, week, status, amount, method, note, updated_at')
+      .select(PAYMENT_FIELDS)
       .single()
   );
 }
