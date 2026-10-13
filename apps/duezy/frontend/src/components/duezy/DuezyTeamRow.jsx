@@ -23,16 +23,23 @@ const initials = (name) =>
     .map((w) => w[0].toUpperCase())
     .join('');
 
-function balanceText({ late, due, dueWhen }) {
-  if (late > 0) return <span className="dz-owe-late">{money(late)} late{due > 0 ? ` · ${money(due)} due` : ''}</span>;
-  if (due > 0) return <span className="dz-owe-due">{money(due)} due{dueWhen ? ` ${dueWhen}` : ''}</span>;
-  return 'all caught up';
+function balanceText({ late, due, dueWhen, makeupNights = [], makeupWhen }) {
+  const regular = dueWhen.split(', ').filter((n) => n && !makeupNights.includes(n)).join(', ');
+  const dueText = due > 0 ? (
+    <span className="dz-owe-due" title={makeupNights.length ? `Make-up owed for ${makeupWhen}` : undefined}>
+      {money(due)} due{regular ? ` ${regular}` : ''}
+      {makeupNights.length ? ` · ↻ make-up ${shortNights(makeupNights)}` : ''}
+    </span>
+  ) : null;
+  if (late > 0) return <><span className="dz-owe-late">{money(late)} late</span>{dueText ? <> · {dueText}</> : null}</>;
+  return dueText || 'all caught up';
 }
 
 function readOnlyStatus(status, payment) {
   if (status === 'paid') return `✓ Paid${payment?.method ? ` · ${methodFrom(payment.method, payment.paid_by)}` : ''}`;
   if (status === 'partial') return `Partial ${money(payment?.amount || 0)}`;
   if (status === 'bye') return '⏸ Bye';
+  if (status === 'makeup') return '↻ Make up';
   return 'Not yet';
 }
 

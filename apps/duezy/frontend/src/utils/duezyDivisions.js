@@ -5,7 +5,11 @@
  * A "unit" is what dues are tracked against — a division. Leagues created before
  * duezy-one-division SQL may have no division rows; then the league itself acts as one (id: null).
  */
-import { matchesToSave, owedThrough, round2, seasonSummary, teamsBehind, unpaidWeeks, weekSummary, weeklyDues } from './duezyMath.js';
+import {
+  makeupWeeks, matchesToSave, owedThrough, round2, seasonSummary, teamsBehind, unpaidWeeks, weekSummary, weeklyDues,
+} from './duezyMath.js';
+
+const LATE = { skipMakeup: true };
 import { currentWeekOn, lateThroughOn, scheduleToSave, shortDate, todayISO, weekDates } from './duezySchedule.js';
 
 export const DIVISION_SETTING_KEYS = ['play_day', 'dues_amount', 'dues_basis', 'players_per_match', 'matches_per_night', 'total_weeks', 'current_week'];
@@ -64,18 +68,26 @@ export function nightsWithWeeks(weeks, { dates, label }) {
   return weeks.map((w) => (dates?.[w - 1] ? `${label(w)} (week ${w})` : `week ${w}`)).join(', ');
 }
 
-/** One team's money right now: late (past grace), due (not late yet), and which nights are late. */
+/**
+ * One team's money right now: late (past grace), due (not late yet — includes make-up weeks),
+ * which nights are late, and which are waiting to be made up.
+ */
 export function teamBalance(teamId, schedule, dues, paymentIndex) {
   const { started, currentWeek, lateThrough, label } = schedule;
-  const late = owedThrough(teamId, lateThrough, dues, paymentIndex);
-  const due = Math.max(0, owedThrough(teamId, started ? currentWeek : 0, dues, paymentIndex) - late);
-  const lateNights = late > 0 ? unpaidWeeks(teamId, lateThrough, dues, paymentIndex).map(label) : [];
+  const through = started ? currentWeek : 0;
+  const late = owedThrough(teamId, lateThrough, dues, paymentIndex, LATE);
+  const due = Math.max(0, owedThrough(teamId, through, dues, paymentIndex) - late);
+  const lateNights = late > 0 ? unpaidWeeks(teamId, lateThrough, dues, paymentIndex, LATE).map(label) : [];
+  const makeups = makeupWeeks(teamId, through, paymentIndex);
+  const regularDue = owedThrough(teamId, through, dues, paymentIndex, LATE) - late > 0;
   return {
     late,
     due: round2(due),
     lateNights,
     lateWhen: lateNights.join(', '),
-    dueWhen: due > 0 ? label(currentWeek) : '',
+    dueWhen: due > 0 ? [...makeups.map(label), regularDue ? label(currentWeek) : ''].filter(Boolean).join(', ') : '',
+    makeupNights: makeups.map(label),
+    makeupWhen: nightsWithWeeks(makeups, schedule),
   };
 }
 
@@ -91,12 +103,12 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
   const total = Math.max(1, Number(unit.total_weeks) || 1);
   const week = Math.max(1, Math.min(Number(opts.viewWeek) || currentWeek, total));
   const behind = teamsBehind(unitTeams, lateThrough, dues, paymentIndex).map((x) => {
-    const weeks = unpaidWeeks(x.team.id, lateThrough, dues, paymentIndex);
+    const weeks = unpaidWeeks(x.team.id, lateThrough, dues, paymentIndex, LATE);
     return { ...x, when: weeks.map(label).join(', '), nights: nightsWithWeeks(weeks, schedule) };
   });
   const dueThrough = started ? currentWeek : 0;
   const dueTotal = unitTeams.reduce(
-    (s, t) => s + Math.max(0, owedThrough(t.id, dueThrough, dues, paymentIndex) - owedThrough(t.id, lateThrough, dues, paymentIndex)),
+    (s, t) => s + Math.max(0, owedThrough(t.id, dueThrough, dues, paymentIndex) - owedThrough(t.id, lateThrough, dues, paymentIndex, LATE)),
     0
   );
   return {
@@ -112,7 +124,7 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
   };
 }
 
-const SUMMARY_KEYS = ['paid', 'partial', 'bye', 'unpaid', 'collected', 'expected'];
+const SUMMARY_KEYS = ['paid', 'partial', 'bye', 'makeup', 'unpaid', 'collected', 'expected'];
 const SEASON_KEYS = ['collected', 'expected', 'seasonValue', 'collectedAll'];
 
 function sumKeys(rows, keys) {

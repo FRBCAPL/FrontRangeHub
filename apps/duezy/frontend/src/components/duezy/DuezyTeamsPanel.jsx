@@ -8,8 +8,9 @@ import { SEARCH_MIN_TEAMS, groupTeams, teamBucket, teamCounts } from '../../util
 const SETTLE_MS = 1500;
 
 const EMPTY = {
-  open: 'Everyone’s paid or on a bye this week. 🎉',
+  open: 'Everyone’s paid, on a bye, or making up this week. 🎉',
   paid: 'No one has paid yet this week.',
+  makeup: 'No make-ups this week.',
   bye: 'No byes this week.',
 };
 

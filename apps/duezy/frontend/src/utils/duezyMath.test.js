@@ -57,7 +57,7 @@ test('week summary', () => {
     { team_id: 'c', week: 2, status: 'bye', amount: 0 },
   ]);
   assert.deepEqual(weekSummary(teams, 2, 40, idx), {
-    paid: 1, partial: 1, bye: 1, unpaid: 0, collected: 50, expected: 80,
+    paid: 1, partial: 1, bye: 1, makeup: 0, unpaid: 0, collected: 50, expected: 80,
   });
 });
 
@@ -83,4 +83,22 @@ test('parse pasted team lines', () => {
     { name: 'Rails', captain: 'Kim', contact: '719-555-0123' },
     { name: 'Jets', captain: null, contact: 'jo@x.com' },
   ]);
+});
+
+test('make-up weeks are still owed but never late', async () => {
+  const { owedThrough, teamsBehind, unpaidWeeks, makeupWeeks, weekSummary } = await import('./duezyMath.js');
+  const idx = indexPayments([
+    { team_id: 'a', week: 1, status: 'makeup', amount: 0 },
+    { team_id: 'a', week: 2, status: 'paid', amount: 20 },
+  ]);
+  assert.equal(owedThrough('a', 2, 20, idx), 20);
+  assert.equal(owedThrough('a', 2, 20, idx, { skipMakeup: true }), 0);
+  assert.deepEqual(teamsBehind([{ id: 'a', name: 'A' }], 2, 20, idx), []);
+  assert.deepEqual(unpaidWeeks('a', 2, 20, idx), [1]);
+  assert.deepEqual(unpaidWeeks('a', 2, 20, idx, { skipMakeup: true }), []);
+  assert.deepEqual(makeupWeeks('a', 2, idx), [1]);
+  const s = weekSummary([{ id: 'a' }, { id: 'b' }], 1, 20, idx);
+  assert.equal(s.makeup, 1);
+  assert.equal(s.unpaid, 1);
+  assert.equal(s.expected, 40);
 });

@@ -16,7 +16,7 @@ function whenLabel(week, schedule) {
   return week === schedule.currentWeek ? 'This week' : 'Past';
 }
 
-const STATUS = { paid: 'Paid', partial: 'Partial', bye: 'Bye', unpaid: 'Not paid' };
+const STATUS = { paid: 'Paid', partial: 'Partial', bye: 'Bye', makeup: 'Make up', unpaid: 'Not paid' };
 
 /** Text starting with = + - @ gets a leading ' so spreadsheets don't run it as a formula. */
 function cell(value) {

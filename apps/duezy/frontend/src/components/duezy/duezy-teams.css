@@ -40,3 +40,10 @@
 .dz-paid-toggle:disabled { cursor: default; }
 .dz-paid-check { color: #4ade80; font-weight: 900; }
 .dz-paid-toggle .dz-muted { font-weight: 600; }
+
+/* Make up: postponed match. Still owed, never late while waiting. */
+.dz-chip.is-on.is-makeup { background: rgba(34, 211, 238, 0.16); color: #a5f3fc; border-color: rgba(34, 211, 238, 0.45); }
+.dz-team.is-makeup .dz-dot { background: var(--dz-cyan); }
+.dz-strip .is-makeup { background: rgba(34, 211, 238, 0.25); color: #a5f3fc; }
+.dz-team-name small.dz-makeup-weeks { color: #67e8f9; font-size: 0.75rem; }
+.dz-legend .is-makeup::before { background: var(--dz-cyan); }

@@ -1,12 +1,13 @@
 import React from 'react';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 
-/** All / Not yet / Paid / Bye tabs with live counts, plus a search box for big divisions. */
+/** All / Not yet / Paid / Make up / Bye tabs with live counts, plus a search box for big divisions. */
 export default function DuezyTeamFilters({ counts, filter, onFilter, showSearch, query, onQuery }) {
   const tabs = [
     { id: 'all', label: 'All', count: counts.all },
     { id: 'open', label: 'Not yet', count: counts.open, tone: counts.open ? 'bad' : undefined },
     { id: 'paid', label: 'Paid', count: counts.paid },
+    ...(counts.makeup || filter === 'makeup' ? [{ id: 'makeup', label: 'Make up', count: counts.makeup }] : []),
     ...(counts.bye || filter === 'bye' ? [{ id: 'bye', label: 'Bye', count: counts.bye }] : []),
   ];
   return (

@@ -165,8 +165,13 @@ export async function markPaidThrough(leagueId, teamIds, throughWeek, dues) {
 /** Set once we learn the "who paid" SQL hasn't been run, so payments keep saving without paid_by. */
 let noPaidByColumn = false;
 
-const upsertPayment = (row) =>
-  duezy.from('duezy_payments').upsert(row, { onConflict: 'team_id,week' }).select(PAYMENT_FIELDS).single();
+const upsertPayment = async (row) => {
+  const result = await duezy.from('duezy_payments').upsert(row, { onConflict: 'team_id,week' }).select(PAYMENT_FIELDS).single();
+  if (row.status === 'makeup' && /status_check/.test(result.error?.message || '')) {
+    throw new Error('“Make up” needs a quick database update first (duezy-makeup-2026-10.sql).');
+  }
+  return result;
+};
 
 /** One row per team per week — saving again replaces it. */
 export async function savePayment(leagueId, teamId, week, { status, amount = 0, method = null, note = null, paid_by = null }) {

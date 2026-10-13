@@ -2,7 +2,7 @@ import React from 'react';
 import { money } from '../../utils/duezyMath.js';
 
 export default function DuezyWeekSummary({ summary, lateCount, lateTotal, dueTotal = 0, title = 'Collected this week', onShowLate }) {
-  const { paid, partial, bye, collected, expected } = summary;
+  const { paid, partial, bye, makeup = 0, collected, expected } = summary;
   const pct = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 100;
   const lateStat = (
     <>
@@ -24,6 +24,7 @@ export default function DuezyWeekSummary({ summary, lateCount, lateTotal, dueTot
           <div className="dz-legend">
             <span className="is-paid">{paid} paid</span>
             {partial ? <span className="is-partial">{partial} partial</span> : null}
+            {makeup ? <span className="is-makeup">{makeup} make up</span> : null}
             {bye ? <span className="is-bye">{bye} bye</span> : null}
           </div>
         </div>

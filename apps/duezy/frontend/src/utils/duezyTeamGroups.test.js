@@ -20,7 +20,7 @@ const ids = (list) => list.map((t) => t.id);
 const base = { teams, week: 2, paymentIndex };
 
 test('counts by bucket (partial counts as not paid yet)', () => {
-  assert.deepEqual(teamCounts(teams, 2, paymentIndex), { all: 5, open: 2, paid: 2, bye: 1 });
+  assert.deepEqual(teamCounts(teams, 2, paymentIndex), { all: 5, open: 2, paid: 2, makeup: 0, bye: 1 });
 });
 
 test('"all" lists teams to collect first, byes next, paid in their own group', () => {

@@ -37,12 +37,18 @@ export function paidFor(payment, dues) {
   return 0;
 }
 
-/** What a team still owes for weeks 1..throughWeek (byes owe nothing; overpaying counts as credit). */
-export function owedThrough(teamId, throughWeek, dues, paymentIndex) {
+/** A postponed match: still owed, but never counted late while it's waiting to be made up. */
+export const isMakeup = (p) => p?.status === 'makeup';
+
+/**
+ * What a team still owes for weeks 1..throughWeek (byes owe nothing; overpaying counts as credit).
+ * `skipMakeup` leaves out make-up weeks — used for "late" amounts.
+ */
+export function owedThrough(teamId, throughWeek, dues, paymentIndex, { skipMakeup = false } = {}) {
   let owed = 0;
   for (let w = 1; w <= throughWeek; w += 1) {
     const p = paymentIndex.get(`${teamId}:${w}`);
-    if (p?.status === 'bye') continue;
+    if (p?.status === 'bye' || (skipMakeup && isMakeup(p))) continue;
     owed += dues - paidFor(p, dues);
   }
   return Math.max(0, round2(owed));
@@ -52,12 +58,14 @@ export function weekSummary(teams, week, dues, paymentIndex) {
   let paid = 0;
   let partial = 0;
   let bye = 0;
+  let makeup = 0;
   let collected = 0;
   teams.forEach((t) => {
     const p = paymentIndex.get(`${t.id}:${week}`);
     if (p?.status === 'paid') paid += 1;
     else if (p?.status === 'partial') partial += 1;
     else if (p?.status === 'bye') bye += 1;
+    else if (isMakeup(p)) makeup += 1;
     collected += paidFor(p, dues);
   });
   const playing = teams.length - bye;
@@ -65,7 +73,8 @@ export function weekSummary(teams, week, dues, paymentIndex) {
     paid,
     partial,
     bye,
-    unpaid: playing - paid - partial,
+    makeup,
+    unpaid: playing - paid - partial - makeup,
     collected: round2(collected),
     expected: round2(playing * dues),
   };
@@ -96,19 +105,30 @@ export function seasonSummary(teams, throughWeek, dues, totalWeeks, paymentIndex
   };
 }
 
+/** Late teams: make-up weeks don't count toward late. */
 export function teamsBehind(teams, throughWeek, dues, paymentIndex) {
   return teams
-    .map((team) => ({ team, owed: owedThrough(team.id, throughWeek, dues, paymentIndex) }))
+    .map((team) => ({ team, owed: owedThrough(team.id, throughWeek, dues, paymentIndex, { skipMakeup: true }) }))
     .filter((x) => x.owed > 0)
     .sort((a, b) => b.owed - a.owed || a.team.name.localeCompare(b.team.name));
 }
 
-/** Weeks 1..throughWeek not fully paid (byes skipped). */
-export function unpaidWeeks(teamId, throughWeek, dues, paymentIndex) {
+/** Weeks 1..throughWeek not fully paid (byes skipped; make-ups skipped with `skipMakeup`). */
+export function unpaidWeeks(teamId, throughWeek, dues, paymentIndex, { skipMakeup = false } = {}) {
   const weeks = [];
   for (let w = 1; w <= throughWeek; w += 1) {
     const p = paymentIndex.get(`${teamId}:${w}`);
-    if (p?.status !== 'bye' && paidFor(p, dues) < dues) weeks.push(w);
+    if (p?.status === 'bye' || (skipMakeup && isMakeup(p))) continue;
+    if (paidFor(p, dues) < dues) weeks.push(w);
+  }
+  return weeks;
+}
+
+/** Weeks 1..throughWeek marked "Make up" and still waiting. */
+export function makeupWeeks(teamId, throughWeek, paymentIndex) {
+  const weeks = [];
+  for (let w = 1; w <= throughWeek; w += 1) {
+    if (isMakeup(paymentIndex.get(`${teamId}:${w}`))) weeks.push(w);
   }
   return weeks;
 }

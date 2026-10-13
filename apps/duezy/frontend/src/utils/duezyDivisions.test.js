@@ -160,3 +160,17 @@ test('division drafts copy defaults and save cleanly', () => {
     total_weeks: 14,
   });
 });
+
+test('teamBalance shows a make-up week as due, not late', () => {
+  const schedule = { started: true, currentWeek: 3, lateThrough: 2, dates: null, label: (w) => `week ${w}` };
+  const idx = indexPayments([
+    { team_id: 'a', week: 1, status: 'makeup', amount: 0 },
+    { team_id: 'a', week: 2, status: 'paid', amount: 20 },
+    { team_id: 'a', week: 3, status: 'paid', amount: 20 },
+  ]);
+  const b = teamBalance('a', schedule, 20, idx);
+  assert.equal(b.late, 0);
+  assert.equal(b.due, 20);
+  assert.equal(b.dueWhen, 'week 1');
+  assert.deepEqual(b.makeupNights, ['week 1']);
+});

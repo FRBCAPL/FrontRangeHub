@@ -1,9 +1,9 @@
 /**
- * How the team list is split for a week: who still needs collecting first, byes after,
+ * How the team list is split for a week: who still needs collecting first, then make-ups, then byes,
  * paid teams in their own (collapsible) group. Filters and search narrow the list.
  */
 
-export const TEAM_FILTERS = ['all', 'open', 'paid', 'bye'];
+export const TEAM_FILTERS = ['all', 'open', 'paid', 'makeup', 'bye'];
 
 /** Teams this big get a search box. */
 export const SEARCH_MIN_TEAMS = 10;
@@ -13,6 +13,7 @@ export function teamBucket(team, week, paymentIndex) {
   const status = paymentIndex.get(`${team.id}:${week}`)?.status || 'unpaid';
   if (status === 'paid') return 'paid';
   if (status === 'bye') return 'bye';
+  if (status === 'makeup') return 'makeup';
   return 'open';
 }
 
@@ -23,7 +24,7 @@ export function matchesSearch(team, query) {
 }
 
 export function teamCounts(teams, week, paymentIndex) {
-  const counts = { all: teams.length, open: 0, paid: 0, bye: 0 };
+  const counts = { all: teams.length, open: 0, paid: 0, makeup: 0, bye: 0 };
   teams.forEach((t) => { counts[teamBucket(t, week, paymentIndex)] += 1; });
   return counts;
 }
@@ -42,7 +43,8 @@ export function groupTeams({ teams, week, paymentIndex, filter = 'all', query = 
     return { main: visible.filter((t) => bucket(t) === filter || (filter === 'open' && hold.has(t.id))), paid: [] };
   }
 
-  const rank = (t) => (bucket(t) === 'bye' ? 1 : 0);
+  const RANK = { open: 0, makeup: 1, bye: 2, paid: 0 };
+  const rank = (t) => RANK[bucket(t)];
   const main = visible
     .filter((t) => bucket(t) !== 'paid' || hold.has(t.id))
     .map((t, i) => ({ t, i }))

@@ -15,9 +15,9 @@ export function SeasonStrip({ teamId, week, dues, paymentIndex, schedule }) {
         const w = i + 1;
         const p = paymentIndex.get(`${teamId}:${w}`);
         const status = p?.status || 'unpaid';
-        const late = status !== 'paid' && status !== 'bye' && w <= schedule.lateThrough;
+        const late = !['paid', 'bye', 'makeup'].includes(status) && w <= schedule.lateThrough;
         const night = schedule.dates ? `${schedule.label(w)} (week ${w})` : `Week ${w}`;
-        const title = status === 'partial' ? `${night}: paid ${money(paidFor(p, dues))} of ${money(dues)}` : `${night}: ${late ? 'late' : status}`;
+        const title = status === 'partial' ? `${night}: paid ${money(paidFor(p, dues))} of ${money(dues)}` : `${night}: ${late ? 'late' : status === 'makeup' ? 'make up (still owed)' : status}`;
         return <span key={w} className={`is-${status}${late ? ' is-late' : ''}`} title={title}>{w}</span>;
       })}
     </div>
@@ -42,6 +42,11 @@ export default function DuezyTeamDetail({
       <p className="dz-small dz-muted">Season so far</p>
       <SeasonStrip teamId={team.id} week={week} dues={dues} paymentIndex={paymentIndex} schedule={schedule} />
       {balance.late > 0 ? <p className="dz-small dz-owe-late">Late for {balance.lateWhen}</p> : null}
+      {balance.makeupNights.length ? (
+        <p className="dz-small dz-muted">
+          ↻ Make-up for {balance.makeupWhen}. Still owed, but not late. Tap a payment method when they pay.
+        </p>
+      ) : null}
 
       {payment?.status === 'partial' ? (
         <p className="dz-small">

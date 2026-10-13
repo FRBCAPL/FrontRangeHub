@@ -10,7 +10,7 @@ function rowMethods(league, payment) {
 }
 
 /**
- * One button per payment method, plus Bye and Not yet. Cash records right away;
+ * One button per payment method, plus Bye, Make up and Not yet. Cash records right away;
  * other methods call onAskWhoPaid(method) so the row can show "Who paid?".
  */
 export default function DuezyTeamPayButtons({ league, team, week, dues, payment, picking, onSetPayment, onAskWhoPaid }) {
@@ -46,6 +46,15 @@ export default function DuezyTeamPayButtons({ league, team, week, dues, payment,
         onClick={() => onSetPayment({ status: 'bye', amount: 0 })}
       >
         <span aria-hidden="true">⏸</span> Bye
+      </button>
+      <button
+        type="button"
+        className={`dz-chip ${status === 'makeup' ? 'is-on is-makeup' : ''}`}
+        aria-pressed={status === 'makeup'}
+        title="Match postponed: dues are still owed but won't count as late until it's made up"
+        onClick={() => onSetPayment({ status: 'makeup', amount: 0 })}
+      >
+        <span aria-hidden="true">↻</span> Make up
       </button>
       <button
         type="button"

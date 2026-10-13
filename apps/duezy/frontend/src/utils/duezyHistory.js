@@ -6,6 +6,7 @@ export function statusText(status, amount) {
   if (status === 'paid') return `Paid ${money(amount)}`;
   if (status === 'partial') return `Partial ${money(amount)}`;
   if (status === 'bye') return 'Bye';
+  if (status === 'makeup') return 'Make up';
   return 'Not paid';
 }
 
