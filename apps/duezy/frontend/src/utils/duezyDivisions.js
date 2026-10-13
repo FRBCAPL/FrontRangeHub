@@ -53,15 +53,23 @@ export function unitSchedule(unit, { today = todayISO(), defaultGrace = 0 } = {}
   };
 }
 
+/** "Oct 6, Oct 13, Oct 20 +2 more" — the first few nights, then a count. */
+export function shortNights(nights = [], max = 3) {
+  if (nights.length <= max) return nights.join(', ');
+  return `${nights.slice(0, max).join(', ')} +${nights.length - max} more`;
+}
+
 /** One team's money right now: late (past grace), due (not late yet), and which nights are late. */
 export function teamBalance(teamId, schedule, dues, paymentIndex) {
   const { started, currentWeek, lateThrough, label } = schedule;
   const late = owedThrough(teamId, lateThrough, dues, paymentIndex);
   const due = Math.max(0, owedThrough(teamId, started ? currentWeek : 0, dues, paymentIndex) - late);
+  const lateNights = late > 0 ? unpaidWeeks(teamId, lateThrough, dues, paymentIndex).map(label) : [];
   return {
     late,
     due: round2(due),
-    lateWhen: late > 0 ? unpaidWeeks(teamId, lateThrough, dues, paymentIndex).map(label).join(', ') : '',
+    lateNights,
+    lateWhen: lateNights.join(', '),
     dueWhen: due > 0 ? label(currentWeek) : '',
   };
 }

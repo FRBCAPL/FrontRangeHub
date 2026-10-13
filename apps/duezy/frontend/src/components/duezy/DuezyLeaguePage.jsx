@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import useDuezyLeague from '../../hooks/useDuezyLeague.js';
-import { money } from '../../utils/duezyMath.js';
+import { matchesPerNight, money } from '../../utils/duezyMath.js';
 import { allDivisionsStats, unitStats } from '../../utils/duezyDivisions.js';
 import { todayISO } from '../../utils/duezySchedule.js';
 import { DUEZY_PATH, sportOf } from '../../data/duezyOptions.js';
@@ -101,6 +101,8 @@ export default function DuezyLeaguePage() {
         !several && sport.short,
         selected.unit.play_day && `${selected.unit.play_day}s`,
         `${money(selected.dues)} per team weekly`,
+        matchesPerNight(selected.unit) > 1 &&
+          `double play (${money(selected.dues / matchesPerNight(selected.unit))} × ${matchesPerNight(selected.unit)})`,
         `${selected.teams.length} teams`,
       ]}
       settingsTo={settingsTo}

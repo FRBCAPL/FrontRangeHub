@@ -68,7 +68,7 @@ export default function DuezyPeoplePanel({ league }) {
         </p>
       </div>
 
-      <details className="dz-perms-details" open={owner && !people.members.length && !people.invites.length}>
+      <details className="dz-perms-details">
         <summary className="dz-link dz-small">What can each role do?</summary>
         <DuezyPermissionTable />
       </details>

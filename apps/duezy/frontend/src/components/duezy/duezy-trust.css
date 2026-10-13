@@ -48,7 +48,10 @@
 .dz-perms small { display: block; color: var(--dz-muted); font-size: 0.74rem; }
 .dz-perms-wrap { overflow-x: auto; margin-top: 8px; }
 .dz-perms tbody th { font-weight: 600; }
-.dz-perms-details summary { cursor: pointer; width: fit-content; }
+.dz-perms-details summary { cursor: pointer; width: fit-content; list-style: none; }
+.dz-perms-details summary::-webkit-details-marker { display: none; }
+.dz-perms-details summary::before { content: '▸ '; display: inline-block; width: 1em; }
+.dz-perms-details[open] summary::before { content: '▾ '; }
 
 /* ---------- Scope label on settings ---------- */
 .dz-scope {

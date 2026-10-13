@@ -15,6 +15,7 @@
 
 .dz-owe-late { color: #fca5a5; font-weight: 600; }
 .dz-owe-due { color: #fcd34d; }
+.dz-team-name small.dz-owe-weeks { color: rgba(252, 165, 165, 0.8); font-size: 0.74rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .dz-strip .is-unpaid:not(.is-late) {
   background: transparent;

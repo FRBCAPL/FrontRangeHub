@@ -36,7 +36,8 @@
 .dz-stat strong { font-size: 1.35rem; }
 .dz-stat-icon { top: 10px; right: 10px; width: 22px; height: 22px; font-size: 0.75rem; }
 
-.dz-season-total--division { margin: 0; padding: 10px 14px; gap: 6px; }
+.dz-season-total--division { margin: 0; padding: 10px 14px; gap: 6px; text-align: center; }
+.dz-season-total--division .dz-row { flex-direction: column; justify-content: center; align-items: center; gap: 2px; }
 .dz-season-total--division .dz-league-progress { height: 6px; }
 
 /* Team rows */

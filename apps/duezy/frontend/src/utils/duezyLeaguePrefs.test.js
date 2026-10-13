@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  cleanHandle, defaultMethod, handlesToSave, leagueMethods, methodOptions, methodsToSave, paymentLines, timeZoneOptions,
+  cleanHandle, cleanMethodName, customMethods, defaultMethod, findMethod, handlesToSave, leagueMethods, methodOptions,
+  methodsToSave, paymentLines, timeZoneOptions,
 } from './duezyLeaguePrefs.js';
 import { METHODS } from '../data/duezyOptions.js';
 
@@ -38,6 +39,29 @@ test('league methods, default and options', () => {
   assert.equal(methodsToSave(METHODS), null);
   assert.equal(methodsToSave([]), null);
   assert.deepEqual(methodsToSave(['Venmo', 'Cash']), ['Cash', 'Venmo']);
+});
+
+test('custom "Other" methods are kept after the standard ones', () => {
+  const league = { payment_methods: ['House tab', 'Venmo', 'Cash', ' square  pos '], default_method: 'House tab' };
+  assert.deepEqual(leagueMethods(league), ['Cash', 'Venmo', 'House tab', 'square pos']);
+  assert.deepEqual(customMethods(league), ['House tab', 'square pos']);
+  assert.equal(defaultMethod(league), 'House tab');
+  assert.deepEqual(leagueMethods({ payment_methods: ['Bar tab'] }), ['Bar tab']);
+});
+
+test('saving keeps customs, even when every standard method is chosen', () => {
+  assert.deepEqual(methodsToSave([...METHODS, 'House tab']), [...METHODS, 'House tab']);
+  assert.deepEqual(methodsToSave(['Venmo', 'venmo ', 'Bar tab', 'bar TAB']), ['Venmo', 'Bar tab']);
+  assert.equal(methodsToSave([...METHODS, '  ']), null);
+  assert.equal(methodsToSave([...METHODS, ...Array.from({ length: 9 }, (_, i) => `M${i}`)]).length, 12);
+});
+
+test('method names are tidied and matched without case', () => {
+  assert.equal(cleanMethodName('  Bar   tab '), 'Bar tab');
+  assert.equal(cleanMethodName('x'.repeat(40)).length, 24);
+  assert.equal(findMethod(['House tab'], 'venmo'), 'Venmo');
+  assert.equal(findMethod(['House tab'], 'HOUSE TAB'), 'House tab');
+  assert.equal(findMethod(['House tab'], 'Square'), null);
 });
 
 test('timeZoneOptions adds unlisted zones once', () => {

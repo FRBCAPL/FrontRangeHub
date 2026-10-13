@@ -2,6 +2,7 @@ import React from 'react';
 import { memberWord } from '../../data/duezyOptions.js';
 import { matchesPerNight } from '../../utils/duezyMath.js';
 import { useDoublePlaySupported } from '../../hooks/useDuezyFeatures.js';
+import DuezyDoublePlayField from './DuezyDoublePlayField.jsx';
 
 /** Dues amount / basis / players / weeks — shared by the setup wizard and league settings. */
 export default function DuezyDuesFields({ league, onChange, showTeamSize = false }) {
@@ -34,7 +35,10 @@ export default function DuezyDuesFields({ league, onChange, showTeamSize = false
 
       <div className="dz-grid-3">
         <label className="dz-field">
-          <span>{perPlayer ? `Per ${word.replace(/s$/, '')}` : 'Per team'}, per {matches > 1 ? 'match' : 'week'}</span>
+          <span>
+            {perPlayer ? `Per ${word.replace(/s$/, '')}` : 'Per team'}, per {matches > 1 ? 'match' : 'week'}
+            {matches > 1 ? <em className="dz-muted"><br />(Duezy will double it)</em> : null}
+          </span>
           <div className="dz-money-input">
             <em>$</em>
             <input
@@ -73,26 +77,7 @@ export default function DuezyDuesFields({ league, onChange, showTeamSize = false
         </label>
       </div>
 
-      {doublePlay || matches > 1 ? (
-        <div className="dz-field">
-          <span>Matches each night</span>
-          <div className="dz-segment" role="radiogroup" aria-label="Matches each night">
-            {[[1, 'One match'], [2, 'Double play (2 matches)']].map(([n, label]) => (
-              <button
-                key={n}
-                type="button"
-                role="radio"
-                aria-checked={matches === n}
-                className={matches === n ? 'is-active' : ''}
-                onClick={() => onChange({ matches_per_night: n })}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {matches > 1 ? <small className="dz-small dz-muted">Dues are charged for each match, so the weekly amount doubles.</small> : null}
-        </div>
-      ) : null}
+      {doublePlay || matches > 1 ? <DuezyDoublePlayField league={league} onChange={onChange} /> : null}
     </div>
   );
 }

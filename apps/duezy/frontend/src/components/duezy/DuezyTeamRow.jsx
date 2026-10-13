@@ -1,6 +1,6 @@
 import React from 'react';
 import { money } from '../../utils/duezyMath.js';
-import { teamBalance } from '../../utils/duezyDivisions.js';
+import { shortNights, teamBalance } from '../../utils/duezyDivisions.js';
 import { leagueMethods } from '../../utils/duezyLeaguePrefs.js';
 import DuezyTeamDetail from './DuezyTeamDetail.jsx';
 
@@ -62,6 +62,11 @@ export default function DuezyTeamRow({
               {team.captain ? `${team.captain} · ` : ''}
               {balanceText(balance)}
             </small>
+            {balance.lateNights.length ? (
+              <small className="dz-owe-weeks" title={`Late for ${balance.lateWhen}`}>
+                Late for {shortNights(balance.lateNights)}
+              </small>
+            ) : null}
           </span>
         </button>
         {canEdit ? (

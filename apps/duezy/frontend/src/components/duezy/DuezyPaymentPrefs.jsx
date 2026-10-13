@@ -1,6 +1,7 @@
 import React from 'react';
 import { METHODS } from '../../data/duezyOptions.js';
 import { PAY_HANDLES, defaultMethod, leagueMethods } from '../../utils/duezyLeaguePrefs.js';
+import DuezyOtherMethods from './DuezyOtherMethods.jsx';
 
 /**
  * How teams pay this league: free-text instructions, tap-to-pay handles, which methods the
@@ -57,7 +58,10 @@ export default function DuezyPaymentPrefs({ form, set, ready }) {
                 </label>
               ))}
             </div>
-            <small className="dz-small dz-muted">Only these show up when recording a payment.</small>
+            <DuezyOtherMethods methods={methods} onChange={(next) => set({ payment_methods: next })} />
+            <small className="dz-small dz-muted">
+              Only these show up when recording a payment. Use Other for anything else you take, like a house tab or Square.
+            </small>
           </div>
           <label className="dz-field">
             <span>Default method</span>

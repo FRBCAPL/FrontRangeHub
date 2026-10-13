@@ -51,11 +51,39 @@ export function paymentLines(league) {
 
 export const hasPaymentInfo = (league) => paymentLines(league).length > 0;
 
-/** Methods this league uses, in the standard order; all of them when none are chosen. */
+/** payment_methods holds at most this many entries (database check). */
+export const MAX_METHODS = 12;
+export const METHOD_NAME_MAX = 24;
+
+export const cleanMethodName = (raw) => String(raw || '').replace(/\s+/g, ' ').trim().slice(0, METHOD_NAME_MAX);
+
+/** Names the league added under "Other" (anything that isn't a standard method), first spelling wins. */
+function customsIn(list) {
+  const seen = new Set(METHODS.map((m) => m.toLowerCase()));
+  const out = [];
+  (list || []).forEach((raw) => {
+    const name = cleanMethodName(raw);
+    if (name && !seen.has(name.toLowerCase())) {
+      seen.add(name.toLowerCase());
+      out.push(name);
+    }
+  });
+  return out;
+}
+
+export const customMethods = (league) => customsIn(Array.isArray(league?.payment_methods) ? league.payment_methods : []);
+
+/** Methods this league uses: chosen standard ones in the standard order, then its own; all standard ones when none are chosen. */
 export function leagueMethods(league) {
   const chosen = Array.isArray(league?.payment_methods) ? league.payment_methods : [];
-  const list = METHODS.filter((m) => chosen.includes(m));
+  const list = [...METHODS.filter((m) => chosen.includes(m)), ...customsIn(chosen)];
   return list.length ? list : METHODS;
+}
+
+/** The existing method this name means (case-insensitive), or null if it's new. */
+export function findMethod(methods, raw) {
+  const name = cleanMethodName(raw).toLowerCase();
+  return [...METHODS, ...methods].find((m) => m.toLowerCase() === name) || null;
 }
 
 export function defaultMethod(league) {
@@ -69,10 +97,15 @@ export function methodOptions(league, current) {
   return current && !list.includes(current) ? [...list, current] : list;
 }
 
-/** null when every method is chosen (= no restriction), so new methods added later show up automatically. */
+/**
+ * null when every standard method is chosen and there are no custom ones (= no restriction), so
+ * standard methods added later show up automatically.
+ */
 export function methodsToSave(chosen) {
   const list = METHODS.filter((m) => (chosen || []).includes(m));
-  return list.length && list.length < METHODS.length ? list : null;
+  const customs = customsIn(chosen);
+  if (!customs.length) return list.length && list.length < METHODS.length ? list : null;
+  return [...list, ...customs].slice(0, MAX_METHODS);
 }
 
 export const TIME_ZONES = [

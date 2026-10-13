@@ -8,10 +8,27 @@ import {
   divisionUnits,
   isMultiDivision,
   newDivisionDraft,
+  shortNights,
+  teamBalance,
   teamsInUnit,
+  unitSchedule,
   unitStats,
   unitWeek,
 } from './duezyDivisions.js';
+
+test('teamBalance lists the late nights; shortNights trims long lists', () => {
+  const schedule = unitSchedule({ current_week: 5, total_weeks: 12 });
+  const index = indexPayments([
+    { team_id: 'x', week: 1, status: 'paid', amount: 20 },
+    { team_id: 'x', week: 3, status: 'bye', amount: 0 },
+  ]);
+  const b = teamBalance('x', schedule, 20, index);
+  assert.deepEqual(b.lateNights, ['week 2', 'week 4']);
+  assert.equal(b.lateWhen, 'week 2, week 4');
+  assert.equal(teamBalance('x', schedule, 20, indexPayments([])).lateNights.length, 4);
+  assert.equal(shortNights(['Oct 6', 'Oct 13']), 'Oct 6, Oct 13');
+  assert.equal(shortNights(['a', 'b', 'c', 'd', 'e']), 'a, b, c +2 more');
+});
 
 const league = { id: 'L', name: 'Mile High', multi_division: true, play_day: 'Tuesday', dues_amount: 20, dues_basis: 'team', players_per_match: 4, total_weeks: 12, current_week: 3 };
 const tue = { id: 'd1', name: 'Tue 8-Ball', dues_amount: 20, dues_basis: 'team', players_per_match: 4, total_weeks: 12, current_week: 2 };

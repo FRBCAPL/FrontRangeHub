@@ -59,7 +59,61 @@
 }
 .dz-pay-handles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
 .dz-method-checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.dz-double-play > small { margin-top: -2px; }
+.dz-double-play-total {
+  margin: 2px 0 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  font-size: 0.88rem;
+  color: var(--dz-text);
+}
+.dz-double-play-total strong { color: #4ade80; }
+.dz-double-play-notes { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 2px; }
 .dz-method-checks .dz-check-label { color: var(--dz-text); min-height: 32px; }
+.dz-other-methods { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.dz-other-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 4px 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(129, 140, 248, 0.14);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+.dz-other-chip button {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dz-muted);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.dz-other-chip button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); color: var(--dz-text); }
+.dz-other-btn {
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px dashed var(--dz-line-strong);
+  background: transparent;
+  color: var(--dz-text);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dz-other-btn:hover:not(:disabled) { border-color: var(--dz-accent); background: rgba(129, 140, 248, 0.08); }
+.dz-other-btn:disabled { opacity: 0.5; cursor: default; }
+.dz-other-add { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.dz-app .dz-other-add input { width: 200px; min-height: 34px; }
+.dz-other-note { flex-basis: 100%; }
 .dz-reminder-preview {
   margin: 0;
   padding: 12px 14px;
