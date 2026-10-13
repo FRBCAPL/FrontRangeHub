@@ -59,7 +59,7 @@ export default function useDuezyLeague(leagueId) {
   const writePayment = useCallback(
     async (teamId, week, entry) => {
       const previous = payments;
-      const optimistic = { id: `tmp-${teamId}-${week}`, team_id: teamId, week, amount: 0, method: null, note: null, ...entry };
+      const optimistic = { id: `tmp-${teamId}-${week}`, team_id: teamId, week, amount: 0, method: null, note: null, paid_by: null, ...entry };
       setPayments((prev) => [...prev.filter((p) => !(p.team_id === teamId && p.week === week)), optimistic]);
       try {
         const saved = await savePayment(leagueId, teamId, week, entry);
@@ -90,7 +90,7 @@ export default function useDuezyLeague(leagueId) {
     const { teamId, week, before } = lastChange;
     setLastChange(null);
     await writePayment(teamId, week, before
-      ? { status: before.status, amount: Number(before.amount) || 0, method: before.method || null, note: before.note || null }
+      ? { status: before.status, amount: Number(before.amount) || 0, method: before.method || null, note: before.note || null, paid_by: before.paid_by || null }
       : { status: 'unpaid', amount: 0 });
   }, [lastChange, writePayment]);
 

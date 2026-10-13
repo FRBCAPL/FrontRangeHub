@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { statusText } from '../../utils/duezyHistory.js';
 import { hasRecordedEntry } from '../../utils/duezyCorrection.js';
+import { methodFrom } from '../../utils/duezyPayers.js';
 
 const SHOW_MS = 7000;
 
@@ -23,7 +24,7 @@ export default function DuezyUndoToast({ change, teams, onUndo, onDismiss, onCor
     <div className="dz-toast" role="status" aria-live="polite">
       <span className="dz-toast-text">
         <strong>{team?.name || 'Team'}</strong> · week {change.week} · {what}
-        {change.entry.method ? ` · ${change.entry.method}` : ''}
+        {change.entry.method ? ` · ${methodFrom(change.entry.method, change.entry.paid_by)}` : ''}
       </span>
       {onCorrect && hasRecordedEntry(change.entry) ? (
         <button type="button" className="dz-toast-link" onClick={() => onCorrect(change)}>Correct</button>

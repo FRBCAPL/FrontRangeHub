@@ -2,26 +2,36 @@ import React, { useState } from 'react';
 import { money } from '../../utils/duezyMath.js';
 import { hasRecordedEntry } from '../../utils/duezyCorrection.js';
 import { defaultMethod, methodOptions } from '../../utils/duezyLeaguePrefs.js';
+import { asksWhoPaid, payerChoice } from '../../utils/duezyPayers.js';
 import DuezyCorrectPayment from './DuezyCorrectPayment.jsx';
+import DuezyPayerSelect from './DuezyPayerSelect.jsx';
 
 /**
- * Amount / method / note form for one team's week. Less than the dues saves as partial.
+ * Amount / method / who paid / note form for one team's week. Less than the dues saves as partial.
  * A week that already has money recorded gets "Correct this entry" instead of a second payment form.
  */
-export default function DuezyRecordPayment({ league, dues, weekName, payment, onSetPayment, startCorrect = false }) {
+export default function DuezyRecordPayment({
+  league, team, dues, weekName, payment, onSetPayment, onAddPlayer, startCorrect = false,
+}) {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState(payment?.method || defaultMethod(league));
+  const [payer, setPayer] = useState({ pick: '', other: '' });
   const [note, setNote] = useState(payment?.note || '');
 
   if (hasRecordedEntry(payment)) {
     return <DuezyCorrectPayment league={league} dues={dues} weekName={weekName} payment={payment} onSetPayment={onSetPayment} startOpen={startCorrect} />;
   }
 
+  const askPayer = Boolean(team) && asksWhoPaid(method);
+
   const save = () => {
     const n = Number(amount);
     if (!(n > 0)) return;
-    onSetPayment({ status: n >= dues ? 'paid' : 'partial', amount: n, method, note: note.trim() || null });
+    const who = askPayer ? payerChoice(payer, team) : { name: null, isNew: false };
+    onSetPayment({ status: n >= dues ? 'paid' : 'partial', amount: n, method, note: note.trim() || null, paid_by: who.name });
+    if (who.isNew) onAddPlayer?.(who.name);
     setAmount('');
+    setPayer({ pick: '', other: '' });
   };
 
   return (
@@ -36,6 +46,7 @@ export default function DuezyRecordPayment({ league, dues, weekName, payment, on
         <select value={method} onChange={(e) => setMethod(e.target.value)} aria-label="Payment method">
           {methodOptions(league, method).map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
+        {askPayer ? <DuezyPayerSelect team={team} value={payer} onChange={setPayer} /> : null}
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" maxLength={300} aria-label="Note" />
         <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={save} disabled={!(Number(amount) > 0)}>Save</button>
       </div>

@@ -1,5 +1,6 @@
 /** Wording for the payment audit trail. A history row is a duezy_payment_history record. */
 import { money } from './duezyMath.js';
+import { methodFrom } from './duezyPayers.js';
 
 export function statusText(status, amount) {
   if (status === 'paid') return `Paid ${money(amount)}`;
@@ -17,7 +18,7 @@ export function shortStamp(iso) {
 export function historyChange(row, weekLabel = (w) => `Week ${w}`) {
   const next = statusText(row.new_status, row.new_amount);
   const change = row.action === 'created' ? next : `${statusText(row.old_status, row.old_amount)} → ${next}`;
-  return [`${weekLabel(row.week)}: ${change}`, row.method, row.note].filter(Boolean).join(' · ');
+  return [`${weekLabel(row.week)}: ${change}`, row.method && methodFrom(row.method, row.paid_by), row.note].filter(Boolean).join(' · ');
 }
 
 /** A change that took money back off the books (paid → partial / not paid / bye, or a smaller amount). */

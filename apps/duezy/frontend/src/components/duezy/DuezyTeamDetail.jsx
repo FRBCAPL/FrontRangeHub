@@ -1,5 +1,6 @@
 import React from 'react';
 import { money, paidFor, teamReminder } from '../../utils/duezyMath.js';
+import { methodFrom } from '../../utils/duezyPayers.js';
 import DuezyContactLinks from './DuezyContactLinks.jsx';
 import DuezyPaymentHistory from './DuezyPaymentHistory.jsx';
 import DuezyRecordPayment from './DuezyRecordPayment.jsx';
@@ -30,7 +31,7 @@ function reminderFor(league, team, { late, due, lateWhen, dueWhen }) {
 }
 
 export default function DuezyTeamDetail({
-  league, team, week, dues, schedule, balance, payment, paymentIndex, onSetPayment, onEditTeam, canEdit = true,
+  league, team, week, dues, schedule, balance, payment, paymentIndex, onSetPayment, onAddPlayer, onEditTeam, canEdit = true,
   correctKey = 0,
 }) {
   const weekName = schedule.dates ? schedule.label(week) : `week ${week}`;
@@ -50,7 +51,7 @@ export default function DuezyTeamDetail({
       {(payment?.method && !hasRecordedEntry(payment)) || payment?.note || payment?.recorded_by_email ? (
         <p className="dz-small dz-muted">
           {[
-            !hasRecordedEntry(payment) && payment.method,
+            !hasRecordedEntry(payment) && payment.method && methodFrom(payment.method, payment.paid_by),
             payment.note,
             payment.recorded_by_email && `recorded ${shortStamp(payment.recorded_at || payment.updated_at)} by ${payment.recorded_by_email}`,
           ].filter(Boolean).join(' · ')}
@@ -62,10 +63,12 @@ export default function DuezyTeamDetail({
           <DuezyRecordPayment
             key={correctKey}
             league={league}
+            team={team}
             dues={dues}
             weekName={weekName}
             payment={payment}
             onSetPayment={onSetPayment}
+            onAddPlayer={onAddPlayer}
             startCorrect={correctKey > 0}
           />
         ) : null}

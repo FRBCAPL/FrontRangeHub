@@ -35,6 +35,7 @@ import './duezy-reports.css';
 import './duezy-prefs.css';
 import './duezy-teams.css';
 import './duezy-team-modal.css';
+import './duezy-payers.css';
 import './duezy-touch.css';
 
 export default function DuezyApp() {

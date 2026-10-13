@@ -1,0 +1,42 @@
+/* "Who paid?" picker under a team row, and the "Venmo from Ana" line. */
+.dz-payer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 10px 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  border-radius: 12px;
+  background: rgba(129, 140, 248, 0.07);
+  animation: dz-modal-fade 0.15s ease-out;
+}
+.dz-payer p { margin: 0; }
+.dz-payer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dz-payer-close {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dz-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+.dz-payer-close:hover { color: var(--dz-text); background: rgba(255, 255, 255, 0.06); }
+
+.dz-payer-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.dz-payer-role { margin-left: 6px; font-size: 0.7rem; color: var(--dz-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.dz-payer-skip { color: var(--dz-muted); }
+.dz-payer-other { display: flex; gap: 6px; flex: 1 1 220px; }
+.dz-payer-other input { flex: 1; min-width: 0; min-height: 34px; }
+
+.dz-chip.is-picking { border-color: var(--dz-accent); box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.3); }
+
+.dz-team-name small.dz-paid-by { color: #86efac; font-size: 0.75rem; }
+
+@media (max-width: 560px) {
+  .dz-payer { margin: 0 6px 8px; }
+  .dz-payer-options .dz-chip { flex: 1 1 auto; min-height: 40px; }
+  .dz-payer-other { flex-basis: 100%; }
+}

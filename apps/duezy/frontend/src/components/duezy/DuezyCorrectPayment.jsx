@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { money, paidFor } from '../../utils/duezyMath.js';
 import { correctionEntry, correctionSummary, isSameEntry } from '../../utils/duezyCorrection.js';
 import { defaultMethod, methodOptions } from '../../utils/duezyLeaguePrefs.js';
+import { asksWhoPaid, methodFrom } from '../../utils/duezyPayers.js';
 
 /**
  * A week that already has a payment: show what's recorded and offer "Correct this entry"
@@ -28,7 +29,9 @@ export default function DuezyCorrectPayment({ league, dues, weekName, payment, o
     setBusy(true);
     setError('');
     try {
-      await onSetPayment(correctionEntry(amount, dues, method, reason));
+      const entry = correctionEntry(amount, dues, method, reason);
+      const keepPayer = entry.amount > 0 && asksWhoPaid(entry.method) ? payment?.paid_by || null : null;
+      await onSetPayment({ ...entry, paid_by: keepPayer });
       setStep('view');
     } catch (e) {
       setError(e.message);
@@ -46,7 +49,7 @@ export default function DuezyCorrectPayment({ league, dues, weekName, payment, o
       <div className="dz-recorded">
         <p className="dz-small">
           <strong>{money(recorded)} recorded</strong> for {weekName}
-          {payment?.method ? ` · ${payment.method}` : ''}
+          {payment?.method ? ` · ${methodFrom(payment.method, payment.paid_by)}` : ''}
           {payment?.status === 'partial' ? ` · partial (${money(dues - recorded)} still due)` : ''}
         </p>
         <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={open}>Correct this entry</button>

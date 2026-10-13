@@ -3,6 +3,7 @@ import DuezyModal from './DuezyModal.jsx';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyTeamPaste from './DuezyTeamPaste.jsx';
 import { contactHint, formatContact } from '../../utils/duezyContact.js';
+import { parsePlayers, teamPlayers } from '../../utils/duezyPayers.js';
 
 const TABS = [
   { id: 'one', label: 'One team' },
@@ -39,6 +40,7 @@ export default function DuezyTeamModal({
   const [name, setName] = useState(team?.name || '');
   const [captain, setCaptain] = useState(team?.captain || '');
   const [contact, setContact] = useState(team?.contact || '');
+  const [players, setPlayers] = useState(teamPlayers(team).join(', '));
   const [division, setDivision] = useState(team?.division_id || divisionId || divisions[0]?.id || null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -53,11 +55,17 @@ export default function DuezyTeamModal({
     el?.focus();
   }, [focus, tab]);
 
-  const values = () => ({
-    name: name.trim(),
-    captain: captain.trim() || null,
-    contact: formatContact(contact) || null,
-  });
+  /** players is only sent when it changed, so teams keep saving before the "who paid" SQL is run. */
+  const values = () => {
+    const list = parsePlayers(players, captain);
+    const changed = list.join('\n') !== teamPlayers(team).join('\n');
+    return {
+      name: name.trim(),
+      captain: captain.trim() || null,
+      contact: formatContact(contact) || null,
+      ...(changed ? { players: list } : {}),
+    };
+  };
 
   const run = async (work) => {
     setBusy(true);
@@ -90,6 +98,7 @@ export default function DuezyTeamModal({
     setName('');
     setCaptain('');
     setContact('');
+    setPlayers('');
     nameRef.current?.focus();
   });
 
@@ -139,6 +148,18 @@ export default function DuezyTeamModal({
               autoComplete="off"
             />
             <small className={`dz-team-modal-hint is-${hint.tone}`}>{hint.text}</small>
+          </label>
+          <label className="dz-field">
+            <span>Other players <em>(optional)</em></span>
+            <input
+              value={players}
+              onChange={(e) => setPlayers(e.target.value)}
+              placeholder="Ana, Lee, Sam"
+              autoComplete="off"
+            />
+            <small className="dz-team-modal-hint">
+              Separate names with commas. They show up under “Who paid?” for Venmo, Zelle and other non-cash payments.
+            </small>
           </label>
           {picker}
 

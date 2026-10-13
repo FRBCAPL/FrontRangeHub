@@ -8,7 +8,7 @@ import { weekDates } from './duezySchedule.js';
 import { changeKind, statusText } from './duezyHistory.js';
 
 export const HISTORY_HEADER = [
-  'Changed at', 'Division', 'Team', 'Week', 'Night', 'Change', 'Was', 'Now', 'Amount change', 'Method', 'Note', 'By',
+  'Changed at', 'Division', 'Team', 'Week', 'Night', 'Change', 'Was', 'Now', 'Amount change', 'Method', 'Paid by', 'Note', 'By',
 ];
 
 const stamp = (iso) => (iso ? iso.slice(0, 16).replace('T', ' ') : '');
@@ -35,6 +35,7 @@ export function historyRows({ rows, units = [], teamsById = {} }) {
         statusText(r.new_status, r.new_amount),
         delta.toFixed(2),
         r.method || '',
+        r.paid_by || '',
         r.note || '',
         r.changed_by_email || '',
       ];

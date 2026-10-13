@@ -8,7 +8,7 @@ import { teamsInUnit, unitSchedule } from './duezyDivisions.js';
 
 export const LEDGER_HEADER = [
   'Division', 'Team', 'Captain', 'Week', 'Night', 'When', 'Dues', 'Status', 'Paid', 'Balance', 'Due now',
-  'Method', 'Note', 'Recorded by', 'Last updated',
+  'Method', 'Paid by', 'Note', 'Recorded by', 'Last updated',
 ];
 
 function whenLabel(week, schedule) {
@@ -58,6 +58,7 @@ export function ledgerRows({ units, teams, payments, today, defaultGrace = 0 }) 
           balance.toFixed(2),
           (w <= through ? balance : 0).toFixed(2),
           p?.method || '',
+          p?.paid_by || '',
           p?.note || '',
           p?.recorded_by_email || '',
           p?.updated_at ? p.updated_at.slice(0, 16).replace('T', ' ') : '',

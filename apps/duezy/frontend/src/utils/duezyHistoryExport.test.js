@@ -11,12 +11,12 @@ test('created, changed and corrected rows read oldest first with the money moved
     units,
     rows: [
       { action: 'changed', week: 1, old_status: 'paid', old_amount: 40, new_status: 'unpaid', new_amount: 0, changed_at: '2026-10-21T02:00:00Z', changed_by_email: 'amy@x.com', team },
-      { action: 'created', week: 1, new_status: 'paid', new_amount: 40, method: 'Venmo', changed_at: '2026-10-21T01:00:00Z', changed_by_email: 'sam@x.com', team },
+      { action: 'created', week: 1, new_status: 'paid', new_amount: 40, method: 'Venmo', paid_by: 'Ana', changed_at: '2026-10-21T01:00:00Z', changed_by_email: 'sam@x.com', team },
     ],
   });
-  assert.deepEqual(rows[0], ['2026-10-21 01:00', 'Tuesday', 'Sharks', 1, '2026-10-20', 'Recorded', '', 'Paid $40', '40.00', 'Venmo', '', 'sam@x.com']);
+  assert.deepEqual(rows[0], ['2026-10-21 01:00', 'Tuesday', 'Sharks', 1, '2026-10-20', 'Recorded', '', 'Paid $40', '40.00', 'Venmo', 'Ana', '', 'sam@x.com']);
   assert.deepEqual(rows[1].slice(5, 9), ['Correction', 'Paid $40', 'Not paid', '-40.00']);
-  assert.equal(rows[1][11], 'amy@x.com');
+  assert.equal(rows[1][12], 'amy@x.com');
 });
 
 test('teams that were removed still show up', () => {

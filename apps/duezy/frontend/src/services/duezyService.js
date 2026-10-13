@@ -28,8 +28,15 @@ const teamRow = (leagueId, t, sortOrder) => ({
   name: t.name.trim(),
   captain: t.captain?.trim() || null,
   contact: t.contact?.trim() || null,
+  ...(t.players?.length ? { players: t.players } : {}),
   sort_order: sortOrder,
 });
+
+const PAYERS_SQL_NEEDED = 'Saving team players needs the "who paid" database update (duezy-payers-2026-10.sql).';
+const checkTeam = (result) => {
+  if (result.error && /players/.test(result.error.message)) throw new Error(PAYERS_SQL_NEEDED);
+  return check(result);
+};
 
 /**
  * Single division: teams = [{ name, captain, contact }].
@@ -95,17 +102,17 @@ export async function listTeamsAndPaymentsForLeagues(leagueIds) {
 export async function addTeam(leagueId, team, sortOrder, divisionId = null) {
   const row = teamRow(leagueId, team, sortOrder);
   if (divisionId) row.division_id = divisionId;
-  return check(await duezy.from('duezy_teams').insert(row).select(TEAM_FIELDS).single());
+  return checkTeam(await duezy.from('duezy_teams').insert(row).select(TEAM_FIELDS).single());
 }
 
 /** Several teams at once (pasted list), in order after the existing ones. */
 export async function addTeams(leagueId, teams, startOrder, divisionId = null) {
   const rows = teams.map((t, i) => ({ ...teamRow(leagueId, t, startOrder + i), ...(divisionId ? { division_id: divisionId } : {}) }));
-  return check(await duezy.from('duezy_teams').insert(rows).select(TEAM_FIELDS)) || [];
+  return checkTeam(await duezy.from('duezy_teams').insert(rows).select(TEAM_FIELDS)) || [];
 }
 
 export async function updateTeam(id, changes) {
-  check(await duezy.from('duezy_teams').update(changes).eq('id', id));
+  checkTeam(await duezy.from('duezy_teams').update(changes).eq('id', id));
 }
 
 export async function listPayments(leagueId) {
@@ -155,16 +162,20 @@ export async function markPaidThrough(leagueId, teamIds, throughWeek, dues) {
   ) || [];
 }
 
+/** Set once we learn the "who paid" SQL hasn't been run, so payments keep saving without paid_by. */
+let noPaidByColumn = false;
+
+const upsertPayment = (row) =>
+  duezy.from('duezy_payments').upsert(row, { onConflict: 'team_id,week' }).select(PAYMENT_FIELDS).single();
+
 /** One row per team per week — saving again replaces it. */
-export async function savePayment(leagueId, teamId, week, { status, amount = 0, method = null, note = null }) {
-  return check(
-    await duezy
-      .from('duezy_payments')
-      .upsert(
-        { league_id: leagueId, team_id: teamId, week, status, amount, method, note, updated_at: new Date().toISOString() },
-        { onConflict: 'team_id,week' }
-      )
-      .select(PAYMENT_FIELDS)
-      .single()
-  );
+export async function savePayment(leagueId, teamId, week, { status, amount = 0, method = null, note = null, paid_by = null }) {
+  const row = { league_id: leagueId, team_id: teamId, week, status, amount, method, note, updated_at: new Date().toISOString() };
+  if (noPaidByColumn) return check(await upsertPayment(row));
+  const result = await upsertPayment({ ...row, paid_by });
+  if (result.error && /paid_by/.test(result.error.message)) {
+    noPaidByColumn = true;
+    return check(await upsertPayment(row));
+  }
+  return check(result);
 }
