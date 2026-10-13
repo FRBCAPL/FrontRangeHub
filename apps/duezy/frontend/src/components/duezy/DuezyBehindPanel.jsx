@@ -34,14 +34,14 @@ export default function DuezyBehindPanel({ league, behind, graceNote = '' }) {
       <div className="dz-panel dz-panel--alert">
         <h3 className="dz-h3">Who's late</h3>
         <ul className="dz-behind-list">
-          {behind.map(({ team, owed, division, when }) => (
+          {behind.map(({ team, owed, division, when, nights }) => (
             <li key={team.id}>
               <span className="dz-behind-name">
                 <span>
                   {team.name}
                   {division ? <small className="dz-div-tag">{division}</small> : null}
                 </span>
-                {when ? <small className="dz-muted">{when}</small> : null}
+                {nights || when ? <small className="dz-behind-weeks">{nights || when}</small> : null}
               </span>
               <span className="dz-behind-right">
                 <DuezyContactLinks contact={team.contact} message={teamReminder(league, team, owed, when)} compact />

@@ -59,6 +59,11 @@ export function shortNights(nights = [], max = 3) {
   return `${nights.slice(0, max).join(', ')} +${nights.length - max} more`;
 }
 
+/** "Aug 12 (week 1), Oct 7 (week 9)" — or "week 1, week 9" when the division has no dates. */
+export function nightsWithWeeks(weeks, { dates, label }) {
+  return weeks.map((w) => (dates?.[w - 1] ? `${label(w)} (week ${w})` : `week ${w}`)).join(', ');
+}
+
 /** One team's money right now: late (past grace), due (not late yet), and which nights are late. */
 export function teamBalance(teamId, schedule, dues, paymentIndex) {
   const { started, currentWeek, lateThrough, label } = schedule;
@@ -85,10 +90,10 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
   const { currentWeek, lateThrough, started, label } = schedule;
   const total = Math.max(1, Number(unit.total_weeks) || 1);
   const week = Math.max(1, Math.min(Number(opts.viewWeek) || currentWeek, total));
-  const behind = teamsBehind(unitTeams, lateThrough, dues, paymentIndex).map((x) => ({
-    ...x,
-    when: unpaidWeeks(x.team.id, lateThrough, dues, paymentIndex).map(label).join(', '),
-  }));
+  const behind = teamsBehind(unitTeams, lateThrough, dues, paymentIndex).map((x) => {
+    const weeks = unpaidWeeks(x.team.id, lateThrough, dues, paymentIndex);
+    return { ...x, when: weeks.map(label).join(', '), nights: nightsWithWeeks(weeks, schedule) };
+  });
   const dueThrough = started ? currentWeek : 0;
   const dueTotal = unitTeams.reduce(
     (s, t) => s + Math.max(0, owedThrough(t.id, dueThrough, dues, paymentIndex) - owedThrough(t.id, lateThrough, dues, paymentIndex)),

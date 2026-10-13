@@ -10,6 +10,7 @@ import {
   newDivisionDraft,
   shortNights,
   teamBalance,
+  nightsWithWeeks,
   teamsInUnit,
   unitSchedule,
   unitStats,
@@ -23,6 +24,9 @@ test('teamBalance lists the late nights; shortNights trims long lists', () => {
     { team_id: 'x', week: 3, status: 'bye', amount: 0 },
   ]);
   const b = teamBalance('x', schedule, 20, index);
+  const dated = { dates: ['2026-08-12', '2026-08-19'], label: (w) => ['Aug 12', 'Aug 19'][w - 1] };
+  assert.equal(nightsWithWeeks([1, 2], dated), 'Aug 12 (week 1), Aug 19 (week 2)');
+  assert.equal(nightsWithWeeks([1, 3], { dates: null, label: (w) => `week ${w}` }), 'week 1, week 3');
   assert.deepEqual(b.lateNights, ['week 2', 'week 4']);
   assert.equal(b.lateWhen, 'week 2, week 4');
   assert.equal(teamBalance('x', schedule, 20, indexPayments([])).lateNights.length, 4);

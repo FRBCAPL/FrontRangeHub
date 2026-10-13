@@ -25,6 +25,7 @@
 
 .dz-behind-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .dz-behind-name small { font-size: 0.75rem; }
+.dz-behind-name small.dz-behind-weeks { color: var(--dz-muted); }
 
 .dz-skip-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .dz-skip-chip {
