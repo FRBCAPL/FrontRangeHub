@@ -8,9 +8,9 @@ export default function DuezyContactLinks({ contact, message = '', compact = fal
   const cls = `dz-contact-btn${compact ? ' is-compact' : ''}`;
   return (
     <span className="dz-contact-links">
-      {links.text ? <a className={cls} href={links.text}>💬 Text</a> : null}
+      {links.text ? <a className={cls} href={links.text} title={message ? 'Opens your messages with the reminder filled in — you press send' : undefined}>💬 Text</a> : null}
       {links.call && !compact ? <a className={cls} href={links.call}>📞 Call</a> : null}
-      {links.email ? <a className={cls} href={links.email}>✉️ Email</a> : null}
+      {links.email ? <a className={cls} href={links.email} title={message ? 'Opens your email with the reminder filled in — you press send' : undefined}>✉️ Email</a> : null}
     </span>
   );
 }

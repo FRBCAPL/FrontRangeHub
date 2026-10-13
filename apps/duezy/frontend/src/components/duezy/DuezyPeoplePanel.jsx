@@ -5,6 +5,7 @@ import { getSession } from '../../services/duezyAuthService.js';
 import { ROLES, roleLabel } from '../../utils/duezyPeople.js';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import DuezyInviteForm from './DuezyInviteForm.jsx';
+import DuezyPermissionTable from './DuezyPermissionTable.jsx';
 
 /** Who can see / work on this league. The owner invites, changes roles and removes; members can leave. */
 export default function DuezyPeoplePanel({ league }) {
@@ -63,10 +64,14 @@ export default function DuezyPeoplePanel({ league }) {
         <span className="dz-eyebrow">Sharing</span>
         <h2 className="dz-h3">People on this league</h2>
         <p className="dz-small dz-muted">
-          Treasurers can record payments and edit teams and division settings. Viewers can see everything but change nothing.
-          Every payment change is saved with who made it. Only the owner manages people, adds divisions and handles billing.
+          Treasurers record payments and keep teams and divisions up to date. Viewers can see everything but change nothing.
         </p>
       </div>
+
+      <details className="dz-perms-details" open={owner && !people.members.length && !people.invites.length}>
+        <summary className="dz-link dz-small">What can each role do?</summary>
+        <DuezyPermissionTable />
+      </details>
 
       <ul className="dz-people-list">
         <li>

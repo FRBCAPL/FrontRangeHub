@@ -6,6 +6,7 @@ import DuezyContactLinks from './DuezyContactLinks.jsx';
 import DuezyPaymentHistory from './DuezyPaymentHistory.jsx';
 import DuezyRecordPayment from './DuezyRecordPayment.jsx';
 import { shortStamp } from '../../utils/duezyHistory.js';
+import { hasRecordedEntry } from '../../utils/duezyCorrection.js';
 
 export function SeasonStrip({ teamId, week, dues, paymentIndex, schedule }) {
   const shown = Math.max(week, schedule.started ? schedule.currentWeek : 0);
@@ -32,6 +33,7 @@ function reminderFor(league, team, { late, due, lateWhen, dueWhen }) {
 
 export default function DuezyTeamDetail({
   league, team, week, dues, schedule, balance, payment, paymentIndex, divisions = [], onSetPayment, onUpdateTeam, canEdit = true,
+  correctKey = 0,
 }) {
   const [editing, setEditing] = useState(false);
   const weekName = schedule.dates ? schedule.label(week) : `week ${week}`;
@@ -58,10 +60,10 @@ export default function DuezyTeamDetail({
           Paid {money(paidFor(payment, dues))} of {money(dues)} this week — {money(dues - paidFor(payment, dues))} carries over.
         </p>
       ) : null}
-      {payment?.method || payment?.note || payment?.recorded_by_email ? (
+      {(payment?.method && !hasRecordedEntry(payment)) || payment?.note || payment?.recorded_by_email ? (
         <p className="dz-small dz-muted">
           {[
-            payment.method,
+            !hasRecordedEntry(payment) && payment.method,
             payment.note,
             payment.recorded_by_email && `recorded ${shortStamp(payment.recorded_at || payment.updated_at)} by ${payment.recorded_by_email}`,
           ].filter(Boolean).join(' · ')}
@@ -69,7 +71,16 @@ export default function DuezyTeamDetail({
       ) : null}
 
       <div className="dz-detail-block">
-        {canEdit ? <DuezyRecordPayment dues={dues} weekName={weekName} payment={payment} onSetPayment={onSetPayment} /> : null}
+        {canEdit ? (
+          <DuezyRecordPayment
+            key={correctKey}
+            dues={dues}
+            weekName={weekName}
+            payment={payment}
+            onSetPayment={onSetPayment}
+            startCorrect={correctKey > 0}
+          />
+        ) : null}
         <DuezyPaymentHistory
           teamId={team.id}
           weekLabel={(w) => (schedule.dates ? `${schedule.label(w)} (week ${w})` : `Week ${w}`)}

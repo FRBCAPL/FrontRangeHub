@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { statusText } from '../../utils/duezyHistory.js';
+import { hasRecordedEntry } from '../../utils/duezyCorrection.js';
 
 const SHOW_MS = 7000;
 
-/** "Sharks · week 3 · Paid $80 — Undo" for a few seconds after each payment tap. */
-export default function DuezyUndoToast({ change, teams, onUndo, onDismiss }) {
+/** "Sharks · week 3 · Paid $80 — Correct / Undo" for a few seconds after each payment tap. */
+export default function DuezyUndoToast({ change, teams, onUndo, onDismiss, onCorrect }) {
   useEffect(() => {
     if (!change) return undefined;
     const t = setTimeout(onDismiss, SHOW_MS);
@@ -24,6 +25,9 @@ export default function DuezyUndoToast({ change, teams, onUndo, onDismiss }) {
         <strong>{team?.name || 'Team'}</strong> · week {change.week} · {what}
         {change.entry.method ? ` · ${change.entry.method}` : ''}
       </span>
+      {onCorrect && hasRecordedEntry(change.entry) ? (
+        <button type="button" className="dz-toast-link" onClick={() => onCorrect(change)}>Correct</button>
+      ) : null}
       <button type="button" className="dz-toast-undo" onClick={onUndo}>Undo</button>
       <button type="button" className="dz-toast-close" onClick={onDismiss} aria-label="Dismiss">×</button>
     </div>,

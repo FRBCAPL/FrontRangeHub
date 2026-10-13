@@ -5,6 +5,7 @@ import DuezyLeagueList from './DuezyLeagueList.jsx';
 import DuezySetupWizard from './DuezySetupWizard.jsx';
 import DuezyLeaguePage from './DuezyLeaguePage.jsx';
 import DuezyLeagueSettings from './DuezyLeagueSettings.jsx';
+import DuezyReportsPage from './DuezyReportsPage.jsx';
 import DuezyLogo from './DuezyLogo.jsx';
 import DuezyHubBadge from './DuezyHubBadge.jsx';
 import DuezyPlanPage from './DuezyPlanPage.jsx';
@@ -29,6 +30,8 @@ import './duezy-admin.css';
 import './duezy-people.css';
 import './duezy-ux.css';
 import './duezy-compact.css';
+import './duezy-trust.css';
+import './duezy-reports.css';
 
 export default function DuezyApp() {
   const location = useLocation();
@@ -94,6 +97,7 @@ export default function DuezyApp() {
               <Route path="billing" element={<DuezyPlanPage />} />
               <Route path="league/:leagueId" element={<DuezyLeaguePage />} />
               <Route path="league/:leagueId/settings" element={<DuezyLeagueSettings />} />
+              <Route path="league/:leagueId/reports" element={<DuezyReportsPage />} />
               <Route path="admin" element={<DuezyAdminPage />} />
               <Route path="admin/account/:ownerId" element={<DuezyAdminAccount />} />
               <Route path="admin/league/:leagueId" element={<DuezyAdminLeague />} />

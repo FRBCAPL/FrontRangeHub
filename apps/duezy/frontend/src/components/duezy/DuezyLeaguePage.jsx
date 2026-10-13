@@ -15,6 +15,7 @@ import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyUndoToast from './DuezyUndoToast.jsx';
 import DuezyGettingStarted from './DuezyGettingStarted.jsx';
 import DuezySkeleton from './DuezySkeleton.jsx';
+import DuezyNoAccess from './DuezyNoAccess.jsx';
 import { roleLabel } from '../../utils/duezyPeople.js';
 
 const SECTIONS = ['main', 'late', 'activity'];
@@ -25,6 +26,7 @@ export default function DuezyLeaguePage() {
   const data = useDuezyLeague(leagueId);
   const { league, units, several, teams, paymentIndex, error, setError, loading } = data;
   const [viewWeeks, setViewWeeks] = useState({});
+  const [correctRequest, setCorrectRequest] = useState(null);
 
   const opts = useMemo(
     () => ({ today: todayISO(league?.timezone), defaultGrace: Number(league?.grace_days) || 0 }),
@@ -33,7 +35,7 @@ export default function DuezyLeaguePage() {
   const all = useMemo(() => allDivisionsStats(units, teams, paymentIndex, opts), [units, teams, paymentIndex, opts]);
 
   if (loading) return <DuezySkeleton variant="league" label="Loading league…" />;
-  if (!league) return <p className="dz-error">{error || 'League not found.'}</p>;
+  if (!league) return <DuezyNoAccess detail={error && error !== 'League not found.' ? error : ''} />;
 
   const sport = sportOf(league.sport);
   const settingsTo = data.canEdit ? `${DUEZY_PATH}/league/${league.id}/settings` : null;
@@ -50,6 +52,12 @@ export default function DuezyLeaguePage() {
   }, { replace: true });
   const openDivision = (id) => updateParams({ div: id === ALL_DIVISIONS ? null : id });
   const showSection = (id) => updateParams({ view: id === 'main' ? null : id });
+  const correctChange = (change) => {
+    const team = teams.find((t) => t.id === change.teamId);
+    updateParams({ view: null, ...(several && team?.division_id ? { div: team.division_id } : {}) });
+    setCorrectRequest({ teamId: change.teamId, key: Date.now() });
+    data.dismissLastChange();
+  };
 
   const behindCounts = Object.fromEntries(all.per.map((s) => [s.unit.id, s.behind.length]));
 
@@ -118,7 +126,7 @@ export default function DuezyLeaguePage() {
     <div className="dz-stack dz-stack--lg">
       <div className="dz-row">
         <Link to={DUEZY_PATH} className="dz-link dz-small">‹ All leagues</Link>
-        <DuezyExportButton league={league} units={units} teams={teams} payments={data.payments} />
+        <DuezyExportButton league={league} />
       </div>
 
       {several ? (
@@ -168,6 +176,7 @@ export default function DuezyLeaguePage() {
           tabs={sectionTabs('Teams', selected.behind.length)}
           activity={activity}
           onShowLate={() => showSection('late')}
+          correctRequest={correctRequest}
         />
       )}
 
@@ -182,6 +191,7 @@ export default function DuezyLeaguePage() {
         teams={teams}
         onUndo={data.undoLastChange}
         onDismiss={data.dismissLastChange}
+        onCorrect={data.canEdit ? correctChange : null}
       />
     </div>
   );

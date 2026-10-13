@@ -53,15 +53,22 @@ export default function DuezyBehindPanel({ league, behind, graceNote = '' }) {
         {graceNote ? <p className="dz-small dz-muted">{graceNote}</p> : null}
       </div>
       <div className="dz-panel">
-        <div className="dz-row">
-          <h3 className="dz-h3">Reminder text</h3>
-          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={copy}>{copied ? 'Copied' : 'Copy'}</button>
+        <div className="dz-row dz-row--wrap">
+          <div>
+            <h3 className="dz-h3">Reminder for your group chat</h3>
+            <p className="dz-small dz-muted">
+              {behind.length} {behind.length === 1 ? 'team' : 'teams'} · {money(behind.reduce((s, x) => s + x.owed, 0))} late
+            </p>
+          </div>
+          <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={copy}>
+            {copied ? 'Copied — paste it to send' : 'Copy reminder to send'}
+          </button>
         </div>
-        <textarea className="dz-textarea" readOnly rows={Math.min(10, behind.length + 3)} value={text} />
+        <textarea className="dz-textarea" readOnly rows={Math.min(10, behind.length + 3)} value={text} aria-label="Reminder text" />
         <p className="dz-small dz-muted">
-          Paste it into your league's group chat.
+          Duezy doesn't send anything — paste this into your league's group chat yourself.
           {behind.some((x) => x.team.contact)
-            ? ' Or tap 💬 next to a team to text that captain directly.'
+            ? ' Or tap 💬 Text next to a team to open your messages with that captain’s reminder filled in.'
             : ' Add a captain phone number to a team to text them directly.'}
         </p>
       </div>

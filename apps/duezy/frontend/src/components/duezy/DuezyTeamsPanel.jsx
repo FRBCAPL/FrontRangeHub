@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DuezyTeamRow from './DuezyTeamRow.jsx';
 import DuezyAddTeam from './DuezyAddTeam.jsx';
 import DuezyQuickMethod, { useQuickMethod } from './DuezyQuickMethod.jsx';
 
 /** The team list for one division's week: tap-to-record chips, expandable details, add team. */
-export default function DuezyTeamsPanel({ league, stats, data, divisions }) {
+export default function DuezyTeamsPanel({ league, stats, data, divisions, correctRequest = null }) {
   const [openTeamId, setOpenTeamId] = useState('');
+  const [correcting, setCorrecting] = useState(null);
   const [quickMethod, setQuickMethod] = useQuickMethod(league.id);
   const { unit, teams, week, dues, schedule } = stats;
   const { canEdit } = data;
+
+  useEffect(() => {
+    if (!correctRequest || !teams.some((t) => t.id === correctRequest.teamId)) return;
+    setOpenTeamId(correctRequest.teamId);
+    setCorrecting(correctRequest);
+    requestAnimationFrame(() => {
+      document.getElementById(`dz-team-${correctRequest.teamId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+  }, [correctRequest]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <section className="dz-panel">
@@ -30,10 +40,14 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions }) {
               divisions={divisions}
               quickMethod={quickMethod}
               open={openTeamId === team.id}
-              onToggle={() => setOpenTeamId(openTeamId === team.id ? '' : team.id)}
+              onToggle={() => {
+                setOpenTeamId(openTeamId === team.id ? '' : team.id);
+                setCorrecting(null);
+              }}
               onSetPayment={(entry) => data.setPayment(team.id, week, entry)}
               onUpdateTeam={(changes) => data.updateTeam(team.id, changes)}
               canEdit={canEdit}
+              correctKey={correcting?.teamId === team.id ? correcting.key : 0}
             />
           ))}
         </ul>

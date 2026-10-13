@@ -29,7 +29,7 @@ export function useQuickMethod(leagueId) {
 export default function DuezyQuickMethod({ value, onChange }) {
   return (
     <label className="dz-quick-method">
-      <span className="dz-small dz-muted">“Paid” taps record</span>
+      <span className="dz-small dz-muted">“Paid” records full dues by</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} aria-label="Payment method for one-tap Paid">
         {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
       </select>

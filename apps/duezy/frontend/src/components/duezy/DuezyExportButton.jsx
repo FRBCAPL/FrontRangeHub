@@ -1,18 +1,13 @@
 import React from 'react';
-import { downloadCsv, ledgerCsv, ledgerFileName } from '../../utils/duezyExport.js';
-import { todayISO } from '../../utils/duezySchedule.js';
+import { Link } from 'react-router-dom';
+import { DUEZY_PATH } from '../../data/duezyOptions.js';
 
-/** Downloads the whole league's dues ledger (every division) as a CSV a spreadsheet can open. */
-export default function DuezyExportButton({ league, units, teams, payments }) {
-  const download = () => {
-    const today = todayISO(league.timezone);
-    const csv = ledgerCsv({ units, teams, payments, today, defaultGrace: Number(league.grace_days) || 0 });
-    downloadCsv(csv, ledgerFileName(league.name, today));
-  };
-
+/** Header link to the bookkeeping reports page (preview + PDF). `report` picks the starting tab. */
+export default function DuezyExportButton({ league, report = '', label = 'Bookkeeping reports' }) {
+  const to = `${DUEZY_PATH}/league/${league.id}/reports${report ? `?report=${report}` : ''}`;
   return (
-    <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={download} title="Every team, every week of the season — opens in Excel or Google Sheets">
-      Download ledger (CSV)
-    </button>
+    <Link to={to} className="dz-btn dz-btn--ghost dz-btn--sm" title="Preview season, change-history and payment-method reports, then download a PDF">
+      {label}
+    </Link>
   );
 }

@@ -4,12 +4,13 @@ import DuezyWeekSummary from './DuezyWeekSummary.jsx';
 import DuezyBehindPanel from './DuezyBehindPanel.jsx';
 import DuezyCatchUp from './DuezyCatchUp.jsx';
 import DuezyTeamsPanel from './DuezyTeamsPanel.jsx';
+import DuezyDivisionSeason from './DuezyDivisionSeason.jsx';
 
 /**
  * One division (or a single-division league) at its current week.
  * section: 'main' (teams) | 'late' | 'activity'; `tabs` is the tab bar, `activity` the league-wide log.
  */
-export default function DuezyUnitView({ league, stats, data, divisions, section = 'main', tabs = null, activity = null, onShowLate }) {
+export default function DuezyUnitView({ league, stats, data, divisions, section = 'main', tabs = null, activity = null, onShowLate, correctRequest = null }) {
   const { week, schedule, summary, behind, dueTotal } = stats;
   const isCurrent = week === schedule.currentWeek;
   const title = isCurrent ? 'Collected this week' : `Collected for ${schedule.dates ? schedule.label(week) : `week ${week}`}`;
@@ -29,10 +30,11 @@ export default function DuezyUnitView({ league, stats, data, divisions, section 
         dueTotal={dueTotal}
         onShowLate={onShowLate}
       />
+      <DuezyDivisionSeason season={stats.season} />
 
       {tabs}
 
-      {section === 'main' ? <DuezyTeamsPanel league={league} stats={stats} data={data} divisions={divisions} /> : null}
+      {section === 'main' ? <DuezyTeamsPanel league={league} stats={stats} data={data} divisions={divisions} correctRequest={correctRequest} /> : null}
       {section === 'late' ? <DuezyBehindPanel league={league} behind={behind} graceNote={graceNote} /> : null}
       {section === 'activity' ? activity : null}
     </>

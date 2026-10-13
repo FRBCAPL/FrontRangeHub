@@ -34,14 +34,14 @@ function readOnlyStatus(status, payment) {
 
 export default function DuezyTeamRow({
   league, team, week, dues, schedule, paymentIndex, divisions = [], quickMethod = null, open, onToggle, onSetPayment, onUpdateTeam,
-  canEdit = true,
+  canEdit = true, correctKey = 0,
 }) {
   const payment = paymentIndex.get(`${team.id}:${week}`);
   const status = payment?.status || 'unpaid';
   const balance = teamBalance(team.id, schedule, dues, paymentIndex);
 
   return (
-    <li className={`dz-team is-${status}`}>
+    <li className={`dz-team is-${status}`} id={`dz-team-${team.id}`}>
       <div className="dz-team-main">
         <button type="button" className="dz-team-name" onClick={onToggle} aria-expanded={open} title={open ? 'Hide details' : 'History, partial payments and captain contact'}>
           <span className="dz-team-avatar" style={avatarStyle(team.name)} aria-hidden="true">
@@ -100,6 +100,7 @@ export default function DuezyTeamRow({
           onSetPayment={onSetPayment}
           onUpdateTeam={onUpdateTeam}
           canEdit={canEdit}
+          correctKey={correctKey}
         />
       ) : null}
     </li>

@@ -2,19 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { listLeagueHistory } from '../../services/duezyService.js';
 import { getSession } from '../../services/duezyAuthService.js';
 import { byWhom, changeKind, historyChange, shortStamp } from '../../utils/duezyHistory.js';
-import { historyCsv, historyFileName } from '../../utils/duezyHistoryExport.js';
-import { downloadCsv } from '../../utils/duezyExport.js';
-import { todayISO } from '../../utils/duezySchedule.js';
+import DuezyExportButton from './DuezyExportButton.jsx';
 
 const SHOWN = 30;
-const EXPORT_LIMIT = 5000;
 
 /** League-wide audit trail: every payment recorded or changed, newest first, corrections flagged. */
 export default function DuezyActivityPanel({ league, units, refreshKey, embedded = false }) {
   const [open, setOpen] = useState(embedded);
   const [rows, setRows] = useState(undefined);
   const [me, setMe] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const several = units.length > 1;
   const unitName = (divisionId) => (several ? units.find((u) => u.id === divisionId)?.name : '') || '';
@@ -29,20 +25,6 @@ export default function DuezyActivityPanel({ league, units, refreshKey, embedded
     return () => { alive = false; };
   }, [open, league.id, refreshKey]);
 
-  const download = async () => {
-    setBusy(true);
-    setError('');
-    try {
-      const all = await listLeagueHistory(league.id, EXPORT_LIMIT);
-      const today = todayISO(league.timezone);
-      downloadCsv(historyCsv({ rows: all || [], units }), historyFileName(league.name, today));
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <section className="dz-panel dz-activity">
       <div className="dz-row dz-panel-head">
@@ -53,10 +35,7 @@ export default function DuezyActivityPanel({ league, units, refreshKey, embedded
             <span aria-hidden="true">{open ? '▾' : '▸'}</span> Recent changes
           </button>
         )}
-        <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={download} disabled={busy}
-          title="Every payment recorded or changed, who did it and when — opens in Excel or Google Sheets">
-          {busy ? 'Preparing…' : 'Download change history (CSV)'}
-        </button>
+        <DuezyExportButton league={league} report="history" label="Change history report" />
       </div>
       <p className="dz-muted dz-small dz-panel-hint">
         Every payment entry and correction across the league, with who made it. Entries can be changed but never erased.

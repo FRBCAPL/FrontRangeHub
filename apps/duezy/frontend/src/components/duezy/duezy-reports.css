@@ -1,0 +1,50 @@
+/* Bookkeeping reports page: controls, summary figures, preview table, download actions. */
+.dz-report-controls { align-items: center; }
+.dz-check-label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dz-muted); }
+.dz-check-label input { width: 16px; height: 16px; accent-color: var(--dz-accent); }
+
+.dz-report-preview { display: flex; flex-direction: column; gap: 12px; }
+.dz-report-preview > p { margin: 0; }
+
+.dz-report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.dz-report-summary > div {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--dz-line);
+}
+.dz-report-summary dt { color: var(--dz-muted); font-size: 0.76rem; font-weight: 600; }
+.dz-report-summary dd { margin: 2px 0 0; font-size: 1.15rem; font-weight: 800; }
+
+.dz-report-table-wrap {
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--dz-line);
+  background: rgba(0, 0, 0, 0.18);
+}
+.dz-report-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.dz-report-table th,
+.dz-report-table td { padding: 7px 10px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--dz-line); }
+.dz-report-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #312e81;
+  color: #e0e7ff;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+.dz-report-table tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.025); }
+.dz-report-table .is-num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.dz-report-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+@media (max-width: 680px) {
+  .dz-report-actions { flex-direction: column; align-items: stretch; }
+  .dz-report-actions .dz-link { text-align: center; }
+}
