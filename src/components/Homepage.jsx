@@ -13,6 +13,7 @@ import MatchSchedulingModal from './modal/MatchSchedulingModal';
 import LadderIntroModal from '@shared/components/modal/modal/LadderIntroModal';
 import TournamentBannerAll from '@shared/components/tournament/TournamentBannerAll';
 import HomeAppLauncher from './HomeAppLauncher.jsx';
+import HomeDuezyBanner from './HomeDuezyBanner.jsx';
 import { DuezyLearnMoreModal, DuezyWhatIsModal } from './DuezyIntroModals.jsx';
 import useBreakAndRunTile from './useBreakAndRunTile.jsx';
 import useArcadeNewScoreBadge from './useArcadeNewScoreBadge.js';
@@ -232,19 +233,6 @@ const Homepage = ({ canRunTournament = false }) => {
 
   const poolTiles = [
     {
-      id: 'cueless',
-      icon: <CuelessCubeLogo />,
-      title: 'Cueless in the Booth',
-      blurb: 'Live-streamed pool, broadcast style.',
-      accent: '#22c55e',
-      onOpen: () => navigate('/cueless'),
-      actions: [
-        { label: 'Clips', onClick: openExternal(CUELESS_FEATURED_FACEBOOK_REEL) },
-        { label: 'Streams', onClick: openExternal(CUELESS_FULL_MATCH_PLAYLIST_URL) },
-        { label: 'Book Cueless Now!', onClick: (e) => { e.stopPropagation(); navigate('/cueless?section=book'); } },
-      ],
-    },
-    {
       id: 'tournaments',
       icon: '🏆',
       title: 'Tournaments',
@@ -274,6 +262,19 @@ const Homepage = ({ canRunTournament = false }) => {
 
   const otherTiles = [
     {
+      id: 'cueless',
+      icon: <CuelessCubeLogo />,
+      title: 'Cueless in the Booth',
+      blurb: 'Live-streamed pool, broadcast style.',
+      accent: '#22c55e',
+      onOpen: () => navigate('/cueless'),
+      actions: [
+        { label: 'Clips', onClick: openExternal(CUELESS_FEATURED_FACEBOOK_REEL) },
+        { label: 'Streams', onClick: openExternal(CUELESS_FULL_MATCH_PLAYLIST_URL) },
+        { label: 'Book Cueless Now!', onClick: (e) => { e.stopPropagation(); navigate('/cueless?section=book'); } },
+      ],
+    },
+    {
       id: 'arcade',
       icon: '🎮',
       title: 'Legends Arcade',
@@ -299,18 +300,6 @@ const Homepage = ({ canRunTournament = false }) => {
       actions: [
         { label: 'Demo', onClick: openExternal(CUESYNC_URL) },
         { label: 'Sign in', onClick: openExternal(CUESYNC_URL) },
-      ],
-    },
-    {
-      id: 'duezy',
-      icon: '💰',
-      title: 'Duezy',
-      blurb: 'Dues & payments for league operators.',
-      accent: '#818cf8',
-      onOpen: () => navigate('/duezy'),
-      actions: [
-        { label: 'What is it?', onClick: handleWhatIsDuezy },
-        { label: 'Log in', onClick: () => navigate('/duezy') },
       ],
     },
   ];
@@ -399,6 +388,7 @@ const Homepage = ({ canRunTournament = false }) => {
         {/* Main Navigation Cards */}
         <div className="homepage-navigation">
           <HomeAppLauncher featured title="" tiles={featuredTiles} />
+          <HomeDuezyBanner onOpen={() => navigate('/duezy')} onWhatIs={handleWhatIsDuezy} />
           <div className="hal-row">
             <HomeAppLauncher tiles={poolTiles} />
             <HomeAppLauncher title="Beyond the Table" tiles={otherTiles} />
@@ -411,7 +401,7 @@ const Homepage = ({ canRunTournament = false }) => {
             <span aria-hidden="true">🗄️</span> Estate Vault
           </button>
           <button type="button" className="homepage-footer-app homepage-footer-app--duezy" onClick={handleNavigateToDuesTracker}>
-            <span aria-hidden="true">💰</span> FRUSAPL Duezy
+            <span aria-hidden="true">💰</span> FRUSAPL Dues Tracker
           </button>
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>
