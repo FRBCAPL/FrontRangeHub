@@ -1,6 +1,6 @@
 /** Plain-English pricing lines. `access` is the duezy_billing_status() snapshot (or null). */
 import { money } from './duezyMath.js';
-import { priceFor, TRIAL_DIVISIONS } from './duezyPricing.js';
+import { capFor, priceFor, TRIAL_DIVISIONS } from './duezyPricing.js';
 
 export const PRICING_RULE = 'Leagues are free. You pay for divisions, counted across all your leagues — every league has at least one division.';
 
@@ -26,8 +26,9 @@ export function divisionCostNote(access, adding = 1) {
     const before = priceFor(Math.max(1, used), interval);
     const next = priceFor(Math.max(1, used + adding), interval);
     const what = adding === 1 ? 'This adds 1 division' : `This adds ${adding} divisions`;
-    return next > before
-      ? `${what} — your plan goes from ${money(before)} to ${money(next)}/${per(interval)}.`
+    if (next > before) return `${what} — your plan goes from ${money(before)} to ${money(next)}/${per(interval)}.`;
+    return before >= capFor(interval)
+      ? `${what} — you’re at the ${money(before)}/${per(interval)} cap, so no price change.`
       : `${what} — included in your current plan, no price change.`;
   }
   return null;

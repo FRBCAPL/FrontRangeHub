@@ -1,33 +1,47 @@
 import React from 'react';
 import { money } from '../../utils/duezyMath.js';
-import { PLAN_ROWS } from '../../utils/duezyPricing.js';
+import { CAP_DIVISIONS, MONTHLY_CAP, PLAN_ROWS } from '../../utils/duezyPricing.js';
 
-const HINTS = [
-  'One night or one group of teams.',
-  'Two or three — say, a Tuesday and a Thursday division.',
-  'Grow as big as you like, one division at a time.',
+const [ONE, THREE, ...EXTRA] = PLAN_ROWS;
+
+const TIERS = [
+  { name: ONE.label, monthly: ONE.monthly, hint: 'One night or one group of teams.' },
+  { name: THREE.label, monthly: THREE.monthly, hint: 'Two or three — say, a Tuesday and a Thursday division.' },
+  {
+    name: 'Each extra division',
+    monthly: EXTRA[0].monthly,
+    plus: true,
+    hint: `Gets cheaper as you grow: +${money(EXTRA[1].monthly)} each from 11, +${money(EXTRA[2].monthly)} each from 21.`,
+  },
+  {
+    name: 'Big leagues',
+    monthly: MONTHLY_CAP,
+    max: true,
+    hint: `${CAP_DIVISIONS}+ divisions — add as many as you like, the price stops here.`,
+  },
 ];
 
-const tierFor = (used) => (used <= 1 ? 0 : used <= 3 ? 1 : 2);
+const tierFor = (used) => (used <= 1 ? 0 : used <= 3 ? 1 : used < CAP_DIVISIONS ? 2 : 3);
 
-/** The three pricing tiers as cards, with this account's tier highlighted. */
+/** The pricing tiers as cards, with this account's tier highlighted. */
 export default function DuezyPlanTiers({ used, interval }) {
   const yours = tierFor(used);
   const per = interval === 'year' ? 'yr' : 'mo';
+  const amount = (monthly) => money(interval === 'year' ? monthly * 10 : monthly);
   return (
     <section className="dz-stack">
       <h2 className="dz-h3 dz-center">Plans</h2>
       <ul className="dz-plan-tiers">
-        {PLAN_ROWS.map((r, i) => (
-          <li key={r.label} className={i === yours ? 'is-yours' : ''}>
+        {TIERS.map((t, i) => (
+          <li key={t.name} className={i === yours ? 'is-yours' : ''}>
             {i === yours ? (
               <span className="dz-plan-badge">{i === 2 ? `You: 3 + ${used - 3} extra` : 'Your plan'}</span>
             ) : null}
-            <span className="dz-plan-tier-name">{r.label}</span>
+            <span className="dz-plan-tier-name">{t.name}</span>
             <strong className="dz-plan-tier-price">
-              {r.plus ? '+' : ''}{money(interval === 'year' ? r.monthly * 10 : r.monthly)}<small>/{per}</small>
+              {t.plus ? '+' : ''}{amount(t.monthly)}<small>/{per}{t.max ? ' max' : ''}</small>
             </strong>
-            <small className="dz-muted">{HINTS[i]}</small>
+            <small className="dz-muted">{t.hint}</small>
           </li>
         ))}
       </ul>

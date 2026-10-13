@@ -1,19 +1,23 @@
 import React from 'react';
 import { money } from '../../utils/duezyMath.js';
-import { PLAN_ROWS, TRIAL_DAYS, TRIAL_DIVISIONS } from '../../utils/duezyPricing.js';
+import { MONTHLY_CAP, PLAN_ROWS, TRIAL_DAYS, TRIAL_DIVISIONS } from '../../utils/duezyPricing.js';
 
 /** Landing page: the whole price list and what happens when the trial ends — no surprises. */
 export default function DuezyAuthPricing() {
   return (
     <section className="dz-auth-pricing" aria-label="Pricing">
-      <strong>Pricing</strong>
+      <h2>Simple pricing</h2>
       <ul>
         {PLAN_ROWS.map((r) => (
           <li key={r.label}>
             <span>{r.label}</span>
-            <span>{r.plus ? '+' : ''}{money(r.monthly)}/mo</span>
+            <span>{r.plus ? '+' : ''}{money(r.monthly)}/mo{r.each ? ' each' : ''}</span>
           </li>
         ))}
+        <li className="dz-pricing-cap">
+          <span>Big league?</span>
+          <span>Never more than {money(MONTHLY_CAP)}/mo</span>
+        </li>
       </ul>
       <small>
         Unlimited leagues — you pay for divisions (a division is a group of teams on one schedule).

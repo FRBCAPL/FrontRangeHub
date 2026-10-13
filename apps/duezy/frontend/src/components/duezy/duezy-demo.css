@@ -1,0 +1,61 @@
+/* Public demo league: banner on /duezy/demo, links to it, and the landing "A look inside" screenshots. */
+.dz-demo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  border-radius: 14px;
+  background: rgba(250, 204, 21, 0.1);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+.dz-demo-banner > div:first-child { flex: 1 1 320px; }
+.dz-demo-banner-actions { display: flex; align-items: center; gap: 14px; }
+
+.dz-land-ctas { align-items: center; }
+.dz-land-ctas > .dz-land-cta { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; height: 50px; padding-block: 0; }
+.dz-land-visual { display: flex; flex-direction: column; gap: 12px; }
+.dz-land-demo-link { align-self: center; }
+
+/* A look inside: one screenshot at a time behind small tabs */
+.dz-land-screens { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.dz-land-screens-head { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.dz-land-screens-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--dz-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.dz-land-screens-tab {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dz-muted);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dz-land-screens-tab:hover { color: inherit; }
+.dz-land-screens-tab.is-active { background: rgba(129, 140, 248, 0.22); color: #fff; }
+.dz-land-shot { display: flex; flex-direction: column; gap: 12px; width: min(600px, 100%); margin: 0; }
+.dz-land-shot-frame {
+  overflow: hidden;
+  border-radius: var(--dz-radius);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0b0d14;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+.dz-land-shot-bar { display: flex; gap: 6px; padding: 9px 12px; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid var(--dz-line); }
+.dz-land-shot-bar i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
+.dz-land-shot img { display: block; width: 100%; height: auto; }
+.dz-land-shot figcaption { color: var(--dz-muted); font-size: 0.9rem; line-height: 1.5; text-align: center; }

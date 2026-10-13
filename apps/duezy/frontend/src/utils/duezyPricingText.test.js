@@ -16,6 +16,13 @@ test('paid: shows the price change or that it is included', () => {
   assert.equal(divisionCostNote({ ...paid, divisions_used: 3, plan_interval: 'year' }), 'This adds 1 division — your plan goes from $190 to $230/yr.');
 });
 
+test('paid: big leagues reach the cap and stop going up', () => {
+  const big = { phase: 'active', has_subscription: true, plan_interval: 'month', divisions_used: 30 };
+  assert.equal(divisionCostNote(big), 'This adds 1 division — your plan goes from $97 to $99/mo.');
+  assert.equal(divisionCostNote({ ...big, divisions_used: 31 }), 'This adds 1 division — you’re at the $99/mo cap, so no price change.');
+  assert.equal(divisionCostNote({ ...big, divisions_used: 40, plan_interval: 'year' }, 5), 'This adds 5 divisions — you’re at the $990/yr cap, so no price change.');
+});
+
 test('comp and no access: nothing to say', () => {
   assert.equal(divisionCostNote({ phase: 'comp', has_subscription: false, divisions_used: 4 }), null);
   assert.equal(divisionCostNote(null), null);

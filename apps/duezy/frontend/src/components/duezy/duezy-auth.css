@@ -23,6 +23,8 @@
 .dz-auth-pricing li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--dz-line); font-size: 0.92rem; }
 .dz-auth-pricing li:last-child { border-bottom: none; }
 .dz-auth-pricing li span:last-child { font-weight: 700; }
+.dz-auth-pricing li.dz-pricing-cap { margin-top: 4px; padding: 8px 10px; border: 1px solid rgba(110, 231, 183, 0.35); border-radius: 10px; background: rgba(110, 231, 183, 0.08); }
+.dz-auth-pricing li.dz-pricing-cap span:last-child { color: #6ee7b7; }
 .dz-auth-pricing small { color: var(--dz-muted); font-size: 0.82rem; line-height: 1.45; }
 
 .dz-features { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }

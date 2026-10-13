@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { openPortal, startCheckout } from '../../services/duezyBillingService.js';
 import { money } from '../../utils/duezyMath.js';
-import { monthlyPrice, priceFor } from '../../utils/duezyPricing.js';
+import { atCap, capFor, monthlyPrice, priceFor } from '../../utils/duezyPricing.js';
 
 /** "Your price" card on the plan page: billing period, what this account pays, and the Stripe button. */
 export default function DuezyPlanCheckout({ access, config, used, interval, onInterval }) {
@@ -45,6 +45,9 @@ export default function DuezyPlanCheckout({ access, config, used, interval, onIn
         For your <strong>{used}</strong> {used === 1 ? 'division' : 'divisions'}, across all your leagues.
         {interval === 'year' ? <span className="dz-plan-save"> 2 months free — save {money(saved)}</span> : null}
       </p>
+      {atCap(used) ? (
+        <p className="dz-small dz-plan-save">You’ve reached the {money(capFor(interval))}/{per} cap — add as many divisions as you like.</p>
+      ) : null}
 
       {error ? <p className="dz-error">{error}</p> : null}
 
@@ -62,7 +65,7 @@ export default function DuezyPlanCheckout({ access, config, used, interval, onIn
       {!subscribed && access?.phase === 'trial' ? (
         <p className="dz-small dz-muted">Subscribing now won’t charge you until your free trial ends.</p>
       ) : null}
-      <p className="dz-small dz-muted">Your bill follows your divisions — add or archive divisions and it adjusts. Cancel anytime.</p>
+      <p className="dz-small dz-muted">Your bill follows your divisions — add or archive divisions and it adjusts, never above {money(capFor(interval))}/{per}. Cancel anytime.</p>
     </section>
   );
 }

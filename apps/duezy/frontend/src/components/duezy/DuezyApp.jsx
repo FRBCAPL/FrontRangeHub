@@ -8,6 +8,9 @@ import DuezyLeagueSettings from './DuezyLeagueSettings.jsx';
 import DuezyReportsPage from './DuezyReportsPage.jsx';
 import DuezyLogo from './DuezyLogo.jsx';
 import DuezyHubBadge from './DuezyHubBadge.jsx';
+import DuezyFooter from './DuezyFooter.jsx';
+import DuezyLegalPage from './DuezyLegalPage.jsx';
+import DuezyDemoPage from './DuezyDemoPage.jsx';
 import DuezyPlanPage from './DuezyPlanPage.jsx';
 import DuezyBillingBanner from './DuezyBillingBanner.jsx';
 import DuezyAccountMenu from './DuezyAccountMenu.jsx';
@@ -19,6 +22,7 @@ import useDuezyAdmin from '../../hooks/useDuezyAdmin.js';
 import { completeOAuth, getSession, onAuthChange, signOut } from '../../services/duezyAuthService.js';
 import { DUEZY_OAUTH_ROUTE } from '../../utils/duezyAuthLanding.js';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
+import { LEGAL_PAGES } from '../../data/duezyLegal.js';
 import './duezy.css';
 import './duezy-auth.css';
 import './duezy-league.css';
@@ -39,6 +43,10 @@ import './duezy-makeups.css';
 import './duezy-team-modal.css';
 import './duezy-payers.css';
 import './duezy-touch.css';
+import './duezy-landing.css';
+import './duezy-demo.css';
+
+const LEGAL_KINDS = Object.keys(LEGAL_PAGES);
 
 export default function DuezyApp() {
   const location = useLocation();
@@ -46,6 +54,10 @@ export default function DuezyApp() {
   const [session, setSession] = useState(undefined);
   const [oauthError, setOauthError] = useState('');
   const isOAuthLanding = location.pathname === DUEZY_OAUTH_ROUTE;
+  const path = location.pathname.replace(/\/+$/, '');
+  const legalKind = LEGAL_KINDS.find((k) => path === `${DUEZY_PATH}/${k}`) || '';
+  const isDemo = path === `${DUEZY_PATH}/demo`;
+  const publicPage = legalKind || isDemo;
   const isAdmin = useDuezyAdmin(session?.user?.id);
 
   useEffect(() => {
@@ -81,21 +93,28 @@ export default function DuezyApp() {
     <div className="dz-app" ref={appRef}>
       <div className="dz-glow" aria-hidden="true" />
       <header className="dz-header">
-        <div className="dz-header-left"><DuezyHubBadge /></div>
+        <div className="dz-header-left">{session ? <DuezyHubBadge /> : null}</div>
         <Link to={DUEZY_PATH} className="dz-brand" aria-label="Duezy home"><DuezyLogo /></Link>
         {session ? (
           <div className="dz-header-account">
             <DuezyAccountMenu user={session.user} isAdmin={isAdmin} onSignOut={signOut} />
           </div>
+        ) : session === null ? (
+          <nav className="dz-header-auth" aria-label="Account">
+            <Link to={`${DUEZY_PATH}?auth=login`} className="dz-btn dz-btn--ghost dz-btn--sm">Log in</Link>
+            <Link to={`${DUEZY_PATH}?auth=signup`} className="dz-btn dz-btn--primary dz-btn--sm">Start free</Link>
+          </nav>
         ) : <span />}
       </header>
 
       <main className="dz-main">
-        {session === undefined || isOAuthLanding ? (
+        {legalKind ? <DuezyLegalPage kind={legalKind} /> : null}
+        {isDemo ? <DuezyDemoPage /> : null}
+        {!publicPage && (session === undefined || isOAuthLanding) ? (
           <p className="dz-muted dz-center">{isOAuthLanding ? 'Signing you in…' : 'Loading…'}</p>
         ) : null}
-        {session === null && !isOAuthLanding ? <DuezyAuth initialError={oauthError} /> : null}
-        {session && !isOAuthLanding ? (
+        {!publicPage && session === null && !isOAuthLanding ? <DuezyAuth initialError={oauthError} /> : null}
+        {!publicPage && session && !isOAuthLanding ? (
           <DuezyBillingProvider key={session.user?.id}>
             <DuezyBillingBanner />
             <Routes>
@@ -113,7 +132,7 @@ export default function DuezyApp() {
         ) : null}
       </main>
 
-      <footer className="dz-footer">Duezy · league dues made easy · © {new Date().getFullYear()}</footer>
+      <DuezyFooter />
     </div>
   );
 }

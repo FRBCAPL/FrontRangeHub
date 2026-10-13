@@ -2,22 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { listPaymentHistory } from '../../services/duezyService.js';
 import { getSession } from '../../services/duezyAuthService.js';
 import { byWhom, historyChange, shortStamp } from '../../utils/duezyHistory.js';
+import { useDuezyDemo } from '../../hooks/useDuezyDemo.js';
 
 /** Collapsible audit trail for one team: every payment created or changed, who did it, and when. */
 export default function DuezyPaymentHistory({ teamId, weekLabel, refreshKey }) {
+  const demo = useDuezyDemo();
   const [open, setOpen] = useState(false);
-  const [rows, setRows] = useState(undefined);
-  const [me, setMe] = useState('');
+  const [loaded, setRows] = useState(undefined);
+  const [myEmail, setMe] = useState('');
+  const rows = demo ? demo.history.filter((h) => h.team_id === teamId) : loaded;
+  const me = demo ? demo.me : myEmail;
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open || demo) return undefined;
     let alive = true;
     getSession().then((s) => alive && setMe(s?.user?.email || '')).catch(() => {});
     listPaymentHistory(teamId)
       .then((r) => alive && setRows(r))
       .catch(() => alive && setRows([]));
     return () => { alive = false; };
-  }, [open, teamId, refreshKey]);
+  }, [open, teamId, refreshKey, demo]);
 
   return (
     <div className="dz-history">
