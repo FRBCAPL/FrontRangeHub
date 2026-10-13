@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
 import { money, paidFor } from '../../utils/duezyMath.js';
 import { correctionEntry, correctionSummary, isSameEntry } from '../../utils/duezyCorrection.js';
-import { METHODS } from '../../data/duezyOptions.js';
+import { defaultMethod, methodOptions } from '../../utils/duezyLeaguePrefs.js';
 
 /**
  * A week that already has a payment: show what's recorded and offer "Correct this entry"
  * (prefilled amount/method, optional reason, before → after preview, confirm before saving).
  */
-export default function DuezyCorrectPayment({ dues, weekName, payment, onSetPayment, startOpen = false }) {
+export default function DuezyCorrectPayment({ league, dues, weekName, payment, onSetPayment, startOpen = false }) {
   const recorded = paidFor(payment, dues);
   const [step, setStep] = useState(startOpen ? 'edit' : 'view');
   const [amount, setAmount] = useState(String(recorded));
-  const [method, setMethod] = useState(payment?.method || METHODS[0]);
+  const [method, setMethod] = useState(payment?.method || defaultMethod(league));
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
   const open = () => {
     setAmount(String(recorded));
-    setMethod(payment?.method || METHODS[0]);
+    setMethod(payment?.method || defaultMethod(league));
     setReason('');
     setError('');
     setStep('edit');
@@ -82,7 +82,7 @@ export default function DuezyCorrectPayment({ dues, weekName, payment, onSetPaym
           <input type="number" inputMode="decimal" min="0" step="0.5" value={amount} onChange={(e) => setAmount(e.target.value)} autoFocus />
         </label>
         <select value={method} onChange={(e) => setMethod(e.target.value)} aria-label="Payment method" disabled={Number(amount) === 0}>
-          {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+          {methodOptions(league, payment?.method).map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
         <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (optional)" maxLength={300} aria-label="Reason for correction" />
       </div>

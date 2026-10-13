@@ -1,37 +1,38 @@
 import React, { useState } from 'react';
-import { METHODS } from '../../data/duezyOptions.js';
+import { defaultMethod, leagueMethods } from '../../utils/duezyLeaguePrefs.js';
 
-const storageKey = (leagueId) => `duezy-quick-method:${leagueId}`;
+/** Keyed by the league default too, so when the owner changes the default every device picks it up. */
+const storageKey = (league) => `duezy-quick-method:${league.id}:${defaultMethod(league)}`;
 
-function readSaved(leagueId) {
+function readSaved(league) {
   try {
-    const saved = localStorage.getItem(storageKey(leagueId));
-    return METHODS.includes(saved) ? saved : METHODS[0];
+    const saved = localStorage.getItem(storageKey(league));
+    return leagueMethods(league).includes(saved) ? saved : defaultMethod(league);
   } catch {
-    return METHODS[0];
+    return defaultMethod(league);
   }
 }
 
-/** Method the one-tap "Paid" button records, remembered per league on this device. */
-export function useQuickMethod(leagueId) {
-  const [method, setMethod] = useState(() => readSaved(leagueId));
+/** Method the one-tap "Paid" button records: the league default, unless changed on this device. */
+export function useQuickMethod(league) {
+  const [method, setMethod] = useState(() => readSaved(league));
   const choose = (next) => {
     setMethod(next);
     try {
-      localStorage.setItem(storageKey(leagueId), next);
+      localStorage.setItem(storageKey(league), next);
     } catch {
       /* private mode — keep it for this visit only */
     }
   };
-  return [method, choose];
+  return [leagueMethods(league).includes(method) ? method : defaultMethod(league), choose];
 }
 
-export default function DuezyQuickMethod({ value, onChange }) {
+export default function DuezyQuickMethod({ league, value, onChange }) {
   return (
     <label className="dz-quick-method">
       <span className="dz-small dz-muted">“Paid” records full dues by</span>
       <select value={value} onChange={(e) => onChange(e.target.value)} aria-label="Payment method for one-tap Paid">
-        {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+        {leagueMethods(league).map((m) => <option key={m} value={m}>{m}</option>)}
       </select>
     </label>
   );

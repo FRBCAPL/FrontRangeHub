@@ -53,16 +53,16 @@ export default function DuezyLeagueList() {
 
   return (
     <div className="dz-stack dz-stack--lg">
-      <div className="dz-row">
-        <div>
+      <div className="dz-page-head">
+        <div className="dz-center">
           <span className="dz-eyebrow">Dashboard</span>
           <h1 className="dz-h1">Your leagues</h1>
         </div>
         <Link to={`${DUEZY_PATH}/new`} className="dz-btn dz-btn--primary">+ New league</Link>
       </div>
-      <p className="dz-small dz-muted">
-        A league is your whole organization; divisions are the groups of teams inside it. To add another night,
-        skill level or format, use <strong>+ Add division</strong> under the league. <strong>+ New league</strong> starts a separate organization.
+      <p className="dz-small dz-muted dz-center">
+        A league is your whole organization; divisions are the groups of teams inside it. <br />
+        To add another night, skill level or format, use <strong>+ Add division</strong> under the league. <strong>+ New league</strong> starts a separate organization.
       </p>
       {joined ? (
         <p className="dz-notice" role="status">You were added to {joined === 1 ? 'a league' : `${joined} leagues`} — {joined === 1 ? 'it’s' : 'they’re'} below.</p>

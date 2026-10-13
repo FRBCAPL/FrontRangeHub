@@ -1,0 +1,75 @@
+/* League settings: section layout, save bar, tap-to-pay handles, accepted methods, reminder preview. */
+
+/* Side menu + one section at a time; menu becomes a pill row on phones */
+.dz-set-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 16px; align-items: start; }
+.dz-set-main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dz-set-nav { display: flex; flex-direction: column; gap: 6px; position: sticky; top: 12px; }
+.dz-set-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dz-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dz-set-nav-item:hover { background: rgba(255, 255, 255, 0.04); color: var(--dz-text); }
+.dz-set-nav-item.is-active { background: var(--dz-surface); border-color: rgba(129, 140, 248, 0.5); color: var(--dz-text); }
+.dz-set-nav-icon { font-size: 1.15rem; }
+.dz-set-nav-text { display: flex; flex-direction: column; min-width: 0; }
+.dz-set-nav-text strong { font-size: 0.92rem; }
+.dz-set-nav-text small { font-size: 0.74rem; color: var(--dz-muted); }
+
+.dz-set-danger { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-color: rgba(239, 68, 68, 0.25); }
+.dz-set-danger-btn { color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+
+.dz-save-bar {
+  position: sticky;
+  bottom: 10px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--dz-line-strong);
+  background: var(--dz-surface-solid);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  color: var(--dz-muted);
+}
+.dz-save-bar.is-dirty { border-color: rgba(234, 179, 8, 0.45); color: #fde68a; }
+.dz-save-error { color: #fecaca; }
+.dz-save-actions { display: inline-flex; align-items: center; gap: 8px; }
+.dz-self-start { align-self: flex-start; }
+.dz-div-editor-head .dz-h3 { margin: 2px 0 0; font-size: 1.15rem; }
+
+@media (max-width: 760px) {
+  .dz-set-layout { grid-template-columns: 1fr; }
+  .dz-set-nav { position: static; flex-direction: row; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .dz-set-nav::-webkit-scrollbar { display: none; }
+  .dz-set-nav-item { flex: 0 0 auto; width: auto; min-height: 44px; border-radius: 999px; border-color: var(--dz-line-strong); padding: 0 14px; }
+  .dz-set-nav-text small { display: none; }
+}
+.dz-pay-handles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.dz-method-checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.dz-method-checks .dz-check-label { color: var(--dz-text); min-height: 32px; }
+.dz-reminder-preview {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--dz-line);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--dz-text);
+}

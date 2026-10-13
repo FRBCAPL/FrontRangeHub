@@ -1,4 +1,5 @@
 /** Pure dues math for Duezy. A payment row: { team_id, week, status, amount }. */
+import { paymentLines } from './duezyLeaguePrefs.js';
 
 /** 1 = one match a night, 2 = double play (dues for each match). */
 export const matchesPerNight = (unit) => Math.min(4, Math.max(1, Math.round(Number(unit?.matches_per_night) || 1)));
@@ -116,17 +117,22 @@ export function unpaidWeeks(teamId, throughWeek, dues, paymentIndex) {
 export function reminderText(league, week, behind) {
   if (!behind.length) return '';
   const lines = behind.map((x) => `- ${x.team.name}${x.division ? ` (${x.division})` : ''}: ${money(x.owed)}${x.when ? ` — ${x.when}` : ''}`);
-  const how = league?.payment_note?.trim() ? `\n${league.payment_note.trim()}` : '';
+  const pay = paymentLines(league);
+  const how = pay.length ? `\n${pay.join('\n')}` : '';
   const when = week ? ` after week ${week}` : '';
-  return `${league?.name || 'League'} dues check${when}:\n${lines.join('\n')}${how}\nThanks!`;
+  const intro = league?.reminder_intro?.trim() ? `${league.reminder_intro.trim()}\n` : '';
+  const sign = league?.reminder_signoff?.trim() ? `\n${league.reminder_signoff.trim()}` : '';
+  return `${intro}${league?.name || 'League'} dues check${when}:\n${lines.join('\n')}${how}\nThanks!${sign}`;
 }
 
 /** A friendly one-team reminder for a text or email; `when` names the nights ("Sep 16, Sep 23"). */
 export function teamReminder(league, team, owed, when = '') {
   const hi = team.captain ? `Hi ${team.captain.split(/\s+/)[0]}` : 'Hi';
   const forWhen = when ? ` for ${when}` : '';
-  const how = league?.payment_note?.trim() ? ` ${league.payment_note.trim()}` : '';
-  return `${hi} — quick ${league?.name || 'league'} dues reminder: ${team.name} owes ${money(owed)}${forWhen}.${how} Thanks!`;
+  const pay = paymentLines(league);
+  const how = pay.length ? ` ${pay.join(' · ')}` : '';
+  const sign = league?.reminder_signoff?.trim() ? ` ${league.reminder_signoff.trim()}` : '';
+  return `${hi} — quick ${league?.name || 'league'} dues reminder: ${team.name} owes ${money(owed)}${forWhen}.${how} Thanks!${sign}`;
 }
 
 const looksLikeContact = (s) => s.includes('@') || s.replace(/\D/g, '').length >= 7;

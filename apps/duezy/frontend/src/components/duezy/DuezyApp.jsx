@@ -32,6 +32,8 @@ import './duezy-ux.css';
 import './duezy-compact.css';
 import './duezy-trust.css';
 import './duezy-reports.css';
+import './duezy-prefs.css';
+import './duezy-touch.css';
 
 export default function DuezyApp() {
   const location = useLocation();

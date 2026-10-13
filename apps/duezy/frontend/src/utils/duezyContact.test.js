@@ -26,3 +26,11 @@ test('teamReminder is personal and includes payment note', () => {
   );
   assert.equal(teamReminder({ name: 'L' }, { name: 'X' }, 5), 'Hi — quick L dues reminder: X owes $5. Thanks!');
 });
+
+test('teamReminder adds tap-to-pay links and the sign-off', () => {
+  const league = { name: 'L', pay_handles: { venmo: 'sam' }, reminder_signoff: '— Sam' };
+  assert.equal(
+    teamReminder(league, { name: 'X' }, 5),
+    'Hi — quick L dues reminder: X owes $5. Venmo: https://venmo.com/u/sam Thanks! — Sam',
+  );
+});

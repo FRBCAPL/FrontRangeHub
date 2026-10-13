@@ -74,6 +74,7 @@ export default function DuezyTeamDetail({
         {canEdit ? (
           <DuezyRecordPayment
             key={correctKey}
+            league={league}
             dues={dues}
             weekName={weekName}
             payment={payment}

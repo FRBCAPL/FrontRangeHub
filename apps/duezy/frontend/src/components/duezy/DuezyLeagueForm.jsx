@@ -1,27 +1,63 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { archiveLeague, updateLeague } from '../../services/duezyService.js';
-import { matchesToSave, money, weeklyDues } from '../../utils/duezyMath.js';
-import { DAYS, DUEZY_PATH, sportToSave } from '../../data/duezyOptions.js';
-import { scheduleToSave } from '../../utils/duezySchedule.js';
-import DuezyDuesFields from './DuezyDuesFields.jsx';
+import { matchesToSave } from '../../utils/duezyMath.js';
+import { DUEZY_PATH, sportToSave } from '../../data/duezyOptions.js';
+import { browserTimeZone, scheduleToSave } from '../../utils/duezySchedule.js';
+import { defaultMethod, handlesToSave, methodsToSave } from '../../utils/duezyLeaguePrefs.js';
 import DuezySportPicker from './DuezySportPicker.jsx';
 import DuezyScheduleFields from './DuezyScheduleFields.jsx';
+import DuezyTimeZoneField from './DuezyTimeZoneField.jsx';
+import DuezyPaymentPrefs from './DuezyPaymentPrefs.jsx';
+import DuezyReminderPrefs from './DuezyReminderPrefs.jsx';
+import DuezyLegacyDivisionFields from './DuezyLegacyDivisionFields.jsx';
+import DuezyLeagueSectionNav from './DuezyLeagueSectionNav.jsx';
+
+const trimOrNull = (s) => String(s || '').trim() || null;
+
+/** Only sent once the preferences SQL has added the columns, so older databases keep saving. */
+const prefsToSave = (form) => ({
+  pay_handles: handlesToSave(form.pay_handles),
+  payment_methods: methodsToSave(form.payment_methods),
+  default_method: defaultMethod(form),
+  reminder_intro: trimOrNull(form.reminder_intro),
+  reminder_signoff: trimOrNull(form.reminder_signoff),
+});
+
+function sectionsFor(hasDivisions, prefsReady) {
+  return [
+    { id: 'basics', icon: '🏷️', label: 'Basics', hint: 'Name, sport, time zone' },
+    hasDivisions
+      ? { id: 'late', icon: '⏰', label: 'Late rule', hint: 'When dues count as late' }
+      : { id: 'late', icon: '📅', label: 'Your division', hint: 'Night, dues, schedule' },
+    { id: 'payments', icon: '💳', label: 'Payments', hint: 'How teams pay you' },
+    prefsReady && { id: 'reminders', icon: '💬', label: 'Reminders', hint: 'Opening line, sign-off' },
+  ].filter(Boolean);
+}
 
 /**
- * League details = the organization only (name, sport, late rule, payment note).
+ * League details = the organization only, in sections (basics, late rule, payments, reminders) under one Save.
  * Leagues that predate division rows still edit their one division's night / dues / weeks here.
+ * ?section= picks the open section so other screens can link straight to, say, Payments.
  */
 export default function DuezyLeagueForm({ form, setForm, owner }) {
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const hasDivisions = Boolean(form.multi_division);
+  const prefsReady = 'pay_handles' in form;
+  const zoneReady = 'timezone' in form;
+  const sections = sectionsFor(hasDivisions, prefsReady);
+  const section = sections.some((s) => s.id === params.get('section')) ? params.get('section') : 'basics';
+  const openSection = (id) => setParams({ tab: 'league', section: id }, { replace: true });
 
   const set = (changes) => {
     setForm((prev) => ({ ...prev, ...changes }));
     setSaved(false);
+    setDirty(true);
   };
 
   const leagueFields = () => ({
@@ -29,6 +65,8 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
     sport: sportToSave(form.sport),
     payment_note: form.payment_note.trim() || null,
     ...('grace_days' in form ? scheduleToSave({ grace_days: form.grace_days }, { league: true }) : {}),
+    ...(zoneReady ? { timezone: form.timezone || browserTimeZone() } : {}),
+    ...(prefsReady ? prefsToSave(form) : {}),
   });
 
   const legacyDivisionFields = () => {
@@ -47,11 +85,17 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
 
   const save = async (e) => {
     e.preventDefault();
+    if (!form.name.trim()) {
+      openSection('basics');
+      setError('Give the league a name first.');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
       await updateLeague(form.id, hasDivisions ? leagueFields() : { ...leagueFields(), ...legacyDivisionFields() });
       setSaved(true);
+      setDirty(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -70,59 +114,58 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
   };
 
   return (
-    <form className="dz-card dz-stack" onSubmit={save}>
-      <p className="dz-small dz-muted">These apply to the whole league. Night, dates, dues and weeks are set per division.</p>
+    <form className="dz-set-layout" onSubmit={save}>
+      <DuezyLeagueSectionNav sections={sections} active={section} onChange={openSection} />
 
-      <label className="dz-field">
-        <span>League name</span>
-        <input value={form.name} onChange={(e) => set({ name: e.target.value })} maxLength={80} required />
-      </label>
-      <div className="dz-field">
-        <span>What you play</span>
-        <DuezySportPicker value={form.sport} onChange={(sport) => set({ sport })} />
-      </div>
+      <div className="dz-set-main">
+        <section className="dz-card dz-stack">
+          {section === 'basics' ? (
+            <>
+              <h2 className="dz-h3">Basics</h2>
+              <label className="dz-field">
+                <span>League name</span>
+                <input value={form.name} onChange={(e) => set({ name: e.target.value })} maxLength={80} required />
+              </label>
+              <div className="dz-field">
+                <span>What you play</span>
+                <DuezySportPicker value={form.sport} onChange={(sport) => set({ sport })} />
+              </div>
+              {zoneReady ? <DuezyTimeZoneField value={form.timezone} onChange={(timezone) => set({ timezone })} /> : null}
+            </>
+          ) : null}
 
-      {hasDivisions ? (
-        <>
-          <h2 className="dz-h3">When a team counts as late</h2>
-          <DuezyScheduleFields value={form} onChange={set} showDates={false} />
-          <p className="dz-small dz-muted">League default — a division can use its own on the Divisions tab.</p>
-        </>
-      ) : (
-        <>
-          <h2 className="dz-h3">Your division</h2>
-          <p className="dz-small dz-muted">This league has one division. Its night, dues and schedule:</p>
-          <label className="dz-field">
-            <span>Night you play</span>
-            <select value={form.play_day || ''} onChange={(e) => set({ play_day: e.target.value })}>
-              {DAYS.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </label>
-          <DuezyDuesFields league={form} onChange={set} />
-          <p className="dz-small dz-muted">
-            Each team pays {money(weeklyDues(form))} per week. Changing dues updates what every team owes, including past weeks.
-          </p>
-          <DuezyScheduleFields value={form} onChange={set} />
-        </>
-      )}
+          {section === 'late' ? (
+            hasDivisions ? (
+              <>
+                <h2 className="dz-h3">When a team counts as late</h2>
+                <DuezyScheduleFields value={form} onChange={set} showDates={false} />
+                <p className="dz-small dz-muted">League default — a division can use its own on the Divisions tab.</p>
+              </>
+            ) : <DuezyLegacyDivisionFields form={form} set={set} />
+          ) : null}
 
-      <label className="dz-field">
-        <span>Payment instructions for reminders <em className="dz-muted">(optional)</em></span>
-        <input
-          value={form.payment_note}
-          onChange={(e) => set({ payment_note: e.target.value })}
-          placeholder="e.g. Venmo @yourname or cash at the table"
-          maxLength={300}
-        />
-        <small className="dz-small dz-muted">Added to the end of reminder texts so teams know how to pay you.</small>
-      </label>
+          {section === 'payments' ? <DuezyPaymentPrefs form={form} set={set} ready={prefsReady} /> : null}
+          {section === 'reminders' ? <DuezyReminderPrefs form={form} set={set} /> : null}
+        </section>
 
-      {error ? <p className="dz-error" role="alert">{error}</p> : null}
-      {saved ? <p className="dz-notice" role="status">Saved.</p> : null}
+        {section === 'basics' && owner ? (
+          <section className="dz-card dz-set-danger">
+            <div>
+              <strong>Archive this league</strong>
+              <p className="dz-small dz-muted">Hides it from your list. Nothing is deleted.</p>
+            </div>
+            <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm dz-set-danger-btn" onClick={archive}>Archive league</button>
+          </section>
+        ) : null}
 
-      <div className="dz-row">
-        {owner ? <button type="button" className="dz-link dz-link--danger dz-small" onClick={archive}>Archive league</button> : <span />}
-        <button type="submit" className="dz-btn dz-btn--primary" disabled={busy}>{busy ? 'Saving…' : 'Save league'}</button>
+        <div className={`dz-save-bar${dirty ? ' is-dirty' : ''}`}>
+          <span className="dz-small" role="status">
+            {error ? <span className="dz-save-error">{error}</span>
+              : dirty ? 'Unsaved changes'
+                : saved ? '✓ Saved' : 'Changes apply to every division.'}
+          </span>
+          <button type="submit" className="dz-btn dz-btn--primary" disabled={busy}>{busy ? 'Saving…' : 'Save league'}</button>
+        </div>
       </div>
     </form>
   );

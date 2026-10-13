@@ -25,11 +25,19 @@ export default function DuezyPlanBreakdown() {
   return (
     <section className="dz-card dz-stack">
       <h2 className="dz-h3">How it's counted</h2>
-      <ul className="dz-plan-explain">
-        <li><strong>League</strong> — your organization (name, sport, how teams pay you).</li>
-        <li><strong>Division</strong> — a group of teams on one schedule (night, dues, weeks).</li>
-      </ul>
-      <p className="dz-small">{PRICING_RULE}</p>
+      <div className="dz-plan-defs">
+        <div>
+          <span className="dz-plan-def-icon" aria-hidden="true">🏢</span>
+          <strong>League · free</strong>
+          <small className="dz-muted">Your organization — name, sport and where teams send dues.</small>
+        </div>
+        <div>
+          <span className="dz-plan-def-icon" aria-hidden="true">📅</span>
+          <strong>Division · what you pay for</strong>
+          <small className="dz-muted">A group of teams on one schedule — night, dues and weeks.</small>
+        </div>
+      </div>
+      <p className="dz-small dz-muted">{PRICING_RULE}</p>
       {rows && rows.length ? (
         <ul className="dz-plan-rows dz-plan-breakdown">
           {rows.map((r) => (

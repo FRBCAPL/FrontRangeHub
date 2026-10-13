@@ -1,7 +1,17 @@
 import React from 'react';
-import { trialUsage } from '../../utils/duezyPricingText.js';
+import { TRIAL_DAYS, TRIAL_DIVISIONS } from '../../utils/duezyPricing.js';
 
 const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '');
+
+function Meter({ label, value, max, text }) {
+  const pct = max > 0 ? Math.min(100, Math.max(0, Math.round((value / max) * 100))) : 0;
+  return (
+    <div className="dz-plan-meter">
+      <span className="dz-plan-meter-label"><span>{label}</span><span className="dz-muted">{text}</span></span>
+      <span className="dz-league-progress" aria-label={`${label}: ${text}`}><span style={{ width: `${pct}%` }} /></span>
+    </div>
+  );
+}
 
 /** "Where you stand" card on the plan page. */
 export default function DuezyPlanStatus({ access }) {
@@ -13,7 +23,7 @@ export default function DuezyPlanStatus({ access }) {
   let text = '';
   if (phase === 'trial') {
     title = `Free trial · ${access.days_remaining} ${access.days_remaining === 1 ? 'day' : 'days'} left`;
-    text = `Ends ${fmt(access.trial_ends_at)}. ${trialUsage(access)} — the trial covers up to 2.`;
+    text = `Ends ${fmt(access.trial_ends_at)}. No card needed until then.`;
   } else if (phase === 'active') {
     icon = '✅';
     title = 'Your plan is active';
@@ -34,13 +44,24 @@ export default function DuezyPlanStatus({ access }) {
     text = 'Your leagues and history are safe. Choose a plan to keep recording payments.';
   }
 
+  const daysLeft = Number(access.days_remaining) || 0;
+  const used = Number(access.divisions_used) || 0;
+  const limit = Number(access.division_limit) || TRIAL_DIVISIONS;
+
   return (
-    <div className={`dz-plan-status is-${phase}`}>
-      <span aria-hidden="true">{icon}</span>
-      <div>
+    <section className={`dz-card dz-plan-status is-${phase}`}>
+      <span className="dz-eyebrow">Where you stand</span>
+      <div className="dz-plan-status-head">
+        <span className="dz-plan-status-icon" aria-hidden="true">{icon}</span>
         <strong>{title}</strong>
-        <small>{text}</small>
       </div>
-    </div>
+      <p className="dz-small dz-muted">{text}</p>
+      {phase === 'trial' ? (
+        <div className="dz-plan-meters">
+          <Meter label="Trial days" value={daysLeft} max={TRIAL_DAYS} text={`${daysLeft} of ${TRIAL_DAYS} left`} />
+          <Meter label="Divisions" value={used} max={limit} text={`${used} of ${limit} used`} />
+        </div>
+      ) : null}
+    </section>
   );
 }

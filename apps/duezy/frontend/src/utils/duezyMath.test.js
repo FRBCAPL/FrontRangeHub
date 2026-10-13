@@ -70,6 +70,9 @@ test('teams behind are sorted by amount and the reminder lists them', () => {
   assert.match(text, /- Hustlers: \$40/);
   assert.match(text, /Venmo @league/);
   assert.equal(reminderText({ name: 'x' }, 1, []), '');
+  const custom = reminderText({ name: 'L', reminder_intro: 'Hey all!', reminder_signoff: '— Sam', pay_handles: { cashapp: 'fr' } }, 1, behind);
+  assert.match(custom, /^Hey all!\nL dues check/);
+  assert.match(custom, /Cash App: https:\/\/cash\.app\/\$fr\nThanks!\n— Sam$/);
 });
 
 test('parse pasted team lines', () => {

@@ -7,7 +7,7 @@ import DuezyQuickMethod, { useQuickMethod } from './DuezyQuickMethod.jsx';
 export default function DuezyTeamsPanel({ league, stats, data, divisions, correctRequest = null }) {
   const [openTeamId, setOpenTeamId] = useState('');
   const [correcting, setCorrecting] = useState(null);
-  const [quickMethod, setQuickMethod] = useQuickMethod(league.id);
+  const [quickMethod, setQuickMethod] = useQuickMethod(league);
   const { unit, teams, week, dues, schedule } = stats;
   const { canEdit } = data;
 
@@ -24,7 +24,7 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
     <section className="dz-panel">
       <div className="dz-row dz-panel-head">
         <h3 className="dz-h3">{divisions.length > 1 ? `${unit.name} teams` : 'Teams'}</h3>
-        {canEdit ? <DuezyQuickMethod value={quickMethod} onChange={setQuickMethod} /> : null}
+        {canEdit ? <DuezyQuickMethod league={league} value={quickMethod} onChange={setQuickMethod} /> : null}
       </div>
       {teams.length ? (
         <ul className="dz-team-list">

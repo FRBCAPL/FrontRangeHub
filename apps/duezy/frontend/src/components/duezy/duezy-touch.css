@@ -1,0 +1,19 @@
+/* Thumb-sized tap targets (44px) on phones and touch screens. Loaded last so it wins over the compact desktop sizes. */
+@media (max-width: 680px), (pointer: coarse) {
+  .dz-btn--sm,
+  .dz-chip,
+  .dz-div-tab,
+  .dz-seg-tab,
+  .dz-toast-undo,
+  .dz-toast-link,
+  .dz-contact-btn,
+  .dz-quick-method select,
+  .dz-segment--sm button,
+  .dz-skip-chip { min-height: 44px; }
+
+  .dz-contact-btn.is-compact { min-height: 40px; }
+
+  .dz-week-nav button,
+  .dz-toast-close,
+  .dz-tip-close { width: 44px; height: 44px; }
+}
