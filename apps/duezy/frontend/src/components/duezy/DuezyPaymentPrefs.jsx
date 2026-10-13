@@ -4,7 +4,7 @@ import { PAY_HANDLES, defaultMethod, leagueMethods } from '../../utils/duezyLeag
 
 /**
  * How teams pay this league: free-text instructions, tap-to-pay handles, which methods the
- * dropdowns offer and what one-tap "Paid" records. `ready` = the preferences SQL has been run.
+ * dropdowns offer, and the method prefilled on amount and correction forms. `ready` = the preferences SQL has been run.
  */
 export default function DuezyPaymentPrefs({ form, set, ready }) {
   const handles = form.pay_handles || {};
@@ -60,11 +60,11 @@ export default function DuezyPaymentPrefs({ form, set, ready }) {
             <small className="dz-small dz-muted">Only these show up when recording a payment.</small>
           </div>
           <label className="dz-field">
-            <span>One-tap “Paid” records</span>
+            <span>Default method</span>
             <select value={defaultMethod(form)} onChange={(e) => set({ default_method: e.target.value })}>
               {methods.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
-            <small className="dz-small dz-muted">The default for everyone recording payments in this league.</small>
+            <small className="dz-small dz-muted">Prefilled when you record a partial amount or correct a payment. The team row has a button for each method.</small>
           </label>
         </>
       ) : (

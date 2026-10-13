@@ -25,7 +25,7 @@ export default function DuezyLeagueSummary({ league }) {
           <>
             <div><dt>Tap-to-pay links</dt><dd>{links.length ? links.join(' · ') : none}</dd></div>
             <div><dt>Methods accepted</dt><dd>{leagueMethods(league).join(', ')}</dd></div>
-            <div><dt>One-tap “Paid” records</dt><dd>{defaultMethod(league)}</dd></div>
+            <div><dt>Default method</dt><dd>{defaultMethod(league)}</dd></div>
             <div><dt>Reminders signed as</dt><dd>{league.reminder_signoff || none}</dd></div>
           </>
         ) : null}

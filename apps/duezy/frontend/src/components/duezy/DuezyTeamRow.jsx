@@ -1,6 +1,7 @@
 import React from 'react';
 import { money } from '../../utils/duezyMath.js';
 import { teamBalance } from '../../utils/duezyDivisions.js';
+import { leagueMethods } from '../../utils/duezyLeaguePrefs.js';
 import DuezyTeamDetail from './DuezyTeamDetail.jsx';
 
 const AVATAR_HUES = [245, 190, 160, 320, 30, 275, 205, 350];
@@ -32,8 +33,15 @@ function readOnlyStatus(status, payment) {
   return 'Not yet';
 }
 
+/** League methods, plus a method already saved on this week if the league later dropped it. */
+function rowMethods(league, payment) {
+  const list = leagueMethods(league);
+  const current = payment?.status === 'paid' ? payment.method : null;
+  return current && !list.includes(current) ? [...list, current] : list;
+}
+
 export default function DuezyTeamRow({
-  league, team, week, dues, schedule, paymentIndex, divisions = [], quickMethod = null, open, onToggle, onSetPayment, onUpdateTeam,
+  league, team, week, dues, schedule, paymentIndex, divisions = [], open, onToggle, onSetPayment, onUpdateTeam,
   canEdit = true, correctKey = 0,
 }) {
   const payment = paymentIndex.get(`${team.id}:${week}`);
@@ -58,18 +66,31 @@ export default function DuezyTeamRow({
         </button>
         {canEdit ? (
           <div className="dz-team-actions" role="group" aria-label={`Week ${week} status for ${team.name}`}>
-            <button
-              type="button"
-              className={`dz-chip ${status === 'paid' ? 'is-on is-paid' : ''}`}
-              onClick={() => onSetPayment({ status: 'paid', amount: dues, method: quickMethod || payment?.method || null })}
-              title={status === 'paid' && payment?.method ? `Paid with ${payment.method}` : undefined}
-            >
-              <span aria-hidden="true">✓</span> Paid {money(dues)}
-              {status === 'paid' && payment?.method ? <small className="dz-chip-method">{payment.method}</small> : null}
-            </button>
+            {status === 'paid' && !payment?.method ? (
+              <span className="dz-chip is-on is-paid">✓ Paid</span>
+            ) : null}
+            {rowMethods(league, payment).map((method) => {
+              const on = status === 'paid' && payment?.method === method;
+              return (
+                <button
+                  key={method}
+                  type="button"
+                  className={`dz-chip ${on ? 'is-on is-paid' : ''}`}
+                  aria-pressed={on}
+                  onClick={() => {
+                    if (on && Number(payment?.amount) === Number(dues)) return;
+                    onSetPayment({ status: 'paid', amount: dues, method });
+                  }}
+                >
+                  {on ? <span aria-hidden="true">✓</span> : null}
+                  {method}
+                </button>
+              );
+            })}
             <button
               type="button"
               className={`dz-chip ${status === 'bye' ? 'is-on is-bye' : ''}`}
+              aria-pressed={status === 'bye'}
               onClick={() => onSetPayment({ status: 'bye', amount: 0 })}
             >
               <span aria-hidden="true">⏸</span> Bye
@@ -77,6 +98,7 @@ export default function DuezyTeamRow({
             <button
               type="button"
               className={`dz-chip ${status === 'unpaid' ? 'is-on is-unpaid' : ''}`}
+              aria-pressed={status === 'unpaid'}
               onClick={() => onSetPayment({ status: 'unpaid', amount: 0 })}
             >
               Not yet

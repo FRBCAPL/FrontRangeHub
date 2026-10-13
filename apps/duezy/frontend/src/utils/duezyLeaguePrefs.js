@@ -1,6 +1,6 @@
 /**
  * League payment & reminder preferences: tap-to-pay handles, which methods a league uses, the
- * default for one-tap "Paid", and the payment lines added to reminders. Columns come from
+ * default method for amount and correction forms, and the payment lines added to reminders. Columns come from
  * duezy-league-preferences-2026-10.sql; every helper copes with them being missing.
  */
 import { METHODS } from '../data/duezyOptions.js';

@@ -167,7 +167,7 @@
 }
 .dz-team:hover { border-color: var(--dz-line-strong); }
 .dz-team.is-paid { background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.18); }
-.dz-team-main { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.dz-team-main { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 12px; }
 .dz-team-name {
   flex: 1;
   min-width: 0;
@@ -215,7 +215,14 @@
 .dz-team.is-partial .dz-dot { background: var(--dz-partial); }
 .dz-team.is-bye .dz-dot { background: var(--dz-bye); }
 
-.dz-team-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.dz-team-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1 1 240px;
+  justify-content: flex-end;
+  margin-left: auto;
+}
 .dz-chip {
   display: inline-flex;
   align-items: center;
@@ -313,6 +320,6 @@ button.dz-add-team:hover { text-decoration: none; border-color: var(--dz-accent)
   .dz-summary-main { grid-column: 1 / -1; }
   .dz-behind { grid-template-columns: 1fr; }
   .dz-team-main { flex-wrap: wrap; }
-  .dz-team-actions { width: 100%; }
-  .dz-team-actions .dz-chip { flex: 1; }
+  .dz-team-actions { width: 100%; justify-content: flex-start; margin-left: 0; }
+  .dz-team-actions .dz-chip { flex: 1 1 auto; }
 }
