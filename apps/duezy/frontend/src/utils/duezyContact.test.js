@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { contactLinks, parseContact } from './duezyContact.js';
+import { contactHint, contactLinks, formatContact, parseContact } from './duezyContact.js';
 import { teamReminder } from './duezyMath.js';
 
 test('parseContact recognizes phones and emails', () => {
@@ -8,6 +8,23 @@ test('parseContact recognizes phones and emails', () => {
   assert.deepEqual(parseContact(' bob@example.com '), { kind: 'email', value: 'bob@example.com' });
   assert.equal(parseContact('ask at the bar'), null);
   assert.equal(parseContact(''), null);
+});
+
+test('formatContact tidies US phone numbers only', () => {
+  assert.equal(formatContact('7195550123'), '719-555-0123');
+  assert.equal(formatContact(' (719) 555 0123 '), '719-555-0123');
+  assert.equal(formatContact('+1 719.555.0123'), '719-555-0123');
+  assert.equal(formatContact('+44 20 7946 0958'), '+44 20 7946 0958');
+  assert.equal(formatContact('555-0123'), '555-0123');
+  assert.equal(formatContact(' bob@example.com '), 'bob@example.com');
+  assert.equal(formatContact('ask at the bar'), 'ask at the bar');
+});
+
+test('contactHint says what the contact will do', () => {
+  assert.equal(contactHint('').tone, 'muted');
+  assert.equal(contactHint('719-555-0123').tone, 'ok');
+  assert.match(contactHint('a@b.co').text, /Email/);
+  assert.equal(contactHint('call Bob').tone, 'warn');
 });
 
 test('contactLinks builds call/text or email links', () => {

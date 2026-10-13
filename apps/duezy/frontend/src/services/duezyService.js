@@ -98,6 +98,12 @@ export async function addTeam(leagueId, team, sortOrder, divisionId = null) {
   return check(await duezy.from('duezy_teams').insert(row).select(TEAM_FIELDS).single());
 }
 
+/** Several teams at once (pasted list), in order after the existing ones. */
+export async function addTeams(leagueId, teams, startOrder, divisionId = null) {
+  const rows = teams.map((t, i) => ({ ...teamRow(leagueId, t, startOrder + i), ...(divisionId ? { division_id: divisionId } : {}) }));
+  return check(await duezy.from('duezy_teams').insert(rows).select(TEAM_FIELDS)) || [];
+}
+
 export async function updateTeam(id, changes) {
   check(await duezy.from('duezy_teams').update(changes).eq('id', id));
 }

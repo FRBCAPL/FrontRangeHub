@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { money } from '../../utils/duezyMath.js';
 import { shortNights, teamBalance } from '../../utils/duezyDivisions.js';
 import { leagueMethods } from '../../utils/duezyLeaguePrefs.js';
 import DuezyTeamDetail from './DuezyTeamDetail.jsx';
+import DuezyTeamModal from './DuezyTeamModal.jsx';
 
 const AVATAR_HUES = [245, 190, 160, 320, 30, 275, 205, 350];
 
@@ -47,6 +48,7 @@ export default function DuezyTeamRow({
   const payment = paymentIndex.get(`${team.id}:${week}`);
   const status = payment?.status || 'unpaid';
   const balance = teamBalance(team.id, schedule, dues, paymentIndex);
+  const [editFocus, setEditFocus] = useState(null);
 
   return (
     <li className={`dz-team is-${status}`} id={`dz-team-${team.id}`}>
@@ -69,6 +71,16 @@ export default function DuezyTeamRow({
             ) : null}
           </span>
         </button>
+        {canEdit && !team.contact ? (
+          <button
+            type="button"
+            className="dz-add-phone"
+            onClick={() => setEditFocus('contact')}
+            title={`Add ${team.captain || 'the captain'}'s phone or email for one-tap reminders`}
+          >
+            + phone
+          </button>
+        ) : null}
         {canEdit ? (
           <div className="dz-team-actions" role="group" aria-label={`Week ${week} status for ${team.name}`}>
             {status === 'paid' && !payment?.method ? (
@@ -123,11 +135,20 @@ export default function DuezyTeamRow({
           balance={balance}
           payment={payment}
           paymentIndex={paymentIndex}
-          divisions={divisions}
           onSetPayment={onSetPayment}
-          onUpdateTeam={onUpdateTeam}
+          onEditTeam={() => setEditFocus('name')}
           canEdit={canEdit}
           correctKey={correctKey}
+        />
+      ) : null}
+      {editFocus ? (
+        <DuezyTeamModal
+          team={team}
+          divisions={divisions}
+          focus={editFocus}
+          onSave={onUpdateTeam}
+          onRemove={() => onUpdateTeam({ archived: true })}
+          onClose={() => setEditFocus(null)}
         />
       ) : null}
     </li>

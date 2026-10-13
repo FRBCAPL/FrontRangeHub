@@ -1,0 +1,120 @@
+/* Popup shell (DuezyModal) and the add/edit team popup. */
+.dz-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(3, 5, 12, 0.72);
+  backdrop-filter: blur(4px);
+  animation: dz-modal-fade 0.15s ease-out;
+}
+
+.dz-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(520px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 20px;
+  background: var(--dz-surface-solid);
+  border: 1px solid var(--dz-line-strong);
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  text-align: left;
+}
+
+.dz-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.dz-modal-head h2 { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
+.dz-modal-close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--dz-line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dz-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.dz-modal-close:hover { color: var(--dz-text); border-color: var(--dz-line-strong); }
+
+@keyframes dz-modal-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.dz-team-modal-form { display: flex; flex-direction: column; gap: 14px; }
+.dz-team-modal-form .dz-field em { font-style: normal; font-weight: 400; opacity: 0.75; }
+.dz-team-modal-form textarea { min-height: 120px; resize: vertical; font-family: inherit; }
+
+.dz-team-modal-hint { font-size: 0.8rem; line-height: 1.4; color: var(--dz-muted); }
+.dz-team-modal-hint.is-ok { color: #86efac; }
+.dz-team-modal-hint.is-warn { color: #fcd34d; }
+
+.dz-team-modal-added {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+  font-size: 0.85rem;
+}
+
+.dz-team-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+.dz-team-modal-remove { margin-right: auto; }
+
+.dz-team-paste-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 8px 10px;
+  list-style: none;
+  border: 1px solid var(--dz-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 0.85rem;
+}
+.dz-team-paste-preview li { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.dz-team-paste-preview span { color: var(--dz-muted); }
+
+/* "+ phone" on team rows without a captain contact. */
+.dz-add-phone {
+  align-self: center;
+  flex: none;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px dashed var(--dz-line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dz-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.dz-add-phone:hover { color: var(--dz-accent); border-color: var(--dz-accent); }
+
+@media (max-width: 560px) {
+  .dz-modal-backdrop { padding: 0; align-items: stretch; }
+  .dz-modal {
+    width: 100%;
+    max-height: none;
+    min-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  }
+  .dz-team-modal-actions .dz-btn { flex: 1 1 auto; min-height: 44px; }
+  .dz-team-modal-remove { flex-basis: 100%; order: 9; margin: 8px 0 0; text-align: center; }
+}

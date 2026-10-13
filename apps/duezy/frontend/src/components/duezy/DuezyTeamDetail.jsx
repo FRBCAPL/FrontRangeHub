@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { money, paidFor, teamReminder } from '../../utils/duezyMath.js';
-import DuezyMoveTeam from './DuezyMoveTeam.jsx';
-import DuezyTeamEditForm from './DuezyTeamEditForm.jsx';
 import DuezyContactLinks from './DuezyContactLinks.jsx';
 import DuezyPaymentHistory from './DuezyPaymentHistory.jsx';
 import DuezyRecordPayment from './DuezyRecordPayment.jsx';
@@ -32,22 +30,11 @@ function reminderFor(league, team, { late, due, lateWhen, dueWhen }) {
 }
 
 export default function DuezyTeamDetail({
-  league, team, week, dues, schedule, balance, payment, paymentIndex, divisions = [], onSetPayment, onUpdateTeam, canEdit = true,
+  league, team, week, dues, schedule, balance, payment, paymentIndex, onSetPayment, onEditTeam, canEdit = true,
   correctKey = 0,
 }) {
-  const [editing, setEditing] = useState(false);
   const weekName = schedule.dates ? schedule.label(week) : `week ${week}`;
   const contact = team.contact ? <DuezyContactLinks contact={team.contact} message={reminderFor(league, team, balance)} /> : null;
-
-  const saveTeam = async (changes) => {
-    await onUpdateTeam(changes);
-    setEditing(false);
-  };
-
-  const removeTeam = async () => {
-    if (!window.confirm(`Remove ${team.name}? Their payment history is kept.`)) return;
-    await onUpdateTeam({ archived: true });
-  };
 
   return (
     <div className="dz-team-detail">
@@ -91,18 +78,12 @@ export default function DuezyTeamDetail({
 
       {canEdit ? (
         <div className="dz-detail-block">
-          {editing ? (
-            <DuezyTeamEditForm team={team} onSave={saveTeam} onCancel={() => setEditing(false)} />
-          ) : (
-            <div className="dz-row dz-row--start">
-              {contact}
-              <button type="button" className="dz-link dz-small" onClick={() => setEditing(true)}>
-                {team.contact ? 'Edit team' : 'Edit team / add captain contact'}
-              </button>
-              <button type="button" className="dz-link dz-link--danger dz-small" onClick={removeTeam}>Remove team</button>
-            </div>
-          )}
-          {divisions.length > 1 && !editing ? <DuezyMoveTeam team={team} divisions={divisions} onMove={onUpdateTeam} /> : null}
+          <div className="dz-row dz-row--start">
+            {contact}
+            <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={onEditTeam}>
+              ✏️ {team.contact ? 'Edit team' : 'Edit team / add captain contact'}
+            </button>
+          </div>
         </div>
       ) : contact ? (
         <div className="dz-detail-block">{contact}</div>

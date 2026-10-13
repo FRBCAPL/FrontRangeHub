@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   addTeam as addTeamRow,
+  addTeams as addTeamRows,
   getLeague,
   listPayments,
   listTeams,
@@ -117,6 +118,14 @@ export default function useDuezyLeague(leagueId) {
     [leagueId, teams.length]
   );
 
+  const addTeams = useCallback(
+    async (list, divisionId = null) => {
+      const created = await addTeamRows(leagueId, list, teams.length, divisionId);
+      setTeams((prev) => [...prev, ...created]);
+    },
+    [leagueId, teams.length]
+  );
+
   const markPaidThrough = useCallback(async (teamIds, throughWeek, dues) => {
     const saved = await markPaidRows(leagueId, teamIds, throughWeek, dues);
     const keys = new Set(saved.map((p) => `${p.team_id}:${p.week}`));
@@ -131,7 +140,7 @@ export default function useDuezyLeague(leagueId) {
   return {
     role, canEdit: roleCanEdit(role), isOwner: roleIsOwner(role), helperCount,
     league, divisions, units, multi, several, teams, payments, paymentIndex,
-    error, setError, loading, setPayment, setWeek, addTeam, updateTeam, markPaidThrough,
+    error, setError, loading, setPayment, setWeek, addTeam, addTeams, updateTeam, markPaidThrough,
     lastChange, undoLastChange, dismissLastChange,
   };
 }

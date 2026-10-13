@@ -139,7 +139,14 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
       ) : (
         <p className="dz-muted dz-small">{canEdit ? 'No teams yet — add the first one below.' : 'No teams yet.'}</p>
       )}
-      {canEdit ? <DuezyAddTeam onAdd={(team) => data.addTeam(team, unit.id)} /> : null}
+      {canEdit ? (
+        <DuezyAddTeam
+          divisions={divisions}
+          divisionId={unit.id}
+          onAdd={(team, divisionId) => data.addTeam(team, divisionId || unit.id)}
+          onAddMany={(list, divisionId) => data.addTeams(list, divisionId || unit.id)}
+        />
+      ) : null}
     </section>
   );
 }
