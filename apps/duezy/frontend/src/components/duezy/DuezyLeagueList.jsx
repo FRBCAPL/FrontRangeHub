@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { listLeagues } from '../../services/duezyService.js';
 import { listDivisionsForLeagues } from '../../services/duezyDivisionService.js';
+import { acceptInvites, myMemberships } from '../../services/duezyPeopleService.js';
+import { getSession } from '../../services/duezyAuthService.js';
+import { roleLabel } from '../../utils/duezyPeople.js';
 import { money, weeklyDues } from '../../utils/duezyMath.js';
 import { divisionUnits, unitSchedule } from '../../utils/duezyDivisions.js';
 import { todayISO } from '../../utils/duezySchedule.js';
@@ -30,10 +33,19 @@ export default function DuezyLeagueList() {
   const [error, setError] = useState('');
 
   const [divisionsByLeague, setDivisionsByLeague] = useState({});
+  const [sharedRoles, setSharedRoles] = useState({});
+  const [joined, setJoined] = useState(0);
 
   useEffect(() => {
-    listLeagues()
-      .then(async (list) => {
+    (async () => {
+      const added = await acceptInvites();
+      setJoined(added);
+      const session = await getSession().catch(() => null);
+      const [list, roles] = await Promise.all([listLeagues(), myMemberships(session?.user?.id)]);
+      return { list, roles };
+    })()
+      .then(async ({ list, roles }) => {
+        setSharedRoles(roles);
         setLeagues(list);
         const multiIds = list.filter((l) => l.multi_division).map((l) => l.id);
         const divisions = await listDivisionsForLeagues(multiIds);
@@ -61,8 +73,12 @@ export default function DuezyLeagueList() {
         A league is your whole organization; divisions are the groups of teams inside it. To add another night,
         skill level or format, use <strong>+ Add division</strong> under the league. <strong>+ New league</strong> starts a separate organization.
       </p>
+      {joined ? (
+        <p className="dz-notice">You were added to {joined === 1 ? 'a league' : `${joined} leagues`} — {joined === 1 ? 'it’s' : 'they’re'} below.</p>
+      ) : null}
       <ul className="dz-league-list">
         {leagues.map((l) => {
+          const shared = sharedRoles[l.id];
           const sport = sportOf(l.sport);
           const units = divisionUnits(l, divisionsByLeague[l.id] || []);
           const today = todayISO(l.timezone);
@@ -72,7 +88,10 @@ export default function DuezyLeagueList() {
                 <span className="dz-league-icon" aria-hidden="true">{sport.icon}</span>
                 <span className="dz-league-body">
                   <span className="dz-eyebrow">League</span>
-                  <strong>{l.name}</strong>
+                  <strong>
+                    {l.name}
+                    {shared ? <span className="dz-shared-badge">Shared · {roleLabel(shared)}</span> : null}
+                  </strong>
                   <span className="dz-muted dz-small">
                     {sport.short} · {units.length} {units.length === 1 ? 'division' : 'divisions'}
                   </span>
@@ -82,9 +101,11 @@ export default function DuezyLeagueList() {
                 </span>
                 <span className="dz-league-go" aria-hidden="true">›</span>
               </Link>
-              <Link to={`${DUEZY_PATH}/league/${l.id}/settings?add=division`} className="dz-link dz-small dz-league-add-div">
-                + Add division to {l.name}
-              </Link>
+              {shared ? null : (
+                <Link to={`${DUEZY_PATH}/league/${l.id}/settings?add=division`} className="dz-link dz-small dz-league-add-div">
+                  + Add division to {l.name}
+                </Link>
+              )}
             </li>
           );
         })}

@@ -8,6 +8,8 @@ export const LOCKED_MESSAGE = 'Your leagues are read-only until you choose a pla
 export function friendlyError(message) {
   const text = String(message || '');
   if (/duezy_trial_division_limit/.test(text)) return TRIAL_LIMIT_MESSAGE;
+  const rule = text.match(/duezy_[a-z_]+: (.+)/);
+  if (rule) return rule[1].charAt(0).toUpperCase() + rule[1].slice(1);
   if (/row-level security/i.test(text)) return LOCKED_MESSAGE;
   if (/(start_date|skip_dates|grace_days|timezone)/.test(text) && /column|schema cache/i.test(text)) {
     return 'League dates need a quick database update (duezy-schedule SQL). Everything else still works.';

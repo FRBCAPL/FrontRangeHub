@@ -20,6 +20,14 @@ export function historyChange(row, weekLabel = (w) => `Week ${w}`) {
   return [`${weekLabel(row.week)}: ${change}`, row.method, row.note].filter(Boolean).join(' · ');
 }
 
+/** A change that took money back off the books (paid → partial / not paid / bye, or a smaller amount). */
+export const isCorrection = (row) => row.action === 'changed' && Number(row.new_amount || 0) < Number(row.old_amount || 0);
+
+export function changeKind(row) {
+  if (row.action === 'created') return 'Recorded';
+  return isCorrection(row) ? 'Correction' : 'Changed';
+}
+
 /** "by sam@x.com" / "by you" */
 export function byWhom(email, myEmail) {
   if (!email) return '';

@@ -110,6 +110,18 @@ export async function listPaymentHistory(teamId, limit = 50) {
   return data || [];
 }
 
+/** Every payment change in a league (newest first), each with `team: { name, division_id }` — removed teams included. */
+export async function listLeagueHistory(leagueId, limit = 50) {
+  const { data, error } = await duezy
+    .from('duezy_payment_history')
+    .select('*, team:duezy_teams(name, division_id)')
+    .eq('league_id', leagueId)
+    .order('changed_at', { ascending: false })
+    .limit(limit);
+  if (error) return /duezy_payment_history/.test(error.message) ? null : check({ data, error });
+  return data || [];
+}
+
 /** Mark weeks 1..throughWeek paid for these teams (catching up a league that started mid-season). */
 export async function markPaidThrough(leagueId, teamIds, throughWeek, dues) {
   const now = new Date().toISOString();

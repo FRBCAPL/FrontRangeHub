@@ -25,6 +25,7 @@ import './duezy-billing.css';
 import './duezy-contact.css';
 import './duezy-schedule.css';
 import './duezy-admin.css';
+import './duezy-people.css';
 
 export default function DuezyApp() {
   const location = useLocation();

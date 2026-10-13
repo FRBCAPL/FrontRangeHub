@@ -11,7 +11,7 @@ import { canAddDivisions } from '../../utils/duezyBillingText.js';
 import { divisionCostNote } from '../../utils/duezyPricingText.js';
 
 /** Settings section: add / edit / archive divisions, or turn a single-division league into several. */
-export default function DuezyDivisionSettings({ league, onConverted }) {
+export default function DuezyDivisionSettings({ league, onConverted, isOwner = true }) {
   const { access, refresh: refreshBilling } = useDuezyBilling();
   const [divisions, setDivisions] = useState(null);
   const [teamCounts, setTeamCounts] = useState({});
@@ -80,7 +80,7 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
           <span className="dz-eyebrow">Divisions</span>
           <h2 className="dz-h3">{multi && divisions.length > 1 ? `${divisions.length} divisions` : 'Your division'}</h2>
         </div>
-        {!draft ? (
+        {!draft && isOwner ? (
           <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setDraft(newDivisionDraft(divisions[divisions.length - 1] || league))}>+ Add division</button>
         ) : null}
       </div>
@@ -102,7 +102,7 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
               index={i}
               sport={league.sport}
               teamCount={teamCounts[d.id] || 0}
-              canArchive={divisions.length > 1}
+              canArchive={isOwner && divisions.length > 1}
               defaultGrace={Number(league.grace_days) || 0}
               onSave={(changes) => saveExisting(d.id, changes)}
             />
@@ -112,7 +112,9 @@ export default function DuezyDivisionSettings({ league, onConverted }) {
         <p className="dz-muted dz-small">This league has one division. Add a division if you run different nights, skill levels or formats — each one tracks its own dues and weeks.</p>
       )}
 
-      {draft ? (
+      {!isOwner ? <p className="dz-muted dz-small">Only the league owner can add or archive divisions.</p> : null}
+
+      {draft && isOwner ? (
         <div className="dz-stack">
           {!multi ? (
             <label className="dz-field">

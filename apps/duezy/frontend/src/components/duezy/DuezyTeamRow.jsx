@@ -25,8 +25,16 @@ function balanceText({ late, due, dueWhen }) {
   return 'all caught up';
 }
 
+function readOnlyStatus(status, payment) {
+  if (status === 'paid') return `✓ Paid${payment?.method ? ` · ${payment.method}` : ''}`;
+  if (status === 'partial') return `Partial ${money(payment?.amount || 0)}`;
+  if (status === 'bye') return '⏸ Bye';
+  return 'Not yet';
+}
+
 export default function DuezyTeamRow({
   league, team, week, dues, schedule, paymentIndex, divisions = [], quickMethod = null, open, onToggle, onSetPayment, onUpdateTeam,
+  canEdit = true,
 }) {
   const payment = paymentIndex.get(`${team.id}:${week}`);
   const status = payment?.status || 'unpaid';
@@ -48,31 +56,35 @@ export default function DuezyTeamRow({
             </small>
           </span>
         </button>
-        <div className="dz-team-actions" role="group" aria-label={`Week ${week} status for ${team.name}`}>
-          <button
-            type="button"
-            className={`dz-chip ${status === 'paid' ? 'is-on is-paid' : ''}`}
-            onClick={() => onSetPayment({ status: 'paid', amount: dues, method: quickMethod || payment?.method || null })}
-            title={status === 'paid' && payment?.method ? `Paid with ${payment.method}` : undefined}
-          >
-            <span aria-hidden="true">✓</span> Paid {money(dues)}
-            {status === 'paid' && payment?.method ? <small className="dz-chip-method">{payment.method}</small> : null}
-          </button>
-          <button
-            type="button"
-            className={`dz-chip ${status === 'bye' ? 'is-on is-bye' : ''}`}
-            onClick={() => onSetPayment({ status: 'bye', amount: 0 })}
-          >
-            <span aria-hidden="true">⏸</span> Bye
-          </button>
-          <button
-            type="button"
-            className={`dz-chip ${status === 'unpaid' ? 'is-on is-unpaid' : ''}`}
-            onClick={() => onSetPayment({ status: 'unpaid', amount: 0 })}
-          >
-            Not yet
-          </button>
-        </div>
+        {canEdit ? (
+          <div className="dz-team-actions" role="group" aria-label={`Week ${week} status for ${team.name}`}>
+            <button
+              type="button"
+              className={`dz-chip ${status === 'paid' ? 'is-on is-paid' : ''}`}
+              onClick={() => onSetPayment({ status: 'paid', amount: dues, method: quickMethod || payment?.method || null })}
+              title={status === 'paid' && payment?.method ? `Paid with ${payment.method}` : undefined}
+            >
+              <span aria-hidden="true">✓</span> Paid {money(dues)}
+              {status === 'paid' && payment?.method ? <small className="dz-chip-method">{payment.method}</small> : null}
+            </button>
+            <button
+              type="button"
+              className={`dz-chip ${status === 'bye' ? 'is-on is-bye' : ''}`}
+              onClick={() => onSetPayment({ status: 'bye', amount: 0 })}
+            >
+              <span aria-hidden="true">⏸</span> Bye
+            </button>
+            <button
+              type="button"
+              className={`dz-chip ${status === 'unpaid' ? 'is-on is-unpaid' : ''}`}
+              onClick={() => onSetPayment({ status: 'unpaid', amount: 0 })}
+            >
+              Not yet
+            </button>
+          </div>
+        ) : (
+          <span className={`dz-chip is-on is-${status}`}>{readOnlyStatus(status, payment)}</span>
+        )}
       </div>
       {open ? (
         <DuezyTeamDetail
@@ -87,6 +99,7 @@ export default function DuezyTeamRow({
           divisions={divisions}
           onSetPayment={onSetPayment}
           onUpdateTeam={onUpdateTeam}
+          canEdit={canEdit}
         />
       ) : null}
     </li>

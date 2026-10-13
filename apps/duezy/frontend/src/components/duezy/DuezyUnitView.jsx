@@ -18,9 +18,11 @@ export default function DuezyUnitView({ league, stats, data, divisions }) {
     ? `Dues are due by ${graceLabel(schedule.grace).toLowerCase()}, late after that.`
     : 'Dues count as late once the next week starts.';
 
+  const { canEdit } = data;
+
   return (
     <>
-      <DuezyCatchUp leagueId={league.id} stats={stats} paymentIndex={data.paymentIndex} onMarkPaid={data.markPaidThrough} />
+      {canEdit ? <DuezyCatchUp leagueId={league.id} stats={stats} paymentIndex={data.paymentIndex} onMarkPaid={data.markPaidThrough} /> : null}
 
       <DuezyWeekSummary
         summary={summary}
@@ -33,9 +35,11 @@ export default function DuezyUnitView({ league, stats, data, divisions }) {
       <section className="dz-panel">
         <div className="dz-row dz-panel-head">
           <h3 className="dz-h3">{divisions.length > 1 ? `${unit.name} teams` : 'Teams'}</h3>
-          <DuezyQuickMethod value={quickMethod} onChange={setQuickMethod} />
+          {canEdit ? <DuezyQuickMethod value={quickMethod} onChange={setQuickMethod} /> : null}
         </div>
-        <p className="dz-muted dz-small dz-panel-hint">Tap a team for history, partial payments and captain contact.</p>
+        <p className="dz-muted dz-small dz-panel-hint">
+          {canEdit ? 'Tap a team for history, partial payments and captain contact.' : 'Tap a team for its payment history and captain contact.'}
+        </p>
         {teams.length ? (
           <ul className="dz-team-list">
             {teams.map((team) => (
@@ -53,13 +57,14 @@ export default function DuezyUnitView({ league, stats, data, divisions }) {
                 onToggle={() => setOpenTeamId(openTeamId === team.id ? '' : team.id)}
                 onSetPayment={(entry) => data.setPayment(team.id, week, entry)}
                 onUpdateTeam={(changes) => data.updateTeam(team.id, changes)}
+                canEdit={canEdit}
               />
             ))}
           </ul>
         ) : (
-          <p className="dz-muted dz-small">No teams yet — add the first one below.</p>
+          <p className="dz-muted dz-small">{canEdit ? 'No teams yet — add the first one below.' : 'No teams yet.'}</p>
         )}
-        <DuezyAddTeam onAdd={(team) => data.addTeam(team, unit.id)} />
+        {canEdit ? <DuezyAddTeam onAdd={(team) => data.addTeam(team, unit.id)} /> : null}
       </section>
 
       <DuezyBehindPanel league={league} behind={behind} graceNote={graceNote} />

@@ -7,7 +7,10 @@ import DuezyDuesFields from './DuezyDuesFields.jsx';
 import DuezySportPicker from './DuezySportPicker.jsx';
 import DuezyDivisionSettings from './DuezyDivisionSettings.jsx';
 import DuezyScheduleFields from './DuezyScheduleFields.jsx';
+import DuezyPeoplePanel from './DuezyPeoplePanel.jsx';
 import { scheduleToSave } from '../../utils/duezySchedule.js';
+import { getPeople } from '../../services/duezyPeopleService.js';
+import { canEdit, isOwner } from '../../utils/duezyPeople.js';
 
 /**
  * League settings = the organization only (name, sport, late rule, payment note).
@@ -21,16 +24,28 @@ export default function DuezyLeagueSettings() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [role, setRole] = useState(undefined);
   const back = `${DUEZY_PATH}/league/${leagueId}`;
 
   useEffect(() => {
     getLeague(leagueId)
       .then((l) => setForm(l ? { ...l, payment_note: l.payment_note || '' } : null))
       .catch((e) => setError(e.message));
+    getPeople(leagueId).then((p) => setRole(p?.my_role || null)).catch(() => setRole(null));
   }, [leagueId]);
 
   if (error && !form) return <p className="dz-error">{error}</p>;
-  if (!form) return <p className="dz-muted dz-center">Loading…</p>;
+  if (!form || role === undefined) return <p className="dz-muted dz-center">Loading…</p>;
+
+  if (!canEdit(role)) {
+    return (
+      <div className="dz-stack dz-stack--lg">
+        <Link to={back} className="dz-link dz-small">Back to {form.name}</Link>
+        <p className="dz-viewonly"><span aria-hidden="true">👀</span><span>You can view this league but not change its settings.</span></p>
+        <DuezyPeoplePanel league={form} />
+      </div>
+    );
+  }
 
   const hasDivisions = Boolean(form.multi_division);
 
@@ -142,11 +157,16 @@ export default function DuezyLeagueSettings() {
         {saved ? <p className="dz-notice">Saved.</p> : null}
 
         <div className="dz-row">
-          <button type="button" className="dz-link dz-link--danger dz-small" onClick={archive}>Archive league</button>
+          {isOwner(role) ? <button type="button" className="dz-link dz-link--danger dz-small" onClick={archive}>Archive league</button> : <span />}
           <button type="submit" className="dz-btn dz-btn--primary" disabled={busy}>{busy ? 'Saving…' : 'Save league'}</button>
         </div>
       </form>
-      <DuezyDivisionSettings league={form} onConverted={() => setForm((prev) => ({ ...prev, multi_division: true }))} />
+      <DuezyDivisionSettings
+        league={form}
+        isOwner={isOwner(role)}
+        onConverted={() => setForm((prev) => ({ ...prev, multi_division: true }))}
+      />
+      <DuezyPeoplePanel league={form} />
     </div>
   );
 }

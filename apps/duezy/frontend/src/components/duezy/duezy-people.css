@@ -1,0 +1,74 @@
+/* People on a league (owner / treasurers / viewers), the view-only notice, and the league activity log. */
+
+.dz-activity-toggle {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-weight: 700;
+}
+.dz-activity-list { max-height: 360px; }
+.dz-activity-tag {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
+}
+
+.dz-viewonly {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(148, 163, 184, 0.08);
+  font-size: 0.9rem;
+}
+
+.dz-people-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dz-people-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+.dz-people-who { flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.dz-people-role {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.18);
+  color: #c7d2fe;
+}
+.dz-people-role.is-pending { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; }
+.dz-people-list select { max-width: 140px; }
+
+.dz-people-invite { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dz-people-invite input[type='email'] { flex: 1 1 220px; min-width: 0; }
+.dz-people-share textarea { width: 100%; }
+.dz-shared-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.16);
+  color: #6ee7b7;
+  vertical-align: middle;
+}

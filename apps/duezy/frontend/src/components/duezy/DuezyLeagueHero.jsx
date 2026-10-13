@@ -12,7 +12,7 @@ export default function DuezyLeagueHero({ icon, title, subtitle, meta, settingsT
         <h1 className="dz-h1">{title}</h1>
         <p className="dz-hero-meta">{meta.filter(Boolean).join(' · ')}</p>
       </div>
-      <Link to={settingsTo} className="dz-btn dz-btn--ghost dz-btn--sm dz-hero-settings">Settings</Link>
+      {settingsTo ? <Link to={settingsTo} className="dz-btn dz-btn--ghost dz-btn--sm dz-hero-settings">Settings</Link> : null}
 
       {weekNav ? (
         <div className="dz-week-nav-wrap">

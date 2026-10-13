@@ -10,6 +10,8 @@ import DuezyDivisionTabs, { ALL_DIVISIONS } from './DuezyDivisionTabs.jsx';
 import DuezyUnitView from './DuezyUnitView.jsx';
 import DuezyAllDivisions from './DuezyAllDivisions.jsx';
 import DuezyExportButton from './DuezyExportButton.jsx';
+import DuezyActivityPanel from './DuezyActivityPanel.jsx';
+import { roleLabel } from '../../utils/duezyPeople.js';
 
 export default function DuezyLeaguePage() {
   const { leagueId } = useParams();
@@ -28,7 +30,8 @@ export default function DuezyLeaguePage() {
   if (!league) return <p className="dz-error">{error || 'League not found.'}</p>;
 
   const sport = sportOf(league.sport);
-  const settingsTo = `${DUEZY_PATH}/league/${league.id}/settings`;
+  const settingsTo = data.canEdit ? `${DUEZY_PATH}/league/${league.id}/settings` : null;
+  const lastChange = data.payments.reduce((m, p) => (p.updated_at > m ? p.updated_at : m), '');
   const requested = params.get('div');
   const current = several ? all.per.find((s) => s.unit.id === requested) || null : all.per[0];
   const showAll = several && !current;
@@ -95,6 +98,16 @@ export default function DuezyLeaguePage() {
 
       {hero}
 
+      {data.role && data.role !== 'owner' ? (
+        <p className="dz-viewonly">
+          <span aria-hidden="true">{data.canEdit ? '🤝' : '👀'}</span>
+          <span>
+            Shared with you as <strong>{roleLabel(data.role)}</strong>.{' '}
+            {data.canEdit ? 'You can record payments and edit teams; the owner manages people and billing.' : 'You can see everything but not change it.'}
+          </span>
+        </p>
+      ) : null}
+
       {error ? (
         <p className="dz-error" onClick={() => setError('')}>{error}</p>
       ) : null}
@@ -104,6 +117,13 @@ export default function DuezyLeaguePage() {
       ) : (
         <DuezyUnitView key={selected.unit.id || 'single'} league={league} stats={selected} data={data} divisions={units} />
       )}
+
+      <DuezyActivityPanel league={league} units={units} refreshKey={lastChange} />
+      {data.isOwner ? (
+        <p className="dz-small dz-muted dz-center">
+          Want help collecting? <Link to={`${settingsTo}?show=people`} className="dz-link">Add a co-treasurer or viewer</Link>
+        </p>
+      ) : null}
     </div>
   );
 }

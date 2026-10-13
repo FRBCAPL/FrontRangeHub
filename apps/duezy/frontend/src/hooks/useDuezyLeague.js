@@ -10,8 +10,10 @@ import {
   updateTeam as updateTeamRow,
 } from '../services/duezyService.js';
 import { listDivisions, updateDivision } from '../services/duezyDivisionService.js';
+import { getPeople } from '../services/duezyPeopleService.js';
 import { indexPayments } from '../utils/duezyMath.js';
 import { divisionUnits, isMultiDivision } from '../utils/duezyDivisions.js';
+import { canEdit as roleCanEdit, isOwner as roleIsOwner } from '../utils/duezyPeople.js';
 
 /** Loads one league with its divisions, teams and payments, and exposes optimistic actions. */
 export default function useDuezyLeague(leagueId) {
@@ -19,12 +21,17 @@ export default function useDuezyLeague(leagueId) {
   const [divisions, setDivisions] = useState([]);
   const [teams, setTeams] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [role, setRole] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     try {
-      const [l, d, t, p] = await Promise.all([getLeague(leagueId), listDivisions(leagueId), listTeams(leagueId), listPayments(leagueId)]);
+      const [l, d, t, p, people] = await Promise.all([
+        getLeague(leagueId), listDivisions(leagueId), listTeams(leagueId), listPayments(leagueId),
+        getPeople(leagueId).catch(() => null),
+      ]);
+      setRole(people?.my_role || null);
       setLeague(l);
       setDivisions(d);
       setTeams(t);
@@ -94,6 +101,7 @@ export default function useDuezyLeague(leagueId) {
   }, []);
 
   return {
+    role, canEdit: roleCanEdit(role), isOwner: roleIsOwner(role),
     league, divisions, units, multi, several, teams, payments, paymentIndex,
     error, setError, loading, setPayment, setWeek, addTeam, updateTeam, markPaidThrough,
   };

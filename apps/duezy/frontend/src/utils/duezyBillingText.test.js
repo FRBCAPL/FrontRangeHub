@@ -6,6 +6,7 @@ test('billing errors become plain English; others pass through', () => {
   assert.equal(friendlyError('duezy_trial_division_limit: the free trial covers up to 2 divisions'), TRIAL_LIMIT_MESSAGE);
   assert.equal(friendlyError('new row violates row-level security policy for table "duezy_payments"'), LOCKED_MESSAGE);
   assert.equal(friendlyError('network down'), 'network down');
+  assert.equal(friendlyError('duezy_not_owner: only the league owner can add people'), 'Only the league owner can add people');
 });
 
 test('trial allows 2 divisions in total; paid has no cap; locked allows none', () => {

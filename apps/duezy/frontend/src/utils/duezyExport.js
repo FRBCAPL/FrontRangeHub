@@ -72,7 +72,21 @@ export function ledgerCsv(args) {
   return toCsv([LEDGER_HEADER, ...ledgerRows(args)]);
 }
 
+export const fileSlug = (name) =>
+  String(name || 'league').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'league';
+
 export function ledgerFileName(leagueName, today) {
-  const slug = String(leagueName || 'league').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'league';
-  return `${slug}-dues-${today}.csv`;
+  return `${fileSlug(leagueName)}-dues-${today}.csv`;
+}
+
+/** Download text as a UTF-8 CSV (with BOM so Excel reads accents). Browser only. */
+export function downloadCsv(csv, fileName) {
+  const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
