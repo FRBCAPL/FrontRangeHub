@@ -82,6 +82,16 @@ export async function listTeams(leagueId) {
   ) || [];
 }
 
+/** Dashboard: active teams and all payments for several leagues in two queries. */
+export async function listTeamsAndPaymentsForLeagues(leagueIds) {
+  if (!leagueIds.length) return { teams: [], payments: [] };
+  const [t, p] = await Promise.all([
+    duezy.from('duezy_teams').select(TEAM_FIELDS).in('league_id', leagueIds).eq('archived', false).order('sort_order').order('created_at'),
+    duezy.from('duezy_payments').select('league_id, team_id, week, status, amount').in('league_id', leagueIds),
+  ]);
+  return { teams: check(t) || [], payments: check(p) || [] };
+}
+
 export async function addTeam(leagueId, team, sortOrder, divisionId = null) {
   const row = teamRow(leagueId, team, sortOrder);
   if (divisionId) row.division_id = divisionId;

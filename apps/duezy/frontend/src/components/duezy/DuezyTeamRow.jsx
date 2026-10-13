@@ -43,7 +43,7 @@ export default function DuezyTeamRow({
   return (
     <li className={`dz-team is-${status}`}>
       <div className="dz-team-main">
-        <button type="button" className="dz-team-name" onClick={onToggle} aria-expanded={open}>
+        <button type="button" className="dz-team-name" onClick={onToggle} aria-expanded={open} title={open ? 'Hide details' : 'History, partial payments and captain contact'}>
           <span className="dz-team-avatar" style={avatarStyle(team.name)} aria-hidden="true">
             {initials(team.name)}
             <span className="dz-dot" />

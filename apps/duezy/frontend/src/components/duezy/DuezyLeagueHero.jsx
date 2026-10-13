@@ -2,10 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 /** League header: icon, name, one-line meta, settings link, and (for one division) the week arrows. */
-export default function DuezyLeagueHero({ icon, title, subtitle, meta, settingsTo, weekNav }) {
+export default function DuezyLeagueHero({ icon, title, subtitle, meta, settingsTo, weekNav, centered = false }) {
   const offCurrent = weekNav?.date && weekNav.week !== weekNav.currentWeek;
   return (
-    <section className="dz-hero">
+    <section className={`dz-hero${centered ? ' dz-hero--centered' : ''}`}>
       <span className="dz-hero-icon" aria-hidden="true">{icon}</span>
       <div className="dz-hero-body">
         {subtitle ? <span className="dz-eyebrow">{subtitle}</span> : null}

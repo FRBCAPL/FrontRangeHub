@@ -38,7 +38,7 @@ export default function DuezyDivisionSettings({ league, onConverted, isOwner = t
   useEffect(() => {
     if (!loaded || searchParams.get('add') !== 'division') return;
     setDraft((prev) => prev || newDivisionDraft(divisions[divisions.length - 1] || league));
-    setSearchParams({}, { replace: true });
+    setSearchParams({ tab: 'divisions' }, { replace: true });
     requestAnimationFrame(() => sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }, [loaded]); // eslint-disable-line react-hooks/exhaustive-deps
 

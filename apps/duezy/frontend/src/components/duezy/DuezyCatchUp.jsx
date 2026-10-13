@@ -50,8 +50,7 @@ export default function DuezyCatchUp({ leagueId, stats, paymentIndex, onMarkPaid
     <section className="dz-panel dz-catchup">
       <strong>Starting partway through the season?</strong>
       <p className="dz-small dz-muted">
-        Nothing is recorded for {span}, so every team shows as late. If those weeks were already collected,
-        mark them paid in one tap — you can still change any team afterwards.
+        Nothing is recorded for {span}, so every team shows late. Already collected those weeks? Mark them paid in one tap.
       </p>
       {error ? <p className="dz-error">{error}</p> : null}
       <div className="dz-row dz-row--start">

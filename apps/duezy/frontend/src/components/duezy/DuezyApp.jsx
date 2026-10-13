@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import DuezyAuth from './DuezyAuth.jsx';
 import DuezyLeagueList from './DuezyLeagueList.jsx';
@@ -9,6 +9,7 @@ import DuezyLogo from './DuezyLogo.jsx';
 import DuezyHubBadge from './DuezyHubBadge.jsx';
 import DuezyPlanPage from './DuezyPlanPage.jsx';
 import DuezyBillingBanner from './DuezyBillingBanner.jsx';
+import DuezyAccountMenu from './DuezyAccountMenu.jsx';
 import DuezyAdminPage from './DuezyAdminPage.jsx';
 import DuezyAdminAccount from './DuezyAdminAccount.jsx';
 import DuezyAdminLeague from './DuezyAdminLeague.jsx';
@@ -26,6 +27,8 @@ import './duezy-contact.css';
 import './duezy-schedule.css';
 import './duezy-admin.css';
 import './duezy-people.css';
+import './duezy-ux.css';
+import './duezy-compact.css';
 
 export default function DuezyApp() {
   const location = useLocation();
@@ -52,6 +55,12 @@ export default function DuezyApp() {
     };
   }, []);
 
+  const appRef = useRef(null);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    appRef.current?.parentElement?.scrollTo?.(0, 0);
+  }, [location.pathname]);
+
   useEffect(() => {
     const previous = document.title;
     document.title = 'Duezy — league dues made easy';
@@ -59,20 +68,14 @@ export default function DuezyApp() {
   }, []);
 
   return (
-    <div className="dz-app">
+    <div className="dz-app" ref={appRef}>
       <div className="dz-glow" aria-hidden="true" />
       <header className="dz-header">
         <div className="dz-header-left"><DuezyHubBadge /></div>
         <Link to={DUEZY_PATH} className="dz-brand" aria-label="Duezy home"><DuezyLogo /></Link>
         {session ? (
           <div className="dz-header-account">
-            <span className="dz-avatar dz-avatar--sm" aria-hidden="true">
-              {(session.user?.user_metadata?.full_name || session.user?.email || '?').trim()[0].toUpperCase()}
-            </span>
-            <span className="dz-header-email">{session.user?.email}</span>
-            {isAdmin ? <Link to={`${DUEZY_PATH}/admin`} className="dz-btn dz-btn--ghost dz-btn--sm">Admin</Link> : null}
-            <Link to={`${DUEZY_PATH}/billing`} className="dz-btn dz-btn--ghost dz-btn--sm">Billing</Link>
-            <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={signOut}>Log out</button>
+            <DuezyAccountMenu user={session.user} isAdmin={isAdmin} onSignOut={signOut} />
           </div>
         ) : <span />}
       </header>

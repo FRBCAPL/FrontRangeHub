@@ -1,0 +1,82 @@
+/* Denser league page so the team list is reachable without much scrolling. Loaded last. */
+.dz-stack--lg { gap: 14px; }
+
+/* Header: name, settings and week arrows on one row on wider screens */
+.dz-hero { padding: 14px 16px; gap: 12px; }
+.dz-hero-icon { width: 44px; height: 44px; font-size: 1.4rem; border-radius: 12px; }
+.dz-hero .dz-h1 { font-size: 1.35rem; }
+.dz-hero-meta { font-size: 0.85rem; }
+.dz-week-nav { padding: 4px; }
+.dz-week-nav button { width: 36px; height: 36px; font-size: 1.25rem; border-radius: 10px; }
+.dz-week-nav strong { font-size: 1.4rem; }
+@media (min-width: 681px) {
+  .dz-hero { grid-template-columns: auto 1fr auto auto; }
+  .dz-week-nav-wrap { grid-column: auto; gap: 4px; }
+  .dz-week-nav { gap: 10px; }
+}
+
+.dz-hero.dz-hero--centered { grid-template-columns: minmax(44px, 1fr) minmax(0, auto) minmax(44px, 1fr); }
+.dz-hero--centered .dz-hero-body { text-align: center; }
+.dz-hero--centered .dz-hero-settings { justify-self: end; }
+.dz-hero--centered .dz-week-nav-wrap { grid-column: 1 / -1; }
+@media (max-width: 680px) {
+  .dz-hero.dz-hero--centered { grid-template-columns: 1fr; gap: 10px; }
+  .dz-hero--centered .dz-hero-icon { display: none; }
+  .dz-hero--centered .dz-hero-settings { justify-self: center; }
+}
+
+/* Week summary */
+.dz-summary { gap: 10px; }
+.dz-summary-main,
+.dz-stat { padding: 12px 14px; }
+.dz-summary-main { gap: 14px; }
+.dz-ring { width: 62px; height: 62px; }
+.dz-ring span { width: 48px; height: 48px; font-size: 0.9rem; }
+.dz-summary-text strong { font-size: 1.3rem; }
+.dz-stat strong { font-size: 1.35rem; }
+.dz-stat-icon { top: 10px; right: 10px; width: 22px; height: 22px; font-size: 0.75rem; }
+
+/* Team rows */
+.dz-panel-head { margin-bottom: 10px; }
+.dz-team-list { gap: 6px; }
+.dz-team-main { padding: 6px 10px; }
+.dz-team-name { gap: 10px; }
+.dz-team-avatar { width: 34px; height: 34px; border-radius: 10px; font-size: 0.78rem; }
+.dz-chip { min-height: 34px; padding: 0 12px; }
+@media (max-width: 680px) {
+  .dz-hero { grid-template-columns: auto 1fr auto; padding: 12px 14px; }
+  .dz-hero-settings { grid-column: auto; align-self: start; }
+  .dz-main .dz-panel { padding: 14px; }
+  .dz-summary-main { padding: 10px 12px; }
+  .dz-stat { padding: 10px 12px; }
+  .dz-stat strong { font-size: 1.2rem; }
+  .dz-team-main { row-gap: 4px; padding: 6px 8px; }
+  .dz-team-actions { align-items: center; }
+  .dz-chip { min-height: 38px; }
+}
+
+/* One-line setup tip (replaces the old checklist card) */
+.dz-tip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  font-size: 0.88rem;
+}
+.dz-tip-text { flex: 1; min-width: 0; }
+.dz-tip-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dz-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.dz-tip-close:hover { color: var(--dz-text); background: rgba(255, 255, 255, 0.06); }

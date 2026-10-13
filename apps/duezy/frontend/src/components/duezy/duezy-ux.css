@@ -1,0 +1,253 @@
+/* UX layer: undo toast, section tabs, getting-started checklist, account menu, skeletons,
+   dashboard money line, and accessibility (focus rings, screen-reader text, reduced motion). */
+
+/* ---------- Accessibility ---------- */
+.dz-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dz-app :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--dz-cyan);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dz-app *,
+  .dz-app *::before,
+  .dz-app *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Read-only status pill for viewers (partial wasn't styled before). */
+.dz-chip.is-on.is-partial { background: rgba(234, 179, 8, 0.18); color: #fde68a; border-color: rgba(234, 179, 8, 0.4); }
+
+/* "N teams late · see who ›" stat as a button */
+.dz-stat--button { cursor: pointer; text-align: left; font: inherit; color: inherit; }
+.dz-stat--button:hover { border-color: rgba(239, 68, 68, 0.45); }
+
+/* ---------- Section tabs (segmented) ---------- */
+.dz-seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--dz-line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dz-seg::-webkit-scrollbar { display: none; }
+.dz-seg-tab {
+  flex: 1 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dz-muted);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.dz-seg-tab:hover { color: var(--dz-text); background: rgba(255, 255, 255, 0.05); }
+.dz-seg-tab.is-active { background: var(--dz-surface-2); color: var(--dz-text); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); }
+.dz-seg-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: rgba(129, 140, 248, 0.25);
+  color: #e0e7ff;
+}
+.dz-seg-count.is-bad { background: rgba(239, 68, 68, 0.85); color: #fff; }
+
+/* ---------- Undo toast ---------- */
+.dz-toast {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  margin: 0 auto;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  max-width: min(560px, calc(100% - 24px));
+  box-sizing: border-box;
+  padding: 10px 10px 10px 16px;
+  border-radius: 14px;
+  background: var(--dz-surface-solid);
+  border: 1px solid var(--dz-line-strong);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+  animation: dz-toast-in 0.2s ease both;
+}
+.dz-toast-text { flex: 1; min-width: 0; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dz-toast-undo {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: 1px solid rgba(129, 140, 248, 0.5);
+  background: rgba(129, 140, 248, 0.16);
+  color: #e0e7ff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dz-toast-undo:hover { background: rgba(129, 140, 248, 0.3); }
+.dz-toast-close {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dz-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.dz-toast-close:hover { color: var(--dz-text); background: rgba(255, 255, 255, 0.06); }
+@keyframes dz-toast-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Getting started checklist ---------- */
+.dz-checklist { display: flex; flex-direction: column; gap: 12px; border-color: rgba(129, 140, 248, 0.35); }
+.dz-checklist-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dz-checklist-steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.dz-checklist-steps li.is-done .dz-checklist-text strong { color: var(--dz-muted); text-decoration: line-through; font-weight: 500; }
+.dz-checklist-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dz-check {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--dz-line-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.is-done .dz-check { background: var(--dz-paid); border-color: var(--dz-paid); color: #052e16; }
+
+/* ---------- Account menu ---------- */
+.dz-account { position: relative; }
+.dz-account-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 280px;
+  min-height: 40px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--dz-line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--dz-text);
+  font: inherit;
+  cursor: pointer;
+}
+.dz-account-button:hover { background: rgba(255, 255, 255, 0.07); }
+.dz-account-caret { color: var(--dz-muted); font-size: 0.75rem; }
+.dz-account-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 50;
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--dz-surface-solid);
+  border: 1px solid var(--dz-line-strong);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  animation: dz-toast-in-menu 0.15s ease both;
+}
+.dz-account-who { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px 10px; border-bottom: 1px solid var(--dz-line); margin-bottom: 4px; overflow-wrap: anywhere; }
+.dz-account-item {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--dz-text);
+  font: inherit;
+  font-size: 0.92rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.dz-account-item:hover { background: rgba(255, 255, 255, 0.06); }
+.dz-account-item.is-danger { color: #fca5a5; }
+@keyframes dz-toast-in-menu {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Skeletons ---------- */
+.dz-sk {
+  border-radius: var(--dz-radius);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: dz-shimmer 1.3s linear infinite;
+}
+.dz-sk-hero { height: 110px; }
+.dz-sk-summary { height: 120px; }
+.dz-sk-tabs { height: 48px; border-radius: 14px; }
+.dz-sk-row { height: 64px; border-radius: 12px; }
+.dz-sk-title { height: 44px; width: 55%; border-radius: 10px; }
+.dz-sk-card { height: 150px; }
+.dz-sk-field { height: 58px; border-radius: 12px; }
+.dz-sk-line { display: block; height: 18px; width: 60%; border-radius: 6px; }
+@keyframes dz-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ---------- Dashboard money line ---------- */
+.dz-league-money { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.85rem; margin-top: 2px; }
+.dz-league-money .is-collected { color: #bbf7d0; font-weight: 700; }
+.dz-league-money .is-late { color: #fca5a5; font-weight: 700; }
+.dz-league-money .is-ok { color: #86efac; }
+
+.dz-settings-eyebrow { display: block; margin-top: 10px; }
+
+@media (max-width: 680px) {
+  .dz-header-account { grid-column: auto; justify-self: end; }
+  .dz-account-button { padding-right: 8px; }
+  .dz-seg-tab { padding: 0 12px; font-size: 0.88rem; }
+  .dz-toast { bottom: max(12px, env(safe-area-inset-bottom)); }
+}

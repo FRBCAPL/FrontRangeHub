@@ -10,8 +10,8 @@ const SHOWN = 30;
 const EXPORT_LIMIT = 5000;
 
 /** League-wide audit trail: every payment recorded or changed, newest first, corrections flagged. */
-export default function DuezyActivityPanel({ league, units, refreshKey }) {
-  const [open, setOpen] = useState(false);
+export default function DuezyActivityPanel({ league, units, refreshKey, embedded = false }) {
+  const [open, setOpen] = useState(embedded);
   const [rows, setRows] = useState(undefined);
   const [me, setMe] = useState('');
   const [busy, setBusy] = useState(false);
@@ -46,9 +46,13 @@ export default function DuezyActivityPanel({ league, units, refreshKey }) {
   return (
     <section className="dz-panel dz-activity">
       <div className="dz-row dz-panel-head">
-        <button type="button" className="dz-activity-toggle dz-h3" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-          <span aria-hidden="true">{open ? '▾' : '▸'}</span> Recent changes
-        </button>
+        {embedded ? (
+          <h3 className="dz-h3">Recent changes</h3>
+        ) : (
+          <button type="button" className="dz-activity-toggle dz-h3" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+            <span aria-hidden="true">{open ? '▾' : '▸'}</span> Recent changes
+          </button>
+        )}
         <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={download} disabled={busy}
           title="Every payment recorded or changed, who did it and when — opens in Excel or Google Sheets">
           {busy ? 'Preparing…' : 'Download change history (CSV)'}

@@ -11,7 +11,13 @@ import DuezyUnitView from './DuezyUnitView.jsx';
 import DuezyAllDivisions from './DuezyAllDivisions.jsx';
 import DuezyExportButton from './DuezyExportButton.jsx';
 import DuezyActivityPanel from './DuezyActivityPanel.jsx';
+import DuezySectionTabs from './DuezySectionTabs.jsx';
+import DuezyUndoToast from './DuezyUndoToast.jsx';
+import DuezyGettingStarted from './DuezyGettingStarted.jsx';
+import DuezySkeleton from './DuezySkeleton.jsx';
 import { roleLabel } from '../../utils/duezyPeople.js';
+
+const SECTIONS = ['main', 'late', 'activity'];
 
 export default function DuezyLeaguePage() {
   const { leagueId } = useParams();
@@ -26,7 +32,7 @@ export default function DuezyLeaguePage() {
   );
   const all = useMemo(() => allDivisionsStats(units, teams, paymentIndex, opts), [units, teams, paymentIndex, opts]);
 
-  if (loading) return <p className="dz-muted dz-center">Loading…</p>;
+  if (loading) return <DuezySkeleton variant="league" label="Loading league…" />;
   if (!league) return <p className="dz-error">{error || 'League not found.'}</p>;
 
   const sport = sportOf(league.sport);
@@ -35,7 +41,15 @@ export default function DuezyLeaguePage() {
   const requested = params.get('div');
   const current = several ? all.per.find((s) => s.unit.id === requested) || null : all.per[0];
   const showAll = several && !current;
-  const openDivision = (id) => setParams(id === ALL_DIVISIONS ? {} : { div: id }, { replace: true });
+  const section = SECTIONS.includes(params.get('view')) ? params.get('view') : 'main';
+
+  const updateParams = (changes) => setParams((prev) => {
+    const next = new URLSearchParams(prev);
+    Object.entries(changes).forEach(([k, v]) => (v ? next.set(k, v) : next.delete(k)));
+    return next;
+  }, { replace: true });
+  const openDivision = (id) => updateParams({ div: id === ALL_DIVISIONS ? null : id });
+  const showSection = (id) => updateParams({ view: id === 'main' ? null : id });
 
   const behindCounts = Object.fromEntries(all.per.map((s) => [s.unit.id, s.behind.length]));
 
@@ -61,6 +75,7 @@ export default function DuezyLeaguePage() {
     };
   }
 
+  const named = !showAll && Boolean(several || (selected.unit.id && selected.unit.name));
   const hero = showAll ? (
     <DuezyLeagueHero
       icon={sport.icon}
@@ -71,11 +86,11 @@ export default function DuezyLeaguePage() {
   ) : (
     <DuezyLeagueHero
       icon={sport.icon}
-      title={several ? selected.unit.name : league.name}
-      subtitle={several ? league.name : ''}
+      title={named ? `Division: ${selected.unit.name}` : league.name}
+      subtitle={named ? league.name : ''}
+      centered={named}
       meta={[
         !several && sport.short,
-        !several && selected.unit.id && selected.unit.name,
         selected.unit.play_day && `${selected.unit.play_day}s`,
         `${money(selected.dues)} per team weekly`,
         `${selected.teams.length} teams`,
@@ -84,6 +99,20 @@ export default function DuezyLeaguePage() {
       weekNav={weekNav}
     />
   );
+
+  const sectionTabs = (mainLabel, lateCount) => (
+    <DuezySectionTabs
+      label="League sections"
+      active={section}
+      onChange={showSection}
+      tabs={[
+        { id: 'main', label: mainLabel },
+        { id: 'late', label: 'Late', count: lateCount, tone: 'bad' },
+        { id: 'activity', label: 'Activity' },
+      ]}
+    />
+  );
+  const activity = <DuezyActivityPanel league={league} units={units} refreshKey={lastChange} embedded />;
 
   return (
     <div className="dz-stack dz-stack--lg">
@@ -109,21 +138,51 @@ export default function DuezyLeaguePage() {
       ) : null}
 
       {error ? (
-        <p className="dz-error" onClick={() => setError('')}>{error}</p>
+        <p className="dz-error" role="alert">
+          {error}{' '}
+          <button type="button" className="dz-link dz-small" onClick={() => setError('')}>Dismiss</button>
+        </p>
+      ) : null}
+
+      {data.isOwner && data.canEdit ? (
+        <DuezyGettingStarted league={league} teamCount={teams.length} settingsTo={settingsTo} />
       ) : null}
 
       {showAll ? (
-        <DuezyAllDivisions league={league} all={all} onOpen={openDivision} />
+        <DuezyAllDivisions
+          league={league}
+          all={all}
+          onOpen={(id) => updateParams({ div: id, view: null })}
+          section={section}
+          tabs={sectionTabs('Divisions', all.behind.length)}
+          activity={activity}
+        />
       ) : (
-        <DuezyUnitView key={selected.unit.id || 'single'} league={league} stats={selected} data={data} divisions={units} />
+        <DuezyUnitView
+          key={selected.unit.id || 'single'}
+          league={league}
+          stats={selected}
+          data={data}
+          divisions={units}
+          section={section}
+          tabs={sectionTabs('Teams', selected.behind.length)}
+          activity={activity}
+          onShowLate={() => showSection('late')}
+        />
       )}
 
-      <DuezyActivityPanel league={league} units={units} refreshKey={lastChange} />
-      {data.isOwner ? (
+      {data.isOwner && section === 'main' ? (
         <p className="dz-small dz-muted dz-center">
-          Want help collecting? <Link to={`${settingsTo}?show=people`} className="dz-link">Add a co-treasurer or viewer</Link>
+          Want help collecting? <Link to={`${settingsTo}?tab=people`} className="dz-link">Add a co-treasurer or viewer</Link>
         </p>
       ) : null}
+
+      <DuezyUndoToast
+        change={data.lastChange}
+        teams={teams}
+        onUndo={data.undoLastChange}
+        onDismiss={data.dismissLastChange}
+      />
     </div>
   );
 }

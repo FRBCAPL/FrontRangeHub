@@ -22,6 +22,7 @@ export default function useDuezyLeague(leagueId) {
   const [teams, setTeams] = useState([]);
   const [payments, setPayments] = useState([]);
   const [role, setRole] = useState(null);
+  const [helperCount, setHelperCount] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -32,6 +33,7 @@ export default function useDuezyLeague(leagueId) {
         getPeople(leagueId).catch(() => null),
       ]);
       setRole(people?.my_role || null);
+      setHelperCount(people ? (people.members?.length || 0) + (people.invites?.length || 0) : null);
       setLeague(l);
       setDivisions(d);
       setTeams(t);
@@ -51,7 +53,9 @@ export default function useDuezyLeague(leagueId) {
   const multi = isMultiDivision(league, divisions);
   const several = units.length > 1;
 
-  const setPayment = useCallback(
+  const [lastChange, setLastChange] = useState(null);
+
+  const writePayment = useCallback(
     async (teamId, week, entry) => {
       const previous = payments;
       const optimistic = { id: `tmp-${teamId}-${week}`, team_id: teamId, week, amount: 0, method: null, note: null, ...entry };
@@ -59,13 +63,37 @@ export default function useDuezyLeague(leagueId) {
       try {
         const saved = await savePayment(leagueId, teamId, week, entry);
         setPayments((prev) => [...prev.filter((p) => !(p.team_id === teamId && p.week === week)), saved]);
+        return true;
       } catch (e) {
         setPayments(previous);
         setError(`Couldn't save that payment: ${e.message}`);
+        return false;
       }
     },
     [leagueId, payments]
   );
+
+  /** Saves and remembers what was there before, so the toast can offer Undo. */
+  const setPayment = useCallback(
+    async (teamId, week, entry) => {
+      const before = payments.find((p) => p.team_id === teamId && p.week === week) || null;
+      const ok = await writePayment(teamId, week, entry);
+      if (ok) setLastChange({ teamId, week, entry, before, at: Date.now() });
+    },
+    [payments, writePayment]
+  );
+
+  /** Puts the week back how it was. A week that had no entry goes back to "not paid" (entries are never deleted). */
+  const undoLastChange = useCallback(async () => {
+    if (!lastChange) return;
+    const { teamId, week, before } = lastChange;
+    setLastChange(null);
+    await writePayment(teamId, week, before
+      ? { status: before.status, amount: Number(before.amount) || 0, method: before.method || null, note: before.note || null }
+      : { status: 'unpaid', amount: 0 });
+  }, [lastChange, writePayment]);
+
+  const dismissLastChange = useCallback(() => setLastChange(null), []);
 
   /** divisionId = null moves the league's own week (league not yet migrated to division rows). */
   const setWeek = useCallback(
@@ -101,8 +129,9 @@ export default function useDuezyLeague(leagueId) {
   }, []);
 
   return {
-    role, canEdit: roleCanEdit(role), isOwner: roleIsOwner(role),
+    role, canEdit: roleCanEdit(role), isOwner: roleIsOwner(role), helperCount,
     league, divisions, units, multi, several, teams, payments, paymentIndex,
     error, setError, loading, setPayment, setWeek, addTeam, updateTeam, markPaidThrough,
+    lastChange, undoLastChange, dismissLastChange,
   };
 }
