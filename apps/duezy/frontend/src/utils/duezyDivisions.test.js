@@ -174,3 +174,16 @@ test('teamBalance shows a make-up week as due, not late', () => {
   assert.equal(b.dueWhen, 'week 1');
   assert.deepEqual(b.makeupNights, ['week 1']);
 });
+
+test('owed splits into late, make-ups and this week', async () => {
+  const { unitStats } = await import('./duezyDivisions.js');
+  const unit = { id: null, name: 'L', dues_amount: 20, current_week: 3, total_weeks: 10 };
+  const teams = [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }];
+  const idx = indexPayments([
+    { team_id: 'a', week: 1, status: 'makeup', amount: 0 },
+    { team_id: 'a', week: 2, status: 'paid', amount: 20 },
+    { team_id: 'b', week: 1, status: 'paid', amount: 20 },
+  ]);
+  const s = unitStats(unit, teams, idx, true);
+  assert.deepEqual(s.owed, { late: 20, lateTeams: 1, makeup: 20, makeupTeams: 1, current: 40 });
+});

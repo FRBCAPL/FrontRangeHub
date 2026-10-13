@@ -15,7 +15,7 @@ const EMPTY = {
 };
 
 /** The team list for one division's week: filters, search, tap-to-record chips, expandable details, add team. */
-export default function DuezyTeamsPanel({ league, stats, data, divisions, correctRequest = null }) {
+export default function DuezyTeamsPanel({ league, stats, data, divisions, correctRequest = null, filterRequest = null }) {
   const [openTeamId, setOpenTeamId] = useState('');
   const [pinnedId, setPinnedId] = useState('');
   const [correcting, setCorrecting] = useState(null);
@@ -41,6 +41,28 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
       document.getElementById(`dz-team-${correctRequest.teamId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
     });
   }, [correctRequest]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const panelRef = useRef(null);
+  const [weekRequest, setWeekRequest] = useState(null);
+  useEffect(() => {
+    if (!filterRequest) return;
+    const { filter: nextFilter, teamId } = filterRequest;
+    setFilter(teamId ? 'all' : nextFilter);
+    setQuery('');
+    if (teamId) {
+      setShowPaid(true);
+      setOpenTeamId(teamId);
+      setPinnedId(teamId);
+      setCorrecting(null);
+      setWeekRequest(filterRequest.week ? { teamId, week: filterRequest.week, key: filterRequest.key } : null);
+    }
+    if (teamId && filterRequest.week) return;
+    const timer = setTimeout(() => {
+      const target = teamId ? document.getElementById(`dz-team-${teamId}`) : panelRef.current;
+      target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [filterRequest]);
 
   const settle = (teamId) => {
     clearTimeout(timers.current[teamId]);
@@ -87,6 +109,8 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
         if (entry.status === 'paid') settle(team.id);
         return data.setPayment(team.id, week, entry);
       }}
+      onSetWeekPayment={(w, entry) => data.setPayment(team.id, w, entry)}
+      focusWeek={weekRequest?.teamId === team.id ? weekRequest : null}
       onUpdateTeam={(changes) => data.updateTeam(team.id, changes)}
       canEdit={canEdit}
       correctKey={correcting?.teamId === team.id ? correcting.key : 0}
@@ -98,7 +122,7 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
     : filter === 'all' ? null : EMPTY[filter];
 
   return (
-    <section className="dz-panel">
+    <section className="dz-panel" ref={panelRef}>
       <div className="dz-row dz-panel-head">
         <h3 className="dz-h3">{divisions.length > 1 ? `${unit.name} teams` : 'Teams'}</h3>
       </div>

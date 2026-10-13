@@ -111,6 +111,10 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
     (s, t) => s + Math.max(0, owedThrough(t.id, dueThrough, dues, paymentIndex) - owedThrough(t.id, lateThrough, dues, paymentIndex, LATE)),
     0
   );
+  const makeupList = unitTeams.map((team) => ({ team, weeks: makeupWeeks(team.id, dueThrough, paymentIndex) }));
+  const makeupCounts = makeupList.map((m) => m.weeks.length);
+  const makeupTotal = round2(makeupCounts.reduce((s, n) => s + n * dues, 0));
+  const makeups = makeupList.filter((m) => m.weeks.length).map((m) => ({ ...m, when: nightsWithWeeks(m.weeks, schedule) }));
   return {
     unit,
     teams: unitTeams,
@@ -121,8 +125,26 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
     season: seasonSummary(unitTeams, dueThrough, dues, total, paymentIndex),
     behind,
     dueTotal: round2(dueTotal),
+    owed: owedBreakdown(behind, dueTotal, makeupTotal, makeups.length),
+    makeups,
   };
 }
+
+/**
+ * What's still to collect, split three ways: late (past grace), make-ups (postponed, never late),
+ * and this week's dues that aren't late yet. dueTotal = makeup + current.
+ */
+function owedBreakdown(behind, dueTotal, makeup, makeupTeams) {
+  return {
+    late: round2(behind.reduce((s, x) => s + x.owed, 0)),
+    lateTeams: behind.length,
+    makeup,
+    makeupTeams,
+    current: round2(Math.max(0, dueTotal - makeup)),
+  };
+}
+
+const OWED_KEYS = ['late', 'lateTeams', 'makeup', 'makeupTeams', 'current'];
 
 const SUMMARY_KEYS = ['paid', 'partial', 'bye', 'makeup', 'unpaid', 'collected', 'expected'];
 const SEASON_KEYS = ['collected', 'expected', 'seasonValue', 'collectedAll'];
@@ -146,7 +168,8 @@ export function allDivisionsStats(units, teams, paymentIndex, opts = {}) {
     .flatMap((s) => s.behind.map((x) => ({ ...x, division: s.unit.name })))
     .sort((a, b) => b.owed - a.owed || a.team.name.localeCompare(b.team.name));
   const dueTotal = round2(per.reduce((s, x) => s + x.dueTotal, 0));
-  return { per, summary, season, behind, dueTotal };
+  const owed = sumKeys(per.map((s) => s.owed), OWED_KEYS);
+  return { per, summary, season, behind, dueTotal, owed };
 }
 
 let draftSeq = 0;

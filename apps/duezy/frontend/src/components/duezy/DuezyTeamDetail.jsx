@@ -1,56 +1,78 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { money, paidFor, teamReminder } from '../../utils/duezyMath.js';
 import { methodFrom } from '../../utils/duezyPayers.js';
 import DuezyContactLinks from './DuezyContactLinks.jsx';
 import DuezyPaymentHistory from './DuezyPaymentHistory.jsx';
 import DuezyRecordPayment from './DuezyRecordPayment.jsx';
+import DuezySeasonStrip from './DuezySeasonStrip.jsx';
+import DuezyWeekPanel from './DuezyWeekPanel.jsx';
 import { shortStamp } from '../../utils/duezyHistory.js';
 import { hasRecordedEntry } from '../../utils/duezyCorrection.js';
-
-export function SeasonStrip({ teamId, week, dues, paymentIndex, schedule }) {
-  const shown = Math.max(week, schedule.started ? schedule.currentWeek : 0);
-  return (
-    <div className="dz-strip" aria-label="Season so far">
-      {Array.from({ length: shown }, (_, i) => {
-        const w = i + 1;
-        const p = paymentIndex.get(`${teamId}:${w}`);
-        const status = p?.status || 'unpaid';
-        const late = !['paid', 'bye', 'makeup'].includes(status) && w <= schedule.lateThrough;
-        const night = schedule.dates ? `${schedule.label(w)} (week ${w})` : `Week ${w}`;
-        const title = status === 'partial' ? `${night}: paid ${money(paidFor(p, dues))} of ${money(dues)}` : `${night}: ${late ? 'late' : status === 'makeup' ? 'make up (still owed)' : status}`;
-        return <span key={w} className={`is-${status}${late ? ' is-late' : ''}`} title={title}>{w}</span>;
-      })}
-    </div>
-  );
-}
-
 function reminderFor(league, team, { late, due, lateWhen, dueWhen }) {
   if (late > 0) return teamReminder(league, team, late, lateWhen);
   if (due > 0) return teamReminder(league, team, due, dueWhen);
   return '';
 }
 
+/**
+ * Expanded team: Season so far (tap a week to record it), partial / correct form, history, contact.
+ * Everything payment-related follows the tapped week, or the page's week when none is open.
+ * focusWeek = { week, key } opens a week from outside (make-up jump).
+ */
 export default function DuezyTeamDetail({
-  league, team, week, dues, schedule, balance, payment, paymentIndex, onSetPayment, onAddPlayer, onEditTeam, canEdit = true,
-  correctKey = 0,
+  league, team, week, dues, schedule, balance, paymentIndex, onSetWeekPayment, onAddPlayer, onEditTeam, canEdit = true,
+  canSavePlayers = false, correctKey = 0, focusWeek = null,
 }) {
-  const weekName = schedule.dates ? schedule.label(week) : `week ${week}`;
-  const contact = team.contact ? <DuezyContactLinks contact={team.contact} message={reminderFor(league, team, balance)} /> : null;
+  const [openWeek, setOpenWeek] = useState(focusWeek?.week || null);
+  useEffect(() => {
+    if (focusWeek) setOpenWeek(focusWeek.week);
+  }, [focusWeek?.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const activeWeek = openWeek || week;
+  const payment = paymentIndex.get(`${team.id}:${activeWeek}`);
+  const weekName = schedule.dates ? schedule.label(activeWeek) : `week ${activeWeek}`;
+  const setPayment = (entry) => onSetWeekPayment(activeWeek, entry);
+  const contact = team.contact ? <DuezyContactLinks contact={team.contact} message={reminderFor(league, team, balance)} /> : null;
   return (
     <div className="dz-team-detail">
-      <p className="dz-small dz-muted">Season so far</p>
-      <SeasonStrip teamId={team.id} week={week} dues={dues} paymentIndex={paymentIndex} schedule={schedule} />
+      <p className="dz-small dz-muted">
+        Season so far{canEdit ? <span className="dz-strip-hint"> · tap a week to record it</span> : null}
+      </p>
+      <DuezySeasonStrip
+        teamId={team.id}
+        week={week}
+        dues={dues}
+        paymentIndex={paymentIndex}
+        schedule={schedule}
+        openWeek={openWeek}
+        onPick={canEdit ? setOpenWeek : undefined}
+      />
+      {canEdit && openWeek ? (
+        <DuezyWeekPanel
+          league={league}
+          team={team}
+          week={openWeek}
+          dues={dues}
+          schedule={schedule}
+          payment={payment}
+          canSavePlayers={canSavePlayers}
+          onSetPayment={setPayment}
+          onAddPlayer={onAddPlayer}
+          onClose={() => setOpenWeek(null)}
+          scrollKey={focusWeek?.week === openWeek ? focusWeek.key : 0}
+        />
+      ) : null}
       {balance.late > 0 ? <p className="dz-small dz-owe-late">Late for {balance.lateWhen}</p> : null}
       {balance.makeupNights.length ? (
         <p className="dz-small dz-muted">
-          ↻ Make-up for {balance.makeupWhen}. Still owed, but not late. Tap a payment method when they pay.
+          ↻ Make-up for {balance.makeupWhen}. Still owed, but not late.
+          {canEdit ? ' Tap that week above to record it.' : ''}
         </p>
       ) : null}
 
       {payment?.status === 'partial' ? (
         <p className="dz-small">
-          Paid {money(paidFor(payment, dues))} of {money(dues)} this week — {money(dues - paidFor(payment, dues))} carries over.
+          Paid {money(paidFor(payment, dues))} of {money(dues)} for {weekName} — {money(dues - paidFor(payment, dues))} carries over.
         </p>
       ) : null}
       {(payment?.method && !hasRecordedEntry(payment)) || payment?.note || payment?.recorded_by_email ? (
@@ -66,15 +88,15 @@ export default function DuezyTeamDetail({
       <div className="dz-detail-block">
         {canEdit ? (
           <DuezyRecordPayment
-            key={correctKey}
+            key={`${correctKey}-${activeWeek}`}
             league={league}
             team={team}
             dues={dues}
             weekName={weekName}
             payment={payment}
-            onSetPayment={onSetPayment}
+            onSetPayment={setPayment}
             onAddPlayer={onAddPlayer}
-            startCorrect={correctKey > 0}
+            startCorrect={correctKey > 0 && !openWeek}
           />
         ) : null}
         <DuezyPaymentHistory

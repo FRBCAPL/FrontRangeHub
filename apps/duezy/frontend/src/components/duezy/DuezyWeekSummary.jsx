@@ -1,16 +1,14 @@
 import React from 'react';
 import { money } from '../../utils/duezyMath.js';
+import DuezyOwedStat from './DuezyOwedStat.jsx';
+import DuezyWeekCashCard from './DuezyWeekCashCard.jsx';
 
-export default function DuezyWeekSummary({ summary, lateCount, lateTotal, dueTotal = 0, title = 'Collected this week', onShowLate }) {
+/** Division header: collected this week (ring), cash vs digital + make-ups, and what's still to collect. */
+export default function DuezyWeekSummary({
+  summary, owed, cash, makeups = [], title = 'Collected this week', cashTitle, currentNote = '', onShowLate, onShowMakeups, onOpenTeam,
+}) {
   const { paid, partial, bye, makeup = 0, collected, expected } = summary;
   const pct = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 100;
-  const lateStat = (
-    <>
-      <span className="dz-stat-icon" aria-hidden="true">{lateCount ? '!' : '✓'}</span>
-      <strong>{lateCount}</strong>
-      <span>{lateCount === 1 ? 'team late' : 'teams late'}{lateCount && onShowLate ? ' · see who ›' : ''}</span>
-    </>
-  );
 
   return (
     <section className="dz-summary">
@@ -29,16 +27,8 @@ export default function DuezyWeekSummary({ summary, lateCount, lateTotal, dueTot
           </div>
         </div>
       </div>
-      {lateCount && onShowLate ? (
-        <button type="button" className="dz-stat is-bad dz-stat--button" onClick={onShowLate}>{lateStat}</button>
-      ) : (
-        <div className={`dz-stat ${lateCount ? 'is-bad' : 'is-good'}`}>{lateStat}</div>
-      )}
-      <div className={`dz-stat ${lateTotal ? 'is-warn' : 'is-good'}`}>
-        <span className="dz-stat-icon" aria-hidden="true">$</span>
-        <strong>{money(lateTotal)}</strong>
-        <span>late{dueTotal > 0 ? ` · ${money(dueTotal)} due, not late yet` : ''}</span>
-      </div>
+      <DuezyWeekCashCard totals={cash} makeups={makeups} onOpenTeam={onOpenTeam} title={cashTitle} />
+      <DuezyOwedStat owed={owed} onShowLate={onShowLate} onShowMakeups={onShowMakeups} currentNote={currentNote} />
     </section>
   );
 }

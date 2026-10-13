@@ -44,8 +44,8 @@ function readOnlyStatus(status, payment) {
 }
 
 export default function DuezyTeamRow({
-  league, team, week, dues, schedule, paymentIndex, divisions = [], open, onToggle, onSetPayment, onUpdateTeam,
-  canEdit = true, correctKey = 0,
+  league, team, week, dues, schedule, paymentIndex, divisions = [], open, onToggle, onSetPayment, onSetWeekPayment, onUpdateTeam,
+  canEdit = true, correctKey = 0, focusWeek = null,
 }) {
   const payment = paymentIndex.get(`${team.id}:${week}`);
   const status = payment?.status || 'unpaid';
@@ -138,13 +138,14 @@ export default function DuezyTeamRow({
           dues={dues}
           schedule={schedule}
           balance={balance}
-          payment={payment}
           paymentIndex={paymentIndex}
-          onSetPayment={onSetPayment}
+          onSetWeekPayment={(w, entry) => (w === week ? onSetPayment(entry) : onSetWeekPayment(w, entry))}
           onAddPlayer={addPlayer}
           onEditTeam={() => setEditFocus('name')}
           canEdit={canEdit}
+          canSavePlayers={canSavePlayers}
           correctKey={correctKey}
+          focusWeek={focusWeek}
         />
       ) : null}
       {editFocus ? (

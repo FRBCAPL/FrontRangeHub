@@ -6,7 +6,7 @@ import { allDivisionsStats, divisionUnits, teamBalance } from '../../utils/duezy
 import { todayISO } from '../../utils/duezySchedule.js';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import DuezySeasonSummary from './DuezySeasonSummary.jsx';
-import { SeasonStrip } from './DuezyTeamDetail.jsx';
+import SeasonStrip from './DuezySeasonStrip.jsx';
 
 function balanceText(b) {
   if (b.late > 0) return <span className="dz-owe-late">{money(b.late)} late{b.due > 0 ? ` · ${money(b.due)} due` : ''}</span>;
@@ -55,7 +55,7 @@ export default function DuezyAdminLeague() {
         </p>
       </section>
 
-      <DuezySeasonSummary season={stats.season} behind={stats.behind} dueTotal={stats.dueTotal} divisionCount={view.units.length} />
+      <DuezySeasonSummary season={stats.season} behind={stats.behind} owed={stats.owed} divisionCount={view.units.length} />
 
       {stats.per.map((s) => (
         <section key={s.unit.id || 'single'} className="dz-panel dz-stack">

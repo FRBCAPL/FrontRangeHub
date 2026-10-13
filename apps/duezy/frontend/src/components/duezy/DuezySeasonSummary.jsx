@@ -1,16 +1,16 @@
 import React from 'react';
 import { money } from '../../utils/duezyMath.js';
+import DuezyOwedStat from './DuezyOwedStat.jsx';
 
 const percent = (part, whole) => (whole > 0 ? Math.min(100, Math.round((part / whole) * 100)) : 100);
 
 /** All-divisions header: season to date (each division through its own week) + full-season value. */
-export default function DuezySeasonSummary({ season, behind, dueTotal = 0, divisionCount }) {
+export default function DuezySeasonSummary({ season, behind, owed, divisionCount, onShowLate }) {
   const { collected, expected, seasonValue } = season;
   const collectedAll = season.collectedAll ?? collected;
   const early = Math.max(0, collectedAll - collected);
   const notStarted = expected === 0;
   const pct = percent(collected, expected);
-  const totalOwed = behind.reduce((s, x) => s + x.owed, 0);
   const seasonPct = percent(collectedAll, seasonValue);
 
   return (
@@ -45,11 +45,7 @@ export default function DuezySeasonSummary({ season, behind, dueTotal = 0, divis
           <strong>{behind.length}</strong>
           <span>{behind.length === 1 ? 'team late' : 'teams late'}</span>
         </div>
-        <div className={`dz-stat ${totalOwed ? 'is-warn' : 'is-good'}`}>
-          <span className="dz-stat-icon" aria-hidden="true">$</span>
-          <strong>{money(totalOwed)}</strong>
-          <span>late, all divisions{dueTotal > 0 ? ` · ${money(dueTotal)} due, not late yet` : ''}</span>
-        </div>
+        <DuezyOwedStat owed={owed} onShowLate={onShowLate} currentNote="Each division uses its own dates and grace period." />
       </section>
 
       {seasonValue > 0 ? (

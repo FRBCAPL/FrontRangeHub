@@ -46,12 +46,12 @@ function DivisionCards({ per, onOpen }) {
 }
 
 /** Combined view: every division at its own current week. section: 'main' | 'late' | 'activity'. */
-export default function DuezyAllDivisions({ league, all, onOpen, section = 'main', tabs = null, activity = null }) {
-  const { per, season, behind, dueTotal } = all;
+export default function DuezyAllDivisions({ league, all, onOpen, section = 'main', tabs = null, activity = null, onShowLate }) {
+  const { per, season, behind, owed } = all;
 
   return (
     <>
-      <DuezySeasonSummary season={season} behind={behind} dueTotal={dueTotal} divisionCount={per.length} />
+      <DuezySeasonSummary season={season} behind={behind} owed={owed} divisionCount={per.length} onShowLate={onShowLate} />
       {tabs}
       {section === 'main' ? <DivisionCards per={per} onOpen={onOpen} /> : null}
       {section === 'late' ? <DuezyBehindPanel league={league} behind={behind} graceNote="Each division uses its own dates and grace period." /> : null}

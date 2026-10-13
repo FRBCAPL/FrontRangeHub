@@ -27,6 +27,7 @@ export default function DuezyLeaguePage() {
   const { league, units, several, teams, paymentIndex, error, setError, loading } = data;
   const [viewWeeks, setViewWeeks] = useState({});
   const [correctRequest, setCorrectRequest] = useState(null);
+  const [filterRequest, setFilterRequest] = useState(null);
 
   const opts = useMemo(
     () => ({ today: todayISO(league?.timezone), defaultGrace: Number(league?.grace_days) || 0 }),
@@ -51,7 +52,10 @@ export default function DuezyLeaguePage() {
     return next;
   }, { replace: true });
   const openDivision = (id) => updateParams({ div: id === ALL_DIVISIONS ? null : id });
-  const showSection = (id) => updateParams({ view: id === 'main' ? null : id });
+  const showSection = (id) => {
+    setFilterRequest(null);
+    updateParams({ view: id === 'main' ? null : id });
+  };
   const correctChange = (change) => {
     const team = teams.find((t) => t.id === change.teamId);
     updateParams({ view: null, ...(several && team?.division_id ? { div: team.division_id } : {}) });
@@ -166,6 +170,7 @@ export default function DuezyLeaguePage() {
           section={section}
           tabs={sectionTabs('Divisions', all.behind.length)}
           activity={activity}
+          onShowLate={() => showSection('late')}
         />
       ) : (
         <DuezyUnitView
@@ -178,7 +183,16 @@ export default function DuezyLeaguePage() {
           tabs={sectionTabs('Teams', selected.behind.length)}
           activity={activity}
           onShowLate={() => showSection('late')}
+          onShowMakeups={() => {
+            showSection('main');
+            setFilterRequest({ filter: 'makeup', key: Date.now() });
+          }}
+          onOpenTeam={(teamId, week) => {
+            showSection('main');
+            setFilterRequest({ teamId, week, key: Date.now() });
+          }}
           correctRequest={correctRequest}
+          filterRequest={filterRequest}
         />
       )}
 
