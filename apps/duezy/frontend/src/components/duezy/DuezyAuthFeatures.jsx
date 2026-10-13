@@ -1,7 +1,7 @@
 import React from 'react';
 
 const FEATURES = [
-  { icon: '⚡', title: 'Two-minute setup', text: 'Name your league, set dues, paste your team list.' },
+  { icon: '⚡', title: 'Two-minute setup', text: 'Name your league, set dues, add your teams.' },
   { icon: '✓', title: 'One tap per team', text: 'Paid, partial, bye or make-up — right from your phone.' },
   { icon: '💬', title: 'Know who owes', text: 'Late teams at a glance, plus a ready-made reminder to copy.' },
   { icon: '📊', title: 'Books that balance', text: 'Cash vs Venmo totals, bank deposits, PDF and CSV reports.' },

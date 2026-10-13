@@ -9,9 +9,6 @@
 .dz-land-ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 4px; }
 .dz-land-cta { min-width: 190px; padding: 12px 22px; font-size: 1rem; }
 .dz-land-hero + .dz-land-features { margin-top: -20px; }
-.dz-land-visual { width: 100%; max-width: 440px; justify-self: center; }
-.dz-land-visual .dz-preview { transform: rotate(1.2deg); }
-
 /* Features row */
 .dz-land-features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 0; padding: 0; list-style: none; }
 .dz-land-features li {
@@ -27,9 +24,70 @@
 .dz-land-features small { color: var(--dz-muted); font-size: 0.85rem; line-height: 1.45; }
 
 /* "See it in action": what it handles + sample week */
-.dz-land-band { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; }
-.dz-land-handles { display: flex; flex-direction: column; gap: 12px; }
+.dz-land-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-areas: 'left handles right';
+  gap: 24px;
+  align-items: stretch;
+}
+.dz-land-features + .dz-land-band { margin-top: -24px; }
+.dz-land-handles { grid-area: handles; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; }
 .dz-land-handles p { margin: 0; }
+.dz-land-handles .dz-auth-handles { justify-content: center; }
+.dz-land-handles .dz-sport-strip {
+  display: grid;
+  grid-template-columns: auto repeat(4, 28px);
+  grid-auto-rows: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.dz-land-handles .dz-sport-strip small { grid-row: span 2; margin-right: 4px; }
+
+/* Sport icon tooltips: hover, keyboard focus, or tap */
+.dz-sport-tip { position: relative; cursor: default; outline: none; transition: border-color 0.15s ease, background 0.15s ease; }
+.dz-sport-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 5;
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--dz-line-strong, rgba(255, 255, 255, 0.18));
+  background: #11131c;
+  color: var(--dz-text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+.dz-sport-tip:hover,
+.dz-sport-tip:focus-visible,
+.dz-sport-tip:focus { border-color: rgba(129, 140, 248, 0.6); background: rgba(129, 140, 248, 0.14); }
+.dz-sport-tip:hover::after,
+.dz-sport-tip:focus::after { opacity: 1; transform: translate(-50%, 0); }
+/* Bottom row opens downward so it doesn't cover the top row */
+.dz-land-handles .dz-sport-tip:nth-of-type(n+5)::after { bottom: auto; top: calc(100% + 8px); transform: translate(-50%, -4px); }
+.dz-land-handles .dz-sport-tip:nth-of-type(n+5):hover::after,
+.dz-land-handles .dz-sport-tip:nth-of-type(n+5):focus::after { transform: translate(-50%, 0); }
+
+/* The two sample weeks beside "Handles the messy stuff" — compact so they match its height */
+.dz-land-sample { gap: 7px; padding: 12px; justify-content: space-between; }
+.dz-land-sample--left { grid-area: left; transform: rotate(-1.5deg); }
+.dz-land-sample--right { grid-area: right; transform: rotate(1.5deg); }
+.dz-land-sample .dz-preview-head { flex-direction: column; align-items: flex-start; gap: 2px; font-size: 0.82rem; }
+.dz-land-sample .dz-preview-amount { font-size: 1.05rem; white-space: nowrap; }
+.dz-land-sample .dz-preview-bar { height: 6px; }
+.dz-land-sample .dz-preview-row { gap: 8px; padding: 6px 8px; }
+.dz-land-sample .dz-preview-name { font-size: 0.8rem; min-width: 0; }
+.dz-land-sample .dz-preview-name small { font-size: 0.7rem; }
+.dz-land-sample .dz-preview-chip { font-size: 0.68rem; padding: 3px 8px; white-space: nowrap; }
 
 /* Pricing on its own, centered */
 .dz-land-pricing { width: min(520px, 100%); margin: 0 auto; }
@@ -73,9 +131,15 @@
 .dz-preview-row.is-makeup .dz-dot { background: var(--dz-cyan); }
 .dz-preview-row.is-makeup .dz-preview-chip { background: rgba(34, 211, 238, 0.16); color: #a5f3fc; }
 
+@media (max-width: 960px) {
+  .dz-land-band { grid-template-columns: 1fr 1fr; grid-template-areas: 'handles handles' 'left right'; row-gap: 28px; }
+}
 @media (max-width: 860px) {
   .dz-land-features { grid-template-columns: 1fr 1fr; }
-  .dz-land-band { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .dz-land-band { grid-template-columns: 1fr; grid-template-areas: 'handles' 'left' 'right'; }
+  .dz-land-sample { width: min(400px, 100%); justify-self: center; }
 }
 @media (max-width: 760px) {
   .dz-land .dz-preview { display: flex; }
@@ -85,7 +149,7 @@
   .dz-land-hero h1 { font-size: 2rem; }
   .dz-land-sub { font-size: 0.95rem; }
   .dz-land-cta { width: 100%; }
-  .dz-land-visual .dz-preview { transform: none; }
+  .dz-land-sample { transform: none; }
   .dz-land-features { grid-template-columns: 1fr; }
 }
 @media (max-width: 680px) {
