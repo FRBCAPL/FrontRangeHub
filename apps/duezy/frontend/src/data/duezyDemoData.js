@@ -100,7 +100,9 @@ export function buildDemoLeague(now = new Date()) {
         const entry = STORY[div.id][ti](w, dues);
         if (!entry) continue;
         const amount = entry.status === 'paid' ? dues : entry.amount || 0;
-        const at = `${addDays(start, 7 * (Math.min(w, CURRENT) - 1))}T20:${String(10 + ti).padStart(2, '0')}:00-06:00`;
+        const night = new Date(`${addDays(start, 7 * (Math.min(w, CURRENT) - 1))}T20:${String(10 + ti).padStart(2, '0')}:00-06:00`);
+        const minutesAgo = 4 + di * 20 + ti * 2 + (w > CURRENT ? 1 : 0);
+        const at = (night > now ? new Date(now.getTime() - minutesAgo * 60000) : night).toISOString();
         const row = {
           id: `${id}:${w}`, league_id: DEMO_ID, team_id: id, week: w, status: entry.status, amount,
           method: entry.method || null, note: null, paid_by: entry.paid_by || null,

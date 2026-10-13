@@ -87,8 +87,11 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
   const paidOpen = showPaid || Boolean(search.trim());
   const byeCount = paid.filter((t) => teamBucket(t, week, paymentIndex) === 'bye').length;
   const paidCount = paid.length - byeCount;
-  const groupLabel = [paidCount && `${paidCount} paid`, byeCount && `${byeCount} ${byeCount === 1 ? 'bye' : 'byes'}`]
-    .filter(Boolean).join(' · ');
+  const paidAbove = main.some((t) => isSettled(teamBucket(t, week, paymentIndex)));
+  const groupLabel = [
+    paidCount && `${paidCount} ${paidAbove ? 'other ' : ''}paid`,
+    byeCount && `${byeCount} ${paidAbove && !paidCount ? 'other ' : ''}${byeCount === 1 ? 'bye' : 'byes'}`,
+  ].filter(Boolean).join(' · ');
 
   const toggleTeam = (team) => {
     const opening = openTeamId !== team.id;

@@ -10,7 +10,7 @@ export default function DuezyAuthPitch({ onStart, onLogin }) {
       <h1>League dues, <span className="dz-gradient-text">without the spreadsheet.</span></h1>
       <p className="dz-land-sub">
         Duezy tracks who’s paid, who owes and where the money went. Teams keep paying you the way they do now —
-        cash, Venmo, Zelle — and you record it in one tap. No fees, and no money passes through Duezy.
+        cash, Venmo, Zelle — and you record it in one tap. No payment-processing fees — no money passes through Duezy.
       </p>
       <div className="dz-land-ctas">
         <Link to={`${DUEZY_PATH}/demo`} className="dz-btn dz-btn--ghost dz-land-cta">Try the live demo</Link>

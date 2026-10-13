@@ -6,7 +6,7 @@ import DuezyWeekSummary from './DuezyWeekSummary.jsx';
 import DuezyBehindPanel from './DuezyBehindPanel.jsx';
 import DuezyCatchUp from './DuezyCatchUp.jsx';
 import DuezyTeamsPanel from './DuezyTeamsPanel.jsx';
-import DuezyDivisionSeason from './DuezyDivisionSeason.jsx';
+import DuezyFullSeason from './DuezyFullSeason.jsx';
 import DuezyMakeupModal from './DuezyMakeupModal.jsx';
 
 /**
@@ -52,7 +52,7 @@ export default function DuezyUnitView({
         onShowLate={onShowLate}
         onShowMakeups={data.canEdit ? () => setMakeupsOpen(true) : onShowMakeups}
       />
-      <DuezyDivisionSeason season={stats.season} />
+      <DuezyFullSeason season={stats.season} />
 
       {tabs}
 

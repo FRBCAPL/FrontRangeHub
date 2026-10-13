@@ -36,9 +36,22 @@
 .dz-stat strong { font-size: 1.35rem; }
 .dz-stat-icon { top: 10px; right: 10px; width: 22px; height: 22px; font-size: 0.75rem; }
 
-.dz-season-total--division { margin: 0; padding: 10px 14px; gap: 6px; text-align: center; }
-.dz-season-total--division .dz-row { flex-direction: column; justify-content: center; align-items: center; gap: 2px; }
-.dz-season-total--division .dz-league-progress { height: 6px; }
+.dz-full-season { margin: 0; padding: 0 14px; gap: 6px; }
+.dz-full-season summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  cursor: pointer;
+  list-style: none;
+}
+.dz-full-season summary::-webkit-details-marker { display: none; }
+.dz-full-season summary > span:first-child::before { content: '▸'; display: inline-block; margin-right: 6px; transition: transform 0.15s ease; }
+.dz-full-season[open] summary > span:first-child::before { transform: rotate(90deg); }
+.dz-full-season[open] { padding-bottom: 12px; }
+.dz-full-season > .dz-league-progress { display: block; height: 6px; margin: 2px 0 8px; }
+.dz-full-season > span.dz-small { display: block; }
 
 /* Team rows */
 .dz-panel-head { margin-bottom: 10px; }
