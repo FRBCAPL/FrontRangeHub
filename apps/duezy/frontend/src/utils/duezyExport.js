@@ -1,13 +1,20 @@
 /**
- * CSV ledger for treasurers: one line per team per week through each division's current week
- * (plus any later week that already has a payment), with dues, what was paid, and what's still owed.
+ * CSV ledger for treasurers: one line per team for every week of the season (unpaid and upcoming
+ * weeks included), so the columns reconcile with the screens:
+ *   sum(Paid) = collected · sum(Paid + Balance) = full-season value (byes excluded) · sum(Due now) = owed today.
  */
 import { indexPayments, paidFor, round2, weeklyDues } from './duezyMath.js';
 import { teamsInUnit, unitSchedule } from './duezyDivisions.js';
 
 export const LEDGER_HEADER = [
-  'Division', 'Team', 'Captain', 'Week', 'Night', 'Dues', 'Status', 'Paid', 'Owed', 'Method', 'Note', 'Recorded by', 'Last updated',
+  'Division', 'Team', 'Captain', 'Week', 'Night', 'When', 'Dues', 'Status', 'Paid', 'Balance', 'Due now',
+  'Method', 'Note', 'Recorded by', 'Last updated',
 ];
+
+function whenLabel(week, schedule) {
+  if (!schedule.started || week > schedule.currentWeek) return 'Upcoming';
+  return week === schedule.currentWeek ? 'This week' : 'Past';
+}
 
 const STATUS = { paid: 'Paid', partial: 'Partial', bye: 'Bye', unpaid: 'Not paid' };
 
@@ -30,23 +37,26 @@ export function ledgerRows({ units, teams, payments, today, defaultGrace = 0 }) 
     const dues = weeklyDues(unit);
     const schedule = unitSchedule(unit, { today, defaultGrace });
     const through = schedule.started ? schedule.currentWeek : 0;
+    const totalWeeks = Math.max(1, Number(unit.total_weeks) || 1);
     teamsInUnit(teams, unit, i === 0).forEach((team) => {
-      const last = Math.max(through, lastPaidWeek[team.id] || 0);
+      const last = Math.max(totalWeeks, lastPaidWeek[team.id] || 0);
       for (let w = 1; w <= last; w += 1) {
         const p = index.get(`${team.id}:${w}`);
-        if (!p && w > through) continue;
         const status = p?.status || 'unpaid';
         const paid = paidFor(p, dues);
+        const balance = status === 'bye' ? 0 : Math.max(0, round2(dues - paid));
         rows.push([
           unit.name,
           team.name,
           team.captain || '',
           w,
           schedule.dates?.[w - 1] || '',
+          whenLabel(w, schedule),
           dues.toFixed(2),
           STATUS[status] || status,
           round2(paid).toFixed(2),
-          (status === 'bye' ? 0 : Math.max(0, round2(dues - paid))).toFixed(2),
+          balance.toFixed(2),
+          (w <= through ? balance : 0).toFixed(2),
           p?.method || '',
           p?.note || '',
           p?.recorded_by_email || '',

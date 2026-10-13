@@ -18,7 +18,7 @@ export default function DuezyExportButton({ league, units, teams, payments }) {
   };
 
   return (
-    <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={download} title="Every team, every week — opens in Excel or Google Sheets">
+    <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={download} title="Every team, every week of the season — opens in Excel or Google Sheets">
       Download ledger (CSV)
     </button>
   );
