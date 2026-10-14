@@ -71,7 +71,7 @@ export default function DuezyLeagueList() {
         You can have an unlimited number of leagues.<br />
         Each league must have at least one division and you can have unlimited divisions per league.<br />
         Add a division using <strong>+ Add division</strong> on the league page. <br />
-        Same division starting over? Click <strong>Start next season</strong> on the league page or in the division’s settings.
+        Same division starting over? Click <strong>Start next season</strong> on the league page or in the division’s settings.<br />
         A different league altogether? <strong>+ New league</strong>.
       </p>
       {joined ? (
