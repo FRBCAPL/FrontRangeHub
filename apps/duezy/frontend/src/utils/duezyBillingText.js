@@ -11,10 +11,11 @@ export function friendlyError(message) {
   const rule = text.match(/duezy_[a-z_]+: (.+)/);
   if (rule) return rule[1].charAt(0).toUpperCase() + rule[1].slice(1);
   if (/row-level security/i.test(text)) return LOCKED_MESSAGE;
-  if (/(start_date|skip_dates|grace_days|timezone)/.test(text) && /column|schema cache/i.test(text)) {
+  const missingColumn = /schema cache|column .* does not exist/i.test(text);
+  if (/(start_date|skip_dates|grace_days|timezone)/.test(text) && missingColumn) {
     return 'League dates need a quick database update (duezy-schedule SQL). Everything else still works.';
   }
-  if (/matches_per_night/.test(text) && /column|schema cache/i.test(text)) {
+  if (/matches_per_night/.test(text) && missingColumn) {
     return 'Double play needs a quick database update (duezy-double-play SQL). Everything else still works.';
   }
   return text;

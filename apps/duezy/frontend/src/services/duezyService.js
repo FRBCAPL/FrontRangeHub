@@ -9,6 +9,12 @@ const TEAM_FIELDS = '*';
 /** '*' so recorded_by_* columns come through once the payment-history SQL is run (and nothing breaks before). */
 const PAYMENT_FIELDS = '*';
 
+/**
+ * Multi-row inserts: a field one row leaves out (e.g. no nights off) gets the column default,
+ * not null — otherwise NOT NULL columns like skip_dates reject the whole insert.
+ */
+const ALL_ROWS_DEFAULTS = { defaultToNull: false };
+
 export function check({ data, error }) {
   if (error) throw new Error(friendlyError(error.message));
   return data;
@@ -54,13 +60,13 @@ export async function createLeague(league, teams, divisions = null) {
     let rows = teams.map((t, i) => teamRow(created.id, t, i));
     if (multi) {
       const divisionRows = divisions.map(({ teams: _teams, ...d }, i) => ({ ...d, league_id: created.id, sort_order: i }));
-      const savedDivisions = check(await duezy.from('duezy_divisions').insert(divisionRows).select('id, sort_order'));
+      const savedDivisions = check(await duezy.from('duezy_divisions').insert(divisionRows, ALL_ROWS_DEFAULTS).select('id, sort_order'));
       const idByOrder = new Map(savedDivisions.map((d) => [d.sort_order, d.id]));
       rows = divisions.flatMap((d, di) =>
         d.teams.map((t, ti) => ({ ...teamRow(created.id, t, ti), division_id: idByOrder.get(di) }))
       );
     }
-    if (rows.length) checkTeam(await duezy.from('duezy_teams').insert(rows));
+    if (rows.length) checkTeam(await duezy.from('duezy_teams').insert(rows, ALL_ROWS_DEFAULTS));
   } catch (e) {
     await duezy.from('duezy_leagues').delete().eq('id', created.id);
     throw e;
@@ -113,7 +119,7 @@ export async function addTeams(leagueId, teams, startOrder, divisionId = null) {
     const division = t.division_id || divisionId;
     return { ...teamRow(leagueId, t, startOrder + i), ...(division ? { division_id: division } : {}) };
   });
-  return checkTeam(await duezy.from('duezy_teams').insert(rows).select(TEAM_FIELDS)) || [];
+  return checkTeam(await duezy.from('duezy_teams').insert(rows, ALL_ROWS_DEFAULTS).select(TEAM_FIELDS)) || [];
 }
 
 export async function updateTeam(id, changes) {

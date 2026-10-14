@@ -146,6 +146,15 @@ test('roundup reminder names divisions and skips the week', () => {
   assert.match(text, /^Mile High dues check:\n- Hustlers \(Tue 8-Ball\): \$40/);
 });
 
+test('a new division draft inherits the nights off', () => {
+  const from = { skip_dates: ['2026-11-26', '2026-12-24'], start_date: '2026-10-20' };
+  const d = newDivisionDraft(from);
+  assert.deepEqual(d.skip_dates, ['2026-11-26', '2026-12-24']);
+  d.skip_dates.push('2027-01-01');
+  assert.equal(from.skip_dates.length, 2);
+  assert.equal('skip_dates' in newDivisionDraft({ skip_dates: [] }), false);
+});
+
 test('division drafts copy defaults and save cleanly', () => {
   const d = newDivisionDraft({ dues_amount: 25, total_weeks: 14, play_day: 'Thursday' });
   assert.equal(divisionReady(d), false);

@@ -9,6 +9,14 @@ test('billing errors become plain English; others pass through', () => {
   assert.equal(friendlyError('duezy_not_owner: only the league owner can add people'), 'Only the league owner can add people');
 });
 
+test('only a truly missing column asks for the schedule SQL', () => {
+  const sqlNeeded = /duezy-schedule SQL/;
+  assert.match(friendlyError("Could not find the 'skip_dates' column of 'duezy_divisions' in the schema cache"), sqlNeeded);
+  assert.match(friendlyError('column "start_date" of relation "duezy_leagues" does not exist'), sqlNeeded);
+  const notNull = 'null value in column "skip_dates" of relation "duezy_divisions" violates not-null constraint';
+  assert.equal(friendlyError(notNull), notNull);
+});
+
 test('trial allows 2 divisions in total; paid has no cap; locked allows none', () => {
   assert.equal(canAddDivisions(null, 5), true);
   assert.equal(canAddDivisions({ phase: 'trial', can_write: true, division_limit: 2, divisions_used: 1 }, 1), true);

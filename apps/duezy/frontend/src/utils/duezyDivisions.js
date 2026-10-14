@@ -196,6 +196,7 @@ export function newDivisionDraft(defaults = {}) {
     players_per_match: defaults.players_per_match ?? 4,
     total_weeks: defaults.total_weeks ?? 12,
     ...(defaults.start_date ? { start_date: defaults.start_date } : {}),
+    ...(defaults.skip_dates?.length ? { skip_dates: [...defaults.skip_dates] } : {}),
     ...(Number(defaults.matches_per_night) > 1 ? { matches_per_night: Number(defaults.matches_per_night) } : {}),
     teamsText: '',
   };
