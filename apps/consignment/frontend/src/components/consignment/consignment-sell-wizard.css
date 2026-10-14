@@ -226,22 +226,44 @@
   background: #020617;
 }
 
+/* 44px tap area; the visible 26px dot is drawn by ::before. */
 .cs-wiz-photos button {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 24px !important;
+  top: -5px;
+  right: -5px;
+  width: 44px !important;
   min-width: 0 !important;
-  height: 24px;
+  height: 44px;
   min-height: 0;
   padding: 0 !important;
-  border-radius: 999px;
   border: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: transparent;
   color: #fff;
-  font-size: 1rem;
+  font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+}
+
+.cs-wiz-photos button::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.75);
+  z-index: -1;
+}
+
+#cs-wiz-title:focus {
+  outline: none;
+}
+
+.cs-wiz-photo-errors {
+  margin: 6px 0 0;
+  padding-left: 18px;
 }
 
 .cs-wiz-review {

@@ -41,7 +41,9 @@ function EndedMessage({ auction, iWon, payDays }) {
 
 /** onAuction(auction): lets the item page follow the latest auction state (e.g. the "at Legends" badge). */
 export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
-  const { auction, history, userId, myTopBid, isHighBidder, remaining, loading, error, refresh } = useConsignmentAuction(itemId);
+  const {
+    auction, history, userId, myTopBid, isHighBidder, outbid, remaining, loading, error, stale, refresh,
+  } = useConsignmentAuction(itemId);
   const [payDays, setPayDays] = useState(DEFAULT_PAY_DAYS);
 
   useEffect(() => {
@@ -67,11 +69,12 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
       <div className="cs-auction-head">
         <span className="cs-auction-badge">Online auction</span>
         {live ? (
-          <span className={`cs-countdown${closing ? ' closing' : ''}`} aria-live="polite">
+          <span className={`cs-countdown${closing ? ' closing' : ''}`} role="timer">
             {remaining > 0 ? `Ends in ${formatCountdown(remaining)}` : 'Closing…'}
           </span>
         ) : null}
       </div>
+      {stale ? <p className="cs-hint" role="status">Reconnecting… showing the last update.</p> : null}
 
       {live ? (
         <>
@@ -93,6 +96,7 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
             auction={auction}
             userId={userId}
             isHighBidder={isHighBidder}
+            outbid={outbid}
             payDays={payDays}
             onBid={refresh}
           />

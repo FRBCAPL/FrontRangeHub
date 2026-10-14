@@ -1,51 +1,22 @@
-import React, { useEffect, useMemo } from 'react';
-import { categoryLabel, conditionLabel, MAX_PHOTOS } from '../../data/consignmentConstants.js';
+import React from 'react';
+import { categoryLabel, conditionLabel, FIELD_LIMITS } from '../../data/consignmentConstants.js';
 import { listingFee } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentSellPhotos from './ConsignmentSellPhotos.jsx';
 import { SALE_METHODS } from './ConsignmentSubmitPricing.jsx';
 
-export function StepDetails({ form, set, files, setFiles }) {
-  const previews = useMemo(() => files.map((f) => ({ file: f, url: URL.createObjectURL(f) })), [files]);
-  useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews]);
-
-  const addFiles = (e) => {
-    setFiles((prev) => [...prev, ...e.target.files].slice(0, MAX_PHOTOS));
-    e.target.value = '';
-  };
-
+export function StepDetails({ form, set, files, setFiles, draftRestored }) {
   return (
     <>
       <div className="cs-field">
         <label htmlFor="cs-specs">Specifications</label>
-        <textarea id="cs-specs" rows={3} value={form.specs} onChange={set('specs')} placeholder="Weight, length, wrap, tip, joint…" />
+        <textarea id="cs-specs" rows={3} value={form.specs} onChange={set('specs')} maxLength={FIELD_LIMITS.specs} placeholder="Weight, length, wrap, tip, joint…" />
       </div>
       <div className="cs-field">
         <label htmlFor="cs-desc">Description</label>
-        <textarea id="cs-desc" rows={3} value={form.description} onChange={set('description')} placeholder="Anything a buyer should know — wear, history, extras included." />
+        <textarea id="cs-desc" rows={3} value={form.description} onChange={set('description')} maxLength={FIELD_LIMITS.description} placeholder="Anything a buyer should know — wear, history, extras included." />
       </div>
-      <div className="cs-field">
-        <label htmlFor="cs-photos">Photos ({files.length}/{MAX_PHOTOS})</label>
-        {files.length < MAX_PHOTOS ? (
-          <input id="cs-photos" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={addFiles} />
-        ) : null}
-        <p className="cs-hint">Optional, but items with clear photos get reviewed faster.</p>
-        {previews.length ? (
-          <ul className="cs-wiz-photos">
-            {previews.map((p, i) => (
-              <li key={p.url}>
-                <img src={p.url} alt={`Photo ${i + 1}`} />
-                <button
-                  type="button"
-                  aria-label={`Remove photo ${i + 1}`}
-                  onClick={() => setFiles((prev) => prev.filter((f) => f !== p.file))}
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
+      <ConsignmentSellPhotos files={files} setFiles={setFiles} draftRestored={draftRestored} />
     </>
   );
 }
@@ -98,7 +69,7 @@ export function StepAgree({ form, set, agreementText }) {
         <label>
           <input type="checkbox" checked={form.agreement} onChange={set('agreement')} />
           I agree to the {isAuction ? 'online auction' : 'consignment'} terms above
-          <span className="cs-req" aria-label="required">*</span>
+          <span className="cs-req" aria-hidden="true">*</span>
         </label>
       </div>
       <p className="cs-hint">

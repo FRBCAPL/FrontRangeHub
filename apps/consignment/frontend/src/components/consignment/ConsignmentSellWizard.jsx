@@ -6,14 +6,16 @@ import { StepAgree, StepDetails, StepReview } from './ConsignmentSellReviewSteps
 
 /**
  * Guided sell-an-item modal. Form state lives in the parent, so closing and reopening keeps progress.
- * props: form, set, setMethod, files, setFiles, policy, days, deliverDays, agreementText, busy, submitError, onSubmit, onClose,
- * onCancel (clears the listing so it isn't offered again)
+ * props: form, set, setMethod, files, setFiles, index, setIndex, draftRestored, policy, days, deliverDays, agreementText,
+ * busy, busyLabel, submitError, onSubmit, onClose, onCancel (clears the listing so it isn't offered again)
  */
 export default function ConsignmentSellWizard(props) {
-  const { form, busy, submitError, onSubmit, onClose, onCancel } = props;
-  const [index, setIndex] = useState(0);
+  const { form, busy, busyLabel, submitError, onSubmit, onClose, onCancel, setIndex } = props;
+  const index = Math.min(Math.max(0, props.index || 0), SELL_STEPS.length - 1);
   const [error, setError] = useState('');
+  const modalRef = useRef(null);
   const bodyRef = useRef(null);
+  const titleRef = useRef(null);
   const step = SELL_STEPS[index];
   const last = index === SELL_STEPS.length - 1;
 
@@ -24,7 +26,8 @@ export default function ConsignmentSellWizard(props) {
   }, [busy, onClose]);
 
   useEffect(() => {
-    bodyRef.current?.scrollTo?.(0, 0);
+    modalRef.current?.scrollTo?.(0, 0);
+    if (!bodyRef.current?.contains(document.activeElement)) titleRef.current?.focus({ preventScroll: true });
   }, [index]);
 
   useEffect(() => {
@@ -42,12 +45,12 @@ export default function ConsignmentSellWizard(props) {
     if (problem) { setError(problem); return; }
     setError('');
     if (last) onSubmit();
-    else setIndex((i) => i + 1);
+    else setIndex(index + 1);
   };
 
   const back = () => {
     setError('');
-    setIndex((i) => Math.max(0, i - 1));
+    setIndex(Math.max(0, index - 1));
   };
 
   const shared = { ...props, goTo };
@@ -55,12 +58,19 @@ export default function ConsignmentSellWizard(props) {
 
   return createPortal(
     <div className="cs-portal">
-      <div className="cs-modal" role="dialog" aria-modal="true" aria-labelledby="cs-wiz-title" onClick={busy ? undefined : onClose}>
+      <div
+        ref={modalRef}
+        className="cs-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cs-wiz-title"
+        onClick={busy ? undefined : onClose}
+      >
         <form className="cs-modal-card cs-wiz" onClick={(e) => e.stopPropagation()} onSubmit={next} noValidate>
           <div className="cs-how-head">
             <div>
               <p className="cs-wiz-count">Step {index + 1} of {SELL_STEPS.length}</p>
-              <h2 id="cs-wiz-title">{step.title}</h2>
+              <h2 id="cs-wiz-title" ref={titleRef} tabIndex={-1}>{step.title}</h2>
             </div>
             <button type="button" className="cs-how-close" onClick={onClose} disabled={busy} aria-label="Close">×</button>
           </div>
@@ -96,7 +106,7 @@ export default function ConsignmentSellWizard(props) {
                 <button type="button" className="cs-wiz-cancel" onClick={onCancel} disabled={busy}>Cancel listing</button>
               ) : null}
               <button type="submit" className="cs-btn" disabled={busy}>
-                {last ? (busy ? 'Submitting…' : 'Submit for review') : 'Next'}
+                {last ? (busy ? busyLabel || 'Submitting…' : 'Submit for review') : 'Next'}
               </button>
             </div>
           </div>

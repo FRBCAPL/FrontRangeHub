@@ -34,6 +34,7 @@ export async function isMyItem(itemId) {
 /** Latest public auction per item id, for shop cards. Empty if the auction migration hasn't run. */
 export async function loadAuctionsForItems(itemIds) {
   if (!itemIds?.length) return {};
+  await supabase.rpc('close_due_consignment_auctions');
   const { data, error } = await supabase
     .from('consignment_auction_board')
     .select('*')
@@ -68,19 +69,17 @@ export function onAuthChange(callback) {
   };
 }
 
-/** The signed-in user's highest bid on this auction (null if none). */
-export async function loadMyTopBid(auctionId, userId) {
-  if (!auctionId || !userId) return null;
+/** The signed-in user's bids on this auction, highest first (empty if none). */
+export async function loadMyBids(auctionId, userId) {
+  if (!auctionId || !userId) return [];
   const { data, error } = await supabase
     .from('consignment_bids')
     .select('amount, is_buy_now')
     .eq('auction_id', auctionId)
     .eq('bidder_id', userId)
-    .order('amount', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (error) return null;
-  return data;
+    .order('amount', { ascending: false });
+  if (error) return [];
+  return data || [];
 }
 
 export function openHubLogin() {

@@ -5,14 +5,17 @@ import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 
 export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
-  const [suspend, setSuspend] = useState(true);
+  const overdue = Boolean(auction.payment_due_at) && new Date(auction.payment_due_at).getTime() < Date.now();
+  const [suspend, setSuspend] = useState(overdue);
   const [reason, setReason] = useState('Did not pay for a won auction');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const overdue = new Date(auction.payment_due_at).getTime() < Date.now();
 
   const save = async (e) => {
     e.preventDefault();
+    if (!overdue && !window.confirm(
+      `The pay window is still open until ${formatDateTime(auction.payment_due_at)}. Mark this winner unpaid anyway?`,
+    )) return;
     setBusy(true);
     setError('');
     try {
@@ -49,7 +52,7 @@ export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
         {error ? <p className="cs-error">{error}</p> : null}
         <div className="cs-actions">
           <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Mark unpaid'}</button>
-          <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)}>Cancel</button>
+          <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)} disabled={busy}>Cancel</button>
         </div>
       </form>
     </div>

@@ -3,42 +3,67 @@ import {
   currentUserId,
   loadAuctionForItem,
   loadBidHistory,
-  loadMyTopBid,
+  loadMyBids,
   onAuthChange,
 } from '../services/consignmentAuctionService.js';
+import { serverNow, syncServerClock } from '../services/consignmentServerClock.js';
 
 const POLL_MS = 10000;
 const FAST_POLL_MS = 3000;
 const FAST_WINDOW_MS = 3 * 60 * 1000;
 
-/** Live auction state for one item: polls the public board, ticks a clock, tracks the signed-in bidder. */
+/**
+ * Live auction state for one item: polls the public board, ticks a server-synced clock, tracks the
+ * signed-in bidder. A failed poll keeps the last good data and sets `stale` instead of blanking the panel.
+ */
 export default function useConsignmentAuction(itemId) {
   const [auction, setAuction] = useState(null);
   const [history, setHistory] = useState([]);
   const [userId, setUserId] = useState(null);
-  const [myTopBid, setMyTopBid] = useState(null);
-  const [now, setNow] = useState(() => Date.now());
+  const [myBids, setMyBids] = useState([]);
+  const [now, setNow] = useState(serverNow);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [stale, setStale] = useState(false);
   const userRef = useRef(null);
+  const requestRef = useRef(0);
+  const hasDataRef = useRef(false);
+
+  useEffect(() => {
+    syncServerClock().then(() => setNow(serverNow()));
+  }, []);
+
+  useEffect(() => {
+    requestRef.current += 1;
+    hasDataRef.current = false;
+    setAuction(null);
+    setHistory([]);
+    setMyBids([]);
+    setError('');
+    setStale(false);
+    setLoading(true);
+  }, [itemId]);
 
   const refresh = useCallback(async () => {
+    const request = ++requestRef.current;
     try {
       const row = await loadAuctionForItem(itemId);
+      const [bids, mine] = row
+        ? await Promise.all([loadBidHistory(row.id), loadMyBids(row.id, userRef.current)])
+        : [[], []];
+      if (request !== requestRef.current) return;
+      hasDataRef.current = true;
       setAuction(row);
-      if (row) {
-        const [bids, mine] = await Promise.all([
-          loadBidHistory(row.id),
-          loadMyTopBid(row.id, userRef.current),
-        ]);
-        setHistory(bids);
-        setMyTopBid(mine);
-      }
+      setHistory(bids);
+      setMyBids(mine);
       setError('');
+      setStale(false);
     } catch (err) {
-      setError(err.message);
+      if (request !== requestRef.current) return;
+      if (hasDataRef.current) setStale(true);
+      else setError(err.message);
     } finally {
-      setLoading(false);
+      if (request === requestRef.current) setLoading(false);
     }
   }, [itemId]);
 
@@ -65,7 +90,7 @@ export default function useConsignmentAuction(itemId) {
 
   useEffect(() => {
     if (!live) return undefined;
-    const tick = setInterval(() => setNow(Date.now()), 1000);
+    const tick = setInterval(() => setNow(serverNow()), 1000);
     return () => clearInterval(tick);
   }, [live]);
 
@@ -80,9 +105,27 @@ export default function useConsignmentAuction(itemId) {
     if (clockEnded) refresh();
   }, [clockEnded, refresh]);
 
+  const myTopBid = myBids[0] || null;
   const isHighBidder = Boolean(
     myTopBid && auction?.bid_count && Number(myTopBid.amount) === Number(auction.current_bid),
   );
+  const outbid = Boolean(live && myTopBid && !isHighBidder);
+  const myAmounts = new Set(myBids.map((b) => Number(b.amount)));
+  const historyWithMine = myAmounts.size
+    ? history.map((b) => ({ ...b, is_mine: myAmounts.has(Number(b.amount)) }))
+    : history;
 
-  return { auction, history, userId, myTopBid, isHighBidder, remaining, loading, error, refresh };
+  return {
+    auction,
+    history: historyWithMine,
+    userId,
+    myTopBid,
+    isHighBidder,
+    outbid,
+    remaining,
+    loading,
+    error,
+    stale,
+    refresh,
+  };
 }

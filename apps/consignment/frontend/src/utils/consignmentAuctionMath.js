@@ -6,6 +6,8 @@
  * - Soft close: a bid inside the final N minutes moves the end to N minutes after that bid.
  */
 
+import { formatDollars } from './consignmentMoney.js';
+
 export const DEFAULT_COMMISSION_PCT = 15;
 export const DEFAULT_SOFT_CLOSE_MINUTES = 2;
 export const INCREMENT_BREAK = 500;
@@ -62,6 +64,6 @@ export function bidError(amount, auction) {
   const n = Number(amount);
   if (!Number.isFinite(n) || n <= 0) return 'Enter a bid amount.';
   const min = minNextBid(auction);
-  if (n < min) return `Minimum bid is $${min.toLocaleString('en-US')}.`;
+  if (n < min) return `Minimum bid is ${formatDollars(min)}.`;
   return null;
 }

@@ -62,7 +62,7 @@ export function PriceFields({ method, form, set, policy }) {
     return (
       <div className="cs-field">
         <label htmlFor="cs-payout">Your price ($) <Req /></label>
-        <input id="cs-payout" type="number" min="1" step="0.01" required value={form.seller_payout} onChange={set('seller_payout')} />
+        <input id="cs-payout" type="number" inputMode="decimal" min="1" step="0.01" required value={form.seller_payout} onChange={set('seller_payout')} />
         <p className="cs-hint">The price buyers see in the case (plus sales tax). FRPL may suggest a different price when it reviews your item.</p>
         <FeePreview price={form.seller_payout} method="fixed" policy={policy} />
         <label className="cs-check">
@@ -84,12 +84,12 @@ export function PriceFields({ method, form, set, policy }) {
       <div className="cs-row">
         <div className="cs-field">
           <label htmlFor="cs-reserve">Reserve / opening bid ($) <Req /></label>
-          <input id="cs-reserve" type="number" min="1" step="0.01" required value={form.seller_payout} onChange={set('seller_payout')} />
+          <input id="cs-reserve" type="number" inputMode="decimal" min="1" step="0.01" required value={form.seller_payout} onChange={set('seller_payout')} />
           <p className="cs-hint">The lowest price you’ll accept. Bidding starts here.</p>
         </div>
         <div className="cs-field">
           <label htmlFor="cs-buynow">Buy It Now ($)</label>
-          <input id="cs-buynow" type="number" min="1" step="0.01" value={form.buy_now_price} onChange={set('buy_now_price')} />
+          <input id="cs-buynow" type="number" inputMode="decimal" min="1" step="0.01" value={form.buy_now_price} onChange={set('buy_now_price')} />
           <p className="cs-hint">
             Optional. Must be higher than the reserve.
             {atBuyNow ? ` If someone buys it now, you’re paid ${formatDollars(atBuyNow.sellerFromSale)}.` : ''}

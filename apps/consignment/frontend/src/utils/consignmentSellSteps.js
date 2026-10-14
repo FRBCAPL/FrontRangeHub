@@ -1,3 +1,5 @@
+import { FIELD_LIMITS } from '../data/consignmentConstants.js';
+
 export const SELL_STEPS = [
   { id: 'method', title: 'How do you want to sell?' },
   { id: 'contact', title: 'How do we reach you?' },
@@ -9,15 +11,27 @@ export const SELL_STEPS = [
 ];
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PHONE_DIGITS = 10;
+
+const tooLong = (value, key) => String(value || '').trim().length > FIELD_LIMITS[key];
 
 /** First problem on a step, or '' when the seller can move on. */
 export function sellStepError(stepId, form) {
   if (stepId === 'contact') {
+    const phoneDigits = form.seller_phone.replace(/\D/g, '').length;
     if (!form.seller_name.trim()) return 'Enter your name.';
     if (!form.seller_phone.trim() && !form.seller_email.trim()) return 'Enter a phone number or email so FRPL can reach you.';
+    if (form.seller_phone.trim() && phoneDigits < MIN_PHONE_DIGITS) return 'Enter your full phone number, including area code.';
     if (form.seller_email.trim() && !EMAIL_RE.test(form.seller_email.trim())) return 'That email doesn’t look right.';
   }
-  if (stepId === 'item' && !form.name.trim()) return 'Give the item a name, like “Predator Throne cue”.';
+  if (stepId === 'item') {
+    if (!form.name.trim()) return 'Give the item a name, like “Predator Throne cue”.';
+    if (tooLong(form.name, 'name')) return `Keep the item name under ${FIELD_LIMITS.name} characters.`;
+    if (tooLong(form.brand, 'brand') || tooLong(form.model, 'model')) return `Keep brand and model under ${FIELD_LIMITS.brand} characters.`;
+  }
+  if (stepId === 'details' && (tooLong(form.specs, 'specs') || tooLong(form.description, 'description'))) {
+    return `Keep specs and description under ${FIELD_LIMITS.description.toLocaleString('en-US')} characters each.`;
+  }
   if (stepId === 'price') {
     const payout = Number(form.seller_payout);
     if (!(payout > 0)) {

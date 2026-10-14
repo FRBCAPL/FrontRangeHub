@@ -1,9 +1,9 @@
 import React from 'react';
-import { CATEGORIES, CONDITIONS } from '../../data/consignmentConstants.js';
+import { CATEGORIES, CONDITIONS, FIELD_LIMITS } from '../../data/consignmentConstants.js';
 import { PriceFields, SaleMethodPicker, SellTerms } from './ConsignmentSubmitPricing.jsx';
 
 function Req() {
-  return <span className="cs-req" aria-label="required">*</span>;
+  return <span className="cs-req" aria-hidden="true">*</span>;
 }
 
 export function StepMethod({ form, setMethod, agreementText }) {
@@ -20,16 +20,16 @@ export function StepContact({ form, set }) {
     <>
       <div className="cs-field">
         <label htmlFor="cs-seller">Your name <Req /></label>
-        <input id="cs-seller" autoComplete="name" value={form.seller_name} onChange={set('seller_name')} autoFocus />
+        <input id="cs-seller" autoComplete="name" value={form.seller_name} onChange={set('seller_name')} maxLength={120} aria-required="true" autoFocus />
       </div>
       <div className="cs-row">
         <div className="cs-field">
           <label htmlFor="cs-phone">Phone</label>
-          <input id="cs-phone" type="tel" autoComplete="tel" value={form.seller_phone} onChange={set('seller_phone')} />
+          <input id="cs-phone" type="tel" autoComplete="tel" value={form.seller_phone} onChange={set('seller_phone')} maxLength={40} />
         </div>
         <div className="cs-field">
           <label htmlFor="cs-email">Email</label>
-          <input id="cs-email" type="email" autoComplete="email" value={form.seller_email} onChange={set('seller_email')} />
+          <input id="cs-email" type="email" autoComplete="email" value={form.seller_email} onChange={set('seller_email')} maxLength={200} />
         </div>
       </div>
       <p className="cs-hint">
@@ -44,16 +44,24 @@ export function StepItem({ form, set }) {
     <>
       <div className="cs-field">
         <label htmlFor="cs-name">Item name <Req /></label>
-        <input id="cs-name" value={form.name} onChange={set('name')} placeholder="e.g. Predator Throne cue" autoFocus />
+        <input
+          id="cs-name"
+          value={form.name}
+          onChange={set('name')}
+          placeholder="e.g. Predator Throne cue"
+          maxLength={FIELD_LIMITS.name}
+          aria-required="true"
+          autoFocus
+        />
       </div>
       <div className="cs-row">
         <div className="cs-field">
           <label htmlFor="cs-brand">Brand</label>
-          <input id="cs-brand" value={form.brand} onChange={set('brand')} />
+          <input id="cs-brand" value={form.brand} onChange={set('brand')} maxLength={FIELD_LIMITS.brand} />
         </div>
         <div className="cs-field">
           <label htmlFor="cs-model">Model number/name</label>
-          <input id="cs-model" value={form.model} onChange={set('model')} />
+          <input id="cs-model" value={form.model} onChange={set('model')} maxLength={FIELD_LIMITS.model} />
         </div>
       </div>
       <div className="cs-row">

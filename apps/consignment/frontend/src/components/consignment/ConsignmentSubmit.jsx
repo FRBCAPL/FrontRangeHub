@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CONSIGNMENT_DAYS, CONSIGNMENT_PATH, itemLabel, LEGENDS_PLACE } from '../../data/consignmentConstants.js';
 import { loadSettings, submitItem } from '../../services/consignmentService.js';
 import { uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
+import { clearSellDraft, loadSellDraft, saveSellDraft } from '../../services/consignmentSellDraft.js';
 import { currentUserEmail } from '../../services/consignmentSellerService.js';
 import { DEFAULT_FEE_POLICY, feePolicyFrom } from '../../utils/consignmentFeePolicy.js';
 import { SALE_METHODS } from './ConsignmentSubmitPricing.jsx';
@@ -44,11 +45,18 @@ const HOW_STEPS = [
 
 export default function ConsignmentSubmit() {
   const [searchParams] = useSearchParams();
-  const [form, setForm] = useState(() => ({
-    ...empty,
-    sale_method: searchParams.get('method') === 'auction' ? 'auction' : 'fixed',
-  }));
+  const [draft] = useState(() => loadSellDraft(empty));
+  const [form, setForm] = useState(() => {
+    const asked = searchParams.get('method');
+    if (!draft) return { ...empty, sale_method: asked === 'auction' ? 'auction' : 'fixed' };
+    return asked && asked !== draft.form.sale_method && (asked === 'auction' || asked === 'fixed')
+      ? { ...draft.form, sale_method: asked }
+      : draft.form;
+  });
+  const [stepIndex, setStepIndex] = useState(draft?.step ?? 0);
   const [files, setFiles] = useState([]);
+  const [photosLost, setPhotosLost] = useState(Boolean(draft?.photoCount));
+  const [busyLabel, setBusyLabel] = useState('');
   const [days, setDays] = useState(CONSIGNMENT_DAYS);
   const [deliverDays, setDeliverDays] = useState(3);
   const [policy, setPolicy] = useState(DEFAULT_FEE_POLICY);
@@ -94,10 +102,23 @@ export default function ConsignmentSubmit() {
 
   const inProgress = Boolean(form.name || form.seller_payout || files.length);
 
+  useEffect(() => {
+    if (done) return;
+    if (inProgress) saveSellDraft({ form, step: stepIndex, photoCount: files.length });
+    else clearSellDraft();
+  }, [form, stepIndex, files.length, inProgress, done]);
+
+  useEffect(() => {
+    if (files.length) setPhotosLost(false);
+  }, [files.length]);
+
   const cancelListing = () => {
     if (inProgress && !window.confirm('Cancel this listing? Everything you entered will be cleared.')) return;
     setForm((prev) => ({ ...empty, seller_email: prev.seller_email }));
     setFiles([]);
+    setStepIndex(0);
+    setPhotosLost(false);
+    clearSellDraft();
     setError('');
     setWizardOpen(false);
   };
@@ -106,7 +127,10 @@ export default function ConsignmentSubmit() {
     setError('');
     setBusy(true);
     try {
-      const photo_urls = await uploadConsignmentPhotos(files);
+      const photo_urls = await uploadConsignmentPhotos(files, (doneCount, total) => {
+        setBusyLabel(doneCount < total ? `Uploading photo ${doneCount + 1} of ${total}…` : 'Submitting…');
+      });
+      setBusyLabel('Submitting…');
       const data = await submitItem({
         seller_name: form.seller_name,
         seller_phone: form.seller_phone,
@@ -125,12 +149,14 @@ export default function ConsignmentSubmit() {
         photo_urls,
         agreement_accepted: form.agreement,
       });
+      clearSellDraft();
       setWizardOpen(false);
       setDone(data);
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
+      setBusyLabel('');
     }
   };
 
@@ -169,6 +195,7 @@ export default function ConsignmentSubmit() {
       {inProgress ? (
         <div className="cs-sell-resume">
           <p>You have a listing in progress{form.name ? `: ${form.name}` : ''}.</p>
+          {photosLost ? <p className="cs-hint">Photos can’t be saved between visits. Add them again on the photos step.</p> : null}
           <div className="cs-sell-resume-actions">
             <button type="button" className="cs-btn" onClick={() => start()}>Continue your listing</button>
             <button type="button" className="cs-btn cs-btn-secondary" onClick={cancelListing}>Cancel listing</button>
@@ -201,7 +228,11 @@ export default function ConsignmentSubmit() {
           days={days}
           deliverDays={deliverDays}
           agreementText={isAuction ? auctionAgreement : agreementText}
+          index={stepIndex}
+          setIndex={setStepIndex}
+          draftRestored={photosLost}
           busy={busy}
+          busyLabel={busyLabel}
           submitError={error}
           onSubmit={onSubmit}
           onClose={closeWizard}

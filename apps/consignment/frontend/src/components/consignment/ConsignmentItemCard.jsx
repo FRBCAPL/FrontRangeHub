@@ -4,17 +4,18 @@ import { brandModelLabel, categoryLabel, conditionLabel } from '../../data/consi
 import { consignmentItemPath } from '../../utils/consignmentPaths.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { formatCountdown, formatDateTime, formatShortEnd } from '../../utils/consignmentAuctionDates.js';
+import { serverNow } from '../../services/consignmentServerClock.js';
 
 const ENDING_SOON_MS = 60 * 60 * 1000;
 
 /** Milliseconds until endsAt, refreshed every second in the last hour and every 30s before that. */
 function useTimeLeft(endsAt) {
   const end = new Date(endsAt).getTime();
-  const [now, setNow] = useState(Date.now);
+  const [now, setNow] = useState(serverNow);
   const left = end - now;
   useEffect(() => {
     if (!(left > 0)) return undefined;
-    const id = setTimeout(() => setNow(Date.now()), left < ENDING_SOON_MS ? 1000 : 30000);
+    const id = setTimeout(() => setNow(serverNow()), left < ENDING_SOON_MS ? 1000 : 30000);
     return () => clearTimeout(id);
   }, [now, left]);
   return left;

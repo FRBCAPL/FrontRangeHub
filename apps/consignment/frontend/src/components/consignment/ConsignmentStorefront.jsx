@@ -3,11 +3,14 @@ import { useSearchParams } from 'react-router-dom';
 import { CATEGORIES, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadCatalog } from '../../services/consignmentService.js';
 import { loadAuctionsForItems } from '../../services/consignmentAuctionService.js';
+import { syncServerClock } from '../../services/consignmentServerClock.js';
 import ConsignmentItemCard from './ConsignmentItemCard.jsx';
 import ConsignmentShopBadges from './ConsignmentShopBadges.jsx';
 import ConsignmentBuyersGuideModal from './ConsignmentBuyersGuideModal.jsx';
 import ConsignmentExampleListings from './ConsignmentExampleListings.jsx';
 import './consignment-shop.css';
+
+const AUCTION_REFRESH_MS = 60 * 1000;
 
 export default function ConsignmentStorefront() {
   const [category, setCategory] = useState('all');
@@ -26,8 +29,13 @@ export default function ConsignmentStorefront() {
   const catalogStatus = status === 'auctions' || status === 'case' ? 'available' : status;
 
   useEffect(() => {
+    syncServerClock();
+  }, []);
+
+  useEffect(() => {
     let alive = true;
     setLoading(true);
+    setError('');
     loadCatalog({ category, status: catalogStatus })
       .then(async (all) => {
         const list = all.filter((r) => !r.is_example);
@@ -35,7 +43,8 @@ export default function ConsignmentStorefront() {
         const byItem = await loadAuctionsForItems(auctionIds);
         if (!alive) return;
         if (category === 'all' && catalogStatus === 'available') {
-          setHasRealAuctions(list.some((r) => r.sale_method === 'auction'));
+          setHasRealAuctions(list.some((r) => r.sale_method === 'auction'
+            && (!byItem[r.id] || byItem[r.id].status === 'live')));
         }
         setRows(list);
         setAuctions(byItem);
@@ -45,13 +54,26 @@ export default function ConsignmentStorefront() {
     return () => { alive = false; };
   }, [category, catalogStatus]);
 
+  const liveIds = Object.values(auctions).filter((a) => a.status === 'live').map((a) => a.item_id).join(',');
+  useEffect(() => {
+    if (!liveIds) return undefined;
+    const ids = liveIds.split(',');
+    const id = setInterval(() => {
+      loadAuctionsForItems(ids).then((fresh) => setAuctions((prev) => ({ ...prev, ...fresh })));
+    }, AUCTION_REFRESH_MS);
+    return () => clearInterval(id);
+  }, [liveIds]);
+
   const isAuction = (i) => i.sale_method === 'auction';
-  const items = rows.filter((i) => (status === 'auctions' ? isAuction(i) : status === 'case' ? !isAuction(i) : true));
-  const auctionCount = items.filter((i) => isAuction(i) && i.status !== 'sold').length;
-  const shelfCount = items.filter((i) => !isAuction(i) && i.status !== 'sold').length;
+  // An auction item is still for sale until its auction closes (no auction row yet counts as open).
+  const forSale = (i) => i.status !== 'sold' && (!isAuction(i) || !auctions[i.id] || auctions[i.id].status === 'live');
+  const visible = catalogStatus === 'available' ? rows.filter(forSale) : rows;
+  const items = visible.filter((i) => (status === 'auctions' ? isAuction(i) : status === 'case' ? !isAuction(i) : true));
+  const auctionCount = items.filter((i) => isAuction(i) && forSale(i)).length;
+  const shelfCount = items.filter((i) => !isAuction(i) && forSale(i)).length;
   const badgeCounts = loading || catalogStatus === 'sold' ? {} : {
-    case: rows.filter((i) => !isAuction(i) && i.status !== 'sold').length,
-    auctions: rows.filter((i) => isAuction(i) && i.status !== 'sold').length,
+    case: rows.filter((i) => !isAuction(i) && forSale(i)).length,
+    auctions: rows.filter((i) => isAuction(i) && forSale(i)).length,
   };
   const counts = [
     shelfCount ? `${shelfCount} in the case` : '',

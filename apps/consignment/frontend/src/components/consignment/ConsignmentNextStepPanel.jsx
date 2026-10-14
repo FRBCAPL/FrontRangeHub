@@ -41,6 +41,9 @@ export default function ConsignmentNextStepPanel({ item, settings, onDone }) {
 
   const submit = async (e) => {
     e.preventDefault();
+    if (choice === 'relist' && rule.free && !window.confirm(
+      `Start a new ${AUCTION_DAYS}-day auction now with a ${formatDollars(reserve)} reserve? Bidders can see it right away.`,
+    )) return;
     setBusy(true);
     setError('');
     try {
@@ -97,7 +100,7 @@ export default function ConsignmentNextStepPanel({ item, settings, onDone }) {
         <div className="cs-next-detail">
           <label className="cs-field">
             <span>New reserve ($)</span>
-            <input type="number" step="0.01" min="1" value={reserve} onChange={(e) => setReserve(e.target.value)} required />
+            <input type="number" inputMode="decimal" step="0.01" min="1" value={reserve} onChange={(e) => setReserve(e.target.value)} required />
           </label>
           <p className={rule.free ? 'cs-next-free' : 'cs-next-fee'}>
             {rule.free

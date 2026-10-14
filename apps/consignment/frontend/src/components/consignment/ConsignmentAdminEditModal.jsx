@@ -98,6 +98,11 @@ export default function ConsignmentAdminEditModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const payoutLocked = Boolean(item.intake_at) || (!approving && item.status !== 'pending');
+  // Sold / Available need the Sold, Approve or Renew flows (sale split, fee, listing window).
+  const statusLocked = !approving && !item.is_example && item.status === 'sold';
+  const statusOptions = approving || item.is_example
+    ? STATUSES
+    : STATUSES.filter((s) => s.id === item.status || !['sold', 'available'].includes(s.id));
   const needsRetail = LISTED.includes(form.status) && !isAuction;
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -243,10 +248,18 @@ export default function ConsignmentAdminEditModal({
               <p className="cs-static">{statusLabel(item.status)}</p>
               <p className="cs-hint">Auction items change status through the Auctions tab (start, paid, relist, returned).</p>
             </>
+          ) : statusLocked ? (
+            <>
+              <p className="cs-static">{statusLabel(item.status)}</p>
+              <p className="cs-hint">Sold items keep their sale record. Use Undo paid / notes if something needs correcting.</p>
+            </>
           ) : (
-            <select value={form.status} onChange={set('status')}>
-              {STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
+            <>
+              <select value={form.status} onChange={set('status')}>
+                {statusOptions.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+              <p className="cs-hint">To list or sell an item, use Approve, Renew or Sold on the list so the fee and sale are recorded.</p>
+            </>
           )}
         </div>
         <div className="cs-field">

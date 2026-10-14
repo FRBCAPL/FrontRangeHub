@@ -7,7 +7,7 @@ import {
   itemLabel,
   PAYMENT_METHODS,
 } from '../../data/consignmentConstants.js';
-import { intakePatch, recordFee } from '../../services/consignmentFeesService.js';
+import { approveItem } from '../../services/consignmentFeesService.js';
 import { DEFAULT_FEE_POLICY, listingFee, saleSplit } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import './consignment-approve.css';
@@ -50,7 +50,6 @@ export default function ConsignmentApproveModal({
   policy = DEFAULT_FEE_POLICY,
   onEditDetails,
   onClose,
-  onSave,
 }) {
   const commissionPct = Number(item.commission_pct ?? policy.shelfCommissionPct);
   const [agreed, setAgreed] = useState(item.seller_payout ?? '');
@@ -78,19 +77,15 @@ export default function ConsignmentApproveModal({
     setBusy(true);
     setError('');
     try {
-      await onSave({
-        seller_payout: agreedNum,
-        selling_price: shopNum,
-        consignment_fee: feeNum,
-        commission_pct: commissionPct,
-        sale_method: 'fixed',
-        status: 'available',
-        ...(hasInspection ? { allow_inspection: inspection } : {}),
-        ...intakePatch(consignmentDays),
+      await approveItem(item.id, {
+        sellerPayout: agreedNum,
+        sellingPrice: shopNum,
+        fee: feeNum,
+        commissionPct,
+        days: consignmentDays,
+        paymentMethod: feeNum > 0 ? method : null,
+        allowInspection: hasInspection ? inspection : null,
       });
-      if (feeNum > 0) {
-        await recordFee(item.id, { kind: 'consignment', amount: feeNum, days: consignmentDays, paymentMethod: method });
-      }
       onClose();
     } catch (err) {
       setError(err.message);
@@ -158,7 +153,7 @@ export default function ConsignmentApproveModal({
         {error ? <p className="cs-error">{error}</p> : null}
         <div className="cs-actions">
           <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Approving…' : 'Approve & list'}</button>
-          <button className="cs-btn-secondary" type="button" onClick={onClose}>Cancel</button>
+          <button className="cs-btn-secondary" type="button" onClick={onClose} disabled={busy}>Cancel</button>
         </div>
       </form>
     </div>

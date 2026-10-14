@@ -137,6 +137,24 @@ export async function updateItem(id, patch) {
   if (error) throwNice(error, 'Could not save this item.');
 }
 
+const CHANGED_ELSEWHERE = 'This item changed since the list loaded (another tab or device?). Refresh and check it.';
+
+/** Updates only if the item is still `expectedStatus`, so a stale screen or double tap can't apply twice. */
+async function updateItemIfStatus(id, expectedStatus, patch) {
+  const { data, error } = await supabase
+    .from('consignment_items')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('status', expectedStatus)
+    .select('id');
+  if (error) throwNice(error, 'Could not save this item.');
+  if (!data?.length) throw new Error(CHANGED_ELSEWHERE);
+}
+
+export async function changeItemStatus(item, next) {
+  return updateItemIfStatus(item.id, item.status, { status: next });
+}
+
 export async function clearItemPhotos(item) {
   await deleteConsignmentPhotos(item.photo_urls);
   await updateItem(item.id, { photo_urls: [] });
@@ -171,5 +189,5 @@ export async function markSold(item, { actualSellingPrice, paymentMethod, transa
     payment_method: paymentMethod,
   };
   if (transactionFee != null) patch.transaction_fee = Number(transactionFee);
-  return updateItem(item.id, patch);
+  return updateItemIfStatus(item.id, 'available', patch);
 }

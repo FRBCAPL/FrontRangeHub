@@ -9,6 +9,7 @@ import {
   STATUSES,
 } from '../../data/consignmentConstants.js';
 import {
+  changeItemStatus,
   clearItemPhotos,
   loadAdminItems,
   loadSettings,
@@ -32,6 +33,16 @@ import ConsignmentAuctionAdmin from './ConsignmentAuctionAdmin.jsx';
 import ConsignmentAuctionStartModal from './ConsignmentAuctionStartModal.jsx';
 import ConsignmentMessagesPanel from './ConsignmentMessagesPanel.jsx';
 import ConsignmentVisitsPanel from './ConsignmentVisitsPanel.jsx';
+
+/** Confirmation text for one-tap status buttons that take an item out of the shop, or null for none. */
+function statusChangeQuestion(item, next) {
+  const label = itemLabel(item);
+  if (next === 'withdrawn' && item.status === 'pending') return `Reject ${label}? It won’t be listed.`;
+  if (next === 'withdrawn') return `Withdraw ${label}? It comes out of the shop right away.`;
+  if (next === 'returned' && item.status === 'expired') return `Mark ${label} picked up by the seller?`;
+  if (next === 'returned') return `Mark ${label} returned to the seller? It comes out of the shop right away.`;
+  return null;
+}
 
 export default function ConsignmentAdmin() {
   const navigate = useNavigate();
@@ -99,8 +110,13 @@ export default function ConsignmentAdmin() {
   };
 
   const setStatusOf = async (item, next) => {
-    await updateItem(item.id, { status: next });
-    refresh();
+    const question = item.is_example ? null : statusChangeQuestion(item, next);
+    if (question && !window.confirm(question)) return;
+    try {
+      await changeItemStatus(item, next);
+    } finally {
+      refresh();
+    }
   };
 
   const deletePhotos = async (item) => {
@@ -193,7 +209,6 @@ export default function ConsignmentAdmin() {
           policy={policy}
           onEditDetails={() => { setApproving(false); setEdit(approvingItem); setApprovingItem(null); }}
           onClose={() => { setApprovingItem(null); refresh(); }}
-          onSave={(patch) => updateItem(approvingItem.id, patch)}
         />
       ) : null}
       {edit ? (

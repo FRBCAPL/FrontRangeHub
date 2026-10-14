@@ -20,16 +20,21 @@ export async function changePayout(itemId, { newPayout, consent, note }) {
   if (error) fail(error, 'Could not change the payout.');
 }
 
+/** Only a sold item not yet paid out, so a second tap or stale tab can't overwrite the first record. */
 export async function markSellerPaid(itemId, { method, paidAt }) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('consignment_items')
     .update({
       seller_paid_at: paidAt || new Date().toISOString(),
       seller_paid_method: method || null,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', itemId);
+    .eq('id', itemId)
+    .eq('status', 'sold')
+    .is('seller_paid_at', null)
+    .select('id');
   if (error) fail(error, 'Could not mark the seller paid.');
+  if (!data?.length) throw new Error('This seller was already marked paid (or the item isn’t sold). Refresh the list.');
 }
 
 export async function clearSellerPaid(itemId) {

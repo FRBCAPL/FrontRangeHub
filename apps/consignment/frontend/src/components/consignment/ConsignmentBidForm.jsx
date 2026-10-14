@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { buyNow, isMyItem, openHubLogin, placeBid } from '../../services/consignmentAuctionService.js';
-import { bidError, bidIncrement } from '../../utils/consignmentAuctionMath.js';
+import { bidError } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { LEGENDS_PLACE } from '../../data/consignmentConstants.js';
 
 const PICKUP_NOTE = `Pickup is in person at ${LEGENDS_PLACE}; nothing ships.`;
 
-export default function ConsignmentBidForm({ auction, userId, isHighBidder, payDays, onBid }) {
+export default function ConsignmentBidForm({ auction, userId, isHighBidder, outbid, payDays, onBid }) {
   const minNext = Number(auction.min_next_bid);
   const [amount, setAmount] = useState(minNext);
   const [busy, setBusy] = useState(false);
@@ -17,6 +17,10 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
   useEffect(() => {
     setAmount((prev) => (Number(prev) < minNext ? minNext : prev));
   }, [minNext]);
+
+  useEffect(() => {
+    if (!isHighBidder) setNotice('');
+  }, [isHighBidder]);
 
   useEffect(() => {
     let alive = true;
@@ -86,12 +90,13 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, payD
   return (
     <form className="cs-bid-form" onSubmit={submit}>
       {isHighBidder ? <p className="cs-bid-leading">You’re the high bidder.</p> : null}
+      {outbid ? <p className="cs-error" role="status">You’ve been outbid. Bid again to take the lead.</p> : null}
       <div className="cs-bid-row">
         <span className="cs-bid-dollar">$</span>
         <input
           type="number"
           inputMode="decimal"
-          step={bidIncrement(minNext)}
+          step="any"
           min={minNext}
           value={amount}
           onChange={(e) => setAmount(e.target.value)}

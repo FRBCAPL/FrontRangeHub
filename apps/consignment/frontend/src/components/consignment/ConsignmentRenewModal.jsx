@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { CONSENT_METHODS, itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { renewItem } from '../../services/consignmentFeesService.js';
-import { changePayout } from '../../services/consignmentPayoutService.js';
 import { formatShortDate, renewedExpiry } from '../../utils/consignmentDates.js';
 import {
   DEFAULT_FEE_POLICY,
@@ -12,8 +11,6 @@ import {
   usesShelfCommission,
 } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
-
-const round2 = (n) => Math.round(Number(n) * 100) / 100;
 
 export default function ConsignmentRenewModal({ item, defaultFee, consignmentDays, policy = DEFAULT_FEE_POLICY, onClose }) {
   const commissionModel = usesShelfCommission(item);
@@ -50,23 +47,17 @@ export default function ConsignmentRenewModal({ item, defaultFee, consignmentDay
     setBusy(true);
     setError('');
     try {
-      let itemPatch = null;
-      if (commissionModel && newPrice !== agreed) {
-        await changePayout(item.id, {
-          newPayout: newPrice,
-          consent: lowering ? consent : null,
-          note: `Price changed at renewal (${formatDollars(agreed)} → ${formatDollars(newPrice)})`,
-        });
-        // The shop price moves by the same % so any spread above the agreed price is kept.
-        const shop = Number(item.selling_price) || agreed;
-        itemPatch = { selling_price: round2(shop * (newPrice / agreed)) };
-      }
+      const priceChanged = commissionModel && newPrice !== agreed;
       await renewItem(item, {
         amount: Number(amount) || 0,
         days: Number(days),
         paymentMethod: Number(amount) > 0 ? method : null,
         note: rule?.free ? rule.reason : null,
-        itemPatch,
+        ...(priceChanged ? {
+          newPayout: newPrice,
+          consent: lowering ? consent : null,
+          payoutNote: `Price changed at renewal (${formatDollars(agreed)} → ${formatDollars(newPrice)})`,
+        } : {}),
       });
       onClose();
     } catch (err) {
@@ -133,7 +124,7 @@ export default function ConsignmentRenewModal({ item, defaultFee, consignmentDay
         {error ? <p className="cs-error">{error}</p> : null}
         <div className="cs-actions">
           <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Renew'}</button>
-          <button className="cs-btn-secondary" type="button" onClick={onClose}>Cancel</button>
+          <button className="cs-btn-secondary" type="button" onClick={onClose} disabled={busy}>Cancel</button>
         </div>
       </form>
     </div>

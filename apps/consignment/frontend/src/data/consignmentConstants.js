@@ -7,6 +7,8 @@ export const CONSIGNMENT_DAYS = 30;
 export const PICKUP_GRACE_DAYS = 14;
 export const EXPIRING_SOON_DAYS = 7;
 export const MAX_PHOTOS = 8;
+/** Mirrors consignment_seller_update_listing and consignment_items_guard_lengths (SQL). */
+export const FIELD_LIMITS = { name: 120, brand: 80, model: 80, specs: 2000, description: 2000 };
 
 export const CATEGORIES = [
   { id: 'cues', label: 'Cues' },

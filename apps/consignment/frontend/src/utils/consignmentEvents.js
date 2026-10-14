@@ -1,4 +1,4 @@
-import { statusLabel } from '../data/consignmentConstants.js';
+import { feeKindLabel, statusLabel } from '../data/consignmentConstants.js';
 import { formatDollars } from './consignmentMoney.js';
 
 const money = (v) => (v == null ? 'not set' : formatDollars(v));
@@ -31,6 +31,10 @@ export function describeEvent(event) {
       if (d.field === 'listing') {
         const names = Object.keys(d.changes || {}).map((k) => LISTING_FIELDS[k] || k);
         return `Listing edited${names.length ? `: ${names.join(', ')}` : ''}`;
+      }
+      if (d.field === 'fee') {
+        const what = `${feeKindLabel(d.fee_kind)} fee ${money(d.amount)}${d.method ? ` · ${d.method}` : ''}`;
+        return d.action === 'removed' ? `Fee record deleted: ${what}` : `Fee recorded: ${what}`;
       }
       return 'Note';
     default:
