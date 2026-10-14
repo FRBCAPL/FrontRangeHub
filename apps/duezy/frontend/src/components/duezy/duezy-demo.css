@@ -56,5 +56,6 @@
 }
 .dz-land-shot-bar { display: flex; gap: 6px; padding: 9px 12px; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid var(--dz-line); }
 .dz-land-shot-bar i { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.18); }
-.dz-land-shot img { display: block; width: 100%; height: auto; }
-.dz-land-shot figcaption { color: var(--dz-muted); font-size: 0.9rem; line-height: 1.5; text-align: center; white-space: pre-line; }
+/* Every tab uses the tallest screenshot's shape so switching never moves the page below. */
+.dz-land-shot img { display: block; width: 100%; aspect-ratio: 685 / 454; object-fit: contain; }
+.dz-land-shot figcaption { color: var(--dz-muted); font-size: 0.9rem; line-height: 1.5; text-align: center; white-space: pre-line; min-height: 4.5em; }
