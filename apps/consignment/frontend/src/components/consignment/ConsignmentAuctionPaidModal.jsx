@@ -4,6 +4,7 @@ import { bidderName, markAuctionPaid } from '../../services/consignmentAuctionAd
 import { loadFeesForItems } from '../../services/consignmentFeesService.js';
 import { originalListingFee, saleSplit } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentAuctionPaidModal({ auction, onClose }) {
   const [method, setMethod] = useState(PAYMENT_METHODS[0]);
@@ -35,7 +36,7 @@ export default function ConsignmentAuctionPaidModal({ auction, onClose }) {
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-apaid-title">
+    <ConsignmentModal titleId="cs-apaid-title" onClose={() => onClose(false)} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-apaid-title">Winner paid · {itemLabel(auction.item)}</h2>
         <p className="cs-hint">
@@ -56,14 +57,14 @@ export default function ConsignmentAuctionPaidModal({ auction, onClose }) {
         </div>
         <div className="cs-row">
           <div className="cs-field">
-            <label>Payment method</label>
-            <select value={method} onChange={(e) => setMethod(e.target.value)}>
+            <label htmlFor="cs-auction-paid-f1">Payment method</label>
+            <select id="cs-auction-paid-f1" value={method} onChange={(e) => setMethod(e.target.value)}>
               {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
           <div className="cs-field">
-            <label>Card/transaction fee ($, optional)</label>
-            <input type="number" step="0.01" min="0" value={txnFee} onChange={(e) => setTxnFee(e.target.value)} />
+            <label htmlFor="cs-auction-paid-f2">Card/transaction fee ($, optional)</label>
+            <input id="cs-auction-paid-f2" type="number" step="0.01" min="0" value={txnFee} onChange={(e) => setTxnFee(e.target.value)} />
           </div>
         </div>
         {fee ? <p className="cs-hint">FRPL net from the sale after fee: {formatDollars(split.frplFromSale - fee)}</p> : null}
@@ -74,6 +75,6 @@ export default function ConsignmentAuctionPaidModal({ auction, onClose }) {
           <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }

@@ -1,0 +1,148 @@
+.cs-nav {
+  align-items: center;
+}
+
+.cs-nav a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cs-nav .cs-nav-how {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 0 6px;
+  min-height: 44px;
+  padding: 4px 14px 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  background: rgba(168, 85, 247, 0.12);
+  color: #e9d5ff;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.cs-nav .cs-nav-how span {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #a855f7;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.cs-nav .cs-nav-how:hover {
+  background: rgba(168, 85, 247, 0.22);
+  color: #fff;
+}
+
+.cs-how {
+  width: min(620px, calc(100vw - 28px));
+  box-sizing: border-box;
+}
+
+.cs-how-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.cs-how-head h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.cs-how-close {
+  flex: 0 0 auto;
+  width: 40px !important;
+  min-width: 0 !important;
+  height: 40px;
+  min-height: 0 !important;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--cs-line);
+  background: transparent;
+  color: var(--cs-ink);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cs-how .cs-tabs {
+  flex-wrap: wrap;
+}
+
+.cs-how-intro {
+  margin: 4px 0 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cs-how-steps {
+  margin: 0 0 12px;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+  line-height: 1.45;
+  color: var(--cs-ink);
+}
+
+.cs-how-steps li::marker {
+  color: var(--cs-accent);
+  font-weight: 800;
+}
+
+.cs-how-example {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.1);
+  font-size: 0.92rem;
+}
+
+.cs-how-example ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.cs-terms {
+  width: min(640px, 100%);
+  margin: 0 auto 18px;
+  box-sizing: border-box;
+}
+
+.cs-sellbox strong {
+  display: block;
+  font-size: 1.2rem;
+  color: var(--cs-accent);
+}
+
+.cs-agree {
+  display: grid;
+  gap: 8px;
+  white-space: pre-line;
+  font-size: 0.9rem;
+  color: var(--cs-muted);
+}
+
+.cs-agree label {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--cs-ink);
+  font-weight: 700;
+}

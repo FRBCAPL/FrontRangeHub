@@ -3,6 +3,7 @@ import { CONSENT_METHODS, itemLabel } from '../../data/consignmentConstants.js';
 import { changePayout } from '../../services/consignmentPayoutService.js';
 import { usesShelfCommission } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentPayoutModal({ item, currentPayout, onClose, onChanged }) {
   const [amount, setAmount] = useState(currentPayout);
@@ -30,7 +31,7 @@ export default function ConsignmentPayoutModal({ item, currentPayout, onClose, o
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-payout-title">
+    <ConsignmentModal titleId="cs-payout-title" onClose={onClose} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-payout-title">Change {label} · {itemLabel(item)}</h2>
         <p className="cs-hint">
@@ -38,20 +39,20 @@ export default function ConsignmentPayoutModal({ item, currentPayout, onClose, o
           but lowering it requires the seller&apos;s agreement.
         </p>
         <div className="cs-field">
-          <label>New {label} ($)</label>
-          <input type="number" step="0.01" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+          <label htmlFor="cs-payout-f1">New {label} ($)</label>
+          <input id="cs-payout-f1" type="number" step="0.01" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} required />
         </div>
         {lowering ? (
           <div className="cs-field">
-            <label>How did the seller agree?</label>
-            <select value={consent} onChange={(e) => setConsent(e.target.value)}>
+            <label htmlFor="cs-payout-f2">How did the seller agree?</label>
+            <select id="cs-payout-f2" value={consent} onChange={(e) => setConsent(e.target.value)}>
               {CONSENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
         ) : null}
         <div className="cs-field">
-          <label>Note {lowering ? '(recommended)' : '(optional)'}</label>
-          <textarea
+          <label htmlFor="cs-payout-f3">Note {lowering ? '(recommended)' : '(optional)'}</label>
+          <textarea id="cs-payout-f3"
             rows={2}
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -64,6 +65,6 @@ export default function ConsignmentPayoutModal({ item, currentPayout, onClose, o
           <button className="cs-btn-secondary" type="button" onClick={onClose}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }

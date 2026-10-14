@@ -11,6 +11,7 @@ import {
   usesShelfCommission,
 } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentRenewModal({ item, defaultFee, consignmentDays, policy = DEFAULT_FEE_POLICY, onClose }) {
   const commissionModel = usesShelfCommission(item);
@@ -68,7 +69,7 @@ export default function ConsignmentRenewModal({ item, defaultFee, consignmentDay
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-renew-title">
+    <ConsignmentModal titleId="cs-renew-title" onClose={onClose} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-renew-title">Renew {itemLabel(item)}</h2>
         <p className="cs-hint">
@@ -78,16 +79,16 @@ export default function ConsignmentRenewModal({ item, defaultFee, consignmentDay
         {commissionModel ? (
           <>
             <div className="cs-field">
-              <label>Price for the next {Number(days) || consignmentDays} days ($)</label>
-              <input type="number" step="0.01" min="1" value={price} onChange={(e) => setPrice(e.target.value)} required />
+              <label htmlFor="cs-renew-f1">Price for the next {Number(days) || consignmentDays} days ($)</label>
+              <input id="cs-renew-f1" type="number" step="0.01" min="1" value={price} onChange={(e) => setPrice(e.target.value)} required />
               <p className="cs-hint">
                 Agreed price now {formatDollars(agreed)}. Lowering it {policy.freeRepeatDropPct}% or more makes the first renewal free.
               </p>
             </div>
             {lowering ? (
               <div className="cs-field">
-                <label>How did the seller agree to the lower price?</label>
-                <select value={consent} onChange={(e) => setConsent(e.target.value)}>
+                <label htmlFor="cs-renew-f2">How did the seller agree to the lower price?</label>
+                <select id="cs-renew-f2" value={consent} onChange={(e) => setConsent(e.target.value)}>
                   {CONSENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
@@ -96,8 +97,8 @@ export default function ConsignmentRenewModal({ item, defaultFee, consignmentDay
         ) : null}
         <div className="cs-row">
           <div className="cs-field">
-            <label>Renewal fee ($)</label>
-            <input
+            <label htmlFor="cs-renew-f3">Renewal fee ($)</label>
+            <input id="cs-renew-f3"
               type="number"
               step="0.01"
               min="0"
@@ -108,14 +109,14 @@ export default function ConsignmentRenewModal({ item, defaultFee, consignmentDay
             {rule ? <p className="cs-hint">{rule.reason}</p> : null}
           </div>
           <div className="cs-field">
-            <label>Days</label>
-            <input type="number" step="1" min="1" value={days} onChange={(e) => setDays(e.target.value)} required />
+            <label htmlFor="cs-renew-f4">Days</label>
+            <input id="cs-renew-f4" type="number" step="1" min="1" value={days} onChange={(e) => setDays(e.target.value)} required />
           </div>
         </div>
         {Number(amount) > 0 ? (
           <div className="cs-field">
-            <label>Payment method</label>
-            <select value={method} onChange={(e) => setMethod(e.target.value)}>
+            <label htmlFor="cs-renew-f5">Payment method</label>
+            <select id="cs-renew-f5" value={method} onChange={(e) => setMethod(e.target.value)}>
               {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
@@ -127,6 +128,6 @@ export default function ConsignmentRenewModal({ item, defaultFee, consignmentDay
           <button className="cs-btn-secondary" type="button" onClick={onClose} disabled={busy}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }

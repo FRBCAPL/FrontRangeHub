@@ -2,16 +2,12 @@ import React, { useState } from 'react';
 import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { markSellerPaid } from '../../services/consignmentPayoutService.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
-
-function todayInput() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
+import { toDateInput } from '../../utils/consignmentFormValues.js';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentSellerPaidModal({ item, onClose }) {
   const [method, setMethod] = useState(PAYMENT_METHODS[0]);
-  const [day, setDay] = useState(todayInput());
+  const [day, setDay] = useState(() => toDateInput(new Date()));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -31,7 +27,7 @@ export default function ConsignmentSellerPaidModal({ item, onClose }) {
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-paid-title">
+    <ConsignmentModal titleId="cs-paid-title" onClose={onClose} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-paid-title">Seller paid · {itemLabel(item)}</h2>
         <p className="cs-hint">
@@ -40,14 +36,14 @@ export default function ConsignmentSellerPaidModal({ item, onClose }) {
         </p>
         <div className="cs-row">
           <div className="cs-field">
-            <label>Paid with</label>
-            <select value={method} onChange={(e) => setMethod(e.target.value)}>
+            <label htmlFor="cs-seller-paid-f1">Paid with</label>
+            <select id="cs-seller-paid-f1" value={method} onChange={(e) => setMethod(e.target.value)}>
               {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
           <div className="cs-field">
-            <label>Date paid</label>
-            <input type="date" value={day} onChange={(e) => setDay(e.target.value)} required />
+            <label htmlFor="cs-seller-paid-f2">Date paid</label>
+            <input id="cs-seller-paid-f2" type="date" value={day} onChange={(e) => setDay(e.target.value)} required />
           </div>
         </div>
         {error ? <p className="cs-error">{error}</p> : null}
@@ -56,6 +52,6 @@ export default function ConsignmentSellerPaidModal({ item, onClose }) {
           <button className="cs-btn-secondary" type="button" onClick={onClose}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }

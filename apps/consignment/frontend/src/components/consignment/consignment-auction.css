@@ -1,0 +1,246 @@
+.cs-auction-panel {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(168, 85, 247, 0.5);
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.cs-auction-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cs-auction-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.25);
+  color: #e9d5ff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cs-countdown {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-countdown.closing {
+  color: #fca5a5;
+}
+
+.cs-auction-price {
+  display: grid;
+  gap: 2px;
+}
+
+.cs-auction-at-legends {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.12);
+  color: #bbf7d0;
+  font-size: 0.9rem;
+}
+
+.cs-auction-at-legends strong {
+  color: #dcfce7;
+}
+
+.cs-auction-price strong {
+  font-size: 2rem;
+  color: #d8b4fe;
+}
+
+.cs-bid-form {
+  display: grid;
+  gap: 8px;
+}
+
+.cs-bid-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cs-bid-dollar {
+  font-weight: 800;
+  color: var(--cs-muted);
+}
+
+.cs-bid-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font: inherit;
+  font-size: 1.1rem;
+}
+
+.cs-bid-leading,
+.cs-bid-notice {
+  margin: 0;
+  color: #86efac;
+  font-weight: 700;
+}
+
+.cs-buy-now {
+  justify-self: start;
+  border-color: #a855f7;
+}
+
+.cs-bid-alerts {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.cs-bid-won {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(134, 239, 172, 0.5);
+  background: rgba(134, 239, 172, 0.08);
+}
+
+.cs-bid-won p {
+  margin: 6px 0 0;
+}
+
+.cs-bid-history h3 {
+  margin: 4px 0 8px;
+  font-size: 1rem;
+}
+
+.cs-bid-history ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.cs-bid-history li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cs-line);
+}
+
+.cs-bid-history li .cs-meta {
+  grid-column: 1 / -1;
+}
+
+.cs-method {
+  width: min(640px, 100%);
+  margin: 0 auto 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  box-sizing: border-box;
+}
+
+.cs-method-option {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  cursor: pointer;
+  text-align: left;
+}
+
+.cs-method-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cs-method-option span {
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.cs-method-option.active {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.cs-method-option:focus-within {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+}
+
+.cs-candidates {
+  display: grid;
+  gap: 6px;
+}
+
+.cs-candidate {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cs-line);
+  cursor: pointer;
+}
+
+.cs-candidate.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cs-bidders {
+  margin-top: 18px;
+}
+
+.cs-bidders summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cs-bidders ul {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cs-bidders li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--cs-line);
+}
+
+.cs-bidders li button {
+  min-height: 34px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+
+.cs-bidders li .cs-actions {
+  margin-top: 0;
+  flex-wrap: nowrap;
+}

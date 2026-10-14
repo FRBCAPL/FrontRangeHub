@@ -7,6 +7,7 @@ import {
 } from '../../services/consignmentAuctionAdminService.js';
 import { auctionSplit } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentSecondChanceModal({ auction, onClose }) {
   const [candidates, setCandidates] = useState(null);
@@ -43,7 +44,7 @@ export default function ConsignmentSecondChanceModal({ auction, onClose }) {
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-second-title">
+    <ConsignmentModal titleId="cs-second-title" onClose={() => onClose(false)} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-second-title">Offer to another bidder · {itemLabel(auction.item)}</h2>
         <p className="cs-hint">
@@ -83,6 +84,6 @@ export default function ConsignmentSecondChanceModal({ auction, onClose }) {
           <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }

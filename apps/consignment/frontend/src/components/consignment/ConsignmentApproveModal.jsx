@@ -10,13 +10,9 @@ import {
 import { approveItem } from '../../services/consignmentFeesService.js';
 import { DEFAULT_FEE_POLICY, listingFee, saleSplit } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { numOrNull } from '../../utils/consignmentFormValues.js';
 import './consignment-approve.css';
-
-function numOrNull(v) {
-  if (v === '' || v == null) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 function ItemSummary({ item }) {
   const brandModel = brandModelLabel(item);
@@ -95,7 +91,7 @@ export default function ConsignmentApproveModal({
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-approve-title">
+    <ConsignmentModal titleId="cs-approve-title" onClose={onClose} busy={busy}>
       <form className="cs-modal-card cs-form cs-approve" onSubmit={save}>
         <h2 id="cs-approve-title">Approve {itemLabel(item)}</h2>
         <ItemSummary item={item} />
@@ -156,6 +152,6 @@ export default function ConsignmentApproveModal({
           <button className="cs-btn-secondary" type="button" onClick={onClose} disabled={busy}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }

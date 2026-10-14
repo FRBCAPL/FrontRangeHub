@@ -22,6 +22,9 @@ export default function ConsignmentItemPage() {
 
   useEffect(() => {
     let alive = true;
+    setItem(null);
+    setError('');
+    setPhoto(0);
     loadPublicItem(itemNumber)
       .then((row) => {
         if (!alive) return;
@@ -81,7 +84,14 @@ export default function ConsignmentItemPage() {
         {photos.length > 1 ? (
           <div className="cs-thumbs">
             {photos.map((src, i) => (
-              <button key={src} type="button" className={i === photo ? 'active' : ''} onClick={() => setPhoto(i)}>
+              <button
+                key={src}
+                type="button"
+                className={i === photo ? 'active' : ''}
+                onClick={() => setPhoto(i)}
+                aria-label={`Show photo ${i + 1} of ${photos.length}`}
+                aria-pressed={i === photo}
+              >
                 <img src={src} alt="" />
               </button>
             ))}

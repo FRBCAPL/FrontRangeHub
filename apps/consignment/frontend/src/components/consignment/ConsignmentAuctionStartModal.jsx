@@ -15,6 +15,7 @@ import {
 import { AUCTION_DAYS, auctionEndFrom, formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import ConsignmentAuctionFeeFields from './ConsignmentAuctionFeeFields.jsx';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentAuctionStartModal({
   item, settings, isRelist = false, previousReserve = null, previouslyDelivered = false,
@@ -95,7 +96,7 @@ export default function ConsignmentAuctionStartModal({
     + (s.credit ? ` (${commission}% minus the ${formatDollars(s.credit)} listing fee)` : '');
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-auction-title">
+    <ConsignmentModal titleId="cs-auction-title" onClose={() => onClose(false)} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-auction-title">{isRelist ? 'Relist' : 'Start'} auction · {itemLabel(item)}</h2>
         <p className="cs-hint">
@@ -120,8 +121,8 @@ export default function ConsignmentAuctionStartModal({
 
         <div className="cs-row">
           <div className="cs-field">
-            <label>Reserve / opening bid ($)</label>
-            <input type="number" step="0.01" min="1" value={reserve} onChange={(e) => setReserve(e.target.value)} required />
+            <label htmlFor="cs-auction-start-f1">Reserve / opening bid ($)</label>
+            <input id="cs-auction-start-f1" type="number" step="0.01" min="1" value={reserve} onChange={(e) => setReserve(e.target.value)} required />
             {isRelist ? (
               <p className="cs-hint">
                 Last reserve {formatDollars(lastReserve)}. Lowering it {policy.freeRepeatDropPct}% or more makes the relist free.
@@ -130,14 +131,14 @@ export default function ConsignmentAuctionStartModal({
             ) : null}
           </div>
           <div className="cs-field">
-            <label>FRPL commission (%)</label>
-            <input type="number" step="0.5" min="0" max="99" value={commission} onChange={(e) => setCommission(e.target.value)} required />
+            <label htmlFor="cs-auction-start-f2">FRPL commission (%)</label>
+            <input id="cs-auction-start-f2" type="number" step="0.5" min="0" max="99" value={commission} onChange={(e) => setCommission(e.target.value)} required />
           </div>
         </div>
         {needsConsent ? (
           <div className="cs-field">
-            <label>Below the agreed {formatDollars(agreedAmount)}. How did the seller agree?</label>
-            <select value={consent} onChange={(e) => setConsent(e.target.value)}>
+            <label htmlFor="cs-auction-start-f3">Below the agreed {formatDollars(agreedAmount)}. How did the seller agree?</label>
+            <select id="cs-auction-start-f3" value={consent} onChange={(e) => setConsent(e.target.value)}>
               {consentOptions.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
@@ -149,8 +150,8 @@ export default function ConsignmentAuctionStartModal({
         </div>
 
         <div className="cs-field">
-          <label>Buy It Now ($, optional)</label>
-          <input type="number" step="0.01" min="0" value={buyNow} onChange={(e) => setBuyNow(e.target.value)} placeholder="Leave blank for none" />
+          <label htmlFor="cs-auction-start-f4">Buy It Now ($, optional)</label>
+          <input id="cs-auction-start-f4" type="number" step="0.01" min="0" value={buyNow} onChange={(e) => setBuyNow(e.target.value)} placeholder="Leave blank for none" />
           {atBuyNow ? (
             <span className="cs-hint">
               At Buy It Now: {splitLine(atBuyNow)}. Disappears once bidding reaches this price.
@@ -185,6 +186,6 @@ export default function ConsignmentAuctionStartModal({
           <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }

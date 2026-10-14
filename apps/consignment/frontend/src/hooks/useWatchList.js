@@ -10,6 +10,7 @@ const SYNC_EVENT = 'frpl:consignment-watch-changed';
  */
 export default function useWatchList() {
   const [userId, setUserId] = useState(null);
+  const [ready, setReady] = useState(false);
   const [watched, setWatched] = useState(() => new Set());
   const [error, setError] = useState('');
 
@@ -17,6 +18,7 @@ export default function useWatchList() {
     let alive = true;
     const load = (id) => {
       setUserId(id);
+      setReady(true);
       loadWatchedIds(id).then((ids) => { if (alive) setWatched(ids); });
     };
     currentUserId().then((id) => { if (alive) load(id); });
@@ -51,5 +53,5 @@ export default function useWatchList() {
     }
   }, [userId, watched]);
 
-  return { userId, watched, toggle, error };
+  return { userId, ready, watched, toggle, error };
 }

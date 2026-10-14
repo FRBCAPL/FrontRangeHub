@@ -10,7 +10,13 @@ import ConsignmentAdmin from './ConsignmentAdmin.jsx';
 import ConsignmentBetaBanner from './ConsignmentBetaBanner.jsx';
 import { CONSIGNMENT_BETA, CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import useConsignmentPageVisitTracker from '../../hooks/useConsignmentPageVisitTracker.js';
+// Keep this order: the parts were one stylesheet and later rules override earlier ones.
 import './consignment.css';
+import './consignment-auction.css';
+import './consignment-gallery.css';
+import './consignment-forms.css';
+import './consignment-help.css';
+import './consignment-controls.css';
 import './consignment-seller.css';
 import './consignment-sell-wizard.css';
 import './consignment-messages.css';

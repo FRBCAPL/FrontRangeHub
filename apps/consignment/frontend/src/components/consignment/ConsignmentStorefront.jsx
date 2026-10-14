@@ -14,14 +14,24 @@ import './consignment-shop.css';
 import './consignment-watch.css';
 
 const AUCTION_REFRESH_MS = 60 * 1000;
+const SHOW_VALUES = ['available', 'case', 'auctions', 'sold', 'all', 'watching'];
 
 export default function ConsignmentStorefront() {
-  const [category, setCategory] = useState('all');
-  const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState(() => {
-    const show = searchParams.get('show');
-    return show === 'case' || show === 'auctions' ? show : 'available';
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showParam = searchParams.get('show');
+  const status = SHOW_VALUES.includes(showParam) ? showParam : 'available';
+  const catParam = searchParams.get('cat');
+  const category = CATEGORIES.some((c) => c.id === catParam) ? catParam : 'all';
+  // Filters live in the URL so Back from an item returns to the same view and links can be shared.
+  const setFilter = useCallback((key, value, fallback) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (value === fallback) next.delete(key); else next.set(key, value);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+  const setStatus = useCallback((v) => setFilter('show', v, 'available'), [setFilter]);
+  const setCategory = useCallback((v) => setFilter('cat', v, 'all'), [setFilter]);
   const [rows, setRows] = useState([]);
   const [auctions, setAuctions] = useState({});
   const [error, setError] = useState('');
@@ -35,8 +45,8 @@ export default function ConsignmentStorefront() {
   else if (status === 'watching') catalogStatus = 'all';
 
   useEffect(() => {
-    if (status === 'watching' && !watch.userId) setStatus('available');
-  }, [status, watch.userId]);
+    if (status === 'watching' && watch.ready && !watch.userId) setStatus('available');
+  }, [status, watch.ready, watch.userId, setStatus]);
 
   useEffect(() => {
     syncServerClock();
@@ -100,15 +110,14 @@ export default function ConsignmentStorefront() {
     <div className="cs-page cs-shop">
       <header className="cs-shop-head">
         <div className="cs-shop-title">
-          <h1><center>FRPL Consignment</center></h1>
+          <h1>FRPL Consignment</h1>
           <p>
-            <center>Buy in person from the case at <strong>Legends Brews &amp; Cues</strong> in{' '}
+            Buy in person from the case at <strong>Legends Brews &amp; Cues</strong> in{' '}
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>, or bid
             online. <br />
             Auction items are delivered to Legends when they sell. <br />
             All pickups are in person; nothing ships. <br />
             Prices + tax, paid at the register.
-            </center>
           </p>
         </div>
         <div className="cs-shop-filters">
@@ -128,7 +137,7 @@ export default function ConsignmentStorefront() {
             <option value="auctions">Online auctions</option>
             <option value="sold">Sold</option>
             <option value="all">Available & sold</option>
-            {watch.userId ? <option value="watching">Watching ({watch.watched.size})</option> : null}
+            {watch.userId || status === 'watching' ? <option value="watching">Watching ({watch.watched.size})</option> : null}
           </select>
         </div>
       </header>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AUCTION_STATUSES, itemLabel } from '../../data/consignmentConstants.js';
 import {
   adminUpdateListing,
@@ -32,7 +32,15 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
   const [editingListing, setEditingListing] = useState(null);
   const [bidderKey, setBidderKey] = useState(0);
 
-  const refresh = () => loadAdminAuctions(status).then(setRows).catch((err) => setError(err.message));
+  const statusRef = useRef(status);
+  statusRef.current = status;
+  const requestRef = useRef(0);
+  const refresh = () => {
+    const request = ++requestRef.current;
+    return loadAdminAuctions(statusRef.current)
+      .then((data) => { if (request === requestRef.current) setRows(data); })
+      .catch((err) => { if (request === requestRef.current) setError(err.message); });
+  };
   const closeWith = (setter) => (saved) => {
     setter(null);
     if (saved) {

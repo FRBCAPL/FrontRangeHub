@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { messageTopicLabel } from '../../data/consignmentConstants.js';
 import { loadConsignmentMessages, setConsignmentMessageStatus } from '../../services/consignmentMessagesService.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
@@ -62,12 +62,17 @@ export default function ConsignmentMessagesPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const filterRef = useRef(filter);
+  filterRef.current = filter;
+  const requestRef = useRef(0);
   const refresh = () => {
+    const request = ++requestRef.current;
+    const latest = () => request === requestRef.current;
     setLoading(true);
-    return loadConsignmentMessages(filter)
-      .then((data) => { setRows(data); setError(''); })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    return loadConsignmentMessages(filterRef.current)
+      .then((data) => { if (latest()) { setRows(data); setError(''); } })
+      .catch((err) => { if (latest()) setError(err.message); })
+      .finally(() => { if (latest()) setLoading(false); });
   };
 
   useEffect(() => { refresh(); }, [filter]);

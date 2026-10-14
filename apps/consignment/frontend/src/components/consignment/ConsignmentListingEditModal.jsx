@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { CONDITIONS, itemLabel, MAX_PHOTOS } from '../../data/consignmentConstants.js';
+import { CONDITIONS, FIELD_LIMITS, itemLabel, MAX_PHOTOS } from '../../data/consignmentConstants.js';
 import { deleteConsignmentPhotos, uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { updateMyListing } from '../../services/consignmentSellerService.js';
 import ConsignmentPhotoManager from './ConsignmentPhotoManager.jsx';
 
 const TEXT_FIELDS = ['name', 'brand', 'model', 'condition', 'specs', 'description'];
-const MAX_TEXT = 2000;
 
 function initialForm(item) {
   return {
@@ -106,16 +105,16 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved, sa
 
           <div className="cs-field">
             <label htmlFor="cs-le-name">Item name</label>
-            <input id="cs-le-name" value={form.name} onChange={set('name')} maxLength={120} required />
+            <input id="cs-le-name" value={form.name} onChange={set('name')} maxLength={FIELD_LIMITS.name} required />
           </div>
           <div className="cs-row">
             <div className="cs-field">
               <label htmlFor="cs-le-brand">Brand</label>
-              <input id="cs-le-brand" value={form.brand} onChange={set('brand')} maxLength={80} />
+              <input id="cs-le-brand" value={form.brand} onChange={set('brand')} maxLength={FIELD_LIMITS.brand} />
             </div>
             <div className="cs-field">
               <label htmlFor="cs-le-model">Model</label>
-              <input id="cs-le-model" value={form.model} onChange={set('model')} maxLength={80} />
+              <input id="cs-le-model" value={form.model} onChange={set('model')} maxLength={FIELD_LIMITS.model} />
             </div>
           </div>
           <div className="cs-field">
@@ -126,11 +125,11 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved, sa
           </div>
           <div className="cs-field">
             <label htmlFor="cs-le-specs">Specifications</label>
-            <textarea id="cs-le-specs" rows={3} value={form.specs} onChange={set('specs')} maxLength={MAX_TEXT} placeholder="Weight, length, wrap, tip, joint…" />
+            <textarea id="cs-le-specs" rows={3} value={form.specs} onChange={set('specs')} maxLength={FIELD_LIMITS.specs} placeholder="Weight, length, wrap, tip, joint…" />
           </div>
           <div className="cs-field">
             <label htmlFor="cs-le-desc">Description</label>
-            <textarea id="cs-le-desc" rows={4} value={form.description} onChange={set('description')} maxLength={MAX_TEXT} placeholder="Anything a buyer should know — wear, history, extras included." />
+            <textarea id="cs-le-desc" rows={4} value={form.description} onChange={set('description')} maxLength={FIELD_LIMITS.description} placeholder="Anything a buyer should know — wear, history, extras included." />
           </div>
           <ConsignmentPhotoManager
             photos={form.photo_urls}

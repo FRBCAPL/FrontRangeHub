@@ -20,6 +20,7 @@
 .cs-shop-title {
   flex: 1 1 360px;
   min-width: 0;
+  text-align: center;
 }
 
 .cs-shop .cs-shop-title h1 {
@@ -81,7 +82,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: 44px;
   padding: 6px 14px;
   border-radius: 999px;
   border: 1px solid transparent;

@@ -1,5 +1,6 @@
 import { formatDollars } from './consignmentMoney.js';
 import { formatShortDate } from './consignmentDates.js';
+import { formatDateTime, formatShortEnd } from './consignmentAuctionDates.js';
 import { saleSplit, usesShelfCommission } from './consignmentFeePolicy.js';
 
 /**
@@ -82,15 +83,13 @@ function auctionStatus(item, a, deliverDays) {
           ? `Current bid: ${formatDollars(a.current_bid)} (${bids} bid${bids === 1 ? '' : 's'})`
           : `No bids yet — opening bid ${formatDollars(a.opening_bid)}`,
         reserve,
-        `Ends ${new Date(a.ends_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
+        `Ends ${formatShortEnd(a.ends_at)}`,
         a.delivered_at ? null : `Keep it safe and ready: if it sells, you have ${deliverDays} days to bring it to Legends.`,
       ].filter(Boolean),
     };
   }
   if (a.status === 'awaiting_payment' && 'delivered_at' in a && !a.delivered_at) {
-    const due = a.delivery_due_at
-      ? new Date(a.delivery_due_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-      : null;
+    const due = a.delivery_due_at ? formatDateTime(a.delivery_due_at) : null;
     return {
       tone: 'warn',
       label: 'Sold — bring it to Legends',

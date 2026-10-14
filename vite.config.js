@@ -112,6 +112,7 @@ export default defineConfig({
       jspdf: path.resolve(__dirname, 'node_modules', 'jspdf'),
       'jspdf-autotable': path.resolve(__dirname, 'node_modules', 'jspdf-autotable'),
       xlsx: path.resolve(__dirname, 'node_modules', 'xlsx'),
+      qrcode: path.resolve(__dirname, 'node_modules', 'qrcode'),
       canvas: path.resolve(__dirname, 'src', 'empty-module.js'),
       '@stripe/react-stripe-js': path.resolve(__dirname, 'node_modules', '@stripe/react-stripe-js'),
       '@stripe/stripe-js': path.resolve(__dirname, 'node_modules', '@stripe/stripe-js')

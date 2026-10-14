@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CONSIGNMENT_DAYS,
@@ -56,7 +56,6 @@ export default function ConsignmentAdmin() {
   const [consignmentDays, setConsignmentDays] = useState(CONSIGNMENT_DAYS);
   const [graceDays, setGraceDays] = useState(PICKUP_GRACE_DAYS);
   const [edit, setEdit] = useState(null);
-  const [approving, setApproving] = useState(false);
   const [approvingItem, setApprovingItem] = useState(null);
   const [sold, setSold] = useState(null);
   const [renewing, setRenewing] = useState(null);
@@ -72,7 +71,15 @@ export default function ConsignmentAdmin() {
     if (linkedTab === 'items' && linkedStatus) setStatus(linkedStatus);
   }, [linkedTab, linkedStatus]);
 
-  const refresh = () => loadAdminItems(status).then(setRows).catch((err) => setError(err.message));
+  const statusRef = useRef(status);
+  statusRef.current = status;
+  const requestRef = useRef(0);
+  const refresh = () => {
+    const request = ++requestRef.current;
+    return loadAdminItems(statusRef.current)
+      .then((data) => { if (request === requestRef.current) setRows(data); })
+      .catch((err) => { if (request === requestRef.current) setError(err.message); });
+  };
 
   useEffect(() => {
     setError('');
@@ -94,7 +101,7 @@ export default function ConsignmentAdmin() {
   }, []);
 
   const actions = {
-    edit: (item) => { setApproving(false); setEdit(item); },
+    edit: setEdit,
     approve: setApprovingItem,
     sold: setSold,
     renew: setRenewing,
@@ -207,17 +214,15 @@ export default function ConsignmentAdmin() {
           item={approvingItem}
           consignmentDays={consignmentDays}
           policy={policy}
-          onEditDetails={() => { setApproving(false); setEdit(approvingItem); setApprovingItem(null); }}
+          onEditDetails={() => { setEdit(approvingItem); setApprovingItem(null); }}
           onClose={() => { setApprovingItem(null); refresh(); }}
         />
       ) : null}
       {edit ? (
         <ConsignmentAdminEditModal
-          key={`${edit.id}-${approving}`}
+          key={edit.id}
           item={edit}
-          approving={approving}
           defaultFee={defaultFee}
-          consignmentDays={consignmentDays}
           policy={policy}
           onClose={() => { setEdit(null); refresh(); }}
           onSave={(patch) => updateItemIfStatus(edit.id, edit.status, patch)}

@@ -3,6 +3,7 @@ import { itemLabel } from '../../data/consignmentConstants.js';
 import { bidderName, defaultAuction } from '../../services/consignmentAuctionAdminService.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
   const overdue = Boolean(auction.payment_due_at) && new Date(auction.payment_due_at).getTime() < Date.now();
@@ -29,7 +30,7 @@ export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-adefault-title">
+    <ConsignmentModal titleId="cs-adefault-title" onClose={() => onClose(false)} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-adefault-title">Winner didn’t pay · {itemLabel(auction.item)}</h2>
         <p className="cs-hint">
@@ -42,8 +43,8 @@ export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
           Suspend this bidder from future auctions
         </label>
         <div className="cs-field">
-          <label>Note (admin only)</label>
-          <input value={reason} onChange={(e) => setReason(e.target.value)} />
+          <label htmlFor="cs-auction-default-f1">Note (admin only)</label>
+          <input id="cs-auction-default-f1" value={reason} onChange={(e) => setReason(e.target.value)} />
         </div>
         <p className="cs-hint">
           Nothing is awarded automatically. Afterward you can offer it to another bidder, or the seller picks
@@ -55,6 +56,6 @@ export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
           <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)} disabled={busy}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }

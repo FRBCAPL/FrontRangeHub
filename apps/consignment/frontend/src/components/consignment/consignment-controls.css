@@ -1,0 +1,272 @@
+.cs-btn,
+.cs-btn-secondary {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid var(--cs-accent);
+}
+
+.cs-btn {
+  background: var(--cs-accent);
+  color: #fff;
+}
+
+.cs-btn-secondary {
+  background: transparent;
+  color: var(--cs-ink);
+}
+
+.cs-error {
+  color: #fca5a5;
+  margin: 0;
+}
+
+.cs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.cs-table th,
+.cs-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--cs-line);
+  vertical-align: top;
+}
+
+.cs-table button {
+  min-height: 0;
+  margin: 0 4px 4px 0;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+.cs-admin-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.cs-table .cs-admin-thumb {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  margin: 0;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--cs-line);
+  background: #020617;
+  overflow: hidden;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+}
+
+.cs-admin-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cs-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.cs-photo-tile {
+  position: relative;
+  border-radius: 10px;
+  border: 2px solid var(--cs-line);
+  overflow: hidden;
+  background: #020617;
+}
+
+.cs-photo-tile.cover {
+  border-color: #a855f7;
+}
+
+.cs-photo-view {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  min-height: 0;
+}
+
+.cs-photo-view img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  display: block;
+}
+
+.cs-photo-tag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #a855f7;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.cs-photo-actions {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+}
+
+.cs-photo-actions button {
+  flex: 1;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-photo-actions button.danger {
+  flex: 0 0 auto;
+  color: #fca5a5;
+  border-color: rgba(252, 165, 165, 0.5);
+}
+
+.cs-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  cursor: zoom-out;
+}
+
+.cs-lightbox img {
+  width: min(100%, 1200px);
+  height: 80vh;
+  object-fit: contain;
+}
+
+/* index.css also unsets max-height, so the overlay scrolls instead of the card. */
+.cs-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cs-modal:focus {
+  outline: none;
+}
+
+.cs-modal-card {
+  width: min(640px, 100%);
+  margin: auto 0;
+  box-sizing: border-box;
+  background: var(--cs-card);
+  border: 1px solid var(--cs-line);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.cs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .cs-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cs-fee-add {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cs-table,
+  .cs-table tbody,
+  .cs-table tr,
+  .cs-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .cs-table thead {
+    display: none;
+  }
+
+  .cs-table tr {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--cs-line);
+    border-radius: 14px;
+    background: var(--cs-card);
+  }
+
+  .cs-table td {
+    padding: 6px 0;
+    border-bottom: 0;
+  }
+
+  .cs-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--cs-muted);
+  }
+
+  .cs-table .cs-cell-id {
+    padding-top: 0;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--cs-accent);
+  }
+
+  .cs-table .cs-cell-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--cs-line);
+  }
+
+  .cs-table .cs-cell-actions button {
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+  }
+}

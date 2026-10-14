@@ -292,9 +292,11 @@
 }
 
 .cs-wiz-edit {
-  min-height: 0;
-  margin-left: 6px;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-left: 2px;
+  padding: 0 8px;
   border: 0;
   background: none;
   color: #c084fc;

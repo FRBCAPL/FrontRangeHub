@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import {
   CATEGORIES,
   CONDITIONS,
-  CONSIGNMENT_DAYS,
   DEFAULT_CONSIGNMENT_FEE,
+  FIELD_LIMITS,
   itemLabel,
-  PAYMENT_METHODS,
   statusLabel,
   STATUSES,
 } from '../../data/consignmentConstants.js';
@@ -15,56 +14,33 @@ import { updateAuctionTerms } from '../../services/consignmentAuctionAdminServic
 import { formatDollars, frplRevenue } from '../../utils/consignmentMoney.js';
 import {
   DEFAULT_FEE_POLICY,
-  listingFee,
   originalListingFee,
   saleSplit,
   usesShelfCommission,
 } from '../../utils/consignmentFeePolicy.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
+import { fromDateInput, numOrNull, toDateInput } from '../../utils/consignmentFormValues.js';
 import { deleteConsignmentPhotos, uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
-import { intakePatch, recordFee } from '../../services/consignmentFeesService.js';
 import ConsignmentPhotoManager from './ConsignmentPhotoManager.jsx';
 import ConsignmentFeesPanel from './ConsignmentFeesPanel.jsx';
 import ConsignmentHistoryPanel from './ConsignmentHistoryPanel.jsx';
 import ConsignmentPayoutModal from './ConsignmentPayoutModal.jsx';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 const LISTED = ['available', 'sold'];
 const ACTIVE_AUCTION = ['draft', 'live', 'awaiting_payment'];
 
-function numOrNull(v) {
-  if (v === '' || v == null) return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
-function toDateInput(value) {
-  if (!value) return '';
-  const d = new Date(value);
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-/** End of the chosen local day, so an item listed "until Oct 30" stays up all of Oct 30. */
-function fromDateInput(value) {
-  if (!value) return null;
-  const [y, m, d] = value.split('-').map(Number);
-  return new Date(y, m - 1, d, 23, 59, 59).toISOString();
-}
-
 export default function ConsignmentAdminEditModal({
   item,
-  approving = false,
   defaultFee = DEFAULT_CONSIGNMENT_FEE,
-  consignmentDays = CONSIGNMENT_DAYS,
   policy = DEFAULT_FEE_POLICY,
   onClose,
   onSave,
 }) {
-  const isAuction = item.sale_method === 'auction' && !approving;
-  // Every approval uses the commission model; older listed items keep the markup math.
-  const commissionModel = approving || usesShelfCommission(item);
+  const isAuction = item.sale_method === 'auction';
+  // Older listed items keep the markup math.
+  const commissionModel = usesShelfCommission(item);
   const commissionPct = Number(item.commission_pct ?? policy.shelfCommissionPct);
-  const initialRetail = item.selling_price ?? (approving ? item.seller_payout : '');
   const activeAuction = isAuction && ACTIVE_AUCTION.includes(item.auction?.status) ? item.auction : null;
   const termsEditable = isAuction
     && ['pending', 'available'].includes(item.status)
@@ -81,26 +57,21 @@ export default function ConsignmentAdminEditModal({
     specs: item.specs || '',
     seller_payout: isAuction ? startReserve : item.seller_payout,
     requested_buy_now: startBuyNow,
-    selling_price: initialRetail ?? '',
-    consignment_fee: commissionModel
-      ? (item.consignment_fee ?? listingFee(initialRetail || item.seller_payout, 'fixed', policy))
-      : (item.consignment_fee ?? defaultFee),
-    status: approving ? 'available' : item.status,
+    selling_price: item.selling_price ?? '',
+    status: item.status,
     photo_urls: item.photo_urls || [],
     ...('allow_inspection' in item ? { allow_inspection: Boolean(item.allow_inspection) } : {}),
   });
   const [expiresOn, setExpiresOn] = useState(toDateInput(item.expires_at));
-  const [feePaid, setFeePaid] = useState(true);
-  const [feeMethod, setFeeMethod] = useState(PAYMENT_METHODS[0]);
   const [removedPhotos, setRemovedPhotos] = useState([]);
   const [changingPayout, setChangingPayout] = useState(false);
   const [historyKey, setHistoryKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const payoutLocked = Boolean(item.intake_at) || (!approving && item.status !== 'pending');
+  const payoutLocked = Boolean(item.intake_at) || item.status !== 'pending';
   // Sold / Available need the Sold, Approve or Renew flows (sale split, fee, listing window).
-  const statusLocked = !approving && !item.is_example && item.status === 'sold';
-  const statusOptions = approving || item.is_example
+  const statusLocked = !item.is_example && item.status === 'sold';
+  const statusOptions = item.is_example
     ? STATUSES
     : STATUSES.filter((s) => s.id === item.status || !['sold', 'available'].includes(s.id));
   const needsRetail = LISTED.includes(form.status) && !isAuction;
@@ -108,10 +79,7 @@ export default function ConsignmentAdminEditModal({
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const retail = numOrNull(form.selling_price);
-  const policyFee = listingFee(retail ?? form.seller_payout, 'fixed', policy);
-  const creditedFee = approving
-    ? (numOrNull(form.consignment_fee) ?? 0)
-    : (originalListingFee(item.fees, 'fixed') || Number(item.consignment_fee) || 0);
+  const creditedFee = originalListingFee(item.fees, 'fixed') || Number(item.consignment_fee) || 0;
   const atRetail = commissionModel && retail != null ? saleSplit(retail, commissionPct, creditedFee) : null;
   const margin = retail != null
     ? (atRetail ? atRetail.frplFromSale : frplRevenue(retail, form.seller_payout))
@@ -137,10 +105,6 @@ export default function ConsignmentAdminEditModal({
       setError('Set the shop price before listing this item.');
       return;
     }
-    if (approving && Number(form.consignment_fee) > 0 && !feePaid) {
-      setError('The listing fee is paid at drop-off. Collect it before the item goes in the case.');
-      return;
-    }
     const reserve = Number(form.seller_payout);
     const buyNow = numOrNull(form.requested_buy_now);
     if (termsEditable && !(reserve > 0)) {
@@ -156,10 +120,8 @@ export default function ConsignmentAdminEditModal({
     setBusy(true);
     setError('');
     try {
-      const { consignment_fee: feeInput, ...rest } = form;
-      const fee = numOrNull(feeInput);
       const patch = {
-        ...rest,
+        ...form,
         seller_payout: Number(form.seller_payout),
         selling_price: retail,
       };
@@ -170,19 +132,10 @@ export default function ConsignmentAdminEditModal({
         delete patch.selling_price;
       }
       if (termsChanged) await updateAuctionTerms(item.id, { reserve, buyNow });
-      if (approving) {
-        Object.assign(
-          patch,
-          { consignment_fee: fee, sale_method: 'fixed', commission_pct: commissionPct },
-          intakePatch(consignmentDays),
-        );
-      } else if (!isAuction && expiresOn !== toDateInput(item.expires_at)) {
+      if (!isAuction && expiresOn !== toDateInput(item.expires_at)) {
         patch.expires_at = fromDateInput(expiresOn);
       }
       await onSave(patch);
-      if (approving && feePaid && fee) {
-        await recordFee(item.id, { kind: 'consignment', amount: fee, days: consignmentDays, paymentMethod: feeMethod });
-      }
       const gone = removedPhotos.filter((url) => !form.photo_urls.includes(url));
       await deleteConsignmentPhotos(gone).catch(() => {});
       onClose();
@@ -194,18 +147,12 @@ export default function ConsignmentAdminEditModal({
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-edit-title">
+    <ConsignmentModal titleId="cs-edit-title" onClose={onClose} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-edit-title">
-          {approving ? 'Approve' : 'Edit'} {itemLabel(item)}
+          Edit {itemLabel(item)}
           {isAuction ? <span className="cs-badge auction" style={{ marginLeft: 8 }}>Online auction</span> : null}
         </h2>
-        {approving ? (
-          <p className="cs-hint">
-            Confirm the shop price and collect the listing fee. The item goes live in the shop when you save,
-            and its {consignmentDays}-day window starts today. FRPL earns {commissionPct}% of the sale, with the listing fee credited.
-          </p>
-        ) : null}
         <ConsignmentPhotoManager
           photos={form.photo_urls}
           onChange={(photo_urls) => setForm((prev) => ({ ...prev, photo_urls }))}
@@ -214,35 +161,35 @@ export default function ConsignmentAdminEditModal({
           disabled={busy}
         />
         <div className="cs-field">
-          <label>Item name</label>
-          <input value={form.name} onChange={set('name')} required />
+          <label htmlFor="cs-admin-edit-f1">Item name</label>
+          <input id="cs-admin-edit-f1" value={form.name} onChange={set('name')} maxLength={FIELD_LIMITS.name} required />
         </div>
         <div className="cs-row">
           <div className="cs-field">
-            <label>Brand</label>
-            <input value={form.brand} onChange={set('brand')} />
+            <label htmlFor="cs-admin-edit-f2">Brand</label>
+            <input id="cs-admin-edit-f2" value={form.brand} onChange={set('brand')} maxLength={FIELD_LIMITS.brand} />
           </div>
           <div className="cs-field">
-            <label>Model number/name</label>
-            <input value={form.model} onChange={set('model')} />
+            <label htmlFor="cs-admin-edit-f3">Model number/name</label>
+            <input id="cs-admin-edit-f3" value={form.model} onChange={set('model')} maxLength={FIELD_LIMITS.model} />
           </div>
         </div>
         <div className="cs-row">
           <div className="cs-field">
-            <label>Category</label>
-            <select value={form.category} onChange={set('category')}>
+            <label htmlFor="cs-admin-edit-f4">Category</label>
+            <select id="cs-admin-edit-f4" value={form.category} onChange={set('category')}>
               {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
           <div className="cs-field">
-            <label>Condition</label>
-            <select value={form.condition} onChange={set('condition')}>
+            <label htmlFor="cs-admin-edit-f5">Condition</label>
+            <select id="cs-admin-edit-f5" value={form.condition} onChange={set('condition')}>
               {CONDITIONS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
         </div>
         <div className="cs-field">
-          <label>Status</label>
+          <label htmlFor={isAuction || statusLocked ? undefined : 'cs-admin-edit-status'}>Status</label>
           {isAuction ? (
             <>
               <p className="cs-static">{statusLabel(item.status)}</p>
@@ -255,7 +202,7 @@ export default function ConsignmentAdminEditModal({
             </>
           ) : (
             <>
-              <select value={form.status} onChange={set('status')}>
+              <select id="cs-admin-edit-status" value={form.status} onChange={set('status')}>
                 {statusOptions.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
               <p className="cs-hint">To list or sell an item, use Approve, Renew or Sold on the list so the fee and sale are recorded.</p>
@@ -263,12 +210,12 @@ export default function ConsignmentAdminEditModal({
           )}
         </div>
         <div className="cs-field">
-          <label>Specs</label>
-          <textarea rows={2} value={form.specs} onChange={set('specs')} />
+          <label htmlFor="cs-admin-edit-f6">Specs</label>
+          <textarea id="cs-admin-edit-f6" rows={2} value={form.specs} onChange={set('specs')} maxLength={FIELD_LIMITS.specs} />
         </div>
         <div className="cs-field">
-          <label>Description</label>
-          <textarea rows={3} value={form.description} onChange={set('description')} />
+          <label htmlFor="cs-admin-edit-f7">Description</label>
+          <textarea id="cs-admin-edit-f7" rows={3} value={form.description} onChange={set('description')} maxLength={FIELD_LIMITS.description} />
         </div>
         {isAuction ? (
           <ConsignmentEditAuctionFields
@@ -282,7 +229,9 @@ export default function ConsignmentAdminEditModal({
         <>
         <div className="cs-row">
           <div className="cs-field">
-            <label>{commissionModel ? 'Agreed price ($)' : 'Seller Payout ($)'}</label>
+            <label htmlFor={payoutLocked ? undefined : 'cs-admin-edit-payout'}>
+              {commissionModel ? 'Agreed price ($)' : 'Seller Payout ($)'}
+            </label>
             {payoutLocked ? (
               <div className="cs-locked">
                 <span>{formatDollars(form.seller_payout)}</span>
@@ -291,13 +240,13 @@ export default function ConsignmentAdminEditModal({
                 </button>
               </div>
             ) : (
-              <input type="number" step="0.01" min="0" value={form.seller_payout} onChange={set('seller_payout')} />
+              <input id="cs-admin-edit-payout" type="number" step="0.01" min="0" value={form.seller_payout} onChange={set('seller_payout')} />
             )}
             {commissionModel ? <p className="cs-hint">The seller’s price. It can’t sell for less without their OK.</p> : null}
           </div>
           <div className="cs-field">
-            <label>{commissionModel ? 'Shop price ($)' : 'FRPL Retail Price ($)'}</label>
-            <input
+            <label htmlFor="cs-admin-edit-f8">{commissionModel ? 'Shop price ($)' : 'FRPL Retail Price ($)'}</label>
+            <input id="cs-admin-edit-f8"
               type="number"
               step="0.01"
               min="0"
@@ -337,49 +286,21 @@ export default function ConsignmentAdminEditModal({
         ) : null}
         </>
         )}
-        {approving ? (
+        {isAuction ? null : (
           <div className="cs-row">
             <div className="cs-field">
-              <label>Listing fee ($)</label>
-              <input type="number" step="0.01" min="0" value={form.consignment_fee} onChange={set('consignment_fee')} />
-              {commissionModel && Number(form.consignment_fee) !== policyFee ? (
-                <p className="cs-hint">
-                  Policy fee for this price: {formatDollars(policyFee)}.{' '}
-                  <button type="button" className="cs-btn-secondary" onClick={() => setForm((prev) => ({ ...prev, consignment_fee: policyFee }))}>
-                    Use it
-                  </button>
-                </p>
-              ) : null}
-              <label className="cs-check">
-                <input type="checkbox" checked={feePaid} onChange={(e) => setFeePaid(e.target.checked)} />
-                Fee paid now (required before it goes in the case)
-              </label>
+              <label>Listed on</label>
+              <p className="cs-static">{formatShortDate(item.intake_at)}</p>
             </div>
             <div className="cs-field">
-              <label>Payment method</label>
-              <select value={feeMethod} onChange={(e) => setFeeMethod(e.target.value)} disabled={!feePaid}>
-                {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
+              <label htmlFor="cs-admin-edit-f11">Listing ends</label>
+              <input id="cs-admin-edit-f11" type="date" value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} />
             </div>
           </div>
-        ) : (
-          <>
-            {isAuction ? null : (
-              <div className="cs-row">
-                <div className="cs-field">
-                  <label>Listed on</label>
-                  <p className="cs-static">{formatShortDate(item.intake_at)}</p>
-                </div>
-                <div className="cs-field">
-                  <label>Listing ends</label>
-                  <input type="date" value={expiresOn} onChange={(e) => setExpiresOn(e.target.value)} />
-                </div>
-              </div>
-            )}
-            <ConsignmentFeesPanel item={item} defaultFee={defaultFee} />
-            <ConsignmentHistoryPanel itemId={item.id} reloadKey={historyKey} />
-          </>
         )}
+        <ConsignmentFeesPanel item={item} defaultFee={defaultFee} />
+        <ConsignmentHistoryPanel itemId={item.id} reloadKey={historyKey} />
+
         {error ? <p className="cs-error">{error}</p> : null}
         <div className="cs-actions">
           <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
@@ -397,6 +318,6 @@ export default function ConsignmentAdminEditModal({
           }}
         />
       ) : null}
-    </div>
+    </ConsignmentModal>
   );
 }

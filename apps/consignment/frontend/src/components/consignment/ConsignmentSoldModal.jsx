@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { shelfSaleSplit, usesShelfCommission } from '../../utils/consignmentFeePolicy.js';
 import { feesTotal, formatDollars, priceWithTaxLabel } from '../../utils/consignmentMoney.js';
+import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentSoldModal({ item, onClose, onSave }) {
   const [actual, setActual] = useState(item.selling_price);
@@ -36,7 +37,7 @@ export default function ConsignmentSoldModal({ item, onClose, onSave }) {
   };
 
   return (
-    <div className="cs-modal" role="dialog" aria-labelledby="cs-sold-title">
+    <ConsignmentModal titleId="cs-sold-title" onClose={onClose} busy={busy}>
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-sold-title">Mark {itemLabel(item)} sold</h2>
         <p className="cs-hint">
@@ -46,18 +47,18 @@ export default function ConsignmentSoldModal({ item, onClose, onSave }) {
             : `Seller Payout stays ${formatDollars(item.seller_payout)}.`}
         </p>
         <div className="cs-field">
-          <label>Sale price before tax ($)</label>
-          <input type="number" step="0.01" min="0" value={actual} onChange={(e) => setActual(e.target.value)} required />
+          <label htmlFor="cs-sold-f1">Sale price before tax ($)</label>
+          <input id="cs-sold-f1" type="number" step="0.01" min="0" value={actual} onChange={(e) => setActual(e.target.value)} required />
         </div>
         <div className="cs-field">
-          <label>Payment method</label>
-          <select value={method} onChange={(e) => setMethod(e.target.value)}>
+          <label htmlFor="cs-sold-f2">Payment method</label>
+          <select id="cs-sold-f2" value={method} onChange={(e) => setMethod(e.target.value)}>
             {PAYMENT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
         <div className="cs-field">
-          <label>Card/transaction fee charged to FRPL ($, optional)</label>
-          <input type="number" step="0.01" min="0" value={txnFee} onChange={(e) => setTxnFee(e.target.value)} placeholder="Leave blank if none" />
+          <label htmlFor="cs-sold-f3">Card/transaction fee charged to FRPL ($, optional)</label>
+          <input id="cs-sold-f3" type="number" step="0.01" min="0" value={txnFee} onChange={(e) => setTxnFee(e.target.value)} placeholder="Leave blank if none" />
         </div>
         <div className="cs-sellbox">
           <span>Seller is paid</span>
@@ -84,6 +85,6 @@ export default function ConsignmentSoldModal({ item, onClose, onSave }) {
           <button className="cs-btn-secondary" type="button" onClick={onClose}>Cancel</button>
         </div>
       </form>
-    </div>
+    </ConsignmentModal>
   );
 }
