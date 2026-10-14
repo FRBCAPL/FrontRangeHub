@@ -3,6 +3,7 @@ import { buyNow, isMyItem, openHubLogin, placeBid } from '../../services/consign
 import { bidError, buyNowAvailable } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { LEGENDS_PLACE } from '../../data/consignmentConstants.js';
+import ConsignmentBidAlertsToggle from './ConsignmentBidAlertsToggle.jsx';
 
 const PICKUP_NOTE = `Pickup is in person at ${LEGENDS_PLACE}; nothing ships.`;
 
@@ -115,6 +116,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, outb
       ) : null}
       {error ? <p className="cs-error">{error}</p> : null}
       {notice ? <p className="cs-bid-notice">{notice}</p> : null}
+      <ConsignmentBidAlertsToggle userId={userId} />
     </form>
   );
 }

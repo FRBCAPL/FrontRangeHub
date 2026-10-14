@@ -325,6 +325,12 @@
   border-color: #a855f7;
 }
 
+.cs-bid-alerts {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
 .cs-bid-won {
   padding: 12px;
   border-radius: 10px;
