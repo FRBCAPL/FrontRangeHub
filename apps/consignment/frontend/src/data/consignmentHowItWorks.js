@@ -31,11 +31,11 @@ export const HOW_IT_WORKS_TABS = [
     intro: 'You set the price. We sell it from the case at Legends.',
     steps: [
       { icon: '🔑', title: 'Get seller access', text: 'Selling is open to approved FRPL sellers. Log in and request seller access.' },
-      { icon: '📍', title: 'Drop off at Legends', text: 'You’ll need to drop the item off at Legends in Colorado Springs, CO.' },
-      { icon: '📸', title: 'Submit it online', text: 'Submit your item online with photos and your price.' },
+      { icon: '📸', title: 'Submit it online', text: 'Submit your item online with photos and your price. Keep the item for now.' },
       { icon: '👀', title: 'FRPL reviews it', text: 'FRPL reviews it and gets in touch. We may accept it, suggest changes, or decline.' },
-      { icon: '🏪', title: 'Into the case', text: 'If accepted, bring it to Legends and pay the listing fee. It stays in the case for {days} days.' },
-      { icon: '💲', title: 'Your price, your call', text: 'Your price is never lowered without your OK. Fees and terms are in the consignment agreement.' },
+      { icon: '🏪', title: 'Drop it off at Legends', text: 'Only once it’s accepted: bring it to Legends in Colorado Springs, CO and pay the listing fee. It goes in the case for {days} days.' },
+      { icon: '💲', title: 'Your price, your call', text: 'Your price is never lowered without your OK.' },
+      { icon: '🧾', title: 'What it costs', text: '{consignFees}', home: false },
       { icon: '🪪', title: 'Inspection is your choice', text: 'You choose whether buyers may inspect your item at Legends.' },
       { icon: '💵', title: 'Sold? Get paid', text: 'Sold? Collect your payment at Legends within 7 days of the sale.' },
       { icon: '🔁', title: 'Didn’t sell?', text: 'Not sold after {days} days? Renew it, or pick it up within {graceDays} days. Items left longer become unclaimed property.' },
@@ -56,10 +56,34 @@ export const HOW_IT_WORKS_TABS = [
       { icon: '🚚', title: 'Sold? Deliver it', text: 'Sold? Bring it to Legends within {deliverDays} days. The winner looks it over and pays there. Miss the deadline and the sale is cancelled, the fee isn’t refunded, and you lose selling access.' },
       { icon: '💵', title: 'Get paid', text: 'Collect your payment at Legends within 7 days of the winner paying.' },
       { icon: '🔁', title: 'No bids?', text: 'No bids? Choose what’s next on My items: relist it (free every time you lower the reserve 10% or more), switch to a fixed-price consignment, or keep it. If it’s already at Legends, pick it up within {graceDays} days; otherwise there’s nothing to pick up.' },
-      { icon: '📄', title: 'Fees and terms', text: 'Fees and terms are in the auction agreement.' },
+      { icon: '🧾', title: 'What it costs', text: '{auctionFees}', home: false },
     ],
   },
 ];
+
+/**
+ * Fee wording for {consignFees} {auctionFees} {consignFeeLine} {auctionFeeLine}.
+ * `seller` (with the fee placeholders from consignmentFeeText) shows to approved sellers and admins only;
+ * everyone else sees `public`.
+ */
+export const FEE_TEXT = {
+  consignFees: {
+    seller: 'Listing fee: {fee}, paid at drop-off and not refunded. When it sells, FRPL keeps {shelfCommission}% of the price, with your listing fee counted toward it. Renewing costs {repeatShare} the original fee, or is free the first time if you lower your price {freeDrop} or more. Full terms are in the consignment agreement.',
+    public: 'There’s a listing fee, and FRPL keeps a share when it sells. Once you’re an approved seller you’ll see the exact amounts here and before you submit anything.',
+  },
+  auctionFees: {
+    seller: 'Listing fee: {auctionFee}, paid before the auction goes live and not refunded. When it sells, FRPL keeps {commission}% of the winning bid, with your listing fee counted toward it. Relisting is free every time you lower the reserve {freeDrop} or more; otherwise it costs {repeatShare} the original fee. Full terms are in the auction agreement.',
+    public: 'There’s a listing fee, and FRPL keeps a share of the winning bid. Once you’re an approved seller you’ll see the exact amounts here and before you submit anything.',
+  },
+  consignFeeLine: {
+    seller: 'Listing fee {fee}, paid at drop-off. FRPL keeps {shelfCommission}% of the sale, fee credited.',
+    public: 'Listing fee paid at drop-off. Approved sellers see the amounts before submitting.',
+  },
+  auctionFeeLine: {
+    seller: 'Listing fee {auctionFee}, paid before it goes live. FRPL keeps {commission}% of the winning bid, fee credited.',
+    public: 'Listing fee paid before it goes live. Approved sellers see the amounts before submitting.',
+  },
+};
 
 export const HOW_IT_WORKS_FOOTER = 'Questions? Ask at the bar at Legends, or message FRPL.';
 
@@ -106,7 +130,7 @@ export const HOME_COMPARE = [
     lines: [
       'Best when you know what you want for it.',
       'You set the price; it sells from the case at Legends.',
-      'Listing fees apply. See the consignment agreement.',
+      '{consignFeeLine}',
     ],
   },
   {
@@ -115,7 +139,7 @@ export const HOME_COMPARE = [
     lines: [
       'Best when you want bidders to set the price.',
       'You set the reserve (the opening bid) and an optional Buy It Now.',
-      'Listing fees apply. See the auction agreement.',
+      '{auctionFeeLine}',
     ],
   },
 ];
