@@ -77,6 +77,40 @@
 .dz-land-handles .dz-sport-tip:nth-of-type(n+5):hover::after,
 .dz-land-handles .dz-sport-tip:nth-of-type(n+5):focus::after { transform: translate(-50%, 0); }
 
+/* General landing tooltips (DuezyTip): wrap to a readable width, open above or below */
+.dz-tip { position: relative; outline: none; cursor: help; }
+.dz-tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 20;
+  width: max-content;
+  max-width: min(250px, 80vw);
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--dz-line-strong, rgba(255, 255, 255, 0.18));
+  background: #11131c;
+  color: var(--dz-text);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  pointer-events: none;
+}
+.dz-tip--below::after { bottom: auto; top: calc(100% + 8px); transform: translate(-50%, -4px); }
+.dz-tip:hover::after,
+.dz-tip:focus::after { opacity: 1; transform: translate(-50%, 0); }
+.dz-tip:focus-visible { outline: 2px solid rgba(129, 140, 248, 0.6); outline-offset: 2px; border-radius: 6px; }
+.dz-tip-term { border-bottom: 1px dotted currentColor; }
+
 /* The two sample weeks beside "Handles the messy stuff" — compact so they match its height */
 .dz-land-sample { gap: 7px; padding: 12px; justify-content: space-between; }
 .dz-land-sample--left { grid-area: left; transform: rotate(-1.5deg); }
