@@ -17,7 +17,7 @@ const TIERS = [
     name: 'Larger Leagues \n With many Divisions',
     monthly: MONTHLY_CAP,
     max: true,
-    hint: `${CAP_DIVISIONS}+ divisions — add as many as you like, the price stops here.`,
+    hint: `${CAP_DIVISIONS}+ Divisions. \n Add as many as you need. \n The price stops here.`,
   },
 ];
 
