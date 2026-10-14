@@ -28,6 +28,11 @@
 
 .dz-set-danger { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-color: rgba(239, 68, 68, 0.25); }
 .dz-set-danger-btn { color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+.dz-archive-league { padding-top: 12px; padding-bottom: 12px; }
+.dz-archive-league > summary { cursor: pointer; color: var(--dz-muted); font-size: 0.88rem; font-weight: 600; }
+.dz-archive-league > summary:hover { color: var(--dz-text); }
+.dz-archive-league[open] { border-color: rgba(239, 68, 68, 0.25); }
+.dz-archive-league[open] > summary { margin-bottom: 12px; }
 
 .dz-save-bar {
   position: sticky;

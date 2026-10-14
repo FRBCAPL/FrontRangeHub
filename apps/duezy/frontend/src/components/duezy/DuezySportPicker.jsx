@@ -33,7 +33,7 @@ export default function DuezySportPicker({ value, onChange }) {
           className="dz-sport-other"
           value={customText}
           onChange={(e) => onChange(e.target.value || 'other')}
-          placeholder="What do you play? e.g. Pickleball"
+          placeholder="What do you play? e.g. Disc golf"
           aria-label="Your sport or game"
           maxLength={30}
           autoFocus

@@ -245,6 +245,12 @@
 .dz-league-money .is-ok { color: #86efac; }
 
 .dz-settings-eyebrow { display: block; margin-top: 10px; }
+.dz-settings-title { margin-top: 10px; text-align: center; }
+.dz-settings-title .dz-eyebrow { display: block; }
+.dz-settings-title .dz-h1 { font-size: 2.1rem; }
+@media (max-width: 680px) {
+  .dz-settings-title .dz-h1 { font-size: 1.7rem; }
+}
 
 @media (max-width: 680px) {
   .dz-header-account { grid-column: auto; justify-self: end; }

@@ -26,9 +26,9 @@ export default function DuezyAuthShowcase() {
         <p className="dz-muted dz-small">Some things can make spreadsheets messy. <br />
         Duezy makes them easy.</p>
         <ul className="dz-auth-handles">{HANDLES.map((h) => <li key={h}>{h}</li>)}</ul>
-        <div className="dz-sport-strip dz-sport-strip--sm" aria-label="Works for any league: pool, darts, bowling, softball and more">
+        <div className="dz-sport-strip dz-sport-strip--sm" aria-label="Works for any league: pool, darts, bowling, racing, pickleball, soccer and more">
           <small>Works for any league:</small>
-          {SPORTS.slice(0, 8).map((s) => (
+          {SPORTS.map((s) => (
             <span key={s.value} className="dz-sport-tip" data-tip={s.label} role="img" aria-label={s.label} tabIndex={0}>{s.icon}</span>
           ))}
         </div>

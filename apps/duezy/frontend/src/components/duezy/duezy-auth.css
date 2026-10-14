@@ -124,7 +124,11 @@
 .dz-steps li.is-active span { background: var(--dz-grad); color: #fff; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45); }
 .dz-steps li.is-done span { background: rgba(34, 197, 94, 0.22); color: #bbf7d0; }
 
-.dz-sports { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+/* 12 tiles: 4 per row (3 on phones) so rows always come out even. */
+.dz-sports { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 480px) {
+  .dz-sports { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 .dz-sport {
   display: flex;
   flex-direction: column;

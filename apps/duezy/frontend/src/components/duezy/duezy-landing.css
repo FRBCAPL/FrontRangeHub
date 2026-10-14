@@ -37,7 +37,7 @@
 .dz-land-handles .dz-auth-handles { justify-content: center; }
 .dz-land-handles .dz-sport-strip {
   display: grid;
-  grid-template-columns: auto repeat(4, 28px);
+  grid-template-columns: auto repeat(6, 28px);
   grid-auto-rows: 28px;
   align-items: center;
   justify-content: center;

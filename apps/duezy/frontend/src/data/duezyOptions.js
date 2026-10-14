@@ -9,6 +9,9 @@ export const SPORTS = [
   { value: 'volleyball', label: 'Volleyball', short: 'Volleyball', icon: '🏐' },
   { value: 'golf', label: 'Golf', short: 'Golf', icon: '⛳' },
   { value: 'trivia', label: 'Trivia', short: 'Trivia', icon: '🧠' },
+  { value: 'racing', label: 'Racing', short: 'Racing', icon: '🏁' },
+  { value: 'pickleball', label: 'Pickleball', short: 'Pickleball', icon: '🏓' },
+  { value: 'soccer', label: 'Soccer', short: 'Soccer', icon: '⚽' },
   { value: 'other', label: 'Something else', short: 'Other', icon: '🏆' },
 ];
 
@@ -36,6 +39,7 @@ export const METHODS = ['Cash', 'Venmo', 'Cash App', 'Zelle', 'PayPal', 'Card', 
 export const MEMBER_WORD = {
   golf: 'golfers',
   trivia: 'members',
+  racing: 'drivers',
   default: 'players',
 };
 

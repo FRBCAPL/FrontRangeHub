@@ -2,7 +2,7 @@
  * Sample league for the public demo (/duezy/demo). Built relative to today so it's always mid-season:
  * week 6 of 14, with a mix of paid, late, partial, make-up, bye and paid-ahead teams. Nothing is saved.
  */
-import { DAYS } from './duezyOptions.js';
+import { DAYS, METHODS } from './duezyOptions.js';
 import { addDays, todayISO } from '../utils/duezySchedule.js';
 
 export const DEMO_ID = 'demo';
@@ -56,18 +56,18 @@ const STORY = {
     (w) => (w <= CURRENT - 3 ? paid() : null),
     (w, d) => (w < CURRENT ? paid('Venmo', 'Ana') : w === CURRENT ? { status: 'partial', amount: d / 2, method: 'Venmo', paid_by: 'Ana' } : null),
     (w) => (w === CURRENT - 2 ? { status: 'makeup' } : w < CURRENT ? paid() : null),
-    (w) => (w === 2 || w === CURRENT ? { status: 'bye' } : w < CURRENT ? paid() : null),
+    (w) => (w === 2 || w === CURRENT ? { status: 'bye' } : w < CURRENT ? paid('Check') : null),
     (w) => (w <= CURRENT + 1 ? paid('Venmo', 'Rae') : null),
     (w) => (w < CURRENT - 1 ? paid() : null),
     (w) => (w <= CURRENT ? paid('Zelle') : null),
   ],
   'demo-thu': [
-    (w) => (w <= CURRENT ? paid() : null),
+    (w) => (w <= CURRENT ? paid('Card') : null),
     (w) => (w === CURRENT - 1 ? { status: 'makeup' } : w < CURRENT ? paid() : null),
     (w) => (w === CURRENT - 1 ? { status: 'makeup' } : w < CURRENT ? paid('Venmo', 'Tom') : null),
-    (w, d) => (w === CURRENT - 2 ? { status: 'partial', amount: d / 2, method: 'Cash' } : w <= CURRENT ? paid() : null),
+    (w, d) => (w === CURRENT - 2 ? { status: 'partial', amount: d / 2, method: 'Cash' } : w <= CURRENT ? paid('Cash App') : null),
     (w) => (w < CURRENT ? paid('Venmo', 'Ali') : null),
-    (w) => (w <= CURRENT ? paid('Venmo', 'Sam') : null),
+    (w) => (w <= CURRENT ? paid('PayPal', 'Sam') : null),
   ],
 };
 
@@ -78,7 +78,7 @@ export function buildDemoLeague(now = new Date()) {
   const today = todayISO(TZ, now);
   const league = {
     id: DEMO_ID, name: 'Front Range Demo League', season_word: 'season', sport: 'pool', multi_division: true, timezone: TZ, grace_days: 1,
-    payment_methods: ['Cash', 'Venmo', 'Zelle'], default_method: 'Cash', archived: false,
+    payment_methods: [...METHODS, 'Other'], default_method: 'Cash', archived: false,
   };
   const divisions = [];
   const teams = [];

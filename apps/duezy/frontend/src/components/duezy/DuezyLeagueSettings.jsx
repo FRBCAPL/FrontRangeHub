@@ -19,6 +19,8 @@ const TABS = [
   { id: 'people', label: 'People' },
 ];
 
+const TITLES = { league: 'League settings', divisions: 'Division settings', people: 'People & access' };
+
 const SCOPE = {
   league: { owner: 'Whole league · affects every division · owner only', other: 'Whole league · owner only' },
   divisions: { owner: 'Each division’s own night, dues and dates', other: 'Each division’s own night, dues and dates · adding or archiving divisions is owner only' },
@@ -53,18 +55,20 @@ export default function DuezyLeagueSettings() {
   if (form === undefined || role === undefined) return <DuezySkeleton variant="form" label="Loading settings…" />;
 
   const owner = isOwner(role);
-  const header = (
+  const header = (title) => (
     <div>
       <Link to={back} className="dz-link dz-small">‹ Back to {form.name}</Link>
-      <span className="dz-eyebrow dz-settings-eyebrow">{form.name}</span>
-      <h1 className="dz-h1">Settings</h1>
+      <div className="dz-settings-title">
+        <span className="dz-eyebrow">{form.name}</span>
+        <h1 className="dz-h1">{title}</h1>
+      </div>
     </div>
   );
 
   if (!canEdit(role)) {
     return (
       <div className="dz-stack dz-stack--lg">
-        {header}
+        {header(TITLES.people)}
         <p className="dz-viewonly"><span aria-hidden="true">👀</span><span>You can view this league but not change its settings.</span></p>
         <DuezyPeoplePanel league={form} />
       </div>
@@ -73,7 +77,7 @@ export default function DuezyLeagueSettings() {
 
   return (
     <div className="dz-stack dz-stack--lg">
-      {header}
+      {header(TITLES[tab])}
       <DuezySectionTabs label="Settings sections" tabs={TABS} active={tab} onChange={(id) => setParams({ tab: id }, { replace: true })} />
       <p className="dz-scope"><span aria-hidden="true">{tab === 'league' ? '🌐' : tab === 'divisions' ? '📅' : '👥'}</span>{SCOPE[tab][owner ? 'owner' : 'other']}</p>
       {tab === 'league' ? (owner ? <DuezyLeagueForm form={form} setForm={setForm} owner /> : <DuezyLeagueSummary league={form} />) : null}

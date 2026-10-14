@@ -10,7 +10,7 @@ const SCREENS = [
     id: 'teams',
     tab: 'Record payments',
     img: teamsShot,
-    alt: 'Team list with Cash, Venmo, Zelle, Bye and Make up buttons next to each team',
+    alt: 'Team list with Cash, Venmo, Cash App, Zelle, PayPal, Card, Check, Other, Bye and Make up buttons next to each team',
     caption: 'Every team on one screen. Tap how they paid — late balances and make-ups show right on the row.',
   },
   {
@@ -24,8 +24,8 @@ const SCREENS = [
     id: 'totals',
     tab: 'Know the totals',
     img: summaryShot,
-    alt: 'Weekly totals: collected this week, cash versus digital, and what is still to collect',
-    caption: 'Collected this week and this season, cash versus Venmo/Zelle, and what’s still out.',
+    alt: 'Weekly totals: collected this week, cash versus other methods, and what is still to collect',
+    caption: 'Collected this week and this season, cash versus every other method, and what’s still out.',
   },
 ];
 

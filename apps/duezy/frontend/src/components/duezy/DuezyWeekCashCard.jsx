@@ -26,12 +26,12 @@ export default function DuezyWeekCashCard({ totals, title = 'This week by method
               <small>{cash.count} {cash.count === 1 ? 'team' : 'teams'}</small>
             </div>
             <div className="is-digital">
-              <span>📱 Digital</span>
+              <span>🧾 Other</span>
               <strong>{money(digitalTotal)}</strong>
               <small>{digitalCount} {digitalCount === 1 ? 'team' : 'teams'}</small>
             </div>
           </div>
-          <div className="dz-cash-bar" role="img" aria-label={`${pct(cash.total, total)}% cash, ${pct(digitalTotal, total)}% digital`}>
+          <div className="dz-cash-bar" role="img" aria-label={`${pct(cash.total, total)}% cash, ${pct(digitalTotal, total)}% other methods`}>
             <span className="is-cash" style={{ width: `${pct(cash.total, total)}%` }} />
             <span className="is-digital" style={{ width: `${pct(digitalTotal, total)}%` }} />
           </div>

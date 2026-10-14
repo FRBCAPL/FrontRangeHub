@@ -79,6 +79,47 @@
 }
 .dz-div-tab-count.is-ok { background: rgba(34, 197, 94, 0.85); }
 
+/* Night pills: a night with several divisions opens this menu under its pill. */
+.dz-div-days { position: relative; }
+.dz-div-tab-sub { font-size: 0.75rem; opacity: 0.7; }
+.dz-div-tab-caret { font-size: 0.7rem; opacity: 0.8; margin-left: -2px; }
+.dz-div-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 15;
+  width: min(280px, 100%);
+  max-height: min(60vh, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid var(--dz-line-strong);
+  border-radius: 14px;
+  background: var(--dz-surface-solid);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+}
+.dz-div-menu-head { padding: 6px 10px 8px; color: var(--dz-muted); font-size: 0.78rem; font-weight: 600; }
+.dz-div-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dz-text);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.dz-div-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
+.dz-div-menu-item.is-active { background: var(--dz-grad); color: #fff; }
+
 .dz-div-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
 .dz-div-card {
   width: 100%;

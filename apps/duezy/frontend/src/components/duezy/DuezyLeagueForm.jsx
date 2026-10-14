@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { archiveLeague, updateLeague } from '../../services/duezyService.js';
+import { useSearchParams } from 'react-router-dom';
+import { updateLeague } from '../../services/duezyService.js';
 import { matchesToSave } from '../../utils/duezyMath.js';
-import { DUEZY_PATH, sportToSave } from '../../data/duezyOptions.js';
+import { sportToSave } from '../../data/duezyOptions.js';
 import { browserTimeZone, scheduleToSave } from '../../utils/duezySchedule.js';
 import { defaultMethod, handlesToSave, methodsToSave } from '../../utils/duezyLeaguePrefs.js';
 import DuezySportPicker from './DuezySportPicker.jsx';
@@ -13,7 +13,8 @@ import DuezyReminderPrefs from './DuezyReminderPrefs.jsx';
 import DuezyLegacyDivisionFields from './DuezyLegacyDivisionFields.jsx';
 import DuezyLeagueSectionNav from './DuezyLeagueSectionNav.jsx';
 import DuezySeasonFields from './DuezySeasonFields.jsx';
-import { hasSeasonWord, seasonTerms, seasonWordToSave } from '../../utils/duezyTerms.js';
+import { hasSeasonWord, seasonWordToSave } from '../../utils/duezyTerms.js';
+import DuezyArchiveLeagueCard from './DuezyArchiveLeagueCard.jsx';
 
 const trimOrNull = (s) => String(s || '').trim() || null;
 
@@ -43,7 +44,6 @@ function sectionsFor(hasDivisions, prefsReady) {
  * ?section= picks the open section so other screens can link straight to, say, Payments.
  */
 export default function DuezyLeagueForm({ form, setForm, owner }) {
-  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -106,16 +106,6 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
     }
   };
 
-  const archive = async () => {
-    if (!window.confirm(`Archive ${form.name}? It moves under Archived leagues on your dashboard. Nothing is deleted and you can restore it.`)) return;
-    try {
-      await archiveLeague(form.id);
-      navigate(DUEZY_PATH, { replace: true });
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
   return (
     <form className="dz-set-layout" onSubmit={save}>
       <DuezyLeagueSectionNav sections={sections} active={section} onChange={openSection} />
@@ -152,19 +142,7 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
           {section === 'reminders' ? <DuezyReminderPrefs form={form} set={set} /> : null}
         </section>
 
-        {section === 'basics' && owner ? (
-          <section className="dz-card dz-set-danger">
-            <div>
-              <strong>Archive this league</strong>
-              <p className="dz-small dz-muted">
-                For a league that’s closed for good. It moves under Archived leagues on your dashboard and its divisions stop
-                counting toward your plan. Nothing is deleted. Just starting a new {seasonTerms(form).one}? Use Start next{' '}
-                {seasonTerms(form).one} on a division instead.
-              </p>
-            </div>
-            <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm dz-set-danger-btn" onClick={archive}>Archive league</button>
-          </section>
-        ) : null}
+        {section === 'basics' && owner && !form.archived ? <DuezyArchiveLeagueCard league={form} /> : null}
 
         <div className={`dz-save-bar${dirty ? ' is-dirty' : ''}`}>
           <span className="dz-small" role="status">
