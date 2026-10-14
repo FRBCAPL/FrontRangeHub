@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { loadBiddingEmails, saveBiddingEmails } from '../../services/consignmentAlertPrefsService.js';
 
-/** "Email me bidding alerts" (outbid + ending soon). Hidden until the setting loads. */
+/** "Email me bidding & watch alerts" (outbid, ending soon, price drops). Hidden until the setting loads. */
 export default function ConsignmentBidAlertsToggle({ userId }) {
   const [on, setOn] = useState(null);
   const [error, setError] = useState('');
@@ -30,7 +30,7 @@ export default function ConsignmentBidAlertsToggle({ userId }) {
     <>
       <label className="cs-check cs-bid-alerts">
         <input type="checkbox" checked={on} onChange={toggle} />
-        Email me bidding alerts (outbid, ending soon)
+        Email me bidding &amp; watch alerts (outbid, ending soon, price drops)
       </label>
       {error ? <p className="cs-error">{error}</p> : null}
     </>

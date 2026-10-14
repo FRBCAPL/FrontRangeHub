@@ -1,0 +1,100 @@
+/* Watch list: heart buttons on shop cards and the item page, Watching filter. */
+
+.cs-card-wrap {
+  position: relative;
+  display: flex;
+}
+
+.cs-card-wrap > .cs-card {
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-watch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 114, 182, 0.55);
+  background: rgba(15, 23, 42, 0.7);
+  color: #fbcfe8;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-watch span[aria-hidden="true"] {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.cs-watch.on {
+  background: rgba(236, 72, 153, 0.18);
+  border-color: #ec4899;
+  color: #f9a8d4;
+}
+
+.cs-watch:hover,
+.cs-watch:focus-visible {
+  border-color: #f472b6;
+}
+
+/* On cards: round icon over the photo, below the ribbon; 44px tap area. */
+.cs-watch-compact {
+  position: absolute;
+  top: 32px;
+  right: 6px;
+  width: 44px !important;
+  min-width: 0 !important;
+  height: 44px;
+  padding: 0 !important;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  z-index: 2;
+  isolation: isolate;
+}
+
+.cs-watch-compact::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.72);
+  border: 1px solid rgba(244, 114, 182, 0.5);
+  z-index: -1;
+}
+
+.cs-watch-compact.on::before {
+  background: rgba(190, 24, 93, 0.85);
+  border-color: #f9a8d4;
+}
+
+.cs-watch-compact.on {
+  background: transparent;
+  color: #fff;
+}
+
+.cs-item-watch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+
+.cs-watch-count {
+  color: var(--cs-muted, #94a3b8);
+  font-size: 0.9rem;
+}
+
+.cs-watching-bar {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}

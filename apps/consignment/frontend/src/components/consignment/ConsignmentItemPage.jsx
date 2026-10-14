@@ -9,6 +9,7 @@ import ConsignmentExampleAuctionPanel from './ConsignmentExampleAuctionPanel.jsx
 import ConsignmentPhotoZoom from './ConsignmentPhotoZoom.jsx';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 import ConsignmentItemDetails from './ConsignmentItemDetails.jsx';
+import ConsignmentItemWatch from './ConsignmentItemWatch.jsx';
 
 export default function ConsignmentItemPage() {
   const { itemNumber } = useParams();
@@ -69,6 +70,7 @@ export default function ConsignmentItemPage() {
       <span className={`cs-legends${item.status === 'sold' || isExample ? ' sold' : ''}`}>
         {badge}
       </span>
+      {isExample || item.status === 'sold' ? null : <ConsignmentItemWatch itemId={item.id} />}
       <div className="cs-hero">
         {current ? (
           <button type="button" className="cs-hero-zoom" onClick={() => setZooming(true)} aria-label="Open photo to zoom">

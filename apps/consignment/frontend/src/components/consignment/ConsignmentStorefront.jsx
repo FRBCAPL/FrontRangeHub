@@ -8,7 +8,10 @@ import ConsignmentItemCard from './ConsignmentItemCard.jsx';
 import ConsignmentShopBadges from './ConsignmentShopBadges.jsx';
 import ConsignmentBuyersGuideModal from './ConsignmentBuyersGuideModal.jsx';
 import ConsignmentExampleListings from './ConsignmentExampleListings.jsx';
+import ConsignmentBidAlertsToggle from './ConsignmentBidAlertsToggle.jsx';
+import useWatchList from '../../hooks/useWatchList.js';
 import './consignment-shop.css';
+import './consignment-watch.css';
 
 const AUCTION_REFRESH_MS = 60 * 1000;
 
@@ -26,7 +29,14 @@ export default function ConsignmentStorefront() {
   const [hasRealAuctions, setHasRealAuctions] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const closeGuide = useCallback(() => setGuideOpen(false), []);
-  const catalogStatus = status === 'auctions' || status === 'case' ? 'available' : status;
+  const watch = useWatchList();
+  let catalogStatus = status;
+  if (status === 'auctions' || status === 'case') catalogStatus = 'available';
+  else if (status === 'watching') catalogStatus = 'all';
+
+  useEffect(() => {
+    if (status === 'watching' && !watch.userId) setStatus('available');
+  }, [status, watch.userId]);
 
   useEffect(() => {
     syncServerClock();
@@ -68,7 +78,12 @@ export default function ConsignmentStorefront() {
   // An auction item is still for sale until its auction closes (no auction row yet counts as open).
   const forSale = (i) => i.status !== 'sold' && (!isAuction(i) || !auctions[i.id] || auctions[i.id].status === 'live');
   const visible = catalogStatus === 'available' ? rows.filter(forSale) : rows;
-  const items = visible.filter((i) => (status === 'auctions' ? isAuction(i) : status === 'case' ? !isAuction(i) : true));
+  const items = visible.filter((i) => {
+    if (status === 'auctions') return isAuction(i);
+    if (status === 'case') return !isAuction(i);
+    if (status === 'watching') return watch.watched.has(i.id);
+    return true;
+  });
   const auctionCount = items.filter((i) => isAuction(i) && forSale(i)).length;
   const shelfCount = items.filter((i) => !isAuction(i) && forSale(i)).length;
   const badgeCounts = loading || catalogStatus === 'sold' ? {} : {
@@ -112,18 +127,39 @@ export default function ConsignmentStorefront() {
             <option value="auctions">Online auctions</option>
             <option value="sold">Sold</option>
             <option value="all">Available & sold</option>
+            {watch.userId ? <option value="watching">Watching ({watch.watched.size})</option> : null}
           </select>
         </div>
       </header>
+      {status === 'watching' && watch.userId ? (
+        <div className="cs-watching-bar">
+          <p className="cs-hint">Tap ♥ on any item to watch it. Watched auctions email you an hour before they end.</p>
+          <ConsignmentBidAlertsToggle userId={watch.userId} />
+        </div>
+      ) : null}
       {!loading && counts ? <p className="cs-shop-count">{counts}</p> : null}
       {error ? <p className="cs-error">{error}</p> : null}
+      {watch.error ? <p className="cs-error">{watch.error}</p> : null}
       {!loading && !error && items.length === 0 ? (
-        <p className="cs-shop-empty">Nothing here yet. Check back soon, or sell an item through FRPL.</p>
+        <p className="cs-shop-empty">
+          {status === 'watching'
+            ? 'You’re not watching anything yet. Tap ♥ on an item to add it here.'
+            : 'Nothing here yet. Check back soon, or sell an item through FRPL.'}
+        </p>
       ) : null}
       <div className="cs-grid">
         {loading
           ? Array.from({ length: 4 }, (_, i) => <div key={i} className="cs-card cs-card-skeleton" aria-hidden="true" />)
-          : items.map((item) => <ConsignmentItemCard key={item.id} item={item} auction={auctions[item.id]} />)}
+          : items.map((item) => (
+            <ConsignmentItemCard
+              key={item.id}
+              item={item}
+              auction={auctions[item.id]}
+              watching={watch.watched.has(item.id)}
+              onWatch={watch.toggle}
+              signedIn={Boolean(watch.userId)}
+            />
+          ))}
       </div>
       <ConsignmentExampleListings hideAuctions={hasRealAuctions} />
       {guideOpen ? <ConsignmentBuyersGuideModal onClose={closeGuide} /> : null}

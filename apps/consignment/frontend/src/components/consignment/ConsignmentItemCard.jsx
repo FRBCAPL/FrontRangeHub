@@ -5,6 +5,7 @@ import { consignmentItemPath } from '../../utils/consignmentPaths.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { formatCountdown, formatDateTime, formatShortEnd } from '../../utils/consignmentAuctionDates.js';
 import { serverNow } from '../../services/consignmentServerClock.js';
+import ConsignmentWatchButton from './ConsignmentWatchButton.jsx';
 
 const ENDING_SOON_MS = 60 * 60 * 1000;
 
@@ -66,7 +67,7 @@ function ExampleAuctionLine({ sample }) {
   );
 }
 
-export default function ConsignmentItemCard({ item, auction }) {
+export default function ConsignmentItemCard({ item, auction, watching = false, onWatch = null, signedIn = false }) {
   const photo = item.photo_urls?.[0];
   const isAuction = item.sale_method === 'auction';
   const isSold = item.status === 'sold';
@@ -90,7 +91,7 @@ export default function ConsignmentItemCard({ item, auction }) {
     ['Condition', item.condition ? conditionLabel(item.condition) : ''],
   ].filter(([, value]) => value);
 
-  return (
+  const card = (
     <Link className={`cs-card cs-card-${kind}`} to={consignmentItemPath(item.item_number)}>
       <div className="cs-card-ribbon">
         <span aria-hidden="true">{ribbon.icon}</span> {ribbon.label}
@@ -112,5 +113,12 @@ export default function ConsignmentItemCard({ item, auction }) {
         {priceLine}
       </div>
     </Link>
+  );
+  if (!onWatch || item.is_example) return card;
+  return (
+    <div className="cs-card-wrap">
+      {card}
+      <ConsignmentWatchButton compact watching={watching} signedIn={signedIn} onToggle={() => onWatch(item.id)} />
+    </div>
   );
 }
