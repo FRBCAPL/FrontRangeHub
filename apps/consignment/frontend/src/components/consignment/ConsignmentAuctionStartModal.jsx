@@ -150,7 +150,7 @@ export default function ConsignmentAuctionStartModal({
 
         <div className="cs-field">
           <label>Buy It Now ($, optional)</label>
-          <input type="number" step="5" min="0" value={buyNow} onChange={(e) => setBuyNow(e.target.value)} placeholder="Leave blank for none" />
+          <input type="number" step="0.01" min="0" value={buyNow} onChange={(e) => setBuyNow(e.target.value)} placeholder="Leave blank for none" />
           {atBuyNow ? (
             <span className="cs-hint">
               At Buy It Now: {splitLine(atBuyNow)}. Disappears once bidding reaches this price.

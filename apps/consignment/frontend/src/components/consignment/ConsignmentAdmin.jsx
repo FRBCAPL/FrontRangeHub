@@ -15,7 +15,7 @@ import {
   loadSettings,
   markSold,
   purgeExpiredSoldPhotos,
-  updateItem,
+  updateItemIfStatus,
 } from '../../services/consignmentService.js';
 import ConsignmentAgreementSettings from './ConsignmentAgreementSettings.jsx';
 import ConsignmentSellersPanel from './ConsignmentSellersPanel.jsx';
@@ -220,7 +220,7 @@ export default function ConsignmentAdmin() {
           consignmentDays={consignmentDays}
           policy={policy}
           onClose={() => { setEdit(null); refresh(); }}
-          onSave={(patch) => updateItem(edit.id, patch)}
+          onSave={(patch) => updateItemIfStatus(edit.id, edit.status, patch)}
         />
       ) : null}
       {renewing ? (

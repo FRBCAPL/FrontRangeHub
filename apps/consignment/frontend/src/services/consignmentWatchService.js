@@ -2,8 +2,10 @@ import { supabase } from '@shared/config/supabase.js';
 
 const MISSING = 'Run supabase-migrations/consignment-watch-list-2026-10.sql in the Supabase SQL editor, then refresh.';
 
+const MISSING_CODES = ['42P01', '42883', 'PGRST202', 'PGRST205'];
+
 function fail(error, fallback) {
-  if (/does not exist|schema cache|consignment_watches/i.test(error?.message || '')) throw new Error(MISSING);
+  if (MISSING_CODES.includes(error?.code)) throw new Error(MISSING);
   throw new Error(error?.message || fallback);
 }
 

@@ -69,7 +69,8 @@ export default function ConsignmentStorefront() {
     if (!liveIds) return undefined;
     const ids = liveIds.split(',');
     const id = setInterval(() => {
-      loadAuctionsForItems(ids).then((fresh) => setAuctions((prev) => ({ ...prev, ...fresh })));
+      if (document.hidden) return;
+      loadAuctionsForItems(ids, { close: false }).then((fresh) => setAuctions((prev) => ({ ...prev, ...fresh })));
     }, AUCTION_REFRESH_MS);
     return () => clearInterval(id);
   }, [liveIds]);

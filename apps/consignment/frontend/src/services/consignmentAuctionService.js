@@ -2,17 +2,20 @@ import { supabase } from '@shared/config/supabase.js';
 
 const MISSING = 'Run supabase-migrations/consignment-auctions-2026-10.sql in the Supabase SQL editor, then refresh.';
 
+/** Postgres / PostgREST codes for "table or function not found" (migration not run). */
+const MISSING_CODES = ['42P01', '42883', 'PGRST202', 'PGRST205'];
+
 function fail(error, fallback) {
-  const msg = error?.message || '';
-  if (/consignment_auction|consignment_bid|schema cache|does not exist/i.test(msg) && !/Minimum bid|Log in|suspended/i.test(msg)) {
-    throw new Error(MISSING);
-  }
-  throw new Error(msg || fallback);
+  if (MISSING_CODES.includes(error?.code)) throw new Error(MISSING);
+  throw new Error(error?.message || fallback);
 }
 
-/** Public auction state for one item (latest auction), or null. Closes due auctions first. */
-export async function loadAuctionForItem(itemId) {
-  await supabase.rpc('close_due_consignment_auctions');
+/**
+ * Public auction state for one item (latest auction), or null. `close` asks the server to close due auctions
+ * first; routine polls skip it (pg_cron closes them every minute).
+ */
+export async function loadAuctionForItem(itemId, { close = true } = {}) {
+  if (close) await supabase.rpc('close_due_consignment_auctions');
   const { data, error } = await supabase
     .from('consignment_auction_board')
     .select('*')
@@ -32,9 +35,9 @@ export async function isMyItem(itemId) {
 }
 
 /** Latest public auction per item id, for shop cards. Empty if the auction migration hasn't run. */
-export async function loadAuctionsForItems(itemIds) {
+export async function loadAuctionsForItems(itemIds, { close = true } = {}) {
   if (!itemIds?.length) return {};
-  await supabase.rpc('close_due_consignment_auctions');
+  if (close) await supabase.rpc('close_due_consignment_auctions');
   const { data, error } = await supabase
     .from('consignment_auction_board')
     .select('*')

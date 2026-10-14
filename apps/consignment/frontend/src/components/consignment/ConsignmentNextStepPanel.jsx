@@ -48,9 +48,11 @@ export default function ConsignmentNextStepPanel({ item, settings, onDone }) {
     setError('');
     try {
       await chooseNextStep(item.id, choice, choice === 'relist' ? reserve : null);
+      setEditing(false);
       onDone?.();
     } catch (err) {
       setError(err.message);
+    } finally {
       setBusy(false);
     }
   };

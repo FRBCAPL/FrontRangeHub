@@ -140,7 +140,7 @@ export async function updateItem(id, patch) {
 const CHANGED_ELSEWHERE = 'This item changed since the list loaded (another tab or device?). Refresh and check it.';
 
 /** Updates only if the item is still `expectedStatus`, so a stale screen or double tap can't apply twice. */
-async function updateItemIfStatus(id, expectedStatus, patch) {
+export async function updateItemIfStatus(id, expectedStatus, patch) {
   const { data, error } = await supabase
     .from('consignment_items')
     .update({ ...patch, updated_at: new Date().toISOString() })
@@ -156,8 +156,8 @@ export async function changeItemStatus(item, next) {
 }
 
 export async function clearItemPhotos(item) {
-  await deleteConsignmentPhotos(item.photo_urls);
   await updateItem(item.id, { photo_urls: [] });
+  await deleteConsignmentPhotos(item.photo_urls);
 }
 
 /** Deletes photos for items sold more than SOLD_PHOTO_DAYS ago. Returns how many items were cleaned. */

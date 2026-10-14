@@ -86,7 +86,7 @@ function storagePathFromUrl(url) {
   return decodeURIComponent(s.slice(i + PUBLIC_MARKER.length).split('?')[0]);
 }
 
-/** Admin only (storage RLS). Ignores URLs that aren't in the consignment bucket. */
+/** Admins delete any photo; sellers only their own uploads (storage RLS). Ignores URLs outside the bucket. */
 export async function deleteConsignmentPhotos(urls) {
   const paths = [...new Set((urls || []).map(storagePathFromUrl).filter(Boolean))];
   if (!paths.length) return;

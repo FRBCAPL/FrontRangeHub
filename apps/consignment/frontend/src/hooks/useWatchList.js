@@ -41,7 +41,12 @@ export default function useWatchList() {
       if (wasWatching) await unwatchItem(userId, itemId);
       else await watchItem(userId, itemId);
     } catch (err) {
-      window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: [...watched] }));
+      setWatched((current) => {
+        const undo = new Set(current);
+        if (wasWatching) undo.add(itemId); else undo.delete(itemId);
+        window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: [...undo] }));
+        return undo;
+      });
       setError(err.message);
     }
   }, [userId, watched]);

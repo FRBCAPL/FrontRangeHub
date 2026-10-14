@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CONDITIONS, itemLabel, MAX_PHOTOS } from '../../data/consignmentConstants.js';
-import { uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
+import { deleteConsignmentPhotos, uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { updateMyListing } from '../../services/consignmentSellerService.js';
 import ConsignmentPhotoManager from './ConsignmentPhotoManager.jsx';
 
@@ -40,14 +40,21 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved, sa
   const [form, setForm] = useState(original);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const uploadedRef = useRef([]);
   const changes = changedFields(form, original);
   const dirty = Object.keys(changes).length > 0;
 
+  const cancel = useCallback(() => {
+    const unused = uploadedRef.current.filter((url) => !original.photo_urls.includes(url));
+    deleteConsignmentPhotos(unused).catch(() => {});
+    onClose();
+  }, [onClose, original]);
+
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape' && !busy) onClose(); };
+    const onKey = (e) => { if (e.key === 'Escape' && !busy) cancel(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [busy, onClose]);
+  }, [busy, cancel]);
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
@@ -59,6 +66,7 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved, sa
     setError('');
     try {
       const urls = await uploadConsignmentPhotos(files.slice(0, room));
+      uploadedRef.current.push(...urls);
       setForm((prev) => ({ ...prev, photo_urls: [...prev.photo_urls, ...urls] }));
     } catch (err) {
       setError(err.message);
@@ -75,6 +83,8 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved, sa
     try {
       if (saveChanges) await saveChanges(changes);
       else await updateMyListing(item.id, changes);
+      const all = [...original.photo_urls, ...uploadedRef.current];
+      deleteConsignmentPhotos(all.filter((url) => !form.photo_urls.includes(url))).catch(() => {});
       onSaved?.();
       onClose();
     } catch (err) {
@@ -85,7 +95,7 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved, sa
 
   return createPortal(
     <div className="cs-portal">
-      <div className="cs-modal" role="dialog" aria-modal="true" aria-labelledby="cs-listing-edit-title" onClick={busy ? undefined : onClose}>
+      <div className="cs-modal" role="dialog" aria-modal="true" aria-labelledby="cs-listing-edit-title" onClick={busy ? undefined : cancel}>
         <form className="cs-modal-card cs-form cs-listing-edit" onSubmit={save} onClick={(e) => e.stopPropagation()}>
           <h2 id="cs-listing-edit-title">Edit {itemLabel(item)}</h2>
           <p className="cs-hint">
@@ -134,7 +144,7 @@ export default function ConsignmentListingEditModal({ item, onClose, onSaved, sa
           {error ? <p className="cs-error" role="alert">{error}</p> : null}
           <div className="cs-actions">
             <button className="cs-btn" type="submit" disabled={busy || !dirty}>{busy ? 'Saving…' : 'Save changes'}</button>
-            <button className="cs-btn-secondary" type="button" onClick={onClose} disabled={busy}>Cancel</button>
+            <button className="cs-btn-secondary" type="button" onClick={cancel} disabled={busy}>Cancel</button>
           </div>
         </form>
       </div>

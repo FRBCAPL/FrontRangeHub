@@ -44,10 +44,10 @@ export default function useConsignmentAuction(itemId) {
     setLoading(true);
   }, [itemId]);
 
-  const refresh = useCallback(async () => {
+  const load = useCallback(async (close) => {
     const request = ++requestRef.current;
     try {
-      const row = await loadAuctionForItem(itemId);
+      const row = await loadAuctionForItem(itemId, { close });
       const [bids, mine] = row
         ? await Promise.all([loadBidHistory(row.id), loadMyBids(row.id, userRef.current)])
         : [[], []];
@@ -66,6 +66,8 @@ export default function useConsignmentAuction(itemId) {
       if (request === requestRef.current) setLoading(false);
     }
   }, [itemId]);
+
+  const refresh = useCallback(() => load(true), [load]);
 
   useEffect(() => {
     let alive = true;
@@ -96,9 +98,16 @@ export default function useConsignmentAuction(itemId) {
 
   useEffect(() => {
     if (!live) return undefined;
-    const poll = setInterval(refresh, fast ? FAST_POLL_MS : POLL_MS);
-    return () => clearInterval(poll);
-  }, [live, fast, refresh]);
+    const poll = setInterval(() => {
+      if (!document.hidden) load(false);
+    }, fast ? FAST_POLL_MS : POLL_MS);
+    const onVisible = () => { if (!document.hidden) load(false); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(poll);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [live, fast, load]);
 
   // Once the clock passes the end, ask the server to close it.
   useEffect(() => {
