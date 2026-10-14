@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { joinUrl, setJoinLink } from '../../services/duezyJoinService.js';
-import { leagueTitle, seasonTerms } from '../../utils/duezyTerms.js';
+import { seasonTerms } from '../../utils/duezyTerms.js';
 
 /**
  * League settings: the captain sign-up link. The owner turns it on/off or replaces it; treasurers can copy it
@@ -41,7 +41,7 @@ export default function DuezyJoinLinkCard({ league, owner, onSaved }) {
     }
   };
 
-  const share = () => navigator.share?.({ title: `${leagueTitle(league)} team sign-up`, url }).catch(() => {});
+  const share = () => navigator.share?.({ title: `${league.name} team sign-up`, url }).catch(() => {});
 
   return (
     <section className="dz-card dz-stack dz-join-card">
@@ -49,7 +49,8 @@ export default function DuezyJoinLinkCard({ league, owner, onSaved }) {
         <strong>Captain sign-up link</strong>
         <p className="dz-small dz-muted">
           Text one link to your captains or post it at the venue. They add their own team, contact and players; each sign-up
-          waits on the league page until you approve it. Only works for this {terms.one}.
+          waits on the league page until you approve it. Captains pick from your current divisions, so the same link keeps
+          working {terms.one} after {terms.one}.
         </p>
       </div>
       {!ready ? (

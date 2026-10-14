@@ -24,16 +24,25 @@ export async function listDivisionsForLeagues(leagueIds) {
   );
 }
 
+const NO_LABEL_COLUMN = /session_label/;
+const LABEL_SQL_NEEDED = 'Session labels need the sessions database update (duezy-division-sessions-2026-10.sql).';
+
 export async function addDivision(leagueId, division, sortOrder) {
-  const created = check(
-    await duezy.from('duezy_divisions').insert({ ...division, league_id: leagueId, sort_order: sortOrder }).select(FIELDS).single()
-  );
+  const insert = (row) => duezy.from('duezy_divisions').insert({ ...row, league_id: leagueId, sort_order: sortOrder }).select(FIELDS).single();
+  let result = await insert(division);
+  if (result.error && NO_LABEL_COLUMN.test(result.error.message || '') && 'session_label' in division) {
+    const { session_label: _label, ...rest } = division;
+    result = await insert(rest);
+  }
+  const created = check(result);
   syncQuantity();
   return created;
 }
 
 export async function updateDivision(id, changes) {
-  const saved = check(await duezy.from('duezy_divisions').update(changes).eq('id', id).select(FIELDS).single());
+  const result = await duezy.from('duezy_divisions').update(changes).eq('id', id).select(FIELDS).single();
+  if (result.error && NO_LABEL_COLUMN.test(result.error.message || '')) throw new Error(LABEL_SQL_NEEDED);
+  const saved = check(result);
   if ('archived' in changes) syncQuantity();
   return saved;
 }

@@ -13,7 +13,7 @@ import DuezyReminderPrefs from './DuezyReminderPrefs.jsx';
 import DuezyLegacyDivisionFields from './DuezyLegacyDivisionFields.jsx';
 import DuezyLeagueSectionNav from './DuezyLeagueSectionNav.jsx';
 import DuezySeasonFields from './DuezySeasonFields.jsx';
-import { hasSeasonFields, seasonFieldsToSave, seasonLabel, seasonTerms } from '../../utils/duezyTerms.js';
+import { hasSeasonWord, seasonTerms, seasonWordToSave } from '../../utils/duezyTerms.js';
 
 const trimOrNull = (s) => String(s || '').trim() || null;
 
@@ -28,7 +28,7 @@ const prefsToSave = (form) => ({
 
 function sectionsFor(hasDivisions, prefsReady) {
   return [
-    { id: 'basics', icon: '🏷️', label: 'Basics', hint: 'Name, season, sport' },
+    { id: 'basics', icon: '🏷️', label: 'Basics', hint: 'Name, sport, time zone' },
     hasDivisions
       ? { id: 'late', icon: '⏰', label: 'Late rule', hint: 'When dues count as late' }
       : { id: 'late', icon: '📅', label: 'Your division', hint: 'Night, dues, schedule' },
@@ -38,7 +38,7 @@ function sectionsFor(hasDivisions, prefsReady) {
 }
 
 /**
- * League + season details (not divisions), in sections (basics, late rule, payments, reminders) under one Save.
+ * League (organization) details, not divisions, in sections (basics, late rule, payments, reminders) under one Save.
  * Leagues that predate division rows still edit their one division's night / dues / weeks here.
  * ?section= picks the open section so other screens can link straight to, say, Payments.
  */
@@ -53,7 +53,6 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
   const prefsReady = 'pay_handles' in form;
   const zoneReady = 'timezone' in form;
   const sections = sectionsFor(hasDivisions, prefsReady);
-  const terms = seasonTerms(form);
   const section = sections.some((s) => s.id === params.get('section')) ? params.get('section') : 'basics';
   const openSection = (id) => setParams({ tab: 'league', section: id }, { replace: true });
 
@@ -70,7 +69,7 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
     ...('grace_days' in form ? scheduleToSave({ grace_days: form.grace_days }, { league: true }) : {}),
     ...(zoneReady ? { timezone: form.timezone || browserTimeZone() } : {}),
     ...(prefsReady ? prefsToSave(form) : {}),
-    ...seasonFieldsToSave(form),
+    ...seasonWordToSave(form),
   });
 
   const legacyDivisionFields = () => {
@@ -108,8 +107,7 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
   };
 
   const archive = async () => {
-    const what = seasonLabel(form) ? `${form.name} · ${seasonLabel(form)}` : form.name;
-    if (!window.confirm(`Archive ${what}? It moves under Past ${terms.many} on your dashboard. Nothing is deleted and you can restore it.`)) return;
+    if (!window.confirm(`Archive ${form.name}? It moves under Archived leagues on your dashboard. Nothing is deleted and you can restore it.`)) return;
     try {
       await archiveLeague(form.id);
       navigate(DUEZY_PATH, { replace: true });
@@ -131,7 +129,7 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
                 <span>League name</span>
                 <input value={form.name} onChange={(e) => set({ name: e.target.value })} maxLength={80} required />
               </label>
-              {hasSeasonFields(form) ? <DuezySeasonFields value={form} onChange={set} /> : null}
+              {hasSeasonWord(form) ? <DuezySeasonFields value={form} onChange={set} /> : null}
               <div className="dz-field">
                 <span>What you play</span>
                 <DuezySportPicker value={form.sport} onChange={(sport) => set({ sport })} />
@@ -157,13 +155,14 @@ export default function DuezyLeagueForm({ form, setForm, owner }) {
         {section === 'basics' && owner ? (
           <section className="dz-card dz-set-danger">
             <div>
-              <strong>Archive this {terms.one}</strong>
+              <strong>Archive this league</strong>
               <p className="dz-small dz-muted">
-                For a {terms.one} that’s finished. It moves under Past {terms.many} on your dashboard and its divisions stop counting
-                toward your plan. Nothing is deleted.
+                For a league that’s closed for good. It moves under Archived leagues on your dashboard and its divisions stop
+                counting toward your plan. Nothing is deleted. Just starting a new {seasonTerms(form).one}? Use Start next{' '}
+                {seasonTerms(form).one} on a division instead.
               </p>
             </div>
-            <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm dz-set-danger-btn" onClick={archive}>Archive {terms.one}</button>
+            <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm dz-set-danger-btn" onClick={archive}>Archive league</button>
           </section>
         ) : null}
 

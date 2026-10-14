@@ -1,9 +1,9 @@
 import React from 'react';
-import { SEASON_LABEL_MAX, seasonTerms } from '../../utils/duezyTerms.js';
+import { seasonTerms } from '../../utils/duezyTerms.js';
 
 const WORDS = [{ value: 'season', label: 'Seasons' }, { value: 'session', label: 'Sessions' }];
 
-/** "Which season is this?" plus what this league calls them (Season / Session). */
+/** What this league calls each run of weeks a division plays: Season or Session. */
 export default function DuezySeasonFields({ value, onChange }) {
   const terms = seasonTerms(value);
   return (
@@ -23,18 +23,9 @@ export default function DuezySeasonFields({ value, onChange }) {
           </button>
         ))}
       </div>
-      <label className="dz-field">
-        <span>Which {terms.one} is this? <em className="dz-muted">(optional)</em></span>
-        <input
-          value={value.season_label || ''}
-          onChange={(e) => onChange({ season_label: e.target.value })}
-          placeholder={`e.g. Fall 2026 or ${terms.One} 4`}
-          maxLength={SEASON_LABEL_MAX}
-        />
-        <small className="dz-small dz-muted">
-          Shown next to the league name. Starting the next {terms.one} later keeps the name and moves this along (Fall 2026 → Winter 2027).
-        </small>
-      </label>
+      <small className="dz-small dz-muted">
+        Each division plays in {terms.many} (Fall 2026, {terms.One} 4…). You name each division’s {terms.one} when you set it up.
+      </small>
     </div>
   );
 }

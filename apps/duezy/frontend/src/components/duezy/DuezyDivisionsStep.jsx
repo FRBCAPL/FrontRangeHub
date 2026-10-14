@@ -1,6 +1,7 @@
 import React from 'react';
 import { newDivisionDraft } from '../../utils/duezyDivisions.js';
 import DuezyDivisionCard from './DuezyDivisionCard.jsx';
+import { seasonTerms } from '../../utils/duezyTerms.js';
 
 export const MAX_DIVISIONS = 20;
 
@@ -13,13 +14,14 @@ export default function DuezyDivisionsStep({ drafts, sport, defaults, onChange }
   return (
     <div className="dz-stack">
       <h2 className="dz-h2">Set up your divisions</h2>
-      <p className="dz-muted">Each division keeps its own night, dues, team size, season length and week. You can add more later in Settings.</p>
+      <p className="dz-muted">Each division keeps its own night, dues, team size, {seasonTerms(defaults).one} length and week. You can add more later in Settings.</p>
       {drafts.map((d, i) => (
         <DuezyDivisionCard
           key={d.key}
           draft={d}
           sport={sport}
           index={i}
+          word={seasonTerms(defaults).one}
           defaultGrace={Number(defaults.grace_days) || 0}
           onChange={(changes) => update(d.key, changes)}
           onRemove={drafts.length > 1 ? () => remove(d.key) : null}

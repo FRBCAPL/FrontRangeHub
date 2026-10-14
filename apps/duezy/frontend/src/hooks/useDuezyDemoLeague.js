@@ -85,8 +85,8 @@ export default function useDuezyDemoLeague() {
 
   return {
     role: 'owner', canEdit: true, isOwner: false, helperCount: 0,
-    league, divisions, units, multi: isMultiDivision(league, divisions), several, teams, payments, paymentIndex,
-    error, setError, loading: false, setPayment, setWeek, addTeam, addTeams, updateTeam, markPaidThrough,
+    league, divisions, units, multi: isMultiDivision(league, divisions), several, teams, allTeams: teams, payments, paymentIndex,
+    error, setError, loading: false, reload: () => {}, setPayment, setWeek, addTeam, addTeams, updateTeam, markPaidThrough,
     lastChange, undoLastChange, dismissLastChange,
     history,
   };

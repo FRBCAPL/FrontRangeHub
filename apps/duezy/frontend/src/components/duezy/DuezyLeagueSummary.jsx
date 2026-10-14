@@ -1,7 +1,7 @@
 import React from 'react';
 import { sportOf } from '../../data/duezyOptions.js';
 import { TIME_ZONES, defaultMethod, leagueMethods, payLines } from '../../utils/duezyLeaguePrefs.js';
-import { seasonLabel, seasonTerms } from '../../utils/duezyTerms.js';
+import { hasSeasonWord, seasonTerms } from '../../utils/duezyTerms.js';
 
 const none = <span className="dz-muted">None yet</span>;
 
@@ -18,7 +18,7 @@ export default function DuezyLeagueSummary({ league }) {
       </p>
       <dl className="dz-summary-list">
         <div><dt>League name</dt><dd>{league.name}</dd></div>
-        {seasonLabel(league) ? <div><dt>{seasonTerms(league).One}</dt><dd>{seasonLabel(league)}</dd></div> : null}
+        {hasSeasonWord(league) ? <div><dt>Each run of play is called a</dt><dd>{seasonTerms(league).one}</dd></div> : null}
         <div><dt>Sport</dt><dd>{sportOf(league.sport).short}</dd></div>
         {zone ? <div><dt>Time zone</dt><dd>{zone}</dd></div> : null}
         <div><dt>Grace before dues count as late</dt><dd>{grace ? `${grace} day${grace === 1 ? '' : 's'}` : 'None'}</dd></div>

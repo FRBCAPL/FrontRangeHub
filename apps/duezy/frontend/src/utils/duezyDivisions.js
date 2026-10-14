@@ -1,7 +1,8 @@
 /**
  * Divisions for Duezy.
- *   League   = one season of a league (name, season label, sport, payment note, default grace, timezone).
- *   Division = teams on one schedule (night, dates, dues, weeks, current week). Every league has at least one.
+ *   League   = the organization (name, sport, payment note, default grace, timezone, season/session word).
+ *   Division = teams that play each other on one schedule (night, dates, dues, weeks, current week, session label).
+ *              Every league has at least one; a new session is a new division row (the old one is archived).
  * A "unit" is what dues are tracked against — a division. Leagues created before
  * duezy-one-division SQL may have no division rows; then the league itself acts as one (id: null).
  */
@@ -11,6 +12,7 @@ import {
 
 const LATE = { skipMakeup: true };
 import { currentWeekOn, lateThroughOn, scheduleToSave, shortDate, todayISO, weekDates } from './duezySchedule.js';
+import { cleanSessionLabel } from './duezyTerms.js';
 
 export const DIVISION_SETTING_KEYS = ['play_day', 'dues_amount', 'dues_basis', 'players_per_match', 'matches_per_night', 'total_weeks', 'current_week'];
 const SCHEDULE_KEYS = ['start_date', 'skip_dates', 'grace_days'];
@@ -31,6 +33,13 @@ export function unitWeek(unit) {
 }
 
 /** Teams in a unit. Teams without a division (shouldn't happen once multi) show in the first division. */
+/** Teams in the current sessions: drops teams whose division is archived (a past session). */
+export function currentSessionTeams(teams, divisions = [], multi = true) {
+  if (!multi) return teams;
+  const active = new Set(divisions.map((d) => d.id));
+  return teams.filter((t) => !t.division_id || active.has(t.division_id));
+}
+
 export function teamsInUnit(teams, unit, isFirst = false) {
   if (!unit?.id) return teams;
   return teams.filter((t) => t.division_id === unit.id || (isFirst && !t.division_id));
@@ -180,6 +189,7 @@ export function newDivisionDraft(defaults = {}) {
   return {
     key: `draft-${draftSeq}`,
     name: '',
+    session_label: defaults.session_label || '',
     play_day: defaults.play_day || 'Tuesday',
     dues_amount: defaults.dues_amount ?? '',
     dues_basis: defaults.dues_basis || 'team',
@@ -193,9 +203,11 @@ export function newDivisionDraft(defaults = {}) {
 
 export const divisionReady = (d) => Boolean(String(d?.name || '').trim()) && Number(d.dues_amount) > 0 && Number(d.total_weeks) > 0;
 
-/** Draft → database row (no id / league_id / teams). */
+/** Draft → database row (no id / league_id / teams). A blank session label is left out (older databases lack the column). */
 export function divisionToSave(d) {
+  const label = cleanSessionLabel(d.session_label);
   return {
+    ...(label ? { session_label: label } : {}),
     name: String(d.name).trim().slice(0, 60),
     play_day: d.play_day || null,
     dues_amount: Number(d.dues_amount) || 0,

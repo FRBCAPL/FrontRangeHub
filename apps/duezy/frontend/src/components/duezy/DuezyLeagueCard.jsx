@@ -5,11 +5,11 @@ import { money, weeklyDues } from '../../utils/duezyMath.js';
 import { divisionUnits, unitSchedule } from '../../utils/duezyDivisions.js';
 import { todayISO } from '../../utils/duezySchedule.js';
 import { DUEZY_PATH, sportOf } from '../../data/duezyOptions.js';
-import { seasonLabel, seasonTerms } from '../../utils/duezyTerms.js';
-import DuezyPastSeasons from './DuezyPastSeasons.jsx';
+import { sessionLabel } from '../../utils/duezyTerms.js';
 
-/** One division line inside a league card: name, night, dues and how far into its season. */
+/** One division line inside a league card: name, session, night, dues and how far into its session. */
 function DivisionLine({ unit, today }) {
+  const label = sessionLabel(unit);
   const schedule = unitSchedule(unit, { today });
   const week = schedule.currentWeek;
   const total = Math.max(1, Number(unit.total_weeks) || 1);
@@ -17,7 +17,10 @@ function DivisionLine({ unit, today }) {
   const when = schedule.started ? `week ${week} of ${total}` : `starts ${schedule.label(1)}`;
   return (
     <li className="dz-league-div">
-      <span className="dz-league-div-name">{unit.id ? unit.name : 'Division'}</span>
+      <span className="dz-league-div-name">
+        {unit.id ? unit.name : 'Division'}
+        {label ? <span className="dz-league-season">{label}</span> : null}
+      </span>
       <span className="dz-muted dz-small">
         {[unit.play_day && `${unit.play_day}s`, `${money(weeklyDues(unit))}/team weekly`, when].filter(Boolean).join(' · ')}
       </span>
@@ -46,12 +49,10 @@ function MoneyLine({ snapshot }) {
   );
 }
 
-export default function DuezyLeagueCard({ league, divisions, snapshot, sharedRole, past = [], onRestored }) {
+export default function DuezyLeagueCard({ league, divisions, snapshot, sharedRole }) {
   const sport = sportOf(league.sport);
   const units = divisionUnits(league, divisions);
   const today = todayISO(league.timezone);
-  const terms = seasonTerms(league);
-  const label = seasonLabel(league);
 
   return (
     <li>
@@ -64,7 +65,6 @@ export default function DuezyLeagueCard({ league, divisions, snapshot, sharedRol
             {sharedRole ? <span className="dz-shared-badge">Shared · {roleLabel(sharedRole)}</span> : null}
           </strong>
           <span className="dz-muted dz-small">
-            {label ? <span className="dz-league-season">{label}</span> : null}
             {sport.short} · {units.length} {units.length === 1 ? 'division' : 'divisions'}
           </span>
           <MoneyLine snapshot={snapshot} />
@@ -79,7 +79,6 @@ export default function DuezyLeagueCard({ league, divisions, snapshot, sharedRol
           + Add division to {league.name}
         </Link>
       )}
-      <DuezyPastSeasons seasons={past} title={`Past ${terms.many}`} nested onRestored={onRestored} />
     </li>
   );
 }

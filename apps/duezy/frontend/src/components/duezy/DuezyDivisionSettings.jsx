@@ -5,6 +5,8 @@ import { addDivision, convertToMulti, listDivisions, updateDivision } from '../.
 import { divisionToSave, newDivisionDraft } from '../../utils/duezyDivisions.js';
 import { money, weeklyDues } from '../../utils/duezyMath.js';
 import useDuezyBilling from '../../hooks/useDuezyBilling.js';
+import { seasonTerms } from '../../utils/duezyTerms.js';
+import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import DuezyDivisionEditor from './DuezyDivisionEditor.jsx';
 import DuezyDivisionAddPanel from './DuezyDivisionAddPanel.jsx';
 import DuezyLeagueSectionNav from './DuezyLeagueSectionNav.jsx';
@@ -164,8 +166,10 @@ export default function DuezyDivisionSettings({ league, onConverted, isOwner = t
             key={open.id}
             division={open}
             sport={league.sport}
+            word={seasonTerms(league).one}
             teamCount={teamCounts[open.id] || 0}
             canArchive={isOwner && divisions.length > 1}
+            nextSessionTo={isOwner && !league.archived ? `${DUEZY_PATH}/league/${league.id}/next-session?div=${open.id}` : null}
             defaultGrace={Number(league.grace_days) || 0}
             startSection={open.start_date ? 'basics' : 'schedule'}
             onSave={(changes) => saveExisting(open.id, changes)}

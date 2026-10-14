@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { money, weeklyDues } from '../../utils/duezyMath.js';
 import { divisionReady, divisionToSave } from '../../utils/duezyDivisions.js';
+import { cleanSessionLabel } from '../../utils/duezyTerms.js';
+import DuezySessionLabelField from './DuezySessionLabelField.jsx';
 import DuezyDuesFields from './DuezyDuesFields.jsx';
 import DuezyDayPicker from './DuezyDayPicker.jsx';
 import DuezyScheduleFields from './DuezyScheduleFields.jsx';
@@ -16,8 +19,11 @@ const SECTIONS = [
  * One saved division in Settings, in sections (basics · dues & format · schedule) under one Save.
  * Remount with key={division.id} to switch divisions; onDirty tells the parent about unsaved edits.
  */
-export default function DuezyDivisionEditor({ division, sport, teamCount, canArchive, defaultGrace = 0, startSection = 'basics', onSave, onDirty }) {
+export default function DuezyDivisionEditor({
+  division, sport, word = 'season', teamCount, canArchive, nextSessionTo, defaultGrace = 0, startSection = 'basics', onSave, onDirty,
+}) {
   const [form, setForm] = useState(() => ({ ...division }));
+  const hasLabel = 'session_label' in division;
   const [section, setSection] = useState(startSection);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -52,7 +58,8 @@ export default function DuezyDivisionEditor({ division, sport, teamCount, canArc
 
   const save = () => {
     const totalWeeks = Number(form.total_weeks) || 12;
-    run({ ...divisionToSave(form), current_week: Math.min(form.current_week, totalWeeks) });
+    const label = hasLabel ? { session_label: cleanSessionLabel(form.session_label) || null } : {};
+    run({ ...divisionToSave(form), ...label, current_week: Math.min(form.current_week, totalWeeks) });
   };
 
   const discard = () => {
@@ -81,6 +88,9 @@ export default function DuezyDivisionEditor({ division, sport, teamCount, canArc
               <span>Division name</span>
               <input value={form.name} onChange={(e) => set({ name: e.target.value })} maxLength={60} />
             </label>
+            {hasLabel ? (
+              <DuezySessionLabelField value={form.session_label} onChange={(session_label) => set({ session_label })} word={word} />
+            ) : null}
             <div className="dz-field">
               <span>Night they play</span>
               <DuezyDayPicker value={form.play_day} onChange={(play_day) => set({ play_day })} label={`Night for ${form.name || 'this division'}`} />
@@ -94,7 +104,7 @@ export default function DuezyDivisionEditor({ division, sport, teamCount, canArc
             <DuezyDuesFields league={{ ...form, sport }} onChange={set} showTeamSize />
             {perTeam > 0 ? (
               <p className="dz-small dz-muted">
-                Each team pays <strong>{money(perTeam)}</strong> per week · {money(perTeam * (Number(form.total_weeks) || 0))} for the season
+                Each team pays <strong>{money(perTeam)}</strong> per week · {money(perTeam * (Number(form.total_weeks) || 0))} for the {word}
               </p>
             ) : null}
             <p className="dz-small dz-muted">Changing dues updates what every team in this division owes, including past weeks.</p>
@@ -105,6 +115,18 @@ export default function DuezyDivisionEditor({ division, sport, teamCount, canArc
           <DuezyScheduleFields value={form} onChange={set} graceMode="override" defaultGrace={defaultGrace} />
         ) : null}
       </section>
+
+      {section === 'basics' && nextSessionTo ? (
+        <section className="dz-card dz-ns-link">
+          <div>
+            <strong>Start the next {word}</strong>
+            <p className="dz-small dz-muted">
+              New dates for {division.name}, same dues and settings, returning teams carried over. This {word} is kept as a past {word}.
+            </p>
+          </div>
+          <Link className="dz-btn dz-btn--ghost dz-btn--sm" to={nextSessionTo}>Start next {word}</Link>
+        </section>
+      ) : null}
 
       {section === 'basics' && canArchive ? (
         <section className="dz-card dz-set-danger">

@@ -4,6 +4,7 @@ import { canAddDivisions } from '../../utils/duezyBillingText.js';
 import { divisionCostNote } from '../../utils/duezyPricingText.js';
 import DuezyDivisionCard from './DuezyDivisionCard.jsx';
 import DuezyTrialLimitNote from './DuezyTrialLimitNote.jsx';
+import { seasonTerms } from '../../utils/duezyTerms.js';
 
 /**
  * New-division form in Settings. For a league that has no division rows yet (`multi` false) it also
@@ -26,7 +27,7 @@ export default function DuezyDivisionAddPanel({
           <input value={currentName} onChange={(e) => setCurrentName(e.target.value)} placeholder={`e.g. ${league.play_day || 'Tuesday'} division`} maxLength={60} />
         </label>
       ) : null}
-      <DuezyDivisionCard draft={draft} sport={league.sport} index={index} defaultGrace={Number(league.grace_days) || 0} onChange={(c) => setDraft((p) => ({ ...p, ...c }))}>
+      <DuezyDivisionCard draft={draft} sport={league.sport} index={index} word={seasonTerms(league).one} defaultGrace={Number(league.grace_days) || 0} onChange={(c) => setDraft((p) => ({ ...p, ...c }))}>
         {!allowed ? <DuezyTrialLimitNote access={access} /> : null}
         {allowed && divisionCostNote(access) ? <p className="dz-bill-hint">{divisionCostNote(access)}</p> : null}
         <div className="dz-row">

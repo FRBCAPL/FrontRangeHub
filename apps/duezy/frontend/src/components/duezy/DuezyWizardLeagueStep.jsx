@@ -3,19 +3,20 @@ import DuezySportPicker from './DuezySportPicker.jsx';
 import DuezyStructurePicker from './DuezyStructurePicker.jsx';
 import DuezySeasonFields from './DuezySeasonFields.jsx';
 
-/** Wizard step 1: the league itself — name, sport, one or several divisions, and how teams pay. */
+/** Wizard step 1: the league (the organization) — name, sport, one or several divisions, and how teams pay. */
 export default function DuezyWizardLeagueStep({ league, structure, onChange, onStructure }) {
   return (
     <div className="dz-stack">
       <h2 className="dz-h2">What's your league called?</h2>
       <p className="dz-small dz-muted">
-        A <strong>league</strong> is the name people know it by. Each <strong>season</strong> of it (or session) has its
-        own <strong>divisions</strong> — groups of teams on the same night, dues and schedule. Already have this league and
-        just need another night or skill level? Use <strong>+ Add division</strong> on its dashboard card instead.
+        Your <strong>league</strong> is your organization — APA of Denver, Front Range BCAPL, Tuesday Night Darts.
+        Inside it, <strong>divisions</strong> are groups of teams that play each other on the same night, format, dues and
+        schedule. Each division plays in <strong>seasons</strong> (or sessions). Already have this league and just need another
+        night or format? Use <strong>+ Add division</strong> on its dashboard card instead.
       </p>
       <label className="dz-field">
-        <span>League name</span>
-        <input value={league.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="e.g. Tuesday Night Darts" maxLength={80} autoFocus />
+        <span>League (organization) name</span>
+        <input value={league.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="e.g. APA of Denver" maxLength={80} autoFocus />
       </label>
       <DuezySeasonFields value={league} onChange={onChange} />
       <div className="dz-field">

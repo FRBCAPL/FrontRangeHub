@@ -4,7 +4,7 @@ import { matchesPerNight, money } from '../../utils/duezyMath.js';
 import { allDivisionsStats, unitStats } from '../../utils/duezyDivisions.js';
 import { todayISO } from '../../utils/duezySchedule.js';
 import { DUEZY_PATH, sportOf } from '../../data/duezyOptions.js';
-import { leagueTitle, seasonLabel, seasonTerms } from '../../utils/duezyTerms.js';
+import { seasonTerms, sessionLabel } from '../../utils/duezyTerms.js';
 import { SeasonTermsContext } from '../../hooks/useSeasonTerms.js';
 import DuezyLeagueHero from './DuezyLeagueHero.jsx';
 import DuezyDivisionTabs, { ALL_DIVISIONS } from './DuezyDivisionTabs.jsx';
@@ -15,7 +15,8 @@ import DuezyActivityPanel from './DuezyActivityPanel.jsx';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyUndoToast from './DuezyUndoToast.jsx';
 import DuezyGettingStarted from './DuezyGettingStarted.jsx';
-import DuezyNextSeasonLink from './DuezyNextSeasonLink.jsx';
+import DuezySessionNudge from './DuezySessionNudge.jsx';
+import DuezyPastSessions from './DuezyPastSessions.jsx';
 import DuezyJoinRequests from './DuezyJoinRequests.jsx';
 import DuezySkeleton from './DuezySkeleton.jsx';
 import DuezyNoAccess from './DuezyNoAccess.jsx';
@@ -98,17 +99,17 @@ export default function DuezyLeagueView({ data, demo = false }) {
     <DuezyLeagueHero
       icon={sport.icon}
       title={league.name}
-      meta={[seasonLabel(league), sport.short, `${units.length} divisions`, `${teams.length} teams`].filter(Boolean)}
+      meta={[sport.short, `${units.length} divisions`, `${teams.length} teams`]}
       settingsTo={settingsTo}
     />
   ) : (
     <DuezyLeagueHero
       icon={sport.icon}
       title={named ? `Division: ${selected.unit.name}` : league.name}
-      subtitle={named ? leagueTitle(league) : ''}
+      subtitle={named ? league.name : ''}
       centered={named}
       meta={[
-        !named && seasonLabel(league),
+        sessionLabel(selected.unit),
         !several && sport.short,
         selected.unit.play_day && `${selected.unit.play_day}s`,
         `${money(selected.dues)} per team weekly`,
@@ -172,13 +173,13 @@ export default function DuezyLeagueView({ data, demo = false }) {
         <DuezyGettingStarted league={league} teamCount={teams.length} settingsTo={settingsTo} />
       ) : null}
       {data.canEdit && !demo && !league.archived ? <DuezyJoinRequests data={data} /> : null}
-      {data.isOwner && !demo && !league.archived ? <DuezyNextSeasonLink league={league} units={units} variant="nudge" /> : null}
+      {data.isOwner && !demo && !league.archived ? <DuezySessionNudge league={league} units={units} /> : null}
       {league.archived ? (
         <p className="dz-viewonly">
           <span aria-hidden="true">📦</span>
           <span>
-            Past {terms.one} (archived). It doesn’t count toward your plan. Restore it from{' '}
-            <strong>Past {terms.many}</strong> under {league.name} on your dashboard.
+            This league is archived and doesn’t count toward your plan. Restore it from{' '}
+            <strong>Archived leagues</strong> on your dashboard.
           </span>
         </p>
       ) : null}
@@ -216,6 +217,10 @@ export default function DuezyLeagueView({ data, demo = false }) {
           filterRequest={filterRequest}
         />
       )}
+
+      {!demo && data.multi && section === 'main' ? (
+        <DuezyPastSessions league={league} isOwner={data.isOwner && !league.archived} onRestored={data.reload} />
+      ) : null}
 
       {data.isOwner && section === 'main' ? (
         <p className="dz-small dz-muted dz-center">

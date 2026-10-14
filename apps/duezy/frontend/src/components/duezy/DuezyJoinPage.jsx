@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getJoinInfo, submitJoin } from '../../services/duezyJoinService.js';
 import { parseContact, formatContact } from '../../utils/duezyContact.js';
 import { parsePlayers } from '../../utils/duezyPayers.js';
-import { leagueTitle, seasonTerms } from '../../utils/duezyTerms.js';
+import { seasonTerms } from '../../utils/duezyTerms.js';
 import { sportOf } from '../../data/duezyOptions.js';
 import DuezyJoinForm from './DuezyJoinForm.jsx';
 
@@ -75,7 +75,7 @@ export default function DuezyJoinPage({ code }) {
       <div className="dz-center">
         <span className="dz-join-icon" aria-hidden="true">{sport.icon}</span>
         <span className="dz-eyebrow">Team sign-up</span>
-        <h1 className="dz-h1">{leagueTitle(info)}</h1>
+        <h1 className="dz-h1">{info.name}</h1>
         <p className="dz-muted">Captains: add your team for this {terms.one}. The league confirms it before it shows up.</p>
       </div>
 

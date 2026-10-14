@@ -13,6 +13,8 @@ import { teamToLine } from '../../utils/duezyRoster.js';
 import DuezyTrialLimitNote from './DuezyTrialLimitNote.jsx';
 import DuezyScheduleFields from './DuezyScheduleFields.jsx';
 import DuezyDayPicker from './DuezyDayPicker.jsx';
+import DuezySessionLabelField from './DuezySessionLabelField.jsx';
+import { seasonTerms } from '../../utils/duezyTerms.js';
 import { browserTimeZone, scheduleToSave } from '../../utils/duezySchedule.js';
 import useDuezyBilling from '../../hooks/useDuezyBilling.js';
 import { canAddDivisions } from '../../utils/duezyBillingText.js';
@@ -38,7 +40,7 @@ export default function DuezySetupWizard() {
     total_weeks: 12,
     payment_note: '',
     division_name: '',
-    season_label: '',
+    session_label: '',
     season_word: 'season',
   });
   const [teamsText, setTeamsText] = useState('');
@@ -73,7 +75,7 @@ export default function DuezySetupWizard() {
 
   /** Single-division league: its one division takes the night, dues and dates; grace stays the league default. */
   const singleDivision = () => {
-    const { grace_days: _grace, division_name: divisionName, season_label: _label, season_word: _word, ...rest } = league;
+    const { grace_days: _grace, division_name: divisionName, season_word: _word, ...rest } = league;
     return { ...rest, name: divisionName.trim() || `${league.play_day} division` };
   };
 
@@ -92,7 +94,6 @@ export default function DuezySetupWizard() {
         payment_note: league.payment_note.trim() || null,
         ...matchesToSave(league),
         ...scheduleToSave(league, { league: true }),
-        ...(league.season_label.trim() ? { season_label: league.season_label.trim().slice(0, 40) } : {}),
         ...(league.season_word === 'session' ? { season_word: 'session' } : {}),
       };
       if (!row.timezone && multi && drafts.some((d) => d.start_date)) row.timezone = browserTimeZone();
@@ -150,12 +151,18 @@ export default function DuezySetupWizard() {
               </div>
             </>
           ) : null}
+          <DuezySessionLabelField
+            value={league.session_label}
+            onChange={(session_label) => set({ session_label })}
+            word={seasonTerms(league).one}
+            label={multi ? `Which ${seasonTerms(league).one} is this? (each division can change it)` : ''}
+          />
           <DuezyDuesFields league={league} onChange={set} showTeamSize={multi} />
           {perTeam > 0 ? (
             <div className="dz-dues-preview">
               <span>Each team pays</span>
               <strong>{money(perTeam)}</strong>
-              <span>per week · {money(perTeam * (Number(league.total_weeks) || 0))} for the season</span>
+              <span>per week · {money(perTeam * (Number(league.total_weeks) || 0))} for the {seasonTerms(league).one}</span>
             </div>
           ) : null}
           <DuezyScheduleFields

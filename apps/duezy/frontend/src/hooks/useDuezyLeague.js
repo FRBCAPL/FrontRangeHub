@@ -13,7 +13,7 @@ import {
 import { listDivisions, updateDivision } from '../services/duezyDivisionService.js';
 import { getPeople } from '../services/duezyPeopleService.js';
 import { indexPayments } from '../utils/duezyMath.js';
-import { divisionUnits, isMultiDivision } from '../utils/duezyDivisions.js';
+import { currentSessionTeams, divisionUnits, isMultiDivision } from '../utils/duezyDivisions.js';
 import { canEdit as roleCanEdit, isOwner as roleIsOwner } from '../utils/duezyPeople.js';
 
 /** Loads one league with its divisions, teams and payments, and exposes optimistic actions. */
@@ -53,6 +53,7 @@ export default function useDuezyLeague(leagueId) {
   const units = useMemo(() => divisionUnits(league, divisions), [league, divisions]);
   const multi = isMultiDivision(league, divisions);
   const several = units.length > 1;
+  const currentTeams = useMemo(() => currentSessionTeams(teams, divisions, multi), [teams, divisions, multi]);
 
   const [lastChange, setLastChange] = useState(null);
 
@@ -139,8 +140,8 @@ export default function useDuezyLeague(leagueId) {
 
   return {
     role, canEdit: roleCanEdit(role), isOwner: roleIsOwner(role), helperCount,
-    league, divisions, units, multi, several, teams, payments, paymentIndex,
-    error, setError, loading, setPayment, setWeek, addTeam, addTeams, updateTeam, markPaidThrough,
+    league, divisions, units, multi, several, teams: currentTeams, allTeams: teams, payments, paymentIndex,
+    error, setError, loading, reload: load, setPayment, setWeek, addTeam, addTeams, updateTeam, markPaidThrough,
     lastChange, undoLastChange, dismissLastChange,
   };
 }

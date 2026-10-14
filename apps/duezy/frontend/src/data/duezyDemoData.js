@@ -77,7 +77,7 @@ const duesFor = (div) => (div.dues_basis === 'player' ? div.dues_amount * (div.p
 export function buildDemoLeague(now = new Date()) {
   const today = todayISO(TZ, now);
   const league = {
-    id: DEMO_ID, name: 'Front Range Demo League', season_label: 'Fall 2026', season_word: 'season', sport: 'pool', multi_division: true, timezone: TZ, grace_days: 1,
+    id: DEMO_ID, name: 'Front Range Demo League', season_word: 'season', sport: 'pool', multi_division: true, timezone: TZ, grace_days: 1,
     payment_methods: ['Cash', 'Venmo', 'Zelle'], default_method: 'Cash', archived: false,
   };
   const divisions = [];
@@ -88,7 +88,7 @@ export function buildDemoLeague(now = new Date()) {
   DIVISIONS.forEach((div, di) => {
     const start = startFor(div.play_day, today);
     divisions.push({
-      id: div.id, league_id: DEMO_ID, name: div.name, play_day: div.play_day, dues_amount: div.dues_amount,
+      id: div.id, league_id: DEMO_ID, name: div.name, session_label: 'Fall 2026', play_day: div.play_day, dues_amount: div.dues_amount,
       dues_basis: div.dues_basis, players_per_match: div.players_per_match || 1, matches_per_night: 1,
       total_weeks: 14, current_week: CURRENT, start_date: start, skip_dates: [], grace_days: 1, sort_order: di,
     });

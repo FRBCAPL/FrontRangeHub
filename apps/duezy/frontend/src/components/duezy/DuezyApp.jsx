@@ -6,7 +6,7 @@ import DuezySetupWizard from './DuezySetupWizard.jsx';
 import DuezyLeaguePage from './DuezyLeaguePage.jsx';
 import DuezyLeagueSettings from './DuezyLeagueSettings.jsx';
 import DuezyReportsPage from './DuezyReportsPage.jsx';
-import DuezyNextSeason from './DuezyNextSeason.jsx';
+import DuezyNextSession from './DuezyNextSession.jsx';
 import DuezyLogo from './DuezyLogo.jsx';
 import DuezyHubBadge from './DuezyHubBadge.jsx';
 import DuezyFooter from './DuezyFooter.jsx';
@@ -131,7 +131,7 @@ export default function DuezyApp() {
               <Route path="league/:leagueId" element={<DuezyLeaguePage />} />
               <Route path="league/:leagueId/settings" element={<DuezyLeagueSettings />} />
               <Route path="league/:leagueId/reports" element={<DuezyReportsPage />} />
-              <Route path="league/:leagueId/next-season" element={<DuezyNextSeason />} />
+              <Route path="league/:leagueId/next-session" element={<DuezyNextSession />} />
               <Route path="admin" element={<DuezyAdminPage />} />
               <Route path="admin/account/:ownerId" element={<DuezyAdminAccount />} />
               <Route path="admin/league/:leagueId" element={<DuezyAdminLeague />} />

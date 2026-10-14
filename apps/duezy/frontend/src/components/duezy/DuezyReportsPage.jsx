@@ -10,6 +10,8 @@ import { methodTotals, methodTotalsCsvRows } from '../../utils/duezyBookkeeping.
 import { downloadReportPdf } from '../../utils/duezyPdf.js';
 import { todayISO } from '../../utils/duezySchedule.js';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
+import { listPastDivisions } from '../../services/duezySessionService.js';
+import { divisionTitle, seasonTerms } from '../../utils/duezyTerms.js';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyReportPreview from './DuezyReportPreview.jsx';
 import DuezyDepositsPanel from './DuezyDepositsPanel.jsx';
@@ -29,7 +31,9 @@ export default function DuezyReportsPage() {
   const { leagueId } = useParams();
   const [params, setParams] = useSearchParams();
   const data = useDuezyLeague(leagueId);
-  const { league, units, teams, payments, loading } = data;
+  const { league, units, teams, allTeams, payments, loading } = data;
+  const terms = seasonTerms(league);
+  const [past, setPast] = useState([]);
   const [history, setHistory] = useState(undefined);
   const [upcoming, setUpcoming] = useState(false);
   const [me, setMe] = useState('');
@@ -50,18 +54,31 @@ export default function DuezyReportsPage() {
     listLeagueHistory(league.id, HISTORY_LIMIT).then((r) => setHistory(r || [])).catch((e) => { setHistory([]); setError(e.message); });
   }, [reportId, history, league]);
 
+  useEffect(() => {
+    if (!data.multi || !league) return undefined;
+    let alive = true;
+    listPastDivisions(league.id).then((rows) => { if (alive) setPast(rows); }).catch(() => {});
+    return () => { alive = false; };
+  }, [data.multi, league]);
+
   const scope = useMemo(() => {
-    const unit = units.find((u) => u.id && u.id === divId);
-    if (!unit) return { units, teams, payments, history: history || [], label: units.length > 1 ? 'All divisions' : '' };
-    const ids = new Set(teams.filter((t) => t.division_id === unit.id).map((t) => t.id));
+    const current = units.find((u) => u.id && u.id === divId);
+    const unit = current || past.find((u) => u.id === divId);
+    if (!unit) {
+      const pastIds = new Set(past.map((d) => d.id));
+      const pastTeams = new Set(allTeams.filter((t) => pastIds.has(t.division_id)).map((t) => t.id));
+      const rows = (history || []).filter((h) => !pastTeams.has(h.team_id));
+      return { units, teams, payments, history: rows, label: units.length > 1 ? 'All divisions' : '' };
+    }
+    const ids = new Set(allTeams.filter((t) => t.division_id === unit.id).map((t) => t.id));
     return {
       units: [unit],
-      teams: teams.filter((t) => ids.has(t.id)),
+      teams: allTeams.filter((t) => ids.has(t.id)),
       payments: payments.filter((p) => ids.has(p.team_id)),
       history: (history || []).filter((h) => ids.has(h.team_id)),
-      label: unit.name,
+      label: current ? divisionTitle(unit) : `${divisionTitle(unit)} (past ${terms.one})`,
     };
-  }, [units, teams, payments, history, divId]);
+  }, [units, past, teams, allTeams, payments, history, divId, terms.one]);
 
   const today = todayISO(league?.timezone);
   const grace = Number(league?.grace_days) || 0;
@@ -72,8 +89,8 @@ export default function DuezyReportsPage() {
     return ledgerReport({ ...scope, today, defaultGrace: grace, includeUpcoming: upcoming });
   }, [league, reportId, scope, today, grace, upcoming]);
   const leagueTotals = useMemo(
-    () => (reportId === 'deposits' ? methodTotals({ units, teams, payments }) : []),
-    [reportId, units, teams, payments]
+    () => (reportId === 'deposits' ? methodTotals({ units: [...units, ...past], teams: allTeams, payments }) : []),
+    [reportId, units, past, allTeams, payments]
   );
 
   if (loading) return <DuezySkeleton variant="list" label="Loading reports…" />;
@@ -106,7 +123,7 @@ export default function DuezyReportsPage() {
         <h1 className="dz-h1">Reports &amp; deposits</h1>
       </div>
 
-      <DuezySectionTabs label="Reports" tabs={REPORTS} active={reportId} onChange={(id) => setParam('report', id === 'ledger' ? '' : id)} />
+      <DuezySectionTabs label="Reports" tabs={REPORTS.map((r) => (r.id === 'ledger' ? { ...r, label: `${terms.One} ledger` } : r))} active={reportId} onChange={(id) => setParam('report', id === 'ledger' ? '' : id)} />
 
       {reportId === 'deposits' ? (
         <section className="dz-panel dz-stack">
@@ -115,12 +132,17 @@ export default function DuezyReportsPage() {
       ) : (
       <section className="dz-panel dz-stack">
         <div className="dz-row dz-row--wrap dz-report-controls">
-          {units.length > 1 ? (
+          {units.length > 1 || past.length ? (
             <label className="dz-quick-method">
               <span className="dz-small dz-muted">Division</span>
               <select value={divId} onChange={(e) => setParam('div', e.target.value)}>
-                <option value="">All divisions</option>
-                {units.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                <option value="">{units.length > 1 ? 'All current divisions' : divisionTitle(units[0])}</option>
+                {units.length > 1 ? units.map((u) => <option key={u.id} value={u.id}>{divisionTitle(u)}</option>) : null}
+                {past.length ? (
+                  <optgroup label={`Past ${terms.many}`}>
+                    {past.map((u) => <option key={u.id} value={u.id}>{divisionTitle(u)}</option>)}
+                  </optgroup>
+                ) : null}
               </select>
             </label>
           ) : <span />}
