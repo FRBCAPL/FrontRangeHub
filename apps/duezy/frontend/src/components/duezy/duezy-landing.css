@@ -161,6 +161,10 @@
 }
 @media (max-width: 680px) {
   .dz-header-auth { grid-column: auto; }
+  .dz-header.is-public { grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; }
+  .dz-header.is-public .dz-header-left { display: none; }
+  .dz-header-auth { gap: 6px; }
+  .dz-header-auth .dz-btn { padding-left: 10px; padding-right: 10px; white-space: nowrap; }
 }
 
 .dz-footer { flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; }

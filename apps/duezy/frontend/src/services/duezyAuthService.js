@@ -1,5 +1,5 @@
 import duezy from './duezyClient.js';
-import { DUEZY_OAUTH_ROUTE, clearDuezyOAuthFlag, markDuezyOAuthStart } from '../utils/duezyAuthLanding.js';
+import { DUEZY_OAUTH_ROUTE, clearDuezyOAuthFlag, markDuezyOAuthStart, markDuezyResetSent } from '../utils/duezyAuthLanding.js';
 
 const redirectUrl = () => `${window.location.origin}/#/duezy`;
 
@@ -33,6 +33,22 @@ export async function completeOAuth(search) {
   if (error) throw new Error(error.message);
 }
 
+/** Sign in with the tokens from a password-reset link, so the new password can be saved. */
+export async function startRecovery({ access_token, refresh_token }) {
+  const { error } = await duezy.auth.setSession({ access_token, refresh_token });
+  if (error) throw new Error(/expired|invalid/i.test(error.message) ? RESET_EXPIRED : error.message);
+}
+
+export async function updatePassword(password) {
+  const { error } = await duezy.auth.updateUser({ password });
+  if (error) {
+    if (/different from the old/i.test(error.message)) throw new Error('Pick a password you haven’t used here before.');
+    throw new Error(friendly(error.message));
+  }
+}
+
+export const RESET_EXPIRED = 'That reset link has expired or was already used. Use “Forgot password?” to get a new one.';
+
 export async function getSession() {
   const { data } = await duezy.auth.getSession();
   return data?.session || null;
@@ -65,6 +81,7 @@ export async function signUp(email, password, fullName) {
 }
 
 export async function sendReset(email) {
+  markDuezyResetSent();
   const { error } = await duezy.auth.resetPasswordForEmail(email.trim(), { redirectTo: redirectUrl() });
   if (error) throw new Error(friendly(error.message));
 }

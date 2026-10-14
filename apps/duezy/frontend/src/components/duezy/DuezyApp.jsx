@@ -21,8 +21,9 @@ import DuezyAdminAccount from './DuezyAdminAccount.jsx';
 import DuezyAdminLeague from './DuezyAdminLeague.jsx';
 import { DuezyBillingProvider } from '../../hooks/useDuezyBilling.js';
 import useDuezyAdmin from '../../hooks/useDuezyAdmin.js';
-import { completeOAuth, getSession, onAuthChange, signOut } from '../../services/duezyAuthService.js';
-import { DUEZY_OAUTH_ROUTE } from '../../utils/duezyAuthLanding.js';
+import { RESET_EXPIRED, completeOAuth, getSession, onAuthChange, signOut, startRecovery } from '../../services/duezyAuthService.js';
+import { DUEZY_OAUTH_ROUTE, duezyRecoveryFromHash } from '../../utils/duezyAuthLanding.js';
+import DuezyNewPassword from './DuezyNewPassword.jsx';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import { LEGAL_PAGES } from '../../data/duezyLegal.js';
 import './duezy.css';
@@ -58,6 +59,8 @@ export default function DuezyApp() {
   const navigate = useNavigate();
   const [session, setSession] = useState(undefined);
   const [oauthError, setOauthError] = useState('');
+  const [recoveryLanding] = useState(() => duezyRecoveryFromHash(window.location.hash));
+  const [newPassword, setNewPassword] = useState(false);
   const isOAuthLanding = location.pathname === DUEZY_OAUTH_ROUTE;
   const path = location.pathname.replace(/\/+$/, '');
   const legalKind = LEGAL_KINDS.find((k) => path === `${DUEZY_PATH}/${k}`) || '';
@@ -72,6 +75,22 @@ export default function DuezyApp() {
       .catch((e) => setOauthError(e.message))
       .finally(() => navigate(DUEZY_PATH, { replace: true }));
   }, [isOAuthLanding, location.search, navigate]);
+
+  useEffect(() => {
+    if (!recoveryLanding) return;
+    navigate(DUEZY_PATH, { replace: true });
+    if (recoveryLanding.error) {
+      setOauthError(RESET_EXPIRED);
+      return;
+    }
+    startRecovery(recoveryLanding)
+      .then(() => getSession())
+      .then((s) => {
+        setSession(s);
+        setNewPassword(true);
+      })
+      .catch((e) => setOauthError(e.message));
+  }, [recoveryLanding, navigate]);
 
   useEffect(() => {
     let alive = true;
@@ -98,7 +117,7 @@ export default function DuezyApp() {
   return (
     <div className="dz-app" ref={appRef}>
       <div className="dz-glow" aria-hidden="true" />
-      <header className="dz-header">
+      <header className={`dz-header${session ? '' : ' is-public'}`}>
         <div className="dz-header-left">{session ? <DuezyHubBadge /> : null}</div>
         <Link to={DUEZY_PATH} className="dz-brand" aria-label="Duezy home"><DuezyLogo /></Link>
         {session ? (
@@ -139,6 +158,8 @@ export default function DuezyApp() {
           </DuezyBillingProvider>
         ) : null}
       </main>
+
+      {newPassword && session ? <DuezyNewPassword email={session.user?.email} onClose={() => setNewPassword(false)} /> : null}
 
       <DuezyFooter />
     </div>

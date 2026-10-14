@@ -320,6 +320,7 @@ button.dz-add-team:hover { text-decoration: none; border-color: var(--dz-accent)
   .dz-summary-main { grid-column: 1 / -1; }
   .dz-behind { grid-template-columns: 1fr; }
   .dz-team-main { flex-wrap: wrap; }
-  .dz-team-actions { width: 100%; justify-content: flex-start; margin-left: 0; }
+  .dz-team-name { flex: 1 1 160px; }
+  .dz-team-actions { flex: 1 1 100%; width: 100%; justify-content: flex-start; margin-left: 0; }
   .dz-team-actions .dz-chip { flex: 1 1 auto; }
 }

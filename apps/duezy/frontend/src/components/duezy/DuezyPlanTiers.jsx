@@ -11,7 +11,7 @@ const TIERS = [
     name: 'Each extra division',
     monthly: EXTRA[0].monthly,
     plus: true,
-    hint: `11-20 Divsions = +${money(EXTRA[1].monthly)} /mo, 21-30 Divsions = +${money(EXTRA[2].monthly)} /mo.`,
+    hint: `11-20 Divisions = +${money(EXTRA[1].monthly)} /mo, 21-30 Divisions = +${money(EXTRA[2].monthly)} /mo.`,
   },
   {
     name: 'Big leagues',

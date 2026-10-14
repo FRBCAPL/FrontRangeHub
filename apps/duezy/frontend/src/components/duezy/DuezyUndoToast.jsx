@@ -4,7 +4,7 @@ import { statusText } from '../../utils/duezyHistory.js';
 import { hasRecordedEntry } from '../../utils/duezyCorrection.js';
 import { methodFrom } from '../../utils/duezyPayers.js';
 
-const SHOW_MS = 7000;
+const SHOW_MS = 12000;
 
 /** "Sharks · week 3 · Paid $80 — Correct / Undo" for a few seconds after each payment tap. */
 export default function DuezyUndoToast({ change, teams, onUndo, onDismiss, onCorrect }) {
