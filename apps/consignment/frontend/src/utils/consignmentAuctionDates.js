@@ -1,33 +1,35 @@
+import { addShopDays, SHOP_TIME_ZONE, shopParts } from './consignmentTimeZone.js';
+
 /** Every auction runs exactly this long from the moment it starts (late bids can still extend it). */
 export const AUCTION_DAYS = 7;
 
-/** End time for an auction starting at `start`: the same time of day, AUCTION_DAYS later. */
+/** End time for an auction starting at `start`: the same Colorado time of day, AUCTION_DAYS later. */
 export function auctionEndFrom(start = new Date()) {
-  const end = new Date(start);
-  end.setDate(end.getDate() + AUCTION_DAYS);
-  return end;
+  return addShopDays(start, AUCTION_DAYS);
 }
 
-/** Value for <input type="datetime-local"> in local time. */
+/** Value for <input type="datetime-local"> in Colorado time. */
 export function toLocalInputValue(date) {
   if (!date) return '';
-  const d = new Date(date);
+  const p = shopParts(date);
   const pad = (n) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${p.year}-${pad(p.month)}-${pad(p.day)}T${pad(p.hour)}:${pad(p.minute)}`;
 }
 
 export function formatDateTime(value) {
   if (!value) return '—';
   return new Date(value).toLocaleString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+    weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    timeZone: SHOP_TIME_ZONE, timeZoneName: 'short',
   });
 }
 
-/** Compact end time for cards: "Oct 18, 7:30 PM" (a weekday alone is ambiguous for 7-day auctions). */
+/** Compact end time for cards: "Oct 18, 7:30 PM MDT" (a weekday alone is ambiguous for 7-day auctions). */
 export function formatShortEnd(value) {
   if (!value) return '';
   return new Date(value).toLocaleString('en-US', {
-    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    timeZone: SHOP_TIME_ZONE, timeZoneName: 'short',
   });
 }
 

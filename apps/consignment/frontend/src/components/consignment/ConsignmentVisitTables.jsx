@@ -1,9 +1,12 @@
 import React from 'react';
+import { SHOP_TIME_ZONE } from '../../utils/consignmentTimeZone.js';
 
 function when(iso) {
   if (!iso) return '';
   try {
-    return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    return new Date(iso).toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: SHOP_TIME_ZONE,
+    });
   } catch {
     return iso;
   }

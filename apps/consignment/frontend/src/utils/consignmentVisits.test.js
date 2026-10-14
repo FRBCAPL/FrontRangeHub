@@ -1,7 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { consignmentVisitIsPublic, consignmentVisitPageLabel } from './consignmentVisitPages.js';
-import { summarizeVisits } from './consignmentVisitStats.js';
+import { summarizeVisits, visitsSinceIso } from './consignmentVisitStats.js';
+import { shopTime } from './consignmentTimeZone.js';
+
+test('visitor window starts at Colorado midnight', () => {
+  assert.equal(visitsSinceIso(1, shopTime(2026, 10, 14, 23)), '2026-10-14T06:00:00.000Z');
+  assert.equal(visitsSinceIso(7, shopTime(2026, 10, 14, 1)), '2026-10-08T06:00:00.000Z');
+});
 
 test('admin and print-tag pages are not counted', () => {
   assert.equal(consignmentVisitIsPublic('/consignment'), true);
@@ -22,9 +28,9 @@ test('page labels', () => {
 });
 
 test('summary leaves out my own views and counts unique visitors', () => {
-  const now = new Date(2026, 9, 9, 15);
-  const today = new Date(2026, 9, 9, 10).toISOString();
-  const earlier = new Date(2026, 9, 5, 10).toISOString();
+  const now = shopTime(2026, 10, 9, 15);
+  const today = shopTime(2026, 10, 9, 10).toISOString();
+  const earlier = shopTime(2026, 10, 5, 10).toISOString();
   const rows = [
     { id: 1, visitor_id: 'me-browser', path: '/consignment', created_at: today },
     { id: 2, visitor_id: 'other-1', visitor_email: 'Mark@Example.com', path: '/consignment', created_at: today },

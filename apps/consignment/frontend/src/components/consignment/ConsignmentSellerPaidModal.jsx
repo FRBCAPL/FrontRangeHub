@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { markSellerPaid } from '../../services/consignmentPayoutService.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
-import { toDateInput } from '../../utils/consignmentFormValues.js';
+import { middayFromDateInput, toDateInput } from '../../utils/consignmentFormValues.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentSellerPaidModal({ item, onClose }) {
@@ -16,8 +16,7 @@ export default function ConsignmentSellerPaidModal({ item, onClose }) {
     setBusy(true);
     setError('');
     try {
-      const [y, m, d] = day.split('-').map(Number);
-      await markSellerPaid(item.id, { method, paidAt: new Date(y, m - 1, d, 12).toISOString() });
+      await markSellerPaid(item.id, { method, paidAt: middayFromDateInput(day) });
       onClose();
     } catch (err) {
       setError(err.message);

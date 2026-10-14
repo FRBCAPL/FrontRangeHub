@@ -1,12 +1,17 @@
+import { addShopDays, SHOP_TIME_ZONE } from './consignmentTimeZone.js';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Calendar days in Colorado, so an 11:59 PM end date stays 11:59 PM across a clock change. */
 export function addDays(date, days) {
-  return new Date(new Date(date).getTime() + Number(days) * DAY_MS);
+  return addShopDays(date, days);
 }
 
 export function formatShortDate(value) {
   if (!value) return '—';
-  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric', timeZone: SHOP_TIME_ZONE,
+  });
 }
 
 /** Whole days from now until `value` (negative once passed). */

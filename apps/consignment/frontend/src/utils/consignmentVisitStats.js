@@ -1,4 +1,5 @@
 /** Visitor stats for the admin Visitors tab. "Mine" = this browser's id or the admin's sign-in email. */
+import { shopDateKey, shopParts, shopTime } from './consignmentTimeZone.js';
 
 function visitEmail(row) {
   return String(row?.visitor_email || '').trim().toLowerCase();
@@ -15,18 +16,17 @@ export function visitIsMine(row, mineId = '', mineEmail = '') {
   return Boolean(mineId && row?.visitor_id === mineId);
 }
 
+/** Midnight in Colorado at the start of the last `days` days (today counts as one). */
 export function visitsSinceIso(days, now = new Date()) {
-  const start = new Date(now);
-  start.setHours(0, 0, 0, 0);
-  start.setDate(start.getDate() - (days - 1));
-  return start.toISOString();
+  const p = shopParts(now);
+  return shopTime(p.year, p.month, p.day - (days - 1)).toISOString();
 }
 
 export function summarizeVisits(rows, labelFor, mineId = '', mineEmail = '', now = new Date()) {
   const isMine = (row) => visitIsMine(row, mineId, mineEmail);
   const others = rows.filter((row) => !isMine(row));
-  const todayKey = now.toDateString();
-  const todayOthers = others.filter((row) => row.created_at && new Date(row.created_at).toDateString() === todayKey);
+  const todayKey = shopDateKey(now);
+  const todayOthers = others.filter((row) => row.created_at && shopDateKey(row.created_at) === todayKey);
 
   const pages = new Map();
   others.forEach((row) => {
