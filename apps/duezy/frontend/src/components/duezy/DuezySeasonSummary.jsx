@@ -2,6 +2,7 @@ import React from 'react';
 import { money } from '../../utils/duezyMath.js';
 import DuezyOwedStat from './DuezyOwedStat.jsx';
 import DuezyFullSeason from './DuezyFullSeason.jsx';
+import useSeasonTerms from '../../hooks/useSeasonTerms.js';
 
 const percent = (part, whole) => (whole > 0 ? Math.min(100, Math.round((part / whole) * 100)) : 100);
 
@@ -12,6 +13,7 @@ export default function DuezySeasonSummary({ season, behind, owed, divisionCount
   const early = Math.max(0, collectedAll - collected);
   const notStarted = expected === 0;
   const pct = percent(collected, expected);
+  const terms = useSeasonTerms();
 
   return (
     <>
@@ -21,12 +23,12 @@ export default function DuezySeasonSummary({ season, behind, owed, divisionCount
             className="dz-ring"
             style={{ '--dz-pct': notStarted ? 0 : pct }}
             role="img"
-            aria-label={notStarted ? 'Season not started yet' : `${pct}% of dues due so far collected`}
+            aria-label={notStarted ? `${terms.One} not started yet` : `${pct}% of dues due so far collected`}
           >
             <span>{notStarted ? '—' : `${pct}%`}</span>
           </div>
           <div className="dz-summary-text">
-            <small>Season so far{divisionCount > 1 ? ` · all ${divisionCount} divisions` : ''}</small>
+            <small>{terms.One} so far{divisionCount > 1 ? ` · all ${divisionCount} divisions` : ''}</small>
             {notStarted ? (
               <strong>Not started yet <span>· {money(collectedAll)} collected early</span></strong>
             ) : (
@@ -48,7 +50,7 @@ export default function DuezySeasonSummary({ season, behind, owed, divisionCount
         <DuezyOwedStat owed={owed} onShowLate={onShowLate} currentNote="Each division uses its own dates and grace period." />
       </section>
 
-      <DuezyFullSeason season={season} label={divisionCount > 1 ? 'Full season outlook · all divisions' : undefined} />
+      <DuezyFullSeason season={season} allDivisions={divisionCount > 1} />
     </>
   );
 }

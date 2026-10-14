@@ -77,7 +77,7 @@ const duesFor = (div) => (div.dues_basis === 'player' ? div.dues_amount * (div.p
 export function buildDemoLeague(now = new Date()) {
   const today = todayISO(TZ, now);
   const league = {
-    id: DEMO_ID, name: 'Front Range Demo League', sport: 'pool', multi_division: true, timezone: TZ, grace_days: 1,
+    id: DEMO_ID, name: 'Front Range Demo League', season_label: 'Fall 2026', season_word: 'season', sport: 'pool', multi_division: true, timezone: TZ, grace_days: 1,
     payment_methods: ['Cash', 'Venmo', 'Zelle'], default_method: 'Cash', archived: false,
   };
   const divisions = [];

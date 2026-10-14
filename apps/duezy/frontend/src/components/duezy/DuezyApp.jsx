@@ -6,11 +6,13 @@ import DuezySetupWizard from './DuezySetupWizard.jsx';
 import DuezyLeaguePage from './DuezyLeaguePage.jsx';
 import DuezyLeagueSettings from './DuezyLeagueSettings.jsx';
 import DuezyReportsPage from './DuezyReportsPage.jsx';
+import DuezyNextSeason from './DuezyNextSeason.jsx';
 import DuezyLogo from './DuezyLogo.jsx';
 import DuezyHubBadge from './DuezyHubBadge.jsx';
 import DuezyFooter from './DuezyFooter.jsx';
 import DuezyLegalPage from './DuezyLegalPage.jsx';
 import DuezyDemoPage from './DuezyDemoPage.jsx';
+import DuezyJoinPage from './DuezyJoinPage.jsx';
 import DuezyPlanPage from './DuezyPlanPage.jsx';
 import DuezyBillingBanner from './DuezyBillingBanner.jsx';
 import DuezyAccountMenu from './DuezyAccountMenu.jsx';
@@ -41,6 +43,9 @@ import './duezy-prefs.css';
 import './duezy-teams.css';
 import './duezy-makeups.css';
 import './duezy-team-modal.css';
+import './duezy-import.css';
+import './duezy-seasons.css';
+import './duezy-join.css';
 import './duezy-payers.css';
 import './duezy-touch.css';
 import './duezy-landing.css';
@@ -57,7 +62,8 @@ export default function DuezyApp() {
   const path = location.pathname.replace(/\/+$/, '');
   const legalKind = LEGAL_KINDS.find((k) => path === `${DUEZY_PATH}/${k}`) || '';
   const isDemo = path === `${DUEZY_PATH}/demo`;
-  const publicPage = legalKind || isDemo;
+  const joinCode = path.match(new RegExp(`^${DUEZY_PATH}/join/([A-Za-z0-9]{8,24})$`))?.[1] || '';
+  const publicPage = legalKind || isDemo || joinCode;
   const isAdmin = useDuezyAdmin(session?.user?.id);
 
   useEffect(() => {
@@ -110,6 +116,7 @@ export default function DuezyApp() {
       <main className="dz-main">
         {legalKind ? <DuezyLegalPage kind={legalKind} /> : null}
         {isDemo ? <DuezyDemoPage /> : null}
+        {joinCode ? <DuezyJoinPage code={joinCode} /> : null}
         {!publicPage && (session === undefined || isOAuthLanding) ? (
           <p className="dz-muted dz-center">{isOAuthLanding ? 'Signing you in…' : 'Loading…'}</p>
         ) : null}
@@ -124,6 +131,7 @@ export default function DuezyApp() {
               <Route path="league/:leagueId" element={<DuezyLeaguePage />} />
               <Route path="league/:leagueId/settings" element={<DuezyLeagueSettings />} />
               <Route path="league/:leagueId/reports" element={<DuezyReportsPage />} />
+              <Route path="league/:leagueId/next-season" element={<DuezyNextSeason />} />
               <Route path="admin" element={<DuezyAdminPage />} />
               <Route path="admin/account/:ownerId" element={<DuezyAdminAccount />} />
               <Route path="admin/league/:leagueId" element={<DuezyAdminLeague />} />

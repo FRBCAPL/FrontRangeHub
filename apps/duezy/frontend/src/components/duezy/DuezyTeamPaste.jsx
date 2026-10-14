@@ -1,47 +1,34 @@
 import React, { useMemo, useState } from 'react';
-import { parseTeamLines } from '../../utils/duezyMath.js';
-import { formatContact, parseContact } from '../../utils/duezyContact.js';
+import DuezyImportPreview from './DuezyImportPreview.jsx';
+import { assignDivisions, MAX_IMPORT_TEAMS, parseRosterText } from '../../utils/duezyRoster.js';
 
-const MAX_TEAMS = 60;
-
-const contactIcon = (contact) => {
-  const kind = parseContact(contact)?.kind;
-  return kind === 'email' ? '✉️' : kind === 'phone' ? '📱' : '📝';
-};
-
-/** "Paste a list" tab: one team per line, previewed before adding. `children` = division picker. */
-export default function DuezyTeamPaste({ busy, error, onAddMany, onCancel, children }) {
+/** "Paste a list" tab: typed lines or cells copied from a spreadsheet, previewed before adding. `children` = division picker. */
+export default function DuezyTeamPaste({
+  divisions = [], fallbackName = '', existingNames = [], busy, error, onAddMany, onCancel, children,
+}) {
   const [text, setText] = useState('');
-  const teams = useMemo(
-    () => parseTeamLines(text).slice(0, MAX_TEAMS).map((t) => ({ ...t, contact: formatContact(t.contact) || null })),
-    [text]
+  const { teams, unmatched } = useMemo(
+    () => assignDivisions(parseRosterText(text).slice(0, MAX_IMPORT_TEAMS), divisions),
+    [text, divisions]
   );
 
   return (
     <form className="dz-team-modal-form" onSubmit={(e) => { e.preventDefault(); if (teams.length) onAddMany(teams); }}>
       <label className="dz-field">
-        <span>One team per line: name, captain, phone or email</span>
+        <span>One team per line: name, captain, phone or email, then any players</span>
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={6}
-          placeholder={'Sharks, Bobby King, 719-555-0123\nCue Balls, Ana, ana@email.com\nEight Ballers'}
+          placeholder={'Sharks, Bobby King, 719-555-0123, Ana, Lee\nCue Balls, Ana, ana@email.com\nEight Ballers'}
           autoFocus
         />
-        <small className="dz-team-modal-hint is-muted">Captain and contact are optional. Copying from a spreadsheet or text works too.</small>
+        <small className="dz-team-modal-hint is-muted">
+          Only the team name is required. You can also copy rows straight out of Excel or Google Sheets and paste them here.
+        </small>
       </label>
 
-      {teams.length ? (
-        <ul className="dz-team-paste-preview" aria-label="Teams to add">
-          {teams.map((t, i) => (
-            <li key={`${t.name}-${i}`}>
-              <strong>{t.name}</strong>
-              {t.captain ? <span>{t.captain}</span> : null}
-              {t.contact ? <span>{contactIcon(t.contact)} {t.contact}</span> : null}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <DuezyImportPreview teams={teams} divisions={divisions} fallbackName={fallbackName} existingNames={existingNames} unmatched={unmatched} />
       {children}
 
       {error ? <p className="dz-error">{error}</p> : null}

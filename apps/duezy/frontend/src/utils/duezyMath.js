@@ -1,5 +1,6 @@
 /** Pure dues math for Duezy. A payment row: { team_id, week, status, amount }. */
 import { paymentLines } from './duezyLeaguePrefs.js';
+import { parseRosterText } from './duezyRoster.js';
 
 /** 1 = one match a night, 2 = double play (dues for each match). */
 export const matchesPerNight = (unit) => Math.min(4, Math.max(1, Math.round(Number(unit?.matches_per_night) || 1)));
@@ -155,22 +156,5 @@ export function teamReminder(league, team, owed, when = '') {
   return `${hi} — quick ${league?.name || 'league'} dues reminder: ${team.name} owes ${money(owed)}${forWhen}.${how} Thanks!${sign}`;
 }
 
-const looksLikeContact = (s) => s.includes('@') || s.replace(/\D/g, '').length >= 7;
-
-/** "Sharks, Bobby K., 719-555-0123" per line → [{ name, captain, contact }]. */
-export function parseTeamLines(text) {
-  return String(text || '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [name, ...rest] = line.split(',').map((p) => p.trim());
-      const contact = rest.length && looksLikeContact(rest[rest.length - 1]) ? rest.pop() : '';
-      return {
-        name: name.slice(0, 80),
-        captain: rest.join(', ').slice(0, 80) || null,
-        contact: contact.slice(0, 120) || null,
-      };
-    })
-    .filter((t) => t.name);
-}
+/** "Sharks, Bobby K., 719-555-0123, Ana, Lee" per line (or cells copied from a spreadsheet) → teams. */
+export const parseTeamLines = (text) => parseRosterText(text);

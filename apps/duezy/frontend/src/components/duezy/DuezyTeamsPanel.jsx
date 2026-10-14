@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DuezyTeamRow from './DuezyTeamRow.jsx';
 import DuezyAddTeam from './DuezyAddTeam.jsx';
 import DuezyTeamFilters from './DuezyTeamFilters.jsx';
+import { entryWords, isSingles } from '../../utils/duezyTeamWords.js';
 import { SEARCH_MIN_TEAMS, groupTeams, isSettled, teamBucket, teamCounts } from '../../utils/duezyTeamGroups.js';
 
 /** How long a just-paid row stays put before it moves into the paid group. */
@@ -26,6 +27,8 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
   const timers = useRef({});
   const { unit, teams, week, dues, schedule } = stats;
   const { canEdit, paymentIndex } = data;
+  const singles = isSingles(unit);
+  const words = entryWords(singles, league.sport);
 
   useEffect(() => () => Object.values(timers.current).forEach(clearTimeout), []);
 
@@ -125,13 +128,13 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
   );
 
   const emptyText = search.trim()
-    ? `No teams match “${search.trim()}”.`
+    ? `No ${words.many} match “${search.trim()}”.`
     : filter === 'all' ? null : EMPTY[filter];
 
   return (
     <section className="dz-panel" ref={panelRef}>
       <div className="dz-row dz-panel-head">
-        <h3 className="dz-h3">{divisions.length > 1 ? `${unit.name} teams` : 'Teams'}</h3>
+        <h3 className="dz-h3">{divisions.length > 1 ? `${unit.name} ${words.many}` : words.Many}</h3>
       </div>
       {teams.length > 1 ? (
         <DuezyTeamFilters
@@ -171,12 +174,16 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
           ) : null}
         </>
       ) : (
-        <p className="dz-muted dz-small">{canEdit ? 'No teams yet — add the first one below.' : 'No teams yet.'}</p>
+        <p className="dz-muted dz-small">{canEdit ? `No ${words.many} yet — add the first one below.` : `No ${words.many} yet.`}</p>
       )}
       {canEdit ? (
         <DuezyAddTeam
           divisions={divisions}
           divisionId={unit.id}
+          sport={league.sport}
+          singles={singles}
+          words={words}
+          existingNames={data.teams.map((t) => t.name)}
           onAdd={(team, divisionId) => data.addTeam(team, divisionId || unit.id)}
           onAddMany={(list, divisionId) => data.addTeams(list, divisionId || unit.id)}
         />

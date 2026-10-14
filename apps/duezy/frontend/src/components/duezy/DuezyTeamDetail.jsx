@@ -8,6 +8,7 @@ import DuezySeasonStrip from './DuezySeasonStrip.jsx';
 import DuezyWeekPanel from './DuezyWeekPanel.jsx';
 import { shortStamp } from '../../utils/duezyHistory.js';
 import { hasRecordedEntry } from '../../utils/duezyCorrection.js';
+import useSeasonTerms from '../../hooks/useSeasonTerms.js';
 function reminderFor(league, team, { late, due, lateWhen, dueWhen }) {
   if (late > 0) return teamReminder(league, team, late, lateWhen);
   if (due > 0) return teamReminder(league, team, due, dueWhen);
@@ -23,6 +24,7 @@ export default function DuezyTeamDetail({
   league, team, week, dues, schedule, balance, paymentIndex, onSetWeekPayment, onAddPlayer, onEditTeam, canEdit = true,
   canSavePlayers = false, correctKey = 0, focusWeek = null,
 }) {
+  const terms = useSeasonTerms();
   const [openWeek, setOpenWeek] = useState(focusWeek?.week || null);
   useEffect(() => {
     if (focusWeek) setOpenWeek(focusWeek.week);
@@ -36,7 +38,7 @@ export default function DuezyTeamDetail({
   return (
     <div className="dz-team-detail">
       <p className="dz-small dz-muted">
-        Season so far{canEdit ? <span className="dz-strip-hint"> · tap a week to record it</span> : null}
+        {terms.One} so far{canEdit ? <span className="dz-strip-hint"> · tap a week to record it</span> : null}
       </p>
       <DuezySeasonStrip
         teamId={team.id}

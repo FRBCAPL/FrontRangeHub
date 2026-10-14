@@ -2,14 +2,16 @@ import React from 'react';
 import { money } from '../../utils/duezyMath.js';
 import DuezyOwedStat from './DuezyOwedStat.jsx';
 import DuezyWeekCashCard from './DuezyWeekCashCard.jsx';
+import useSeasonTerms from '../../hooks/useSeasonTerms.js';
 
 /** Season-to-date for the division, including money paid ahead for later weeks. */
 function SeasonLine({ season }) {
+  const terms = useSeasonTerms();
   const all = season.collectedAll ?? season.collected;
   const ahead = Math.max(0, all - season.collected);
   return (
     <p className="dz-summary-season">
-      This season: <b>{money(all)}</b> collected
+      This {terms.one}: <b>{money(all)}</b> collected
       {season.expected > 0 ? <> of {money(season.expected)} due so far</> : null}
       {ahead > 0 ? <> · {money(ahead)} paid ahead</> : null}
     </p>

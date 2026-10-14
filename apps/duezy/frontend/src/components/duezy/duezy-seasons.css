@@ -1,0 +1,84 @@
+/* Start next season page, its entry points, and the dashboard's Past seasons list. */
+.dz-ns-div { display: flex; flex-direction: column; gap: 12px; }
+.dz-ns-div.is-off { opacity: 0.6; }
+.dz-ns-keep { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; }
+.dz-ns-keep input,
+.dz-ns-teams input,
+.dz-ns-archive input { flex: none; width: 18px; height: 18px; min-height: 0; margin: 0; padding: 0; accent-color: var(--dz-accent, #818cf8); }
+.dz-ns-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) minmax(0, 1fr); gap: 10px; }
+.dz-ns-div textarea { min-height: 72px; resize: vertical; font-family: inherit; }
+.dz-ns-div .dz-field em { font-style: normal; font-weight: 400; opacity: 0.75; }
+
+.dz-ns-teams-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 0.9rem; }
+.dz-ns-teams {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dz-ns-teams label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid var(--dz-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.dz-ns-teams label > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.dz-ns-teams label small { margin-left: auto; color: var(--dz-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dz-ns-teams label.is-off { opacity: 0.5; }
+.dz-ns-teams label.is-off > span { text-decoration: line-through; }
+
+.dz-ns-archive { align-items: flex-start; color: var(--dz-text); line-height: 1.45; }
+.dz-ns-archive input { margin-top: 2px; }
+.dz-ns-archive em { font-style: normal; color: #86efac; }
+.dz-ns-summary { margin: 0; font-weight: 700; }
+.dz-ns-problems { margin: 0; padding-left: 18px; color: #fcd34d; font-size: 0.86rem; }
+
+.dz-ns-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.dz-ns-card p { margin: 4px 0; }
+.dz-ns-nudge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  border-radius: 12px;
+  background: rgba(129, 140, 248, 0.1);
+}
+.dz-ns-nudge .dz-btn { margin-left: auto; }
+
+.dz-past-seasons { padding: 10px 14px; border: 1px solid var(--dz-line); border-radius: 12px; }
+.dz-past-seasons summary { cursor: pointer; color: var(--dz-muted); font-size: 0.9rem; font-weight: 600; }
+.dz-past-seasons ul { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.dz-past-seasons li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.dz-past-actions { display: inline-flex; gap: 12px; margin-left: auto; }
+.dz-past-seasons.is-nested { margin-top: 6px; padding: 6px 12px; border-style: dashed; }
+.dz-past-seasons.is-nested summary { font-size: 0.84rem; }
+
+.dz-league-season {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(129, 140, 248, 0.16);
+  color: #c7d2fe;
+  font-weight: 700;
+}
+.dz-season-fields { display: flex; flex-direction: column; gap: 10px; }
+.dz-season-fields .dz-field em { font-style: normal; font-weight: 400; opacity: 0.75; }
+
+@media (max-width: 560px) {
+  .dz-ns-grid { grid-template-columns: 1fr 1fr; }
+  .dz-ns-grid .dz-field:first-child { grid-column: 1 / -1; }
+}

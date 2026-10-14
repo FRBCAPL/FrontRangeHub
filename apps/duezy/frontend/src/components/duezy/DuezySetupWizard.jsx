@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createLeague } from '../../services/duezyService.js';
+import { createSeasonRow } from '../../services/duezySeasonService.js';
 import { matchesToSave, money, parseTeamLines, weeklyDues } from '../../utils/duezyMath.js';
 import { divisionReady, divisionToSave, newDivisionDraft } from '../../utils/duezyDivisions.js';
 import { DUEZY_PATH, memberWord, sportToSave } from '../../data/duezyOptions.js';
@@ -8,6 +8,8 @@ import DuezyDuesFields from './DuezyDuesFields.jsx';
 import DuezyWizardLeagueStep from './DuezyWizardLeagueStep.jsx';
 import DuezyDivisionsStep from './DuezyDivisionsStep.jsx';
 import DuezyDivisionTeamsStep from './DuezyDivisionTeamsStep.jsx';
+import DuezyWizardUpload from './DuezyWizardUpload.jsx';
+import { teamToLine } from '../../utils/duezyRoster.js';
 import DuezyTrialLimitNote from './DuezyTrialLimitNote.jsx';
 import DuezyScheduleFields from './DuezyScheduleFields.jsx';
 import DuezyDayPicker from './DuezyDayPicker.jsx';
@@ -36,6 +38,8 @@ export default function DuezySetupWizard() {
     total_weeks: 12,
     payment_note: '',
     division_name: '',
+    season_label: '',
+    season_word: 'season',
   });
   const [teamsText, setTeamsText] = useState('');
   const [drafts, setDrafts] = useState([]);
@@ -69,7 +73,7 @@ export default function DuezySetupWizard() {
 
   /** Single-division league: its one division takes the night, dues and dates; grace stays the league default. */
   const singleDivision = () => {
-    const { grace_days: _grace, division_name: divisionName, ...rest } = league;
+    const { grace_days: _grace, division_name: divisionName, season_label: _label, season_word: _word, ...rest } = league;
     return { ...rest, name: divisionName.trim() || `${league.play_day} division` };
   };
 
@@ -88,12 +92,14 @@ export default function DuezySetupWizard() {
         payment_note: league.payment_note.trim() || null,
         ...matchesToSave(league),
         ...scheduleToSave(league, { league: true }),
+        ...(league.season_label.trim() ? { season_label: league.season_label.trim().slice(0, 40) } : {}),
+        ...(league.season_word === 'session' ? { season_word: 'session' } : {}),
       };
       if (!row.timezone && multi && drafts.some((d) => d.start_date)) row.timezone = browserTimeZone();
       const divisions = multi
         ? drafts.map((d) => ({ ...divisionToSave(d), teams: parseTeamLines(d.teamsText) }))
         : [{ ...divisionToSave(singleDivision()), teams }];
-      const created = await createLeague(row, [], divisions);
+      const created = await createSeasonRow(row, divisions);
       refreshBilling();
       navigate(`${DUEZY_PATH}/league/${created.id}`, { replace: true });
     } catch (e) {
@@ -172,7 +178,7 @@ export default function DuezySetupWizard() {
         <div className="dz-stack">
           <h2 className="dz-h2">Add your teams</h2>
           <p className="dz-muted">
-            One team per line. Add the captain and their phone or email after commas if you like (Sharks, Bobby, 719-555-0123). If your league is individuals, list {memberWord(league.sport)} instead.
+            One team per line. Add the captain, their phone or email, and players after commas if you like (Sharks, Bobby, 719-555-0123, Ana, Lee). If your league is individuals, list {memberWord(league.sport)} instead.
           </p>
           <textarea
             className="dz-textarea"
@@ -182,7 +188,13 @@ export default function DuezySetupWizard() {
             placeholder={'Sharks, Bobby K.\nSlop Shots, Amy T.\nThe Hustlers'}
             autoFocus
           />
-          <p className="dz-muted">{teams.length} {teams.length === 1 ? 'team' : 'teams'} · you can add more later</p>
+          <div className="dz-wizard-teams-foot">
+            <p className="dz-muted">{teams.length} {teams.length === 1 ? 'team' : 'teams'} · you can add more later</p>
+            <DuezyWizardUpload
+              existingNames={teams.map((t) => t.name)}
+              onImport={(list) => setTeamsText((prev) => [prev.trimEnd(), ...list.map(teamToLine)].filter(Boolean).join('\n'))}
+            />
+          </div>
         </div>
       ) : null}
 

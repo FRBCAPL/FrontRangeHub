@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import DuezyModal from './DuezyModal.jsx';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyTeamPaste from './DuezyTeamPaste.jsx';
+import DuezyTeamUpload from './DuezyTeamUpload.jsx';
 import { contactHint, formatContact } from '../../utils/duezyContact.js';
 import { parsePlayers, teamPlayers } from '../../utils/duezyPayers.js';
+import { duplicateOf, entryWords, isSingles } from '../../utils/duezyTeamWords.js';
 
-const TABS = [
-  { id: 'one', label: 'One team' },
+const tabsFor = (words) => [
+  { id: 'one', label: `One ${words.one}` },
   { id: 'paste', label: 'Paste a list' },
+  { id: 'file', label: 'Upload a file' },
 ];
 
 function DivisionPicker({ divisions, value, onChange, moving }) {
@@ -29,11 +32,13 @@ function DivisionPicker({ divisions, value, onChange, moving }) {
 }
 
 /**
- * Add or edit a team. `team` null = add mode (with "Add & add another" and a "Paste a list" tab).
- * `focus: 'contact'` opens with the phone/email box focused.
+ * Add or edit a team. `team` null = add mode (with "Add & add another", "Paste a list" and "Upload a file" tabs).
+ * `focus: 'contact'` opens with the phone/email box focused. `existingNames` flags duplicates.
+ * Singles divisions (team size 1) say "player" and skip the captain / other-players boxes; `singles` covers leagues without division rows.
  */
 export default function DuezyTeamModal({
-  team = null, divisions = [], divisionId = null, focus = null, onAdd, onAddMany, onSave, onRemove, onClose,
+  team = null, divisions = [], divisionId = null, existingNames = [], focus = null, sport = '', singles: singlesDefault = false,
+  onAdd, onAddMany, onSave, onRemove, onClose,
 }) {
   const editing = Boolean(team);
   const [tab, setTab] = useState('one');
@@ -49,6 +54,10 @@ export default function DuezyTeamModal({
   const contactRef = useRef(null);
   const hint = contactHint(contact);
   const moving = editing && divisions.length > 1 && division !== team.division_id;
+  const current = divisions.find((d) => d.id && d.id === division);
+  const singles = current ? isSingles(current) : singlesDefault;
+  const words = entryWords(singles, sport);
+  const duplicate = duplicateOf(name, existingNames, team?.name);
 
   useEffect(() => {
     const el = focus === 'contact' ? contactRef.current : nameRef.current;
@@ -94,7 +103,7 @@ export default function DuezyTeamModal({
       onClose();
       return;
     }
-    setAdded((prev) => [...prev, name.trim()]);
+    setAdded((prev) => [...prev, divisions.length > 1 && current ? `${name.trim()} → ${current.name}` : name.trim()]);
     setName('');
     setCaptain('');
     setContact('');
@@ -103,7 +112,7 @@ export default function DuezyTeamModal({
   });
 
   const remove = () => {
-    if (!window.confirm(`Remove ${team.name}? Their payment history is kept.`)) return;
+    if (!window.confirm(`Remove ${team.name}? Payment history is kept.`)) return;
     run(async () => {
       await onRemove();
       onClose();
@@ -116,28 +125,48 @@ export default function DuezyTeamModal({
   });
 
   const picker = <DivisionPicker divisions={divisions} value={division} onChange={setDivision} moving={moving} />;
+  const listProps = {
+    divisions,
+    fallbackName: divisions.find((d) => d.id === division)?.name || '',
+    existingNames,
+    busy,
+    error,
+    onCancel: onClose,
+  };
 
   return (
-    <DuezyModal title={editing ? `Edit ${team.name}` : 'Add a team'} onClose={onClose} className="dz-team-modal">
-      {!editing && onAddMany ? <DuezySectionTabs tabs={TABS} active={tab} onChange={setTab} label="How to add" /> : null}
+    <DuezyModal title={editing ? `Edit ${team.name}` : `Add ${words.many}`} onClose={onClose} className="dz-team-modal">
+      {!editing && onAddMany ? <DuezySectionTabs tabs={tabsFor(words)} active={tab} onChange={setTab} label="How to add" /> : null}
 
-      {tab === 'paste' ? (
-        <DuezyTeamPaste busy={busy} error={error} onAddMany={addMany} onCancel={onClose}>{picker}</DuezyTeamPaste>
-      ) : (
+      {tab === 'paste' ? <DuezyTeamPaste {...listProps} onAddMany={addMany}>{picker}</DuezyTeamPaste> : null}
+      {tab === 'file' ? <DuezyTeamUpload {...listProps} onImport={addMany}>{picker}</DuezyTeamUpload> : null}
+      {tab === 'one' || editing ? (
         <form className="dz-team-modal-form" onSubmit={(e) => { e.preventDefault(); save(false); }}>
           {added.length ? (
             <p className="dz-team-modal-added" role="status">✓ Added {added.join(', ')}</p>
           ) : null}
           <label className="dz-field">
-            <span>Team name</span>
-            <input ref={nameRef} value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="e.g. Sharks" required />
+            <span>{words.One} name</span>
+            <input
+              ref={nameRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              placeholder={singles ? 'e.g. Bobby King' : 'e.g. Sharks'}
+              required
+            />
+            {duplicate ? (
+              <small className="dz-team-modal-hint is-warn">⚠ There’s already a {words.one} called {duplicate}. You can still add it.</small>
+            ) : null}
           </label>
+          {singles ? null : (
+            <label className="dz-field">
+              <span>Captain <em>(optional)</em></span>
+              <input value={captain} onChange={(e) => setCaptain(e.target.value)} maxLength={80} placeholder="e.g. Bobby King" autoComplete="off" />
+            </label>
+          )}
           <label className="dz-field">
-            <span>Captain <em>(optional)</em></span>
-            <input value={captain} onChange={(e) => setCaptain(e.target.value)} maxLength={80} placeholder="e.g. Bobby King" autoComplete="off" />
-          </label>
-          <label className="dz-field">
-            <span>Captain phone or email <em>(optional)</em></span>
+            <span>{singles ? 'Phone or email' : 'Captain phone or email'} <em>(optional)</em></span>
             <input
               ref={contactRef}
               value={contact}
@@ -149,18 +178,20 @@ export default function DuezyTeamModal({
             />
             <small className={`dz-team-modal-hint is-${hint.tone}`}>{hint.text}</small>
           </label>
-          <label className="dz-field">
-            <span>Other players <em>(optional)</em></span>
-            <input
-              value={players}
-              onChange={(e) => setPlayers(e.target.value)}
-              placeholder="Ana, Lee, Sam"
-              autoComplete="off"
-            />
-            <small className="dz-team-modal-hint">
-              Separate names with commas. They show up under “Who paid?” for Venmo, Zelle and other non-cash payments.
-            </small>
-          </label>
+          {singles ? null : (
+            <label className="dz-field">
+              <span>Other players <em>(optional)</em></span>
+              <input
+                value={players}
+                onChange={(e) => setPlayers(e.target.value)}
+                placeholder="Ana, Lee, Sam"
+                autoComplete="off"
+              />
+              <small className="dz-team-modal-hint">
+                Separate names with commas. They show up under “Who paid?” for Venmo, Zelle and other non-cash payments.
+              </small>
+            </label>
+          )}
           {picker}
 
           {error ? <p className="dz-error">{error}</p> : null}
@@ -168,7 +199,7 @@ export default function DuezyTeamModal({
           <div className="dz-team-modal-actions">
             {editing && onRemove ? (
               <button type="button" className="dz-link dz-link--danger dz-small dz-team-modal-remove" onClick={remove} disabled={busy}>
-                Remove team
+                Remove {words.one}
               </button>
             ) : null}
             <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={onClose}>Cancel</button>
@@ -178,11 +209,11 @@ export default function DuezyTeamModal({
               </button>
             ) : null}
             <button type="submit" className="dz-btn dz-btn--primary dz-btn--sm" disabled={busy || !name.trim()}>
-              {editing ? 'Save' : 'Add team'}
+              {editing ? 'Save' : `Add ${words.one}`}
             </button>
           </div>
         </form>
-      )}
+      ) : null}
     </DuezyModal>
   );
 }

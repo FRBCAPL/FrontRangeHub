@@ -1,6 +1,6 @@
 /**
  * Divisions for Duezy.
- *   League   = the organization (name, sport, payment note, default grace, timezone).
+ *   League   = one season of a league (name, season label, sport, payment note, default grace, timezone).
  *   Division = teams on one schedule (night, dates, dues, weeks, current week). Every league has at least one.
  * A "unit" is what dues are tracked against — a division. Leagues created before
  * duezy-one-division SQL may have no division rows; then the league itself acts as one (id: null).

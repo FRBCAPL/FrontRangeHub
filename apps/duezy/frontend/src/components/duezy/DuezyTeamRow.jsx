@@ -152,6 +152,7 @@ export default function DuezyTeamRow({
         <DuezyTeamModal
           team={team}
           divisions={divisions}
+          sport={league?.sport}
           focus={editFocus}
           onSave={onUpdateTeam}
           onRemove={() => onUpdateTeam({ archived: true })}

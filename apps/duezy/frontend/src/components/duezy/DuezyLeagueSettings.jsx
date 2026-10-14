@@ -8,6 +8,8 @@ import DuezyLeagueForm from './DuezyLeagueForm.jsx';
 import DuezyLeagueSummary from './DuezyLeagueSummary.jsx';
 import DuezyDivisionSettings from './DuezyDivisionSettings.jsx';
 import DuezyPeoplePanel from './DuezyPeoplePanel.jsx';
+import DuezyNextSeasonLink from './DuezyNextSeasonLink.jsx';
+import DuezyJoinLinkCard from './DuezyJoinLinkCard.jsx';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezySkeleton from './DuezySkeleton.jsx';
 import DuezyNoAccess from './DuezyNoAccess.jsx';
@@ -76,6 +78,10 @@ export default function DuezyLeagueSettings() {
       <DuezySectionTabs label="Settings sections" tabs={TABS} active={tab} onChange={(id) => setParams({ tab: id }, { replace: true })} />
       <p className="dz-scope"><span aria-hidden="true">{tab === 'league' ? '🌐' : tab === 'divisions' ? '📅' : '👥'}</span>{SCOPE[tab][owner ? 'owner' : 'other']}</p>
       {tab === 'league' ? (owner ? <DuezyLeagueForm form={form} setForm={setForm} owner /> : <DuezyLeagueSummary league={form} />) : null}
+      {tab === 'league' && !form.archived ? (
+        <DuezyJoinLinkCard league={form} owner={owner} onSaved={(changes) => setForm((prev) => ({ ...prev, ...changes }))} />
+      ) : null}
+      {tab === 'league' && owner && !form.archived ? <DuezyNextSeasonLink league={form} /> : null}
       {tab === 'divisions' ? (
         <DuezyDivisionSettings
           league={form}

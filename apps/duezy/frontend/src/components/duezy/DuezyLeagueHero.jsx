@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import useSeasonTerms from '../../hooks/useSeasonTerms.js';
 
 /** League header: icon, name, one-line meta, settings link, and (for one division) the week arrows. */
 export default function DuezyLeagueHero({ icon, title, subtitle, meta, settingsTo, weekNav, centered = false }) {
   const offCurrent = weekNav?.date && weekNav.week !== weekNav.currentWeek;
+  const terms = useSeasonTerms();
   return (
     <section className={`dz-hero${centered ? ' dz-hero--centered' : ''}`}>
       <span className="dz-hero-icon" aria-hidden="true">{icon}</span>
@@ -25,7 +27,7 @@ export default function DuezyLeagueHero({ icon, title, subtitle, meta, settingsT
             </span>
             <button type="button" disabled={weekNav.week >= weekNav.total} onClick={() => weekNav.onChange(weekNav.week + 1)} aria-label="Next week">›</button>
           </div>
-          {weekNav.startLabel && !weekNav.started ? <small className="dz-week-note">Season starts {weekNav.startLabel}</small> : null}
+          {weekNav.startLabel && !weekNav.started ? <small className="dz-week-note">{terms.One} starts {weekNav.startLabel}</small> : null}
           {offCurrent ? (
             <button type="button" className="dz-link dz-small" onClick={() => weekNav.onChange(weekNav.currentWeek)}>
               Back to this week

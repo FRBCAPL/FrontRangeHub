@@ -59,7 +59,7 @@ export async function createLeague(league, teams, divisions = null) {
         d.teams.map((t, ti) => ({ ...teamRow(created.id, t, ti), division_id: idByOrder.get(di) }))
       );
     }
-    if (rows.length) check(await duezy.from('duezy_teams').insert(rows));
+    if (rows.length) checkTeam(await duezy.from('duezy_teams').insert(rows));
   } catch (e) {
     await duezy.from('duezy_leagues').delete().eq('id', created.id);
     throw e;
@@ -105,9 +105,12 @@ export async function addTeam(leagueId, team, sortOrder, divisionId = null) {
   return checkTeam(await duezy.from('duezy_teams').insert(row).select(TEAM_FIELDS).single());
 }
 
-/** Several teams at once (pasted list), in order after the existing ones. */
+/** Several teams at once (pasted list or file), in order after the existing ones. A team's own division_id wins. */
 export async function addTeams(leagueId, teams, startOrder, divisionId = null) {
-  const rows = teams.map((t, i) => ({ ...teamRow(leagueId, t, startOrder + i), ...(divisionId ? { division_id: divisionId } : {}) }));
+  const rows = teams.map((t, i) => {
+    const division = t.division_id || divisionId;
+    return { ...teamRow(leagueId, t, startOrder + i), ...(division ? { division_id: division } : {}) };
+  });
   return checkTeam(await duezy.from('duezy_teams').insert(rows).select(TEAM_FIELDS)) || [];
 }
 

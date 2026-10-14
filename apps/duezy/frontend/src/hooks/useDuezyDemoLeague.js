@@ -70,7 +70,7 @@ export default function useDuezyDemoLeague() {
     setTeams((prev) => [...prev, toTeam(team, divisionId, prev.length)]);
   }, []);
   const addTeams = useCallback(async (list, divisionId = null) => {
-    setTeams((prev) => [...prev, ...list.map((t, i) => toTeam(t, divisionId, prev.length + i))]);
+    setTeams((prev) => [...prev, ...list.map((t, i) => toTeam(t, t.division_id || divisionId, prev.length + i))]);
   }, []);
 
   const updateTeam = useCallback(async (teamId, changes) => {

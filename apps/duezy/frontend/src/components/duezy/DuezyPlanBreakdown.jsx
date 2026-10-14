@@ -29,12 +29,12 @@ export default function DuezyPlanBreakdown() {
         <div>
           <span className="dz-plan-def-icon" aria-hidden="true">🏢</span>
           <strong>League · free</strong>
-          <small className="dz-muted">Your organization — name, sport and where teams send dues.</small>
+          <small className="dz-muted">The league itself — name, season, sport and where teams send dues.</small>
         </div>
         <div>
           <span className="dz-plan-def-icon" aria-hidden="true">📅</span>
           <strong>Division · what you pay for</strong>
-          <small className="dz-muted">A group of teams on one schedule — night, dues and weeks.</small>
+          <small className="dz-muted">A group of teams on one schedule — night, dues and weeks. Divisions in archived (past) seasons don’t count.</small>
         </div>
       </div>
       <p className="dz-small dz-muted">{PRICING_RULE}</p>

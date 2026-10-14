@@ -1,0 +1,86 @@
+/* Team import: spreadsheet upload, column matching and the shared preview list. */
+.dz-upload-drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 26px 16px;
+  border: 2px dashed var(--dz-line-strong);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.dz-upload-drop:hover,
+.dz-upload-drop:focus-within { border-color: rgba(129, 140, 248, 0.7); background: rgba(129, 140, 248, 0.08); }
+.dz-upload-drop.is-busy { cursor: progress; opacity: 0.75; }
+.dz-upload-drop input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: inherit; }
+.dz-upload-drop small { color: var(--dz-muted); font-size: 0.8rem; }
+.dz-upload-icon { font-size: 1.8rem; line-height: 1; }
+
+.dz-upload-file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(129, 140, 248, 0.1);
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.dz-colmap { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--dz-line); border-radius: 12px; min-width: 0; }
+.dz-colmap legend { padding: 0 6px; font-size: 0.85rem; font-weight: 700; }
+.dz-colmap-headings { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 0.85rem; white-space: nowrap; cursor: pointer; }
+.dz-colmap .dz-colmap-headings input[type='checkbox'] {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: #818cf8;
+}
+.dz-colmap ul { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.dz-colmap li { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dz-colmap-col { display: flex; flex-direction: column; min-width: 0; }
+.dz-colmap-col strong { font-size: 0.86rem; }
+.dz-colmap-col small { color: var(--dz-muted); font-size: 0.76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dz-colmap select { flex: none; width: 168px; min-height: 36px; }
+
+.dz-layout-picker { display: flex; flex-direction: column; gap: 10px; }
+.dz-layout-mode { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.88rem; }
+.dz-layout-mode > span { margin-right: 4px; font-weight: 600; }
+.dz-layout-chip {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--dz-line-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dz-muted);
+  font: inherit;
+  cursor: pointer;
+}
+.dz-layout-chip:hover { color: var(--dz-text); }
+.dz-layout-chip.is-active { border-color: rgba(129, 140, 248, 0.8); background: rgba(129, 140, 248, 0.16); color: var(--dz-text); font-weight: 600; }
+.dz-layout-start select { width: 100%; }
+
+.dz-import-preview { display: flex; flex-direction: column; gap: 6px; }
+.dz-import-summary { margin: 0; font-size: 0.88rem; }
+.dz-import-div {
+  margin-left: auto;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(129, 140, 248, 0.14);
+  color: #c7d2fe;
+  font-size: 0.74rem;
+  font-style: normal;
+}
+.dz-team-paste-preview li.is-dupe strong::after { content: ' ⚠ duplicate'; color: #fcd34d; font-weight: 500; font-size: 0.76rem; }
+
+.dz-wizard-teams-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.dz-wizard-teams-foot .dz-muted { margin: 0; }

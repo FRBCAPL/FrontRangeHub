@@ -8,9 +8,13 @@ import { groupByLeague, leagueSnapshot } from '../../utils/duezyDashboard.js';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import DuezyLeagueCard from './DuezyLeagueCard.jsx';
 import DuezySkeleton from './DuezySkeleton.jsx';
+import DuezyPastSeasons from './DuezyPastSeasons.jsx';
+import { listArchivedLeagues } from '../../services/duezySeasonService.js';
+import { groupSeasons } from '../../utils/duezyTerms.js';
 
 export default function DuezyLeagueList() {
   const [leagues, setLeagues] = useState(null);
+  const [archived, setArchived] = useState([]);
   const [error, setError] = useState('');
   const [divisionsByLeague, setDivisionsByLeague] = useState({});
   const [snapshots, setSnapshots] = useState({});
@@ -22,10 +26,13 @@ export default function DuezyLeagueList() {
     (async () => {
       const added = await acceptInvites();
       const session = await getSession().catch(() => null);
-      const [list, roles] = await Promise.all([listLeagues(), myMemberships(session?.user?.id)]);
+      const [list, roles, old] = await Promise.all([
+        listLeagues(), myMemberships(session?.user?.id), listArchivedLeagues().catch(() => []),
+      ]);
       if (!alive) return;
       setJoined(added);
       setSharedRoles(roles);
+      setArchived(old);
       setLeagues(list);
 
       const ids = list.map((l) => l.id);
@@ -49,7 +56,9 @@ export default function DuezyLeagueList() {
 
   if (error) return <p className="dz-error" role="alert">{error}</p>;
   if (!leagues) return <DuezySkeleton variant="list" label="Loading your leagues…" />;
-  if (!leagues.length) return <Navigate to={`${DUEZY_PATH}/new`} replace />;
+  if (!leagues.length && !archived.length) return <Navigate to={`${DUEZY_PATH}/new`} replace />;
+  const groups = groupSeasons(leagues, archived);
+  const reload = () => window.location.reload();
 
   return (
     <div className="dz-stack dz-stack--lg">
@@ -61,23 +70,28 @@ export default function DuezyLeagueList() {
         <Link to={`${DUEZY_PATH}/new`} className="dz-btn dz-btn--primary">+ New league</Link>
       </div>
       <p className="dz-small dz-muted dz-center">
-        A league is your whole organization; divisions are the groups of teams inside it. <br />
-        To add another night, skill level or format, use <strong>+ Add division</strong> under the league. <strong>+ New league</strong> starts a separate organization.
+        Each league runs in seasons; each season has divisions (groups of teams on the same night, dues and schedule). <br />
+        Another night or skill level? <strong>+ Add division</strong>. Same league starting over? <strong>Start next season</strong> in its Settings.
+        A different league altogether? <strong>+ New league</strong>.
       </p>
       {joined ? (
         <p className="dz-notice" role="status">You were added to {joined === 1 ? 'a league' : `${joined} leagues`} — {joined === 1 ? 'it’s' : 'they’re'} below.</p>
       ) : null}
       <ul className="dz-league-list">
-        {leagues.map((l) => (
+        {groups.cards.map(({ league: l, past }) => (
           <DuezyLeagueCard
             key={l.id}
             league={l}
             divisions={divisionsByLeague[l.id] || []}
             snapshot={snapshots === false ? undefined : snapshots[l.id] || null}
             sharedRole={sharedRoles[l.id]}
+            past={past}
+            onRestored={reload}
           />
         ))}
       </ul>
+      {!leagues.length ? <p className="dz-muted dz-center">Nothing running right now — restore an archived league below or start a new one.</p> : null}
+      <DuezyPastSeasons seasons={groups.archived} title="Archived" onRestored={reload} />
     </div>
   );
 }

@@ -77,11 +77,11 @@ test('teams behind are sorted by amount and the reminder lists them', () => {
 
 test('parse pasted team lines', () => {
   assert.deepEqual(parseTeamLines('Sharks, Bobby K.\n\n  Slop Shots \nA, B, C\nRails, Kim, 719-555-0123\nJets, jo@x.com'), [
-    { name: 'Sharks', captain: 'Bobby K.', contact: null },
-    { name: 'Slop Shots', captain: null, contact: null },
-    { name: 'A', captain: 'B, C', contact: null },
-    { name: 'Rails', captain: 'Kim', contact: '719-555-0123' },
-    { name: 'Jets', captain: null, contact: 'jo@x.com' },
+    { name: 'Sharks', captain: 'Bobby K.', contact: null, players: [], division: null },
+    { name: 'Slop Shots', captain: null, contact: null, players: [], division: null },
+    { name: 'A', captain: 'B', contact: null, players: ['C'], division: null },
+    { name: 'Rails', captain: 'Kim', contact: '719-555-0123', players: [], division: null },
+    { name: 'Jets', captain: null, contact: 'jo@x.com', players: [], division: null },
   ]);
 });
 
