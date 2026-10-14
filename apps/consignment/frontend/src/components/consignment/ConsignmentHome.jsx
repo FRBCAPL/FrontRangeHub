@@ -22,7 +22,7 @@ function PathCount({ tab, counts }) {
   const [n, show, one, many] = tab === 'consign'
     ? [counts.case, 'case', 'item in the case now', 'items in the case now']
     : tab === 'auction'
-      ? [counts.auctions, 'auctions', 'online auction now', 'online auctions now']
+      ? [counts.auctions, 'auctions', 'on the table now (auction)', 'on the table now (auctions)']
       : [null];
   if (n == null) return null;
   return (

@@ -10,7 +10,7 @@ export default function ConsignmentExampleAuctionPanel({ sample }) {
   return (
     <section className="cs-auction-panel cs-example-auction" aria-label="Example online auction">
       <div className="cs-auction-head">
-        <span className="cs-auction-badge">Online auction</span>
+        <span className="cs-auction-badge">On the table · Online auction</span>
         <span className="cs-countdown">Sample · 7-day auction</span>
       </div>
       <div className="cs-auction-price">

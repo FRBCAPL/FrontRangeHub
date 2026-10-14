@@ -103,7 +103,7 @@ export default function ConsignmentStorefront() {
   };
   const counts = [
     shelfCount ? `${shelfCount} in the case` : '',
-    auctionCount ? `${auctionCount} online auction${auctionCount === 1 ? '' : 's'}` : '',
+    auctionCount ? `${auctionCount} on the table (auction${auctionCount === 1 ? '' : 's'})` : '',
   ].filter(Boolean).join(' · ');
 
   return (
@@ -134,7 +134,7 @@ export default function ConsignmentStorefront() {
           <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
             <option value="available">Available</option>
             <option value="case">In the case</option>
-            <option value="auctions">Online auctions</option>
+            <option value="auctions">On the table (auctions)</option>
             <option value="sold">Sold</option>
             <option value="all">Available & sold</option>
             {watch.userId || status === 'watching' ? <option value="watching">Watching ({watch.watched.size})</option> : null}

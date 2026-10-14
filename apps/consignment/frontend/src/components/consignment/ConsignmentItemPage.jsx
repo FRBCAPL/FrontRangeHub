@@ -58,7 +58,7 @@ export default function ConsignmentItemPage() {
   let badge = 'Available at Legends Brews & Cues';
   if (isExample) badge = 'Example — not for sale';
   else if (item.status === 'sold') badge = 'Sold';
-  else if (isAuction && !auctionAtLegends) badge = 'Online auction · pickup at Legends Brews & Cues';
+  else if (isAuction && !auctionAtLegends) badge = 'On the table · Online auction · pickup at Legends Brews & Cues';
 
   return (
     <div className="cs-page">

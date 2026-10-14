@@ -75,7 +75,7 @@ export default function ConsignmentItemCard({ item, auction, watching = false, o
   const ribbon = {
     example: { icon: '👀', label: isAuction ? 'Example auction' : 'Example' },
     sold: { icon: '✔', label: 'Sold' },
-    auction: { icon: '🔨', label: 'Online auction' },
+    auction: { icon: '🔨', label: 'On the table · Auction' },
     shelf: { icon: '🏪', label: 'In the case' },
   }[kind];
   let priceLine = <Price amount={item.selling_price} />;

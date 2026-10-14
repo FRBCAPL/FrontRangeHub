@@ -67,7 +67,7 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
   return (
     <section className="cs-auction-panel" aria-label="Online auction">
       <div className="cs-auction-head">
-        <span className="cs-auction-badge">Online auction</span>
+        <span className="cs-auction-badge">On the table · Online auction</span>
         {live ? (
           <span className={`cs-countdown${closing ? ' closing' : ''}`} role="timer">
             {remaining > 0 ? `Ends in ${formatCountdown(remaining)}` : 'Closing…'}

@@ -38,8 +38,8 @@ export const BUYERS_GUIDE_SECTIONS = [
   {
     id: 'bidding',
     icon: '🔨',
-    label: 'Auctions',
-    title: 'Bidding on auctions',
+    label: 'On the table (auctions)',
+    title: 'On the table: bidding on auctions',
     lines: [
       {
         icon: '🔐',

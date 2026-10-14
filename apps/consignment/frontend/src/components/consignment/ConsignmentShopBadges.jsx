@@ -2,7 +2,7 @@ import React from 'react';
 
 const BADGES = [
   { id: 'case', icon: '🏪', label: 'In the case', className: 'cs-shop-badge-case' },
-  { id: 'auctions', icon: '🔨', label: 'Online auctions', className: 'cs-shop-badge-auction' },
+  { id: 'auctions', icon: '🔨', label: 'On the table · Auctions', className: 'cs-shop-badge-auction' },
 ];
 
 export default function ConsignmentShopBadges({ status, counts, onPick }) {

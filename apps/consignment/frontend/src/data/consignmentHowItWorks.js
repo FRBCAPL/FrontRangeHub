@@ -17,7 +17,7 @@ export const HOW_IT_WORKS_TABS = [
       { icon: '🧾', title: 'Tax at the register', text: 'Prices don’t include sales tax; tax is added at the register. This site does not take payment.' },
       { icon: '🪪', title: 'Inspect before you buy', text: 'Some items can be inspected at Legends: ask at the bar and staff will hold your ID while you look. You’re responsible for any damage while inspecting.' },
       { icon: '✅', title: 'Sold as-is', text: 'All sales are final and items are sold as-is. Look the item over before you pay; if it isn’t as described, you don’t have to buy it.' },
-      { group: 'Online auctions', icon: '🔐', title: 'Log in to bid', text: 'Online auctions: log in with your FRPL account to bid. No account? Sign up from the Log in button; FRPL approves new accounts before they can bid.' },
+      { group: 'On the table: online auctions', icon: '🔐', title: 'Log in to bid', text: 'Online auctions: log in with your FRPL account to bid. No account? Sign up from the Log in button; FRPL approves new accounts before they can bid.' },
       { icon: '📈', title: 'Bid steps', text: 'Bids go up in $5 steps under $500 and $10 steps at $500 and up.' },
       { icon: '⏱️', title: 'No sniping', text: 'A bid in the last {softClose} minutes adds {softClose} more minutes, so nobody can snipe it at the buzzer.' },
       { icon: '⚡', title: 'Buy It Now', text: 'Some auctions have Buy It Now. It disappears once bidding reaches that price.' },

@@ -7,8 +7,8 @@ function Req() {
 }
 
 export const SALE_METHODS = [
-  { id: 'fixed', label: 'Consignment', blurb: 'You set the price with FRPL. It sells from the case at Legends.' },
-  { id: 'auction', label: 'Online auction', blurb: 'You set the reserve and an optional Buy It Now. Bidders set the price.' },
+  { id: 'fixed', label: 'In the case: consignment', blurb: 'You set the price with FRPL. It sells from the case at Legends.' },
+  { id: 'auction', label: 'On the table: online auction', blurb: 'You set the reserve and an optional Buy It Now. Bidders set the price.' },
 ];
 
 export function SaleMethodPicker({ value, onChange }) {
