@@ -6,15 +6,15 @@ const [ONE, THREE, ...EXTRA] = PLAN_ROWS;
 
 const TIERS = [
   { name: ONE.label, monthly: ONE.monthly, hint: 'One night or one group of teams.' },
-  { name: THREE.label, monthly: THREE.monthly, hint: 'Two or three — say, a Tuesday and a Thursday division.' },
+  { name: `Small Leagues \n ${THREE.label}`, monthly: THREE.monthly, hint: 'Two or three — say, a Tuesday and a Thursday division.' },
   {
-    name: 'Each extra division',
+    name: 'Mid-Size leagues \n Each active division',
     monthly: EXTRA[0].monthly,
     plus: true,
-    hint: `11-20 Divisions = +${money(EXTRA[1].monthly)} /mo, 21-30 Divisions = +${money(EXTRA[2].monthly)} /mo.`,
+    hint: `11-20 Divisions: +${money(EXTRA[1].monthly)} /mo, 21-30 Divisions: +${money(EXTRA[2].monthly)} /mo.`,
   },
   {
-    name: 'Big leagues',
+    name: 'Larger Leagues \n With many Divisions',
     monthly: MONTHLY_CAP,
     max: true,
     hint: `${CAP_DIVISIONS}+ divisions — add as many as you like, the price stops here.`,

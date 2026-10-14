@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LOCKED_MESSAGE, TRIAL_LIMIT_MESSAGE, billingBanner, canAddDivisions, friendlyError } from './duezyBillingText.js';
+import { LOCKED_MESSAGE, TRIAL_LIMIT_MESSAGE, billingBanner, canAddDivisions, deletionNote, friendlyError } from './duezyBillingText.js';
 
 test('billing errors become plain English; others pass through', () => {
   assert.equal(friendlyError('duezy_trial_division_limit: the free trial covers up to 2 divisions'), TRIAL_LIMIT_MESSAGE);
@@ -34,4 +34,16 @@ test('banner copy by phase', () => {
   assert.equal(billingBanner({ phase: 'locked', status: 'trialing' }).tone, 'bad');
   assert.equal(billingBanner({ phase: 'active' }), null);
   assert.equal(billingBanner(null), null);
+});
+
+test('read-only banner counts down to deletion, red in the last week', () => {
+  const far = { phase: 'locked', status: 'trialing', delete_on: '2026-11-20T15:00:00Z', days_until_delete: 25 };
+  assert.equal(billingBanner(far).tone, 'warn');
+  assert.match(billingBanner(far).text, /^Your free trial has ended and your leagues are read-only\. Your leagues will be deleted on Nov 20/);
+  const near = { ...far, status: 'canceled', days_until_delete: 1 };
+  assert.equal(billingBanner(near).tone, 'bad');
+  assert.match(billingBanner(near).text, /^Your plan has ended.*deleted in 1 day \(Nov 20\)/);
+  assert.match(deletionNote({ ...far, days_until_delete: 0 }), /scheduled for deletion/);
+  assert.equal(deletionNote({ phase: 'locked' }), null);
+  assert.equal(deletionNote(null), null);
 });

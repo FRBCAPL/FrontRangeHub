@@ -11,21 +11,21 @@ const SCREENS = [
     tab: 'Record payments',
     img: teamsShot,
     alt: 'Team list with Cash, Venmo, Cash App, Zelle, PayPal, Card, Check, Other, Bye and Make up buttons next to each team',
-    caption: 'Every team on one screen. Tap how they paid — late balances and make-ups show right on the row.',
+    caption: 'Every team on one screen. Tap how they paid. \n Late balances and make-ups show right on the row.\n',
   },
   {
     id: 'late',
     tab: 'See who’s late',
     img: lateShot,
     alt: 'Late teams with amounts owed and a ready-to-copy group chat reminder',
-    caption: 'Who owes and for which weeks, plus a reminder you can copy into the group chat or text a captain.',
+    caption: 'Who owes and for which weeks. \n Plus a reminder you can copy into the group chat or text a captain.\n',
   },
   {
     id: 'totals',
     tab: 'Know the totals',
     img: summaryShot,
-    alt: 'Weekly totals: collected this week, cash versus other methods, and what is still to collect',
-    caption: 'Collected this week and this season, cash versus every other method, and what’s still out.',
+    alt: 'Weekly totals: collected this week. \n Cash versus other methods, and what is still to collect',
+    caption: 'Collected this week and this season. \n Cash versus every other method, and what’s still out.\n',
   },
 ];
 

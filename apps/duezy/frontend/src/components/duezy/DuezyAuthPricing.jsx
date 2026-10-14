@@ -9,9 +9,11 @@ export default function DuezyAuthPricing() {
       <h2>Simple pricing</h2>
       <DuezyPlanTiers title="" />
       <small>
-        Unlimited leagues — you pay for divisions (a division is a group of teams on one schedule).
-        Yearly = 10 months' price. Try it free for {TRIAL_DAYS} days with up to {TRIAL_DIVISIONS} divisions, no card.
-        If you don't choose a plan, your leagues become read-only — nothing is deleted. Cancel anytime from Billing.
+        Unlimited leagues(every league must have at least one division). <br />
+        You are billed monthly per active division (a division is a group of teams on one schedule). Yearly = 10 months' price.<br />
+         Try it free for {TRIAL_DAYS} days with up to {TRIAL_DIVISIONS} divisions, no credit card required.<br />
+        If you don't choose a plan, your leagues become read-only for 30 days, then are deleted. <br />
+        Cancel anytime from the Billing page.
       </small>
     </section>
   );

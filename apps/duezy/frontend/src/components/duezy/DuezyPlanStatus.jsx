@@ -1,5 +1,6 @@
 import React from 'react';
 import { TRIAL_DAYS, TRIAL_DIVISIONS } from '../../utils/duezyPricing.js';
+import { deletionNote } from '../../utils/duezyBillingText.js';
 
 const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '');
 
@@ -41,7 +42,9 @@ export default function DuezyPlanStatus({ access }) {
   } else {
     icon = '🔒';
     title = 'Read-only';
-    text = 'Your leagues and history are safe. Choose a plan to keep recording payments.';
+    text = deletionNote(access)
+      ? `${deletionNote(access)} You can still view and export your reports until then.`
+      : 'Choose a plan to keep recording payments. You can still view and export your reports.';
   }
 
   const daysLeft = Number(access.days_remaining) || 0;

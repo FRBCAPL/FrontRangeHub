@@ -48,7 +48,7 @@ export const LEGAL_PAGES = {
         heading: 'Your choices',
         items: [
           'You can edit or remove teams and correct payment records while your trial or plan is active.',
-          'If your plan ends, your leagues become read-only — nothing is deleted.',
+          'If your trial ends without a plan, your leagues stay read-only for 30 days and are then deleted. If a paid plan ends (cancelled or unpaid), they stay read-only for 90 days and are then deleted. You can view and export your reports until then, and we email you 7 days and 1 day before deletion.',
           `To export your data or delete your account and leagues, email ${SUPPORT_EMAIL}.`,
         ],
       },
@@ -71,7 +71,7 @@ export const LEGAL_PAGES = {
         items: [
           'New accounts get a free trial with no card required. After that, a paid plan is needed to keep making changes.',
           'Plans are priced by the number of divisions and billed monthly or yearly through Stripe.',
-          'You can cancel anytime from Billing. Your leagues stay viewable (read-only) after a plan ends.',
+          'You can cancel anytime from Billing. After a plan ends your leagues stay viewable (read-only) for 90 days, then they are deleted. After a free trial ends without a plan, that window is 30 days. Choosing a plan before then keeps everything.',
         ],
       },
       {

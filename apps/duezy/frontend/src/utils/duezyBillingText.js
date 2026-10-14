@@ -2,7 +2,22 @@
 import { trialUsage } from './duezyPricingText.js';
 
 export const TRIAL_LIMIT_MESSAGE = 'Your free trial covers up to 2 divisions. Choose a plan in Billing to add more.';
-export const LOCKED_MESSAGE = 'Your leagues are read-only until you choose a plan. Everything is saved — pick a plan in Billing to keep recording.';
+export const LOCKED_MESSAGE = 'Your leagues are read-only until you choose a plan. Pick a plan in Billing to keep recording.';
+
+const shortDate = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+/**
+ * When a read-only account's leagues will be deleted, in words.
+ * Null when nothing is scheduled (not locked, or the retention SQL isn't run yet).
+ */
+export function deletionNote(access) {
+  if (!access?.delete_on) return null;
+  const days = Number(access.days_until_delete ?? 0);
+  const date = shortDate(access.delete_on);
+  if (days <= 0) return 'Your leagues are scheduled for deletion — choose a plan now to keep them.';
+  if (days <= 7) return `Your leagues will be deleted in ${days} ${days === 1 ? 'day' : 'days'} (${date}) — choose a plan to keep them.`;
+  return `Your leagues will be deleted on ${date} — choose a plan to keep them.`;
+}
 
 /** Turn database errors caused by billing rules into plain English. */
 export function friendlyError(message) {
@@ -44,12 +59,16 @@ export function billingBanner(access) {
     }
     case 'grace':
       return { tone: 'warn', text: 'Your last payment didn’t go through. Update your card to keep recording.', cta: 'Fix billing' };
-    case 'locked':
+    case 'locked': {
+      const ended = access.status === 'trialing' || access.status === 'none' ? 'Your free trial has ended' : 'Your plan has ended';
+      const note = deletionNote(access);
+      const lastWeek = !access.delete_on || Number(access.days_until_delete ?? 0) <= 7;
       return {
-        tone: 'bad',
-        text: access.status === 'trialing' || access.status === 'none' ? 'Your free trial has ended — your leagues are read-only.' : 'Your plan has ended — your leagues are read-only.',
+        tone: lastWeek ? 'bad' : 'warn',
+        text: note ? `${ended} and your leagues are read-only. ${note}` : `${ended} — your leagues are read-only.`,
         cta: 'Choose a plan',
       };
+    }
     default:
       return null;
   }
