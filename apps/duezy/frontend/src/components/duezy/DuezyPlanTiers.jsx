@@ -11,7 +11,7 @@ const TIERS = [
     name: 'Each extra division',
     monthly: EXTRA[0].monthly,
     plus: true,
-    hint: `Gets cheaper as you grow: +${money(EXTRA[1].monthly)} each from 11, +${money(EXTRA[2].monthly)} each from 21.`,
+    hint: `11-20 Divsions = +${money(EXTRA[1].monthly)} /mo, 21-30 Divsions = +${money(EXTRA[2].monthly)} /mo.`,
   },
   {
     name: 'Big leagues',
@@ -23,14 +23,14 @@ const TIERS = [
 
 const tierFor = (used) => (used <= 1 ? 0 : used <= 3 ? 1 : used < CAP_DIVISIONS ? 2 : 3);
 
-/** The pricing tiers as cards, with this account's tier highlighted. */
-export default function DuezyPlanTiers({ used, interval }) {
-  const yours = tierFor(used);
+/** The pricing tiers as cards. With `used` (Billing) this account's tier is highlighted; without it (landing page) none is. */
+export default function DuezyPlanTiers({ used, interval, title = 'Plans' }) {
+  const yours = used === undefined ? -1 : tierFor(used);
   const per = interval === 'year' ? 'yr' : 'mo';
   const amount = (monthly) => money(interval === 'year' ? monthly * 10 : monthly);
   return (
     <section className="dz-stack">
-      <h2 className="dz-h3 dz-center">Plans</h2>
+      {title ? <h2 className="dz-h3 dz-center">{title}</h2> : null}
       <ul className="dz-plan-tiers">
         {TIERS.map((t, i) => (
           <li key={t.name} className={i === yours ? 'is-yours' : ''}>

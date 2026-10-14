@@ -1,6 +1,7 @@
 import duezy from './duezyClient.js';
 import { syncQuantity } from './duezyBillingService.js';
 import { friendlyError } from '../utils/duezyBillingText.js';
+import { fetchAllPages } from '../utils/duezyPaging.js';
 
 /* '*' so leagues/teams still load before the divisions migration adds multi_division / division_id. */
 const LEAGUE_FIELDS = '*';
@@ -78,23 +79,24 @@ export async function archiveLeague(id) {
 }
 
 export async function listTeams(leagueId) {
-  return check(
-    await duezy
-      .from('duezy_teams')
-      .select(TEAM_FIELDS)
-      .eq('league_id', leagueId)
-      .eq('archived', false)
-      .order('sort_order')
-      .order('created_at')
-  ) || [];
+  return check(await fetchAllPages(() => duezy
+    .from('duezy_teams')
+    .select(TEAM_FIELDS)
+    .eq('league_id', leagueId)
+    .eq('archived', false)
+    .order('sort_order')
+    .order('created_at')
+    .order('id'))) || [];
 }
 
-/** Dashboard: active teams and all payments for several leagues in two queries. */
+/** Dashboard: active teams and all payments for several leagues (paged, so big accounts load every row). */
 export async function listTeamsAndPaymentsForLeagues(leagueIds) {
   if (!leagueIds.length) return { teams: [], payments: [] };
   const [t, p] = await Promise.all([
-    duezy.from('duezy_teams').select(TEAM_FIELDS).in('league_id', leagueIds).eq('archived', false).order('sort_order').order('created_at'),
-    duezy.from('duezy_payments').select('league_id, team_id, week, status, amount').in('league_id', leagueIds),
+    fetchAllPages(() => duezy.from('duezy_teams').select(TEAM_FIELDS).in('league_id', leagueIds).eq('archived', false)
+      .order('sort_order').order('created_at').order('id')),
+    fetchAllPages(() => duezy.from('duezy_payments').select('id, league_id, team_id, week, status, amount').in('league_id', leagueIds)
+      .order('id')),
   ]);
   return { teams: check(t) || [], payments: check(p) || [] };
 }
@@ -119,9 +121,7 @@ export async function updateTeam(id, changes) {
 }
 
 export async function listPayments(leagueId) {
-  return check(
-    await duezy.from('duezy_payments').select(PAYMENT_FIELDS).eq('league_id', leagueId)
-  ) || [];
+  return check(await fetchAllPages(() => duezy.from('duezy_payments').select(PAYMENT_FIELDS).eq('league_id', leagueId).order('id'))) || [];
 }
 
 /** Change log for one team (newest first). Empty if the payment-history SQL hasn't been run yet. */
@@ -138,12 +138,12 @@ export async function listPaymentHistory(teamId, limit = 50) {
 
 /** Every payment change in a league (newest first), each with `team: { name, division_id }` — removed teams included. */
 export async function listLeagueHistory(leagueId, limit = 50) {
-  const { data, error } = await duezy
+  const { data, error } = await fetchAllPages(() => duezy
     .from('duezy_payment_history')
     .select('*, team:duezy_teams(name, division_id)')
     .eq('league_id', leagueId)
     .order('changed_at', { ascending: false })
-    .limit(limit);
+    .order('id'), { max: limit });
   if (error) return /duezy_payment_history/.test(error.message) ? null : check({ data, error });
   return data || [];
 }
