@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { buyNow, isMyItem, openHubLogin, placeBid } from '../../services/consignmentAuctionService.js';
-import { bidError } from '../../utils/consignmentAuctionMath.js';
+import { bidError, buyNowAvailable } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { LEGENDS_PLACE } from '../../data/consignmentConstants.js';
 
@@ -108,7 +108,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, outb
         </button>
       </div>
       <p className="cs-hint">Minimum bid {formatDollars(minNext)}.</p>
-      {auction.buy_now_price != null ? (
+      {buyNowAvailable({ buyNowPrice: auction.buy_now_price, currentBid: auction.current_bid, bidCount: auction.bid_count }) ? (
         <button type="button" className="cs-btn-secondary cs-buy-now" onClick={doBuyNow} disabled={busy}>
           Buy It Now · {formatDollars(auction.buy_now_price)} + tax
         </button>

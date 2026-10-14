@@ -1,8 +1,6 @@
 import { supabase } from '@shared/config/supabase.js';
-import { auctionEndFrom } from '../utils/consignmentAuctionDates.js';
+import { AUCTION_DAYS } from '../utils/consignmentAuctionDates.js';
 import { openingBid } from '../utils/consignmentAuctionMath.js';
-import { recordFee } from './consignmentFeesService.js';
-import { changePayout } from './consignmentPayoutService.js';
 
 const MISSING = 'Run supabase-migrations/consignment-auctions-2026-10.sql in the Supabase SQL editor, then refresh.';
 const ACTIVE = ['draft', 'live', 'awaiting_payment'];
@@ -66,11 +64,12 @@ export async function loadAdminAuctions(status = 'live') {
   if (error) fail(error, 'Could not load auctions.');
   const rows = data || [];
   const itemIds = rows.map((r) => r.item_id);
-  const [users, { data: sellers }] = await Promise.all([
+  const [users, { data: sellers }, otherBidders] = await Promise.all([
     loadUsers(rows.flatMap((r) => [r.current_bidder, r.winner_id])),
     itemIds.length
       ? supabase.from('consignment_sellers').select('item_id, full_name, phone, email').in('item_id', itemIds)
       : Promise.resolve({ data: [] }),
+    countOtherBidders(rows.filter((r) => r.status === 'defaulted')),
   ]);
   const sellerByItem = Object.fromEntries((sellers || []).map((s) => [s.item_id, s]));
   return rows.map((r) => ({
@@ -78,6 +77,30 @@ export async function loadAdminAuctions(status = 'live') {
     seller: sellerByItem[r.item_id] || null,
     highBidder: users[r.current_bidder] || null,
     winner: users[r.winner_id] || null,
+    otherBidderCount: otherBidders[r.id] || 0,
+  }));
+}
+
+function excludedBidders(auction) {
+  return new Set([...(auction.defaulted_bidders || []), auction.winner_id].filter(Boolean));
+}
+
+/** Per auction: distinct people who bid and haven't already won and failed to pay. */
+async function countOtherBidders(auctions) {
+  if (!auctions.length) return {};
+  const { data, error } = await supabase
+    .from('consignment_bids')
+    .select('auction_id, bidder_id')
+    .in('auction_id', auctions.map((a) => a.id));
+  if (error) return {};
+  const people = {};
+  for (const bid of data || []) {
+    if (!people[bid.auction_id]) people[bid.auction_id] = new Set();
+    people[bid.auction_id].add(bid.bidder_id);
+  }
+  return Object.fromEntries(auctions.map((a) => {
+    const skip = excludedBidders(a);
+    return [a.id, [...(people[a.id] || [])].filter((id) => !skip.has(id)).length];
   }));
 }
 
@@ -91,96 +114,52 @@ export async function loadAuctionSettings() {
   return data;
 }
 
-/**
- * Puts an item up for auction. Works for pending (new), available fixed-price, expired, and
- * relisted items. The reserve (opening bid) is stored as the item's Seller Payout, so the
- * payout guard keeps it from selling below the reserve.
- */
-export async function startAuction(item, {
-  reserve, commissionPct, buyNowPrice, listingFee, feeKind = 'auction_listing', feePaidNow, paymentMethod,
-  consent = null, feeNote = null, atLegends = false,
-}) {
-  const min = Number(reserve);
-  const opening = openingBid(min);
-  if (!opening) throw new Error('Enter a valid reserve.');
-  const buyNow = buyNowPrice === '' || buyNowPrice == null ? null : Number(buyNowPrice);
-  if (buyNow != null && !(buyNow > opening)) throw new Error('Buy It Now must be higher than the reserve.');
-  const current = Number(item.seller_payout);
-  if (min !== current) {
-    const canLowerFreely = item.status === 'pending' && !item.intake_at;
-    if (min < current && !canLowerFreely) {
-      if (!consent) throw new Error('Lowering below the agreed amount needs the seller’s OK.');
-      await changePayout(item.id, {
-        newPayout: min,
-        consent,
-        note: `Reserve lowered to relist (${current} → ${min})`,
-      });
-    } else {
-      await patchItem(item.id, { seller_payout: min });
-    }
-  }
+const FIXES_MISSING = 'Run supabase-migrations/consignment-auction-fixes-2026-10.sql in the Supabase SQL editor, then refresh.';
 
-  const startedAt = new Date();
-  const now = startedAt.toISOString();
-  const end = auctionEndFrom(startedAt);
-  const { data: auction, error } = await supabase
-    .from('consignment_auctions')
-    .insert({
-      item_id: item.id,
-      status: 'live',
-      seller_min_payout: min,
-      commission_pct: Number(commissionPct),
-      opening_bid: opening,
-      buy_now_price: buyNow,
-      listing_fee: listingFee === '' || listingFee == null ? null : Number(listingFee),
-      starts_at: now,
-      scheduled_end_at: end.toISOString(),
-      ends_at: end.toISOString(),
-      ...(atLegends ? { delivered_at: now } : {}),
-    })
-    .select()
-    .single();
+async function fixesRpc(name, args, fallback) {
+  const { data, error } = await supabase.rpc(name, args);
   if (error) {
-    if (/delivered_at/i.test(error.message || '')) throw new Error(DELIVERY_MISSING);
+    if (/could not find the function|schema cache/i.test(error.message || '')) throw new Error(FIXES_MISSING);
     if (/consignment_auctions_one_active|duplicate key/i.test(error.message || '')) {
       throw new Error('This item already has an active auction.');
     }
-    fail(error, 'Could not start the auction.');
+    throw new Error(error.message || fallback);
   }
+  return data;
+}
 
-  try {
-    await patchItem(item.id, {
-      status: 'available',
-      sale_method: 'auction',
-      intake_at: item.intake_at || now,
-      expires_at: null,
-    });
-  } catch (err) {
-    await supabase.from('consignment_auctions').delete().eq('id', auction.id);
-    throw err;
-  }
-
-  const feeAmount = Number(listingFee) || 0;
-  const note = [`Auction ending ${end.toLocaleDateString('en-US')}`, feeNote].filter(Boolean).join(' · ');
-  // $0 relists are recorded too: they mark the free relist as used.
-  if (feeAmount > 0 ? feePaidNow : feeKind === 'relist') {
-    await recordFee(item.id, { kind: feeKind, amount: feeAmount, paymentMethod: feeAmount > 0 ? paymentMethod : null, note });
-  }
-  return auction;
+/**
+ * Puts an item up for auction in one database transaction. Works for pending (new), available fixed-price,
+ * expired, and relisted items. The reserve (opening bid) is stored as the item's Seller Payout, so the
+ * payout guard keeps it from selling below the reserve.
+ */
+export function startAuction(item, {
+  reserve, commissionPct, buyNowPrice, listingFee, feeKind = 'auction_listing', feePaidNow, paymentMethod,
+  consent = null, feeNote = null, atLegends = false,
+}) {
+  const opening = openingBid(reserve);
+  if (!opening) throw new Error('Enter a valid reserve.');
+  const buyNow = buyNowPrice === '' || buyNowPrice == null ? null : Number(buyNowPrice);
+  if (buyNow != null && !(buyNow > opening)) throw new Error('Buy It Now must be higher than the reserve.');
+  return fixesRpc('consignment_admin_start_auction', {
+    p_item_id: item.id,
+    p_reserve: opening,
+    p_commission_pct: Number(commissionPct),
+    p_buy_now: buyNow,
+    p_listing_fee: listingFee === '' || listingFee == null ? null : Number(listingFee),
+    p_fee_kind: feeKind,
+    p_fee_paid_now: Boolean(feePaidNow),
+    p_payment_method: paymentMethod || null,
+    p_consent: consent || null,
+    p_fee_note: feeNote || null,
+    p_at_legends: Boolean(atLegends),
+    p_days: AUCTION_DAYS,
+  }, 'Could not start the auction.');
 }
 
 /** Only allowed before anyone bids. The item goes back to Pending (still marked auction) to restart or approve as consignment. */
-export async function cancelAuction(auction) {
-  const { data, error } = await supabase
-    .from('consignment_auctions')
-    .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-    .eq('id', auction.id)
-    .in('status', ['draft', 'live'])
-    .eq('bid_count', 0)
-    .select('id');
-  if (error) fail(error, 'Could not cancel the auction.');
-  if (!data?.length) throw new Error('This auction already has bids (or has ended) and cannot be cancelled.');
-  await patchItem(auction.item_id, { status: 'pending' });
+export function cancelAuction(auction) {
+  return fixesRpc('consignment_admin_cancel_auction', { p_auction_id: auction.id }, 'Could not cancel the auction.');
 }
 
 /** After an unsold auction: back to Pending as fixed price so admin sets a retail price via Approve. */
@@ -307,7 +286,7 @@ export async function loadSecondChanceCandidates(auction) {
     .eq('auction_id', auction.id)
     .order('amount', { ascending: false });
   if (error) fail(error, 'Could not load bids.');
-  const excluded = new Set([...(auction.defaulted_bidders || []), auction.winner_id].filter(Boolean));
+  const excluded = excludedBidders(auction);
   const best = new Map();
   for (const bid of data || []) {
     if (!excluded.has(bid.bidder_id) && !best.has(bid.bidder_id)) best.set(bid.bidder_id, bid);

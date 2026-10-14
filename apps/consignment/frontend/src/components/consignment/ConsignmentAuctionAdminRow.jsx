@@ -119,8 +119,13 @@ export default function ConsignmentAuctionAdminRow({ auction, actions }) {
             <button type="button" className="cs-btn-secondary" onClick={() => actions.unpaid(auction)}>Didn’t pay</button>
           </>
         ) : null}
-        {auction.status === 'defaulted' && itemStillAuction && auction.bid_count > 1 ? (
-          <button type="button" className="cs-btn" onClick={() => actions.secondChance(auction)}>Offer to next bidder</button>
+        {auction.status === 'defaulted' && itemStillAuction && auction.otherBidderCount > 0 ? (
+          <button type="button" className="cs-btn" onClick={() => actions.secondChance(auction)}>
+            Offer to next bidder ({auction.otherBidderCount} left)
+          </button>
+        ) : null}
+        {auction.status === 'defaulted' && itemStillAuction && !auction.otherBidderCount ? (
+          <div className="cs-meta">No other bidders left to offer it to.</div>
         ) : null}
         {unsold && auction.seller_choice ? (
           <div className="cs-seller-choice">

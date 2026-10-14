@@ -2,7 +2,7 @@
  * Auction rules (mirrored in supabase-migrations/consignment-auctions-2026-10.sql — keep in sync):
  * - Increments: $5 below $500, $10 at $500+.
  * - The seller sets the reserve; it is the opening bid. FRPL keeps the commission % of the final price.
- * - Buy It Now disappears once the current bid reaches it.
+ * - Buy It Now disappears once the next allowed bid reaches it.
  * - Soft close: a bid inside the final N minutes moves the end to N minutes after that bid.
  */
 
@@ -45,10 +45,11 @@ export function minNextBid({ openingBid: opening, currentBid, bidCount }) {
   return round2(Number(currentBid) + bidIncrement(currentBid));
 }
 
+/** Buy It Now closes once the next allowed bid reaches it, so nobody buys for less than the next bidder would pay. */
 export function buyNowAvailable({ buyNowPrice, currentBid, bidCount }) {
   if (buyNowPrice == null || buyNowPrice === '') return false;
   if (!bidCount) return true;
-  return Number(currentBid) < Number(buyNowPrice);
+  return minNextBid({ currentBid, bidCount }) < Number(buyNowPrice);
 }
 
 /** Returns the (possibly extended) end time after a bid placed at `bidAt`. */

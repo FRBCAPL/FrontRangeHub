@@ -1,11 +1,12 @@
 import React from 'react';
+import { buyNowAvailable } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 
 /** A frozen sample of the auction panel for example listings. Nothing here talks to the server. */
 export default function ConsignmentExampleAuctionPanel({ sample }) {
   const s = sample || {};
   const bids = Number(s.bid_count) || 0;
-  const showBuyNow = s.buy_now_price != null && Number(s.buy_now_price) > Number(s.current_bid || 0);
+  const showBuyNow = buyNowAvailable({ buyNowPrice: s.buy_now_price, currentBid: s.current_bid, bidCount: bids });
   return (
     <section className="cs-auction-panel cs-example-auction" aria-label="Example online auction">
       <div className="cs-auction-head">

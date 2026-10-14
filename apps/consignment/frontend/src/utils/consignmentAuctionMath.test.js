@@ -68,8 +68,12 @@ describe('next bid and Buy It Now', () => {
 
   it('Buy It Now stays until the current bid reaches it', () => {
     assert.equal(buyNowAvailable({ buyNowPrice: 825, currentBid: null, bidCount: 0 }), true);
-    assert.equal(buyNowAvailable({ buyNowPrice: 825, currentBid: 820, bidCount: 4 }), true);
+    assert.equal(buyNowAvailable({ buyNowPrice: 825, currentBid: 810, bidCount: 4 }), true);
+    assert.equal(buyNowAvailable({ buyNowPrice: 825, currentBid: 815, bidCount: 4 }), false);
+    assert.equal(buyNowAvailable({ buyNowPrice: 835, currentBid: 820, bidCount: 4 }), true);
     assert.equal(buyNowAvailable({ buyNowPrice: 825, currentBid: 825, bidCount: 5 }), false);
+    assert.equal(buyNowAvailable({ buyNowPrice: 498, currentBid: 495, bidCount: 3 }), false);
+    assert.equal(buyNowAvailable({ buyNowPrice: 510, currentBid: 495, bidCount: 3 }), true);
     assert.equal(buyNowAvailable({ buyNowPrice: null, currentBid: null, bidCount: 0 }), false);
   });
 
