@@ -5,10 +5,12 @@ import { parsePlayers } from '../../utils/duezyPayers.js';
 import { seasonTerms } from '../../utils/duezyTerms.js';
 import { sportOf } from '../../data/duezyOptions.js';
 import DuezyJoinForm from './DuezyJoinForm.jsx';
+import { canKeepCaptain } from './DuezyJoinCaptainFields.jsx';
 
 const blankForm = (divisions) => ({
+  mode: 'new', team_id: '',
   division_id: divisions.length === 1 ? divisions[0].id : '',
-  name: '', captain: '', contact: '', playersText: '', note: '', website: '',
+  name: '', captain: '', contact: '', changeCaptain: false, players: [], note: '', website: '',
 });
 
 /** /duezy/join/:code — public page where a captain signs their team up. It waits for the league to approve it. */
@@ -18,7 +20,7 @@ export default function DuezyJoinPage({ code }) {
   const [form, setForm] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [sentName, setSentName] = useState('');
+  const [sent, setSent] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -43,25 +45,35 @@ export default function DuezyJoinPage({ code }) {
   }
 
   const divisions = info.divisions || [];
+  const teams = info.teams || [];
   const terms = seasonTerms(info);
   const sport = sportOf(info.sport);
 
   const send = async (e) => {
     e.preventDefault();
     setError('');
+    const existing = form.mode === 'existing';
+    const team = existing ? teams.find((t) => t.id === form.team_id) : null;
     if (divisions.length > 1 && !form.division_id) return setError('Pick your division.');
-    if (!form.name.trim() || !form.captain.trim()) return setError('Fill in your team name and your name.');
-    if (!parseContact(form.contact)) return setError('Enter a phone number or email so the league can reach you.');
+    if (existing && !team) return setError('Pick your team.');
+    if (!existing && !form.name.trim()) return setError('Fill in your team name.');
+    const keep = canKeepCaptain(team) && !form.changeCaptain;
+    if (!keep && !form.captain.trim()) return setError(team ? 'Fill in the new captain’s name.' : 'Fill in your name.');
+    if (!keep && !parseContact(form.contact)) return setError('Enter a phone number or email so the league can reach you.');
+    const players = parsePlayers(form.players.join('\n'), keep ? team.captain : form.captain);
+    if (keep && !players.length && !form.note.trim()) return setError('Add a player, leave a note, or change the captain.');
     setBusy(true);
     try {
       await submitJoin(code, {
         ...form,
-        name: form.name.trim(),
-        captain: form.captain.trim(),
-        contact: formatContact(form.contact),
-        players: parsePlayers(form.playersText, form.captain),
+        team_id: team?.id || '',
+        name: team ? team.name : form.name.trim(),
+        // Blank captain + contact tells the database to keep the captain it has on file.
+        captain: keep ? '' : form.captain.trim(),
+        contact: keep ? '' : formatContact(form.contact),
+        players,
       });
-      setSentName(form.name.trim());
+      setSent({ name: team ? team.name : form.name.trim(), existing });
       setForm(blankForm(divisions));
     } catch (err) {
       setError(err.message);
@@ -76,19 +88,27 @@ export default function DuezyJoinPage({ code }) {
         <span className="dz-join-icon" aria-hidden="true">{sport.icon}</span>
         <span className="dz-eyebrow">Team sign-up</span>
         <h1 className="dz-h1">{info.name}</h1>
-        <p className="dz-muted">Captains: add your team for this {terms.one}. The league confirms it before it shows up.</p>
+        <p className="dz-muted">
+          Captains: sign up your team for this {terms.one}
+          {teams.length ? ', or send your info for a team that’s already in the league' : ''}. The league confirms it first.
+        </p>
       </div>
 
-      {sentName ? (
+      {sent ? (
         <section className="dz-card dz-stack dz-join-done" role="status">
-          <strong>✓ {sentName} is signed up and waiting for the league to confirm it.</strong>
+          <strong>
+            {sent.existing
+              ? `✓ Your update for ${sent.name} was sent. The league will confirm it.`
+              : `✓ ${sent.name} is signed up and waiting for the league to confirm it.`}
+          </strong>
           <p className="dz-small dz-muted">No account needed. The league will reach out using the contact you gave.</p>
-          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setSentName('')}>Sign up another team</button>
+          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={() => setSent(null)}>Sign up another team</button>
         </section>
       ) : (
         <DuezyJoinForm
           form={form}
           divisions={divisions}
+          teams={teams}
           busy={busy}
           error={error}
           onChange={(changes) => setForm((prev) => ({ ...prev, ...changes }))}

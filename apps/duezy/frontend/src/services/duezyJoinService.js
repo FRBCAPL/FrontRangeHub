@@ -33,6 +33,8 @@ export async function submitJoin(code, form) {
     p_players: form.players || [],
     p_note: form.note || null,
     p_website: form.website || null,
+    // Only sent for "my team is already in the league", so new-team sign-ups work before the claim SQL is run.
+    ...(form.team_id ? { p_team_id: form.team_id } : {}),
   });
   if (error) throw new Error(joinErrorText(error.message));
 }

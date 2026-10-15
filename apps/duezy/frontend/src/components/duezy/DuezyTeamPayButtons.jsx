@@ -1,6 +1,7 @@
 import React from 'react';
 import { leagueMethods } from '../../utils/duezyLeaguePrefs.js';
 import { asksWhoPaid } from '../../utils/duezyPayers.js';
+import { money } from '../../utils/duezyMath.js';
 
 /** League methods, plus a method already saved on this week if the league later dropped it. */
 function rowMethods(league, payment) {
@@ -13,7 +14,7 @@ function rowMethods(league, payment) {
  * One button per payment method, plus Bye, Make up and Not yet. Cash records right away;
  * other methods call onAskWhoPaid(method) so the row can show "Who paid?".
  */
-export default function DuezyTeamPayButtons({ league, team, week, dues, payment, picking, onSetPayment, onAskWhoPaid }) {
+export default function DuezyTeamPayButtons({ league, team, week, dues, payment, picking, onSetPayment, onAskWhoPaid, onPartial }) {
   const status = payment?.status || 'unpaid';
 
   return (
@@ -39,6 +40,17 @@ export default function DuezyTeamPayButtons({ league, team, week, dues, payment,
           </button>
         );
       })}
+      {onPartial ? (
+        <button
+          type="button"
+          className={`dz-chip ${status === 'partial' ? 'is-on is-partial' : ''}`}
+          aria-pressed={status === 'partial'}
+          title="Paid part of the dues: enter the amount, the rest stays owed"
+          onClick={onPartial}
+        >
+          <span aria-hidden="true">½</span> {status === 'partial' ? `Partial ${money(payment?.amount || 0)}` : 'Partial'}
+        </button>
+      ) : null}
       <button
         type="button"
         className={`dz-chip ${status === 'bye' ? 'is-on is-bye' : ''}`}

@@ -48,8 +48,9 @@ export default function DuezyJoinLinkCard({ league, owner, onSaved }) {
       <div>
         <strong>Captain sign-up link</strong>
         <p className="dz-small dz-muted">
-          Text one link to your captains or post it at the venue. They add their own team, contact and players; each sign-up
-          waits on the league page until you approve it. Captains pick from your current divisions, so the same link keeps
+          Text one link to your captains or post it at the venue. They add a new team, or pick their team if it’s already
+          listed, with their contact and players; each sign-up waits on the league page until you approve it. Captains pick
+          from your current divisions, so the same link keeps
           working {terms.one} after {terms.one}.
         </p>
       </div>

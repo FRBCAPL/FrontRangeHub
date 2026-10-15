@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { deleteJoinRequest, listJoinRequests } from '../../services/duezyJoinService.js';
 import DuezyModal from './DuezyModal.jsx';
 import DuezyJoinRequestRow from './DuezyJoinRequestRow.jsx';
+import { claimChanges } from '../../utils/duezyJoin.js';
 
 const sameName = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
@@ -32,7 +33,15 @@ export default function DuezyJoinRequests({ data }) {
   const approve = async (request, divisionId) => {
     setError('');
     try {
-      await data.addTeams([{ name: request.name, captain: request.captain, contact: request.contact, players: request.players }], divisionId);
+      if (request.team_id) {
+        const team = teams.find((t) => t.id === request.team_id);
+        if (!team) throw new Error(`${request.name} isn’t in the league anymore. Decline this sign-up or add the team again.`);
+        const changes = claimChanges(team, request);
+        if (!('players' in team)) delete changes.players;
+        await data.updateTeam(team.id, changes);
+      } else {
+        await data.addTeams([{ name: request.name, captain: request.captain, contact: request.contact, players: request.players }], divisionId);
+      }
       await deleteJoinRequest(request.id).catch(() => {});
       drop(request.id);
     } catch (e) {
@@ -61,7 +70,10 @@ export default function DuezyJoinRequests({ data }) {
       </p>
       {open ? (
         <DuezyModal title="Team sign-ups" onClose={() => setOpen(false)} className="dz-team-modal">
-          <p className="dz-team-modal-hint">Approved teams join the list like any other team. Nothing counts toward dues until you approve.</p>
+          <p className="dz-team-modal-hint">
+            New teams join the list like any other team. For a team already in the league, approving updates its captain,
+            contact and players. Nothing changes until you approve.
+          </p>
           {error ? <p className="dz-error" role="alert">{error}</p> : null}
           <ul className="dz-join-reqs">
             {requests.map((r) => (
@@ -69,7 +81,8 @@ export default function DuezyJoinRequests({ data }) {
                 key={r.id}
                 request={r}
                 divisions={divisions}
-                taken={teams.some((t) => sameName(t.name, r.name))}
+                claimed={r.team_id ? teams.find((t) => t.id === r.team_id) || 'missing' : null}
+                taken={!r.team_id && teams.some((t) => sameName(t.name, r.name))}
                 onApprove={approve}
                 onDecline={decline}
               />

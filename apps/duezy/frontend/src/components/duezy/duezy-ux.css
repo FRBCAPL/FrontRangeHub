@@ -34,6 +34,15 @@
 /* Read-only status pill for viewers (partial wasn't styled before). */
 .dz-chip.is-on.is-partial { background: rgba(234, 179, 8, 0.18); color: #fde68a; border-color: rgba(234, 179, 8, 0.4); }
 
+/* Partial popup: amount first */
+.dz-partial-form { display: grid; gap: 12px; }
+.dz-partial-form label { display: grid; gap: 6px; }
+.dz-partial-form label > span:first-child { font-size: 0.85rem; font-weight: 600; color: var(--dz-muted); }
+.dz-partial-form select, .dz-partial-form input { width: 100%; }
+.dz-partial-amount input { font-size: 1.5rem; font-weight: 700; padding-top: 12px; padding-bottom: 12px; }
+.dz-partial-amount small { font-size: 0.85rem; color: #fde68a; }
+.dz-partial-amount small.is-full { color: #86efac; }
+
 /* "N teams late · see who ›" stat as a button */
 .dz-stat--button { cursor: pointer; text-align: left; font: inherit; color: inherit; }
 .dz-stat--button:hover { border-color: rgba(239, 68, 68, 0.45); }

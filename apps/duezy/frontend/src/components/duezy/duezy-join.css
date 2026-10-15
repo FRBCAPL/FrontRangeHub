@@ -31,7 +31,73 @@
 .dz-join-req-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 4px; }
 .dz-join-req-actions select { min-width: 160px; }
 .dz-join-warn { color: #fcd34d; }
+.dz-join-claim { color: #a5b4fc; }
+
+/* Captain on file (existing team) and the new-captain inputs */
+.dz-join-captain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--dz-line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.dz-join-captain > div { display: flex; flex-direction: column; gap: 1px; }
+.dz-join-captain-label { color: var(--dz-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.dz-join-captain-edit { display: flex; flex-direction: column; gap: 6px; }
+.dz-join-keep { align-self: flex-start; }
+
+/* Players: chips + "Add player" */
+.dz-join-players { display: flex; flex-direction: column; gap: 8px; }
+.dz-join-players p { margin: 0; }
+.dz-join-player-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.dz-join-player-list li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--dz-line);
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+.dz-join-player-list button {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--dz-muted);
+  line-height: 1;
+  cursor: pointer;
+}
+.dz-join-player-list button:hover { background: rgba(248, 113, 113, 0.2); color: #fca5a5; }
+.dz-join-add-player { align-self: flex-start; }
+.dz-join-player-modal { max-width: 420px; }
+.dz-join-player-actions { justify-content: flex-start; gap: 10px; }
+
+/* New team vs already in the league */
+.dz-join-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dz-join-mode-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--dz-line);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--dz-text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.dz-join-mode-btn small { color: var(--dz-muted); font-size: 0.78rem; }
+.dz-join-mode-btn.is-on { border-color: rgba(129, 140, 248, 0.7); background: rgba(129, 140, 248, 0.14); }
+.dz-join-mode-btn:focus-visible { outline: 2px solid rgba(129, 140, 248, 0.7); outline-offset: 2px; }
 
 @media (max-width: 520px) {
-  .dz-join-grid { grid-template-columns: 1fr; }
+  .dz-join-grid,
+  .dz-join-mode { grid-template-columns: 1fr; }
 }

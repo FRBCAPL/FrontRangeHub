@@ -6,6 +6,7 @@ import DuezyTeamDetail from './DuezyTeamDetail.jsx';
 import DuezyTeamModal from './DuezyTeamModal.jsx';
 import DuezyTeamPayButtons from './DuezyTeamPayButtons.jsx';
 import DuezyPayerPicker from './DuezyPayerPicker.jsx';
+import DuezyPartialModal from './DuezyPartialModal.jsx';
 
 const AVATAR_HUES = [245, 190, 160, 320, 30, 275, 205, 350];
 
@@ -52,6 +53,7 @@ export default function DuezyTeamRow({
   const balance = teamBalance(team.id, schedule, dues, paymentIndex);
   const [editFocus, setEditFocus] = useState(null);
   const [picking, setPicking] = useState(null);
+  const [partial, setPartial] = useState(false);
   /** Teams only have a players list once the "who paid" SQL has been run. */
   const canSavePlayers = 'players' in team;
 
@@ -114,6 +116,7 @@ export default function DuezyTeamRow({
               return onSetPayment(entry);
             }}
             onAskWhoPaid={setPicking}
+            onPartial={() => { setPicking(null); setPartial(true); }}
           />
         ) : (
           <span className={`dz-chip is-on is-${status}`}>{readOnlyStatus(status, payment)}</span>
@@ -146,6 +149,18 @@ export default function DuezyTeamRow({
           canSavePlayers={canSavePlayers}
           correctKey={correctKey}
           focusWeek={focusWeek}
+        />
+      ) : null}
+      {partial ? (
+        <DuezyPartialModal
+          league={league}
+          team={team}
+          dues={dues}
+          weekName={schedule.dates ? schedule.label(week) : `week ${week}`}
+          payment={payment}
+          onSetPayment={onSetPayment}
+          onAddPlayer={addPlayer}
+          onClose={() => setPartial(false)}
         />
       ) : null}
       {editFocus ? (
