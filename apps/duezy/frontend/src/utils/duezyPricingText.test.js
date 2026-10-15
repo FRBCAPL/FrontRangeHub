@@ -11,16 +11,16 @@ test('trial: says which trial division this uses, nothing when over the limit', 
 
 test('paid: shows the price change or that it is included', () => {
   const paid = { phase: 'active', has_subscription: true, plan_interval: 'month', divisions_used: 1 };
-  assert.equal(divisionCostNote(paid), 'This adds 1 division — your plan goes from $9 to $19/mo.');
+  assert.equal(divisionCostNote(paid), 'This adds 1 division — your plan goes from $9 to $19/mo. The difference for the rest of this month goes on your next bill.');
   assert.equal(divisionCostNote({ ...paid, divisions_used: 2 }), 'This adds 1 division — included in your current plan, no price change.');
-  assert.equal(divisionCostNote({ ...paid, divisions_used: 3, plan_interval: 'year' }), 'This adds 1 division — your plan goes from $190 to $230/yr.');
+  assert.equal(divisionCostNote({ ...paid, divisions_used: 3, plan_interval: 'year' }), 'This adds 1 division — your plan goes from $190 to $230/yr ($19 to $23 a month). The difference for the rest of your year is charged now.');
 });
 
 test('paid: big leagues reach the cap and stop going up', () => {
   const big = { phase: 'active', has_subscription: true, plan_interval: 'month', divisions_used: 30 };
-  assert.equal(divisionCostNote(big), 'This adds 1 division — your plan goes from $97 to $99/mo.');
+  assert.equal(divisionCostNote(big), 'This adds 1 division — your plan goes from $97 to $99/mo. The difference for the rest of this month goes on your next bill.');
   assert.equal(divisionCostNote({ ...big, divisions_used: 31 }), 'This adds 1 division — you’re at the $99/mo cap, so no price change.');
-  assert.equal(divisionCostNote({ ...big, divisions_used: 40, plan_interval: 'year' }, 5), 'This adds 5 divisions — you’re at the $990/yr cap, so no price change.');
+  assert.equal(divisionCostNote({ ...big, divisions_used: 40, plan_interval: 'year' }, 5), 'This adds 5 divisions — you’re at the $990/yr ($99 a month) cap, so no price change.');
 });
 
 test('comp and no access: nothing to say', () => {

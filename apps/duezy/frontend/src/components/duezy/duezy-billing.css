@@ -85,6 +85,9 @@
 }
 .dz-plan-price small { color: var(--dz-muted); font-weight: 600; }
 .dz-plan-save { color: #6ee7b7; font-weight: 600; }
+.dz-plan-auto { margin-top: -6px; }
+.dz-plan-follows { margin: 0; }
+.dz-plan-next { margin: 0; }
 
 /* Tier cards */
 .dz-plan-tiers { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
@@ -104,6 +107,8 @@
 .dz-plan-tiers li > small { white-space: pre-line; }
 .dz-plan-tier-price { font-size: 1.7rem; font-weight: 800; }
 .dz-plan-tier-price small { color: var(--dz-muted); font-size: 0.85rem; font-weight: 600; margin-left: 2px; }
+.dz-plan-tier-line { display: block; }
+.dz-plan-tier-base { display: block; font-size: 0.95rem; font-weight: 700; color: var(--dz-muted); line-height: 1.2; }
 .dz-plan-badge {
   position: absolute;
   top: -11px;

@@ -5,6 +5,7 @@ import { divisionCostNote } from '../../utils/duezyPricingText.js';
 import DuezyDivisionCard from './DuezyDivisionCard.jsx';
 import DuezyTrialLimitNote from './DuezyTrialLimitNote.jsx';
 import { seasonTerms } from '../../utils/duezyTerms.js';
+import { TEST_LIMITS } from '../../utils/duezyTestLeague.js';
 
 /**
  * New-division form in Settings. For a league that has no division rows yet (`multi` false) it also
@@ -13,8 +14,12 @@ import { seasonTerms } from '../../utils/duezyTerms.js';
 export default function DuezyDivisionAddPanel({
   league, draft, setDraft, multi, index, currentName, setCurrentName, access, busy, onSave, onCancel,
 }) {
-  const allowed = canAddDivisions(access, 1);
+  const test = Boolean(league.is_test);
+  const allowed = test || canAddDivisions(access, 1);
   const canSave = divisionReady(draft) && (multi || currentName.trim()) && allowed;
+  const costNote = test
+    ? `Test league · free. Up to ${TEST_LIMITS.divisions} divisions.`
+    : divisionCostNote(access);
   return (
     <section className="dz-card dz-stack">
       <div>
@@ -29,7 +34,7 @@ export default function DuezyDivisionAddPanel({
       ) : null}
       <DuezyDivisionCard draft={draft} sport={league.sport} index={index} word={seasonTerms(league).one} defaultGrace={Number(league.grace_days) || 0} onChange={(c) => setDraft((p) => ({ ...p, ...c }))}>
         {!allowed ? <DuezyTrialLimitNote access={access} /> : null}
-        {allowed && divisionCostNote(access) ? <p className="dz-bill-hint">{divisionCostNote(access)}</p> : null}
+        {allowed && costNote ? <p className="dz-bill-hint">{costNote}</p> : null}
         <div className="dz-row">
           <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={onCancel} disabled={busy}>Cancel</button>
           <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={onSave} disabled={!canSave || busy}>

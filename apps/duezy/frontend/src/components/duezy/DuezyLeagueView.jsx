@@ -18,6 +18,7 @@ import DuezyGettingStarted from './DuezyGettingStarted.jsx';
 import DuezySessionNudge from './DuezySessionNudge.jsx';
 import DuezyPastSessions from './DuezyPastSessions.jsx';
 import DuezyJoinRequests from './DuezyJoinRequests.jsx';
+import DuezyTestLeagueBanner from './DuezyTestLeagueBanner.jsx';
 import DuezySkeleton from './DuezySkeleton.jsx';
 import DuezyNoAccess from './DuezyNoAccess.jsx';
 import { roleLabel } from '../../utils/duezyPeople.js';
@@ -152,6 +153,14 @@ export default function DuezyLeagueView({ data, demo = false }) {
 
       {hero}
 
+      {league.is_test && !demo ? (
+        <DuezyTestLeagueBanner
+          league={league}
+          canReset={data.isOwner && data.canEdit && !league.archived}
+          onReset={() => { data.dismissLastChange(); data.reload(); }}
+        />
+      ) : null}
+
       {data.role && data.role !== 'owner' ? (
         <p className="dz-viewonly">
           <span aria-hidden="true">{data.canEdit ? '🤝' : '👀'}</span>
@@ -172,7 +181,7 @@ export default function DuezyLeagueView({ data, demo = false }) {
       {data.isOwner && data.canEdit ? (
         <DuezyGettingStarted league={league} teamCount={teams.length} settingsTo={settingsTo} />
       ) : null}
-      {data.canEdit && !demo && !league.archived ? <DuezyJoinRequests data={data} /> : null}
+      {data.canEdit && !demo && !league.archived && !league.is_test ? <DuezyJoinRequests data={data} /> : null}
       {data.isOwner && !demo && !league.archived ? <DuezySessionNudge league={league} units={units} /> : null}
       {league.archived ? (
         <p className="dz-viewonly">
@@ -222,7 +231,7 @@ export default function DuezyLeagueView({ data, demo = false }) {
         <DuezyPastSessions league={league} isOwner={data.isOwner && !league.archived} onRestored={data.reload} />
       ) : null}
 
-      {data.isOwner && section === 'main' ? (
+      {data.isOwner && section === 'main' && !league.is_test ? (
         <p className="dz-small dz-muted dz-center">
           Want help collecting? <Link to={`${settingsTo}?tab=people`} className="dz-link">Add a co-treasurer or viewer</Link>
         </p>

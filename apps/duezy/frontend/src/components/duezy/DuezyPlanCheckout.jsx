@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { openPortal, startCheckout } from '../../services/duezyBillingService.js';
 import { money } from '../../utils/duezyMath.js';
-import { atCap, capFor, monthlyPrice, priceFor } from '../../utils/duezyPricing.js';
+import { atCap, CAP_DIVISIONS, capFor, monthlyPrice, priceFor } from '../../utils/duezyPricing.js';
 
 /** "Your price" card on the plan page: billing period, what this account pays, and the Stripe button. */
 export default function DuezyPlanCheckout({ access, config, used, interval, onInterval }) {
@@ -25,6 +25,8 @@ export default function DuezyPlanCheckout({ access, config, used, interval, onIn
   const per = interval === 'year' ? 'yr' : 'mo';
   const price = priceFor(used, interval);
   const saved = monthlyPrice(used) * 2;
+  const nextPrice = priceFor(used + 1, interval);
+  const comp = access?.phase === 'comp';
 
   return (
     <section className="dz-card dz-plan-checkout">
@@ -45,9 +47,18 @@ export default function DuezyPlanCheckout({ access, config, used, interval, onIn
         For your <strong>{used}</strong> {used === 1 ? 'division' : 'divisions'}, across all your leagues.
         {interval === 'year' ? <span className="dz-plan-save"> 2 months free — save {money(saved)}</span> : null}
       </p>
+      {comp ? null : (
+        <p className="dz-small dz-plan-follows">
+          <strong>Your bill follows your divisions.</strong> Add or archive one and it adjusts automatically — no plan to change.
+        </p>
+      )}
       {atCap(used) ? (
         <p className="dz-small dz-plan-save">You’ve reached the {money(capFor(interval))}/{per} cap — add as many divisions as you like.</p>
-      ) : null}
+      ) : comp ? null : (
+        <p className="dz-small dz-muted dz-plan-next">
+          Adding 1 more division: {nextPrice > price ? `${money(nextPrice)}/${per}` : 'no price change'}.
+        </p>
+      )}
 
       {error ? <p className="dz-error">{error}</p> : null}
 
@@ -65,7 +76,14 @@ export default function DuezyPlanCheckout({ access, config, used, interval, onIn
       {!subscribed && access?.phase === 'trial' ? (
         <p className="dz-small dz-muted">Subscribing now won’t charge you until your free trial ends.</p>
       ) : null}
-      <p className="dz-small dz-muted">Your bill follows your divisions — add or archive divisions and it adjusts, never above {money(capFor(interval))}/{per}. Cancel anytime.</p>
+      <p className="dz-small dz-muted">
+        {atCap(used)
+          ? `You’re at the cap, so adding divisions never costs more. If you archive enough to drop below ${CAP_DIVISIONS}, the unused part becomes a credit that lowers your next bill.`
+          : interval === 'year'
+            ? `If adding a division raises your price, you’re charged right away, only for the months left. Archive one and the unused part becomes a credit that lowers your next bill.`
+            : `If adding a division raises your price, the extra for the days left goes on your next bill. Archive one and the unused part becomes a credit that lowers it.`}
+        {' '}Never above {money(capFor(interval))}/{per}. Cancel anytime.
+      </p>
     </section>
   );
 }

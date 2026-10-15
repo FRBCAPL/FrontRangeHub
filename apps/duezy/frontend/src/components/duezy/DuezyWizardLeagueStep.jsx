@@ -3,8 +3,19 @@ import DuezySportPicker from './DuezySportPicker.jsx';
 import DuezyStructurePicker from './DuezyStructurePicker.jsx';
 import DuezySeasonFields from './DuezySeasonFields.jsx';
 
-/** Wizard step 1: the league (the organization) — name, sport, one or several divisions, and how teams pay. */
-export default function DuezyWizardLeagueStep({ league, structure, onChange, onStructure }) {
+/**
+ * Wizard step 1: the league (the organization) — name, sport, one or several divisions, and how teams pay.
+ * nameOnly: a sample test league only needs a name; the database fills in the rest.
+ */
+export default function DuezyWizardLeagueStep({ league, structure, onChange, onStructure, nameOnly = false }) {
+  if (nameOnly) {
+    return (
+      <label className="dz-field">
+        <span>Test league name</span>
+        <input value={league.name} onChange={(e) => onChange({ name: e.target.value })} maxLength={80} autoFocus />
+      </label>
+    );
+  }
   return (
     <div className="dz-stack">
       <h2 className="dz-h2">What's your league called?</h2>

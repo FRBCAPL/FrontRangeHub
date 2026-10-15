@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createSeasonRow } from '../../services/duezySeasonService.js';
+import { createSampleTestLeague, hasTestLeague } from '../../services/duezyTestLeagueService.js';
+import { testSetupProblem } from '../../utils/duezyTestLeague.js';
+import DuezyTestLeagueOption from './DuezyTestLeagueOption.jsx';
 import { matchesToSave, money, parseTeamLines, weeklyDues } from '../../utils/duezyMath.js';
 import { divisionReady, divisionToSave, newDivisionDraft } from '../../utils/duezyDivisions.js';
 import { DUEZY_PATH, memberWord, sportToSave } from '../../data/duezyOptions.js';
@@ -47,9 +50,25 @@ export default function DuezySetupWizard() {
   const [drafts, setDrafts] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [params] = useSearchParams();
+  const [test, setTest] = useState({ on: false, seed: 'sample' });
+  const [testTaken, setTestTaken] = useState(false);
+
+  useEffect(() => {
+    hasTestLeague()
+      .then((taken) => {
+        setTestTaken(taken);
+        if (!taken && params.get('test') === '1') {
+          setTest((prev) => ({ ...prev, on: true }));
+          setLeague((prev) => (prev.name.trim() ? prev : { ...prev, name: 'My test league' }));
+        }
+      })
+      .catch(() => {});
+  }, [params]);
 
   const multi = structure === 'multi';
-  const steps = STEPS[structure];
+  const quickSample = test.on && test.seed === 'sample';
+  const steps = quickSample ? ['Your league'] : STEPS[structure];
   const stepName = steps[step];
   const set = (changes) => setLeague((prev) => ({ ...prev, ...changes }));
   const teams = parseTeamLines(teamsText);
@@ -57,14 +76,22 @@ export default function DuezySetupWizard() {
   const divisionTeamCount = drafts.reduce((s, d) => s + parseTeamLines(d.teamsText).length, 0);
 
   const adding = multi ? Math.max(drafts.length, 1) : 1;
-  const overLimit = !canAddDivisions(access, adding);
-  const costNote = divisionCostNote(access, adding);
+  const overLimit = !test.on && !canAddDivisions(access, adding);
+  const costNote = test.on ? null : divisionCostNote(access, adding);
+  const testProblem = test.on && !quickSample && step > 0
+    ? testSetupProblem(multi ? drafts.map((d) => parseTeamLines(d.teamsText).length) : [teams.length])
+    : null;
 
-  const canNext =
+  const canNext = !testProblem && (
     (stepName === 'Your league' && league.name.trim()) ||
     ((stepName === 'Your division' || stepName === 'Default dues') && Number(league.dues_amount) > 0 && Number(league.total_weeks) > 0) ||
     (stepName === 'Divisions' && drafts.length > 0 && drafts.every(divisionReady) && !overLimit) ||
-    (stepName === 'Teams' && (multi ? divisionTeamCount > 0 : teams.length > 0) && !overLimit);
+    (stepName === 'Teams' && (multi ? divisionTeamCount > 0 : teams.length > 0) && !overLimit));
+
+  const setTestOption = (next) => {
+    setTest(next);
+    if (next.on && !league.name.trim()) set({ name: 'My test league' });
+  };
 
   const next = () => {
     if (multi && steps[step + 1] === 'Divisions' && !drafts.length) {
@@ -83,7 +110,13 @@ export default function DuezySetupWizard() {
     setBusy(true);
     setError('');
     try {
+      if (quickSample) {
+        const created = await createSampleTestLeague(league.name.trim());
+        navigate(`${DUEZY_PATH}/league/${created.id}`, { replace: true });
+        return;
+      }
       const row = {
+        ...(test.on ? { is_test: true, test_seed: 'blank' } : {}),
         name: league.name.trim(),
         sport: sportToSave(league.sport),
         play_day: multi ? null : league.play_day,
@@ -105,7 +138,7 @@ export default function DuezySetupWizard() {
       navigate(`${DUEZY_PATH}/league/${created.id}`, { replace: true });
     } catch (e) {
       refreshBilling();
-      const reason = /duezy_divisions does not exist|relation .*duezy_divisions|multi_division/.test(e.message)
+      const reason = /relation "?(public\.)?duezy_divisions"? does not exist|'multi_division' column|column "?multi_division"? .*does not exist/.test(e.message)
         ? 'Divisions need a quick database update (duezy-divisions SQL) before new leagues can be created.'
         : e.message;
       setError(`${reason} Nothing was saved — fix that and press Create league again.`);
@@ -125,7 +158,10 @@ export default function DuezySetupWizard() {
       </ol>
 
       {stepName === 'Your league' ? (
-        <DuezyWizardLeagueStep league={league} structure={structure} onChange={set} onStructure={setStructure} />
+        <>
+          <DuezyTestLeagueOption value={test} taken={testTaken} onChange={setTestOption} />
+          <DuezyWizardLeagueStep league={league} structure={structure} onChange={set} onStructure={setStructure} nameOnly={quickSample} />
+        </>
       ) : null}
 
       {stepName === 'Your division' || stepName === 'Default dues' ? (
@@ -206,6 +242,7 @@ export default function DuezySetupWizard() {
       ) : null}
 
       {overLimit ? <DuezyTrialLimitNote access={access} /> : null}
+      {testProblem ? <p className="dz-error">{testProblem}</p> : null}
       {!overLimit && step === steps.length - 1 && costNote ? <p className="dz-bill-hint">{costNote}</p> : null}
       {error ? <p className="dz-error">{error}</p> : null}
 
@@ -217,7 +254,7 @@ export default function DuezySetupWizard() {
           <button type="button" className="dz-btn dz-btn--primary" onClick={next} disabled={!canNext}>Next</button>
         ) : (
           <button type="button" className="dz-btn dz-btn--primary" onClick={finish} disabled={!canNext || busy}>
-            {busy ? 'Setting up…' : 'Create league'}
+            {busy ? 'Setting up…' : test.on ? 'Create test league' : 'Create league'}
           </button>
         )}
       </div>

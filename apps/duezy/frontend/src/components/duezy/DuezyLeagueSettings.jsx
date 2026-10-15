@@ -12,6 +12,7 @@ import DuezyJoinLinkCard from './DuezyJoinLinkCard.jsx';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezySkeleton from './DuezySkeleton.jsx';
 import DuezyNoAccess from './DuezyNoAccess.jsx';
+import DuezyTestLeagueBanner from './DuezyTestLeagueBanner.jsx';
 
 const TABS = [
   { id: 'league', label: 'League' },
@@ -78,10 +79,14 @@ export default function DuezyLeagueSettings() {
   return (
     <div className="dz-stack dz-stack--lg">
       {header(TITLES[tab])}
+      {form.is_test ? <DuezyTestLeagueBanner league={form} /> : null}
       <DuezySectionTabs label="Settings sections" tabs={TABS} active={tab} onChange={(id) => setParams({ tab: id }, { replace: true })} />
       <p className="dz-scope"><span aria-hidden="true">{tab === 'league' ? '🌐' : tab === 'divisions' ? '📅' : '👥'}</span>{SCOPE[tab][owner ? 'owner' : 'other']}</p>
       {tab === 'league' ? (owner ? <DuezyLeagueForm form={form} setForm={setForm} owner /> : <DuezyLeagueSummary league={form} />) : null}
-      {tab === 'league' && !form.archived ? (
+      {tab === 'league' && !form.archived && form.is_test ? (
+        <p className="dz-small dz-muted dz-test-locked">Captain sign-up links are turned off in test leagues.</p>
+      ) : null}
+      {tab === 'league' && !form.archived && !form.is_test ? (
         <DuezyJoinLinkCard league={form} owner={owner} onSaved={(changes) => setForm((prev) => ({ ...prev, ...changes }))} />
       ) : null}
       {tab === 'divisions' ? (
@@ -91,7 +96,12 @@ export default function DuezyLeagueSettings() {
           onConverted={() => setForm((prev) => ({ ...prev, multi_division: true }))}
         />
       ) : null}
-      {tab === 'people' ? <DuezyPeoplePanel league={form} /> : null}
+      {tab === 'people' && form.is_test ? (
+        <p className="dz-small dz-muted dz-test-locked">
+          Test leagues are just for you — co-treasurers and viewers can be added to your real leagues.
+        </p>
+      ) : null}
+      {tab === 'people' && !form.is_test ? <DuezyPeoplePanel league={form} /> : null}
     </div>
   );
 }

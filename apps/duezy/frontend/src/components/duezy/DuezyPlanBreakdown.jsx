@@ -15,12 +15,14 @@ export default function DuezyPlanBreakdown() {
       const divisions = await listDivisionsForLeagues(leagues.filter((l) => l.multi_division).map((l) => l.id));
       const byLeague = {};
       divisions.forEach((d) => { (byLeague[d.league_id] ||= []).push(d); });
-      if (alive) setRows(leagues.map((l) => ({ id: l.id, name: l.name, count: divisionUnits(l, byLeague[l.id] || []).length })));
+      if (alive) {
+        setRows(leagues.map((l) => ({ id: l.id, name: l.name, test: Boolean(l.is_test), count: divisionUnits(l, byLeague[l.id] || []).length })));
+      }
     })().catch(() => alive && setRows([]));
     return () => { alive = false; };
   }, []);
 
-  const total = (rows || []).reduce((s, r) => s + r.count, 0);
+  const total = (rows || []).reduce((s, r) => s + (r.test ? 0 : r.count), 0);
 
   return (
     <section className="dz-card dz-stack">
@@ -43,7 +45,9 @@ export default function DuezyPlanBreakdown() {
           {rows.map((r) => (
             <li key={r.id}>
               <span>{r.name}</span>
-              <span className="dz-muted">{r.count} {r.count === 1 ? 'division' : 'divisions'}</span>
+              <span className="dz-muted">
+                {r.test ? 'Test league · free' : `${r.count} ${r.count === 1 ? 'division' : 'divisions'}`}
+              </span>
             </li>
           ))}
           <li>

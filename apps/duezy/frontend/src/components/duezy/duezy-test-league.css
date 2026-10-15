@@ -1,0 +1,68 @@
+/* Test (practice) leagues: wizard option, banner, badge */
+
+.dz-test-option {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px dashed rgba(234, 179, 8, 0.35);
+  background: rgba(234, 179, 8, 0.04);
+}
+.dz-test-option.is-on { border-style: solid; border-color: rgba(234, 179, 8, 0.55); background: rgba(234, 179, 8, 0.08); }
+.dz-test-check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.dz-app .dz-test-check input,
+.dz-app .dz-test-seed input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  padding: 0;
+  margin: 2px 0 0;
+  border-radius: 0;
+  box-shadow: none;
+  accent-color: #eab308;
+  flex: none;
+}
+.dz-test-check input:disabled + span { opacity: 0.7; }
+.dz-test-check span,
+.dz-test-seed span { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.dz-test-seed { display: grid; gap: 8px; }
+.dz-test-seed label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--dz-line-strong);
+  background: var(--dz-surface);
+  cursor: pointer;
+}
+.dz-test-seed label.is-active { border-color: rgba(234, 179, 8, 0.6); }
+.dz-test-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(234, 179, 8, 0.5);
+  background: rgba(234, 179, 8, 0.12);
+  color: #fde68a;
+}
+.dz-test-banner > div { flex: 1 1 240px; display: grid; gap: 2px; }
+.dz-test-banner strong { letter-spacing: 0.06em; }
+.dz-test-banner small { color: #fef3c7; opacity: 0.85; }
+
+.dz-test-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(234, 179, 8, 0.18);
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  color: #fde68a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
+.dz-test-locked { padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); }

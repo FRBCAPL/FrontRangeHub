@@ -78,8 +78,8 @@
 .dz-land-handles .dz-sport-tip:nth-of-type(n+5):focus::after { transform: translate(-50%, 0); }
 
 /* General landing tooltips (DuezyTip): wrap to a readable width, open above or below */
-.dz-tip { position: relative; outline: none; cursor: help; }
-.dz-tip::after {
+.dz-hover-tip { position: relative; outline: none; cursor: help; }
+.dz-hover-tip::after {
   content: attr(data-tip);
   position: absolute;
   bottom: calc(100% + 8px);
@@ -105,10 +105,10 @@
   transition: opacity 0.12s ease, transform 0.12s ease;
   pointer-events: none;
 }
-.dz-tip--below::after { bottom: auto; top: calc(100% + 8px); transform: translate(-50%, -4px); }
-.dz-tip:hover::after,
-.dz-tip:focus::after { opacity: 1; transform: translate(-50%, 0); }
-.dz-tip:focus-visible { outline: 2px solid rgba(129, 140, 248, 0.6); outline-offset: 2px; border-radius: 6px; }
+.dz-hover-tip--below::after { bottom: auto; top: calc(100% + 8px); transform: translate(-50%, -4px); }
+.dz-hover-tip:hover::after,
+.dz-hover-tip:focus::after { opacity: 1; transform: translate(-50%, 0); }
+.dz-hover-tip:focus-visible { outline: 2px solid rgba(129, 140, 248, 0.6); outline-offset: 2px; border-radius: 6px; }
 .dz-tip-term { border-bottom: 1px dotted currentColor; }
 
 /* The two sample weeks beside "Handles the messy stuff" — compact so they match its height */

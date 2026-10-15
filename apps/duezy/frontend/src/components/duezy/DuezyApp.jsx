@@ -51,6 +51,7 @@ import './duezy-payers.css';
 import './duezy-touch.css';
 import './duezy-landing.css';
 import './duezy-demo.css';
+import './duezy-test-league.css';
 
 const LEGAL_KINDS = Object.keys(LEGAL_PAGES);
 

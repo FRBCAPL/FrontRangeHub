@@ -32,7 +32,7 @@ export default function DuezyLeagueList() {
       setJoined(added);
       setSharedRoles(roles);
       setArchived(old);
-      setLeagues(list);
+      setLeagues([...list].sort((a, b) => Number(Boolean(a.is_test)) - Number(Boolean(b.is_test))));
 
       const ids = list.map((l) => l.id);
       const multiIds = list.filter((l) => l.multi_division).map((l) => l.id);
@@ -74,6 +74,11 @@ export default function DuezyLeagueList() {
         Same division starting over? Click <strong>Start next season</strong> on the league page or in the division’s settings.<br />
         A different league altogether? <strong>+ New league</strong>.
       </p>
+      {leagues.some((l) => l.is_test) ? null : (
+        <p className="dz-small dz-center">
+          Want to practice first? <Link to={`${DUEZY_PATH}/new?test=1`} className="dz-link">Create a free test league</Link>
+        </p>
+      )}
       {joined ? (
         <p className="dz-notice" role="status">You were added to {joined === 1 ? 'a league' : `${joined} leagues`} — {joined === 1 ? 'it’s' : 'they’re'} below.</p>
       ) : null}

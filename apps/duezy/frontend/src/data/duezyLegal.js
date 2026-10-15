@@ -71,6 +71,7 @@ export const LEGAL_PAGES = {
         items: [
           'New accounts get a free trial with no card required. After that, a paid plan is needed to keep making changes.',
           'Plans are priced by the number of divisions and billed monthly or yearly through Stripe.',
+          'Your price adjusts automatically when you add or archive divisions, prorated for the time left in your billing period. When adding divisions raises your price, yearly plans are charged the difference right away and monthly plans see it on the next bill; at the price cap, adding divisions costs nothing extra. When archiving divisions lowers your price, the unused part becomes a credit that lowers your next bill — credits are not refunded as cash.',
           'You can cancel anytime from Billing. After a plan ends your leagues stay viewable (read-only) for 90 days, then they are deleted. After a free trial ends without a plan, that window is 30 days. Choosing a plan before then keeps everything.',
         ],
       },

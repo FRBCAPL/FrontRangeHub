@@ -2,6 +2,7 @@
 import { trialUsage } from './duezyPricingText.js';
 
 export const TRIAL_LIMIT_MESSAGE = 'Your free trial covers up to 2 divisions. Choose a plan in Billing to add more.';
+export const TEST_LEAGUE_TAKEN = 'You already have a test league. Use Reset on it to start over, or archive it first.';
 export const LOCKED_MESSAGE = 'Your leagues are read-only until you choose a plan. Pick a plan in Billing to keep recording.';
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -32,6 +33,10 @@ export function friendlyError(message) {
   }
   if (/matches_per_night/.test(text) && missingColumn) {
     return 'Double play needs a quick database update (duezy-double-play SQL). Everything else still works.';
+  }
+  if (/duezy_leagues_one_test_idx/.test(text)) return TEST_LEAGUE_TAKEN;
+  if (/(is_test|test_seed|duezy_test_reset)/.test(text) && /does not exist|schema cache|could not find/i.test(text)) {
+    return 'Test leagues need a quick database update (duezy-test-league SQL). Everything else still works.';
   }
   return text;
 }

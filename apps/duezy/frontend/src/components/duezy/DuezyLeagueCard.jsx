@@ -62,6 +62,7 @@ export default function DuezyLeagueCard({ league, divisions, snapshot, sharedRol
           <span className="dz-eyebrow">League</span>
           <strong>
             {league.name}
+            {league.is_test ? <> <span className="dz-test-badge">TEST · FREE</span></> : null}
             {sharedRole ? <span className="dz-shared-badge">Shared · {roleLabel(sharedRole)}</span> : null}
           </strong>
           <span className="dz-muted dz-small">

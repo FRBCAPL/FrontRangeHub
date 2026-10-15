@@ -26,9 +26,15 @@ export function divisionCostNote(access, adding = 1) {
     const before = priceFor(Math.max(1, used), interval);
     const next = priceFor(Math.max(1, used + adding), interval);
     const what = adding === 1 ? 'This adds 1 division' : `This adds ${adding} divisions`;
-    if (next > before) return `${what} — your plan goes from ${money(before)} to ${money(next)}/${per(interval)}.`;
+    if (next > before) {
+      const when = interval === 'year'
+        ? 'The difference for the rest of your year is charged now.'
+        : 'The difference for the rest of this month goes on your next bill.';
+      const monthly = interval === 'year' ? ` (${money(before / 10)} to ${money(next / 10)} a month)` : '';
+      return `${what} — your plan goes from ${money(before)} to ${money(next)}/${per(interval)}${monthly}. ${when}`;
+    }
     return before >= capFor(interval)
-      ? `${what} — you’re at the ${money(before)}/${per(interval)} cap, so no price change.`
+      ? `${what} — you’re at the ${money(before)}/${per(interval)}${interval === 'year' ? ` (${money(before / 10)} a month)` : ''} cap, so no price change.`
       : `${what} — included in your current plan, no price change.`;
   }
   return null;
