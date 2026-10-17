@@ -4,6 +4,7 @@ import { listLiveCashClimbEventsResult } from './cashClimbCloud.js';
 import { cashClimbListErrorMessage } from './cashClimbPublic.js';
 import { cashClimbSubmitHash } from './cashClimbSubmit.js';
 import CashClimbSubmitEventList from './CashClimbSubmitEventList.jsx';
+import { SHOWDOWN_PUBLIC_HASH } from '../showdown/public/showdownPublicRoutes.js';
 import '../TournamentBracketApp.css';
 import './CashClimb.css';
 import './CashClimbSubmitPage.css';
@@ -52,6 +53,9 @@ export default function CashClimbSubmitPicker() {
             onPick={(eventId) => navigate(cashClimbSubmitHash(eventId))}
           />
         </div>
+        <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_PUBLIC_HASH)}>
+          Cash Climb Showdowns
+        </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
           Back to home
         </button>

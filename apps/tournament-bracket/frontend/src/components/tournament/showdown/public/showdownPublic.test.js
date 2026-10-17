@@ -1,0 +1,163 @@
+import { describe, it, before } from 'node:test';
+import assert from 'node:assert/strict';
+import * as E from '../showdownEngine.js';
+import { startedEvent, toPlayoffs, shootoutEvent, toBracket, runToCompletion, playOpen, randomRace } from '../showdownTestKit.js';
+import { render } from '../operator/showdownRenderKit.js';
+import { publicShowdown, publicCopyProblem } from '../cloud/showdownPublicState.js';
+import { buildShowdownTvBoard } from './showdownTvBoard.js';
+import { reportableMatches } from './showdownPhoneSubmit.js';
+import { showdownPublicEventId, showdownPublicHash, showdownTvHref } from './showdownPublicRoutes.js';
+
+const OPERATOR_TEXT = ['Lock qualifying', 'Reopen', 'Undo', 'Withdraw', 'Confirm bracket', 'Draw bracket', 'Complete event', 'won the rack', 'won the lag', 'Approve', 'Corrections', 'Audit log'];
+
+function publicOnly(html) {
+  OPERATOR_TEXT.forEach((t) => assert.ok(!html.includes(t), `no operator control: ${t}`));
+  assert.ok(!/@/.test(html), 'no emails');
+  assert.ok(!/\\u[0-9a-f]{4}/i.test(html), 'no escaped unicode');
+  assert.ok(!/undefined|NaN|\[object Object\]/.test(html), 'no broken values');
+  return html;
+}
+
+const phases = {};
+before(() => {
+  const q = startedEvent(16, { seed: 3 });
+  phases.qualifying = E.startOnTable(q.s, E.suggestNextMatch(q.s.matches).id, 1, q.op());
+  phases.qualifyingDone = playOpen(q.s, q.op, 'qualifying', randomRace(3));
+  phases.shootout = shootoutEvent(8).s;
+  phases.bracket = toBracket(16, { seed: 5 }).s;
+  const p = toPlayoffs(14, { seed: 6 });
+  phases.playoffs = E.startOnTable(p.s, 'qf1', 1, p.op());
+  const c = startedEvent(16, { seed: 7 });
+  phases.completed = runToCompletion(c.s, c.op);
+});
+
+describe('public copy', () => {
+  it('drops the audit log and operator emails at every phase but keeps what the pages need', () => {
+    for (const [name, state] of Object.entries(phases)) {
+      const pub = publicShowdown(state);
+      assert.equal(publicCopyProblem(pub), '', name);
+      assert.deepEqual(pub.audit, []);
+      assert.deepEqual(E.computeEarnings(pub), E.computeEarnings(state), `${name}: earnings identical`);
+      assert.deepEqual(E.standingsFor(pub).rows, E.standingsFor(state).rows);
+    }
+  });
+
+  it('routes: the public page lives under the existing submit route and TV under the existing TV route', () => {
+    assert.equal(showdownPublicHash('showdown-1'), '/tournament-bracket/submit/showdown/showdown-1');
+    assert.equal(showdownPublicEventId('/tournament-bracket/submit/showdown/showdown-1'), 'showdown-1');
+    assert.equal(showdownPublicEventId('/tournament-bracket/submit/showdown'), '');
+    assert.equal(showdownPublicEventId('/tournament-bracket/submit/abc'), null, 'Cash Climb submit links are untouched');
+    assert.match(showdownTvHref('showdown-1', 'portrait'), /#\/tournament-bracket\/tv\?showdown=showdown-1&layout=portrait$/);
+  });
+});
+
+describe('public pages', () => {
+  it('qualifying: tables with Report score, up next, results, standings with cutoff and circle', async () => {
+    const pub = publicShowdown(phases.qualifying);
+    const now = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: true, onReport() {} }));
+    for (const t of ['On the tables', 'Table 1', 'Report score', 'Up next', 'Latest results']) assert.ok(now.includes(t), t);
+    const pending = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [reportableMatches(pub)[0].id], mine: [{ id: 's1', label: 'Qualifying 1', scoreText: 'A 3–1 B', status: 'rejected', reason: 'Wrong' }], canReport: true, onReport() {} }));
+    assert.ok(pending.includes('waiting for the director') && !pending.includes('>Report score<'));
+    assert.ok(pending.includes('Not accepted') && pending.includes('Wrong'));
+    const viewOnly = await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: false, onReport() {} });
+    assert.ok(!viewOnly.includes('Report score'));
+    const standings = publicOnly(await render('../public/ShowdownPublicStandings.jsx', { event: publicShowdown(phases.qualifyingDone) }));
+    for (const t of ['Qualifying standings', 'sd-cutoff', 'Qualifying circle', 'Player 16']) assert.ok(standings.includes(t), t);
+  });
+
+  it('circle scores read from the listed player\u2019s side: a win is always the bigger number first', async () => {
+    const html = await render('../public/ShowdownPublicStandings.jsx', { event: publicShowdown(phases.qualifyingDone) });
+    const results = [...html.matchAll(/(won|lost) (\d)–(\d)/g)];
+    assert.ok(results.length >= 16);
+    results.forEach(([, wl, a, b]) => assert.equal(wl === 'won', Number(a) > Number(b), `${wl} ${a}–${b}`));
+  });
+
+  it('shootout: holder, challenger, breaker, losses; no rack buttons', async () => {
+    const html = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: publicShowdown(phases.shootout), pendingIds: [], mine: [], canReport: true, onReport() {} }));
+    assert.ok(html.includes('Qualification shootout') && html.includes('Lag for the opening break'));
+    assert.ok(!html.includes('Report score'));
+  });
+
+  it('bracket draw: the unconfirmed preview is not shown to the public', async () => {
+    const drawn = E.drawPlayoff(phases.bracket, { now: '2026-10-18T18:00:00.000Z', random: () => 0.3 });
+    const html = publicOnly(await render('../public/ShowdownPublicBracket.jsx', { event: publicShowdown(drawn) }));
+    assert.ok(html.includes('once qualifying is finished and the director confirms'));
+    assert.ok(!html.includes('sd-mini'));
+  });
+
+  it('playoffs: bracket with byes and payouts, money, results so far', async () => {
+    const pub = publicShowdown(phases.playoffs);
+    const bracket = publicOnly(await render('../public/ShowdownPublicBracket.jsx', { event: pub }));
+    for (const t of ['6-player playoff bracket', 'Quarterfinal byes', 'Straight to Semifinal', 'per win', 'Quarterfinal', 'Table 1']) assert.ok(bracket.includes(t), t);
+    assert.ok(!bracket.includes('when confirmed'), 'public bye cards show the earned amount');
+    const { ShowdownPublicMoney } = await (await import('../operator/showdownRenderKit.js')).loadComponent('../public/ShowdownPublicMoney.jsx');
+    const React = await import('react');
+    const server = await import('react-dom/server');
+    const money = publicOnly(server.renderToStaticMarkup(React.createElement(ShowdownPublicMoney, { event: pub })));
+    for (const t of ['Prize pool', 'Payout schedule', 'Earnings', '$280', 'Top-up']) assert.ok(money.includes(t), t);
+  });
+
+  it('completed: champion, final standings and earnings', async () => {
+    const mod = await import('../operator/showdownRenderKit.js');
+    const { ShowdownPublicResults } = await mod.loadComponent('../public/ShowdownPublicMoney.jsx');
+    const React = await import('react');
+    const server = await import('react-dom/server');
+    const html = publicOnly(server.renderToStaticMarkup(React.createElement(ShowdownPublicResults, { event: publicShowdown(phases.completed) })));
+    for (const t of ['Champion', 'Final standings', 'Runner-up', 'is-champion']) assert.ok(html.includes(t), t);
+  });
+});
+
+describe('TV board', () => {
+  it('qualifying: tables, standings with cutoff, next matches', () => {
+    const b = buildShowdownTvBoard(publicShowdown(phases.qualifying));
+    assert.equal(b.mode, 'qualifying');
+    assert.equal(b.tables.length, 1);
+    assert.ok(b.upNext.length > 0);
+    assert.equal(b.standings.rows.length, 16);
+    assert.equal(b.pool, '$320');
+  });
+
+  it('shootout: players, holder or lag, losses and open spots', () => {
+    const b = buildShowdownTvBoard(publicShowdown(phases.shootout));
+    assert.equal(b.mode, 'shootout');
+    assert.ok(b.shootout.order.length >= 2);
+    assert.ok(b.shootout.spots >= 1);
+  });
+
+  it('playoffs: bracket rounds with payouts, active matches, championship status', () => {
+    const b = buildShowdownTvBoard(publicShowdown(phases.playoffs));
+    assert.equal(b.mode, 'playoffs');
+    assert.deepEqual(b.rounds.map((r) => r.key), ['quarterfinal', 'semifinal', 'final']);
+    assert.ok(b.rounds.every((r) => r.payout > 0));
+    assert.equal(b.byes.length, 2);
+    assert.equal(b.tables[0].id, 'qf1');
+    assert.equal(b.championshipStatus.status, 'pending');
+  });
+
+  it('completed: champion, final standings, earnings and pool', () => {
+    const b = buildShowdownTvBoard(publicShowdown(phases.completed));
+    assert.equal(b.mode, 'completed');
+    assert.ok(b.champion.name);
+    assert.equal(b.final.length, 16);
+    assert.equal(b.pool, '$320');
+    assert.equal(b.paid, '$320');
+  });
+
+  it('setup events and missing events show nothing', () => {
+    assert.equal(buildShowdownTvBoard(null), null);
+    assert.equal(buildShowdownTvBoard(E.createShowdown({}, { now: '2026-10-18T00:00:00.000Z' })), null);
+  });
+
+  it('TV sections render without operator controls', async () => {
+    const mod = await import('../operator/showdownRenderKit.js');
+    const S = await mod.loadComponent('../public/ShowdownTvSections.jsx');
+    const React = await import('react');
+    const server = await import('react-dom/server');
+    const b = buildShowdownTvBoard(publicShowdown(phases.playoffs));
+    const html = publicOnly(server.renderToStaticMarkup(React.createElement(React.Fragment, null,
+      React.createElement(S.TvBracket, { rounds: b.rounds, byes: b.byes, championshipStatus: b.championshipStatus }),
+      React.createElement(S.TvTables, { tables: b.tables }))));
+    assert.ok(html.includes('Playoffs') && html.includes('a win') && html.includes('Table 1'));
+    assert.equal((html.match(/Bye to Semifinal/g) || []).length, 2);
+  });
+});

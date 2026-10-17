@@ -1,0 +1,112 @@
+/* Cloud status bar, phone scores waiting, and the conflict dialog. */
+
+.sd-cloud-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.55);
+  color: #cbd5e1;
+}
+
+.sd-cloud-bar a.sd-btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.sd-cloud-bar small {
+  color: #94a3b8;
+}
+
+.sd-cloud-bar.is-saved strong {
+  color: #86efac;
+}
+
+.sd-cloud-bar.is-local-only strong,
+.sd-cloud-bar.is-saving strong {
+  color: #fde68a;
+}
+
+.sd-cloud-bar.is-offline,
+.sd-cloud-bar.is-error,
+.sd-cloud-bar.is-conflict,
+.sd-cloud-bar.is-missing {
+  border-color: rgba(248, 113, 113, 0.6);
+  background: rgba(127, 29, 29, 0.45);
+}
+
+.sd-cloud-bar.is-offline strong,
+.sd-cloud-bar.is-error strong,
+.sd-cloud-bar.is-conflict strong,
+.sd-cloud-bar.is-missing strong {
+  color: #fecaca;
+}
+
+.sd-pending {
+  border-color: rgba(250, 204, 21, 0.6);
+}
+
+.sd-pending-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.sd-pending-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.7);
+  color: #e2e8f0;
+}
+
+.sd-pending-row small {
+  color: #94a3b8;
+}
+
+.sd-pending-row.has-problem {
+  border: 1px solid rgba(248, 113, 113, 0.5);
+}
+
+.sd-input {
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.8);
+  color: #fff;
+  font-size: 1rem;
+}
+
+.sd-conflict-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.sd-conflict-copy {
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.sd-conflict-copy h4 {
+  margin: 0 0 6px;
+}
+
+.sd-conflict-copy p {
+  margin: 4px 0;
+}

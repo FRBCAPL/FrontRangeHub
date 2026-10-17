@@ -1,0 +1,302 @@
+/* Showdown TV board: 16:9 and 9:16, readable from across the room, no scrolling. */
+
+.sd-tv {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: calc(2vh + 34px) 2vw 2vh;
+  box-sizing: border-box;
+  background: radial-gradient(circle at top, #1e1b4b 0%, #020617 70%);
+  color: #e2e8f0;
+  font-size: clamp(14px, 1.6vh, 26px);
+}
+
+.sd-tv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2vw;
+  margin-bottom: 1.5vh;
+}
+
+.sd-tv-brand {
+  margin: 0;
+  color: #a5b4fc;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.85em;
+}
+
+.sd-tv-header h1 {
+  margin: 0.2em 0;
+  font-size: 2.4em;
+  color: #fff;
+}
+
+.sd-tv-chips {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+.sd-tv-money {
+  display: flex;
+  gap: 1.5vw;
+}
+
+.sd-tv-money span {
+  display: grid;
+  padding: 0.5em 1em;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  color: #94a3b8;
+}
+
+.sd-tv-money strong {
+  color: #86efac;
+  font-size: 1.6em;
+}
+
+.sd-tv-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 1.5vw;
+}
+
+.sd-tv-portrait .sd-tv-body {
+  flex-direction: column;
+}
+
+.sd-tv-col {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5vh;
+  overflow: hidden;
+}
+
+.sd-tv-wide {
+  flex: 2;
+}
+
+.sd-tv-card {
+  padding: 1em 1.2em;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sd-tv-card h2 {
+  margin: 0 0 0.6em;
+  font-size: 1.3em;
+  color: #fff;
+}
+
+.sd-tv-card h2 small,
+.sd-tv-card h3 small {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.7em;
+  margin-left: 0.5em;
+}
+
+.sd-tv-tables,
+.sd-tv-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5em;
+}
+
+.sd-tv-tables li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5em;
+  font-size: 1.15em;
+}
+
+.sd-tv-tables em,
+.sd-tv-list em,
+.sd-tv-vs em {
+  color: #94a3b8;
+  font-style: normal;
+}
+
+.sd-tv-tables small,
+.sd-tv-list small {
+  color: #94a3b8;
+}
+
+.sd-tv-table {
+  padding: 0.1em 0.6em;
+  border-radius: 8px;
+  background: rgba(250, 204, 21, 0.18);
+  color: #fde68a;
+  font-weight: 800;
+}
+
+.sd-tv-list li.is-out {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.sd-tv-list li.is-in {
+  color: #86efac;
+}
+
+.sd-tv-standings table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sd-tv-standings td {
+  padding: 0.25em 0.4em;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.sd-tv-standings tr.is-qualified td {
+  color: #86efac;
+}
+
+.sd-tv-standings tr.is-tied td {
+  color: #fde68a;
+}
+
+.sd-tv-standings tr.is-withdrawn td {
+  opacity: 0.5;
+}
+
+.sd-tv-standings tr.is-cutoff td {
+  border-bottom: 3px solid #facc15;
+}
+
+.sd-tv-vs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2em;
+  align-items: center;
+  font-size: 1.3em;
+}
+
+.sd-tv-vs span {
+  display: grid;
+}
+
+.sd-tv-vs small {
+  color: #94a3b8;
+  font-size: 0.6em;
+}
+
+.sd-tv-rounds {
+  display: flex;
+  gap: 1vw;
+}
+
+.sd-tv-portrait .sd-tv-rounds {
+  flex-wrap: wrap;
+}
+
+.sd-tv-rounds > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 0.6em;
+}
+
+.sd-tv-rounds h3 {
+  margin: 0;
+  color: #c7d2fe;
+  font-size: 1em;
+}
+
+.sd-tv-bm {
+  display: grid;
+  padding: 0.4em 0.6em;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(30, 41, 59, 0.6);
+}
+
+.sd-tv-bm.is-on-table {
+  border-color: #facc15;
+}
+
+.sd-tv-bm .is-win {
+  color: #86efac;
+  font-weight: 800;
+}
+
+.sd-tv-bm small {
+  color: #fbbf24;
+  font-size: 0.75em;
+}
+
+.sd-tv-champion {
+  display: grid;
+  justify-items: center;
+  gap: 0.3em;
+  border-color: rgba(250, 204, 21, 0.6);
+}
+
+.sd-tv-champion small {
+  color: #fde68a;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.sd-tv-champion strong {
+  font-size: 3em;
+  color: #fff;
+}
+
+.sd-tv-champion span,
+.sd-tv-big {
+  color: #86efac;
+  font-size: 2em;
+  font-weight: 800;
+  margin: 0;
+}
+
+.sd-tv-muted {
+  color: #94a3b8;
+}
+
+.sd-tv-good {
+  color: #86efac;
+  font-weight: 700;
+}
+
+.sd-tv-warn {
+  color: #fde68a;
+  font-weight: 700;
+}
+
+.sd-tv-close {
+  margin: 8px 0 0;
+  font-size: 0.85em;
+  line-height: 1.35;
+  color: #e2e8f0;
+}
+
+.sd-tv-close strong {
+  color: #fde68a;
+}
+
+.sd-tv-empty {
+  margin: auto;
+  color: #94a3b8;
+  font-size: 1.4em;
+}

@@ -5,6 +5,10 @@ import CreateTournamentForm from './CreateTournamentForm';
 import ElimPlayScreen from './ElimPlayScreen';
 import CashClimbApp from './cash-climb/CashClimbApp';
 import BreakAndRunApp from './break-and-run/BreakAndRunApp.jsx';
+import ShowdownApp from './showdown/operator/ShowdownApp.jsx';
+import { loadShowdown } from './showdown/operator/showdownStore.js';
+import { showdownCloud } from './showdown/cloud/showdownCloud.js';
+import { listShowdownsForHub, openShowdownFromHub, removeShowdownFromHub } from './showdown/cloud/showdownHubActions.js';
 import { loadCashClimb, saveCashClimb, clearCashClimb } from './cash-climb/cashClimbStore';
 import { loadBreakAndRun, saveBreakAndRun, clearBreakAndRun } from './break-and-run/breakAndRunStore.js';
 import { sanitizeBreakAndRun, formatMoney as formatBreakAndRunMoney } from './break-and-run/breakAndRunEngine.js';
@@ -48,6 +52,7 @@ import {
   filterCompletedEvents,
   isCashClimbHubEvent,
   isBreakAndRunHubEvent,
+  isShowdownHubEvent,
 } from './tournamentHubEvents.js';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
@@ -66,6 +71,7 @@ export default function TournamentBracketApp() {
   const [savedElim, setSavedElim] = useState([]);
   const [savedCashClimb, setSavedCashClimb] = useState([]);
   const [savedBreakAndRun, setSavedBreakAndRun] = useState([]);
+  const [savedShowdown, setSavedShowdown] = useState([]);
 
   const persist = useCallback((t) => {
     const next = t ? withTournamentTimestamp(withElimStatus(t)) : null;
@@ -86,6 +92,7 @@ export default function TournamentBracketApp() {
     setSavedElim([...elimLive, ...elim]);
     setSavedCashClimb([...cashLive, ...cash]);
     setSavedBreakAndRun([...bnrLive, ...bnr]);
+    setSavedShowdown(await listShowdownsForHub(showdownCloud));
   }, []);
 
   useEffect(() => {
@@ -263,13 +270,23 @@ export default function TournamentBracketApp() {
     refreshSaved();
   };
 
+  const handleOpenSavedShowdown = async (item) => {
+    if (await openShowdownFromHub(showdownCloud, item)) setScreen('showdown');
+  };
+
+  const handleRemoveSavedShowdown = async (item) => {
+    if (await removeShowdownFromHub(showdownCloud, item)) refreshSaved();
+  };
+
   const handleOpenHubEvent = (item) => {
-    if (isBreakAndRunHubEvent(item)) handleOpenSavedBreakAndRun(item);
+    if (isShowdownHubEvent(item)) handleOpenSavedShowdown(item);
+    else if (isBreakAndRunHubEvent(item)) handleOpenSavedBreakAndRun(item);
     else if (isCashClimbHubEvent(item)) handleOpenSavedCashClimb(item);
     else handleOpenSavedElim(item);
   };
 
   const handleRemoveHubEvent = (item) => {
+    if (isShowdownHubEvent(item)) return handleRemoveSavedShowdown(item);
     if (isBreakAndRunHubEvent(item)) return handleRemoveSavedBreakAndRun(item);
     if (isCashClimbHubEvent(item)) return handleRemoveSavedCashClimb(item);
     return handleRemoveSavedElim(item);
@@ -304,9 +321,11 @@ export default function TournamentBracketApp() {
     cashClimbSaved: savedCashClimb,
     elimSaved: savedElim,
     breakAndRunSaved: savedBreakAndRun,
+    showdownSaved: savedShowdown,
     localCashClimb: cashClimb,
     localElim: elim,
     localBreakAndRun: breakAndRun,
+    localShowdown: loadShowdown(),
   });
   const currentEvents = filterCurrentEvents(hubEvents);
   const completedEvents = filterCompletedEvents(hubEvents);
@@ -337,6 +356,14 @@ export default function TournamentBracketApp() {
             refreshSaved();
           }}
         />
+      </div>
+    );
+  }
+
+  if (screen === 'showdown') {
+    return (
+      <div className="tournament-bracket-app">
+        <ShowdownApp onLeave={() => { setScreen(leaveTo); refreshSaved(); }} />
       </div>
     );
   }
@@ -376,6 +403,8 @@ export default function TournamentBracketApp() {
       <div className="tournament-bracket-app">
         <TournamentFormatPicker
           onCashClimb={startNewCashClimb}
+          onShowdown={() => { setLeaveTo('new'); setScreen('showdown'); }}
+          showdownResume={loadShowdown()?.name || ''}
           onBreakAndRun={startNewBreakAndRun}
           onSingleElim={() => {
             setElimType('single');

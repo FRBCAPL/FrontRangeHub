@@ -1,0 +1,103 @@
+/* Public Showdown pages (phones). Builds on the Cash Climb submit page and Showdown panel styles. */
+
+.sd-pub {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.sd-pub .sd-tabs {
+  margin: 0 0 12px;
+}
+
+.sd-pub-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.sd-pub-match {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.7);
+  color: #e2e8f0;
+}
+
+.sd-pub-match em {
+  color: #94a3b8;
+  font-style: normal;
+  margin: 0 4px;
+}
+
+.sd-pub-match small {
+  color: #94a3b8;
+}
+
+.sd-pub-label {
+  color: #a5b4fc;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.sd-pub-match .sd-btn {
+  justify-self: start;
+}
+
+.sd-pub-event {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: 48px;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.sd-pub-circle {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.sd-pub-circle li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.6);
+  color: #e2e8f0;
+}
+
+.sd-pub-circle li.is-withdrawn {
+  opacity: 0.6;
+}
+
+.sd-pub-circle small {
+  color: #94a3b8;
+}
+
+.sd-pub-champion {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  background: rgba(250, 204, 21, 0.1);
+  color: #fde68a;
+}
+
+.sd-pub-champion strong {
+  font-size: 1.6rem;
+  color: #fff;
+}
