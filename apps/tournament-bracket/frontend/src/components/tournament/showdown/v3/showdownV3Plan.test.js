@@ -44,10 +44,10 @@ describe('V3 locked plan', () => {
     assert.ok(v3PlanProblems(tampered).length > 0);
   });
 
-  it('the engine can run started V3 events, but operators still cannot start one', () => {
+  it('the engine can run started V3 events and operators can start one', () => {
     assert.equal(V3_ENGINE_READY, true);
-    assert.equal(V3_STARTS_ENABLED, false);
-    assert.equal(formatFor(3).startable, false);
+    assert.equal(V3_STARTS_ENABLED, true);
+    assert.equal(formatFor(3).startable, true);
   });
 });
 

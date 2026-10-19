@@ -63,15 +63,15 @@ describe('format selection', () => {
   });
 });
 
-describe('V3 cannot start yet', () => {
-  it('a full, valid V3 setup still cannot start, through the engine or the operator action', () => {
+describe('V3 starts are open to operators', () => {
+  it('a full, valid V3 setup starts through the operator action and locks its payout plan', () => {
     const o = makeOperator(2);
     const s = withPlayers(create(3), 8, o);
-    assert.match(E.setupProblems(s)[0], /V3 events cannot be started yet/);
-    assert.throws(() => E.startShowdown(s, o.op()), /V3 events cannot be started yet/);
+    assert.deepEqual(E.setupProblems(s), []);
     const out = o.tryTap(s, 'start');
-    assert.match(out.error, /V3 events cannot be started yet/);
-    assert.equal(out.state.status, 'setup');
+    assert.equal(out.error, '');
+    assert.equal(out.state.status, 'qualifying');
+    assert.equal(out.state.payoutPlan.payoutVersion, 3);
   });
 
   it('V3 setup accepts shared settings and refuses race settings', () => {
@@ -169,7 +169,7 @@ describe('unsupported versions are read-only', () => {
       assert.equal(out.state, s);
       assert.throws(() => E.startOnTable(s, m.id, 1, operator(1)()), /read-only/);
       assert.throws(() => E.computeEarnings(s), /read-only/);
-      assert.match(E.setupProblems({ ...s, status: 'setup' })[0] || '', label === 'started V3' ? /V3 events cannot be started yet/ : /read-only/);
+      assert.match(E.setupProblems({ ...s, status: 'setup' })[0] || '', label === 'started V3' ? /Games per qualifying match/ : /read-only/);
     });
   }
 
@@ -252,8 +252,7 @@ describe('formats are game-agnostic', () => {
 });
 
 describe('setup validation by format', () => {
-  it('V1 and V2 are ready with 8 players; V3 is blocked only by its missing engine', () => {
-    for (const v of [1, 2]) assert.deepEqual(E.setupProblems(withPlayers(create(v), 8)), [], `V${v}`);
-    assert.equal(E.setupProblems(withPlayers(create(3), 8)).length, 1);
+  it('V1, V2 and V3 are ready with 8 players', () => {
+    for (const v of [1, 2, 3]) assert.deepEqual(E.setupProblems(withPlayers(create(v), 8)), [], `V${v}`);
   });
 });

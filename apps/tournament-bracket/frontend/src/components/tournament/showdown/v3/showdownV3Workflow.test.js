@@ -10,12 +10,14 @@ import {
 
 const qual = (s) => s.matches.filter((m) => m.phase === 'qualifying');
 
-describe('V3 starts stay closed to operators', () => {
-  it('without the development preview flag a valid V3 event still cannot start', () => {
+describe('V3 starts are open to operators', () => {
+  it('without the development preview flag a valid V3 event starts', () => {
     const op = operator(1);
     const s = createV3(8, {}, op);
-    assert.match(E.setupProblems(s)[0], /V3 events cannot be started yet/);
-    assert.throws(() => E.startShowdown(s, op()), /V3 events cannot be started yet/);
+    assert.deepEqual(E.setupProblems(s), []);
+    const started = E.startShowdown(s, op());
+    assert.equal(started.status, 'qualifying');
+    assert.equal(v3LockedPlanProblem(started), '');
   });
 
   it('the preview flag never bypasses a real setup problem', () => {

@@ -26,9 +26,10 @@ const setupScreen = (state) => render('ShowdownSetup.jsx', { state, act: () => t
 describe('format picker', () => {
   it('new event: V3 preselected and recommended, V1 and V2 selectable, Create disabled until confirmed', async () => {
     const html = clean(await render('ShowdownFormatPicker.jsx', { onConfirm() {}, onCancel() {} }));
-    for (const text of ['Choose a tournament format', 'V1 · Win pay with qualifier top-ups', 'V2 · Per-game pay with a playoff reserve', 'V3 · Fixed-length qualifying with per-game pay', 'Recommended', 'cannot be started yet', 'I confirm this tournament will use V3', 'Tick the box to confirm V3']) {
+    for (const text of ['Choose a tournament format', 'V1 · Win pay with qualifier top-ups', 'V2 · Per-game pay with a playoff reserve', 'V3 · Fixed-length qualifying with per-game pay', 'Recommended', 'I confirm this tournament will use V3', 'Tick the box to confirm V3']) {
       assert.ok(html.includes(text), text);
     }
+    assert.ok(!html.includes('cannot be started yet'), 'V3 is startable');
     assert.match(html, /checked="" value="3"/);
     assert.doesNotMatch(html, /checked="" value="[12]"/);
     assert.match(html, /type="checkbox"(?![^>]*checked)/);
@@ -44,12 +45,13 @@ describe('format picker', () => {
 });
 
 describe('setup screen shows the format', () => {
-  it('V3: format panel, recommended, change button, cannot start, fixed games per match, plan preview, no game rules', async () => {
+  it('V3: format panel, recommended, change button, ready to start, fixed games per match, plan preview, no game rules', async () => {
     const html = clean(await setupScreen(setupEvent(3)));
-    for (const text of ['Cash Climb Showdown · Setup · V3', 'Format', 'V3 · Fixed-length qualifying', 'Recommended', 'Change format', 'V3 events cannot be started yet', 'games per match, all played, ties allowed', 'Games per qualifying match', 'Playoff race', 'Showdown only records who wins each game', 'Proposed V3 payout plan']) {
+    for (const text of ['Cash Climb Showdown · Setup · V3', 'Format', 'V3 · Fixed-length qualifying', 'Recommended', 'Change format', 'games per match, all played, ties allowed', 'Games per qualifying match', 'Playoff race', 'Showdown only records who wins each game', 'Proposed V3 payout plan']) {
       assert.ok(html.includes(text), text);
     }
-    assert.match(html, /disabled=""[^>]*>Start qualifying/);
+    assert.ok(!html.includes('cannot be started yet'));
+    assert.doesNotMatch(html, /disabled=""[^>]*>Start qualifying/);
     assert.ok(!/9-Ball|Texas|Qualifying race|payout schedule is not available/.test(html), 'no game, no qualifying race, no V1/V2 schedule text on V3 setup');
   });
 

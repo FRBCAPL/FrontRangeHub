@@ -60,14 +60,16 @@ before(() => {
 });
 
 describe('V3 setup: match lengths and the payout plan preview', () => {
-  it('shows games and race controls, every plan term, and keeps the start disabled without the dev preview', async () => {
+  it('shows games and race controls, every plan term, and enables the start without the dev preview', async () => {
     const html = clean(await setup(states.setup12));
     for (const t of ['Games per qualifying match', 'Playoff race', '8 games', 'Race to 5', 'Proposed V3 payout plan', 'Entry pool', '$240',
       'Qualifying games', 'Playoff games', 'Match-win bonuses', 'Round 1 game win', 'Round 2 game win', 'Playoff game win', 'Quarterfinal bye',
-      'Championship guarantee tier', 'Guaranteed:', V3_NOT_READY_MESSAGE]) {
+      'Championship guarantee tier', 'Guaranteed:']) {
       assert.ok(html.includes(t), t);
     }
-    assert.match(html, /disabled=""[^>]*>Start qualifying/);
+    assert.ok(!html.includes(V3_NOT_READY_MESSAGE));
+    assert.ok(!html.includes('Development preview'));
+    assert.doesNotMatch(html, /disabled=""[^>]*>Start qualifying/);
     assert.ok(!/Qualifying race|9-Ball|ruleset/i.test(html.replace(/class="[^"]*"/g, '')));
   });
 
@@ -88,12 +90,12 @@ describe('V3 setup: match lengths and the payout plan preview', () => {
     assert.equal(v3PlanPreview(bad).view, null);
   });
 
-  it('the operator start is refused without the dev preview; with it, the locked plan is exactly the preview', () => {
+  it('the operator start works without the dev preview and locks exactly the previewed plan', () => {
     const o = makeOperator(5);
-    assert.equal(o.tryTap(states.setup12, 'start').error, V3_NOT_READY_MESSAGE);
     const preview = v3PlanPreview(states.setup12).view;
-    const started = o.tap(states.setup12, 'start', { v3Preview: true });
+    const started = o.tap(states.setup12, 'start');
     assert.deepEqual(v3PlanView(started.payoutPlan), preview);
+    assert.deepEqual(o.tap(states.setup12, 'start', { v3Preview: true }).payoutPlan, started.payoutPlan, 'the preview flag changes nothing');
     assert.ok(o.tryTap(started, 'updateSettings', { entryFee: 30 }).error, 'financial terms cannot change after the start');
   });
 

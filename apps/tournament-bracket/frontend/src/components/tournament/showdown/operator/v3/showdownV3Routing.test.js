@@ -69,16 +69,16 @@ describe('format-specific operator routing', () => {
     assert.ok(html.includes('Interrupted. Every cent of the $160 pool is accounted for.'));
   });
 
-  it('a V3 setup in a non-development build cannot be started', async () => {
+  it('a V3 setup in a non-development build can be started', async () => {
     const html = await app(createV3(10));
-    assert.match(html, /disabled=""[^>]*>Start qualifying/);
+    assert.doesNotMatch(html, /disabled=""[^>]*>Start qualifying/);
     assert.ok(!html.includes('Development preview'));
   });
 });
 
-describe('V3 starts stay disabled outside development', () => {
+describe('the V3 preview stays development-only', () => {
   it('the preview needs a development build and the device flag', () => {
-    assert.equal(V3_STARTS_ENABLED, false);
+    assert.equal(V3_STARTS_ENABLED, true);
     const store = fakeLocalStorage();
     assert.equal(v3PreviewAvailable(undefined), false);
     assert.equal(v3PreviewAvailable({ DEV: false, PROD: true }), false);
