@@ -50,7 +50,8 @@ describe('V3 TV', () => {
     assert.ok(t.recent.some((r) => r.resultText === '3\u20133 tie'));
     assert.ok(t.standings.hasCredits);
     const html = await tvHtml(t);
-    for (const x of ['Qualifying $', 'Games won', 'Credits', 'Every game won pays', 'Round 1 game', '$0.50', 'Winner\u2019s bonus', 'Credits are games credited for a forfeit, not games won.']) assert.ok(html.includes(x), x);
+    for (const x of ['Qualifying $', 'Games won', 'Credits', 'Every game won pays', 'Every game won', '$0.75', 'Winner\u2019s bonus', 'Credits are games credited for a forfeit, not games won.']) assert.ok(html.includes(x), x);
+    assert.ok(!html.includes('Round 1 game') && !html.includes('Round 2 game'));
     assert.ok(!NOT_GAME_AGNOSTIC.test(html));
   });
 

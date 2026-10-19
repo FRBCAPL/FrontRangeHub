@@ -63,10 +63,11 @@ describe('V3 setup: match lengths and the payout plan preview', () => {
   it('shows games and race controls, every plan term, and enables the start without the dev preview', async () => {
     const html = clean(await setup(states.setup12));
     for (const t of ['Games per qualifying match', 'Playoff race', '8 games', 'Race to 5', 'Proposed V3 payout plan', 'Entry pool', '$240',
-      'Qualifying games', 'Playoff games', 'Match-win bonuses', 'Round 1 game win', 'Round 2 game win', 'Playoff game win', 'Quarterfinal bye',
-      'Championship guarantee tier', 'Guaranteed:']) {
+      'Qualifying games', 'Playoff games', 'Match-win bonuses', 'Every game won', 'Quarterfinal bye',
+      'Champion design target', '4\u00d7 design target', 'Guaranteed:', 'Walkovers, withdrawals during qualifying and operator adjustments are exceptions', 'playoff reserve remainder']) {
       assert.ok(html.includes(t), t);
     }
+    for (const t of ['Round 1 game win', 'Round 2 game win', 'Championship guarantee tier']) assert.ok(!html.includes(t), t);
     assert.ok(!html.includes(V3_NOT_READY_MESSAGE));
     assert.ok(!html.includes('Development preview'));
     assert.doesNotMatch(html, /disabled=""[^>]*>Start qualifying/);
@@ -210,7 +211,7 @@ describe('V3 shootouts, bracket, byes and walkovers', () => {
 describe('V3 money, results and endings', () => {
   it('a completed event reconciles to the cent and shows the locked plan', async () => {
     const html = clean(await tab(states.completed, 'money'));
-    for (const t of ['Payout reconciliation', 'Reconciled', 'Locked V3 payout plan', 'Bonus / split']) assert.ok(html.includes(t), t);
+    for (const t of ['Payout reconciliation', 'Reconciled', 'Locked V3 payout plan', 'Reserve remainder / split', 'Playoff reserve remainder paid to:']) assert.ok(html.includes(t), t);
     const results = clean(await tab(states.completed, 'results'));
     assert.ok(results.includes('Final results'));
     assert.match(nextStep(states.completed), /Every cent/);

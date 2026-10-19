@@ -7,13 +7,17 @@ import { standingsViewV3 } from '../../operator/v3/showdownV3StandingsView.js';
 import { v3Dollars } from '../../operator/v3/showdownV3MoneyView.js';
 import { resultsView } from '../../operator/showdownBoardView.js';
 import { v3PublicSchedule, v3PayoutRules, v3PublicSettlement } from './showdownV3PublicView.js';
+import { isEqualRatePlan } from '../../v3/showdownV3Rules.js';
 
 /** Qualifying schedule: every match by round, with opponents, game count and the score once played. */
 export function ShowdownV3PublicSchedule({ event }) {
   return (
     <section className="sd-panel" aria-label="Qualifying schedule">
       <h3>Qualifying schedule</h3>
-      <p className="sd-note">Each player plays two qualifying matches: one in Round 1 and one in Round 2. Round 2 games pay more.</p>
+      <p className="sd-note">
+        Each player plays two qualifying matches: one in Round 1 and one in Round 2.
+        {isEqualRatePlan(event.payoutPlan) ? ' Every game won pays the same in both rounds.' : ' Round 2 games pay more.'}
+      </p>
       {v3PublicSchedule(event).map((g) => (
         <div key={g.title}>
           <h4>{g.title}</h4>

@@ -8,11 +8,12 @@
  * Earned pay changes only through an audited result correction.
  * The locked plan, the ladder and recorded results are never changed by an adjustment.
  */
-import { isHalfUnit, formatCents } from './showdownV3Rules.js';
+import { formatCents, isUnitMultiple, unitText, V3_UNIT_CENTS } from './showdownV3Rules.js';
 
-export function v3AdjustmentProblem(adj, { playerIds, adjustedCents = {}, availableCents }) {
+/** `unitCents`: the locked plan's money unit (v3UnitCents); 50¢ for original-formula plans. */
+export function v3AdjustmentProblem(adj, { playerIds, adjustedCents = {}, availableCents, unitCents = V3_UNIT_CENTS }) {
   if (!adj || !playerIds.includes(adj.playerId)) return 'Pick the player the adjustment is for.';
-  if (!isHalfUnit(adj.amountCents) || adj.amountCents === 0) return 'An adjustment must be a non-zero multiple of 50\u00a2.';
+  if (!isUnitMultiple(adj.amountCents, unitCents) || adj.amountCents === 0) return `An adjustment must be a non-zero multiple of ${unitText(unitCents)}.`;
   if (!String(adj.reason || '').trim()) return 'Every adjustment needs a reason for the audit log.';
   if (!adj.by || !adj.at) return 'Every adjustment must record who made it and when.';
   if (adj.amountCents < 0 && (adjustedCents[adj.playerId] || 0) + adj.amountCents < 0) {
@@ -28,12 +29,12 @@ export function v3AdjustmentProblem(adj, { playerIds, adjustedCents = {}, availa
  * Applies adjustments in order against the remainder. Invalid records are reported, never skipped silently:
  * the returned `problems` make settlement fail until they are fixed.
  */
-export function applyV3Adjustments(adjustments, { playerIds, remainderCents }) {
+export function applyV3Adjustments(adjustments, { playerIds, remainderCents, unitCents = V3_UNIT_CENTS }) {
   const byPlayer = {};
   let available = remainderCents;
   const problems = [];
   adjustments.forEach((adj) => {
-    const problem = v3AdjustmentProblem(adj, { playerIds, adjustedCents: byPlayer, availableCents: available });
+    const problem = v3AdjustmentProblem(adj, { playerIds, adjustedCents: byPlayer, availableCents: available, unitCents });
     if (problem) { problems.push(`Adjustment ${adj?.id || '?'}: ${problem}`); return; }
     byPlayer[adj.playerId] = (byPlayer[adj.playerId] || 0) + adj.amountCents;
     available -= adj.amountCents;

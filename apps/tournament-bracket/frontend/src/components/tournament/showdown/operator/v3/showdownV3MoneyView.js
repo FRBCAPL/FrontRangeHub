@@ -6,7 +6,7 @@ import * as E from '../../showdownEngine.js';
 import { formatCents } from '../../v3/showdownV3Rules.js';
 import { v3OutcomeOf } from '../../v3/showdownV3Money.js';
 import { nameOf } from '../showdownView.js';
-import { v3PlanView } from './showdownV3PlanView.js';
+import { v3PlanView, V3_REMAINDER_LABEL } from './showdownV3PlanView.js';
 
 export const V3_OUTCOME_LABELS = {
   'in-progress': 'In progress',
@@ -47,9 +47,13 @@ export function moneyViewV3(state) {
     matchId: c.matchId,
     text: `${nameOf(state, c.playerId)}: ${c.games} credit game${c.games === 1 ? '' : 's'} (${formatCents(c.cents || 0)}) for ${c.unplayed} unplayed after ${nameOf(state, c.forfeitedBy)} forfeited${c.provisional ? ' \u00b7 provisional until qualifying locks' : ''}`,
   }));
+  const plan = v3PlanView(state.payoutPlan);
   return {
     payoutVersion: 3,
-    plan: v3PlanView(state.payoutPlan),
+    plan,
+    unitCents: plan.unitCents,
+    remainderColumn: plan.equalRate ? 'Reserve remainder / split' : 'Bonus / split',
+    remainderPaidLabel: plan.equalRate ? `${V3_REMAINDER_LABEL} paid to` : 'Remainder paid to',
     outcome,
     outcomeLabel: V3_OUTCOME_LABELS[outcome] || outcome,
     players,

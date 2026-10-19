@@ -73,12 +73,17 @@ export function v3PayoutRules(plan) {
   const v = v3PlanView(plan);
   const bonuses = v.rounds.map((r) => `${r.label} ${r.each}`).join(', ');
   return [
-    `Every game you win pays. A Round 1 qualifying game pays ${v.rates.r1} and a Round 2 game pays ${v.rates.r2}.`,
+    v.equalRate
+      ? `Every game you win pays ${v.rates.game}, in qualifying and in the playoffs.`
+      : `Every game you win pays. A Round 1 qualifying game pays ${v.rates.r1} and a Round 2 game pays ${v.rates.r2}.`,
     `Every qualifying match is ${v.qualifyingGames} games and every game is played, so a match can end in a tie.`,
     `The top ${v.qualifiers} in qualifying dollars reach the playoffs.${v.bye ? ` The top ${v.bye.count} get a bye to the semifinals worth ${v.bye.each}.` : ''}`,
     `Playoff matches are races to ${v.playoffRaceTo}. Each playoff game won pays ${v.rates.playoff}, and the match winner also earns the round\u2019s winner\u2019s bonus: ${bonuses}.`,
     'If a player forfeits, the games already played are paid to both players. The opponent gets an administrative credit for the unplayed games: it counts toward qualifying dollars, not games won.',
-    `Money nobody wins (unplayed games, unused playoff game money) goes to the champion when the event is completed, so every cent of the ${v.pool} pool goes to players.`,
+    v.equalRate
+      ? `Money nobody wins (unplayed games, unused playoff game money) goes to the champion as the playoff reserve remainder when the event is completed, so every cent of the ${v.pool} pool goes to players.`
+      : `Money nobody wins (unplayed games, unused playoff game money) goes to the champion when the event is completed, so every cent of the ${v.pool} pool goes to players.`,
+    ...(v.equalRate ? ['The champion always earns more than the runner-up, and the runner-up more than either semifinal loser, when every playoff match is played to completion. Walkovers, withdrawals during qualifying and operator adjustments are exceptions.'] : []),
   ];
 }
 
@@ -98,7 +103,8 @@ export function v3PublicSettlement(event) {
   } else if (m.outcome === 'in-progress') {
     lines.push(`${m.paid} of the ${m.pool} pool has been earned so far.${m.heldCents ? ` ${m.held} is still to be won.` : ''}`);
   } else if (m.outcome === 'completed') {
-    lines.push(`Every cent of the ${m.pool} pool was paid to players.${m.recipients.length ? ` The money nobody won went to the champion, ${m.recipients.join(', ')}.` : ''}`);
+    const toChampion = m.plan.equalRate ? 'The money nobody won (the playoff reserve remainder) went to the champion' : 'The money nobody won went to the champion';
+    lines.push(`Every cent of the ${m.pool} pool was paid to players.${m.recipients.length ? ` ${toChampion}, ${m.recipients.join(', ')}.` : ''}`);
   } else {
     lines.push(`The event ended early. Players keep everything they earned.${m.recipients.length ? ` The money still to be won was split among: ${m.recipients.join(', ')}.` : ''}`);
   }

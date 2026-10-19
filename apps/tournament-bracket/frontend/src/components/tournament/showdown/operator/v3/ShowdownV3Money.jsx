@@ -27,7 +27,7 @@ export function ShowdownV3Reconciliation({ v }) {
         Qualifying games paid {v.qualifyingPaid} of the {v.qualifyingReserve} reserved. Playoff games paid {v.playoffGamesPaid} of the {v.playoffGameReserve} reserved.
         {v.heldCents ? ' Money not yet won stays in the pool until the event ends.' : ''}
       </p>
-      {v.recipients.length ? <p className="sd-note">Remainder paid to: {v.recipients.join(', ')}.</p> : null}
+      {v.recipients.length ? <p className="sd-note">{v.remainderPaidLabel}: {v.recipients.join(', ')}.</p> : null}
       {v.disclosures.map((d) => <p key={d} className="sd-warn">{d}</p>)}
       {v.pendingApproval.includes('abandonment-retention') ? <p className="sd-warn">Operator retention is not approved: the unawarded amount must not be kept or paid out until it is.</p> : null}
       {v.reconciled
@@ -61,7 +61,7 @@ export default function ShowdownV3Money({ view }) {
                 <th className="sd-num">Match wins</th>
                 <th className="sd-num">Bye</th>
                 <th className="sd-num">Adjustments</th>
-                <th className="sd-num">Bonus / split</th>
+                <th className="sd-num">{v.remainderColumn}</th>
                 <th className="sd-num">Total</th>
               </tr>
             </thead>

@@ -24,7 +24,9 @@ function standings(event) {
 function payout(plan) {
   const v = v3PlanView(plan);
   return {
-    rates: [['Round 1 game', v.rates.r1], ['Round 2 game', v.rates.r2], ['Playoff game', v.rates.playoff]],
+    rates: v.equalRate
+      ? [['Every game won', v.rates.game]]
+      : [['Round 1 game', v.rates.r1], ['Round 2 game', v.rates.r2], ['Playoff game', v.rates.playoff]],
     bonuses: v.rounds.map((r) => [r.label, r.each]),
     bye: v.bye ? v.bye.each : '',
   };

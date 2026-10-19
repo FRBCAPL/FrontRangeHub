@@ -40,7 +40,9 @@ function V3Stats({ state, plan }) {
       <div className="cc-stat"><span>Entry pool</span><strong>{plan ? plan.pool : money(state.players.length * (Number(state.settings.entryFee) || 0))}</strong></div>
       <div className="cc-stat"><span>Playoff spots</span><strong>{plan ? plan.qualifiers : '—'}</strong></div>
       <div className="cc-stat"><span>Quarterfinal byes</span><strong>{plan ? plan.byes : '—'}</strong></div>
-      <div className="cc-stat"><span>Round 1 / Round 2 game</span><strong>{plan ? `${plan.rates.r1} / ${plan.rates.r2}` : '—'}</strong></div>
+      {plan?.equalRate
+        ? <div className="cc-stat"><span>Every game won</span><strong>{plan.rates.game}</strong></div>
+        : <div className="cc-stat"><span>Round 1 / Round 2 game</span><strong>{plan ? `${plan.rates.r1} / ${plan.rates.r2}` : '—'}</strong></div>}
     </div>
   );
 }

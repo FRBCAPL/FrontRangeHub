@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { v3Event, playQualifying, qualify, playPlayoffs, earnings } from './showdownV3TestKit.js';
-import { splitHalfUnits } from './showdownV3Settlement.js';
+import { splitHalfUnits, splitUnits } from './showdownV3Settlement.js';
+import { v3UnitCents } from './showdownV3Rules.js';
 import { v3AdjustmentAudit } from './showdownV3Adjustments.js';
 import { v3InterruptedResult } from './showdownV3Results.js';
 
@@ -68,18 +69,47 @@ describe('V3 settlement', () => {
     assert.equal(playoffs.rows[final.winnerId].matchWinCents, (ev.plan.ladder.perRound.semifinal + ev.plan.ladder.perRound.final) * 100);
   });
 
-  it('an interrupted final splits the remainder between the finalists in 50\u00a2 units, higher seed first', () => {
-    const ev = run(cfg(18, { seed: 5 }), { script: { interruptAt: 'final' } });
-    const e = earnings(ev, { outcome: 'interrupted-final' });
-    const s = e.settlement;
+  for (const [legacy, unit] of [[false, 25], [true, 50]]) {
+    it(`an interrupted final splits the remainder between the finalists in ${unit}\u00a2 units, higher seed first (${legacy ? 'original' : 'equal-rate'} plan)`, () => {
+      const ev = run(cfg(18, { seed: 5, legacy }), { script: { interruptAt: 'final' } });
+      assert.equal(v3UnitCents(ev.plan), unit);
+      const e = earnings(ev, { outcome: 'interrupted-final' });
+      const s = e.settlement;
+      assert.equal(s.ok, true, s.problems.join('; '));
+      assert.equal(s.bonusRecipients.length, 2);
+      const [hi, lo] = s.bonusRecipients;
+      assert.ok(ev.qualifierIds.indexOf(hi) < ev.qualifierIds.indexOf(lo));
+      const diff = s.rows[hi].settlementCents - s.rows[lo].settlementCents;
+      assert.ok(diff === 0 || diff === unit);
+      assert.ok(Object.values(s.rows).every((r) => r.settlementCents % unit === 0));
+      assert.equal(s.paidCents, ev.plan.poolCents);
+      assert.equal(earnings(ev, { outcome: 'completed' }).settlement.ok, false, 'there is no champion');
+    });
+  }
+
+  it('a player who withdraws during qualifying keeps every qualifying game they won', () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const quitter = 'P3';
+      const ev = run(cfg(16, { seed }), { quits: { [quitter]: 1 }, withdrawnIds: [quitter] });
+      const e = earnings(ev, { outcome: 'completed', withdrawnIds: [quitter] });
+      assert.equal(e.settlement.ok, true, e.settlement.problems.join('; '));
+      assert.ok(!ev.qualifierIds.includes(quitter));
+      const won = ev.qualifying.filter((m) => m.p1 === quitter || m.p2 === quitter)
+        .reduce((sum, m) => sum + (m.p1 === quitter ? m.score1 : m.score2), 0);
+      assert.equal(e.qualifying.rows[quitter].totalCents, won * ev.plan.rates.r1, `seed ${seed}`);
+      assert.equal(e.settlement.rows[quitter].totalCents, won * ev.plan.rates.r1, `seed ${seed}`);
+      assert.equal(e.settlement.paidCents, ev.plan.poolCents);
+    }
+  });
+
+  it('an original-formula event still settles to the cent with its own rates and ladder', () => {
+    const ev = run(cfg(16, { legacy: true }));
+    assert.equal(ev.plan.formula, undefined);
+    assert.deepEqual(ev.plan.rates, { r1: 200, r2: 300, playoff: 300 });
+    const { settlement: s, status } = earnings(ev, { outcome: 'completed' });
     assert.equal(s.ok, true, s.problems.join('; '));
-    assert.equal(s.bonusRecipients.length, 2);
-    const [hi, lo] = s.bonusRecipients;
-    assert.ok(ev.qualifierIds.indexOf(hi) < ev.qualifierIds.indexOf(lo));
-    const diff = s.rows[hi].settlementCents - s.rows[lo].settlementCents;
-    assert.ok(diff === 0 || diff === 50);
     assert.equal(s.paidCents, ev.plan.poolCents);
-    assert.equal(earnings(ev, { outcome: 'completed' }).settlement.ok, false, 'there is no champion');
+    assert.deepEqual(s.bonusRecipients, [status.championId]);
   });
 
   it('an interruption before the final splits among the players still alive (approved rule, nothing pending)', () => {
@@ -115,6 +145,19 @@ describe('V3 settlement', () => {
     assert.deepEqual(splitHalfUnits(300, ['a', 'b', 'c']), { a: 100, b: 100, c: 100 });
     assert.deepEqual(splitHalfUnits(250, ['a', 'b', 'c']), { a: 100, b: 100, c: 50 });
   });
+
+  it('splits are exact in 25\u00a2 units, extra units to the earliest recipients', () => {
+    assert.deepEqual(splitUnits(175, ['a', 'b'], 25), { a: 100, b: 75 });
+    assert.deepEqual(splitUnits(75, ['a', 'b', 'c', 'd'], 25), { a: 25, b: 25, c: 25, d: 0 });
+    assert.deepEqual(splitUnits(325, ['a', 'b', 'c'], 25), { a: 125, b: 100, c: 100 });
+    for (let cents = 0; cents <= 2500; cents += 25) {
+      for (let n = 1; n <= 8; n += 1) {
+        const parts = Object.values(splitUnits(cents, Array.from({ length: n }, (_, i) => `p${i}`), 25));
+        assert.equal(parts.reduce((a, b) => a + b, 0), cents);
+        assert.ok(parts.every((c) => c % 25 === 0) && Math.max(...parts) - Math.min(...parts) <= 25);
+      }
+    }
+  });
 });
 
 describe('V3 operator adjustments', () => {
@@ -147,9 +190,18 @@ describe('V3 operator adjustments', () => {
     assert.match(check(entry({ amountCents: -50 })).problems[0], /Earned pay cannot be reduced/);
     assert.match(check(entry({ amountCents: -1000000, acknowledgedReduction: true })).problems[0], /Earned pay cannot be reduced/);
     assert.match(check(entry({ amountCents: 50, reason: ' ' })).problems[0], /reason/);
-    assert.match(check(entry({ amountCents: 25 })).problems[0], /50/);
+    assert.match(check(entry({ amountCents: 10 })).problems[0], /multiple of 25\u00a2/);
+    assert.equal(check(entry({ amountCents: 25 })).ok, true);
     const takeBack = check(entry({ amountCents: 100 }, 'a'), entry({ amountCents: -100 }, 'b'));
     assert.equal(takeBack.ok, true, takeBack.problems.join('; '));
     assert.match(check(entry({ amountCents: 100 }, 'a'), entry({ amountCents: -150 }, 'b')).problems[0], /Earned pay cannot be reduced/);
+  });
+
+  it('an original-formula event keeps 50\u00a2 adjustment steps', () => {
+    const ev = run(cfg(12, { seed: 4, legacy: true }));
+    const p = earnings(ev, { outcome: 'completed' }).status.championId;
+    const check = (amountCents) => earnings(ev, { outcome: 'completed', adjustments: [{ id: 'x', playerId: p, by, at, reason: 'r', amountCents }] }).settlement;
+    assert.match(check(25).problems[0], /An adjustment must be a non-zero multiple of 50\u00a2\./);
+    assert.equal(check(50).ok, true);
   });
 });

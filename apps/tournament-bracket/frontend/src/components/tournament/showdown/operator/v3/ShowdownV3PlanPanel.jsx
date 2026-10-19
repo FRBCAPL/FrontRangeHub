@@ -21,14 +21,21 @@ export default function ShowdownV3PlanPanel({ view, problems = [], locked = fals
         <>
           <div className="cc-stat-row">
             <div className="cc-stat"><span>Entry pool</span><strong>{v.pool}</strong></div>
-            <div className="cc-stat"><span>Round 1 game win</span><strong>{v.rates.r1}</strong></div>
-            <div className="cc-stat"><span>Round 2 game win</span><strong>{v.rates.r2}</strong></div>
-            <div className="cc-stat"><span>Playoff game win</span><strong>{v.rates.playoff}</strong></div>
+            {v.equalRate ? (
+              <div className="cc-stat"><span>Every game won</span><strong>{v.rates.game}</strong></div>
+            ) : (
+              <>
+                <div className="cc-stat"><span>Round 1 game win</span><strong>{v.rates.r1}</strong></div>
+                <div className="cc-stat"><span>Round 2 game win</span><strong>{v.rates.r2}</strong></div>
+                <div className="cc-stat"><span>Playoff game win</span><strong>{v.rates.playoff}</strong></div>
+              </>
+            )}
             <div className="cc-stat"><span>Championship win</span><strong>{v.championship}</strong></div>
           </div>
           <p className="sd-note">
             {v.entrants} entrants at {v.entryFee}. Qualifying: {v.qualifyingGames} games per match, all played, ties allowed.
-            Playoffs: {v.qualifiers} players, race to {v.playoffRaceTo}. Every game won pays its rate; match wins pay the bonuses below.
+            Playoffs: {v.qualifiers} players, race to {v.playoffRaceTo}.
+            {v.equalRate ? ' Every game won pays the same rate in qualifying and in the playoffs; match wins pay the bonuses below.' : ' Every game won pays its rate; match wins pay the bonuses below.'}
           </p>
 
           <h4>Where the pool goes</h4>
@@ -59,17 +66,18 @@ export default function ShowdownV3PlanPanel({ view, problems = [], locked = fals
             </table>
           </div>
 
-          <p className="sd-note">Championship guarantee tier: {v.tierText}</p>
+          <p className="sd-note">{v.tierHeading}: {v.tierText}</p>
           <ul className="sd-note-list" aria-label="Payout order checks">
             {v.checks.map((c) => <li key={c.label} className={c.ok ? 'sd-ok' : 'sd-warn'}>{c.ok ? 'Guaranteed: ' : 'Not guaranteed: '}{c.label.toLowerCase()}</li>)}
           </ul>
+          {v.scope ? <p className="sd-note">{v.scope}</p> : null}
           {v.warnings.length ? (
             <div className="sd-warn" role="status">
               <strong>Payout-order warnings</strong>
               <ul>{v.warnings.map((w) => <li key={w}>{w}</li>)}</ul>
             </div>
           ) : null}
-          <p className="sd-note">Unused playoff game money, unearned match-win bonuses and rounding go to the champion as the champion bonus.</p>
+          <p className="sd-note">{v.remainderText}</p>
         </>
       ) : null}
     </section>

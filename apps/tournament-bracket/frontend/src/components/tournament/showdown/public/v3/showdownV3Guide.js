@@ -57,12 +57,12 @@ export function showdownV3Guide() {
       {
         title: 'How you get paid',
         body: [
-          'Every game you win pays, even in a match you lose. A Round 2 qualifying game pays more than a Round 1 game.',
+          'Every game you win pays, even in a match you lose. The event page shows what each game pays.',
           'In the playoffs every game won pays too, and the match winner also earns that round\u2019s winner\u2019s bonus. Later rounds pay bigger bonuses; a bye pays a set amount.',
           'If your opponent forfeits, you get an administrative credit for the unplayed games. It counts toward qualifying dollars, not games won.',
           'Money nobody wins goes to the champion when the event is completed. The event page shows this event\u2019s exact amounts.',
         ],
-        tv: ['Every game won pays. Round 2 games pay more.', 'Playoff games pay, plus a winner\u2019s bonus for each match won.', 'Money nobody wins goes to the champion.'],
+        tv: ['Every game won pays, even in a match you lose.', 'Playoff games pay, plus a winner\u2019s bonus for each match won.', 'Money nobody wins goes to the champion.'],
       },
       {
         title: 'If the event stops early',

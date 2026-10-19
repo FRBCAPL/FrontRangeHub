@@ -8,6 +8,7 @@ import { screenPublicEvent, UNSUPPORTED_PUBLIC_MESSAGE } from '../useShowdownPub
 import { moneyViewV3 } from '../../operator/v3/showdownV3MoneyView.js';
 import { standingsViewV3 } from '../../operator/v3/showdownV3StandingsView.js';
 import { render } from '../../operator/showdownRenderKit.js';
+import { buildV3LegacyPlan } from '../../v3/showdownV3PlanLegacy.js';
 import { V3_PLAN_MISSING_MESSAGE, v3PublicProblem, v3PublicFacts, v3PublicSchedule, v3PayoutRules, v3PublicSettlement } from './showdownV3PublicView.js';
 
 const V1V2_WORDS = /Qualifying win pays|Climb|ladder rung|V1|V2|race to \d+ in qualifying/i;
@@ -113,13 +114,19 @@ describe('V3 player screens', () => {
 
   it('money: locked plan rules in plain language, game pay, bonuses and totals', async () => {
     const rules = v3PayoutRules(ev.tie.payoutPlan);
-    assert.equal(rules.length, 6);
-    assert.match(rules[0], /Round 1 qualifying game pays \$0\.50 and a Round 2 game pays \$1\.50/);
+    assert.equal(rules.length, 7);
+    assert.equal(rules[0], 'Every game you win pays $0.75, in qualifying and in the playoffs.');
     assert.match(rules[1], /6 games/);
-    assert.match(rules[3], /races to 5/);
+    assert.match(rules[3], /races to 5\. Each playoff game won pays \$0\.75/);
+    assert.match(rules[5], /goes to the champion as the playoff reserve remainder/);
+    assert.match(rules[6], /runner-up more than either semifinal loser.*Walkovers, withdrawals during qualifying and operator adjustments are exceptions/);
+    const legacy = v3PayoutRules(buildV3LegacyPlan({ entrants: 8, entryFee: 20, qualifyingGames: 6, playoffRaceTo: 5 }));
+    assert.equal(legacy.length, 6);
+    assert.match(legacy[0], /Round 1 qualifying game pays \$0\.50 and a Round 2 game pays \$1\.50/);
+    assert.ok(!legacy.some((l) => /reserve/i.test(l)));
     const html = await tab('money', ev.done);
     for (const t of ['How the money works', 'Every cent of the $160 pool']) assert.ok(html.includes(t), t);
-    assert.ok(!/reserve|retain|operator keeps|house/i.test(html), 'no internal or retention wording');
+    assert.ok(!/reserve|retain|operator keeps|house/i.test(html.replace(/playoff reserve remainder/gi, '')), 'no internal or retention wording beyond the approved remainder label');
     assert.ok(!V1V2_WORDS.test(html));
   });
 

@@ -1,9 +1,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import * as E from '../showdownEngine.js';
-import { operator, names, startedEvent, runToCompletion } from '../showdownTestKit.js';
+import { operator, names, startedEvent, runToCompletion, settleShootouts } from '../showdownTestKit.js';
 import { v3RoundLabelProblems } from './showdownV3Rounds.js';
 import { v3LockedPlanProblem } from './showdownV3Event.js';
+import { buildV3LegacyPlan } from './showdownV3PlanLegacy.js';
+import { V3_EQUAL_RATE_FORMULA } from './showdownV3Rules.js';
+import { moneyViewV3 } from '../operator/v3/showdownV3MoneyView.js';
 import {
   v3Op, createV3, startV3, toBracketV3, toPlayoffsV3, playPlayoffsV3, playQualifyingV3, runV3, money, auditActions,
 } from './showdownV3WorkflowKit.js';
@@ -50,7 +53,8 @@ describe('complete V3 tournaments through the shared workflow', () => {
         assert.ok(done.qualification.v3Credits.finalizedAt);
         assert.deepEqual(done.playoffPlan.perRound, lockedPlan.ladder.perRound);
         for (const a of ['start', 'lock-qualifying', 'confirm-bracket', 'complete']) assert.ok(auditActions(done).includes(a), a);
-        Object.values(m.byPlayer).forEach((r) => assert.ok(r.totalCents >= 0 && r.totalCents % 50 === 0));
+        assert.equal(lockedPlan.formula, V3_EQUAL_RATE_FORMULA);
+        Object.values(m.byPlayer).forEach((r) => assert.ok(r.totalCents >= 0 && r.totalCents % 25 === 0));
       });
     }
   }
@@ -110,6 +114,12 @@ describe('the locked payout plan', () => {
     assert.throws(() => E.completeShowdown(tampered, op2()), /damaged|locked/);
     const swapped = { ...played, payoutPlan: { ...played.payoutPlan, championshipTierPct: 100 } };
     assert.throws(() => E.completeShowdown(swapped, op2()), /locked/);
+    const settings = { entrants: 9, entryFee: 20, qualifyingGames: 7, playoffRaceTo: 5 };
+    const downgraded = { ...played, payoutPlan: buildV3LegacyPlan(settings) };
+    assert.throws(() => E.completeShowdown(downgraded, op2()), /damaged|locked/);
+    const allRates = (c) => ({ r1: c, r2: c, playoff: c });
+    const shifted = { ...played, payoutPlan: { ...played.payoutPlan, rates: allRates(played.payoutPlan.rates.r1 + 25) } };
+    assert.throws(() => E.completeShowdown(shifted, op2()), /damaged|locked/);
   });
 
   it('the playoff plan copies the locked ladder; locking qualifying does not rebuild the payouts', () => {
@@ -173,6 +183,63 @@ describe('saved V3 events', () => {
     assert.equal(E.reconciliationProblem(saved), '');
     assert.deepEqual(saved.audit, E.clone(s.audit));
     assert.deepEqual(saved.v3Outcome, s.v3Outcome);
+  });
+});
+
+describe('events locked with the original formula before the equal-rate formula', () => {
+  const lockLegacy = (s) => {
+    const p = s.payoutPlan;
+    const payoutPlan = buildV3LegacyPlan({ entrants: p.entrants, entryFee: p.entryFee, qualifyingGames: p.qualifyingGames, playoffRaceTo: p.playoffRaceTo });
+    const audit = s.audit.map((a) => {
+      if (a.action !== 'start') return a;
+      const { formula, ...detail } = a.detail;
+      assert.equal(formula, V3_EQUAL_RATE_FORMULA);
+      return { ...a, detail: { ...detail, rates: payoutPlan.rates, championshipTierPct: payoutPlan.championshipTierPct, warnings: payoutPlan.guarantees.warnings } };
+    });
+    return { ...s, payoutPlan, audit };
+  };
+
+  for (const n of [12, 16]) {
+    it(`${n} entrants: keeps its original plan through qualifying, playoffs, completion, adjustment and reload`, () => {
+      const { s: fresh, op } = startV3(n, { seed: 3, fee: 50 });
+      const started = lockLegacy(fresh);
+      const legacyPlan = started.payoutPlan;
+      assert.equal(legacyPlan.formula, undefined);
+      assert.notEqual(legacyPlan.rates.r1, legacyPlan.rates.r2);
+      assert.equal(v3LockedPlanProblem(started), '');
+
+      const played = playQualifyingV3(started, op);
+      const bracket = settleShootouts(E.lockQualifying(played, op()), op);
+      assert.deepEqual(bracket.playoffPlan.perRound, legacyPlan.ladder.perRound);
+      const po = E.confirmPlayoff(E.drawPlayoff(bracket, op()), op());
+      const done = E.completeShowdown(playPlayoffsV3(po, op), op());
+      assert.equal(done.status, 'completed');
+      assert.deepEqual(done.payoutPlan, legacyPlan);
+      assert.equal(v3LockedPlanProblem(done), '');
+      assert.equal(E.reconciliationProblem(done), '');
+      const m = money(done);
+      assert.equal(m.paidCents, m.poolCents);
+      Object.values(m.byPlayer).forEach((r) => assert.ok(r.totalCents % 50 === 0));
+      assert.throws(() => E.adjustPayout(done, { playerId: 'P2', amountCents: 25, reason: 'Quarter' }, op()), /50\u00a2/);
+      const adjusted = E.adjustPayout(done, { playerId: 'P2', amountCents: 50, reason: 'Scoring error' }, op());
+      assert.equal(E.reconciliationProblem(adjusted), '');
+
+      const reloaded = E.clone(adjusted);
+      assert.deepEqual(money(reloaded).byPlayer, money(adjusted).byPlayer);
+      assert.equal(v3LockedPlanProblem(reloaded), '');
+    });
+  }
+
+  it('the operator money view keeps the original Round 1 / Round 2 wording and 50\u00a2 steps', () => {
+    const { s: fresh } = startV3(12, { seed: 3, fee: 50 });
+    const legacy = moneyViewV3(lockLegacy(fresh));
+    assert.equal(legacy.unitCents, 50);
+    assert.equal(legacy.remainderColumn, 'Bonus / split');
+    assert.equal(legacy.plan.equalRate, false);
+    const current = moneyViewV3(fresh);
+    assert.equal(current.unitCents, 25);
+    assert.equal(current.remainderColumn, 'Reserve remainder / split');
+    assert.equal(current.remainderPaidLabel, 'Playoff reserve remainder paid to');
   });
 });
 

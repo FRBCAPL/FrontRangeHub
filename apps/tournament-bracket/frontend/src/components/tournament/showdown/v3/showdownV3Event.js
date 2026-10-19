@@ -3,8 +3,8 @@
  * the finalized credit snapshot and the corrections that V3 refuses.
  */
 import { fieldRuleFor } from '../showdownFieldRules.js';
-import { selectV3Rates } from './showdownV3Rates.js';
-import { buildV3Plan, v3PlanProblems, v3PlanChangeProblem } from './showdownV3Plan.js';
+import { selectV3EqualRate } from './showdownV3EqualRate.js';
+import { buildV3Plan, v3ExpectedPlan, v3PlanProblems, v3PlanChangeProblem } from './showdownV3Plan.js';
 import { withRoundLabels } from './showdownV3Rounds.js';
 import { v3Credits } from './showdownV3Credits.js';
 import { v3QualifyingLedger } from './showdownV3Qualifying.js';
@@ -31,7 +31,7 @@ export function v3SetupProblems(state) {
     problems.push(`The playoff race must be to ${V3_PLAYOFF_RACE_TO.min}\u2013${V3_PLAYOFF_RACE_TO.max} games.`);
   }
   if (!problems.length && fieldRuleFor(s.entrants)) {
-    const sel = selectV3Rates(s);
+    const sel = selectV3EqualRate(s);
     if (!sel.ok) problems.push(...sel.problems.filter((p) => !/Entry fee/.test(p)));
   }
   return problems;
@@ -42,13 +42,18 @@ export function v3StartFields(state, matches) {
   return { payoutPlan: buildV3Plan(v3SettingsOf(state)), matches: withRoundLabels(matches) };
 }
 
-/** '' while the stored plan is intact and still the plan these locked settings produce. */
+/**
+ * '' while the stored plan is intact and still the plan these locked settings produce under the formula it
+ * was locked with (a plan locked by the original formula is re-derived by the original formula).
+ */
 export function v3LockedPlanProblem(state) {
   const plan = state.payoutPlan;
   const internal = v3PlanProblems(plan);
   if (internal.length) return `The locked V3 payout plan is damaged: ${internal[0]}`;
+  const startedWith = (state.audit || []).find((a) => a.action === 'start')?.detail?.formula;
+  if (startedWith && startedWith !== plan.formula) return v3PlanChangeProblem({ formula: startedWith }, plan);
   let expected;
-  try { expected = buildV3Plan(v3SettingsOf(state)); } catch (e) { return e.message; }
+  try { expected = v3ExpectedPlan(plan, v3SettingsOf(state)); } catch (e) { return e.message; }
   return v3PlanChangeProblem(plan, expected);
 }
 

@@ -93,5 +93,7 @@ export function startShowdown(state, ctxIn) {
     playoffPlan: null,
     matches: v3 ? v3.matches : circleMatches(circle),
     startedAt: c.now,
-  }, c, 'start', ids, v3 ? { payoutVersion: 3, rates: payoutPlan.rates, championshipTierPct: payoutPlan.championshipTierPct, warnings: payoutPlan.guarantees.warnings } : null);
+  }, c, 'start', ids, v3 ? {
+    payoutVersion: 3, formula: payoutPlan.formula, rates: payoutPlan.rates, championshipTierPct: payoutPlan.championshipTierPct, warnings: payoutPlan.guarantees.warnings,
+  } : null);
 }

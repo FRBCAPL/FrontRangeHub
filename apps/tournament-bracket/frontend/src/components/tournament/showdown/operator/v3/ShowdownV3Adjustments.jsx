@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { isHalfUnit } from '../../v3/showdownV3Rules.js';
+import { isUnitMultiple, unitText, V3_UNIT_CENTS } from '../../v3/showdownV3Rules.js';
 
-function draftProblem(playerId, amountCents, reason) {
+function draftProblem(playerId, amountCents, reason, unit) {
   if (!playerId) return 'Pick the player the adjustment is for.';
-  if (!amountCents || !isHalfUnit(amountCents)) return 'Enter a non-zero amount in 50\u00a2 steps.';
+  if (!amountCents || !isUnitMultiple(amountCents, unit)) return `Enter a non-zero amount in ${unitText(unit)} steps.`;
   if (!reason.trim()) return 'Every adjustment needs a reason for the audit log.';
   return '';
 }
@@ -16,8 +16,9 @@ export default function ShowdownV3Adjustments({ view, players, error = '', onAdj
   const [playerId, setPlayerId] = useState('');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
+  const unit = view.unitCents || V3_UNIT_CENTS;
   const amountCents = Math.round(Number(amount) * 100);
-  const problem = draftProblem(playerId, Number.isFinite(amountCents) ? amountCents : 0, reason);
+  const problem = draftProblem(playerId, Number.isFinite(amountCents) ? amountCents : 0, reason, unit);
   const submit = () => {
     if (onAdjust({ playerId, amountCents, reason: reason.trim() })) { setAmount(''); setReason(''); }
   };
@@ -50,8 +51,8 @@ export default function ShowdownV3Adjustments({ view, players, error = '', onAdj
           </select>
         </label>
         <label className="sd-field">
-          Amount ($, 50&cent; steps)
-          <input type="number" step="0.5" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          Amount ($, {unit}&cent; steps)
+          <input type="number" step={unit / 100} inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </label>
         <label className="sd-field">
           Reason
