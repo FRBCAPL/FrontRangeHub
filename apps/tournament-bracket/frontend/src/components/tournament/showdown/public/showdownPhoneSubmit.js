@@ -1,14 +1,26 @@
 /** Sends a phone score: checked here for quick feedback, then enforced again by the database. */
 import { phoneSubmissionCode, PHONE_PROBLEMS, invalidScoreMessage } from '../showdownPhoneActions.js';
+import { isPayoutV3 } from '../showdownPayoutVersion.js';
+
+function v3ScoreRuleText(event, match) {
+  const { qualifyingGames: g, playoffRaceTo: k } = event.payoutPlan;
+  return match.phase === 'qualifying'
+    ? `A qualifying match is ${g} games, all played: the scores must add up to ${g}. A tie is allowed.`
+    : invalidScoreMessage(k);
+}
 
 function raceFor(event, match) {
   return Number(match.phase === 'qualifying' ? event.settings.qualifyingRaceTo : event.settings.playoffRaceTo);
 }
 
 function problemText(code, event, match) {
-  if (code === 'invalid-score') return invalidScoreMessage(raceFor(event, match));
+  if (code === 'invalid-score' && !isPayoutV3(event)) return invalidScoreMessage(raceFor(event, match));
+  if ((code === 'invalid-score' || code === 'invalid-games') && isPayoutV3(event) && event.payoutPlan) {
+    return v3ScoreRuleText(event, match);
+  }
   if (code === 'network') return 'Could not reach the server. Check your signal and try again.';
   if (code === 'unavailable') return 'Phone scores are not available for this event. Tell the director your score.';
+  if (code === 'dev-isolation-required') return 'Development build: phone scores for V3 events are never sent to the live database. Turn on the V3 preview to test with the isolated test cloud.';
   return PHONE_PROBLEMS[code] || 'That score could not be sent. Tell the director your score.';
 }
 

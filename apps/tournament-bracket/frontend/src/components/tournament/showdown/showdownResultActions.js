@@ -2,7 +2,10 @@ import { playedResult, forfeitResult } from './showdownResults.js';
 import { assignTable, moveTable, unassignTable, setHold } from './showdownScheduler.js';
 import { syncPlayoffPlayers, downstreamOf } from './showdownPlayoff.js';
 import { applyWalkovers } from './showdownWalkovers.js';
-import { context, findMatch, requireStatus, withAudit, qualifyingMatches, playoffMatches, replaceMatches } from './showdownState.js';
+import { raceToFor, isPayoutV3 } from './showdownPayoutVersion.js';
+import { context, findMatch, requireStatus, withAudit, qualifyingMatches, playoffMatches, replaceMatches, playerIds, withdrawnIds } from './showdownState.js';
+import { v3PlayedFor, v3ForfeitFor } from './v3/showdownV3Matches.js';
+import { v3CorrectionProblem } from './v3/showdownV3Corrections.js';
 
 function phaseStatus(match) {
   return match.phase === 'qualifying' ? ['qualifying'] : ['playoffs'];
@@ -58,6 +61,7 @@ function saveResult(state, match, next, c, action) {
   const detail = correcting
     ? { from: { result: match.result, score1: match.score1, score2: match.score2, winnerId: match.winnerId }, to: { result: next.result, score1: next.score1, score2: next.score2, winnerId: next.winnerId } }
     : { result: next.result, score1: next.score1, score2: next.score2, winnerId: next.winnerId };
+  if (typeof next.voluntaryForfeit === 'boolean') detail.voluntary = next.voluntaryForfeit;
   return withAudit(nextState, c, correcting ? `correct-${action}` : action, [match.id], detail);
 }
 
@@ -71,18 +75,34 @@ function openMatch(state, matchId) {
 }
 
 function raceFor(state, match) {
-  return match.phase === 'qualifying' ? state.settings.qualifyingRaceTo : state.settings.playoffRaceTo;
+  return raceToFor(state, match.phase);
+}
+
+/** V3 corrections are checked against the score rules and every budget before they replace a result. */
+function checkedV3(state, next) {
+  const problem = v3CorrectionProblem(state.payoutPlan, playerIds(state), state.matches, next, {
+    byeIds: (state.playoff?.byes || []).map((b) => b.playerId), withdrawnIds: withdrawnIds(state),
+  });
+  if (problem) throw new Error(problem);
+  return next;
 }
 
 export function recordResult(state, matchId, { score1, score2 }, ctxIn) {
   const c = context(ctxIn);
   const match = openMatch(state, matchId);
+  if (isPayoutV3(state)) return saveResult(state, match, checkedV3(state, v3PlayedFor(state, match, score1, score2, c.now)), c, 'result');
   return saveResult(state, match, playedResult(match, score1, score2, raceFor(state, match), c.now), c, 'result');
 }
 
-export function recordForfeit(state, matchId, forfeitingIds, ctxIn) {
+/**
+ * `entry` (V3 only, required): { score1, score2 } already played, or { noGamesPlayed: true }; both players
+ * keep the games they won. `entry.voluntary` records that the player chose to forfeit.
+ * V1 and V2 forfeits always record the race won to nil.
+ */
+export function recordForfeit(state, matchId, forfeitingIds, ctxIn, entry) {
   const c = context(ctxIn);
   const match = openMatch(state, matchId);
+  if (isPayoutV3(state)) return saveResult(state, match, checkedV3(state, v3ForfeitFor(state, match, forfeitingIds, entry, c.now)), c, 'forfeit');
   return saveResult(state, match, forfeitResult(match, forfeitingIds, raceFor(state, match), c.now), c, 'forfeit');
 }
 

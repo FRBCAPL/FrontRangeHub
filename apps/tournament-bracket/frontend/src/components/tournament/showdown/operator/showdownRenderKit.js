@@ -16,6 +16,14 @@ const cloudStub = {
   },
 };
 
+/** react-router-dom is not installed at the repo root; pages that navigate get a stand-in. */
+const routerStub = {
+  name: 'router-stub',
+  setup(b) {
+    b.onResolve({ filter: /^react-router-dom$/ }, () => ({ path: path.join(here, 'routerTestStub.js') }));
+  },
+};
+
 export async function loadComponent(file) {
   if (cache.has(file)) return cache.get(file);
   const outfile = path.join(outDir, `${path.basename(file, '.jsx')}-${process.pid}.mjs`);
@@ -27,8 +35,8 @@ export async function loadComponent(file) {
     outfile,
     jsx: 'automatic',
     loader: { '.css': 'empty' },
-    external: ['react', 'react-dom', 'react/jsx-runtime', 'react-router-dom'],
-    plugins: [cloudStub],
+    external: ['react', 'react-dom', 'react/jsx-runtime'],
+    plugins: [cloudStub, routerStub],
     logLevel: 'silent',
   });
   const mod = await import(pathToFileURL(outfile).href);

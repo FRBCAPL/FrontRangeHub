@@ -58,10 +58,10 @@ export function TvShootout({ v }) {
           <span><small>Holds the table</small><strong>{v.holder.name}</strong></span>
           <em>vs</em>
           <span><small>Challenger</small><strong>{v.challenger.name}</strong></span>
-          <span><small>Breaks</small><strong>{v.breaker.name}</strong></span>
+          <span><small>Starts</small><strong>{v.breaker.name}</strong></span>
         </p>
       ) : null}
-      {v.status === 'lag' ? <p className="sd-tv-muted">Lag for the break: {v.lagPlayers[0].name} vs {v.lagPlayers[1].name}</p> : null}
+      {v.status === 'lag' ? <p className="sd-tv-muted">Deciding who starts: {v.lagPlayers[0].name} or {v.lagPlayers[1].name}</p> : null}
       <ul className="sd-tv-list">
         {v.order.map((p) => (
           <li key={p.id} className={p.out ? 'is-out' : p.survivor ? 'is-in' : ''}>

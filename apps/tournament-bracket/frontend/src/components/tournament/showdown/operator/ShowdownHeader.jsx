@@ -1,5 +1,12 @@
 import React from 'react';
 import { STATUS_LABELS, money } from './showdownView.js';
+import { isPayoutV3 } from '../showdownPayoutVersion.js';
+import { formatCents } from '../v3/showdownV3Rules.js';
+
+function moneyChips(state, paid) {
+  if (!isPayoutV3(state)) return { pool: money(state.payoutPlan?.pool), paid: money(paid) };
+  return { pool: formatCents(state.payoutPlan.poolCents), paid: formatCents(Math.round(Number(paid || 0) * 100)) };
+}
 
 export function showdownTabs(state) {
   const tabs = [
@@ -8,8 +15,10 @@ export function showdownTabs(state) {
     { key: 'standings', label: 'Standings' },
   ];
   if ((state.shootouts || []).length) tabs.push({ key: 'shootout', label: 'Shootout' });
-  if (['bracket', 'playoffs', 'completed'].includes(state.status)) tabs.push({ key: 'bracket', label: 'Bracket' });
+  const stoppedBeforeBracket = isPayoutV3(state) && state.status === 'completed' && !state.playoff?.drawnAt;
+  if (['bracket', 'playoffs', 'completed'].includes(state.status) && !stoppedBeforeBracket) tabs.push({ key: 'bracket', label: 'Bracket' });
   tabs.push({ key: 'money', label: 'Money' });
+  if (isPayoutV3(state)) tabs.push({ key: 'settle', label: 'End & settle' });
   if (['playoffs', 'completed'].includes(state.status)) tabs.push({ key: 'results', label: 'Results' });
   tabs.push({ key: 'players', label: 'Players' }, { key: 'log', label: 'Audit log' });
   return tabs;
@@ -17,11 +26,12 @@ export function showdownTabs(state) {
 
 export default function ShowdownHeader({ state, tab, onTab, paid, step, corrections, onCorrections, onLeave, onNew }) {
   const tabs = showdownTabs(state);
+  const chips = moneyChips(state, paid);
   return (
     <header className="cc-play-header">
       <div className="cc-play-header-top">
         <div className="cc-play-title">
-          <p className="cc-play-kicker">Cash Climb Showdown · {STATUS_LABELS[state.status] || state.status}</p>
+          <p className="cc-play-kicker">Cash Climb Showdown{isPayoutV3(state) ? ' V3' : ''} · {STATUS_LABELS[state.status] || state.status}</p>
           <h1>{state.name}</h1>
         </div>
         <div className="cc-play-actions">
@@ -38,8 +48,8 @@ export default function ShowdownHeader({ state, tab, onTab, paid, step, correcti
         {state.venue ? <span className="cc-chip">{state.venue}</span> : null}
         <span className="cc-chip">{state.players.length} entrants</span>
         <span className="cc-chip">{state.settings.tableCount} tables</span>
-        <span className="cc-chip">Pool {money(state.payoutPlan?.pool)}</span>
-        <span className="cc-chip">Paid {money(paid)}</span>
+        <span className="cc-chip">Pool {chips.pool}</span>
+        <span className="cc-chip">Paid {chips.paid}</span>
       </div>
       {corrections ? <p className="sd-warn">Corrections mode is on: correct, undo, and reopen controls are showing. Turn it off when you are done.</p> : null}
       {step ? <p className="sd-step" role="status">{step}</p> : null}

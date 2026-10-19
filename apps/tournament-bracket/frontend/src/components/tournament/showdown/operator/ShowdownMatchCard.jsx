@@ -29,6 +29,7 @@ export default function ShowdownMatchCard({ match, freeTables = [], suggested = 
         <span className="sd-vs">vs</span>
         <Player name={m.p2Name} out={m.p2Out} won={done && m.winnerId === m.p2} />
       </div>
+      {m.info ? <p className="sd-match-info">{m.info}</p> : null}
       {done ? <p className="sd-match-result">{m.resultText}</p> : null}
       {!done && !onTable && m.reason ? <p className="sd-match-reason">{m.reason}</p> : null}
       <div className="sd-match-actions">

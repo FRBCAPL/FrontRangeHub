@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { showdownCloud } from '../cloud/showdownCloud.js';
+import { ISOLATED_CLOUD_NOTE } from '../cloud/showdownCloudApi.js';
+import { isPayoutV3 } from '../showdownPayoutVersion.js';
 import { STATUS_LABELS } from '../operator/showdownView.js';
 import { formatTournamentDate } from '../../cash-climb/cashClimbEngine.js';
 import useShowdownPublicEvent from './useShowdownPublicEvent.js';
 import { sendPhoneScore } from './showdownPhoneSubmit.js';
 import { listMySubmissions, rememberSubmission, updateSubmission } from './showdownMySubmissions.js';
 import { SHOWDOWN_PUBLIC_HASH } from './showdownPublicRoutes.js';
+import { SHOWDOWN_GUIDE_HASH, SHOWDOWN_V3_GUIDE_HASH } from './showdownGuideRoute.js';
 import ShowdownPublicList from './ShowdownPublicList.jsx';
 import ShowdownPublicNow from './ShowdownPublicNow.jsx';
 import ShowdownPublicStandings from './ShowdownPublicStandings.jsx';
@@ -14,6 +17,9 @@ import ShowdownPublicBracket from './ShowdownPublicBracket.jsx';
 import ShowdownPublicShootout from './ShowdownPublicShootout.jsx';
 import { ShowdownPublicMoney, ShowdownPublicResults } from './ShowdownPublicMoney.jsx';
 import ShowdownPhoneScoreModal from './ShowdownPhoneScoreModal.jsx';
+import ShowdownV3PublicTabs from './v3/ShowdownV3PublicTabs.jsx';
+import ShowdownV3PhoneScoreModal from './v3/ShowdownV3PhoneScoreModal.jsx';
+import { v3PublicFacts } from './v3/showdownV3PublicView.js';
 import '../../TournamentBracketApp.css';
 import '../../cash-climb/CashClimb.css';
 import '../../cash-climb/CashClimbSubmitPage.css';
@@ -40,7 +46,12 @@ export default function ShowdownPublicPage({ eventId, api = showdownCloud }) {
 
 function ShowdownPublicEvent({ api, eventId }) {
   const navigate = useNavigate();
-  const { event, loading, error, source, pendingIds } = useShowdownPublicEvent(api, eventId);
+  const { search } = useLocation();
+  const isolated = Boolean(api.isIsolated?.());
+  // With the isolated test cloud, ?device=phone makes a tab on the operator's own browser act as a phone.
+  const simulatedPhone = isolated && new URLSearchParams(search).get('device') === 'phone';
+  const { event, loading, error, source, pendingIds } = useShowdownPublicEvent(api, eventId, 3000, { preferTablet: !simulatedPhone });
+  const v3 = Boolean(event) && isPayoutV3(event);
   const [tab, setTab] = useState('');
   const [reporting, setReporting] = useState(null);
   const [notice, setNotice] = useState('');
@@ -76,7 +87,7 @@ function ShowdownPublicEvent({ api, eventId }) {
   };
 
   return (
-    <div className="cc-submit-shell">
+    <div className="cc-submit-shell sd-pub-shell">
       <div className="tournament-bracket-app cc-submit sd-pub">
         <header className="cc-submit-head">
           <p className="cc-play-kicker">Cash Climb Showdown</p>
@@ -86,7 +97,9 @@ function ShowdownPublicEvent({ api, eventId }) {
               {[event.venue, formatTournamentDate(event.tournamentDate), STATUS_LABELS[event.status]].filter(Boolean).join(' \u00b7 ')}
             </p>
           ) : null}
+          {v3 ? <p className="cc-submit-note">{v3PublicFacts(event).join(' \u00b7 ')}</p> : null}
         </header>
+        {isolated ? <p className="cc-banner" role="status">{ISOLATED_CLOUD_NOTE}{simulatedPhone ? ' This tab is acting as a phone.' : ''}</p> : null}
         {loading ? <p className="cc-meta">Loading this event&hellip;</p> : null}
         {!loading && !event ? <p className="cc-banner">{error || 'This event is not available. It may not have started yet.'}</p> : null}
         {notice ? <p className="cc-submit-status" role="status">{notice}</p> : null}
@@ -97,24 +110,27 @@ function ShowdownPublicEvent({ api, eventId }) {
                 <button key={k} type="button" className={`sd-tab${active === k ? ' is-active' : ''}`} aria-pressed={active === k} onClick={() => setTab(k)}>{label}</button>
               ))}
             </nav>
-            {active === 'now' ? <ShowdownPublicNow event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} /> : null}
-            {active === 'standings' ? (
+            {v3 ? <ShowdownV3PublicTabs tab={active} event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} /> : null}
+            {!v3 && active === 'now' ? <ShowdownPublicNow event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} /> : null}
+            {!v3 && active === 'standings' ? (
               <>
                 <ShowdownPublicStandings event={event} />
                 {(event.shootouts || []).length && event.status !== 'shootout' ? <ShowdownPublicShootout event={event} /> : null}
               </>
             ) : null}
-            {active === 'bracket' ? <ShowdownPublicBracket event={event} /> : null}
-            {active === 'money' ? <ShowdownPublicMoney event={event} /> : null}
-            {active === 'results' ? <ShowdownPublicResults event={event} /> : null}
+            {!v3 && active === 'bracket' ? <ShowdownPublicBracket event={event} /> : null}
+            {!v3 && active === 'money' ? <ShowdownPublicMoney event={event} /> : null}
+            {!v3 && active === 'results' ? <ShowdownPublicResults event={event} /> : null}
           </>
         ) : null}
         <div className="cc-submit-nav">
           <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_PUBLIC_HASH)}>All Showdowns</button>
+          <button type="button" className="tb-btn-new" onClick={() => navigate(v3 ? SHOWDOWN_V3_GUIDE_HASH : SHOWDOWN_GUIDE_HASH)}>{v3 ? 'How Showdown V3 works' : 'How Showdown works'}</button>
           <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>Back to home</button>
         </div>
       </div>
-      {reporting && event ? (
+      {reporting && event && v3 ? <ShowdownV3PhoneScoreModal event={event} match={reporting} onSend={send} onCancel={() => setReporting(null)} /> : null}
+      {reporting && event && !v3 ? (
         <ShowdownPhoneScoreModal
           match={reporting}
           raceTo={reporting.phase === 'qualifying' ? event.settings.qualifyingRaceTo : event.settings.playoffRaceTo}

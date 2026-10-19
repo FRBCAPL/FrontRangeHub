@@ -40,7 +40,7 @@ export default function useShowdownCloud(api, state, replaceState) {
     if (!current?.id || !TAKES_SCORES.includes(current.status)) { setPendingRows([]); return; }
     const res = await api.pending(current.id);
     if (res.error) {
-      setPendingError(res.code === 'unavailable' ? '' : `Phone scores could not be checked. ${cloudMessage(res.code)}`);
+      setPendingError(['unavailable', 'dev-isolation-required'].includes(res.code) ? '' : `Phone scores could not be checked. ${cloudMessage(res.code)}`);
       return;
     }
     setPendingError('');

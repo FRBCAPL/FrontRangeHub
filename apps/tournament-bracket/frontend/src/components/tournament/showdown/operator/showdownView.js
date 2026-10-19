@@ -114,7 +114,8 @@ export function circleView(state) {
         const opp = m.p1 === id ? m.p2 : m.p1;
         const mineFirst = m.p1 === id;
         const ownScore = m.result === 'played' ? `${mineFirst ? m.score1 : m.score2}\u2013${mineFirst ? m.score2 : m.score1}` : resultText(state, m);
-        return { id: opp, name: nameOf(state, opp), matchId: m.id, label: matchLabel(state, m), done: m.status === 'completed', result: m.result, resultText: resultText(state, m), ownScore, won: m.winnerId === id };
+        const tie = m.status === 'completed' && m.result === 'played' && !m.winnerId;
+        return { id: opp, name: nameOf(state, opp), matchId: m.id, label: matchLabel(state, m), done: m.status === 'completed', result: m.result, resultText: resultText(state, m), ownScore, won: m.winnerId === id, tie };
       }),
     };
   });
@@ -133,8 +134,8 @@ export function shootoutView(state) {
     kind: bye ? 'bye' : 'cutoff',
     title: bye ? 'Bye shootout' : 'Qualification shootout',
     purpose: bye
-      ? `These qualifiers are tied for the last opening bye${sh.spots === 1 ? '' : 's'}. Everyone here is already in the playoffs; the shootout only decides who skips the quarterfinal. Racks pay nothing and do not change standings.`
-      : 'These players are tied at the playoff cutoff. Racks pay nothing and do not change standings.',
+      ? `These qualifiers are tied for the last opening bye${sh.spots === 1 ? '' : 's'}. Everyone here is already in the playoffs; the shootout only decides who skips the quarterfinal. Shootout games pay nothing and do not change standings.`
+      : 'These players are tied at the playoff cutoff. Shootout games pay nothing and do not change standings.',
     spotLabel: bye ? `bye${sh.spots === 1 ? '' : 's'}` : `spot${sh.spots === 1 ? '' : 's'}`,
     survivorLabel: bye ? 'Bye' : 'Qualified',
     decidedLabel: bye ? 'Byes go to' : 'Qualified',

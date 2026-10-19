@@ -3,6 +3,7 @@
  * Each action is an engine call: it either returns the next state or throws a plain-English error.
  */
 import * as E from '../showdownEngine.js';
+import { v3CompletedStep } from './v3/showdownV3MoneyView.js';
 
 function scoreValue(raw) {
   const text = String(raw ?? '').trim();
@@ -17,10 +18,11 @@ function phaseOf(state) {
 export const ACTIONS = {
   updateDetails: (s, c, patch) => E.updateDetails(s, patch, c),
   updateSettings: (s, c, patch) => E.updateSettings(s, patch, c),
+  changeFormat: (s, c, version, opts) => E.changeFormat(s, version, opts, c),
   addPlayer: (s, c, player) => E.addPlayer(s, player, c),
   removePlayer: (s, c, id) => E.removePlayer(s, id, c),
   updatePlayer: (s, c, id, patch) => E.updatePlayer(s, id, patch, c),
-  start: (s, c) => E.startShowdown(s, c),
+  start: (s, c, { v3Preview = false } = {}) => E.startShowdown(s, { ...c, v3Preview }),
   startMatch: (s, c, matchId, table) => E.startOnTable(s, matchId, Number(table), c),
   startSuggested: (s, c, table) => {
     const next = E.suggestNextMatch(s.matches.filter((m) => m.phase === phaseOf(s)));
@@ -31,8 +33,8 @@ export const ACTIONS = {
   takeOffTable: (s, c, matchId) => E.takeOffTable(s, matchId, c),
   hold: (s, c, matchId, on) => E.holdMatch(s, matchId, on, c),
   recordScore: (s, c, matchId, score1, score2) => E.recordResult(s, matchId, { score1: scoreValue(score1), score2: scoreValue(score2) }, c),
-  forfeit: (s, c, matchId, ids) => E.recordForfeit(s, matchId, ids, c),
-  withdraw: (s, c, id) => E.withdrawPlayer(s, id, c),
+  forfeit: (s, c, matchId, ids, entry) => E.recordForfeit(s, matchId, ids, c, entry),
+  withdraw: (s, c, id, opts) => E.withdrawPlayer(s, id, c, opts),
   reinstate: (s, c, id) => E.reinstatePlayer(s, id, c),
   lockQualifying: (s, c) => E.lockQualifying(s, c),
   reopenQualifying: (s, c, confirmText) => E.reopenQualifying(s, confirmText, c),
@@ -44,6 +46,9 @@ export const ACTIONS = {
   confirmBracket: (s, c) => E.confirmPlayoff(s, c),
   undoFrom: (s, c, matchId, confirmText) => E.undoPlayoffFrom(s, matchId, confirmText, c),
   complete: (s, c) => E.completeShowdown(s, c),
+  interrupt: (s, c, opts, confirmText) => E.interruptShowdown(s, opts, confirmText, c),
+  abandon: (s, c, confirmText) => E.abandonShowdown(s, confirmText, c),
+  adjustPayout: (s, c, adj) => E.adjustPayout(s, adj, c),
   approvePhone: (s, c, sub) => E.approvePhoneResult(s, sub, c),
   rejectPhone: (s, c, sub, reason) => E.rejectPhoneResult(s, sub, reason, c),
 };
@@ -60,6 +65,8 @@ export function currentOperator() {
 export function runAction(state, name, args = [], ctx = {}) {
   const fn = ACTIONS[name];
   if (!fn) return { state, error: `Unknown action: ${name}` };
+  const unsupported = E.formatSupportProblem(state);
+  if (unsupported) return { state, error: unsupported };
   try {
     const c = { by: ctx.by || currentOperator(), ...ctx };
     return { state: fn(state, c, ...args), error: '' };
@@ -88,10 +95,10 @@ export function nextStep(state) {
       const bye = E.shootoutKind(sh) === 'bye';
       if (!sh?.lagWinnerId) {
         return bye
-          ? 'Qualifiers are tied for the last quarterfinal bye. Record who wins the lag to start the bye shootout.'
-          : 'A tie crosses the playoff cutoff. Record who wins the lag to start the shootout.';
+          ? 'Qualifiers are tied for the last quarterfinal bye. Record who starts the first game to begin the bye shootout.'
+          : 'A tie crosses the playoff cutoff. Record who starts the first game to begin the shootout.';
       }
-      return bye ? 'Bye shootout in progress. Record each rack winner.' : 'Shootout in progress. Record each rack winner.';
+      return bye ? 'Bye shootout in progress. Record each game winner.' : 'Shootout in progress. Record each game winner.';
     }
     case 'bracket':
       if (state.qualification?.short) return `Not enough eligible players: ${state.qualification.short} playoff spot(s) cannot be filled.`;
@@ -103,7 +110,7 @@ export function nextStep(state) {
       if (ready && free) return `${open} playoff match${open === 1 ? '' : 'es'} left. Start the next match on an open table.`;
       return `${open} playoff match${open === 1 ? '' : 'es'} left. Record results as tables finish.`;
     case 'completed':
-      return 'Event complete. Every dollar is paid out.';
+      return E.isPayoutV3(state) ? v3CompletedStep(state) : 'Event complete. Every dollar is paid out.';
     default:
       return '';
   }

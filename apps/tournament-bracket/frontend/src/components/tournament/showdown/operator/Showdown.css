@@ -329,6 +329,14 @@
   overflow-y: auto;
 }
 
+/* The hub's global reset (`* { max-height: unset !important }`) otherwise lets a tall popup grow past the
+   screen on phones: its title slides under the page heading and its buttons fall below the fold. */
+.cc-modal-overlay > .cc-modal.sd-score-modal {
+  box-sizing: border-box;
+  max-height: 100% !important;
+  overscroll-behavior: contain;
+}
+
 .sd-archive ul {
   list-style: none;
   margin: 0;
@@ -350,4 +358,63 @@
 
 .sd-archive small {
   color: #94a3b8;
+}
+
+.sd-tag-recommended {
+  background: rgba(56, 189, 248, 0.16);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #7dd3fc;
+}
+
+.cc-modal.sd-format-picker {
+  box-sizing: border-box;
+  align-self: stretch;
+  width: min(38rem, 100%);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sd-format-options {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+
+.sd-format-option {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  cursor: pointer;
+}
+
+.sd-format-option.is-selected {
+  border-color: rgba(56, 189, 248, 0.7);
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.sd-format-option input {
+  margin-top: 4px;
+}
+
+.sd-format-summary,
+.sd-format-option .sd-warn {
+  display: block;
+  margin-top: 4px;
+}
+
+.sd-format-confirm {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 10px 0;
+  font-weight: 700;
+}
+
+.sd-format-current {
+  margin: 0 0 6px;
 }

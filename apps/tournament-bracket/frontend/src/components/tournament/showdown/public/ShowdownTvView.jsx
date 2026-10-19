@@ -6,6 +6,10 @@ import { parseTvLayout } from '../../cash-climb/cashClimbTv.js';
 import useShowdownPublicEvent from './useShowdownPublicEvent.js';
 import { buildShowdownTvBoard } from './showdownTvBoard.js';
 import { TvTables, TvList, TvStandings, TvShootout, TvBracket } from './ShowdownTvSections.jsx';
+import { buildShowdownV3TvBoard } from './v3/showdownV3TvBoard.js';
+import ShowdownV3TvBody from './v3/ShowdownV3TvBody.jsx';
+import { isPayoutV3 } from '../showdownPayoutVersion.js';
+import { ISOLATED_CLOUD_NOTE } from '../cloud/showdownCloudApi.js';
 import '../../cash-climb/CashClimbTv.css';
 import './ShowdownTv.css';
 
@@ -33,7 +37,7 @@ function Body({ b }) {
         <div className="sd-tv-col">
           <TvTables tables={b.tables} />
           <TvList title="Up next" items={b.upNext} render={(m) => <>{m.label}: {m.p1Name} <em>vs</em> {m.p2Name}</>} />
-          <section className="sd-tv-card"><h2>Championship</h2><p className="sd-tv-big">{b.championship}</p></section>
+          <section className="sd-tv-card"><h2>{b.payoutVersion === 2 ? 'Championship win' : 'Championship'}</h2><p className="sd-tv-big">{b.championship}</p></section>
         </div>
       </>
     );
@@ -41,7 +45,7 @@ function Body({ b }) {
   return (
     <>
       <div className="sd-tv-col">
-        {b.champion ? <section className="sd-tv-card sd-tv-champion"><small>{b.champion.title}</small><strong>{b.champion.name}</strong><span>{b.champion.earnings}</span></section> : null}
+        {b.champion ? <section className="sd-tv-card sd-tv-champion"><small>{b.champion.title}</small><strong>{b.champion.name}</strong><span>{b.champion.earnings}</span>{b.champion.bonus ? <small>{b.champion.bonus}</small> : null}</section> : null}
         <TvList title="Earnings" items={b.earnings} render={(p) => <>{p.name} <strong>{p.total}</strong></>} />
       </div>
       <div className="sd-tv-col">
@@ -57,7 +61,7 @@ export default function ShowdownTvView({ eventId, api = showdownCloud }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const layout = parseTvLayout(searchParams.get('layout'));
   const { event, loading, error } = useShowdownPublicEvent(api, eventId, POLL_MS);
-  const b = buildShowdownTvBoard(event);
+  const b = event && isPayoutV3(event) ? buildShowdownV3TvBoard(event) : buildShowdownTvBoard(event);
 
   useEffect(() => { document.title = `Showdown TV ${layout === 'portrait' ? '9:16' : '16:9'}`; }, [layout]);
 
@@ -77,13 +81,15 @@ export default function ShowdownTvView({ eventId, api = showdownCloud }) {
               <p className="sd-tv-brand">Front Range Pool &middot; Cash Climb Showdown</p>
               <h1>{b.name}</h1>
               <p className="sd-tv-chips">{[b.venue, b.dateLabel, b.statusLabel].filter(Boolean).join(' \u00b7 ')}</p>
+              {b.formatLine ? <p className="sd-tv-chips">{b.formatLine}</p> : null}
+              {api.isIsolated?.() ? <p className="sd-tv-warn">{ISOLATED_CLOUD_NOTE}</p> : null}
             </div>
             <div className="sd-tv-money">
               <span>Pool <strong>{b.pool}</strong></span>
               <span>Paid <strong>{b.paid}</strong></span>
             </div>
           </header>
-          <main className="sd-tv-body"><Body b={b} /></main>
+          <main className="sd-tv-body">{b.v3 ? <ShowdownV3TvBody b={b} /> : <Body b={b} />}</main>
         </>
       ) : (
         <p className="sd-tv-empty">{loading ? 'Loading\u2026' : error || 'This Showdown has not started yet.'}</p>

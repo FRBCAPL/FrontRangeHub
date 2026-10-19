@@ -1,5 +1,14 @@
 import { playoffTemplate, finalRound } from './showdownPlayoffTemplates.js';
 import { paysMatchWin } from './showdownResults.js';
+import { isPayoutV1, isPayoutV2, isPayoutV3, noEngineError, requireSupportedFormat } from './showdownPayoutVersion.js';
+import { computeEarningsV2, reconciliationProblemV2 } from './showdownEarningsV2.js';
+import { computeEarningsV3, reconciliationProblemV3, v3OutcomeOf } from './v3/showdownV3Money.js';
+import { SHOWDOWN_PAYOUT_V3 } from './showdownRules.js';
+
+/** A V3 event that started under a V3 plan; anything else V3 has no money to show. */
+function hasV3Plan(state) {
+  return isPayoutV3(state) && state.payoutPlan?.payoutVersion === SHOWDOWN_PAYOUT_V3;
+}
 
 /**
  * Non-championship playoff payouts nobody earned (double forfeits and empty-position results).
@@ -20,6 +29,10 @@ function unpaidPlayoffPayouts(ladder, matches, finalKey) {
  *   playoff    — round pay; the championship adds Q per qualifying double forfeit and every unpaid playoff payout
  */
 export function computeEarnings(state) {
+  requireSupportedFormat(state);
+  if (isPayoutV2(state)) return computeEarningsV2(state);
+  if (hasV3Plan(state)) return computeEarningsV3(state);
+  if (!isPayoutV1(state)) throw noEngineError(state);
   const plan = state.payoutPlan;
   const ladder = state.playoffPlan;
   const byPlayer = {};
@@ -90,6 +103,10 @@ export function earningsDrops(before, after) {
  * Returns '' when the totals match the pool exactly, otherwise a description.
  */
 export function reconciliationProblem(state) {
+  requireSupportedFormat(state);
+  if (isPayoutV2(state)) return reconciliationProblemV2(state);
+  if (hasV3Plan(state)) return reconciliationProblemV3(state, v3OutcomeOf(state) === 'in-progress' ? 'completed' : undefined);
+  if (!isPayoutV1(state)) throw noEngineError(state);
   const { paid, pool } = computeEarnings(state);
   if (!state.playoffPlan) return 'The playoff payouts are not locked yet.';
   if (paid !== pool) return `Paid $${paid} but the pool is $${pool}.`;

@@ -88,6 +88,8 @@ export function bracketView(state) {
     byeTie: named(state.qualification?.byeTie?.tiedIds || []),
     qualifiers: named(state.qualification?.qualifierIds || []),
     championId: state.championId,
+    payoutVersion: E.payoutVersionOf(state),
+    transferTarget: E.isPayoutV2(state) ? 'the champion bonus' : 'the championship',
     championship: state.playoff?.confirmedAt ? E.championshipStatus(state) : { status: 'pending', reason: '' },
     transfers: E.computeEarnings(state).transfers.playoff.map((t) => ({ ...t, label: matchView(state, matches.find((m) => m.id === t.matchId)).label })),
   };
@@ -96,5 +98,14 @@ export function bracketView(state) {
 export function resultsView(state) {
   const rows = E.finalStandings(state).map((r) => ({ ...r, name: nameOf(state, r.playerId) }));
   const champ = state.playoff?.confirmedAt ? E.championshipStatus(state) : { status: 'pending', reason: '' };
-  return { rows, finalDone: champ.status === 'decided', championship: champ };
+  const v2 = E.isPayoutV2(state);
+  const e = v2 ? E.computeEarnings(state) : null;
+  return {
+    rows,
+    finalDone: champ.status === 'decided',
+    championship: champ,
+    payoutVersion: E.payoutVersionOf(state),
+    championBonus: v2 ? e.championBonus : 0,
+    bonusAwarded: v2 ? e.bonusAwarded : false,
+  };
 }

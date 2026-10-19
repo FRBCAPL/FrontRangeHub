@@ -53,14 +53,26 @@ function playedCount(matches, playerId) {
 }
 
 /**
- * Suggested next match: earlier round first, then players who have played least,
- * then players idle longest, then schedule order.
+ * Players for whom this is their labelled Round 2 match while their Round 1 match is unfinished.
+ * Only V3 qualifying matches carry labels, so this is always 0 for V1 and V2.
+ */
+function round2First(matches, m) {
+  if (!m.p1Round) return 0;
+  return [[m.p1, m.p1Round], [m.p2, m.p2Round]].filter(([id, round]) => round === 2 && matches.some((x) => x.id !== m.id
+    && x.status !== 'completed' && ((x.p1 === id && x.p1Round === 1) || (x.p2 === id && x.p2Round === 1)))).length;
+}
+
+/**
+ * Suggested next match: earlier round first, then (V3) matches that keep each player's Round 1 before
+ * their Round 2, then players who have played least, then players idle longest, then schedule order.
+ * The Round 1 preference only orders suggestions; any ready match can still be started.
  */
 export function suggestNextMatch(matches) {
   const ready = readyMatches(matches);
   if (!ready.length) return null;
   const score = (m) => ({
     round: ROUND_ORDER.indexOf(m.roundKey),
+    early: round2First(matches, m),
     played: playedCount(matches, m.p1) + playedCount(matches, m.p2),
     idle: [lastFinished(matches, m.p1), lastFinished(matches, m.p2)].sort().pop(),
     slot: m.slot,
@@ -68,7 +80,7 @@ export function suggestNextMatch(matches) {
   return [...ready].sort((a, b) => {
     const x = score(a);
     const y = score(b);
-    return x.round - y.round || x.played - y.played || (x.idle < y.idle ? -1 : x.idle > y.idle ? 1 : 0) || x.slot - y.slot;
+    return x.round - y.round || x.early - y.early || x.played - y.played || (x.idle < y.idle ? -1 : x.idle > y.idle ? 1 : 0) || x.slot - y.slot;
   })[0];
 }
 

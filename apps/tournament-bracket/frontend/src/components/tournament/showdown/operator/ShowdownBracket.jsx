@@ -2,14 +2,14 @@ import React from 'react';
 import ShowdownBracketRounds from './ShowdownBracketRounds.jsx';
 import { money } from './showdownView.js';
 
-function Byes({ v }) {
+function Byes({ v, fmt }) {
   if (!v.byeCount) return null;
   return (
     <div className="sd-byes">
-      <h4>Quarterfinal byes ({v.byeCount}) · {money(v.byePay)} each</h4>
+      <h4>Quarterfinal byes ({v.byeCount}) · {fmt(v.byePay)} each</h4>
       <p className="sd-note">
         Byes go to the highest-ranked qualifiers by the qualifying tiebreakers. A tie for the last bye is settled by a bye
-        shootout among the tied qualifiers only; a bye pays half a quarterfinal win.
+        shootout among the tied qualifiers only; {v.byeRule || 'a bye pays half a quarterfinal win'}.
       </p>
       {v.byeHolders.length ? <p>Bye holders: <strong>{v.byeHolders.map((p) => p.name).join(', ')}</strong></p> : null}
       {v.byeTie.length ? <p className="sd-warn">Bye shootout needed: {v.byeTie.map((p) => p.name).join(', ')}.</p> : null}
@@ -24,6 +24,7 @@ function Byes({ v }) {
 export default function ShowdownBracket({ view, status, short, onDraw, onConfirm }) {
   if (!view) return null;
   const v = view;
+  const fmt = v.formatAmount || money;
   const drawing = status === 'bracket';
   return (
     <section className="sd-panel" aria-label="Playoff bracket">
@@ -33,7 +34,8 @@ export default function ShowdownBracket({ view, status, short, onDraw, onConfirm
       </div>
       {v.qualifiers.length ? <p className="sd-note">Qualifiers: {v.qualifiers.map((p) => p.name).join(', ')}.</p> : null}
       {short ? <p className="sd-error">Not enough eligible players: {short} playoff spot(s) cannot be filled. The bracket cannot be drawn.</p> : null}
-      <Byes v={v} />
+      {v.raceNote ? <p className="sd-note">{v.raceNote}</p> : null}
+      <Byes v={v} fmt={fmt} />
 
       {drawing ? (
         <div className="sd-btn-row">
@@ -49,7 +51,7 @@ export default function ShowdownBracket({ view, status, short, onDraw, onConfirm
       ) : null}
       {v.transfers.length ? (
         <p className="sd-note">
-          Unpaid match-win payouts moved to the championship: {v.transfers.map((t) => `${t.label} (${money(t.amount)})`).join(', ')}.
+          Unpaid match-win payouts moved to {v.transferTarget}: {v.transfers.map((t) => `${t.label} (${fmt(t.amount)})`).join(', ')}.
         </p>
       ) : null}
 

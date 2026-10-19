@@ -83,9 +83,10 @@ describe('Showdown screens render for every phase', () => {
     for (const text of ['Opp W', 'Opp +/-', 'Separated from player above by']) assert.ok(full.includes(text), `standings tab shows ${text}`);
   });
 
-  it('shootout: order, lag, losses and remaining spots', async () => {
+  it('shootout: order, who starts, losses and remaining spots, with procedure only', async () => {
     const html = clean(await tab(states.shootout, 'run'));
-    for (const text of ['Qualification shootout', 'Lag for the opening break', 'won the lag', 'more elimination', 'Shootout order']) assert.ok(html.includes(text), text);
+    for (const text of ['Qualification shootout', 'Who starts the first game', ' starts</button>', 'Each shootout match is a single game', 'more elimination', 'Shootout order']) assert.ok(html.includes(text), text);
+    assert.ok(!/9-ball|texas|\brack|\blag\b|\bbreak/i.test(html.replace(/<[^>]+>/g, ' ')), 'no game or playing rules');
   });
 
   it('5-player bracket preview shows bye holders, bye sections and bye pay before confirmation', async () => {

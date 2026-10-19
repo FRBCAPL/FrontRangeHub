@@ -3,30 +3,34 @@ import { activeShootout, refreshQualification } from './showdownAdvance.js';
 import { applyWalkovers } from './showdownWalkovers.js';
 import { earningsTotals } from './showdownEarnings.js';
 import { context, withAudit, qualifyingMatches, withdrawnIds, replaceMatches } from './showdownState.js';
+import { isPayoutV3 } from './showdownPayoutVersion.js';
+import { v3AutoForfeit } from './v3/showdownV3Matches.js';
 
 /**
  * Every unfinished qualifying match of a withdrawn player becomes an administrative forfeit.
  * When both players have withdrawn it is a double forfeit (no winner, Q moves to the championship).
  * Finished matches are never rewritten by a withdrawal.
  */
-function forfeitQualifying(state, c) {
+function forfeitQualifying(state, c, scoresSoFar = {}) {
   const out = new Set(withdrawnIds(state));
   const matches = qualifyingMatches(state).map((m) => {
     if (m.status === 'completed') return m;
     const gone = [m.p1, m.p2].filter((id) => out.has(id));
     if (!gone.length) return m;
+    if (isPayoutV3(state)) return v3AutoForfeit(state, m, gone, scoresSoFar, c.now);
     return { ...forfeitResult(m, gone, state.settings.qualifyingRaceTo, c.now), auto: 'withdrawal' };
   });
   return { ...state, matches: replaceMatches(state, 'qualifying', matches) };
 }
 
-function markWithdrawn(state, playerId, c) {
+function markWithdrawn(state, playerId, c, voluntary) {
   const player = state.players.find((p) => p.id === playerId);
   if (!player) throw new Error('Player not found.');
   if (player.withdrawnAt) throw new Error(`${player.name} has already withdrawn.`);
+  const extra = isPayoutV3(state) ? { withdrawnVoluntarily: voluntary === true } : {};
   return {
     ...state,
-    players: state.players.map((p) => (p.id === playerId ? { ...p, withdrawnAt: c.now, withdrawnPhase: state.status } : p)),
+    players: state.players.map((p) => (p.id === playerId ? { ...p, withdrawnAt: c.now, withdrawnPhase: state.status, ...extra } : p)),
   };
 }
 
@@ -50,22 +54,25 @@ function shootoutStarted(shootout) {
  *   a player outside the playoff picture changes nothing and any drawn bracket stands
  * - during a started shootout: a qualifier's vacancy is filled once the shootout finishes
  * - after bracket confirmation: the opponent advances by walkover; an earned bye is kept
+ * V3: `scoresSoFar` ({ [matchId]: { score1, score2 } or { noGamesPlayed: true } }) is required for a match
+ * on a table; both players are paid for the games played and the opponent's credit covers only the rest.
+ * `voluntary` records that the player chose to withdraw (not an emergency or an operator decision).
  */
-export function withdrawPlayer(state, playerId, ctxIn) {
+export function withdrawPlayer(state, playerId, ctxIn, { scoresSoFar = {}, voluntary = false } = {}) {
   const c = context(ctxIn);
   if (state.status === 'setup') throw new Error('Before the start, remove the player instead.');
   if (state.status === 'completed' || state.status === 'ended') throw new Error('This event is finished.');
 
   const active = activeShootout(state);
   if (state.status === 'shootout' && active?.groupIds.includes(playerId) && shootoutStarted(active)) {
-    throw new Error('This player is in a shootout that has started. Undo its racks first.');
+    throw new Error('This player is in a shootout that has started. Undo its games first.');
   }
 
-  let next = markWithdrawn(state, playerId, c);
+  let next = markWithdrawn(state, playerId, c, voluntary);
   let effect = 'none';
 
   if (state.status === 'qualifying') {
-    next = forfeitQualifying(next, c);
+    next = forfeitQualifying(next, c, scoresSoFar);
     effect = 'forfeits';
   } else if ((state.status === 'shootout' || state.status === 'bracket') && affectsPlayoffField(state, playerId)) {
     if (state.status === 'shootout' && shootoutStarted(active)) {
@@ -76,10 +83,10 @@ export function withdrawPlayer(state, playerId, ctxIn) {
       effect = state.playoff ? 'redraw' : 'requalify';
     }
   } else if (state.status === 'playoffs') {
-    next = applyWalkovers(next, c);
+    next = applyWalkovers(next, c, scoresSoFar);
     effect = 'walkovers';
   }
-  const detail = { phase: state.status, effect };
+  const detail = { phase: state.status, effect, ...(isPayoutV3(state) ? { voluntary: voluntary === true } : {}) };
   if (effect === 'redraw' || effect === 'requalify') detail.earningsBefore = earningsTotals(state);
   return withAudit(next, c, 'withdraw', [playerId], detail);
 }

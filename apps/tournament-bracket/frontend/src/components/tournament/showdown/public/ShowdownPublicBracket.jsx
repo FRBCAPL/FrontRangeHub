@@ -15,7 +15,7 @@ export default function ShowdownPublicBracket({ event }) {
       {v.championship.status === 'unresolved' ? <p className="sd-warn">Championship unresolved: {v.championship.reason} The director will resolve it.</p> : null}
       {v.byes.length ? <p className="sd-note">Quarterfinal byes ({money(v.byePay)} each): {v.byes.map((b) => b.name).join(', ')}.</p> : null}
       <ShowdownBracketRounds v={v} readOnly />
-      {v.transfers.length ? <p className="sd-note">Unwon match payouts added to the championship: {v.transfers.map((t) => `${t.label} (${money(t.amount)})`).join(', ')}.</p> : null}
+      {v.transfers.length ? <p className="sd-note">Unwon match payouts added to {v.transferTarget}: {v.transfers.map((t) => `${t.label} (${money(t.amount)})`).join(', ')}.</p> : null}
     </section>
   );
 }

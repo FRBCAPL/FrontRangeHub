@@ -2,6 +2,10 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { cashClimbNewPlayerGuide } from './cashClimbNewPlayerGuide.js';
 import { cashClimbGuideHref } from './cashClimbGuideRoute.js';
+import { isShowdownGuide, isShowdownV3Guide } from '../showdown/public/showdownGuideRoute.js';
+import ShowdownPublicGuide from '../showdown/public/ShowdownPublicGuide.jsx';
+import ShowdownV3PublicGuide from '../showdown/public/v3/ShowdownV3PublicGuide.jsx';
+import GuideFormatSwitch from '../GuideFormatSwitch.jsx';
 import '../TournamentBracketApp.css';
 import './CashClimbPublicGuide.css';
 
@@ -12,10 +16,17 @@ function lineClass(line) {
   return '';
 }
 
+/** Public how-it-works route: the original Cash Climb guide, or the Showdown guide with `?format=showdown`. */
 export default function CashClimbPublicGuide() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isTv = searchParams.get('tv') === '1';
+  if (isShowdownGuide(searchParams.toString())) return <ShowdownPublicGuide isTv={isTv} />;
+  if (isShowdownV3Guide(searchParams.toString())) return <ShowdownV3PublicGuide isTv={isTv} />;
+  return <CashClimbGuide isTv={isTv} />;
+}
+
+function CashClimbGuide({ isTv }) {
+  const navigate = useNavigate();
   const guide = cashClimbNewPlayerGuide();
 
   useEffect(() => {
@@ -31,6 +42,7 @@ export default function CashClimbPublicGuide() {
   return (
     <div className={`cc-public-guide-shell${isTv ? ' is-tv' : ''}`}>
       <div className="cc-public-guide">
+        {isTv ? null : <GuideFormatSwitch current="cash-climb" />}
         <header className="cc-guide-hero">
           <p className="cc-guide-brand">Front Range Pool</p>
           <p className="cc-guide-kicker">Cash Climb</p>

@@ -4,6 +4,7 @@
  */
 import * as E from '../showdownEngine.js';
 import { earningsTotals, earningsDrops } from '../showdownEarnings.js';
+import { formatCents } from '../v3/showdownV3Rules.js';
 import { nameOf, money } from './showdownView.js';
 
 export function earningsDropDetails(state, preview) {
@@ -15,7 +16,8 @@ export function earningsDropDetails(state, preview) {
   }
   const drops = earningsDrops(earningsTotals(state), earningsTotals(next));
   if (!drops.length) return [];
-  const list = drops.map((d) => `${nameOf(state, d.playerId)} ${money(d.before)} \u2192 ${money(d.after)}`).join(', ');
+  const fmt = E.isPayoutV3(state) ? (d) => formatCents(Math.round(d * 100)) : money;
+  const list = drops.map((d) => `${nameOf(state, d.playerId)} ${fmt(d.before)} \u2192 ${fmt(d.after)}`).join(', ');
   return [
     `Earnings shown will go down for: ${list}.`,
     'If any of that money was already handed out, settle the difference with the player in person. The app does not track cash paid.',

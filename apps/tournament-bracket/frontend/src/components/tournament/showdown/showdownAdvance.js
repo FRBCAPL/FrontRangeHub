@@ -3,6 +3,8 @@ import { resolveQualification, resolveByes, shootoutMatchesTie } from './showdow
 import { createShootout, replayShootout, shootoutSummary } from './showdownShootout.js';
 import { lockPlayoffPlan } from './showdownPlayoffPlan.js';
 import { playerIds, qualifyingMatches, withdrawnIds } from './showdownState.js';
+import { isPayoutV2, isPayoutV3 } from './showdownPayoutVersion.js';
+import { v3StandingsFor } from './v3/showdownV3Event.js';
 
 /**
  * Players who withdrew while qualifying was open are left out of the eligible ties. A withdrawal after
@@ -12,7 +14,9 @@ function rankingExcludedIds(state) {
   return (state.players || []).filter((p) => p.withdrawnAt && p.withdrawnPhase === 'qualifying').map((p) => p.id);
 }
 
+/** V3 ranks by qualifying dollars first; V1 and V2 use the six match-win tiebreakers. */
 export function standingsFor(state) {
+  if (isPayoutV3(state)) return v3StandingsFor(state, rankingExcludedIds(state));
   return rankStandings(playerIds(state), qualifyingMatches(state), { excludedIds: rankingExcludedIds(state) });
 }
 
@@ -56,7 +60,7 @@ function withShootoutFor(state, kind, tie, c) {
   const active = activeShootout(state);
   let shootouts = state.shootouts || [];
   if (shootoutMatchesTie(active, tie, kind)) return shootouts;
-  if (active && hasProgress(active)) throw new Error('A shootout is under way. Undo its racks before changing who is tied.');
+  if (active && hasProgress(active)) throw new Error('A shootout is under way. Undo its games before changing who is tied.');
   if (active) shootouts = shootouts.slice(0, -1);
   return [...shootouts, createShootout({ id: c.newId('so'), kind, groupIds: tie.tiedIds, spots: tie.openSpots, random: c.random, now: c.now })];
 }
@@ -65,7 +69,7 @@ function withoutUntouchedShootout(state) {
   const active = activeShootout(state);
   const shootouts = state.shootouts || [];
   if (!active) return shootouts;
-  if (hasProgress(active)) throw new Error('A shootout is under way. Undo its racks before changing who is tied.');
+  if (hasProgress(active)) throw new Error('A shootout is under way. Undo its games before changing who is tied.');
   return shootouts.slice(0, -1);
 }
 
@@ -79,6 +83,8 @@ function withoutUntouchedShootout(state) {
 export function refreshQualification(state, c) {
   const outcome = qualificationOutcome(state);
   const base = { ...state.qualification, byeTie: null, byeIds: [] };
+  /** V2 payouts depend only on qualifying results, so they stay locked while a shootout or a short field is sorted out. */
+  const heldPlan = () => (isPayoutV2(state) ? lockPlayoffPlan(state, outcome.qualifiedIds, c.now) : null);
 
   if (outcome.status === 'needs-shootout') {
     const tie = { tiedIds: outcome.tiedIds, openSpots: outcome.openSpots };
@@ -86,7 +92,7 @@ export function refreshQualification(state, c) {
       ...state,
       status: 'shootout',
       shootouts: withShootoutFor(state, 'cutoff', tie, c),
-      playoffPlan: null,
+      playoffPlan: heldPlan(),
       qualification: { ...base, qualifierIds: outcome.qualifiedIds, tie, short: 0 },
     };
   }
@@ -96,7 +102,7 @@ export function refreshQualification(state, c) {
       ...state,
       status: 'bracket',
       shootouts: withoutUntouchedShootout(state),
-      playoffPlan: null,
+      playoffPlan: heldPlan(),
       qualification: { ...base, qualifierIds: outcome.qualifiedIds, tie: null, short: outcome.missing },
     };
   }

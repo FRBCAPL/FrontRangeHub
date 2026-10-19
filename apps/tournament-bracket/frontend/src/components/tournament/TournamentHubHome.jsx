@@ -10,6 +10,8 @@ export default function TournamentHubHome({
   onTvTall,
   onGuide,
   onGuideTv,
+  onShowdownGuide,
+  onShowdownGuideTv,
   onSubmit,
   onBackHome,
 }) {
@@ -23,7 +25,7 @@ export default function TournamentHubHome({
       <div className="tb-hub-grid">
         <button type="button" className="cc-format-btn cc-primary" onClick={onNew}>
           <strong>New Tournament</strong>
-          <span>Cash Climb, Break and Run, single elimination, or double elimination.</span>
+          <span>Cash Climb, Cash Climb Showdown, Break and Run, single elimination, or double elimination.</span>
         </button>
         <button type="button" className="cc-format-btn" onClick={onCurrent}>
           <strong>Current Tournaments</strong>
@@ -46,8 +48,10 @@ export default function TournamentHubHome({
       <div className="tb-hub-tools">
         <button type="button" className="tb-btn-new" onClick={onTvWide}>TV wide 16:9</button>
         <button type="button" className="tb-btn-new" onClick={onTvTall}>TV tall 9:16</button>
-        <button type="button" className="tb-btn-new" onClick={onGuideTv}>How it works TV</button>
-        <button type="button" className="tb-btn-new" onClick={onGuide}>How it works (public)</button>
+        <button type="button" className="tb-btn-new" onClick={onGuide}>How Cash Climb works</button>
+        <button type="button" className="tb-btn-new" onClick={onGuideTv}>Cash Climb guide TV</button>
+        <button type="button" className="tb-btn-new" onClick={onShowdownGuide}>How Showdown works</button>
+        <button type="button" className="tb-btn-new" onClick={onShowdownGuideTv}>Showdown guide TV</button>
         <button type="button" className="tb-btn-new" onClick={onSubmit}>Player submit (public)</button>
         <button type="button" className="tb-btn-new" onClick={onBackHome}>Back to home</button>
       </div>

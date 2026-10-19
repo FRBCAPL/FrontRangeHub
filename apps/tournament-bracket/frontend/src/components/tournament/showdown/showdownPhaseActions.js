@@ -3,21 +3,29 @@ import { activeShootout, refreshQualification } from './showdownAdvance.js';
 import { qualifyingComplete } from './showdownResultActions.js';
 import { earningsTotals } from './showdownEarnings.js';
 import { context, requireConfirm, requireStatus, withAudit, playoffMatches } from './showdownState.js';
+import { isPayoutV3 } from './showdownPayoutVersion.js';
+import { v3CreditSnapshot, v3ReopenProblem } from './v3/showdownV3Event.js';
+
+/** A V3 settlement belongs to the bracket it settled; reopening an earlier stage discards it. */
+const V3_CLEARED = { v3Outcome: null, v3Settlement: null, v3Adjustments: [] };
 
 /** Locks qualifying and works out qualifiers (opening a shootout if a tie crosses the cutoff). */
 export function lockQualifying(state, ctxIn) {
   const c = context(ctxIn);
   requireStatus(state, ['qualifying'], 'Qualifying is not open.');
   if (!qualifyingComplete(state)) throw new Error('Finish every qualifying match first.');
-  const locked = { ...state, qualification: { lockedAt: c.now, qualifierIds: [], tie: null, short: 0 } };
+  const v3Credits = isPayoutV3(state) ? v3CreditSnapshot(state, c.now) : null;
+  const locked = { ...state, qualification: { lockedAt: c.now, qualifierIds: [], tie: null, short: 0, ...(v3Credits ? { v3Credits } : {}) } };
   const next = refreshQualification(locked, c);
   return withAudit(next, c, 'lock-qualifying', [], {
+    ...(v3Credits ? { v3Credits: v3Credits.credits } : {}),
     status: next.status,
     tie: next.qualification.tie,
     byeTie: next.qualification.byeTie,
     byeIds: next.qualification.byeIds,
     playoffBudget: next.playoffPlan?.budget ?? null,
     topUps: next.playoffPlan?.topUps ?? null,
+    ...(next.playoffPlan?.rackReserve ? { qualifyingRacks: next.playoffPlan.qualifyingRacks, rackReserve: next.playoffPlan.rackReserve } : {}),
   });
 }
 
@@ -32,6 +40,8 @@ function hasDependents(state) {
 export function reopenQualifying(state, confirmText, ctxIn) {
   const c = context(ctxIn);
   requireStatus(state, ['shootout', 'bracket', 'playoffs', 'completed'], 'Qualifying is already open.');
+  const v3Problem = isPayoutV3(state) ? v3ReopenProblem(state) : '';
+  if (v3Problem) throw new Error(v3Problem);
   if (hasDependents(state)) requireConfirm(confirmText);
   const cleared = playoffMatches(state).map((m) => m.id);
   const next = {
@@ -44,6 +54,7 @@ export function reopenQualifying(state, confirmText, ctxIn) {
     matches: state.matches.filter((m) => m.phase === 'qualifying'),
     championId: null,
     completedAt: null,
+    ...(isPayoutV3(state) ? V3_CLEARED : {}),
   };
   return withAudit(next, c, 'reopen-qualifying', cleared, {
     shootoutsCleared: (state.shootouts || []).length,
@@ -96,6 +107,8 @@ export function reopenShootout(state, confirmText, ctxIn) {
   const list = state.shootouts || [];
   const last = list[list.length - 1];
   if (!last || !last.rackWinners.length) throw new Error('There is no finished shootout to reopen.');
+  const v3Problem = isPayoutV3(state) ? v3ReopenProblem(state) : '';
+  if (v3Problem) throw new Error(v3Problem);
   if (state.playoff || state.playoffPlan) requireConfirm(confirmText);
   const cleared = playoffMatches(state).map((m) => m.id);
   const next = refreshQualification({
@@ -105,6 +118,7 @@ export function reopenShootout(state, confirmText, ctxIn) {
     matches: state.matches.filter((m) => m.phase === 'qualifying'),
     championId: null,
     completedAt: null,
+    ...(isPayoutV3(state) ? V3_CLEARED : {}),
   }, c);
   return withAudit(next, c, 'reopen-shootout', cleared, { earningsBefore: earningsTotals(state) });
 }

@@ -3,8 +3,9 @@ import { shuffled } from './showdownRandom.js';
 
 /**
  * Winner-stays-on-table, rotating-queue, two-loss shootout.
- * Stored inputs are only: random order, lag winner, and each rack's winner.
- * Everything else (holder, queue, losses, eliminations, breaker) is replayed from those,
+ * Stored inputs are only: random order, who starts the first game (`lagWinnerId`), and each game's
+ * winner (`rackWinners`; the stored names predate the game-agnostic wording and are kept for saved events).
+ * Everything else (holder, queue, losses, eliminations, who starts) is replayed from those,
  * which makes undo exact and keeps the queue free of duplicates by construction.
  */
 
@@ -49,12 +50,12 @@ export function replayShootout(shootout) {
   if (!lagWinnerId) {
     return { status: 'lag', holderId, challengerId, breakerId: null, queue, losses, eliminated, racks, survivors: [] };
   }
-  if (lagWinnerId !== holderId && lagWinnerId !== challengerId) throw new Error('The lag winner must be one of the first two players.');
+  if (lagWinnerId !== holderId && lagWinnerId !== challengerId) throw new Error('The player who starts must be one of the first two players.');
 
   let breakerId = lagWinnerId;
   rackWinners.forEach((winnerId, i) => {
     if (alive() <= spots) throw new Error('The shootout was already decided.');
-    if (winnerId !== holderId && winnerId !== challengerId) throw new Error(`Rack ${i + 1} winner was not at the table.`);
+    if (winnerId !== holderId && winnerId !== challengerId) throw new Error(`Game ${i + 1} winner was not at the table.`);
     const loserId = winnerId === holderId ? challengerId : holderId;
     losses[loserId] += 1;
     const out = losses[loserId] >= SHOOTOUT_ELIMINATION_LOSSES;
@@ -97,16 +98,16 @@ export function replayShootout(shootout) {
 }
 
 export function setLagWinner(shootout, playerId) {
-  if (shootout.rackWinners.length) throw new Error('Undo the racks before changing the lag.');
+  if (shootout.rackWinners.length) throw new Error('Undo the shootout games before changing who starts.');
   if (playerId !== shootout.order[0] && playerId !== shootout.order[1]) {
-    throw new Error('The lag winner must be one of the first two players.');
+    throw new Error('The player who starts must be one of the first two players.');
   }
   return { ...shootout, lagWinnerId: playerId };
 }
 
 export function recordRack(shootout, winnerId) {
   const state = replayShootout(shootout);
-  if (state.status === 'lag') throw new Error('Record the lag winner first.');
+  if (state.status === 'lag') throw new Error('Record who starts the first game first.');
   if (state.status === 'complete') throw new Error('The shootout is already decided.');
   if (winnerId !== state.holderId && winnerId !== state.challengerId) throw new Error('That player is not at the table.');
   const next = { ...shootout, rackWinners: [...shootout.rackWinners, winnerId] };
@@ -128,7 +129,7 @@ export function shootoutSummary(shootout) {
   return { id: shootout.id, kind: shootoutKind(shootout), groupIds: shootout.groupIds, spots: shootout.spots, status: state.status, survivors: state.survivors };
 }
 
-/** Fewest and most racks the shootout can take (each rack hands out exactly one loss). */
+/** Fewest and most games the shootout can take (each game hands out exactly one loss). */
 export function rackBounds(players, spots) {
   const eliminations = players - spots;
   return { min: SHOOTOUT_ELIMINATION_LOSSES * eliminations, max: SHOOTOUT_ELIMINATION_LOSSES * eliminations + spots };

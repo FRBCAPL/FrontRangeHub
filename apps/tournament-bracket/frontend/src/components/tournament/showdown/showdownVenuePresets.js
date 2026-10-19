@@ -5,7 +5,6 @@ export const VENUE_PRESETS = {
     id: 'legends',
     label: 'Legends Brews & Cues',
     venue: 'Legends Brews & Cues',
-    rulesetId: 'texas-express-9ball',
     minEntrants: 8,
     maxEntrants: 24,
     entryFee: 20,

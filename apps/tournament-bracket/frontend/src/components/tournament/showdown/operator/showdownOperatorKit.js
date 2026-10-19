@@ -20,8 +20,8 @@ export function makeOperator(seed = 1) {
 }
 
 /** Setup screen: a fresh event with players typed in one by one. */
-export function setUpEvent(o, n, { fee = 20, tables = 5 } = {}) {
-  let s = createShowdown({ name: `Showdown ${n}`, presetId: 'legends' }, o.op());
+export function setUpEvent(o, n, { fee = 20, tables = 5, payoutVersion = 1 } = {}) {
+  let s = createShowdown({ name: `Showdown ${n}`, presetId: 'legends', payoutVersion }, o.op());
   s = o.tap(s, 'updateSettings', { entryFee: fee, tableCount: tables });
   for (let i = 1; i <= n; i += 1) s = o.tap(s, 'addPlayer', { name: `Player ${i}` });
   return o.tap(s, 'start');

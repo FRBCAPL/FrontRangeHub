@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { STATUS_LABELS } from '../operator/showdownView.js';
 import { formatTournamentDate } from '../../cash-climb/cashClimbEngine.js';
 import { showdownPublicHash } from './showdownPublicRoutes.js';
+import { SHOWDOWN_GUIDE_HASH } from './showdownGuideRoute.js';
 import { publicLoadMessage } from './useShowdownPublicEvent.js';
 import '../../TournamentBracketApp.css';
 import '../../cash-climb/CashClimb.css';
@@ -55,6 +56,7 @@ export default function ShowdownPublicList({ api }) {
           ))}
         </ul>
         <div className="cc-submit-nav">
+          <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_GUIDE_HASH)}>How Showdown works</button>
           <button type="button" className="tb-btn-new" onClick={() => navigate('/tournament-bracket/submit')}>All tournaments</button>
           <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>Back to home</button>
         </div>

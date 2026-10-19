@@ -105,7 +105,7 @@ describe('showdown shootout — procedure', () => {
     assert.throws(() => createShootout({ id: 'x', groupIds: ['A', 'B'], spots: 2 }));
     assert.throws(() => createShootout({ id: 'x', groupIds: ['A', 'A', 'B'], spots: 1 }));
     const sh = createShootout({ id: 'x', groupIds: ['A', 'B', 'C'], spots: 1, random: () => 0.99 });
-    assert.throws(() => recordRack(sh, 'A'), /lag/);
+    assert.throws(() => recordRack(sh, 'A'), /who starts the first game/);
     assert.throws(() => setLagWinner(sh, 'C'));
     const lagged = setLagWinner(sh, 'A');
     assert.throws(() => recordRack(lagged, 'C'), /not at the table/);

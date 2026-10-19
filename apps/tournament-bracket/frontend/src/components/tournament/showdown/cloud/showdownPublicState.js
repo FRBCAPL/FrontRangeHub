@@ -16,10 +16,19 @@ function scrub(value) {
   return out;
 }
 
+/**
+ * V3 payout adjustments stay in the public copy so public totals reconcile, but without the operator who
+ * made them or their private reason (a valid adjustment needs both, so neutral values stand in).
+ */
+function publicAdjustments(list) {
+  return list.map((a) => ({ id: a.id, playerId: a.playerId, amountCents: a.amountCents, at: a.at, by: 'director', reason: 'Payout adjustment' }));
+}
+
 export function publicShowdown(state) {
   if (!state) return null;
   const copy = scrub(state);
   copy.audit = [];
+  if (Array.isArray(state.v3Adjustments)) copy.v3Adjustments = publicAdjustments(state.v3Adjustments);
   return copy;
 }
 

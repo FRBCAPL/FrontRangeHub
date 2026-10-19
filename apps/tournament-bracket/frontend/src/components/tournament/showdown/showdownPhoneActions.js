@@ -5,6 +5,8 @@
  */
 import { context, withAudit } from './showdownState.js';
 import { recordResult } from './showdownResultActions.js';
+import { raceToFor, isPayoutV3 } from './showdownPayoutVersion.js';
+import { v3PhoneScoreProblem } from './v3/showdownV3Matches.js';
 
 export const PHONE_PROBLEMS = {
   'event-not-active': 'This event is not taking scores right now.',
@@ -16,10 +18,13 @@ export const PHONE_PROBLEMS = {
   'player-withdrawn': 'A player in this match has withdrawn. Ask the director.',
   duplicate: 'A score for this match is already waiting for the director.',
   'rate-limited': 'Too many submissions. Wait a few minutes or ask the director.',
+  'invalid-games': 'Every game in a qualifying match is played: the two scores must add up to the number of games in the match.',
+  'invalid-settings': 'This event\u2019s match lengths are missing, so phone scores cannot be accepted. Tell the director your score.',
+  'unsupported-format': 'This event uses a format this version of the app does not support. Reload the page or tell the director your score.',
 };
 
 function raceFor(state, phase) {
-  return Number(phase === 'qualifying' ? state.settings.qualifyingRaceTo : state.settings.playoffRaceTo);
+  return raceToFor(state, phase);
 }
 
 export function invalidScoreMessage(race) {
@@ -38,6 +43,7 @@ export function phoneSubmissionCode(state, sub) {
   if (m.status !== 'on-table') return 'match-not-started';
   if (m.p1 !== sub.p1 || m.p2 !== sub.p2) return 'stale-match';
   if ((state.players || []).some((p) => [sub.p1, sub.p2].includes(p.id) && p.withdrawnAt)) return 'player-withdrawn';
+  if (isPayoutV3(state)) return v3PhoneScoreProblem(state, m, sub.score1, sub.score2) ? 'invalid-score' : '';
   const race = raceFor(state, m.phase);
   const ok = [sub.score1, sub.score2].every((n) => Number.isInteger(n) && n >= 0 && n <= race)
     && ((sub.score1 === race) !== (sub.score2 === race));
@@ -50,6 +56,7 @@ export function phoneSubmissionProblem(state, sub) {
   if (!code) return '';
   if (code === 'invalid-score') {
     const m = state.matches.find((x) => x.id === sub.matchId);
+    if (isPayoutV3(state)) return v3PhoneScoreProblem(state, m, sub.score1, sub.score2);
     return invalidScoreMessage(raceFor(state, m.phase));
   }
   return PHONE_PROBLEMS[code];

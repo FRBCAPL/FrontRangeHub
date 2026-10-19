@@ -8,6 +8,10 @@ import { cloudMessage } from './showdownCloudApi.js';
 import { loadSyncMeta, saveSyncMeta, keepConflictCopy } from './showdownSyncStore.js';
 
 const RETRY_MS = [3000, 10000, 30000, 60000];
+/** The database refused the save itself; retrying the same save cannot help. */
+const REFUSALS = ['unavailable', 'not-authorized', 'invalid-event', 'too-large', 'update-required', 'unsupported-format', 'format-locked', 'plan-locked', 'event-settled', 'dev-isolation-required'];
+/** Refusals that leave the event saved on this tablet only (not an error the operator caused). */
+const LOCAL_ONLY = ['unavailable', 'dev-isolation-required'];
 
 function stable(value) {
   if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
@@ -51,7 +55,7 @@ export function createShowdownSync({ api, onStatus = () => {}, onReplace = () =>
     clearRetry();
     const wait = RETRY_MS[Math.min(attempts, RETRY_MS.length - 1)];
     attempts += 1;
-    retryTimer = setTimer(() => { retryTimer = null; flush(); }, wait);
+    retryTimer = setTimer(() => { retryTimer = null; return flush(); }, wait);
   }
 
   async function openConflict(state) {
@@ -81,8 +85,8 @@ export function createShowdownSync({ api, onStatus = () => {}, onReplace = () =>
     again = false;
     if (res.code === 'stale-version') { await openConflict(state); return status; }
     if (res.code === 'missing') { report({ status: 'missing', message: cloudMessage('missing') }); return status; }
-    if (res.code === 'unavailable' || res.code === 'not-authorized' || res.code === 'invalid-event' || res.code === 'too-large') {
-      report({ status: res.code === 'unavailable' ? 'local-only' : 'error', message: cloudMessage(res.code) });
+    if (REFUSALS.includes(res.code)) {
+      report({ status: LOCAL_ONLY.includes(res.code) ? 'local-only' : 'error', message: cloudMessage(res.code, state) });
       return status;
     }
     report({ status: 'offline', message: cloudMessage(res.code) });
@@ -115,7 +119,7 @@ export function createShowdownSync({ api, onStatus = () => {}, onReplace = () =>
       // A save started while we were looking; its result is newer than this comparison.
       if (inflight || latest !== local || after.version !== before.version) return status;
       if (cloud.error) {
-        if (cloud.code === 'unavailable' || cloud.code === 'not-authorized') report({ status: cloud.code === 'unavailable' ? 'local-only' : 'error', message: cloudMessage(cloud.code) });
+        if (cloud.code === 'unavailable' || cloud.code === 'not-authorized') report({ status: cloud.code === 'unavailable' ? 'local-only' : 'error', message: cloudMessage(cloud.code, local) });
         else { report({ status: 'offline', message: cloudMessage(cloud.code) }); scheduleRetry(); }
         return status;
       }

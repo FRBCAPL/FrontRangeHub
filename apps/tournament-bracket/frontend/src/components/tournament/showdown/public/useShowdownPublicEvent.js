@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { publicShowdown } from '../cloud/showdownPublicState.js';
 import { loadShowdown } from '../operator/showdownStore.js';
 import { legacyFormatProblem, LEGACY_PUBLIC_MESSAGE } from '../showdownState.js';
+import { formatSupportProblem, isPayoutV1, isPayoutV2, isPayoutV3 } from '../showdownPayoutVersion.js';
+import { v3PublicProblem, V3_PLAN_MISSING_MESSAGE } from './v3/showdownV3PublicView.js';
+
+export const UNSUPPORTED_PUBLIC_MESSAGE = 'This event needs a newer version of the app. Reload the page to update.';
 
 const TAKES_SCORES = ['qualifying', 'playoffs'];
 
@@ -11,23 +15,33 @@ export function publicLoadMessage(code) {
   return 'Could not load this event.';
 }
 
-/** Obsolete test events are never shown to phones or the TV. */
+/**
+ * Obsolete test events are never shown to phones or the TV, and neither is any format these public
+ * screens cannot show. V3 events are shown only with a complete locked payout plan; they never fall
+ * back to the V1/V2 screens.
+ */
 export function screenPublicEvent(event) {
+  if (event && isPayoutV3(event) && event.payoutPlan?.payoutVersion !== 3) return { event: null, error: V3_PLAN_MISSING_MESSAGE };
+  if (event && formatSupportProblem(event)) return { event: null, error: UNSUPPORTED_PUBLIC_MESSAGE };
+  if (event && !(isPayoutV1(event) || isPayoutV2(event) || isPayoutV3(event))) return { event: null, error: UNSUPPORTED_PUBLIC_MESSAGE };
   if (event && legacyFormatProblem(event)) return { event: null, error: LEGACY_PUBLIC_MESSAGE };
+  const v3Problem = event && isPayoutV3(event) ? v3PublicProblem(event) : '';
+  if (v3Problem) return { event: null, error: v3Problem };
   return { event, error: '' };
 }
 
 /**
  * The public copy of one event, refreshed on an interval. On the operator's own device the tablet
- * copy is used directly (always the newest); everywhere else the cloud copy is used.
+ * copy is used directly (always the newest); everywhere else the cloud copy is used. `preferTablet:
+ * false` always reads the cloud copy (the isolated test cloud's simulated phone, see ShowdownPublicPage).
  */
-export default function useShowdownPublicEvent(api, eventId, pollMs = 3000) {
+export default function useShowdownPublicEvent(api, eventId, pollMs = 3000, { preferTablet = true } = {}) {
   const [view, setView] = useState({ event: null, loading: true, error: '', source: '', pendingIds: [] });
 
   useEffect(() => {
     let cancelled = false;
     const refresh = async () => {
-      const local = loadShowdown();
+      const local = preferTablet ? loadShowdown() : null;
       const localCopy = local && local.id === eventId && local.status !== 'setup' ? publicShowdown(local) : null;
       const res = localCopy ? { data: null, error: null } : await api.publicGet(eventId);
       if (cancelled) return;
@@ -54,7 +68,7 @@ export default function useShowdownPublicEvent(api, eventId, pollMs = 3000) {
     refresh();
     const timer = setInterval(refresh, pollMs);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [api, eventId, pollMs]);
+  }, [api, eventId, pollMs, preferTablet]);
 
   return view;
 }

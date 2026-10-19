@@ -22,6 +22,7 @@ import {
 import { sanitizeCashClimb } from './cash-climb/cashClimbEngine.js';
 import { preferTournamentCopy, withTournamentTimestamp, tournamentTime } from './cash-climb/cashClimbSaved.js';
 import { CASH_CLIMB_GUIDE_HASH, openCashClimbGuideTv } from './cash-climb/cashClimbGuideRoute.js';
+import { SHOWDOWN_GUIDE_HASH, openShowdownGuideTv } from './showdown/public/showdownGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
 import {
@@ -460,6 +461,8 @@ export default function TournamentBracketApp() {
         onTvTall={() => openCashClimbTv('portrait')}
         onGuideTv={() => openCashClimbGuideTv()}
         onGuide={() => navigate(CASH_CLIMB_GUIDE_HASH)}
+        onShowdownGuideTv={() => openShowdownGuideTv()}
+        onShowdownGuide={() => navigate(SHOWDOWN_GUIDE_HASH)}
         onSubmit={() => navigate(CASH_CLIMB_SUBMIT_HASH)}
         onBackHome={() => navigate('/')}
       />

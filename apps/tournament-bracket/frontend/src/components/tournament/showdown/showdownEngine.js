@@ -19,4 +19,10 @@ export { suggestNextMatch, readyMatches, freeTables, notReadyReason } from './sh
 export { replayShootout, shootoutKind } from './showdownShootout.js';
 export { buildPayoutPlan, playoffLadder, ladderTotal, ladderProblems, qualifyingWinPay } from './showdownPayout.js';
 export { qualifyingWinnings, qualificationTopUps, buildPlayoffPlan, estimatePlayoffPlan } from './showdownPlayoffPlan.js';
+export { buildPlayoffPlanV2, estimatePlayoffPlanV2, rackReserveFor, scheduledPlayoffMatches, qualifyingRacksWon, playedRacks } from './showdownPlayoffPlanV2.js';
+export { payoutVersionOf, isPayoutV1, isPayoutV2, isPayoutV3, v2RaceProblem, raceToFor, formatSupportProblem } from './showdownPayoutVersion.js';
+export { SHOWDOWN_FORMATS, formatFor, formatTitle, isRecommendedFormat } from './showdownFormats.js';
+export { createShowdownWithFormat, changeFormat, formatChangePreview } from './showdownFormatActions.js';
 export { phoneSubmissionCode, phoneSubmissionProblem, approvePhoneResult, rejectPhoneResult } from './showdownPhoneActions.js';
+export { interruptShowdown, abandonShowdown, adjustPayout } from './v3/showdownV3Endings.js';
+export { computeEarningsV3 } from './v3/showdownV3Money.js';

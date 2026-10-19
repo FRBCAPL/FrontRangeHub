@@ -1,4 +1,10 @@
-import { SHOWDOWN_TYPE, SHOWDOWN_FORMAT_VERSION, SHOWDOWN_NAME, DEFAULT_RULESET_ID, RESET_CONFIRM_WORD, rulesetFor } from './showdownRules.js';
+import {
+  SHOWDOWN_TYPE, SHOWDOWN_FORMAT_VERSION, SHOWDOWN_NAME, RESET_CONFIRM_WORD,
+  SHOWDOWN_PAYOUT_VERSION, minEngineFor,
+} from './showdownRules.js';
+import { isPayoutV2, isPayoutV3, v2RaceProblem, payoutVersionOf, formatSupportProblem, requireSupportedFormat } from './showdownPayoutVersion.js';
+import { v3SetupProblems } from './v3/showdownV3Event.js';
+import { formatFor, formatSettings } from './showdownFormats.js';
 import { fieldRuleFor, supportedFieldRange, unsupportedFieldMessage } from './showdownFieldRules.js';
 import { venuePreset, DEFAULT_PRESET_ID } from './showdownVenuePresets.js';
 import { entryFeeProblem } from './showdownPayout.js';
@@ -10,6 +16,8 @@ export function context(ctx = {}) {
     by: ctx.by || '',
     random: ctx.random || Math.random,
     newId: ctx.newId || newId,
+    /** Development and tests only: lets a V3 event start while V3 starts are disabled. The app never sets it. */
+    v3Preview: ctx.v3Preview === true,
   };
 }
 
@@ -17,7 +25,9 @@ export function clone(state) {
   return JSON.parse(JSON.stringify(state));
 }
 
+/** Every engine change passes through here, so an event this build cannot run is never edited. */
 export function withAudit(state, c, action, affected = [], detail = null) {
+  requireSupportedFormat(state);
   return {
     ...state,
     audit: [...(state.audit || []), { at: c.now, by: c.by, action, affected, detail }],
@@ -64,27 +74,21 @@ export function replaceMatches(state, phase, nextPhaseMatches) {
 export function createShowdown(config = {}, ctxIn = {}) {
   const c = context(ctxIn);
   const preset = venuePreset(config.presetId || DEFAULT_PRESET_ID) || {};
-  const rulesetId = config.rulesetId || preset.rulesetId || DEFAULT_RULESET_ID;
-  const ruleset = rulesetFor(rulesetId);
+  /** Without a format the engine default is used (tests); the app always passes the operator's confirmed choice. */
+  const payoutVersion = config.payoutVersion === undefined ? SHOWDOWN_PAYOUT_VERSION : config.payoutVersion;
+  if (!formatFor(payoutVersion)) throw new Error('Choose a tournament format: V1, V2 or V3.');
   return {
     id: config.id || c.newId('showdown'),
     type: SHOWDOWN_TYPE,
     formatVersion: SHOWDOWN_FORMAT_VERSION,
+    payoutVersion,
+    minEngine: minEngineFor(payoutVersion),
     name: String(config.name || SHOWDOWN_NAME).trim() || SHOWDOWN_NAME,
     tournamentDate: config.tournamentDate || c.now.slice(0, 10),
     venue: config.venue ?? preset.venue ?? '',
     presetId: preset.id || null,
     status: 'setup',
-    settings: {
-      rulesetId,
-      game: ruleset?.game || '9-Ball',
-      entryFee: Number(config.entryFee ?? preset.entryFee ?? 20),
-      minEntrants: Number(config.minEntrants ?? preset.minEntrants ?? supportedFieldRange().min),
-      maxEntrants: Number(config.maxEntrants ?? preset.maxEntrants ?? supportedFieldRange().max),
-      tableCount: Number(config.tableCount ?? preset.tableCount ?? 4),
-      qualifyingRaceTo: Number(config.qualifyingRaceTo ?? preset.qualifyingRaceTo ?? ruleset?.qualifyingRaceTo ?? 3),
-      playoffRaceTo: Number(config.playoffRaceTo ?? preset.playoffRaceTo ?? ruleset?.playoffRaceTo ?? 5),
-    },
+    settings: formatSettings(payoutVersion, config, preset),
     players: (config.players || []).map((p) => ({ id: p.id || c.newId('p'), name: String(p.name || '').trim(), fargorate: p.fargorate || '', withdrawnAt: null, withdrawnPhase: null })),
     circle: [],
     payoutPlan: null,
@@ -118,14 +122,22 @@ function positiveInt(value) {
 
 /** Everything that blocks starting. Empty list means the event can start. */
 export function setupProblems(state) {
+  const support = formatSupportProblem(state);
+  if (support) return [support];
+  const fmt = formatFor(payoutVersionOf(state));
   const s = state.settings;
   const problems = [];
+  if (!fmt.startable) problems.push(fmt.notReady);
   const n = (state.players || []).length;
   const feeProblem = entryFeeProblem(s.entryFee);
   if (feeProblem) problems.push(feeProblem);
-  if (!rulesetFor(s.rulesetId)) problems.push('Pick an approved game ruleset.');
   if (!positiveInt(s.tableCount)) problems.push('Table count must be at least 1.');
-  if (!positiveInt(s.qualifyingRaceTo) || !positiveInt(s.playoffRaceTo)) problems.push('Race lengths must be whole numbers of at least 1.');
+  if (fmt.usesRaces) {
+    if (!positiveInt(s.qualifyingRaceTo) || !positiveInt(s.playoffRaceTo)) problems.push('Race lengths must be whole numbers of at least 1.');
+    else if (isPayoutV2(state) && v2RaceProblem(s)) problems.push(v2RaceProblem(s));
+  } else if (isPayoutV3(state)) {
+    problems.push(...v3SetupProblems(state));
+  }
   const { min } = supportedFieldRange();
   if (!positiveInt(s.minEntrants) || s.minEntrants < min) problems.push(`Minimum entrants cannot be below ${min}.`);
   if (!positiveInt(s.maxEntrants) || s.maxEntrants < s.minEntrants) problems.push('Maximum entrants must be at least the minimum.');

@@ -1,5 +1,7 @@
 import React from 'react';
 import { showdownPublicHref, openShowdownTv } from '../public/showdownPublicRoutes.js';
+import { openShowdownGuideTv } from '../public/showdownGuideRoute.js';
+import { DEV_LIVE_WRITE_NOTE, ISOLATED_CLOUD_NOTE } from '../cloud/showdownCloudApi.js';
 
 const LABELS = {
   idle: 'Checking the cloud\u2026',
@@ -12,22 +14,37 @@ const LABELS = {
   missing: 'Cloud copy removed',
 };
 
+const ISOLATED_LABELS = {
+  ...LABELS,
+  idle: 'Checking the isolated test cloud\u2026',
+  saving: 'Saving to the isolated test cloud\u2026',
+  saved: 'Saved to the isolated test cloud',
+  offline: 'Not saved to the isolated test cloud yet',
+};
+
 function when(at) {
   const d = new Date(at || '');
   return Number.isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-/** Cloud save status, retry, and the public / TV links for this event. */
-export default function ShowdownCloudBar({ eventId, status, sync, onRetry, onReupload, onOpenConflict }) {
+/**
+ * Cloud save status, retry, and the public / TV links for this event. `v3` opens the V3 guide; `isolated`
+ * says the isolated test cloud (development only) is answering instead of the live database; `writesLive`
+ * (development build, preview off) warns that V1/V2 saves are real writes to the live database.
+ */
+export default function ShowdownCloudBar({ eventId, status, sync, onRetry, onReupload, onOpenConflict, v3 = false, isolated = false, writesLive = false }) {
   const s = sync.status;
   const bad = ['offline', 'error', 'conflict', 'missing'].includes(s);
   const live = status !== 'setup';
+  const labels = isolated ? ISOLATED_LABELS : LABELS;
   return (
     <div className={`sd-cloud-bar is-${s}`} role={bad ? 'alert' : 'status'}>
       <span className="sd-cloud-state">
-        <strong>{LABELS[s] || s}</strong>
+        <strong>{labels[s] || s}</strong>
         {s === 'saved' && sync.savedAt ? ` \u00b7 ${when(sync.savedAt)}` : ''}
         {sync.message ? <small> {sync.message}</small> : null}
+        {isolated ? <small> {ISOLATED_CLOUD_NOTE}</small> : null}
+        {writesLive && !isolated && !v3 && s !== 'local-only' ? <small className="sd-cloud-live-warn"> {DEV_LIVE_WRITE_NOTE}</small> : null}
       </span>
       <span className="sd-btn-row">
         {s === 'offline' || s === 'error' ? <button type="button" className="sd-btn" onClick={onRetry}>Retry now</button> : null}
@@ -40,6 +57,7 @@ export default function ShowdownCloudBar({ eventId, status, sync, onRetry, onReu
             <button type="button" className="sd-btn" onClick={() => openShowdownTv(eventId, 'portrait')}>TV 9:16</button>
           </>
         ) : null}
+        <button type="button" className="sd-btn" onClick={() => openShowdownGuideTv({ v3 })}>{v3 ? 'How V3 works TV' : 'How it works TV'}</button>
       </span>
     </div>
   );

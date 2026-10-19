@@ -8,7 +8,7 @@ import { buildShowdownTvBoard } from './showdownTvBoard.js';
 import { reportableMatches } from './showdownPhoneSubmit.js';
 import { showdownPublicEventId, showdownPublicHash, showdownTvHref } from './showdownPublicRoutes.js';
 
-const OPERATOR_TEXT = ['Lock qualifying', 'Reopen', 'Undo', 'Withdraw', 'Confirm bracket', 'Draw bracket', 'Complete event', 'won the rack', 'won the lag', 'Approve', 'Corrections', 'Audit log'];
+const OPERATOR_TEXT = ['Lock qualifying', 'Reopen', 'Undo', 'Withdraw', 'Confirm bracket', 'Draw bracket', 'Complete event', 'won the game', 'Undo who starts', 'Approve', 'Corrections', 'Audit log'];
 
 function publicOnly(html) {
   OPERATOR_TEXT.forEach((t) => assert.ok(!html.includes(t), `no operator control: ${t}`));
@@ -74,7 +74,8 @@ describe('public pages', () => {
 
   it('shootout: holder, challenger, breaker, losses; no rack buttons', async () => {
     const html = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: publicShowdown(phases.shootout), pendingIds: [], mine: [], canReport: true, onReport() {} }));
-    assert.ok(html.includes('Qualification shootout') && html.includes('Lag for the opening break'));
+    assert.ok(html.includes('Qualification shootout') && html.includes('Deciding who starts the first game'));
+    assert.ok(!/9-ball|texas|\brack|\blag\b|\bbreak/i.test(html.replace(/<[^>]+>/g, ' ')), 'no game or playing rules');
     assert.ok(!html.includes('Report score'));
   });
 

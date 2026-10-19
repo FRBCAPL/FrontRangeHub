@@ -2,11 +2,37 @@ import React from 'react';
 import ShowdownPayoutLadder from '../operator/ShowdownPayoutLadder.jsx';
 import { moneyView, resultsView } from '../operator/showdownBoardView.js';
 import { money } from '../operator/showdownView.js';
+import ShowdownEarningsTableV2 from '../operator/ShowdownEarningsTableV2.jsx';
+import { championBonusText } from '../operator/ShowdownMoneyV2.jsx';
 
 /** Pool, payout schedule and earnings so far. */
+function PublicMoneyV2({ v, earners }) {
+  return (
+    <>
+      <section className="sd-panel" aria-label="Prize pool">
+        <div className="cc-stat-row">
+          <div className="cc-stat"><span>Prize pool</span><strong>{money(v.pool)}</strong></div>
+          <div className="cc-stat"><span>Qualifying win pays</span><strong>{money(v.q)}</strong></div>
+          <div className="cc-stat"><span>Each game won pays</span><strong>{money(1)}</strong></div>
+          <div className="cc-stat"><span>Paid so far</span><strong>{money(v.paid)}</strong></div>
+          {v.locked ? <div className="cc-stat"><span>Championship win</span><strong>{money(v.championship)}</strong></div> : null}
+        </div>
+        {v.locked ? <p className="sd-note">{championBonusText(v)}</p> : null}
+      </section>
+      <ShowdownPayoutLadder ladder={v.ladder} title="Payout schedule" locked={v.locked} />
+      <section className="sd-panel" aria-label="Earnings">
+        <h3>Earnings</h3>
+        {earners.length ? <ShowdownEarningsTableV2 players={earners} paid={v.paid} label="Earnings" /> : <p className="sd-note">No money won yet.</p>}
+      </section>
+    </>
+  );
+}
+
 export function ShowdownPublicMoney({ event }) {
   const v = moneyView(event);
+  if (v.payoutVersion !== 1 && v.payoutVersion !== 2) return <section className="sd-panel" aria-label="Prize pool"><p className="sd-note">Money for this event needs a newer version of the app.</p></section>;
   const earners = v.players.filter((p) => p.total > 0);
+  if (v.payoutVersion === 2) return <PublicMoneyV2 v={v} earners={earners} />;
   return (
     <>
       <section className="sd-panel" aria-label="Prize pool">
@@ -55,6 +81,7 @@ export function ShowdownPublicResults({ event }) {
           <small>{champion.stage}</small>
           <strong>{champion.name}</strong>
           <span>{money(champion.earnings)}</span>
+          {v.bonusAwarded && v.championBonus ? <small>Includes a {money(v.championBonus)} champion bonus</small> : null}
         </div>
       ) : null}
       {v.championship.status === 'unresolved' ? <p className="sd-warn">Championship unresolved. The director will resolve it.</p> : null}

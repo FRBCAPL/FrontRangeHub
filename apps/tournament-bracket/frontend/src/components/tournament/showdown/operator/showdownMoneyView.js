@@ -2,6 +2,7 @@
 import * as E from '../showdownEngine.js';
 import { playoffTemplate, finalRound } from '../showdownPlayoffTemplates.js';
 import { matchView } from './showdownView.js';
+import { moneyViewV2, payoutLadderV2 } from './showdownMoneyViewV2.js';
 
 /**
  * Every payout line and its total. `ladder` is the locked playoff plan, or an estimate before
@@ -23,6 +24,7 @@ export function payoutLadder(payoutPlan, ladder, doubleForfeits = 0) {
   });
   const withTotals = rows.map((r) => ({ ...r, total: r.total ?? r.count * r.each }));
   return {
+    payoutVersion: 1,
     rows: withTotals,
     total: withTotals.reduce((s, r) => s + r.total, 0),
     pool: payoutPlan.pool,
@@ -40,10 +42,14 @@ export function payoutLadder(payoutPlan, ladder, doubleForfeits = 0) {
 }
 
 /** Safe preview for setup: the plan and an estimated ladder for N entrants at a fee, or the reason there is none. */
-export function payoutPreview(entrants, entryFee) {
+export function payoutPreview(entrants, entryFee, payoutVersion) {
+  if (payoutVersion !== 1 && payoutVersion !== 2) {
+    return { plan: null, ladder: null, problem: E.formatFor(payoutVersion)?.notReady || 'This format has no payout schedule in this version of the app.' };
+  }
   try {
     const plan = E.buildPayoutPlan({ entrants, entryFee });
-    return { plan, ladder: payoutLadder(plan, E.estimatePlayoffPlan(plan)), problem: '' };
+    const ladder = payoutVersion === 2 ? payoutLadderV2(plan, E.estimatePlayoffPlanV2(plan)) : payoutLadder(plan, E.estimatePlayoffPlan(plan));
+    return { plan, ladder, problem: '' };
   } catch (err) {
     return { plan: null, ladder: null, problem: err.message };
   }
@@ -58,6 +64,9 @@ function estimateOrNull(plan) {
 }
 
 export function moneyView(state) {
+  if (E.formatSupportProblem(state)) return { payoutVersion: null, unsupported: true };
+  if (E.isPayoutV2(state)) return moneyViewV2(state);
+  if (!E.isPayoutV1(state)) return { payoutVersion: E.payoutVersionOf(state), unsupported: true };
   const e = E.computeEarnings(state);
   const plan = state.payoutPlan;
   const locked = Boolean(state.playoffPlan);
@@ -74,6 +83,7 @@ export function moneyView(state) {
   const pool = e.pool || (state.players.length * state.settings.entryFee);
   const qualifyingPaid = players.reduce((s, p) => s + p.qualifying, 0);
   return {
+    payoutVersion: 1,
     ladder: payoutLadder(plan, ladderPlan, e.doubleForfeits),
     locked,
     players,

@@ -1,5 +1,6 @@
 /** Wording for every operator confirmation, kept in one place so the screens stay small. */
 import { nameOf, money } from './showdownView.js';
+import { isPayoutV2, isPayoutV3 } from '../showdownPayoutVersion.js';
 import { earningsDropDetails, previewReopenQualifying, previewReopenShootout, previewUndoFrom, previewWithdraw } from './showdownEarningsDrop.js';
 
 export function withdrawCopy(state, player) {
@@ -10,6 +11,7 @@ export function withdrawCopy(state, player) {
     playoffs: 'They forfeit their next playoff match; the opponent advances by walkover and is paid the round. Money already earned (including a bye) is kept.',
   };
   const base = state.status === 'qualifying' ? ['You can undo this while qualifying is still open.'] : ['This cannot be undone after qualifying.'];
+  if (isPayoutV2(state)) base.push('Forfeits pay no per-game money. Games already played in an unfinished match cannot be recorded, so they are not paid.');
   return {
     title: `Withdraw ${player.name}?`,
     message: byStatus[state.status] || '',
@@ -21,8 +23,14 @@ export function withdrawCopy(state, player) {
 
 export function reopenQualifyingCopy(state) {
   const details = ['Qualifying results become editable again.'];
-  if ((state.shootouts || []).length) details.push('All shootout racks are erased.');
-  if (state.playoffPlan) details.push('Qualifier top-ups and the playoff payouts are unlocked and worked out again when qualifying is locked.');
+  if ((state.shootouts || []).length) details.push('All shootout games are erased.');
+  if (isPayoutV3(state)) {
+    details.push('The V3 payout plan stays locked. Qualifying credits are worked out again and finalized when qualifying is locked.');
+  } else if (state.playoffPlan) {
+    details.push(isPayoutV2(state)
+      ? 'The locked playoff payouts (built from qualifying games won and the playoff game reserve) are cleared and worked out again when qualifying is locked.'
+      : 'Qualifier top-ups and the playoff payouts are unlocked and worked out again when qualifying is locked.');
+  }
   if (state.playoff) details.push('The bracket, byes, and every playoff result are erased. Playoff and bye earnings are removed.');
   details.push(...earningsDropDetails(state, previewReopenQualifying(state)));
   return { title: 'Reopen qualifying?', message: 'Use this only to correct a qualifying result.', details, typed: true, confirmLabel: 'Reopen qualifying', danger: true };
@@ -31,7 +39,7 @@ export function reopenQualifyingCopy(state) {
 export function reopenShootoutCopy(state) {
   return {
     title: 'Reopen the shootout?',
-    message: 'The deciding rack is undone so the shootout can continue.',
+    message: 'The deciding game is undone so the shootout can continue.',
     details: [
       ...(state.playoff ? ['The bracket, byes, and every playoff result are erased.'] : []),
       ...earningsDropDetails(state, previewReopenShootout(state)),
@@ -57,7 +65,8 @@ export function undoFromCopy(state, match, downstream) {
 }
 
 export function confirmBracketCopy(state) {
-  const byes = (state.playoff?.byes || []).map((b) => `${nameOf(state, b.playerId)} gets a quarterfinal bye (${money(state.playoffPlan?.bye)}).`);
+  const byePay = isPayoutV3(state) ? state.payoutPlan.ladder.bye : state.playoffPlan?.bye;
+  const byes = (state.playoff?.byes || []).map((b) => `${nameOf(state, b.playerId)} gets a quarterfinal bye (${money(byePay)}).`);
   return {
     title: 'Confirm the bracket?',
     message: 'Playoffs open and the bracket can no longer be redrawn.',

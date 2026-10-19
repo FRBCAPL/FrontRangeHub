@@ -9,6 +9,13 @@ import ShowdownCloudBar from './ShowdownCloudBar.jsx';
 import ShowdownPendingPanel from './ShowdownPendingPanel.jsx';
 import ShowdownConflictModal from './ShowdownConflictModal.jsx';
 import ShowdownLegacyNotice from './ShowdownLegacyNotice.jsx';
+import ShowdownUnsupportedNotice from './ShowdownUnsupportedNotice.jsx';
+import ShowdownFormatPicker from './ShowdownFormatPicker.jsx';
+import ShowdownV3ScoreModal from './v3/ShowdownV3ScoreModal.jsx';
+import ShowdownV3WithdrawModal from './v3/ShowdownV3WithdrawModal.jsx';
+import { v3LimitsOf } from './v3/showdownV3ScoreDraft.js';
+import { v3PreviewOn } from './v3/showdownV3Preview.js';
+import { v3PlanPreview, v3PlanSummary } from './v3/showdownV3PlanView.js';
 import { closeObsoleteShowdown } from '../cloud/showdownHubActions.js';
 import useShowdownCloud from './useShowdownCloud.js';
 import { showdownCloud } from '../cloud/showdownCloud.js';
@@ -17,7 +24,7 @@ import { runAction, nextStep, currentOperator } from './showdownOperatorActions.
 import { loadShowdown, saveShowdown, archiveShowdown, listArchivedShowdowns, removeArchivedShowdown } from './showdownStore.js';
 import { matchLabel } from './showdownView.js';
 import { withdrawCopy, reopenQualifyingCopy, reopenShootoutCopy, undoFromCopy, confirmBracketCopy } from './showdownConfirmCopy.js';
-import { createShowdown, computeEarnings } from '../showdownEngine.js';
+import { createShowdownWithFormat, computeEarnings, raceToFor, payoutVersionOf, isPayoutV3, formatSupportProblem, formatChangePreview } from '../showdownEngine.js';
 import { legacyFormatProblem } from '../showdownState.js';
 import { downstreamOf } from '../showdownPlayoff.js';
 import '../../cash-climb/CashClimb.css';
@@ -34,6 +41,10 @@ export default function ShowdownApp({ onLeave }) {
   const [confirm, setConfirm] = useState(null);
   const [corrections, setCorrections] = useState(false);
   const [showConflict, setShowConflict] = useState(false);
+  const [picker, setPicker] = useState(null);
+  const [withdrawing, setWithdrawing] = useState(null);
+  const v3 = Boolean(state) && isPayoutV3(state);
+  const v3Preview = v3 && v3PreviewOn();
 
   const replaceFromCloud = useCallback((next) => {
     setState(next);
@@ -45,7 +56,7 @@ export default function ShowdownApp({ onLeave }) {
 
   const commit = useCallback((next) => {
     replaceFromCloud(next);
-    if (next) cloud.queue(next);
+    if (next && !formatSupportProblem(next)) cloud.queue(next);
   }, [replaceFromCloud, cloud]);
 
   const act = (name, ...args) => {
@@ -59,16 +70,36 @@ export default function ShowdownApp({ onLeave }) {
   const ask = (copy, onYes) => { setError(''); setConfirm({ ...copy, onYes }); };
   const closeConfirm = () => { setConfirm(null); setError(''); };
 
-  const newEvent = () => {
+  const newEvent = (payoutVersion) => {
+    let created;
+    try {
+      created = createShowdownWithFormat({ presetId: 'legends', payoutVersion, confirmed: true }, { by: currentOperator() });
+    } catch (err) {
+      setError(err.message);
+      return false;
+    }
     if (state && state.status !== 'setup') archiveShowdown(state);
-    commit(createShowdown({ presetId: 'legends' }, { by: currentOperator() }));
+    commit(created);
     setArchive(listArchivedShowdowns());
     setTab('run');
     setCorrections(false);
+    setError('');
+    return true;
   };
+
+  const pickerModal = picker ? (
+    <ShowdownFormatPicker
+      current={picker === 'change' ? payoutVersionOf(state) : null}
+      resetsFor={(v) => formatChangePreview(state, v).resets}
+      error={error}
+      onCancel={() => { setPicker(null); setError(''); }}
+      onConfirm={(v) => { if (picker === 'change' ? act('changeFormat', v, { confirmed: true }) : newEvent(v)) setPicker(null); }}
+    />
+  ) : null;
 
   const h = {
     act,
+    ask,
     board: {
       onStart: (id, table) => act('startMatch', id, table),
       onStartNext: (table) => act('startSuggested', table),
@@ -90,7 +121,7 @@ export default function ShowdownApp({ onLeave }) {
     reopenShootout: () => ask(reopenShootoutCopy(state), (text) => act('reopenShootout', text)),
     confirmBracket: () => ask(confirmBracketCopy(state), () => act('confirmBracket')),
     complete: () => ask({ title: 'Complete the event?', message: 'Final results and earnings are locked in.', confirmLabel: 'Complete event' }, () => act('complete')),
-    withdraw: (p) => ask(withdrawCopy(state, p), () => act('withdraw', p.id)),
+    withdraw: (p) => (v3 ? (setError(''), setWithdrawing(p)) : ask(withdrawCopy(state, p), () => act('withdraw', p.id))),
     reinstate: (p) => ask({ title: `Undo ${p.name}'s withdrawal?`, message: 'The forfeits created by the withdrawal are cleared so those matches can be played.', confirmLabel: 'Undo withdrawal' }, () => act('reinstate', p.id)),
   };
 
@@ -109,6 +140,9 @@ export default function ShowdownApp({ onLeave }) {
       <ShowdownCloudBar
         eventId={state.id}
         status={state.status}
+        v3={v3}
+        isolated={Boolean(showdownCloud.isIsolated?.())}
+        writesLive={Boolean(showdownCloud.writesLive?.())}
         sync={cloud.sync}
         onRetry={cloud.retry}
         onReupload={cloud.reupload}
@@ -126,18 +160,27 @@ export default function ShowdownApp({ onLeave }) {
 
   if (!state) {
     return (
-      <ShowdownStart
-        archive={archive}
-        onNew={newEvent}
-        onOpen={(item) => {
-          if (legacyFormatProblem(item)) { replaceFromCloud(item); return; }
-          commit(item);
-          setTab(item.status === 'completed' ? 'results' : 'run');
-        }}
-        onRemove={(item) => { removeArchivedShowdown(item.id); setArchive(listArchivedShowdowns()); }}
-        onLeave={onLeave}
-      />
+      <>
+        <ShowdownStart
+          archive={archive}
+          onNew={() => { setError(''); setPicker('create'); }}
+          onOpen={(item) => {
+            if (formatSupportProblem(item) || legacyFormatProblem(item)) { replaceFromCloud(item); return; }
+            commit(item);
+            setTab(item.status === 'completed' ? 'results' : 'run');
+          }}
+          onRemove={(item) => { removeArchivedShowdown(item.id); setArchive(listArchivedShowdowns()); }}
+          onLeave={onLeave}
+        />
+        {pickerModal}
+      </>
     );
+  }
+
+  const unsupported = formatSupportProblem(state);
+  if (unsupported) {
+    const setAside = () => { archiveShowdown(state); replaceFromCloud(null); setArchive(listArchivedShowdowns()); };
+    return <ShowdownUnsupportedNotice state={state} message={unsupported} onSetAside={setAside} onLeave={onLeave} />;
   }
 
   if (state.status === 'setup') {
@@ -149,10 +192,16 @@ export default function ShowdownApp({ onLeave }) {
           state={state}
           act={act}
           onLeave={onLeave}
-          onStart={() => ask({ title: 'Start qualifying?', message: 'The qualifying circle is drawn at random. Entrants, entry fee, and payouts are locked.', confirmLabel: 'Start qualifying' }, () => act('start'))}
+          v3Preview={v3Preview}
+          onChangeFormat={() => { setError(''); setPicker('change'); }}
+          onStart={() => ask(v3
+            ? { title: 'Start this V3 event?', message: 'The qualifying circle is drawn at random. Entrants, entry fee and the V3 payout plan shown on this screen are locked; the plan\u2019s financial terms cannot be edited after the start.', details: v3PlanSummary(v3PlanPreview(state).view), confirmLabel: 'Lock plan and start qualifying' }
+            : { title: 'Start qualifying?', message: 'The qualifying circle is drawn at random. Entrants, entry fee, and payouts are locked.', confirmLabel: 'Start qualifying' },
+          () => act('start', { v3Preview }))}
           onDiscard={() => ask({ title: 'Discard this event?', message: 'The setup is deleted from this tablet and the cloud.', confirmLabel: 'Discard', danger: true }, () => { showdownCloud.remove(state.id); commit(null); return true; })}
         />
         {confirmModal}
+        {pickerModal}
       </>
     );
   }
@@ -167,7 +216,7 @@ export default function ShowdownApp({ onLeave }) {
     return <ShowdownLegacyNotice state={state} message={legacy} onClose={closeLegacy} onLeave={onLeave} />;
   }
 
-  const raceTo = score?.match.phase === 'qualifying' ? state.settings.qualifyingRaceTo : state.settings.playoffRaceTo;
+  const raceTo = score && !v3 ? raceToFor(state, score.match.phase) : 0;
   const done = (ok) => { if (ok) setScore(null); };
 
   return (
@@ -181,9 +230,9 @@ export default function ShowdownApp({ onLeave }) {
         corrections={corrections}
         onCorrections={setCorrections}
         onLeave={onLeave}
-        onNew={() => ask({ title: 'Start a new Showdown?', message: state.status === 'completed' ? 'This event stays in Past events on this tablet.' : 'This event is not finished. It is saved in Past events on this tablet and can be reopened.', confirmLabel: 'New Showdown' }, () => { newEvent(); return true; })}
+        onNew={() => ask({ title: 'Start a new Showdown?', message: state.status === 'completed' ? 'This event stays in Past events on this tablet.' : 'This event is not finished. It is saved in Past events on this tablet and can be reopened.', confirmLabel: 'Choose format' }, () => { setPicker('create'); return true; })}
       />
-      {error && !score && !confirm ? <p className="sd-error sd-banner" role="alert">{error} <button type="button" className="sd-link" onClick={() => setError('')}>Dismiss</button></p> : null}
+      {error && !score && !confirm && !withdrawing && tab !== 'settle' ? <p className="sd-error sd-banner" role="alert">{error} <button type="button" className="sd-link" onClick={() => setError('')}>Dismiss</button></p> : null}
       {cloudParts}
       <ShowdownPendingPanel
         items={pendingView(state, cloud.pendingRows)}
@@ -191,11 +240,32 @@ export default function ShowdownApp({ onLeave }) {
         onApprove={(sub) => act('approvePhone', sub)}
         onReject={rejectPhone}
       />
-      <ShowdownTabContent state={state} tab={tab} corrections={corrections} h={h} />
-      {score ? (
+      <ShowdownTabContent state={state} tab={tab} corrections={corrections} h={h} error={error} />
+      {score && v3 ? (
+        <ShowdownV3ScoreModal
+          match={score.match}
+          limits={v3LimitsOf(state, score.match.phase)}
+          correcting={score.correcting}
+          error={error}
+          onCancel={() => { setScore(null); setError(''); }}
+          onSave={(a, b) => done(act('recordScore', score.match.id, a, b))}
+          onForfeit={(ids, entry) => done(act('forfeit', score.match.id, ids, entry))}
+        />
+      ) : null}
+      {withdrawing ? (
+        <ShowdownV3WithdrawModal
+          state={state}
+          player={withdrawing}
+          error={error}
+          onCancel={() => { setWithdrawing(null); setError(''); }}
+          onConfirm={(opts) => { if (act('withdraw', withdrawing.id, opts)) setWithdrawing(null); }}
+        />
+      ) : null}
+      {score && !v3 ? (
         <ShowdownScoreModal
           match={score.match}
           raceTo={raceTo}
+          payoutVersion={payoutVersionOf(state)}
           correcting={score.correcting}
           error={error}
           onCancel={() => { setScore(null); setError(''); }}
@@ -204,6 +274,7 @@ export default function ShowdownApp({ onLeave }) {
         />
       ) : null}
       {confirmModal}
+      {pickerModal}
     </div>
   );
 }

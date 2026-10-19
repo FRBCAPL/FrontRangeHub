@@ -1,5 +1,8 @@
 import { playoffLadder } from './showdownPayout.js';
 import { paysMatchWin } from './showdownResults.js';
+import { isPayoutV1, isPayoutV2, isPayoutV3, noEngineError, requireSupportedFormat } from './showdownPayoutVersion.js';
+import { lockPlayoffPlanV2 } from './showdownPlayoffPlanV2.js';
+import { v3PlayoffPlanFor } from './v3/showdownV3Event.js';
 
 /**
  * Qualifying money from recorded results: Q per paying win (played or forfeit).
@@ -49,6 +52,10 @@ export function buildPlayoffPlan({ payoutPlan, qualifierIds, winningsById, quali
 }
 
 export function lockPlayoffPlan(state, qualifierIds, now = null) {
+  requireSupportedFormat(state);
+  if (isPayoutV2(state)) return lockPlayoffPlanV2(state, qualifierIds, now);
+  if (isPayoutV3(state)) return v3PlayoffPlanFor(state, qualifierIds, now);
+  if (!isPayoutV1(state)) throw noEngineError(state);
   const w = qualifyingWinnings(state);
   return { ...buildPlayoffPlan({ payoutPlan: state.payoutPlan, qualifierIds, winningsById: w.byPlayer, qualifyingPaid: w.paid }), lockedAt: now };
 }

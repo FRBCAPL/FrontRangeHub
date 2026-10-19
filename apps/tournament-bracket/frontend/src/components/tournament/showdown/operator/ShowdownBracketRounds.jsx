@@ -14,13 +14,13 @@ function MiniMatch({ m, byeIds }) {
   );
 }
 
-function ByeCard({ b, byePay, confirmed }) {
+function ByeCard({ b, byePay, confirmed, fmt }) {
   return (
     <li className="sd-mini sd-mini-bye">
       <span className="sd-mini-label">Section {b.section} &middot; Bye</span>
       <span className="is-winner">{b.name}</span>
       <small>
-        Straight to Semifinal {b.semifinal} &middot; {confirmed ? `earned ${money(byePay)}` : `${money(byePay)} when confirmed`}
+        Straight to Semifinal {b.semifinal} &middot; {confirmed ? `earned ${fmt(byePay)}` : `${fmt(byePay)} when confirmed`}
         {b.withdrawn ? ' \u00b7 withdrew, keeps the bye' : ''}
       </small>
     </li>
@@ -33,6 +33,7 @@ function ByeCard({ b, byePay, confirmed }) {
  */
 export default function ShowdownBracketRounds({ v, readOnly = false }) {
   const byeIds = new Set(v.byes.map((b) => b.playerId));
+  const fmt = v.formatAmount || money;
   return (
     <div className="sd-rounds">
       {v.rounds.map((r) => {
@@ -40,14 +41,14 @@ export default function ShowdownBracketRounds({ v, readOnly = false }) {
         const items = sectioned
           ? [1, 2, 3, 4].map((section) => {
             const b = v.byes.find((x) => x.section === section);
-            if (b) return <ByeCard key={`bye-${section}`} b={b} byePay={v.byePay} confirmed={v.confirmed || readOnly} />;
+            if (b) return <ByeCard key={`bye-${section}`} b={b} byePay={v.byePay} confirmed={v.confirmed || readOnly} fmt={fmt} />;
             const m = r.matches.find((x) => x.section === section);
             return m ? <MiniMatch key={m.id} m={m} byeIds={byeIds} /> : null;
           })
           : r.matches.map((m) => <MiniMatch key={m.id} m={m} byeIds={byeIds} />);
         return (
           <div key={r.key} className="sd-round">
-            <h4>{r.label}{r.payout !== null ? <small>{money(r.payout)} per win</small> : null}</h4>
+            <h4>{r.label}{r.payout !== null ? <small>{fmt(r.payout)} {v.payWord || 'per win'}</small> : null}</h4>
             <ul>{items}</ul>
           </div>
         );

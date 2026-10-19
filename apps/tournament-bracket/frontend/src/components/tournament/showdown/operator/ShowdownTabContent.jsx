@@ -8,6 +8,8 @@ import ShowdownMoney from './ShowdownMoney.jsx';
 import ShowdownResults from './ShowdownResults.jsx';
 import ShowdownEntrants from './ShowdownEntrants.jsx';
 import ShowdownAuditLog from './ShowdownAuditLog.jsx';
+import ShowdownV3TabContent from './v3/ShowdownV3TabContent.jsx';
+import { isPayoutV3 } from '../showdownPayoutVersion.js';
 import { queueView, circleView, shootoutView } from './showdownView.js';
 import { standingsView, bracketView, moneyView, resultsView } from './showdownBoardView.js';
 
@@ -15,7 +17,8 @@ import { standingsView, bracketView, moneyView, resultsView } from './showdownBo
  * Body of the selected tab. `h` holds every operator handler from ShowdownApp, so this file
  * only decides what to show for the current status.
  */
-export default function ShowdownTabContent({ state, tab, corrections, h }) {
+export default function ShowdownTabContent({ state, tab, corrections, h, error = '' }) {
+  if (isPayoutV3(state)) return <ShowdownV3TabContent state={state} tab={tab} corrections={corrections} h={h} error={error} />;
   const s = state;
   const board = (phase, title) => (
     <ShowdownMatchBoard
@@ -33,7 +36,6 @@ export default function ShowdownTabContent({ state, tab, corrections, h }) {
   const shootout = (
     <ShowdownShootout
       view={shootoutView(s)}
-      rulesetId={s.settings.rulesetId}
       corrections={corrections}
       canReopen={['bracket', 'playoffs', 'completed'].includes(s.status)}
       onLag={(id) => h.act('shootoutLag', id)}

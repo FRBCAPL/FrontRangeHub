@@ -5,6 +5,7 @@ import { cashClimbListErrorMessage } from './cashClimbPublic.js';
 import { cashClimbSubmitHash } from './cashClimbSubmit.js';
 import CashClimbSubmitEventList from './CashClimbSubmitEventList.jsx';
 import { SHOWDOWN_PUBLIC_HASH } from '../showdown/public/showdownPublicRoutes.js';
+import { CASH_CLIMB_GUIDE_HASH } from './cashClimbGuideRoute.js';
 import '../TournamentBracketApp.css';
 import './CashClimb.css';
 import './CashClimbSubmitPage.css';
@@ -55,6 +56,9 @@ export default function CashClimbSubmitPicker() {
         </div>
         <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_PUBLIC_HASH)}>
           Cash Climb Showdowns
+        </button>
+        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
+          How Cash Climb works
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
           Back to home

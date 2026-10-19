@@ -1,5 +1,5 @@
 import React from 'react';
-import { DEFAULT_RULESET_ID, rulesetFor } from '../showdownRules.js';
+import { SHOOTOUT_PROCEDURE } from '../showdownRules.js';
 
 function Losses({ n }) {
   return (
@@ -10,10 +10,9 @@ function Losses({ n }) {
 }
 
 /** Winner-stays, two-loss shootout: for the playoff cutoff, or among tied qualifiers for the opening byes. */
-export default function ShowdownShootout({ view, rulesetId, corrections, canReopen, onLag, onRack, onUndo, onReopen }) {
+export default function ShowdownShootout({ view, corrections, canReopen, onLag, onRack, onUndo, onReopen }) {
   if (!view) return <section className="sd-panel"><p className="sd-note">No shootout was needed.</p></section>;
   const v = view;
-  const rules = rulesetFor(rulesetId || DEFAULT_RULESET_ID)?.shootoutRules || [];
   const alive = v.order.filter((p) => !p.out).length;
   return (
     <section className="sd-panel sd-shootout" aria-label={v.title}>
@@ -24,7 +23,7 @@ export default function ShowdownShootout({ view, rulesetId, corrections, canReop
         </span>
       </div>
       <p className="sd-note">{v.purpose}</p>
-      <ul className="sd-note-list">{rules.map((r) => <li key={r}>{r}</li>)}</ul>
+      <ul className="sd-note-list">{SHOOTOUT_PROCEDURE.map((r) => <li key={r}>{r}</li>)}</ul>
 
       <ol className="sd-shootout-order" aria-label="Shootout order">
         {v.order.map((p) => (
@@ -42,10 +41,10 @@ export default function ShowdownShootout({ view, rulesetId, corrections, canReop
 
       {v.status === 'lag' ? (
         <div className="sd-shootout-step">
-          <p><strong>Lag for the opening break:</strong> {v.lagPlayers[0].name} vs {v.lagPlayers[1].name}</p>
+          <p><strong>Who starts the first game:</strong> {v.lagPlayers[0].name} or {v.lagPlayers[1].name}</p>
           <div className="sd-btn-row">
             {v.lagPlayers.map((p) => (
-              <button key={p.id} type="button" className="sd-btn sd-btn-primary" onClick={() => onLag(p.id)}>{p.name} won the lag</button>
+              <button key={p.id} type="button" className="sd-btn sd-btn-primary" onClick={() => onLag(p.id)}>{p.name} starts</button>
             ))}
           </div>
         </div>
@@ -58,10 +57,10 @@ export default function ShowdownShootout({ view, rulesetId, corrections, canReop
             <span className="sd-vs">vs</span>
             <span><small>Incoming challenger</small><strong>{v.challenger.name}</strong></span>
           </p>
-          <p><strong>Break:</strong> {v.breaker.name}{v.queue.length ? ` \u00b7 Next up: ${v.queue.join(', ')}` : ''}</p>
+          <p><strong>Starts:</strong> {v.breaker.name}{v.queue.length ? ` \u00b7 Next up: ${v.queue.join(', ')}` : ''}</p>
           <div className="sd-btn-row">
-            <button type="button" className="sd-btn sd-btn-primary" onClick={() => onRack(v.holder.id)}>{v.holder.name} won the rack</button>
-            <button type="button" className="sd-btn sd-btn-primary" onClick={() => onRack(v.challenger.id)}>{v.challenger.name} won the rack</button>
+            <button type="button" className="sd-btn sd-btn-primary" onClick={() => onRack(v.holder.id)}>{v.holder.name} won the game</button>
+            <button type="button" className="sd-btn sd-btn-primary" onClick={() => onRack(v.challenger.id)}>{v.challenger.name} won the game</button>
           </div>
         </div>
       ) : null}
@@ -70,7 +69,7 @@ export default function ShowdownShootout({ view, rulesetId, corrections, canReop
 
       <div className="sd-btn-row">
         {v.active && v.canUndo ? (
-          <button type="button" className="sd-btn sd-btn-warn" onClick={onUndo}>{v.racks.length ? `Undo rack ${v.racks.length}` : 'Undo lag'}</button>
+          <button type="button" className="sd-btn sd-btn-warn" onClick={onUndo}>{v.racks.length ? `Undo game ${v.racks.length}` : 'Undo who starts'}</button>
         ) : null}
         {!v.active && corrections && canReopen ? (
           <button type="button" className="sd-btn sd-btn-danger" onClick={onReopen}>Reopen shootout</button>
@@ -79,11 +78,11 @@ export default function ShowdownShootout({ view, rulesetId, corrections, canReop
 
       {v.racks.length ? (
         <>
-          <h4>Racks</h4>
+          <h4>Games</h4>
           <ol className="sd-racks">
             {v.racks.map((r) => (
               <li key={r.n}>
-                Rack {r.n}: {r.winnerName} beat {r.loserName}{r.eliminatedName ? ` \u2014 ${r.eliminatedName} eliminated` : ''}
+                Game {r.n}: {r.winnerName} beat {r.loserName}{r.eliminatedName ? ` \u2014 ${r.eliminatedName} eliminated` : ''}
               </li>
             ))}
           </ol>

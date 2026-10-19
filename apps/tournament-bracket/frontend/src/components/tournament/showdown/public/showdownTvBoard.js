@@ -17,6 +17,7 @@ function standingsRows(event) {
 export function buildShowdownTvBoard(event) {
   if (!event || event.status === 'setup') return null;
   const m = moneyView(event);
+  if (m.payoutVersion !== 1 && m.payoutVersion !== 2) return null;
   const base = {
     name: event.name,
     venue: event.venue || '',
@@ -25,7 +26,8 @@ export function buildShowdownTvBoard(event) {
     statusLabel: STATUS_LABELS[event.status] || event.status,
     pool: money(m.pool),
     paid: money(m.paid),
-    championship: money(m.championship),
+    championship: m.payoutVersion === 2 ? `${money(m.championship)} + champion bonus` : money(m.championship),
+    payoutVersion: m.payoutVersion,
   };
   if (event.status === 'qualifying') {
     const q = queueView(event, 'qualifying');
@@ -43,7 +45,13 @@ export function buildShowdownTvBoard(event) {
   return {
     ...base,
     mode: 'completed',
-    champion: champion ? { id: champion.playerId, name: champion.name, title: champion.stage, earnings: money(champion.earnings) } : null,
+    champion: champion ? {
+      id: champion.playerId,
+      name: champion.name,
+      title: champion.stage,
+      earnings: money(champion.earnings),
+      bonus: m.payoutVersion === 2 && m.bonusAwarded && m.championBonus ? `Includes ${money(m.championBonus)} champion bonus` : '',
+    } : null,
     final: r.rows.map((x) => ({ id: x.playerId, place: x.placeLabel, name: x.name, stage: x.stage, earnings: money(x.earnings) })),
     earnings: m.players.filter((p) => p.total > 0).map((p) => ({ id: p.playerId, name: p.name, total: money(p.total) })),
   };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { shootoutView } from '../operator/showdownView.js';
 
-/** Read-only shootout: order, table holder, challenger, breaker, losses and eliminations. */
+/** Read-only shootout: order, table holder, challenger, who starts, losses and eliminations. */
 export default function ShowdownPublicShootout({ event }) {
   const v = shootoutView(event);
   if (!v) return null;
@@ -14,13 +14,13 @@ export default function ShowdownPublicShootout({ event }) {
           {v.active ? `${alive} players for ${v.spots} ${v.spotLabel} \u00b7 ${v.eliminationsLeft} more elimination${v.eliminationsLeft === 1 ? '' : 's'}` : 'Decided'}
         </span>
       </div>
-      {v.status === 'lag' ? <p>Lag for the opening break: {v.lagPlayers[0].name} vs {v.lagPlayers[1].name}</p> : null}
+      {v.status === 'lag' ? <p>Deciding who starts the first game: {v.lagPlayers[0].name} or {v.lagPlayers[1].name}</p> : null}
       {v.status === 'in-progress' ? (
         <p className="sd-shootout-table">
           <span><small>Holds the table</small><strong>{v.holder.name}</strong></span>
           <span className="sd-vs">vs</span>
           <span><small>Challenger</small><strong>{v.challenger.name}</strong></span>
-          <span><small>Breaks</small><strong>{v.breaker.name}</strong></span>
+          <span><small>Starts</small><strong>{v.breaker.name}</strong></span>
         </p>
       ) : null}
       <ol className="sd-shootout-order">
@@ -37,7 +37,7 @@ export default function ShowdownPublicShootout({ event }) {
       {v.status === 'complete' ? <p className="sd-ok">{v.decidedLabel}: {v.survivors.join(', ')}.</p> : null}
       {v.racks.length ? (
         <ol className="sd-racks">
-          {v.racks.map((r) => <li key={r.n}>Rack {r.n}: {r.winnerName} beat {r.loserName}{r.eliminatedName ? ` \u2014 ${r.eliminatedName} eliminated` : ''}</li>)}
+          {v.racks.map((r) => <li key={r.n}>Game {r.n}: {r.winnerName} beat {r.loserName}{r.eliminatedName ? ` \u2014 ${r.eliminatedName} eliminated` : ''}</li>)}
         </ol>
       ) : null}
     </section>

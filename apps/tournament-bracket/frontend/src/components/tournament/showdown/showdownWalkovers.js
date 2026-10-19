@@ -2,9 +2,11 @@ import { forfeitResult, emptyPositionResult, CHAMPION_WALKOVER } from './showdow
 import { syncPlayoffPlayers } from './showdownPlayoff.js';
 import { playoffTemplate, finalRound } from './showdownPlayoffTemplates.js';
 import { withdrawnIds, playoffMatches, replaceMatches, withAudit } from './showdownState.js';
+import { isPayoutV3 } from './showdownPayoutVersion.js';
+import { v3AutoForfeit } from './v3/showdownV3Matches.js';
 
 /** What should happen automatically to an unfinished playoff match, or null to leave it. */
-function automaticResult(m, out, isFinal, state, now) {
+function automaticResult(m, out, isFinal, state, now, scoresSoFar) {
   const side1 = m.p1 || m.empty1;
   const side2 = m.p2 || m.empty2;
   if (!side1 || !side2) return null;
@@ -19,6 +21,7 @@ function automaticResult(m, out, isFinal, state, now) {
   }
   const gone = [m.p1, m.p2].filter((id) => out.has(id));
   if (!gone.length) return null;
+  if (isPayoutV3(state)) return v3AutoForfeit(state, m, gone, scoresSoFar, now);
   return { ...forfeitResult(m, gone, state.settings.playoffRaceTo, now), auto: 'withdrawal' };
 }
 
@@ -27,8 +30,9 @@ function automaticResult(m, out, isFinal, state, now) {
  * - a withdrawn player forfeits as soon as the opponent is known (walkover; both withdrawn = double forfeit)
  * - a match with an empty position is settled administratively (admin-bye / empty / vacated)
  * Repeats until nothing changes, because one resolution can empty or fill the next round.
+ * `scoresSoFar` (V3 only): games already played in a match on a table when a player withdrew.
  */
-export function applyWalkovers(state, c) {
+export function applyWalkovers(state, c, scoresSoFar = {}) {
   if (!state.playoff?.confirmedAt) return state;
   const out = new Set(withdrawnIds(state));
   const finalKey = finalRound(playoffTemplate(state.playoff.templateId)).key;
@@ -38,7 +42,7 @@ export function applyWalkovers(state, c) {
     let changed = false;
     matches = matches.map((m) => {
       if (m.status === 'completed') return m;
-      const next = automaticResult(m, out, m.roundKey === finalKey, state, c.now);
+      const next = automaticResult(m, out, m.roundKey === finalKey, state, c.now, scoresSoFar);
       if (!next) return m;
       changed = true;
       resolved.push(next);

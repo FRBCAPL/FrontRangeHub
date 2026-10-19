@@ -42,7 +42,7 @@ export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, 
             })}
           </ul>
         ) : <p className="sd-note">No matches on a table right now.</p>}
-        {canReport ? <p className="sd-note">Only matches on a table can be reported. Forfeits and shootout racks are entered by the director.</p> : null}
+        {canReport ? <p className="sd-note">Only matches on a table can be reported. Forfeits and shootout games are entered by the director.</p> : null}
       </section>
       {mine.length ? (
         <section className="sd-panel" aria-label="Scores you sent">

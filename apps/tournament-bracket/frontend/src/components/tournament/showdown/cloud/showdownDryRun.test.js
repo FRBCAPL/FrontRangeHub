@@ -97,7 +97,7 @@ const shootoutRuns = [];
 
 async function fullDryRun(n, seed) {
   const run = dryRun(seed);
-  let s = E.createShowdown({ name: `Dry run ${n}`, venue: 'Front Range Pool', tournamentDate: '2026-10-24', entryFee: 20, tableCount: 3, players: names(n) }, run.op());
+  let s = E.createShowdown({ name: `Dry run ${n}`, venue: 'Front Range Pool', tournamentDate: '2026-10-24', entryFee: 20, tableCount: 3, payoutVersion: 1, players: names(n) }, run.op());
   await run.commit(s);
   assert.equal(await run.publicCopy(), null, 'setup events are not public');
   assert.equal(filterCurrentEvents(mergeHubEvents({ showdownSaved: await listShowdownsForHub(run.api) })).length, 1);
@@ -175,7 +175,7 @@ describe('Phase 4 dry run: registration to final payout, every supported field s
 describe('Phase 4 dry run: administrative situations', () => {
   it('18 entrants with two qualifying double forfeits, a playoff branch that empties, and a Champion by Walkover', async () => {
     const run = dryRun(7);
-    await run.commit(E.startShowdown(E.createShowdown({ name: 'Admin dry run', entryFee: 20, tableCount: 3, players: names(18) }, run.op()), run.op()));
+    await run.commit(E.startShowdown(E.createShowdown({ name: 'Admin dry run', entryFee: 20, tableCount: 3, payoutVersion: 1, players: names(18) }, run.op()), run.op()));
     const q = run.state.matches.filter((m) => m.phase === 'qualifying');
     for (const m of q.slice(0, 2)) await run.commit(E.recordForfeit(run.state, m.id, [m.p1, m.p2], run.op()));
     await playPhase(run, 'qualifying');
@@ -210,7 +210,7 @@ describe('Phase 4 dry run: administrative situations', () => {
 
   it('a championship double forfeit is saved as unresolved; the event cannot complete and the TV says so', async () => {
     const run = dryRun(8);
-    await run.commit(E.startShowdown(E.createShowdown({ name: 'Unresolved dry run', entryFee: 20, tableCount: 3, players: names(8) }, run.op()), run.op()));
+    await run.commit(E.startShowdown(E.createShowdown({ name: 'Unresolved dry run', entryFee: 20, tableCount: 3, payoutVersion: 1, players: names(8) }, run.op()), run.op()));
     await playPhase(run, 'qualifying');
     await run.commit(E.lockQualifying(run.state, run.op()));
     if (run.state.status === 'shootout') await run.commit(settleShootouts(run.state, run.op));

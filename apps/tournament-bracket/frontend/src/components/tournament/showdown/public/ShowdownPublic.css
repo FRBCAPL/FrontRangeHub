@@ -5,6 +5,11 @@
   margin: 0 auto;
 }
 
+/* The public page fills the screen with no hub header, so the score popup's backdrop covers it all. */
+.sd-pub-shell > .cc-modal-overlay {
+  top: 0;
+}
+
 .sd-pub .sd-tabs {
   margin: 0 0 12px;
 }

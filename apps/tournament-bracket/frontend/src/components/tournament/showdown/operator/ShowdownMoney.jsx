@@ -1,5 +1,6 @@
 import React from 'react';
 import ShowdownPayoutLadder from './ShowdownPayoutLadder.jsx';
+import ShowdownMoneyV2 from './ShowdownMoneyV2.jsx';
 import { money } from './showdownView.js';
 
 function PlayerTag({ p }) {
@@ -11,6 +12,8 @@ function PlayerTag({ p }) {
 
 /** Payout ladder, each player's earnings step by step, and paid vs. remaining. */
 export default function ShowdownMoney({ view, status }) {
+  if (view.payoutVersion === 2) return <ShowdownMoneyV2 view={view} status={status} />;
+  if (view.payoutVersion !== 1) return <section className="sd-panel" aria-label="Prize pool"><p className="sd-error">Money for this format is not available in this version of the app.</p></section>;
   const v = view;
   return (
     <>

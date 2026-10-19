@@ -63,7 +63,7 @@ describe('operator workflows — special situations', () => {
       assert.ok(st.tie.tiedIds.length > st.tie.openSpots);
       let v = shootoutView(s);
       assert.equal(v.status, 'lag');
-      assert.match(nextStep(s), /lag/);
+      assert.match(nextStep(s), /who starts the first game/);
       s = o.tap(s, 'shootoutLag', v.lagPlayers[0].id);
       v = shootoutView(s);
       assert.equal(v.breaker.id, v.lagPlayers[0].id);

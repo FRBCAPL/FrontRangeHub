@@ -15,7 +15,9 @@ function ScoreRow({ name, value, raceTo, onPick }) {
 }
 
 /** Score entry (or correction) for one match, with forfeit options behind a second tap. */
-export default function ShowdownScoreModal({ match, raceTo, correcting = false, error = '', onSave, onForfeit, onCancel }) {
+export default function ShowdownScoreModal({ match, raceTo, payoutVersion = 1, correcting = false, error = '', onSave, onForfeit, onCancel }) {
+  const v2 = payoutVersion === 2;
+  const target = v2 ? 'the champion bonus' : 'the championship';
   const m = match;
   const [s1, setS1] = useState(correcting && m.result === 'played' ? m.score1 : null);
   const [s2, setS2] = useState(correcting && m.result === 'played' ? m.score2 : null);
@@ -49,11 +51,17 @@ export default function ShowdownScoreModal({ match, raceTo, correcting = false, 
           <summary>Forfeit or no-show</summary>
           <p className="sd-note">
             {qualifying
-              ? `A forfeit is an administrative ${raceTo}\u20130 win. A double forfeit gives nobody the win; that match\u2019s payout moves to the championship.`
+              ? `A forfeit is an administrative ${raceTo}\u20130 win. A double forfeit gives nobody the win; that match\u2019s payout moves to ${target}.`
               : 'In the playoffs a forfeit is a walkover: the opponent advances and is paid the round.'}
-            {!qualifying && !final ? ' A double forfeit advances nobody; the round payout moves to the championship and a waiting opponent advances by administrative bye.' : ''}
+            {!qualifying && !final ? ` A double forfeit advances nobody; the round payout moves to ${target} and a waiting opponent advances by administrative bye.` : ''}
             {final ? ' If both finalists forfeit, no champion is chosen, the championship payout is held, and the event cannot be completed until an earlier result is corrected.' : ''}
           </p>
+          {v2 ? (
+            <p className="sd-warn">
+              Forfeits pay no per-game money. Games already played before a forfeit cannot be recorded, so they are not paid.
+              If the match was finished at the table, record the real score instead.
+            </p>
+          ) : null}
           {!forfeit ? (
             <div className="sd-btn-row">
               <button type="button" className="sd-btn sd-btn-warn" onClick={() => setForfeit(m.p1)}>{m.p1Name} forfeits</button>

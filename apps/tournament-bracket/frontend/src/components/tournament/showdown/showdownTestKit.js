@@ -19,9 +19,10 @@ export function operator(seed = 1) {
 
 export const names = (n) => Array.from({ length: n }, (_, i) => ({ id: `P${i + 1}`, name: `Player ${i + 1}` }));
 
-export function startedEvent(n, { fee = 20, tables = 5, seed = 1 } = {}) {
+/** Defaults to a V1 payout event so the original suites keep testing V1; pass payoutVersion: 2 for V2. */
+export function startedEvent(n, { fee = 20, tables = 5, seed = 1, payoutVersion = 1 } = {}) {
   const op = operator(seed);
-  let s = E.createShowdown({ name: `Test ${n}`, entryFee: fee, tableCount: tables, players: names(n) }, op());
+  let s = E.createShowdown({ name: `Test ${n}`, entryFee: fee, tableCount: tables, players: names(n), payoutVersion }, op());
   s = E.startShowdown(s, op());
   return { s, op };
 }

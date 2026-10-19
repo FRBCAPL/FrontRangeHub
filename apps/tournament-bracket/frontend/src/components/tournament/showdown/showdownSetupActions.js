@@ -1,10 +1,13 @@
 import { buildCircle, circleMatches } from './showdownQualifying.js';
 import { buildPayoutPlan } from './showdownPayout.js';
 import { SHOWDOWN_FORMAT_VERSION } from './showdownRules.js';
+import { isPayoutV2, isPayoutV3, v2RaceProblem, payoutVersionOf, noEngineError } from './showdownPayoutVersion.js';
+import { v3StartFields } from './v3/showdownV3Event.js';
+import { formatFor } from './showdownFormats.js';
 import { context, requireStatus, setupProblems, withAudit } from './showdownState.js';
 
 const EDITABLE_ANYTIME = ['tableCount'];
-const SETTING_KEYS = ['rulesetId', 'entryFee', 'minEntrants', 'maxEntrants', 'tableCount', 'qualifyingRaceTo', 'playoffRaceTo'];
+const SETTING_KEYS = ['entryFee', 'minEntrants', 'maxEntrants', 'tableCount', 'qualifyingRaceTo', 'qualifyingGames', 'playoffRaceTo'];
 
 export function addPlayer(state, { name, fargorate = '' }, ctxIn) {
   const c = context(ctxIn);
@@ -38,11 +41,15 @@ export function updatePlayer(state, playerId, patch, ctxIn) {
 export function updateSettings(state, patch, ctxIn) {
   const c = context(ctxIn);
   const keys = Object.keys(patch).filter((k) => SETTING_KEYS.includes(k));
+  const fmt = formatFor(payoutVersionOf(state));
+  if (!fmt) throw noEngineError(state);
+  if (keys.some((k) => !fmt.settingKeys.includes(k))) throw new Error(`${fmt.code} events do not use that setting.`);
   if (state.status !== 'setup' && keys.some((k) => !EDITABLE_ANYTIME.includes(k))) {
     throw new Error('Only the table count can change once qualifying begins.');
   }
   const settings = { ...state.settings };
-  keys.forEach((k) => { settings[k] = k === 'rulesetId' ? patch[k] : Number(patch[k]); });
+  keys.forEach((k) => { settings[k] = Number(patch[k]); });
+  if (isPayoutV2(state) && v2RaceProblem(settings)) throw new Error(v2RaceProblem(settings));
   if (state.status !== 'setup') {
     const busy = (state.matches || []).filter((m) => m.status === 'on-table' && m.table > settings.tableCount);
     if (busy.length) throw new Error('A match is still on a table you are removing.');
@@ -61,15 +68,22 @@ export function updateDetails(state, { name, tournamentDate, venue }, ctxIn) {
   }, c, 'details');
 }
 
-/** Draws the qualifying circle, locks entrants and the payout plan. */
+/**
+ * Draws the qualifying circle, locks entrants and the payout plan. A V3 event locks its whole payout plan
+ * (rates, reserves, ladder, trace) here and stores each qualifying match's Round 1 / Round 2 labels.
+ */
 export function startShowdown(state, ctxIn) {
   const c = context(ctxIn);
   requireStatus(state, ['setup'], 'This event has already started.');
-  const problems = setupProblems(state);
+  const fmt = formatFor(payoutVersionOf(state));
+  const preview = c.v3Preview && isPayoutV3(state);
+  const problems = setupProblems(state).filter((p) => !(preview && p === fmt?.notReady));
   if (problems.length) throw new Error(problems[0]);
+  if (!fmt?.startable && !preview) throw noEngineError(state);
   const ids = state.players.map((p) => p.id);
   const circle = buildCircle(ids, c.random);
-  const payoutPlan = buildPayoutPlan({ entrants: ids.length, entryFee: state.settings.entryFee });
+  const v3 = isPayoutV3(state) ? v3StartFields(state, circleMatches(circle)) : null;
+  const payoutPlan = v3 ? v3.payoutPlan : buildPayoutPlan({ entrants: ids.length, entryFee: state.settings.entryFee });
   return withAudit({
     ...state,
     formatVersion: SHOWDOWN_FORMAT_VERSION,
@@ -77,7 +91,7 @@ export function startShowdown(state, ctxIn) {
     circle,
     payoutPlan,
     playoffPlan: null,
-    matches: circleMatches(circle),
+    matches: v3 ? v3.matches : circleMatches(circle),
     startedAt: c.now,
-  }, c, 'start', ids);
+  }, c, 'start', ids, v3 ? { payoutVersion: 3, rates: payoutPlan.rates, championshipTierPct: payoutPlan.championshipTierPct, warnings: payoutPlan.guarantees.warnings } : null);
 }
