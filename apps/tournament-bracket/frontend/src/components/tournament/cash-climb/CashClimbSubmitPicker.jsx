@@ -55,7 +55,7 @@ export default function CashClimbSubmitPicker() {
           />
         </div>
         <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_PUBLIC_HASH)}>
-          Cash Climb Showdowns
+          Live Showdowns
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
           How Cash Climb works

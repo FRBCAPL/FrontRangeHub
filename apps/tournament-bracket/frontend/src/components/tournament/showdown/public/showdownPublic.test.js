@@ -7,6 +7,7 @@ import { publicShowdown, publicCopyProblem } from '../cloud/showdownPublicState.
 import { buildShowdownTvBoard } from './showdownTvBoard.js';
 import { reportableMatches } from './showdownPhoneSubmit.js';
 import { showdownPublicEventId, showdownPublicHash, showdownTvHref } from './showdownPublicRoutes.js';
+import { liveShowdownRows } from './useShowdownPublicEvent.js';
 
 const OPERATOR_TEXT = ['Lock qualifying', 'Reopen', 'Undo', 'Withdraw', 'Confirm bracket', 'Draw bracket', 'Complete event', 'won the game', 'Undo who starts', 'Approve', 'Corrections', 'Audit log'];
 
@@ -40,6 +41,20 @@ describe('public copy', () => {
       assert.deepEqual(E.computeEarnings(pub), E.computeEarnings(state), `${name}: earnings identical`);
       assert.deepEqual(E.standingsFor(pub).rows, E.standingsFor(state).rows);
     }
+  });
+
+  it('the player list shows only Showdowns in progress', () => {
+    const now = Date.parse('2026-10-20T03:00:00Z');
+    const rows = [
+      { id: 'live', status: 'qualifying', updated_at: '2026-10-20T02:30:00Z' },
+      { id: 'playoffs', status: 'playoffs', updated_at: '2026-10-19T20:00:00Z' },
+      { id: 'done', status: 'completed', updated_at: '2026-10-20T02:50:00Z' },
+      { id: 'abandoned', status: 'qualifying', updated_at: '2026-10-12T02:00:00Z' },
+      { id: 'setup', status: 'setup', updated_at: '2026-10-20T02:50:00Z' },
+      { id: 'no-date', status: 'shootout' },
+    ];
+    assert.deepEqual(liveShowdownRows(rows, now).map((r) => r.id), ['live', 'playoffs', 'no-date']);
+    assert.deepEqual(liveShowdownRows(null, now), []);
   });
 
   it('routes: the public page lives under the existing submit route and TV under the existing TV route', () => {

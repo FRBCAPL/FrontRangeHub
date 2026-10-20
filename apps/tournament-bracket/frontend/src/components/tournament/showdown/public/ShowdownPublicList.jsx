@@ -4,7 +4,7 @@ import { STATUS_LABELS } from '../operator/showdownView.js';
 import { formatTournamentDate } from '../../cash-climb/cashClimbEngine.js';
 import { showdownPublicHash } from './showdownPublicRoutes.js';
 import { SHOWDOWN_GUIDE_HASH } from './showdownGuideRoute.js';
-import { publicLoadMessage } from './useShowdownPublicEvent.js';
+import { liveShowdownRows, publicLoadMessage } from './useShowdownPublicEvent.js';
 import '../../TournamentBracketApp.css';
 import '../../cash-climb/CashClimb.css';
 import '../../cash-climb/CashClimbSubmitPage.css';
@@ -12,7 +12,7 @@ import './ShowdownPublic.css';
 
 const POLL_MS = 5000;
 
-/** Started and recent Showdowns players can open. */
+/** Showdowns in progress that players can open. */
 export default function ShowdownPublicList({ api }) {
   const navigate = useNavigate();
   const [rows, setRows] = useState([]);
@@ -25,7 +25,7 @@ export default function ShowdownPublicList({ api }) {
     const refresh = async () => {
       const res = await api.publicList();
       if (cancelled) return;
-      setRows(Array.isArray(res.data) ? res.data : []);
+      setRows(liveShowdownRows(Array.isArray(res.data) ? res.data : []));
       setError(res.error ? publicLoadMessage(res.code) : '');
       setLoading(false);
     };
@@ -39,7 +39,7 @@ export default function ShowdownPublicList({ api }) {
       <div className="tournament-bracket-app cc-submit sd-pub">
         <header className="cc-submit-head">
           <p className="cc-play-kicker">Cash Climb Showdown</p>
-          <h1>Showdowns</h1>
+          <h1>Live Showdowns</h1>
           <p className="cc-submit-note">Pick an event to follow results or report a score.</p>
         </header>
         {loading ? <p className="cc-meta">Loading&hellip;</p> : null}
