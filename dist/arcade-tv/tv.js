@@ -122,6 +122,9 @@
   var prizeWinsTotal = 0;
   var PRIZE_WINS_LIMIT = 8;
   var transitioning = false;
+  var lastSlideChangeAt = Date.now();
+  /** Longest slide is ~20s; anything frozen this long gets a full page reload. */
+  var SLIDE_STALL_RELOAD_MS = 90000;
 
   function $(id) {
     return document.getElementById(id);
@@ -1448,6 +1451,7 @@
   }
 
   function onSlideActivated() {
+    lastSlideChangeAt = Date.now();
     var app = $('tv-app');
     var stage = $('tv-slide');
     var slide = slides[slideIndex];
@@ -2453,6 +2457,13 @@
     }
   }
 
+  function reloadIfSlidesStalled() {
+    if (slides.length < 2 || rotationPausedByUser || rotationPausedForCelebration) return;
+    if (overlayBlocksRotation() || nameEntryActive) return;
+    if (Date.now() - lastSlideChangeAt < SLIDE_STALL_RELOAD_MS) return;
+    window.location.reload();
+  }
+
   function pauseTvRotation() {
     captureRotateRemaining();
     clearRotateTimer();
@@ -2460,7 +2471,10 @@
   }
 
   function resumeTvRotation() {
+    var wasPaused = rotationPausedForCelebration;
     rotationPausedForCelebration = false;
+    // Idle polls call this often. Restarting a running timer keeps the same slide forever.
+    if (!wasPaused && rotateTimer) return;
     clearRotateTimer();
     if (slides.length && !celebrationActive && !celebrationStartTimer && !rotationPausedByUser) {
       startRotation();
@@ -2751,6 +2765,12 @@
     var syncKey;
 
     if (!session || orchState === 'IDLE') {
+      var alreadyIdle = !syncedSessionKey
+        && !nameEntryActive
+        && !celebrationActive
+        && !celebrationStartTimer
+        && !overlayBlocksRotation();
+      if (alreadyIdle) return;
       syncedSessionKey = '';
       celebrationSubmitAt = 0;
       clearCelebrationStartTimer();
@@ -3017,6 +3037,7 @@
       bindResizeRefresh();
       bindScreenPauseToggle();
       setInterval(ensureSlideRotation, 12000);
+      setInterval(reloadIfSlidesStalled, 15000);
     });
   }
 
