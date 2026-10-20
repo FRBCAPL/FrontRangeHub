@@ -2,9 +2,8 @@ import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { cashClimbNewPlayerGuide } from './cashClimbNewPlayerGuide.js';
 import { cashClimbGuideHref } from './cashClimbGuideRoute.js';
-import { isShowdownGuide, isShowdownV3Guide } from '../showdown/public/showdownGuideRoute.js';
+import { isShowdownGuide, showdownGuideVersion } from '../showdown/public/showdownGuideRoute.js';
 import ShowdownPublicGuide from '../showdown/public/ShowdownPublicGuide.jsx';
-import ShowdownV3PublicGuide from '../showdown/public/v3/ShowdownV3PublicGuide.jsx';
 import GuideFormatSwitch from '../GuideFormatSwitch.jsx';
 import '../TournamentBracketApp.css';
 import './CashClimbPublicGuide.css';
@@ -16,12 +15,12 @@ function lineClass(line) {
   return '';
 }
 
-/** Public how-it-works route: the original Cash Climb guide, or the Showdown guide with `?format=showdown`. */
+/** Public how-it-works route: the original Cash Climb guide, or the Showdown guide with `?format=showdown&v=1|2|3`. */
 export default function CashClimbPublicGuide() {
   const [searchParams] = useSearchParams();
   const isTv = searchParams.get('tv') === '1';
-  if (isShowdownGuide(searchParams.toString())) return <ShowdownPublicGuide isTv={isTv} />;
-  if (isShowdownV3Guide(searchParams.toString())) return <ShowdownV3PublicGuide isTv={isTv} />;
+  const search = searchParams.toString();
+  if (isShowdownGuide(search)) return <ShowdownPublicGuide isTv={isTv} version={showdownGuideVersion(search)} />;
   return <CashClimbGuide isTv={isTv} />;
 }
 

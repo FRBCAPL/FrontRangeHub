@@ -12,7 +12,7 @@ import { createFakeCloud } from './cloud/showdownFakeCloud.js';
 import { freshStorage, apiFor, syncFor } from './cloud/showdownCloudTestKit.js';
 import { moneyView, payoutPreview } from './operator/showdownBoardView.js';
 import { buildShowdownTvBoard } from './public/showdownTvBoard.js';
-import { showdownNewPlayerGuide } from './showdownNewPlayerGuide.js';
+import { showdownRaceGuide } from './showdownNewPlayerGuide.js';
 import { render, loadComponent } from './operator/showdownRenderKit.js';
 
 beforeEach(() => freshStorage());
@@ -120,10 +120,13 @@ describe('V2 screens', () => {
     assert.equal(tv.championship, '$28 + champion bonus');
   });
 
-  it('the player guide describes each format\u2019s pay: top-ups only for V1, $1 per game won for V2', () => {
-    const text = JSON.stringify(showdownNewPlayerGuide());
-    assert.ok(/V1: every qualifier is topped up to the entry fee/.test(text));
-    assert.ok(/V2: every game you win in a played match pays \$1/.test(text));
-    assert.ok(!/entry fee back|\brack/i.test(text));
+  it('the player guides describe each format\u2019s pay: top-ups only for V1, $1 per game won for V2', () => {
+    const v1 = JSON.stringify(showdownRaceGuide(1));
+    const v2 = JSON.stringify(showdownRaceGuide(2));
+    assert.ok(/Every qualifier is topped up to the entry fee/.test(v1));
+    assert.ok(!/topped up to the entry fee/.test(v2) && /Qualifiers are not topped up/.test(v2));
+    assert.ok(/Every game you win pays \$1/.test(v2) && !/pays \$1/.test(v1));
+    assert.ok(/Games won do not pay on their own/.test(v1));
+    for (const text of [v1, v2]) assert.ok(!/\brack/i.test(text));
   });
 });

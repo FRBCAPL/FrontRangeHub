@@ -1,0 +1,93 @@
+.cc-guide-tagline,
+.cc-guide-stage p {
+  white-space: pre-line;
+}
+
+.sd-guide .cc-guide-card h2,
+.sd-guide .cc-guide-card p,
+.sd-guide .cc-guide-stage {
+  text-align: center;
+}
+
+.sd-guide-older {
+  margin: 0 auto 18px;
+  max-width: 720px;
+  text-align: center;
+}
+
+.sd-guide-older-link {
+  margin-left: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #86efac;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sd-guide-versions {
+  margin-top: -6px;
+}
+
+.sd-guide-version-tag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.sd-guide-compare {
+  margin-bottom: 18px;
+}
+
+.sd-guide-compare-scroll {
+  overflow-x: auto;
+}
+
+.sd-guide-compare .cc-guide-table {
+  min-width: 560px;
+}
+
+.sd-guide-compare .cc-guide-table th[scope="row"] {
+  text-align: left;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.sd-guide-compare .cc-guide-table td {
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.sd-guide-compare .is-current {
+  background: rgba(34, 197, 94, 0.12);
+  color: #fff;
+}
+
+.sd-guide-compare thead .is-current {
+  color: #86efac;
+}
+
+.sd-guide-compare-note {
+  margin-top: 10px !important;
+  color: #94a3b8 !important;
+  font-size: 0.85rem !important;
+}
+
+.sd-guide-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

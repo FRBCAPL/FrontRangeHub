@@ -120,5 +120,9 @@ describe('V3 cloud and local-only messaging', () => {
     for (const t of ['Two different copies of this event', 'Choose a copy', 'Another device saved a newer copy']) assert.ok(conflict.includes(t), t);
     const v1 = clean(await render('ShowdownCloudBar.jsx', { eventId: 'e1', status: 'qualifying', sync: { status: 'saved' }, onRetry() {}, onReupload() {}, onOpenConflict() {} }));
     assert.ok(v1.includes('Player page') && v1.includes('TV 16:9') && v1.includes('How it works TV'), 'V1/V2 links unchanged');
+    for (const n of [1, 2]) {
+      const bar = clean(await render('ShowdownCloudBar.jsx', { eventId: 'e1', status: 'qualifying', guideVersion: n, sync: { status: 'saved' }, onRetry() {}, onReupload() {}, onOpenConflict() {} }));
+      assert.ok(bar.includes(`How V${n} works TV`), `V${n} guide button`);
+    }
   });
 });

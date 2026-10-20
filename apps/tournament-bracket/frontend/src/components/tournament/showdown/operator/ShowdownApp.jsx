@@ -141,6 +141,7 @@ export default function ShowdownApp({ onLeave }) {
         eventId={state.id}
         status={state.status}
         v3={v3}
+        guideVersion={payoutVersionOf(state)}
         isolated={Boolean(showdownCloud.isIsolated?.())}
         writesLive={Boolean(showdownCloud.writesLive?.())}
         sync={cloud.sync}

@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { showdownCloud } from '../cloud/showdownCloud.js';
 import { ISOLATED_CLOUD_NOTE } from '../cloud/showdownCloudApi.js';
-import { isPayoutV3 } from '../showdownPayoutVersion.js';
+import { isPayoutV3, payoutVersionOf } from '../showdownPayoutVersion.js';
 import { STATUS_LABELS } from '../operator/showdownView.js';
 import { formatTournamentDate } from '../../cash-climb/cashClimbEngine.js';
 import useShowdownPublicEvent from './useShowdownPublicEvent.js';
 import { sendPhoneScore } from './showdownPhoneSubmit.js';
 import { listMySubmissions, rememberSubmission, updateSubmission } from './showdownMySubmissions.js';
 import { SHOWDOWN_PUBLIC_HASH } from './showdownPublicRoutes.js';
-import { SHOWDOWN_GUIDE_HASH, SHOWDOWN_V3_GUIDE_HASH } from './showdownGuideRoute.js';
+import { showdownGuideHash } from './showdownGuideRoute.js';
+import { raceEventFacts } from './showdownRaceFacts.js';
 import ShowdownPublicList from './ShowdownPublicList.jsx';
 import ShowdownPublicNow from './ShowdownPublicNow.jsx';
 import ShowdownPublicStandings from './ShowdownPublicStandings.jsx';
@@ -52,6 +53,7 @@ function ShowdownPublicEvent({ api, eventId }) {
   const simulatedPhone = isolated && new URLSearchParams(search).get('device') === 'phone';
   const { event, loading, error, source, pendingIds } = useShowdownPublicEvent(api, eventId, 3000, { preferTablet: !simulatedPhone });
   const v3 = Boolean(event) && isPayoutV3(event);
+  const version = event ? payoutVersionOf(event) : null;
   const [tab, setTab] = useState('');
   const [reporting, setReporting] = useState(null);
   const [notice, setNotice] = useState('');
@@ -97,7 +99,7 @@ function ShowdownPublicEvent({ api, eventId }) {
               {[event.venue, formatTournamentDate(event.tournamentDate), STATUS_LABELS[event.status]].filter(Boolean).join(' \u00b7 ')}
             </p>
           ) : null}
-          {v3 ? <p className="cc-submit-note">{v3PublicFacts(event).join(' \u00b7 ')}</p> : null}
+          {event ? <p className="cc-submit-note">{(v3 ? v3PublicFacts(event) : raceEventFacts(event)).join(' \u00b7 ')}</p> : null}
         </header>
         {isolated ? <p className="cc-banner" role="status">{ISOLATED_CLOUD_NOTE}{simulatedPhone ? ' This tab is acting as a phone.' : ''}</p> : null}
         {loading ? <p className="cc-meta">Loading this event&hellip;</p> : null}
@@ -125,7 +127,7 @@ function ShowdownPublicEvent({ api, eventId }) {
         ) : null}
         <div className="cc-submit-nav">
           <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_PUBLIC_HASH)}>All Showdowns</button>
-          <button type="button" className="tb-btn-new" onClick={() => navigate(v3 ? SHOWDOWN_V3_GUIDE_HASH : SHOWDOWN_GUIDE_HASH)}>{v3 ? 'How Showdown V3 works' : 'How Showdown works'}</button>
+          <button type="button" className="tb-btn-new" onClick={() => navigate(showdownGuideHash(version))}>{version ? `How Showdown V${version} works` : 'How Showdown works'}</button>
           <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>Back to home</button>
         </div>
       </div>

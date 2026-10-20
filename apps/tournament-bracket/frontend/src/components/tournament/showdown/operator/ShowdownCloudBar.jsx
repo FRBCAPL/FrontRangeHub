@@ -28,11 +28,13 @@ function when(at) {
 }
 
 /**
- * Cloud save status, retry, and the public / TV links for this event. `v3` opens the V3 guide; `isolated`
- * says the isolated test cloud (development only) is answering instead of the live database; `writesLive`
- * (development build, preview off) warns that V1/V2 saves are real writes to the live database.
+ * Cloud save status, retry, and the public / TV links for this event. `guideVersion` (1, 2 or 3; V3 when
+ * `v3`) opens that version's guide; `isolated` says the isolated test cloud (development only) is answering
+ * instead of the live database; `writesLive` (development build, preview off) warns that V1/V2 saves are
+ * real writes to the live database.
  */
-export default function ShowdownCloudBar({ eventId, status, sync, onRetry, onReupload, onOpenConflict, v3 = false, isolated = false, writesLive = false }) {
+export default function ShowdownCloudBar({ eventId, status, sync, onRetry, onReupload, onOpenConflict, v3 = false, guideVersion = null, isolated = false, writesLive = false }) {
+  const guide = guideVersion || (v3 ? 3 : null);
   const s = sync.status;
   const bad = ['offline', 'error', 'conflict', 'missing'].includes(s);
   const live = status !== 'setup';
@@ -57,7 +59,7 @@ export default function ShowdownCloudBar({ eventId, status, sync, onRetry, onReu
             <button type="button" className="sd-btn" onClick={() => openShowdownTv(eventId, 'portrait')}>TV 9:16</button>
           </>
         ) : null}
-        <button type="button" className="sd-btn" onClick={() => openShowdownGuideTv({ v3 })}>{v3 ? 'How V3 works TV' : 'How it works TV'}</button>
+        <button type="button" className="sd-btn" onClick={() => openShowdownGuideTv({ version: guide })}>{guide ? `How V${guide} works TV` : 'How it works TV'}</button>
       </span>
     </div>
   );
