@@ -7,6 +7,8 @@ import { elimSubmitHash } from '@apps/tournament-bracket/frontend/src/components
 import { listOpenBreakAndRunPots } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunCloud.js';
 import { breakAndRunPhoneHash } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
 import { formatDollars } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunGuide.js';
+import { showdownCloud } from '@apps/tournament-bracket/frontend/src/components/tournament/showdown/cloud/showdownCloud.js';
+import { listLiveShowdownItems } from '@apps/tournament-bracket/frontend/src/components/tournament/showdown/public/showdownLiveList.js';
 
 const LADDER_LABELS = {
   '499-under': '499 & Under',
@@ -66,14 +68,15 @@ export async function loadBreakAndRunItems() {
 }
 
 export async function loadHomepageTournamentBanner() {
-  const [ladderResult, cashResult, elimEvents, bnrPots] = await Promise.all([
+  const [ladderResult, cashResult, elimEvents, bnrPots, showdowns] = await Promise.all([
     tournamentService.getAllUpcomingTournaments(8),
     listLiveCashClimbEventsResult(),
     listLiveElimEvents(),
     listOpenBreakAndRunPots(),
+    listLiveShowdownItems(showdownCloud),
   ]);
 
-  const live = [];
+  const live = showdowns.map((s) => ({ id: s.id, path: s.path, label: s.name, detail: s.detail, live: true, cta: 'Submit a result' }));
   (cashResult.events || []).forEach((event) => {
     const players = playerCount(event);
     live.push({

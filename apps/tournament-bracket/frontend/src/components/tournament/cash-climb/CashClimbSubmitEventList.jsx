@@ -27,9 +27,9 @@ export default function CashClimbSubmitEventList({
         <ul className="cc-submit-pick-list">
           {events.map((event) => (
             <li key={event.id}>
-              <button type="button" className="cc-submit-pick-item" onClick={() => onPick(event.id)}>
+              <button type="button" className="cc-submit-pick-item" onClick={() => onPick(event.id, event)}>
                 <strong>{event.name}</strong>
-                <span>{eventDetail(event)}</span>
+                <span>{event.detail || eventDetail(event)}</span>
               </button>
             </li>
           ))}

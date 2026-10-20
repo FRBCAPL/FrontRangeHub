@@ -7,7 +7,7 @@ import './TournamentBannerAll.css';
 const POLL_MS = 20000;
 
 /**
- * Landing-page banner: ladder events in registration, plus live Cash Climb / elim.
+ * Landing-page banner: ladder events in registration, plus live Cash Climb / Showdown / elim.
  * Break & Run pots have their own homepage tile (useBreakAndRunTile).
  * Tapping opens a short list modal instead of leaving the homepage.
  */

@@ -5,6 +5,8 @@ import { cashClimbListErrorMessage } from './cashClimbPublic.js';
 import { cashClimbSubmitHash } from './cashClimbSubmit.js';
 import CashClimbSubmitEventList from './CashClimbSubmitEventList.jsx';
 import { SHOWDOWN_PUBLIC_HASH } from '../showdown/public/showdownPublicRoutes.js';
+import { showdownCloud } from '../showdown/cloud/showdownCloud.js';
+import { listLiveShowdownItems } from '../showdown/public/showdownLiveList.js';
 import { CASH_CLIMB_GUIDE_HASH } from './cashClimbGuideRoute.js';
 import '../TournamentBracketApp.css';
 import './CashClimb.css';
@@ -22,10 +24,10 @@ export default function CashClimbSubmitPicker() {
     document.title = 'Submit a result';
     let cancelled = false;
     const refresh = async () => {
-      const result = await listLiveCashClimbEventsResult();
+      const [result, showdowns] = await Promise.all([listLiveCashClimbEventsResult(), listLiveShowdownItems(showdownCloud)]);
       if (cancelled) return;
-      setEvents(result.events);
-      setError(result.error ? cashClimbListErrorMessage(result.error) : '');
+      setEvents([...showdowns, ...result.events]);
+      setError(result.error && !showdowns.length ? cashClimbListErrorMessage(result.error) : '');
       setLoading(false);
     };
     refresh();
@@ -51,7 +53,7 @@ export default function CashClimbSubmitPicker() {
             events={events}
             loading={loading}
             error={error}
-            onPick={(eventId) => navigate(cashClimbSubmitHash(eventId))}
+            onPick={(eventId, event) => navigate(event?.path || cashClimbSubmitHash(eventId))}
           />
         </div>
         <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_PUBLIC_HASH)}>

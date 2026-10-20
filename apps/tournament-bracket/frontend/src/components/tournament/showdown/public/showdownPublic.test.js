@@ -7,7 +7,7 @@ import { publicShowdown, publicCopyProblem } from '../cloud/showdownPublicState.
 import { buildShowdownTvBoard } from './showdownTvBoard.js';
 import { reportableMatches } from './showdownPhoneSubmit.js';
 import { showdownPublicEventId, showdownPublicHash, showdownTvHref } from './showdownPublicRoutes.js';
-import { liveShowdownRows } from './useShowdownPublicEvent.js';
+import { liveShowdownRows, liveShowdownItem, listLiveShowdownItems } from './showdownLiveList.js';
 
 const OPERATOR_TEXT = ['Lock qualifying', 'Reopen', 'Undo', 'Withdraw', 'Confirm bracket', 'Draw bracket', 'Complete event', 'won the game', 'Undo who starts', 'Approve', 'Corrections', 'Audit log'];
 
@@ -55,6 +55,17 @@ describe('public copy', () => {
     ];
     assert.deepEqual(liveShowdownRows(rows, now).map((r) => r.id), ['live', 'playoffs', 'no-date']);
     assert.deepEqual(liveShowdownRows(null, now), []);
+  });
+
+  it('live Showdowns become homepage and Current tournaments entries that open the event page', async () => {
+    assert.deepEqual(liveShowdownItem({ id: 'sd-1', name: 'Tuesday Showdown', venue: 'Main St', status: 'qualifying' }), {
+      id: 'sd-sd-1', path: '/tournament-bracket/submit/showdown/sd-1', name: 'Tuesday Showdown', detail: 'Live Showdown \u00b7 Main St',
+    });
+    const recent = new Date().toISOString();
+    const api = { publicList: async () => ({ data: [{ id: 'a', name: 'A', status: 'playoffs', updated_at: recent }, { id: 'b', name: 'B', status: 'completed', updated_at: recent }] }) };
+    assert.deepEqual((await listLiveShowdownItems(api)).map((i) => i.path), ['/tournament-bracket/submit/showdown/a']);
+    assert.deepEqual(await listLiveShowdownItems({ publicList: async () => { throw new Error('offline'); } }), []);
+    assert.deepEqual(await listLiveShowdownItems({ publicList: async () => ({ data: null, error: 'x' }) }), []);
   });
 
   it('routes: the public page lives under the existing submit route and TV under the existing TV route', () => {

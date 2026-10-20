@@ -15,17 +15,6 @@ export function publicLoadMessage(code) {
   return 'Could not load this event.';
 }
 
-const STALE_MS = 24 * 60 * 60 * 1000;
-
-/** Players only see Showdowns still in progress; completed and abandoned (no update in a day) events are hidden. */
-export function liveShowdownRows(rows, now = Date.now()) {
-  return (rows || []).filter((r) => {
-    if (!r || r.status === 'completed' || r.status === 'setup') return false;
-    const t = Date.parse(r.updated_at);
-    return Number.isNaN(t) || now - t < STALE_MS;
-  });
-}
-
 /**
  * Obsolete test events are never shown to phones or the TV, and neither is any format these public
  * screens cannot show. V3 events are shown only with a complete locked payout plan; they never fall
