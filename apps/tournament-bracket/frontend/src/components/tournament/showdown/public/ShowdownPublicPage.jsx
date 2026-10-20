@@ -10,9 +10,11 @@ import { sendPhoneScore } from './showdownPhoneSubmit.js';
 import { listMySubmissions, rememberSubmission, updateSubmission } from './showdownMySubmissions.js';
 import { showdownGuideHash } from './showdownGuideRoute.js';
 import { loadMe, meIn, saveMe } from './showdownWhoAmI.js';
+import { clearTrack } from './showdownScoreTrack.js';
+import ShowdownScoreTracker from './ShowdownScoreTracker.jsx';
 import { raceEventFacts } from './showdownRaceFacts.js';
 import ShowdownPublicList from './ShowdownPublicList.jsx';
-import ShowdownPublicNow from './ShowdownPublicNow.jsx';
+import ShowdownPublicNow, { ShowdownPublicUpNext } from './ShowdownPublicNow.jsx';
 import ShowdownPublicStandings from './ShowdownPublicStandings.jsx';
 import ShowdownPublicBracket from './ShowdownPublicBracket.jsx';
 import ShowdownPublicShootout from './ShowdownPublicShootout.jsx';
@@ -33,7 +35,9 @@ const STATUS_POLL_MS = 4000;
 export const DIRECTOR_DEVICE_NOTE = 'You\u2019re on the director\u2019s device, so score reporting is off here. Enter scores on the operator screen; players report from their own phones.';
 
 function tabsFor(status) {
-  const tabs = [['now', 'Now'], ['standings', 'Standings']];
+  const tabs = [['now', 'Now']];
+  if (['qualifying', 'playoffs'].includes(status)) tabs.push(['next', 'Up next']);
+  tabs.push(['standings', 'Standings']);
   if (['playoffs', 'completed', 'bracket'].includes(status)) tabs.push(['bracket', 'Bracket']);
   tabs.push(['money', 'Money']);
   if (['playoffs', 'completed'].includes(status)) tabs.push(['results', status === 'completed' ? 'Final results' : 'Results']);
@@ -57,6 +61,7 @@ function ShowdownPublicEvent({ api, eventId }) {
   const version = event ? payoutVersionOf(event) : null;
   const [tab, setTab] = useState('');
   const [reporting, setReporting] = useState(null);
+  const [tracking, setTracking] = useState(null);
   const [notice, setNotice] = useState('');
   const [mine, setMine] = useState(() => listMySubmissions(eventId));
   const [meId, setMeId] = useState(() => loadMe(eventId));
@@ -82,12 +87,18 @@ function ShowdownPublicEvent({ api, eventId }) {
   const active = tabs.some(([k]) => k === tab) ? tab : tabs[0]?.[0];
   const canReport = source === 'cloud';
 
+  const openReport = (m) => { setNotice(''); setTracking(null); setReporting(m); };
+  const openTracker = (m) => { setNotice(''); setReporting(null); setTracking(m); };
+
   const send = async (s1, s2, name) => {
-    const out = await sendPhoneScore(api, event, reporting, s1, s2, me?.name || name);
+    const match = reporting || tracking;
+    const out = await sendPhoneScore(api, event, match, s1, s2, me?.name || name);
     if (out.error) return out.error;
-    rememberSubmission({ id: out.id, eventId, matchId: reporting.id, label: reporting.label, scoreText: `${reporting.p1Name} ${s1}\u2013${s2} ${reporting.p2Name}`, status: 'pending', sentAt: new Date().toISOString() });
+    rememberSubmission({ id: out.id, eventId, matchId: match.id, label: match.label, scoreText: `${match.p1Name} ${s1}\u2013${s2} ${match.p2Name}`, status: 'pending', sentAt: new Date().toISOString() });
+    clearTrack(eventId, match.id);
     setMine(listMySubmissions(eventId));
     setReporting(null);
+    setTracking(null);
     setNotice('Score sent. It counts once the director approves it.');
     return '';
   };
@@ -118,9 +129,11 @@ function ShowdownPublicEvent({ api, eventId }) {
               {tabs.map(([k, label]) => (
                 <button key={k} type="button" className={`sd-tab${active === k ? ' is-active' : ''}`} aria-pressed={active === k} onClick={() => setTab(k)}>{label}</button>
               ))}
+              <button type="button" className="sd-tab" onClick={() => navigate('/')}>Home</button>
             </nav>
-            {v3 ? <ShowdownV3PublicTabs tab={active} event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} me={me} onPickMe={pickMe} /> : null}
-            {!v3 && active === 'now' ? <ShowdownPublicNow event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} me={me} onPickMe={pickMe} /> : null}
+            {v3 ? <ShowdownV3PublicTabs tab={active} event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={openReport} onTrack={openTracker} me={me} onPickMe={pickMe} /> : null}
+            {!v3 && active === 'now' ? <ShowdownPublicNow event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={openReport} onTrack={openTracker} me={me} onPickMe={pickMe} /> : null}
+            {!v3 && active === 'next' ? <ShowdownPublicUpNext event={event} me={me} /> : null}
             {!v3 && active === 'standings' ? (
               <>
                 <ShowdownPublicStandings event={event} />
@@ -137,6 +150,7 @@ function ShowdownPublicEvent({ api, eventId }) {
           <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>Back to home</button>
         </div>
       </div>
+      {tracking && event ? <ShowdownScoreTracker event={event} match={tracking} reporterName={me?.name} onSend={send} onCancel={() => setTracking(null)} /> : null}
       {reporting && event && v3 ? <ShowdownV3PhoneScoreModal event={event} match={reporting} reporterName={me?.name} onSend={send} onCancel={() => setReporting(null)} /> : null}
       {reporting && event && !v3 ? (
         <ShowdownPhoneScoreModal

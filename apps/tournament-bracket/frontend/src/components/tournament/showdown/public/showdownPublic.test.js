@@ -8,7 +8,8 @@ import { buildShowdownTvBoard } from './showdownTvBoard.js';
 import { reportableMatches } from './showdownPhoneSubmit.js';
 import { showdownPublicEventId, showdownPublicHash, showdownTvHref } from './showdownPublicRoutes.js';
 import { liveShowdownRows, liveShowdownItem, listLiveShowdownItems } from './showdownLiveList.js';
-import { loadMe, saveMe, pickablePlayers, meIn, isMyMatch } from './showdownWhoAmI.js';
+import { loadMe, saveMe, pickablePlayers, meIn, isMyMatch, mineFirst } from './showdownWhoAmI.js';
+import { trackRule, canAdd, isDone, statusText, step, loadTrack, saveTrack, clearTrack } from './showdownScoreTrack.js';
 
 const OPERATOR_TEXT = ['Lock qualifying', 'Reopen', 'Undo', 'Withdraw', 'Confirm bracket', 'Draw bracket', 'Complete event', 'won the game', 'Undo who starts', 'Approve', 'Corrections', 'Audit log'];
 
@@ -74,7 +75,53 @@ describe('public copy', () => {
     assert.equal(meIn(event, 'p2').name, 'Amy');
     assert.equal(meIn(event, 'p3'), null, 'a withdrawn player is no longer picked');
     assert.equal(meIn(event, 'gone'), null);
+    const tables = [{ id: 'a', p1: 'p1', p2: 'p3' }, { id: 'b', p1: 'p4', p2: 'p5' }, { id: 'c', p1: 'p2', p2: 'p6' }, { id: 'd', p1: 'p7', p2: 'p8' }];
+    assert.deepEqual(mineFirst(tables, 'p2').map((m) => m.id), ['c', 'a', 'b', 'd'], 'own match first, rest in order');
+    assert.deepEqual(mineFirst(tables, '').map((m) => m.id), ['a', 'b', 'c', 'd']);
     assert.ok(isMyMatch({ p1: 'p1', p2: 'p2' }, 'p2') && !isMyMatch({ p1: 'p1', p2: 'p2' }, 'p3') && !isMyMatch({ p1: 'p1', p2: 'p2' }, ''));
+  });
+
+  it('score tracker: counts games inside the match rules and is saved per match', () => {
+    const games = { mode: 'games', target: 6 };
+    let s = { s1: 0, s2: 0 };
+    for (const side of [1, 1, 2, 1, 2]) s = step(games, s, side, 1);
+    assert.deepEqual(s, { s1: 3, s2: 2 });
+    assert.equal(statusText(games, s.s1, s.s2), 'Game 6 of 6');
+    s = step(games, s, 2, 1);
+    assert.ok(isDone(games, s.s1, s.s2) && statusText(games, s.s1, s.s2) === 'Match complete', '3\u20133 tie completes a 6-game match');
+    assert.deepEqual(step(games, s, 1, 1), s, 'no seventh game');
+    assert.deepEqual(step(games, { s1: 0, s2: 0 }, 1, -1), { s1: 0, s2: 0 }, 'never below zero');
+    const race = { mode: 'race', target: 5 };
+    assert.ok(!isDone(race, 4, 4) && isDone(race, 5, 3) && !canAdd(race, 5, 3));
+    assert.deepEqual(step(race, { s1: 5, s2: 3 }, 2, 1), { s1: 5, s2: 3 }, 'race over: no more games');
+    assert.ok(!isDone(race, 5, 5));
+
+    const v3 = { payoutVersion: 3, payoutPlan: { qualifyingGames: 6, playoffRaceTo: 7 } };
+    assert.deepEqual(trackRule(v3, { phase: 'qualifying' }), { mode: 'games', target: 6 });
+    assert.deepEqual(trackRule(v3, { phase: 'playoff' }), { mode: 'race', target: 7 });
+    assert.deepEqual(trackRule({ settings: { qualifyingRaceTo: 3, playoffRaceTo: 5 } }, { phase: 'qualifying' }), { mode: 'race', target: 3 });
+
+    const store = new Map();
+    const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k) };
+    assert.equal(loadTrack('e1', 'm1', storage), null);
+    saveTrack('e1', 'm1', { s1: 2, s2: 1 }, storage);
+    assert.deepEqual(loadTrack('e1', 'm1', storage), { s1: 2, s2: 1 });
+    assert.equal(loadTrack('e1', 'm2', storage), null, 'each match has its own score');
+    clearTrack('e1', 'm1', storage);
+    assert.equal(loadTrack('e1', 'm1', storage), null);
+    store.set('frph-showdown-track:e1:m3', '{bad');
+    assert.equal(loadTrack('e1', 'm3', storage), null, 'a damaged save starts from 0\u20130');
+  });
+
+  it('score tracker screen and own-match buttons', async () => {
+    const pub = publicShowdown(phases.qualifying);
+    const onTable = reportableMatches(pub)[0];
+    const me = pub.players.find((p) => p.id === onTable.p1);
+    const now = await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: true, onReport() {}, onTrack() {}, me });
+    assert.ok(now.includes('>Keep score<') && now.includes('>Report score<'));
+    const html = await render('../public/ShowdownScoreTracker.jsx', { event: pub, match: { ...onTable, label: 'Qualifying 1', p1Name: 'Amy', p2Name: 'Bo' }, reporterName: 'Amy', onSend: async () => '', onCancel() {} });
+    for (const t of ['Keep score', 'Race to 3', 'Add a game for Amy', 'Send to director', 'saved on this phone']) assert.ok(html.includes(t), t);
+    assert.match(html, /disabled=""[^>]*>Send to director/, 'cannot send before the match is complete');
   });
 
   it('live Showdowns become homepage and Current tournaments entries that open the event page', async () => {
@@ -103,7 +150,10 @@ describe('public pages', () => {
     const onTable = reportableMatches(pub)[0];
     const me = pub.players.find((p) => p.id === onTable.p1);
     const now = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: true, onReport() {}, me }));
-    for (const t of ['On the tables', 'Table 1', 'Report score', 'Up next', 'Latest results', 'Reporting as']) assert.ok(now.includes(t), t);
+    for (const t of ['On the tables', 'Table 1', 'Report score', 'Latest results', 'Reporting as']) assert.ok(now.includes(t), t);
+    assert.ok(!now.includes('Up next'), 'up next has its own tab');
+    const upNext = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, me }, 'ShowdownPublicUpNext'));
+    assert.ok(upNext.includes('Up next') && upNext.includes('sd-pub-match'));
     const pending = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [onTable.id], mine: [{ id: 's1', label: 'Qualifying 1', scoreText: 'A 3–1 B', status: 'rejected', reason: 'Wrong' }], canReport: true, onReport() {}, me }));
     assert.ok(pending.includes('waiting for the director') && !pending.includes('>Report score<'));
     assert.ok(pending.includes('Not accepted') && pending.includes('Wrong'));

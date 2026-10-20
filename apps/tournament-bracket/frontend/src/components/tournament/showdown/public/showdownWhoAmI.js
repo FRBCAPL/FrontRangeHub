@@ -47,3 +47,10 @@ export function meIn(event, playerId) {
 export function isMyMatch(match, playerId) {
   return Boolean(playerId) && Boolean(match) && (match.p1 === playerId || match.p2 === playerId);
 }
+
+/** The player's own matches first; everything else keeps its order. */
+export function mineFirst(matches, playerId) {
+  const list = matches || [];
+  if (!playerId) return list;
+  return [...list.filter((m) => isMyMatch(m, playerId)), ...list.filter((m) => !isMyMatch(m, playerId))];
+}

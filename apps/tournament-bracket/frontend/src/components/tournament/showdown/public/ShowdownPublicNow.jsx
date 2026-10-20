@@ -3,7 +3,8 @@ import { queueView } from '../operator/showdownView.js';
 import { SUBMISSION_STATUS_TEXT } from './showdownMySubmissions.js';
 import ShowdownPublicShootout from './ShowdownPublicShootout.jsx';
 import ShowdownWhoAmI from './ShowdownWhoAmI.jsx';
-import { isMyMatch } from './showdownWhoAmI.js';
+import { isMyMatch, mineFirst } from './showdownWhoAmI.js';
+import MyMatchActions from './ShowdownMyMatchActions.jsx';
 
 function MatchLine({ m }) {
   return (
@@ -15,8 +16,20 @@ function MatchLine({ m }) {
   );
 }
 
+/** "Up next" tab: matches waiting for a table, the player's own first. */
+export function ShowdownPublicUpNext({ event, me = null }) {
+  const q = queueView(event, event.status === 'playoffs' ? 'playoff' : 'qualifying');
+  const next = mineFirst([...q.ready, ...q.waiting], me?.id);
+  return (
+    <section className="sd-panel sd-pub-tables" aria-label="Up next">
+      <h3>Up next</h3>
+      {next.length ? <ul className="sd-pub-list">{next.map((m) => <MatchLine key={m.id} m={m} />)}</ul> : <p className="sd-note">Nothing waiting.</p>}
+    </section>
+  );
+}
+
 /** What is happening right now, with phone reporting for matches on a table. */
-export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, onReport, me = null, onPickMe = () => {} }) {
+export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, onReport, onTrack = () => {}, me = null, onPickMe = () => {} }) {
   const s = event.status;
   if (s === 'shootout') return <ShowdownPublicShootout event={event} />;
   if (s === 'bracket') return <section className="sd-panel"><h3>Playoff bracket</h3><p className="sd-note">Qualifying is finished. The director is drawing the playoff bracket.</p></section>;
@@ -24,12 +37,12 @@ export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, 
   const q = queueView(event, s === 'playoffs' ? 'playoff' : 'qualifying');
   return (
     <>
-      <section className="sd-panel" aria-label="On the tables">
+      <section className="sd-panel sd-pub-tables" aria-label="On the tables">
         <h3>On the tables</h3>
         {canReport ? <ShowdownWhoAmI event={event} me={me} onPick={onPickMe} /> : null}
         {q.onTable.length ? (
           <ul className="sd-pub-list">
-            {q.onTable.map((m) => {
+            {mineFirst(q.onTable, me?.id).map((m) => {
               const waiting = pendingIds.includes(m.id);
               return (
                 <li key={m.id} className="sd-pub-match">
@@ -38,7 +51,7 @@ export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, 
                   {canReport && isMyMatch(m, me?.id) ? (
                     waiting
                       ? <small className="sd-warn">Score sent &mdash; waiting for the director</small>
-                      : <button type="button" className="sd-btn sd-btn-primary" onClick={() => onReport(m)}>Report score</button>
+                      : <MyMatchActions event={event} m={m} onTrack={onTrack} onReport={onReport} />
                   ) : null}
                 </li>
               );
@@ -63,12 +76,6 @@ export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, 
           </ul>
         </section>
       ) : null}
-      <section className="sd-panel" aria-label="Up next">
-        <h3>Up next</h3>
-        {q.ready.length || q.waiting.length ? (
-          <ul className="sd-pub-list">{[...q.ready, ...q.waiting].slice(0, 8).map((m) => <MatchLine key={m.id} m={m} />)}</ul>
-        ) : <p className="sd-note">Nothing waiting.</p>}
-      </section>
       <section className="sd-panel" aria-label="Latest results">
         <h3>Latest results</h3>
         {q.done.length ? <ul className="sd-pub-list">{q.done.slice(0, 10).map((m) => <MatchLine key={m.id} m={m} />)}</ul> : <p className="sd-note">No results yet.</p>}

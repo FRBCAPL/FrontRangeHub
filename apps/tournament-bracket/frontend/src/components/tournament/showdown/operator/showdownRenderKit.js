@@ -44,13 +44,13 @@ export async function loadComponent(file) {
   return mod;
 }
 
-export async function render(file, props = {}) {
-  const [{ default: Component }, React, server] = await Promise.all([
+export async function render(file, props = {}, exportName = 'default') {
+  const [mod, React, server] = await Promise.all([
     loadComponent(file),
     import('react'),
     import('react-dom/server'),
   ]);
-  return server.renderToStaticMarkup(React.createElement(Component, props));
+  return server.renderToStaticMarkup(React.createElement(mod[exportName], props));
 }
 
 /** Minimal localStorage so ShowdownApp can load a saved event under Node. */

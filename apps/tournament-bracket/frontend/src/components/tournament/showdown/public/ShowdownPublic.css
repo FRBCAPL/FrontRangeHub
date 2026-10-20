@@ -51,6 +51,36 @@
   justify-self: start;
 }
 
+.sd-pub-tables h3,
+.sd-pub-tables > .sd-note,
+.sd-pub-tables .sd-pub-match {
+  text-align: center;
+}
+
+.sd-pub-tables .sd-pub-match {
+  justify-items: center;
+}
+
+.sd-pub-tables .sd-pub-match .sd-btn {
+  justify-self: center;
+}
+
+.sd-pub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sd-pub-tables .sd-whoami {
+  text-align: center;
+}
+
+.sd-pub-tables .sd-whoami select {
+  max-width: 320px;
+  margin: 6px auto 0;
+}
+
 .sd-pub-event {
   display: grid;
   gap: 4px;

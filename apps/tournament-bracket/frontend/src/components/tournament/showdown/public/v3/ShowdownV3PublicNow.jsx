@@ -3,7 +3,8 @@ import { queueViewV3 } from '../../operator/v3/showdownV3BoardView.js';
 import { SUBMISSION_STATUS_TEXT } from '../showdownMySubmissions.js';
 import ShowdownPublicShootout from '../ShowdownPublicShootout.jsx';
 import ShowdownWhoAmI from '../ShowdownWhoAmI.jsx';
-import { isMyMatch } from '../showdownWhoAmI.js';
+import { isMyMatch, mineFirst } from '../showdownWhoAmI.js';
+import MyMatchActions from '../ShowdownMyMatchActions.jsx';
 
 function MatchLine({ m }) {
   return (
@@ -35,8 +36,20 @@ function Sent({ mine }) {
   );
 }
 
-/** V3 "Now": matches on a table (with round, games and pay), phone reporting, up next and latest results. */
-export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport, onReport, me = null, onPickMe = () => {} }) {
+/** V3 "Up next" tab: matches waiting for a table, the player's own first. */
+export function ShowdownV3PublicUpNext({ event, me = null }) {
+  const q = queueViewV3(event, event.status === 'playoffs' ? 'playoff' : 'qualifying');
+  const next = mineFirst([...q.ready, ...q.waiting], me?.id);
+  return (
+    <section className="sd-panel sd-pub-tables" aria-label="Up next">
+      <h3>Up next</h3>
+      {next.length ? <ul className="sd-pub-list">{next.map((m) => <MatchLine key={m.id} m={m} />)}</ul> : <p className="sd-note">Nothing waiting.</p>}
+    </section>
+  );
+}
+
+/** V3 "Now": matches on a table (with round, games and pay), phone reporting and latest results. */
+export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport, onReport, onTrack = () => {}, me = null, onPickMe = () => {} }) {
   const s = event.status;
   if (s === 'shootout') return <ShowdownPublicShootout event={event} />;
   if (s === 'bracket') return <section className="sd-panel"><h3>Playoff bracket</h3><p className="sd-note">Qualifying is finished. The director is drawing the playoff bracket.</p></section>;
@@ -46,7 +59,7 @@ export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport
   const plan = event.payoutPlan;
   return (
     <>
-      <section className="sd-panel" aria-label="On the tables">
+      <section className="sd-panel sd-pub-tables" aria-label="On the tables">
         <h3>On the tables</h3>
         <p className="sd-note">
           {playoff
@@ -56,7 +69,7 @@ export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport
         {canReport ? <ShowdownWhoAmI event={event} me={me} onPick={onPickMe} /> : null}
         {q.onTable.length ? (
           <ul className="sd-pub-list">
-            {q.onTable.map((m) => (
+            {mineFirst(q.onTable, me?.id).map((m) => (
               <li key={m.id} className="sd-pub-match">
                 <span className="sd-pub-label">{m.label} &middot; Table {m.table}</span>
                 <span>{m.p1Name} <em>vs</em> {m.p2Name}</span>
@@ -64,7 +77,7 @@ export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport
                 {canReport && isMyMatch(m, me?.id) ? (
                   pendingIds.includes(m.id)
                     ? <small className="sd-warn">Score sent &mdash; waiting for the director</small>
-                    : <button type="button" className="sd-btn sd-btn-primary" onClick={() => onReport(m)}>Report score</button>
+                    : <MyMatchActions event={event} m={m} onTrack={onTrack} onReport={onReport} />
                 ) : null}
               </li>
             ))}
@@ -73,12 +86,6 @@ export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport
         {canReport ? <p className="sd-note">Only finished matches on a table can be reported. Forfeits, withdrawals and payout adjustments are entered by the director.</p> : null}
       </section>
       <Sent mine={mine} />
-      <section className="sd-panel" aria-label="Up next">
-        <h3>Up next</h3>
-        {q.ready.length || q.waiting.length
-          ? <ul className="sd-pub-list">{[...q.ready, ...q.waiting].slice(0, 8).map((m) => <MatchLine key={m.id} m={m} />)}</ul>
-          : <p className="sd-note">Nothing waiting.</p>}
-      </section>
       <section className="sd-panel" aria-label="Latest results">
         <h3>Latest results</h3>
         {q.done.length ? <ul className="sd-pub-list">{q.done.slice(0, 10).map((m) => <MatchLine key={m.id} m={m} />)}</ul> : <p className="sd-note">No results yet.</p>}

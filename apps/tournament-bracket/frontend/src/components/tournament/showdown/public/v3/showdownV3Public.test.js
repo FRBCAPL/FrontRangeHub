@@ -101,6 +101,9 @@ describe('V3 player screens', () => {
     assert.ok(html.includes(`Reporting as <strong>${me.name}</strong>`));
     assert.ok(!(await tab('now', ev.started, { canReport: true })).includes('>Report score<'), 'no name picked: no report button');
     for (const t of ['On the tables', 'Every qualifying match is 6 games, all played. A tie is possible.', 'Report score', 'Forfeits, withdrawals and payout adjustments are entered by the director.']) assert.ok(html.includes(t), t);
+    assert.ok(!html.includes('Up next'), 'up next has its own tab');
+    const next = await tab('next', ev.started, { me });
+    assert.ok(next.includes('Up next') && next.includes('6 games, all played'));
     const viewOnly = await tab('now', ev.started);
     assert.ok(!viewOnly.includes('Report score'));
   });
