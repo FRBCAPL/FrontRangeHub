@@ -95,7 +95,11 @@ describe('V3 player screens', () => {
   });
 
   it('now tab: on-table match, the fixed game count, phone report button and operator-only note', async () => {
-    const html = await tab('now', ev.started, { canReport: true });
+    const onTable = ev.started.matches.find((m) => m.status === 'on-table');
+    const me = ev.started.players.find((p) => p.id === onTable.p2);
+    const html = await tab('now', ev.started, { canReport: true, me });
+    assert.ok(html.includes(`Reporting as <strong>${me.name}</strong>`));
+    assert.ok(!(await tab('now', ev.started, { canReport: true })).includes('>Report score<'), 'no name picked: no report button');
     for (const t of ['On the tables', 'Every qualifying match is 6 games, all played. A tie is possible.', 'Report score', 'Forfeits, withdrawals and payout adjustments are entered by the director.']) assert.ok(html.includes(t), t);
     const viewOnly = await tab('now', ev.started);
     assert.ok(!viewOnly.includes('Report score'));

@@ -2,6 +2,8 @@ import React from 'react';
 import { queueViewV3 } from '../../operator/v3/showdownV3BoardView.js';
 import { SUBMISSION_STATUS_TEXT } from '../showdownMySubmissions.js';
 import ShowdownPublicShootout from '../ShowdownPublicShootout.jsx';
+import ShowdownWhoAmI from '../ShowdownWhoAmI.jsx';
+import { isMyMatch } from '../showdownWhoAmI.js';
 
 function MatchLine({ m }) {
   return (
@@ -34,7 +36,7 @@ function Sent({ mine }) {
 }
 
 /** V3 "Now": matches on a table (with round, games and pay), phone reporting, up next and latest results. */
-export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport, onReport }) {
+export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport, onReport, me = null, onPickMe = () => {} }) {
   const s = event.status;
   if (s === 'shootout') return <ShowdownPublicShootout event={event} />;
   if (s === 'bracket') return <section className="sd-panel"><h3>Playoff bracket</h3><p className="sd-note">Qualifying is finished. The director is drawing the playoff bracket.</p></section>;
@@ -51,6 +53,7 @@ export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport
             ? `Playoff matches are races to ${plan.playoffRaceTo}: the first player to win ${plan.playoffRaceTo} games wins the match.`
             : `Every qualifying match is ${plan.qualifyingGames} games, all played. A tie is possible.`}
         </p>
+        {canReport ? <ShowdownWhoAmI event={event} me={me} onPick={onPickMe} /> : null}
         {q.onTable.length ? (
           <ul className="sd-pub-list">
             {q.onTable.map((m) => (
@@ -58,7 +61,7 @@ export default function ShowdownV3PublicNow({ event, pendingIds, mine, canReport
                 <span className="sd-pub-label">{m.label} &middot; Table {m.table}</span>
                 <span>{m.p1Name} <em>vs</em> {m.p2Name}</span>
                 <small>{m.info}</small>
-                {canReport ? (
+                {canReport && isMyMatch(m, me?.id) ? (
                   pendingIds.includes(m.id)
                     ? <small className="sd-warn">Score sent &mdash; waiting for the director</small>
                     : <button type="button" className="sd-btn sd-btn-primary" onClick={() => onReport(m)}>Report score</button>

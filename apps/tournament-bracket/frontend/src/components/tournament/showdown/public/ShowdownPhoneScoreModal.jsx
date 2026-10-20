@@ -14,7 +14,7 @@ function Picker({ name, value, raceTo, onPick }) {
 }
 
 /** Phone score entry. Sending only asks the director; nothing changes until they approve. */
-export default function ShowdownPhoneScoreModal({ match, raceTo, onSend, onCancel }) {
+export default function ShowdownPhoneScoreModal({ match, raceTo, reporterName = '', onSend, onCancel }) {
   const [s1, setS1] = useState(null);
   const [s2, setS2] = useState(null);
   const [name, setName] = useState('');
@@ -38,10 +38,12 @@ export default function ShowdownPhoneScoreModal({ match, raceTo, onSend, onCance
         <Picker name={match.p1Name} value={s1} raceTo={raceTo} onPick={setS1} />
         <Picker name={match.p2Name} value={s2} raceTo={raceTo} onPick={setS2} />
         {s1 !== null && s2 !== null && !valid ? <p className="sd-error">One player must have exactly {raceTo} and the other fewer.</p> : null}
-        <label className="sd-field">
-          <span>Your name (optional)</span>
-          <input className="sd-input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
-        </label>
+        {reporterName ? <p className="sd-note">Sending as <strong>{reporterName}</strong></p> : (
+          <label className="sd-field">
+            <span>Your name (optional)</span>
+            <input className="sd-input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+          </label>
+        )}
         {error ? <p className="sd-error" role="alert">{error}</p> : null}
         <div className="sd-modal-actions">
           <button type="button" className="tb-btn-new" onClick={onCancel}>Cancel</button>

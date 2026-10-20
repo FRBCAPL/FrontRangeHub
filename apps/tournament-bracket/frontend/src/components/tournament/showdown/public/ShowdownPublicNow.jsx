@@ -2,6 +2,8 @@ import React from 'react';
 import { queueView } from '../operator/showdownView.js';
 import { SUBMISSION_STATUS_TEXT } from './showdownMySubmissions.js';
 import ShowdownPublicShootout from './ShowdownPublicShootout.jsx';
+import ShowdownWhoAmI from './ShowdownWhoAmI.jsx';
+import { isMyMatch } from './showdownWhoAmI.js';
 
 function MatchLine({ m }) {
   return (
@@ -14,7 +16,7 @@ function MatchLine({ m }) {
 }
 
 /** What is happening right now, with phone reporting for matches on a table. */
-export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, onReport }) {
+export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, onReport, me = null, onPickMe = () => {} }) {
   const s = event.status;
   if (s === 'shootout') return <ShowdownPublicShootout event={event} />;
   if (s === 'bracket') return <section className="sd-panel"><h3>Playoff bracket</h3><p className="sd-note">Qualifying is finished. The director is drawing the playoff bracket.</p></section>;
@@ -24,6 +26,7 @@ export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, 
     <>
       <section className="sd-panel" aria-label="On the tables">
         <h3>On the tables</h3>
+        {canReport ? <ShowdownWhoAmI event={event} me={me} onPick={onPickMe} /> : null}
         {q.onTable.length ? (
           <ul className="sd-pub-list">
             {q.onTable.map((m) => {
@@ -32,7 +35,7 @@ export default function ShowdownPublicNow({ event, pendingIds, mine, canReport, 
                 <li key={m.id} className="sd-pub-match">
                   <span className="sd-pub-label">{m.label} &middot; Table {m.table}</span>
                   <span>{m.p1Name} <em>vs</em> {m.p2Name}</span>
-                  {canReport ? (
+                  {canReport && isMyMatch(m, me?.id) ? (
                     waiting
                       ? <small className="sd-warn">Score sent &mdash; waiting for the director</small>
                       : <button type="button" className="sd-btn sd-btn-primary" onClick={() => onReport(m)}>Report score</button>

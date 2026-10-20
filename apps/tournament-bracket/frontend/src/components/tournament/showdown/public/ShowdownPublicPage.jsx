@@ -9,6 +9,7 @@ import useShowdownPublicEvent from './useShowdownPublicEvent.js';
 import { sendPhoneScore } from './showdownPhoneSubmit.js';
 import { listMySubmissions, rememberSubmission, updateSubmission } from './showdownMySubmissions.js';
 import { showdownGuideHash } from './showdownGuideRoute.js';
+import { loadMe, meIn, saveMe } from './showdownWhoAmI.js';
 import { raceEventFacts } from './showdownRaceFacts.js';
 import ShowdownPublicList from './ShowdownPublicList.jsx';
 import ShowdownPublicNow from './ShowdownPublicNow.jsx';
@@ -58,6 +59,9 @@ function ShowdownPublicEvent({ api, eventId }) {
   const [reporting, setReporting] = useState(null);
   const [notice, setNotice] = useState('');
   const [mine, setMine] = useState(() => listMySubmissions(eventId));
+  const [meId, setMeId] = useState(() => loadMe(eventId));
+  const me = event ? meIn(event, meId) : null;
+  const pickMe = (id) => { saveMe(eventId, id); setMeId(id); };
 
   useEffect(() => { document.title = event ? `${event.name} \u00b7 Showdown` : 'Cash Climb Showdown'; }, [event?.name]);
 
@@ -79,7 +83,7 @@ function ShowdownPublicEvent({ api, eventId }) {
   const canReport = source === 'cloud';
 
   const send = async (s1, s2, name) => {
-    const out = await sendPhoneScore(api, event, reporting, s1, s2, name);
+    const out = await sendPhoneScore(api, event, reporting, s1, s2, me?.name || name);
     if (out.error) return out.error;
     rememberSubmission({ id: out.id, eventId, matchId: reporting.id, label: reporting.label, scoreText: `${reporting.p1Name} ${s1}\u2013${s2} ${reporting.p2Name}`, status: 'pending', sentAt: new Date().toISOString() });
     setMine(listMySubmissions(eventId));
@@ -115,8 +119,8 @@ function ShowdownPublicEvent({ api, eventId }) {
                 <button key={k} type="button" className={`sd-tab${active === k ? ' is-active' : ''}`} aria-pressed={active === k} onClick={() => setTab(k)}>{label}</button>
               ))}
             </nav>
-            {v3 ? <ShowdownV3PublicTabs tab={active} event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} /> : null}
-            {!v3 && active === 'now' ? <ShowdownPublicNow event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} /> : null}
+            {v3 ? <ShowdownV3PublicTabs tab={active} event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} me={me} onPickMe={pickMe} /> : null}
+            {!v3 && active === 'now' ? <ShowdownPublicNow event={event} pendingIds={pendingIds} mine={mine} canReport={canReport} onReport={(m) => { setNotice(''); setReporting(m); }} me={me} onPickMe={pickMe} /> : null}
             {!v3 && active === 'standings' ? (
               <>
                 <ShowdownPublicStandings event={event} />
@@ -133,10 +137,11 @@ function ShowdownPublicEvent({ api, eventId }) {
           <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>Back to home</button>
         </div>
       </div>
-      {reporting && event && v3 ? <ShowdownV3PhoneScoreModal event={event} match={reporting} onSend={send} onCancel={() => setReporting(null)} /> : null}
+      {reporting && event && v3 ? <ShowdownV3PhoneScoreModal event={event} match={reporting} reporterName={me?.name} onSend={send} onCancel={() => setReporting(null)} /> : null}
       {reporting && event && !v3 ? (
         <ShowdownPhoneScoreModal
           match={reporting}
+          reporterName={me?.name}
           raceTo={reporting.phase === 'qualifying' ? event.settings.qualifyingRaceTo : event.settings.playoffRaceTo}
           onSend={send}
           onCancel={() => setReporting(null)}

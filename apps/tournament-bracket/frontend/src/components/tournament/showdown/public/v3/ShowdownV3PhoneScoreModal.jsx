@@ -16,7 +16,7 @@ function Picker({ name, value, max, onPick }) {
 }
 
 /** V3 phone score entry. Sending only asks the director; nothing changes until they approve. */
-export default function ShowdownV3PhoneScoreModal({ event, match, onSend, onCancel }) {
+export default function ShowdownV3PhoneScoreModal({ event, match, reporterName = '', onSend, onCancel }) {
   const limits = v3PhoneLimits(event, match);
   const qualifying = limits.phase === 'qualifying';
   const max = qualifying ? limits.games : limits.raceTo;
@@ -48,10 +48,12 @@ export default function ShowdownV3PhoneScoreModal({ event, match, onSend, onCanc
         <Picker name={match.p2Name} value={s2} max={max} onPick={pick2} />
         {s1 !== null && s2 !== null && problem ? <p className="sd-error">{problem}</p> : null}
         {tie ? <p className="sd-ok">Tie: {s1}&ndash;{s2}. Both players are paid for the games they won.</p> : null}
-        <label className="sd-field">
-          <span>Your name (optional)</span>
-          <input className="sd-input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
-        </label>
+        {reporterName ? <p className="sd-note">Sending as <strong>{reporterName}</strong></p> : (
+          <label className="sd-field">
+            <span>Your name (optional)</span>
+            <input className="sd-input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+          </label>
+        )}
         {error ? <p className="sd-error" role="alert">{error}</p> : null}
         <div className="sd-modal-actions">
           <button type="button" className="tb-btn-new" onClick={onCancel}>Cancel</button>

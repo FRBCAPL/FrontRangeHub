@@ -8,6 +8,7 @@ import { buildShowdownTvBoard } from './showdownTvBoard.js';
 import { reportableMatches } from './showdownPhoneSubmit.js';
 import { showdownPublicEventId, showdownPublicHash, showdownTvHref } from './showdownPublicRoutes.js';
 import { liveShowdownRows, liveShowdownItem, listLiveShowdownItems } from './showdownLiveList.js';
+import { loadMe, saveMe, pickablePlayers, meIn, isMyMatch } from './showdownWhoAmI.js';
 
 const OPERATOR_TEXT = ['Lock qualifying', 'Reopen', 'Undo', 'Withdraw', 'Confirm bracket', 'Draw bracket', 'Complete event', 'won the game', 'Undo who starts', 'Approve', 'Corrections', 'Audit log'];
 
@@ -57,6 +58,25 @@ describe('public copy', () => {
     assert.deepEqual(liveShowdownRows(null, now), []);
   });
 
+  it('who are you: the picked player is remembered per event and only matches with them are theirs', () => {
+    const store = new Map();
+    const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k) };
+    assert.equal(loadMe('e1', storage), '');
+    saveMe('e1', 'p2', storage);
+    assert.equal(loadMe('e1', storage), 'p2');
+    assert.equal(loadMe('e2', storage), '', 'each event has its own choice');
+    saveMe('e1', '', storage);
+    assert.equal(loadMe('e1', storage), '');
+    assert.equal(loadMe('e1', { getItem() { throw new Error('blocked'); } }), '');
+    const event = { players: [{ id: 'p1', name: 'Zed' }, { id: 'p2', name: 'Amy' }, { id: 'p3', name: 'Bo', withdrawnAt: 'x' }] };
+    assert.deepEqual(pickablePlayers(event).map((p) => p.name), ['Amy', 'Zed'], 'sorted, withdrawn players left out');
+    assert.deepEqual(pickablePlayers({ players: ['10', '2', '1'].map((n) => ({ id: n, name: n })) }).map((p) => p.name), ['1', '2', '10'], 'numbers in order');
+    assert.equal(meIn(event, 'p2').name, 'Amy');
+    assert.equal(meIn(event, 'p3'), null, 'a withdrawn player is no longer picked');
+    assert.equal(meIn(event, 'gone'), null);
+    assert.ok(isMyMatch({ p1: 'p1', p2: 'p2' }, 'p2') && !isMyMatch({ p1: 'p1', p2: 'p2' }, 'p3') && !isMyMatch({ p1: 'p1', p2: 'p2' }, ''));
+  });
+
   it('live Showdowns become homepage and Current tournaments entries that open the event page', async () => {
     assert.deepEqual(liveShowdownItem({ id: 'sd-1', name: 'Tuesday Showdown', venue: 'Main St', status: 'qualifying' }), {
       id: 'sd-sd-1', path: '/tournament-bracket/submit/showdown/sd-1', name: 'Tuesday Showdown', detail: 'Live Showdown \u00b7 Main St',
@@ -80,13 +100,20 @@ describe('public copy', () => {
 describe('public pages', () => {
   it('qualifying: tables with Report score, up next, results, standings with cutoff and circle', async () => {
     const pub = publicShowdown(phases.qualifying);
-    const now = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: true, onReport() {} }));
-    for (const t of ['On the tables', 'Table 1', 'Report score', 'Up next', 'Latest results']) assert.ok(now.includes(t), t);
-    const pending = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [reportableMatches(pub)[0].id], mine: [{ id: 's1', label: 'Qualifying 1', scoreText: 'A 3–1 B', status: 'rejected', reason: 'Wrong' }], canReport: true, onReport() {} }));
+    const onTable = reportableMatches(pub)[0];
+    const me = pub.players.find((p) => p.id === onTable.p1);
+    const now = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: true, onReport() {}, me }));
+    for (const t of ['On the tables', 'Table 1', 'Report score', 'Up next', 'Latest results', 'Reporting as']) assert.ok(now.includes(t), t);
+    const pending = publicOnly(await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [onTable.id], mine: [{ id: 's1', label: 'Qualifying 1', scoreText: 'A 3–1 B', status: 'rejected', reason: 'Wrong' }], canReport: true, onReport() {}, me }));
     assert.ok(pending.includes('waiting for the director') && !pending.includes('>Report score<'));
     assert.ok(pending.includes('Not accepted') && pending.includes('Wrong'));
-    const viewOnly = await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: false, onReport() {} });
-    assert.ok(!viewOnly.includes('Report score'));
+    const viewOnly = await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: false, onReport() {}, me });
+    assert.ok(!viewOnly.includes('Report score') && !viewOnly.includes('Pick your name'));
+    const noName = await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: true, onReport() {} });
+    assert.ok(noName.includes('Pick your name') && !noName.includes('>Report score<'), 'no name picked: no report buttons');
+    const other = pub.players.find((p) => p.id !== onTable.p1 && p.id !== onTable.p2);
+    const notMine = await render('../public/ShowdownPublicNow.jsx', { event: pub, pendingIds: [], mine: [], canReport: true, onReport() {}, me: other });
+    assert.ok(notMine.includes('Reporting as') && !notMine.includes('>Report score<'), 'only your own match can be reported');
     const standings = publicOnly(await render('../public/ShowdownPublicStandings.jsx', { event: publicShowdown(phases.qualifyingDone) }));
     for (const t of ['Qualifying standings', 'sd-cutoff', 'Qualifying circle', 'Player 16']) assert.ok(standings.includes(t), t);
   });
