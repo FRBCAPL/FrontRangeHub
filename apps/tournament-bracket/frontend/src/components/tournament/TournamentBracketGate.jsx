@@ -6,7 +6,6 @@ import {
   clearLoginReturn,
 } from './tournamentOperators.js';
 import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
-import { SHOWDOWN_GUIDE_HASH } from './showdown/public/showdownGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { hasLocalTournamentWork, localTournamentWorkLabel } from './tournamentLocalWork.js';
 import './TournamentBracketApp.css';
@@ -61,13 +60,10 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
         <header className="tb-header">
           <h1>Operator only</h1>
           <p>
-            Cash Climb, Cash Climb Showdown, Break and Run, and elimination are house formats. Sign in with the operator account to run an event.
+            Cash Climb is a house format. Sign in with the operator account to run an event.
           </p>
           <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
             How Cash Climb works
-          </button>
-          <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_GUIDE_HASH)}>
-            How Showdown works
           </button>
           <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_SUBMIT_HASH)}>
             Submit a result
@@ -87,7 +83,7 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
         <p>
           {localWork
             ? `${localLabel} is still on this tablet. Sign in with the operator account to save it. Nothing you entered has been deleted.`
-            : 'Operator sign-in is required to run Cash Climb, Cash Climb Showdown, Break and Run, or an elimination bracket.'}
+            : 'Operator sign-in is required to run Cash Climb or an elimination bracket.'}
         </p>
       </header>
       {localWork ? (
@@ -102,9 +98,6 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
       <div className="tb-header">
         <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
           How Cash Climb works
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_GUIDE_HASH)}>
-          How Showdown works
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_SUBMIT_HASH)}>
           Submit a result

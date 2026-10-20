@@ -8,8 +8,6 @@ import CashClimbStandings from './CashClimbStandings.jsx';
 import CashClimbSubmitMatches from './CashClimbSubmitMatches.jsx';
 import CashClimbResultModal from './CashClimbResultModal.jsx';
 import CashClimbSubmitPicker from './CashClimbSubmitPicker.jsx';
-import ShowdownPublicPage from '../showdown/public/ShowdownPublicPage.jsx';
-import { showdownPublicEventId } from '../showdown/public/showdownPublicRoutes.js';
 import '../TournamentBracketApp.css';
 import './CashClimb.css';
 import './CashClimbSubmitPage.css';
@@ -26,8 +24,6 @@ function endedAtLabel(tournament) {
 
 export default function CashClimbSubmitPage() {
   const location = useLocation();
-  const showdownId = showdownPublicEventId(location.pathname);
-  if (showdownId !== null) return <ShowdownPublicPage eventId={showdownId} />;
   const eventId = cashClimbSubmitEventId(location.pathname);
   if (!eventId) return <CashClimbSubmitPicker />;
   return <CashClimbSubmitEventPage eventId={eventId} />;

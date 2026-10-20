@@ -8,7 +8,6 @@ import {
 } from '../../data/usaplDivisions.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
 import UsaplDivisionCard from './UsaplDivisionCard.jsx';
-import UsaplLeagueMark from './UsaplLeagueMark.jsx';
 import UsaplLeagueNumberGuide from './UsaplLeagueNumberGuide.jsx';
 import UsaplVegasWinnerTicker from './UsaplVegasWinnerTicker.jsx';
 
@@ -54,13 +53,11 @@ export default function UsaplDivisionsPage() {
     : signupList.filter((row) => row.night === night);
 
   return (
-    <div className="usapl-brand-page">
-      <UsaplLeagueMark />
-      <div className="usapl-page usapl-divisions-page">
+    <div className="usapl-page usapl-divisions-page">
       <h1>FRUSAPL Divisions</h1>
       <p className="usapl-lede">
-        - Current Divisions - Divisions starting soon - Past divisions -<br />
-        Click a division page to see stats, results, and more.<br />
+        Pick a night that fits. Full teams, partial teams, and individuals looking for a
+        home are all welcome.<br />
         {' '}
         <Link to="/usapl/past-divisions">Click here for past divisions and winners</Link>
       </p>
@@ -101,11 +98,6 @@ export default function UsaplDivisionsPage() {
       {visibleSignup.length ? (
         <section className="usapl-night-section">
           <h2 className="usapl-night-section-title">Taking signups</h2>
-          <p className="usapl-lede usapl-night-section-lede">
-            Pick a night that fits.<br />
-            Full teams, partial teams, and individuals looking for a
-            home are all welcome.
-          </p>
           <div className="usapl-night-grid">
             {visibleSignup.map((division) => (
               <UsaplDivisionCard key={division.id} division={division} />
@@ -118,7 +110,6 @@ export default function UsaplDivisionsPage() {
         night={night}
         titleFor={(group) => group.label}
       />
-      </div>
     </div>
   );
 }

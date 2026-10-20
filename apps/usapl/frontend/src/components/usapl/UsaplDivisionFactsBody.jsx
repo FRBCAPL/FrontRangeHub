@@ -1,6 +1,5 @@
 import React from 'react';
 import { usaplNightLabel } from '../../data/usaplDivisions.js';
-import { isDenverMetroCash } from '../../data/usaplDenverMetroCash.js';
 import { stripUsaplFargoCapNotes } from '../../data/usaplFargoCapCopy.js';
 import UsaplPlayPlaceBadge from './UsaplPlayPlaceBadge.jsx';
 
@@ -27,16 +26,10 @@ function Fact({ label, children }) {
   );
 }
 
-export default function UsaplDivisionFactsBody({ division }) {
-  const cashNight = isDenverMetroCash(division);
-  const extraNotes = cashNight ? [] : stripUsaplFargoCapNotes(division.notes);
+export default function UsaplDivisionFactsBody({ division, summary = false }) {
+  const extraNotes = stripUsaplFargoCapNotes(division.notes);
   const teamSize = division.teamSize || '';
   const rosterMax = division.rosterMax || '';
-  const duesLabel = cashNight
-    ? `$${division.duesPerPlayer} / player / format`
-    : (division.duesPerPlayer != null && division.duesPerPlayer !== ''
-      ? `$${division.duesPerPlayer} / player`
-      : '');
   return (
     <div className="usapl-facts-body">
       <h2>{division.name || division.shortName}</h2>
@@ -45,25 +38,34 @@ export default function UsaplDivisionFactsBody({ division }) {
       </div>
       <div className="usapl-facts-grid">
         <Fact label="Day of play">{division.night ? usaplNightLabel(division.night) : ''}</Fact>
-        <Fact label="Area">{String(division.divisionArea || '').trim()}</Fact>
         <Fact label="First week">{formatDate(division.playStarts)}</Fact>
-        <Fact label="Dues">{duesLabel}</Fact>
-        <Fact label="Last week of play">{formatDate(division.lastWeek)}</Fact>
-        <Fact label="Teams">{teamSize ? `${teamSize} players` : ''}</Fact>
-        <Fact label="Roster">{rosterMax ? `${rosterMax} max` : ''}</Fact>
-        <Fact label="Fargo cap">
-          {division.combinedFargoCap ? `${division.combinedFargoCap} combined` : ''}
-        </Fact>
-        {extraNotes.length ? (
-          <div className="usapl-fact usapl-facts-notes">
-            <span className="usapl-fact-label">Notes</span>
-            <ul className="usapl-fact-value">
-              {extraNotes.map((note) => (
-                <li key={note}>{note}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
+        {summary ? (
+          <Fact label="Last week of play">{formatDate(division.lastWeek)}</Fact>
+        ) : (
+          <>
+            <Fact label="Dues">
+              {division.duesPerPlayer != null && division.duesPerPlayer !== ''
+                ? `$${division.duesPerPlayer} / player`
+                : ''}
+            </Fact>
+            <Fact label="Last week of play">{formatDate(division.lastWeek)}</Fact>
+            <Fact label="Teams">{teamSize ? `${teamSize} players` : ''}</Fact>
+            <Fact label="Roster">{rosterMax ? `${rosterMax} max` : ''}</Fact>
+            <Fact label="Fargo cap">
+              {division.combinedFargoCap ? `${division.combinedFargoCap} combined` : ''}
+            </Fact>
+            {extraNotes.length ? (
+              <div className="usapl-fact usapl-facts-notes">
+                <span className="usapl-fact-label">Notes</span>
+                <ul className="usapl-fact-value">
+                  {extraNotes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
     </div>
   );

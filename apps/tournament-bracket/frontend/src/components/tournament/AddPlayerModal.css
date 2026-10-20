@@ -3,12 +3,10 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   z-index: 1000;
   padding: 16px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .add-player-modal {
@@ -107,8 +105,8 @@
 }
 
 .add-player-modal-form .btn-secondary {
-  background: #475569;
-  color: #f8fafc;
+  background: rgba(100, 116, 139, 0.3);
+  color: var(--tb-text, #e0e7ff);
 }
 
 .add-player-modal-form .btn-primary:hover {

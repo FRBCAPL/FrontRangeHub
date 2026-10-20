@@ -28,27 +28,23 @@
 
 .usapl-nav {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 4px 14px;
+  flex-wrap: wrap;
+  gap: 4px 18px;
   justify-content: center;
   margin: 0;
   padding: 14px 20px 10px;
   background: rgba(8, 8, 10, 0.92);
   border-bottom: 1px solid var(--usapl-line);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .usapl-nav a,
 .usapl-nav-link {
-  flex: 0 0 auto;
   color: var(--usapl-muted);
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 600;
   padding: 8px 2px 10px;
   border-bottom: 2px solid transparent;
-  white-space: nowrap;
 }
 
 .usapl-nav a:hover,
@@ -76,14 +72,6 @@
   padding: 0;
 }
 
-.usapl-brand-page {
-  width: 100%;
-}
-
-.usapl-brand-page .usapl-page {
-  padding-top: 12px;
-}
-
 .usapl-hero-welcome {
   position: relative;
   text-align: center;
@@ -104,25 +92,6 @@
 
 .usapl-hero-corner-right {
   right: 12px;
-}
-
-.usapl-league-mark {
-  position: relative;
-  width: 100%;
-  text-align: center;
-  padding: 28px 108px 16px;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-.usapl-league-mark .usapl-hero-corner {
-  top: 12px;
-  transform: none;
-  height: 80px;
-}
-
-.usapl-league-mark .usapl-league-name {
-  margin: 0;
 }
 
 .usapl-kicker {
@@ -147,7 +116,6 @@
   line-height: 1.2;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  white-space: nowrap;
   color: #e23b4a !important;
   -webkit-text-stroke: 2px #f4efe6;
   paint-order: stroke fill;
@@ -429,6 +397,39 @@
   gap: 10px;
 }
 
+.usapl-division-hero {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 20px 28px;
+  margin: 18px 0 8px;
+}
+
+.usapl-division-hero .usapl-division-ad {
+  flex: 0 1 22rem;
+  width: min(100%, 22rem);
+  margin: 0;
+}
+
+.usapl-division-hero .usapl-division-ad img {
+  max-height: min(420px, 58vh);
+}
+
+.usapl-division-hero-facts {
+  flex: 1 1 16rem;
+  min-width: 0;
+  max-width: 28rem;
+  text-align: left;
+  align-self: stretch;
+}
+
+.usapl-division-hero-facts .usapl-facts-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  min-height: 100%;
+}
+
 .usapl-facts-place {
   display: flex;
   justify-content: flex-start;
@@ -441,6 +442,18 @@
   padding: 8px 18px;
   font-size: 0.95rem;
   letter-spacing: 0.05em;
+}
+
+@media (max-width: 700px) {
+  .usapl-division-hero {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .usapl-division-hero-facts {
+    max-width: none;
+    width: 100%;
+  }
 }
 
 .usapl-facts {
@@ -735,35 +748,16 @@
 
 .usapl-schedule-pic {
   display: block;
-  width: 100%;
   margin: 12px 0 8px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  cursor: zoom-in;
+  max-width: min(28rem, 100%);
 }
 
 .usapl-schedule-pic img {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 280px;
-  object-fit: contain;
   border-radius: 12px;
   border: 1px solid var(--usapl-line);
-}
-
-.usapl-flyer-lightbox-frame.is-wide {
-  width: min(1100px, 94vw);
-  height: min(820px, 86vh);
-}
-
-.usapl-flyer-lightbox-frame iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: #fff;
 }
 
 .usapl-card p,
@@ -810,10 +804,6 @@
   gap: 8px;
   margin: 16px 0 12px;
   text-align: center;
-}
-
-.usapl-dues-pay-jump .usapl-dues-after {
-  margin: 14px 0 0;
 }
 
 .usapl-dues-cash-note {
@@ -865,28 +855,22 @@
 
 .usapl-dues-must {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 8px;
   margin: 0 0 10px;
   font-size: 0.95rem;
 }
 
-.usapl-dues-must-badges {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-}
-
 .usapl-dues-must strong {
   color: var(--usapl-gold);
-  font-size: 1.05rem;
+  font-size: 0.78rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
-.usapl-dues-must-badges span {
+.usapl-dues-must span {
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid rgba(224, 179, 77, 0.35);
@@ -1239,7 +1223,15 @@
 .usapl-number-guide {
   margin: 0 0 18px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.usapl-number-guide-title {
+  margin: 0;
+  font-weight: 700;
 }
 
 button.usapl-vegas-fold-action {
@@ -1463,10 +1455,6 @@ button.usapl-vegas-fold-action {
     padding: 24px 80px 28px;
   }
 
-  .usapl-league-mark {
-    padding: 24px 80px 16px;
-  }
-
   .usapl-hero-corner {
     height: 60px;
   }
@@ -1527,10 +1515,6 @@ button.usapl-vegas-fold-action {
   margin: 0 0 12px;
   font-size: 1.15rem;
   color: var(--usapl-gold);
-}
-
-.usapl-night-section-lede {
-  margin: -4px 0 16px;
 }
 
 .usapl-night-grid {
@@ -1809,8 +1793,10 @@ button.usapl-vegas-fold-action {
 }
 
 .usapl-tip {
-  position: fixed;
-  z-index: 1400;
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  z-index: 4;
   width: max-content;
   max-width: 16rem;
   padding: 8px 10px;
@@ -1826,11 +1812,20 @@ button.usapl-vegas-fold-action {
   text-align: center;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
   transform: translateX(-50%);
+  opacity: 0;
   pointer-events: none;
+  visibility: hidden;
 }
 
-.usapl-tip.is-above {
-  transform: translate(-50%, -100%);
+.usapl-tip-wrap:hover .usapl-tip,
+.usapl-tip-wrap:focus-visible .usapl-tip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.usapl-night-card:has(.usapl-tip-wrap:hover),
+.usapl-night-card:has(.usapl-tip-wrap:focus-visible) {
+  z-index: 2;
 }
 
 .usapl-night-card .usapl-night-copy .usapl-meta {
@@ -1854,20 +1849,6 @@ button.usapl-vegas-fold-action {
 
 .usapl-contact-line a:hover {
   text-decoration: underline;
-}
-
-@media (max-width: 1200px) {
-  .usapl-nav {
-    gap: 2px 10px;
-    padding: 10px 16px 8px;
-    justify-content: flex-start;
-  }
-
-  .usapl-nav a,
-  .usapl-nav-link {
-    font-size: 0.84rem;
-    padding: 6px 2px 8px;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1922,14 +1903,13 @@ button.usapl-vegas-fold-action {
   }
 
   .usapl-nav {
-    gap: 2px 10px;
+    gap: 2px 12px;
     padding: 10px 12px 8px;
-    justify-content: flex-start;
   }
 
   .usapl-nav a,
   .usapl-nav-link {
-    font-size: 0.82rem;
+    font-size: 0.86rem;
   }
 
   .usapl-night-row {
@@ -2043,11 +2023,10 @@ button.usapl-vegas-fold-action {
   align-items: center;
   width: max-content;
   padding: 10px 0;
-  animation: usapl-vegas-ticker-scroll 55s linear infinite;
+  animation: usapl-vegas-ticker-scroll 32s linear infinite;
 }
 
-.usapl-vegas-ticker:hover .usapl-vegas-ticker-track,
-.usapl-vegas-ticker:focus-within .usapl-vegas-ticker-track {
+.usapl-vegas-ticker:hover .usapl-vegas-ticker-track {
   animation-play-state: paused;
 }
 
@@ -2628,187 +2607,9 @@ button.usapl-vegas-fold-action {
   white-space: nowrap;
 }
 
-.usapl-visit-table .usapl-visit-who {
-  word-break: break-word;
-}
-
-.usapl-income-how {
-  margin: 0 0 24px;
-  padding-left: 1.2em;
-  color: var(--usapl-muted, inherit);
-}
-
-.usapl-income-how li + li {
-  margin-top: 10px;
-}
-
-.usapl-income-private > summary {
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.usapl-income-private .usapl-lede,
-.usapl-income-private .usapl-form,
-.usapl-income-private .usapl-choice-row,
-.usapl-income-private .usapl-note {
-  margin-top: 12px;
-}
-
-.usapl-income-result-table th {
-  text-align: right;
-  font-weight: 600;
-}
-
-.usapl-income-result-table th:first-child {
-  text-align: left;
-}
-
-.usapl-income-payout-source {
-  margin-bottom: 12px;
-}
-
-.usapl-income-payout-form {
-  display: grid;
-  grid-template-columns: minmax(0, 14rem);
-  margin-bottom: 12px;
-}
-
-.usapl-income-payout-places {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(5.75rem, 1fr));
-  gap: 12px;
-  margin: 0 0 16px;
-}
-
-.usapl-payout-compare-title {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
-}
-
-.usapl-payout-board {
-  margin: 8px 0 20px;
-}
-
-.usapl-payout-board-head h3 {
-  margin: 0 0 4px;
-}
-
-.usapl-payout-board-head .usapl-meta {
-  margin: 0 0 4px;
-  font-weight: 650;
-}
-
-.usapl-payout-rows {
-  display: grid;
-  gap: 8px;
-}
-
-.usapl-payout-row {
-  appearance: none;
-  display: grid;
-  grid-template-columns: 7.75rem minmax(0, 1fr);
-  gap: 10px 14px;
-  align-items: center;
-  width: 100%;
-  margin: 0;
-  padding: 10px 12px;
-  text-align: left;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  border: 1px solid var(--usapl-line);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.usapl-payout-row.is-suggested {
-  border-color: rgba(224, 179, 77, 0.55);
-}
-
-.usapl-payout-row.is-selected {
-  border-color: var(--usapl-gold);
-  box-shadow: 0 0 0 1px var(--usapl-gold);
-  background: rgba(224, 179, 77, 0.08);
-}
-
-.usapl-payout-row-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.usapl-payout-row-label strong {
-  font-size: 0.95rem;
-}
-
-.usapl-payout-option-tag {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--usapl-gold);
-}
-
-.usapl-payout-row-pays {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.usapl-payout-chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.usapl-payout-pip {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  flex: 0 0 auto;
-  align-self: center;
-}
-
-.usapl-payout-chip-place {
-  font-size: 0.75rem;
-  color: var(--usapl-muted);
-}
-
-.usapl-payout-chip-amt {
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.usapl-payout-fine {
-  padding-top: 18px;
-  margin-top: 8px;
-  border-top: 1px solid var(--usapl-line);
-}
-
-.usapl-payout-chart-seg-1 { background: var(--usapl-gold); }
-.usapl-payout-chart-seg-2 { background: #c4922e; }
-.usapl-payout-chart-seg-3 { background: #9a7424; }
-.usapl-payout-chart-seg-4 { background: #7a5c1c; }
-
-@media (max-width: 640px) {
-  .usapl-payout-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 800px) {
-  .usapl-income-payout-form,
-  .usapl-income-payout-places {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.usapl-visit-table tr.is-you td {
-  color: var(--usapl-gold);
+.usapl-visit-table .usapl-meta {
+  margin: 2px 0 0;
+  word-break: break-all;
 }
 
 @media (max-width: 800px) {

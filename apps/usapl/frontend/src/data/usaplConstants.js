@@ -12,7 +12,7 @@ export const USAPL_CONTACT = {
 export const USAPL_VEGAS_BANNER = [
   'Best odds of winning a trip to Vegas!',
   'Approximately 1 in 12 teams \n win a trip to the USAPL Nationals!',
-  'Join Now! \n For your chance to win!',
+  'Join Now for your chance to win!',
 ];
 
 export const USAPL_LINKS = {
@@ -26,15 +26,8 @@ export const USAPL_LINKS = {
   fargoRateApple: 'https://apps.apple.com/us/app/fargorate/id1260182370',
   scoringAndroid: 'https://play.google.com/store/search?q=USAPL%20Scoring&c=apps',
   scoringApple: 'https://apps.apple.com/us/app/usapl-scoring-app/id1257913353',
-  csiHome: 'https://www.playcsipool.com/',
   csiPolicies: 'https://www.playcsipool.com/usapl-policies.html',
   csiRules: 'https://www.playcsipool.com/usapl-rules.html',
-  csiBcapl: 'https://www.playcsipool.com/bcapl.html',
-  csiBcaplRules: 'https://www.playcsipool.com/bcapl-rules.html',
-  bcaPool: 'https://bca-pool.com/',
-  bcaWpaRules: 'https://bca-pool.com/page/54',
-  bcaplHandbook: 'https://www.playcsipool.com/uploads/7/3/5/9/7359673/bcapl_lo_handbook_web_2.pdf',
-  usaplOrg: 'https://www.playusapool.com/',
   localBylaws: '/usapl/frusapl-bylaws.pdf',
   cashApp: 'https://cash.app/$frusapl',
   cashAppHandle: '$frusapl',
@@ -69,7 +62,6 @@ export const USAPL_NAV = [
   { to: '/usapl/divisions', label: 'Divisions' },
   { to: '/usapl/vegas-cup', label: 'Vegas Cup' },
   { to: '/usapl/rules', label: 'Rules' },
-  { to: '/usapl/info', label: 'Info' },
   { to: '/usapl/dues', label: 'Dues' },
   { to: '/usapl/signup', label: 'Sign up' },
   { to: '/usapl/roster', label: 'Roster' },

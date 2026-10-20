@@ -130,18 +130,6 @@
   margin-top: 0;
 }
 
-.arcade-admin-tv-divider {
-  margin: 20px 0 16px;
-  border: none;
-  border-top: 1px solid #444;
-}
-
-.arcade-admin-section-title {
-  margin: 0 0 8px;
-  color: #fbbf24;
-  font-size: 20px;
-}
-
 .arcade-admin-score-list {
   list-style: none;
   margin: 0;
@@ -324,6 +312,18 @@
   margin: 8px 0 0;
   color: #fda4af;
   font-size: 0.95rem;
+}
+
+.arcade-admin-tv-divider {
+  margin: 20px 0 16px;
+  border: none;
+  border-top: 1px solid #444;
+}
+
+.arcade-admin-section-title {
+  margin: 0 0 8px;
+  color: #fbbf24;
+  font-size: 20px;
 }
 
 @media (max-width: 480px) {

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function UsaplFlyerLightbox({ src, alt, iframeSrc, wide = false, onClose }) {
+export default function UsaplFlyerLightbox({ src, alt, onClose }) {
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -17,18 +17,11 @@ export default function UsaplFlyerLightbox({ src, alt, iframeSrc, wide = false, 
 
   return createPortal(
     <div className="usapl-info-overlay usapl-flyer-lightbox" role="presentation" onClick={onClose}>
-      <div
-        className={`usapl-flyer-lightbox-frame${iframeSrc || wide ? ' is-wide' : ''}`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <button type="button" className="usapl-flyer-lightbox-close" onClick={onClose} aria-label="Close">
+      <div className="usapl-flyer-lightbox-frame" onClick={(event) => event.stopPropagation()}>
+        <button type="button" className="usapl-flyer-lightbox-close" onClick={onClose} aria-label="Close flyer">
           ×
         </button>
-        {iframeSrc ? (
-          <iframe title={alt} src={iframeSrc} />
-        ) : (
-          <img src={src} alt={alt} />
-        )}
+        <img src={src} alt={alt} />
       </div>
     </div>,
     document.body

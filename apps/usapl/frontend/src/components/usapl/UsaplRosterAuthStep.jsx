@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { startUsaplGoogleLogin, signInUsaplCaptain, signUpUsaplCaptain } from '../../services/usaplCaptainClaims.js';
-import { usaplCaptainAuthMessage, usaplCaptainAuthReady } from '../../data/usaplCaptainAuth.js';
 
 export default function UsaplRosterAuthStep({ user }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const ready = usaplCaptainAuthReady(email, password);
 
   if (user) {
     return (
@@ -29,15 +27,6 @@ export default function UsaplRosterAuthStep({ user }) {
     }
   };
 
-  const runPassword = (action) => {
-    const next = usaplCaptainAuthMessage(email, password);
-    if (next) {
-      setMessage(next);
-      return;
-    }
-    run(action);
-  };
-
   return (
     <>
       <p className="usapl-lede">
@@ -56,7 +45,7 @@ export default function UsaplRosterAuthStep({ user }) {
           onKeyDown={(event) => {
             if (event.key !== 'Enter') return;
             event.preventDefault();
-            runPassword(() => signInUsaplCaptain(email, password));
+            run(() => signInUsaplCaptain(email, password));
           }}
         />
       </div>
@@ -73,7 +62,7 @@ export default function UsaplRosterAuthStep({ user }) {
           onKeyDown={(event) => {
             if (event.key !== 'Enter') return;
             event.preventDefault();
-            runPassword(() => signInUsaplCaptain(email, password));
+            run(() => signInUsaplCaptain(email, password));
           }}
         />
       </div>
@@ -82,16 +71,16 @@ export default function UsaplRosterAuthStep({ user }) {
         <button
           className="usapl-btn"
           type="button"
-          disabled={busy || !ready}
-          onClick={() => runPassword(() => signInUsaplCaptain(email, password))}
+          disabled={busy}
+          onClick={() => run(() => signInUsaplCaptain(email, password))}
         >
           {busy ? 'Please wait…' : 'Sign in'}
         </button>
         <button
           className="usapl-btn-secondary"
           type="button"
-          disabled={busy || !ready}
-          onClick={() => runPassword(() => signUpUsaplCaptain(email, password))}
+          disabled={busy}
+          onClick={() => run(() => signUpUsaplCaptain(email, password))}
         >
           Create login
         </button>

@@ -24,19 +24,18 @@ export default function UsaplVegasWinnerTicker() {
     ? items
     : [{ key: 'placeholder', text: 'Division winners will appear here as sessions finish' }];
   const track = loopTrack(lines);
+  const seconds = Math.max(24, lines.length * 8);
 
   return (
-    <div
-      className="usapl-vegas-ticker"
-      role="marquee"
-      tabIndex={0}
-      aria-label={`${USAPL_VEGAS_CUP.year} division winners`}
-    >
+    <div className="usapl-vegas-ticker" role="marquee" aria-label={`${USAPL_VEGAS_CUP.year} division winners`}>
       <Link className="usapl-vegas-ticker-label" to="/usapl/past-divisions">
         {USAPL_VEGAS_CUP.year} Division winners
       </Link>
       <div className="usapl-vegas-ticker-window">
-        <div className="usapl-vegas-ticker-track">
+        <div
+          className="usapl-vegas-ticker-track"
+          style={{ animationDuration: `${seconds}s` }}
+        >
           {track.map((item) => (
             <span className="usapl-vegas-ticker-item" key={item.key}>
               {item.text}

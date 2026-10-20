@@ -9,7 +9,6 @@ import UsaplPastDivisionsPage from './UsaplPastDivisionsPage.jsx';
 import UsaplDivisionDetail from './UsaplDivisionDetail.jsx';
 import UsaplVegasCupPage from './UsaplVegasCupPage.jsx';
 import UsaplRulesPage from './UsaplRulesPage.jsx';
-import UsaplInfoPage from './UsaplInfoPage.jsx';
 import UsaplDuesPage from './UsaplDuesPage.jsx';
 import useUsaplPageVisitTracker from '../../hooks/useUsaplPageVisitTracker.js';
 import UsaplAdminInbox from './UsaplAdminInbox.jsx';
@@ -17,12 +16,8 @@ import UsaplAdminDivisions from './UsaplAdminDivisions.jsx';
 import UsaplAdminArchived from './UsaplAdminArchived.jsx';
 import UsaplAdminLocations from './UsaplAdminLocations.jsx';
 import UsaplAdminVisits from './UsaplAdminVisits.jsx';
-import UsaplAdminIncomePage from './UsaplAdminIncomePage.jsx';
-import UsaplPayoutChartPage from './UsaplPayoutChartPage.jsx';
 import './usapl.css';
-import './usapl-mobile.css';
 import './usaplForms.css';
-import './usaplIncome.css';
 
 const USAPL_FONTS_HREF =
   'https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Paytone+One&display=swap';
@@ -54,7 +49,6 @@ export default function UsaplApp({ canAdmin = false }) {
         <Route path="divisions/:divisionId" element={<UsaplDivisionDetail />} />
         <Route path="vegas-cup" element={<UsaplVegasCupPage canAdmin={canAdmin} />} />
         <Route path="rules" element={<UsaplRulesPage />} />
-        <Route path="info" element={<UsaplInfoPage />} />
         <Route
           path="bylaws"
           element={(
@@ -64,7 +58,6 @@ export default function UsaplApp({ canAdmin = false }) {
           )}
         />
         <Route path="dues" element={<UsaplDuesPage />} />
-        <Route path="payout-chart" element={<UsaplPayoutChartPage />} />
         <Route path="singles" element={<Navigate to="/usapl" replace />} />
         <Route
           path="admin"
@@ -85,10 +78,6 @@ export default function UsaplApp({ canAdmin = false }) {
         <Route
           path="admin/visits"
           element={canAdmin ? <UsaplAdminVisits /> : <Navigate to="/usapl" replace />}
-        />
-        <Route
-          path="admin/income"
-          element={canAdmin ? <UsaplAdminIncomePage /> : <Navigate to="/usapl" replace />}
         />
         <Route path="*" element={<Navigate to="/usapl" replace />} />
       </Routes>

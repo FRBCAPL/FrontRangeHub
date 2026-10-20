@@ -8,7 +8,7 @@ export const USAPL_RULE_GROUPS = [
       '"Gentleman\'s call pocket". \nYou do not have to call obvious shots.',
       'Combos, banks, kicks, and caroms should not be considered obvious.' ,
       'What may be obvious to you, may not be obvious to your opponent.',
-      'Make sure your opponent knows which ball and pocket you are calling.',
+      'Make sure your opponent knows what you are calling.',
     ],
   },
   {
@@ -17,7 +17,7 @@ export const USAPL_RULE_GROUPS = [
     blurb: 'Your break, your rack. Keep it moving.',
     items: [
       'Lag or Flip for first break.',
-      'Alternate breaks. \n The black dot above the player\'s name in the USAPL scoring app indicates the breaker.',
+      'Alternate breaks. \n The black dot above the player\'s name in the scoring app indicates the breaker.',
       'Rack your own. \n In 10 ball be sure to place the 2-ball & 3-ball in the bottom corners of the rack.',
       'Open after the break (8-ball).',
       'Ball in hand if you scratch on the break. All formats.',
@@ -30,8 +30,8 @@ export const USAPL_RULE_GROUPS = [
     items: [
       'Pocket safes allowed in 8-ball (call a safety and pocket a ball).\n',
       'In 10-ball, a pocketed ball when a safety is called, is an illegally pocketed ball. In 9-ball the player\'s turn continues.',
-      'Push out allowed (9-ball and 10-ball only). \n Reagrdless of who breaks, the first shot after the break may be a push out.' ,
-      '3-foul rule (9-ball and 10-ball only). \n 3 consecutive fouls results in loss of game.',
+      'Push out allowed (9-ball and 10-ball).',
+      '3-foul rule (9-ball and 10-ball).',
     ],
   },
   {
@@ -40,7 +40,6 @@ export const USAPL_RULE_GROUPS = [
     blurb: 'Use your timeouts wisely.',
     items: [
       'Coaching / timeouts: \n 1 per game, 3 per match, 10 per team — all skill levels.',
-      'Only the players or referees can call a foul.',
       'Jump shots & jump cues are allowed. \nDependent on the establishment\'s policy.',
       'Good sportsmanship: \n Player\'s are expected to be friendly and respectful to each other and the staff.',
     ],

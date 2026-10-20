@@ -13,14 +13,14 @@ export default function UsaplAdminVisitTables({ stats, pageLabel }) {
   return (
     <>
       <section className="usapl-card">
-        <h2>Pages · everyone except you</h2>
+        <h2>Pages</h2>
         {stats.pages.length ? (
           <table className="usapl-visit-table">
             <thead>
               <tr>
                 <th>Page</th>
-                <th className="usapl-visit-num">Other views</th>
-                <th className="usapl-visit-num">Other visitors</th>
+                <th className="usapl-visit-num">Views</th>
+                <th className="usapl-visit-num">Visitors</th>
               </tr>
             </thead>
             <tbody>
@@ -47,16 +47,14 @@ export default function UsaplAdminVisitTables({ stats, pageLabel }) {
             <thead>
               <tr>
                 <th>When</th>
-                <th>Who</th>
                 <th>Page</th>
                 <th>From</th>
               </tr>
             </thead>
             <tbody>
               {stats.recent.map((row) => (
-                <tr key={row.id} className={row.isMine ? 'is-you' : ''}>
+                <tr key={row.id}>
                   <td>{when(row.created_at)}</td>
-                  <td className="usapl-visit-who">{row.whoLabel}</td>
                   <td>{pageLabel(row)}</td>
                   <td className="usapl-meta">{row.referrer || 'direct / in-site'}</td>
                 </tr>

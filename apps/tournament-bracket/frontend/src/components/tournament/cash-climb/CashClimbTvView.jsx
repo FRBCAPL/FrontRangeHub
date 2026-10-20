@@ -8,7 +8,6 @@ import CashClimbTvMatches from './CashClimbTvMatches.jsx';
 import CashClimbTvStandings from './CashClimbTvStandings.jsx';
 import CashClimbTvTicker from './CashClimbTvTicker.jsx';
 import useTvIsTall from './useTvIsTall.js';
-import ShowdownTvView from '../showdown/public/ShowdownTvView.jsx';
 import './CashClimbTv.css';
 import './CashClimbTvLandscape.css';
 import './CashClimbTvPortrait.css';
@@ -16,13 +15,6 @@ import './CashClimbTvPortrait.css';
 const POLL_MS = 1500;
 
 export default function CashClimbTvView() {
-  const [searchParams] = useSearchParams();
-  const showdownId = searchParams.get('showdown');
-  if (showdownId) return <ShowdownTvView eventId={showdownId} />;
-  return <CashClimbLiveTv />;
-}
-
-function CashClimbLiveTv() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const layout = parseTvLayout(searchParams.get('layout') || readStoredTvLayout());

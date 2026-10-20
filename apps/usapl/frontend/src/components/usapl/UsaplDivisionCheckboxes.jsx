@@ -1,6 +1,4 @@
 import React from 'react';
-import { usaplNightLabel } from '../../data/usaplDivisions.js';
-import { usaplFormatWithoutInHouse } from '../../data/usaplFormat.js';
 
 export default function UsaplDivisionCheckboxes({
   divisions = [],
@@ -15,8 +13,6 @@ export default function UsaplDivisionCheckboxes({
       <div className="usapl-check-list" role="group" aria-label="Divisions">
         {divisions.map((division) => {
           const checked = selectedIds.includes(division.id);
-          const night = usaplNightLabel(division.night);
-          const format = usaplFormatWithoutInHouse(division.format);
           return (
             <label
               key={division.id}
@@ -29,9 +25,9 @@ export default function UsaplDivisionCheckboxes({
               />
               <span>
                 <strong>{division.shortName || division.name}</strong>
-                {night || format ? (
+                {division.night || division.format ? (
                   <span className="usapl-meta">
-                    {[night, format].filter(Boolean).join(' · ')}
+                    {[division.night, division.format].filter(Boolean).join(' · ')}
                   </span>
                 ) : null}
               </span>
