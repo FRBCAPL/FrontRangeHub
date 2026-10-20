@@ -4,10 +4,25 @@ import { createElimTournament } from './elimSeed.js';
 import CreateTournamentForm from './CreateTournamentForm';
 import ElimPlayScreen from './ElimPlayScreen';
 import CashClimbApp from './cash-climb/CashClimbApp';
+import BreakAndRunApp from './break-and-run/BreakAndRunApp.jsx';
+import ShowdownApp from './showdown/operator/ShowdownApp.jsx';
+import { loadShowdown } from './showdown/operator/showdownStore.js';
+import { showdownCloud } from './showdown/cloud/showdownCloud.js';
+import { listShowdownsForHub, openShowdownFromHub, removeShowdownFromHub } from './showdown/cloud/showdownHubActions.js';
 import { loadCashClimb, saveCashClimb, clearCashClimb } from './cash-climb/cashClimbStore';
+import { loadBreakAndRun, saveBreakAndRun, clearBreakAndRun } from './break-and-run/breakAndRunStore.js';
+import { sanitizeBreakAndRun, formatMoney as formatBreakAndRunMoney } from './break-and-run/breakAndRunEngine.js';
+import {
+  listSavedBreakAndRunEvents,
+  listLiveBreakAndRunEvents,
+  loadBreakAndRunEventById,
+  deleteBreakAndRunEvent,
+  parkLiveBreakAndRunEvent,
+} from './break-and-run/breakAndRunCloud.js';
 import { sanitizeCashClimb } from './cash-climb/cashClimbEngine.js';
 import { preferTournamentCopy, withTournamentTimestamp, tournamentTime } from './cash-climb/cashClimbSaved.js';
 import { CASH_CLIMB_GUIDE_HASH, openCashClimbGuideTv } from './cash-climb/cashClimbGuideRoute.js';
+import { SHOWDOWN_GUIDE_HASH, openShowdownGuideTv } from './showdown/public/showdownGuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
 import {
@@ -37,6 +52,8 @@ import {
   filterCurrentEvents,
   filterCompletedEvents,
   isCashClimbHubEvent,
+  isBreakAndRunHubEvent,
+  isShowdownHubEvent,
 } from './tournamentHubEvents.js';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
@@ -49,10 +66,13 @@ export default function TournamentBracketApp() {
   const [screen, setScreen] = useState('home');
   const [leaveTo, setLeaveTo] = useState('home');
   const [cashClimbIntent, setCashClimbIntent] = useState('open');
+  const [breakAndRunIntent, setBreakAndRunIntent] = useState('open');
   const [elimType, setElimType] = useState('single');
   const [tournament, setTournament] = useState(loadElim);
   const [savedElim, setSavedElim] = useState([]);
   const [savedCashClimb, setSavedCashClimb] = useState([]);
+  const [savedBreakAndRun, setSavedBreakAndRun] = useState([]);
+  const [savedShowdown, setSavedShowdown] = useState([]);
 
   const persist = useCallback((t) => {
     const next = t ? withTournamentTimestamp(withElimStatus(t)) : null;
@@ -62,14 +82,18 @@ export default function TournamentBracketApp() {
   }, []);
 
   const refreshSaved = useCallback(async () => {
-    const [elim, cash, elimLive, cashLive] = await Promise.all([
+    const [elim, cash, bnr, elimLive, cashLive, bnrLive] = await Promise.all([
       listSavedElimEvents(),
       listSavedCashClimbEvents(),
+      listSavedBreakAndRunEvents(),
       listLiveElimEvents(),
       listLiveCashClimbEvents(),
+      listLiveBreakAndRunEvents(),
     ]);
     setSavedElim([...elimLive, ...elim]);
     setSavedCashClimb([...cashLive, ...cash]);
+    setSavedBreakAndRun([...bnrLive, ...bnr]);
+    setSavedShowdown(await listShowdownsForHub(showdownCloud));
   }, []);
 
   useEffect(() => {
@@ -113,6 +137,7 @@ export default function TournamentBracketApp() {
 
   const goHome = () => {
     setCashClimbIntent('open');
+    setBreakAndRunIntent('open');
     setLeaveTo('home');
     setScreen('home');
     refreshSaved();
@@ -214,12 +239,56 @@ export default function TournamentBracketApp() {
     refreshSaved();
   };
 
+  const handleOpenSavedBreakAndRun = async (item) => {
+    if (!item?.tournament && !item?.id) return;
+    const local = loadBreakAndRun();
+    if (local && local.status !== 'completed' && String(local.id) !== String(item.id)) {
+      const ok = window.confirm('Switch this tablet to that Break and Run? The one you are on stays in Current Tournaments.');
+      if (!ok) return;
+      if (local.status === 'in-progress') {
+        const parked = await parkLiveBreakAndRunEvent(local);
+        if (parked.error) {
+          window.alert('Could not save the current Break and Run first. Sign in and try again so it is not lost.');
+          return;
+        }
+      }
+    }
+    const fresh = item.id ? (await loadBreakAndRunEventById(item.id)).tournament : null;
+    const payload = fresh || item.tournament;
+    if (!payload) return;
+    saveBreakAndRun(sanitizeBreakAndRun(payload));
+    setBreakAndRunIntent('open');
+    setScreen('break-and-run');
+  };
+
+  const handleRemoveSavedBreakAndRun = async (item) => {
+    if (!item?.id) return;
+    const ok = window.confirm(`Remove "${item.name}" from the database? This cannot be undone.`);
+    if (!ok) return;
+    await deleteBreakAndRunEvent(item.id);
+    const local = loadBreakAndRun();
+    if (local && String(local.id) === String(item.id)) clearBreakAndRun();
+    refreshSaved();
+  };
+
+  const handleOpenSavedShowdown = async (item) => {
+    if (await openShowdownFromHub(showdownCloud, item)) setScreen('showdown');
+  };
+
+  const handleRemoveSavedShowdown = async (item) => {
+    if (await removeShowdownFromHub(showdownCloud, item)) refreshSaved();
+  };
+
   const handleOpenHubEvent = (item) => {
-    if (isCashClimbHubEvent(item)) handleOpenSavedCashClimb(item);
+    if (isShowdownHubEvent(item)) handleOpenSavedShowdown(item);
+    else if (isBreakAndRunHubEvent(item)) handleOpenSavedBreakAndRun(item);
+    else if (isCashClimbHubEvent(item)) handleOpenSavedCashClimb(item);
     else handleOpenSavedElim(item);
   };
 
   const handleRemoveHubEvent = (item) => {
+    if (isShowdownHubEvent(item)) return handleRemoveSavedShowdown(item);
+    if (isBreakAndRunHubEvent(item)) return handleRemoveSavedBreakAndRun(item);
     if (isCashClimbHubEvent(item)) return handleRemoveSavedCashClimb(item);
     return handleRemoveSavedElim(item);
   };
@@ -230,13 +299,34 @@ export default function TournamentBracketApp() {
     setScreen('cash-climb');
   };
 
+  const startNewBreakAndRun = () => {
+    const existing = loadBreakAndRun();
+    if (existing && existing.status !== 'completed' && existing.status !== 'ended') {
+      const potLabel = formatBreakAndRunMoney(existing.currentPot);
+      const ok = window.confirm(
+        `A Break & Run pot is already open (${potLabel}).\n\n` +
+          'For the next play night, open that pot from Current Tournaments and use Start next session so money stays in one continuous pot.\n\n' +
+          'Start setup for a brand-new separate pot anyway?'
+      );
+      if (!ok) return;
+    }
+    setBreakAndRunIntent('new');
+    setLeaveTo('new');
+    setScreen('break-and-run');
+  };
+
   const cashClimb = loadCashClimb();
+  const breakAndRun = loadBreakAndRun();
   const elim = tournament;
   const hubEvents = mergeHubEvents({
     cashClimbSaved: savedCashClimb,
     elimSaved: savedElim,
+    breakAndRunSaved: savedBreakAndRun,
+    showdownSaved: savedShowdown,
     localCashClimb: cashClimb,
     localElim: elim,
+    localBreakAndRun: breakAndRun,
+    localShowdown: loadShowdown(),
   });
   const currentEvents = filterCurrentEvents(hubEvents);
   const completedEvents = filterCompletedEvents(hubEvents);
@@ -252,6 +342,29 @@ export default function TournamentBracketApp() {
             refreshSaved();
           }}
         />
+      </div>
+    );
+  }
+
+  if (screen === 'break-and-run') {
+    return (
+      <div className="tournament-bracket-app">
+        <BreakAndRunApp
+          intent={breakAndRunIntent}
+          onLeave={() => {
+            setBreakAndRunIntent('open');
+            setScreen(leaveTo);
+            refreshSaved();
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (screen === 'showdown') {
+    return (
+      <div className="tournament-bracket-app">
+        <ShowdownApp onLeave={() => { setScreen(leaveTo); refreshSaved(); }} />
       </div>
     );
   }
@@ -291,6 +404,9 @@ export default function TournamentBracketApp() {
       <div className="tournament-bracket-app">
         <TournamentFormatPicker
           onCashClimb={startNewCashClimb}
+          onShowdown={() => { setLeaveTo('new'); setScreen('showdown'); }}
+          showdownResume={loadShowdown()?.name || ''}
+          onBreakAndRun={startNewBreakAndRun}
           onSingleElim={() => {
             setElimType('single');
             setScreen('elim-create');
@@ -345,6 +461,8 @@ export default function TournamentBracketApp() {
         onTvTall={() => openCashClimbTv('portrait')}
         onGuideTv={() => openCashClimbGuideTv()}
         onGuide={() => navigate(CASH_CLIMB_GUIDE_HASH)}
+        onShowdownGuideTv={() => openShowdownGuideTv()}
+        onShowdownGuide={() => navigate(SHOWDOWN_GUIDE_HASH)}
         onSubmit={() => navigate(CASH_CLIMB_SUBMIT_HASH)}
         onBackHome={() => navigate('/')}
       />

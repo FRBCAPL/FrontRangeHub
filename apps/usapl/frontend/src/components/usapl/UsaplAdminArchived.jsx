@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usaplDivisionAreaOptions } from '../../data/usaplDivisions.js';
 import { usaplDivisionIsPast } from '../../data/usaplPastDivisions.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
 import { useUsaplLocations } from '../../hooks/useUsaplLocations.js';
@@ -10,6 +11,7 @@ import UsaplDivisionEditModal from './UsaplDivisionEditModal.jsx';
 export default function UsaplAdminArchived() {
   const { allDivisions, loading, fromDatabase, error, reload } = useUsaplDivisions();
   const { names: locationOptions } = useUsaplLocations();
+  const areaOptions = usaplDivisionAreaOptions(allDivisions);
   const [editing, setEditing] = useState(null);
   const [busyId, setBusyId] = useState('');
   const [message, setMessage] = useState('');
@@ -93,6 +95,7 @@ export default function UsaplAdminArchived() {
           draft={editing}
           isNew={false}
           locationOptions={locationOptions}
+          areaOptions={areaOptions}
           onClose={() => setEditing(null)}
           onSave={handleSave}
         />

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { usaplVisitPageLabel } from '../../data/usaplVisitPages.js';
 import { summarizeUsaplVisits, usaplVisitsSinceIso } from '../../data/usaplVisitStats.js';
 import { useUsaplDivisions } from '../../hooks/useUsaplDivisions.js';
-import { listUsaplPageVisits } from '../../services/usaplPageVisits.js';
+import { getUsaplVisitorId, listUsaplPageVisits } from '../../services/usaplPageVisits.js';
 import UsaplAdminSubnav from './UsaplAdminSubnav.jsx';
 import UsaplAdminVisitSummary from './UsaplAdminVisitSummary.jsx';
 import UsaplAdminVisitTables from './UsaplAdminVisitTables.jsx';
@@ -12,6 +12,14 @@ const RANGES = [
   { days: 30, label: '30 days' },
   { days: 90, label: '90 days' },
 ];
+
+function hubEmail() {
+  try {
+    return String(localStorage.getItem('userEmail') || '').trim();
+  } catch {
+    return '';
+  }
+}
 
 export default function UsaplAdminVisits() {
   const { divisions } = useUsaplDivisions();
@@ -27,7 +35,7 @@ export default function UsaplAdminVisits() {
       const data = await listUsaplPageVisits({ sinceIso: usaplVisitsSinceIso(rangeDays) });
       setRows(data);
     } catch (err) {
-      setError(err?.message || 'Could not load visits. Run usapl-page-visits-2026-09.sql in Supabase, then refresh.');
+      setError(err?.message || 'Could not load visits. Run the USAPL page-visits SQL in Supabase, then refresh.');
       setRows([]);
     } finally {
       setLoading(false);
@@ -39,11 +47,13 @@ export default function UsaplAdminVisits() {
   }, [days]);
 
   const labelFor = (row) => usaplVisitPageLabel(row.path, divisions) || row.page_label || row.path;
+  const mineId = getUsaplVisitorId();
+  const mineEmail = hubEmail();
   const stats = useMemo(
     () => summarizeUsaplVisits(rows, divisions, (row) => (
       usaplVisitPageLabel(row.path, divisions) || row.page_label || row.path
-    )),
-    [rows, divisions]
+    ), mineId, mineEmail),
+    [rows, divisions, mineId, mineEmail]
   );
 
   return (
@@ -51,8 +61,11 @@ export default function UsaplAdminVisits() {
       <UsaplAdminSubnav />
       <h1>Visitor stats</h1>
       <p className="usapl-lede">
-        Anonymous counts for the FRUSAPL site. Visitors are remembered in the browser, not by name or email.
-        Admin pages are not counted.
+        Unique visitors: signed-in Google / Hub accounts show as their email. Guests
+        stay anonymous. Your own views are this Google account (any browser) plus
+        this browser when you were not signed in. Older visits from before email
+        tracking still look like guests. Admin pages are never counted. After you
+        add the visitor-email SQL in Supabase, new signed-in visits will show emails.
       </p>
       <div className="usapl-choice-row" style={{ margin: '16px 0' }}>
         {RANGES.map((range) => (

@@ -45,6 +45,7 @@ export default function UsaplHome() {
           <Link className="usapl-btn-secondary" to="/usapl/dues">Pay dues</Link>
           <Link className="usapl-btn-secondary" to="/usapl/vegas-cup">Vegas Cup</Link>
           <Link className="usapl-btn-secondary" to="/usapl/rules">Rules</Link>
+          <Link className="usapl-btn-secondary" to="/usapl/info">Info</Link>
         </div>
         <p className="usapl-official">Official league of the USA Pool League & Cue Sports International</p>
         <div className="usapl-logos">

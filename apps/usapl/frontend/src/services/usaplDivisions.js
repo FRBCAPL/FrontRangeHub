@@ -37,6 +37,7 @@ export function rowToDivision(row) {
     rosterMax: row.roster_max == null ? null : Number(row.roster_max),
     combinedFargoCap: row.combined_fargo_cap == null ? null : Number(row.combined_fargo_cap),
     locationNote: row.location_note || '',
+    divisionArea: row.division_area || '',
     playAnywhere: Boolean(row.play_anywhere),
     inHouse: Boolean(row.in_house) || usaplFormatIsInHouse(row.format),
     inSession: parseUsaplFormat(row.format).inSession,
@@ -70,6 +71,7 @@ export function divisionToRow(division) {
     roster_max: toInt(division.rosterMax),
     combined_fargo_cap: toInt(division.combinedFargoCap),
     location_note: emptyToNull(String(division.locationNote || '').trim()),
+    division_area: emptyToNull(String(division.divisionArea || '').trim()),
     play_anywhere: Boolean(division.playAnywhere),
     fargo_division_id: emptyToNull(joinUsaplFargoIds(division.fargoDivisionId || USAPL_FARGO_DIVISION_IDS[division.id])),
     schedule_image_url: emptyToNull(String(division.scheduleImageUrl || '').trim()),
@@ -108,6 +110,7 @@ const OPTIONAL_COLUMNS = [
   'winner_team',
   'winner_team_b',
   'league_numbers',
+  'division_area',
 ];
 
 function columnFromError(error) {
@@ -129,6 +132,9 @@ function optionalColumnDroppedError(dropped) {
   }
   if (dropped.includes('archived') || dropped.includes('winner_team') || dropped.includes('winner_team_b') || dropped.includes('league_numbers')) {
     return 'Past divisions and winners need a database column. Run supabase-migrations/usapl-divisions-past-winners-2026-09.sql in the Supabase SQL editor, then save again.';
+  }
+  if (dropped.includes('division_area')) {
+    return 'The division area needs a database column. Run supabase-migrations/usapl-divisions-area-2026-09.sql in the Supabase SQL editor, then save again.';
   }
   return '';
 }

@@ -28,6 +28,9 @@ function withPrefill(draft) {
   if (next.combinedFargoCap === '' || next.combinedFargoCap == null) {
     next.combinedFargoCap = USAPL_DEFAULT_FARGO_CAP;
   }
+  if (next.notesText == null) {
+    next.notesText = stripUsaplFargoCapNotes(next.notes || []).join('\n');
+  }
   if (!String(next.reportHeading || '').trim()) next.reportHeading = USAPL_REPORT_HEADING;
   if (!String(next.reportBlurb || '').trim()) next.reportBlurb = USAPL_REPORT_BLURB;
   return next;
@@ -45,7 +48,7 @@ function stepError(step, form) {
   return '';
 }
 
-export default function UsaplDivisionEditModal({ draft, isNew, locationOptions = [], onClose, onSave }) {
+export default function UsaplDivisionEditModal({ draft, isNew, locationOptions = [], areaOptions = [], onClose, onSave }) {
   const [form, setForm] = useState(() => withPrefill(draft));
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -108,6 +111,7 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
           ...form,
           inSession: form.archived ? false : form.inSession === true,
         }),
+        divisionArea: String(form.divisionArea || '').trim(),
         fargoDivisionId: joinUsaplFargoIds([form.fargoReportA, form.fargoReportB]),
         duesPerPlayer: form.duesPerPlayer === '' || form.duesPerPlayer == null ? 10 : form.duesPerPlayer,
         combinedFargoCap: form.combinedFargoCap === '' || form.combinedFargoCap == null ? USAPL_DEFAULT_FARGO_CAP : form.combinedFargoCap,
@@ -121,7 +125,6 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
     }
   };
 
-  const notesText = stripUsaplFargoCapNotes(form.notesText ?? (form.notes || []).join('\n')).join('\n');
   const lastStep = step === STEPS.length - 1;
 
   return createPortal(
@@ -150,12 +153,12 @@ export default function UsaplDivisionEditModal({ draft, isNew, locationOptions =
           <div className="usapl-division-edit-body" style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'scroll' }}>
             {step === 0 ? (
               <>
-                <UsaplDivisionEditNight form={form} setField={setField} locationOptions={locationOptions} />
+                <UsaplDivisionEditNight form={form} setField={setField} locationOptions={locationOptions} areaOptions={areaOptions} />
                 <UsaplDivisionEditFlyer form={form} setField={setField} />
               </>
             ) : null}
             {step === 1 ? (
-              <UsaplDivisionEditPlay form={form} setField={setField} setForm={setForm} notesText={notesText} />
+              <UsaplDivisionEditPlay form={form} setField={setField} setForm={setForm} />
             ) : null}
             {step === 2 ? (
               <>

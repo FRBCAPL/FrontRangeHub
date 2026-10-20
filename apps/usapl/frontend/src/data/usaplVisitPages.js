@@ -5,6 +5,7 @@ const PAGE_LABELS = [
   { test: (path) => path.startsWith('/usapl/past-divisions'), label: 'Past divisions' },
   { test: (path) => path.startsWith('/usapl/vegas-cup'), label: 'Vegas Cup' },
   { test: (path) => path.startsWith('/usapl/rules'), label: 'Rules' },
+  { test: (path) => path.startsWith('/usapl/info'), label: 'Info' },
   { test: (path) => path.startsWith('/usapl/bylaws'), label: 'By-laws' },
   { test: (path) => path.startsWith('/usapl/dues'), label: 'Dues' },
   { test: (path) => path.startsWith('/usapl/admin'), label: 'Admin' },

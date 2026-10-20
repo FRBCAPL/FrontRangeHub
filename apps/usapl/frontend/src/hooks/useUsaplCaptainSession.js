@@ -22,8 +22,9 @@ export function useUsaplCaptainSession() {
 
   useEffect(() => {
     reload();
+    // Deferred: a Supabase call made inside this listener deadlocks the shared auth lock.
     const { data } = supabase.auth.onAuthStateChange(() => {
-      reload();
+      setTimeout(reload, 0);
     });
     return () => data.subscription.unsubscribe();
   }, [reload]);

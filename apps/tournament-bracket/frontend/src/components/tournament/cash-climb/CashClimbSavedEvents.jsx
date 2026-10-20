@@ -1,7 +1,5 @@
 import React from 'react';
-import { formatTournamentDate } from './cashClimbEngine.js';
-import { savedStatusLabel } from './cashClimbSaved.js';
-import { hubFormatLabel } from '../tournamentHubEvents.js';
+import { hubEventDetailLine } from '../tournamentHubEvents.js';
 import './CashClimbSavedEvents.css';
 
 export default function CashClimbSavedEvents({
@@ -26,11 +24,7 @@ export default function CashClimbSavedEvents({
             <li key={item.id}>
               <div>
                 <strong>{item.name}</strong>
-                <span>
-                  {[hubFormatLabel(item), savedStatusLabel(item.status), item.tournamentDate ? formatTournamentDate(item.tournamentDate) : '']
-                    .filter(Boolean)
-                    .join(' • ')}
-                </span>
+                <span>{hubEventDetailLine(item)}</span>
               </div>
               <div className="cc-saved-actions">
                 <button type="button" className="tb-btn-new" onClick={() => onOpen?.(item)}>

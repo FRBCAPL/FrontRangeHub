@@ -671,6 +671,17 @@ const CuelessInTheBooth = () => {
     }
   }, [formData.eventDate]);
 
+  // Homepage "Book us" link: /cueless?section=book scrolls to the booking cards
+  useEffect(() => {
+    const hash = window.location.hash || '';
+    const query = hash.includes('?') ? hash.slice(hash.indexOf('?') + 1) : window.location.search.slice(1);
+    if (new URLSearchParams(query).get('section') !== 'book') return undefined;
+    const timer = setTimeout(() => {
+      document.getElementById('cueless-services')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handle window resize for mobile detection
   useEffect(() => {
     const handleResize = () => {
@@ -1158,7 +1169,7 @@ const CuelessInTheBooth = () => {
       </div>
 
       {/* Services Section */}
-      <div className="services-section">
+      <div className="services-section" id="cueless-services">
         <h3>Our Services</h3>
         <div className="services-grid">
           <div className="service-card" onClick={() => handleServiceClick('legends')}>

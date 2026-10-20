@@ -6,8 +6,10 @@ import {
   usaplDivisionSummaryLines,
 } from '../../data/usaplDivisions.js';
 import UsaplDivisionFlyer from './UsaplDivisionFlyer.jsx';
+import { UsaplDenverMetroCardArt } from './UsaplDenverMetroPromo.jsx';
 import UsaplPlayDayBadge from './UsaplPlayDayBadge.jsx';
 import UsaplPlayPlaceBadge from './UsaplPlayPlaceBadge.jsx';
+import { isDenverMetroCash } from '../../data/usaplDenverMetroCash.js';
 
 export default function UsaplDivisionCard({ division }) {
   const playing = usaplDivisionIsInSession(division);
@@ -33,6 +35,12 @@ export default function UsaplDivisionCard({ division }) {
                 {line}
               </span>
             ))}
+            {isDenverMetroCash(division) ? (
+              <>
+                {lines.length ? <br /> : null}
+                Tuesdays at 7 PM · cash session, not Vegas
+              </>
+            ) : null}
           </p>
           <div className="usapl-night-pills">
             <UsaplPlayDayBadge division={division} />
@@ -42,7 +50,11 @@ export default function UsaplDivisionCard({ division }) {
             </p>
           </div>
         </div>
-        <UsaplDivisionFlyer division={division} compact />
+        {isDenverMetroCash(division) ? (
+          <UsaplDenverMetroCardArt />
+        ) : (
+          <UsaplDivisionFlyer division={division} compact />
+        )}
       </div>
       <div className="usapl-actions" style={{ marginTop: 12 }}>
         <Link className="usapl-btn-secondary" to={`/usapl/divisions/${division.id}`}>Division page</Link>

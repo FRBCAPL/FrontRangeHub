@@ -1,14 +1,55 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './HubNavigation.css';
+import HubLoginModal from './HubLoginModal.jsx';
+import './HubLoginModal.css';
+import AdminAlertsBell from '../admin-inbox/AdminAlertsBell.jsx';
+import useAdminAttention from '../admin-inbox/useAdminAttention.js';
+import { ADMIN_INBOX_PATH } from '../admin-inbox/adminAttentionService.js';
+import useNavSideWidth from './useNavSideWidth.js';
+import useHubNavHeightVar from './useHubNavHeightVar.js';
 import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
 
-const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, showLadderUserViewToggle, ladderUserViewActive, onToggleLadderUserView }) => {
+function hubCenterTitle(pathname, currentAppName, userFirstName) {
+  if (pathname === '/') return 'Front Range Pool.com';
+  if (pathname === '/usapl' || String(pathname || '').startsWith('/usapl/')) {
+    return 'Front Range USA Pool League';
+  }
+  if (pathname === '/consignment' || String(pathname || '').startsWith('/consignment/')) {
+    return 'Consignment Shop';
+  }
+  if (pathname === '/hub') return !userFirstName ? 'Ladder - Login' : 'Ladder of Legends';
+  if (pathname === '/guest/ladder' || pathname === '/ladder') return 'Ladder of Legends';
+  if (pathname === '/cueless') return 'Cueless in the Booth';
+  if (pathname === '/admin') return 'Admin Panel';
+  if (pathname === '/platform-admin') return 'Platform Admin';
+  if (pathname === '/dues-tracker') return 'Dues Tracker';
+  if (pathname === '/tournament-bracket/how-it-works') return 'How Cash Climb works';
+  if (pathname.startsWith('/tournament-bracket/submit')) return 'Submit Cash Climb result';
+  if (pathname === '/tournament-bracket') return 'Tournament Bracket';
+  if (pathname === '/estate-inventory' || pathname.startsWith('/estate-inventory/')) return 'Estate Vault';
+  if (pathname === '/calendar') return 'Match Calendar';
+  return currentAppName || 'Front Range Pool';
+}
+
+const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFirstName, userLastName, onProfileClick, showLadderUserViewToggle, ladderUserViewActive, onToggleLadderUserView, onLoginSuccess }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [showLogin, setShowLogin] = React.useState(false);
+  const showLoginButton = !userFirstName && Boolean(onLoginSuccess);
+  const attention = useAdminAttention(Boolean(isAdmin && userFirstName));
+
+  // Lets app pages (e.g. consignment bidding) open the hub sign-in: window.dispatchEvent(new Event('frpl:open-login'))
+  React.useEffect(() => {
+    if (!onLoginSuccess) return undefined;
+    const open = () => setShowLogin(true);
+    window.addEventListener('frpl:open-login', open);
+    return () => window.removeEventListener('frpl:open-login', open);
+  }, [onLoginSuccess]);
+
   const [isMobile, setIsMobile] = React.useState(
     typeof window !== 'undefined'
       ? window.matchMedia('(max-width: 768px)').matches
@@ -76,7 +117,22 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     navigate('/');
   };
 
-  const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || currentAppName === 'Ladder of Legends';
+  const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || location.pathname.startsWith('/ladder/') || currentAppName === 'Ladder of Legends';
+  const isUsaplApp = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
+  const isConsignmentApp = location.pathname === '/consignment' || location.pathname.startsWith('/consignment/');
+  const isCuelessApp = location.pathname === '/cueless' || location.pathname.startsWith('/cueless/');
+  const isArcadeApp = location.pathname.startsWith('/arcade/');
+  const isTournamentApp =
+    location.pathname.startsWith('/tournament-bracket') &&
+    location.pathname !== '/tournament-bracket/tv' &&
+    !location.pathname.startsWith('/tournament-bracket/break-and-run/tv') &&
+    !location.pathname.startsWith('/tournament-bracket/break-and-run/view') &&
+    !location.pathname.startsWith('/tournament-bracket/break-and-run/rules');
+  const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName);
+  const fullName = [userFirstName, userLastName].filter(Boolean).join(' ');
+  const navRootRef = React.useRef(null);
+  useNavSideWidth(navRootRef, (isConsignmentApp || isArcadeApp) && !isMobile, [userFirstName, isAdmin, isSuperAdmin]);
+  useHubNavHeightVar(navRootRef, !isMobileMenuOpen);
   const handleHamburgerClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -84,7 +140,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
   
   return (
-    <div className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div ref={navRootRef} className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isArcadeApp ? 'arcade-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 
@@ -151,35 +207,19 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                   letterSpacing: '0.5px',
                   whiteSpace: 'nowrap'
                 } : {}}>
-                  {location.pathname === '/'
-                    ? 'Front Range Pool.com'
-                    : location.pathname === '/hub'
-                    ? (!userFirstName ? 'Ladder - Login' : 'Ladder of Legends')
-                    : location.pathname === '/guest/ladder' || location.pathname === '/ladder'
-                    ? 'Ladder of Legends'
-                    : location.pathname === '/cueless'
-                    ? 'Cueless in the Booth'
-                    : location.pathname === '/admin'
-                    ? 'Admin Panel'
-                    : location.pathname === '/platform-admin'
-                    ? 'Platform Admin'
-                    : location.pathname === '/dues-tracker'
-                    ? 'Dues Tracker'
-                    : location.pathname === '/tournament-bracket/how-it-works'
-                    ? 'How Cash Climb works'
-                    : location.pathname.startsWith('/tournament-bracket/submit')
-                    ? 'Submit Cash Climb result'
-                    : location.pathname === '/tournament-bracket'
-                    ? 'Tournament Bracket'
-                    : location.pathname === '/estate-inventory' ||
-                      location.pathname.startsWith('/estate-inventory/')
-                    ? 'Estate Vault'
-                    : location.pathname === '/calendar'
-                    ? 'Match Calendar'
-                    : currentAppName || 'Front Range Pool'
-                  }
+                  {centerTitle}
                 </span>
               </div>
+              {showLoginButton ? (
+                <button
+                  type="button"
+                  className="hub-login-nav-btn"
+                  onClick={() => setShowLogin(true)}
+                  style={{ marginRight: '1rem' }}
+                >
+                  <span className="hub-login-nav-part">🔑 Sign up</span> <span className="hub-login-nav-part">/ Log in</span>
+                </button>
+              ) : (
               <button 
                 type="button"
                 className="hamburger-btn"
@@ -187,6 +227,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
                 aria-expanded={isMobileMenuOpen}
                 style={{
+                  position: 'relative',
                   width: '50px',
                   display: 'flex',
                   justifyContent: 'center',
@@ -195,7 +236,13 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 }}
               >
                 ☰
+                {isAdmin && attention.total ? (
+                  <span className="aib-badge" aria-label={`${attention.total} admin alerts`}>
+                    {attention.total > 99 ? '99+' : attention.total}
+                  </span>
+                ) : null}
               </button>
+              )}
             </div>
           </div>
         )}
@@ -211,33 +258,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 letterSpacing: '1px',
                 whiteSpace: 'nowrap'
               } : {}}>
-                {location.pathname === '/'
-                  ? 'Front Range Pool.com'
-                  : location.pathname === '/hub'
-                  ? (!userFirstName ? 'Ladder - Login' : 'Ladder of Legends')
-                  : location.pathname === '/guest/ladder' || location.pathname === '/ladder'
-                  ? 'Ladder of Legends'
-                  : location.pathname === '/cueless'
-                  ? 'Cueless in the Booth'
-                  : location.pathname === '/admin'
-                  ? 'Admin Panel'
-                  : location.pathname === '/platform-admin'
-                  ? 'Platform Admin'
-                  : location.pathname === '/dues-tracker'
-                  ? 'Dues Tracker'
-                  : location.pathname === '/tournament-bracket/how-it-works'
-                  ? 'How Cash Climb works'
-                  : location.pathname.startsWith('/tournament-bracket/submit')
-                  ? 'Submit Cash Climb result'
-                  : location.pathname === '/tournament-bracket'
-                  ? 'Tournament Bracket'
-                  : location.pathname === '/estate-inventory' ||
-                    location.pathname.startsWith('/estate-inventory/')
-                  ? 'Estate Vault'
-                  : location.pathname === '/calendar'
-                  ? 'Match Calendar'
-                  : currentAppName || 'Front Range Pool'
-                }
+                {centerTitle}
               </span>
             </div>
           </div>
@@ -255,6 +276,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
             <div className="login-nav-info" style={{ display: 'none' }}>
               🎯  Front Range Pool Hub
             </div>
+            {showLoginButton && !isMobile ? (
+              <button type="button" className="hub-login-nav-btn" onClick={() => setShowLogin(true)}>
+                <span className="hub-login-nav-part">🔑 Sign up</span> <span className="hub-login-nav-part">/ Log in</span>
+              </button>
+            ) : null}
           </div>
         ) : (
           <>
@@ -268,6 +294,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 gap: '0.5rem',
                 order: 3
               }}>
+                <span className="hub-nav-greeting" title={fullName}>
+                  Hi, <strong>{userFirstName}</strong>
+                </span>
                 {/* Ladder: User view toggle (admin only) – next to Admin */}
                 {showLadderUserViewToggle && onToggleLadderUserView && (
                   <button
@@ -290,6 +319,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     {ladderUserViewActive ? '👤 Admin view' : '👤 User view'}
                   </button>
                 )}
+                {isAdmin && <AdminAlertsBell attention={attention} />}
                 {/* Admin dropdown */}
                 {(isAdmin || isSuperAdmin) && (
                   <div className="admin-dropdown">
@@ -299,6 +329,9 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                     <div className="dropdown-menu">
                       {isAdmin && (
                         <>
+                          <button onClick={() => navigate(ADMIN_INBOX_PATH)} className="dropdown-item">
+                            🔔 Admin Inbox{attention.total ? ` (${attention.total})` : ''}
+                          </button>
                           <button onClick={handlePlayerManagementClick} className="dropdown-item">
                             👥 Players
                           </button>
@@ -336,12 +369,18 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
       {isMobile && isMobileMenuOpen && userFirstName && (
         <div className="mobile-menu-dropdown">
           <div className="mobile-menu-content">
+            <p className="hub-nav-greeting hub-nav-greeting--menu">
+              Signed in as <strong>{fullName}</strong>
+            </p>
             {/* Admin options */}
             {(isAdmin || isSuperAdmin) && (
               <div className="mobile-admin-section">
                 <h4>Admin</h4>
                 {isAdmin && (
                   <>
+                    <button onClick={() => { navigate(ADMIN_INBOX_PATH); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
+                      🔔 Admin Inbox{attention.total ? ` (${attention.total})` : ''}
+                    </button>
                     <button onClick={() => { handlePlayerManagementClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
                       👥 Players
                     </button>
@@ -373,6 +412,10 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
           </div>
         </div>
       )}
+
+      {showLogin ? (
+        <HubLoginModal onClose={() => setShowLogin(false)} onLoginSuccess={onLoginSuccess} />
+      ) : null}
     </div>
   );
 };

@@ -24,7 +24,7 @@ const readStoredSearchQuery = () => {
   }
 };
 
-const ArcadeKiosk = () => {
+const ArcadeKiosk = ({ canAdmin = false }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
@@ -82,6 +82,13 @@ const ArcadeKiosk = () => {
   return (
     <div className="arcade-kiosk">
       <header className="arcade-kiosk-header">
+        <button
+          type="button"
+          className="arcade-kiosk-home-link"
+          onClick={() => navigate('/')}
+        >
+          ← Home
+        </button>
         <div className="arcade-kiosk-brand">
           <span className="arcade-kiosk-icon">🎮</span>
           <div>
@@ -89,6 +96,15 @@ const ArcadeKiosk = () => {
             <p>{DEFAULT_MACHINE.location}</p>
           </div>
         </div>
+        {canAdmin ? (
+          <button
+            type="button"
+            className="arcade-kiosk-admin-link"
+            onClick={() => navigate('/arcade/admin')}
+          >
+            ⚙️ Admin
+          </button>
+        ) : null}
       </header>
 
       <HowToPlayBanner />

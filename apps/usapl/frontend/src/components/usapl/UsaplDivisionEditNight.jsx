@@ -2,7 +2,7 @@ import React from 'react';
 import { USAPL_NIGHTS } from '../../data/usaplDivisions.js';
 import { USAPL_LEAGUE_NUMBER_HINT } from '../../data/usaplLeagueNumbers.js';
 
-export default function UsaplDivisionEditNight({ form, setField, locationOptions }) {
+export default function UsaplDivisionEditNight({ form, setField, locationOptions, areaOptions = [] }) {
   return (
     <>
       <div className="usapl-player-grid">
@@ -32,22 +32,41 @@ export default function UsaplDivisionEditNight({ form, setField, locationOptions
         />
         <p className="usapl-field-hint" title={USAPL_LEAGUE_NUMBER_HINT}>e.g. 13861/13061</p>
       </div>
-      <div className="usapl-field">
-        <label>Location *</label>
-        <input
-          list="usapl-division-locations"
-          value={form.locationNote}
-          onChange={(e) => setField('locationNote', e.target.value)}
-          placeholder="Bar or hall this night plays at"
-          required
-        />
-        {locationOptions.length ? (
-          <datalist id="usapl-division-locations">
-            {locationOptions.map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
-        ) : null}
+      <div className="usapl-player-grid">
+        <div className="usapl-field">
+          <label>Location *</label>
+          <input
+            list="usapl-division-locations"
+            value={form.locationNote}
+            onChange={(e) => setField('locationNote', e.target.value)}
+            placeholder="Bar or hall this night plays at"
+            required
+          />
+          {locationOptions.length ? (
+            <datalist id="usapl-division-locations">
+              {locationOptions.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          ) : null}
+        </div>
+        <div className="usapl-field">
+          <label>Area</label>
+          <input
+            list="usapl-division-areas"
+            value={form.divisionArea || ''}
+            onChange={(e) => setField('divisionArea', e.target.value)}
+            placeholder="City or county"
+          />
+          {areaOptions.length ? (
+            <datalist id="usapl-division-areas">
+              {areaOptions.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          ) : null}
+          <p className="usapl-field-hint">City or county this division covers.</p>
+        </div>
       </div>
       <div className="usapl-division-edit-flags">
         <label className="usapl-field">
