@@ -8,7 +8,6 @@ import { formatTournamentDate } from '../../cash-climb/cashClimbEngine.js';
 import useShowdownPublicEvent from './useShowdownPublicEvent.js';
 import { sendPhoneScore } from './showdownPhoneSubmit.js';
 import { listMySubmissions, rememberSubmission, updateSubmission } from './showdownMySubmissions.js';
-import { SHOWDOWN_PUBLIC_HASH } from './showdownPublicRoutes.js';
 import { showdownGuideHash } from './showdownGuideRoute.js';
 import { raceEventFacts } from './showdownRaceFacts.js';
 import ShowdownPublicList from './ShowdownPublicList.jsx';
@@ -126,7 +125,6 @@ function ShowdownPublicEvent({ api, eventId }) {
           </>
         ) : null}
         <div className="cc-submit-nav">
-          <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_PUBLIC_HASH)}>All Showdowns</button>
           <button type="button" className="tb-btn-new" onClick={() => navigate(showdownGuideHash(version))}>{version ? `How Showdown V${version} works` : 'How Showdown works'}</button>
           <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>Back to home</button>
         </div>
