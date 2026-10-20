@@ -1911,6 +1911,9 @@
                 showSlide(slideIndex, false);
                 if (pendingCelebrateGameNumber && isInCelebrationFlow()) {
                   focusSlideForGame(pendingCelebrateGameNumber);
+                } else if (!rotationPausedByUser && !isInCelebrationFlow()) {
+                  resumeTvRotation();
+                  startRotation();
                 }
                 if (done) done();
               });
@@ -2196,6 +2199,9 @@
   var rotationPausedForCelebration = false;
   var celebrationSafetyTimer = null;
   var celebrationStartTimer = null;
+  var wsEventsConnected = false;
+  var statePollTimer = null;
+  var syncedSessionKey = '';
   var CELEBRATION_SAFETY_MS = 120000;
   /** Min pause after tablet submit before fireworks/audio (TV-enforced even if server is old). */
   var CELEBRATION_DELAY_MS = 2500;
@@ -2408,9 +2414,43 @@
   function hideEntryBanner() {
     hideNameEntryOverlay();
     var banner = $('tv-entry-banner');
-    if (!banner) return;
-    banner.classList.remove('is-visible');
-    banner.setAttribute('hidden', 'hidden');
+    if (banner) {
+      banner.classList.remove('is-visible');
+      banner.setAttribute('hidden', 'hidden');
+    }
+    maybeResumeTvRotationAfterOverlay();
+  }
+
+  function overlayBlocksRotation() {
+    var entry = $('tv-name-entry');
+    var celeb = $('tv-celebration');
+    var shutdown = $('tv-shutdown');
+    if (entry && !entry.hasAttribute('hidden')) return true;
+    if (celeb && !celeb.hasAttribute('hidden')) return true;
+    if (shutdown && !shutdown.hasAttribute('hidden')) return true;
+    if (celebrationActive || celebrationStartTimer) return true;
+    return false;
+  }
+
+  /** End-of-game overlays pause rotation; resume when they clear unless celebration is still running. */
+  function maybeResumeTvRotationAfterOverlay() {
+    if (rotationPausedByUser) return;
+    if (overlayBlocksRotation()) return;
+    celebrationSubmitAt = 0;
+    resumeTvRotation();
+  }
+
+  /** Recover if rotation was left paused (ended session, stale flags, or missed transitionend). */
+  function ensureSlideRotation() {
+    if (!slides.length || rotationPausedByUser) return;
+    if (overlayBlocksRotation()) return;
+    if (transitioning) {
+      transitioning = false;
+    }
+    celebrationSubmitAt = 0;
+    if (!rotateTimer) {
+      resumeTvRotation();
+    }
   }
 
   function pauseTvRotation() {
@@ -2429,11 +2469,14 @@
 
   function toggleUserPause() {
     rotationPausedByUser = !rotationPausedByUser;
+    var hint = $('tv-footer-hint');
     if (rotationPausedByUser) {
       captureRotateRemaining();
       clearRotateTimer();
+      if (hint) hint.textContent = 'Tap screen to resume slide rotation';
       return;
     }
+    if (hint) hint.textContent = 'Use the tablet to submit scores';
     if (!rotationPausedForCelebration && !celebrationActive && !celebrationStartTimer && slides.length) {
       startRotation();
     }
@@ -2662,10 +2705,169 @@
     }
   }
 
+  function fetchLocalServerState(callback) {
+    var req = new XMLHttpRequest();
+    req.open('GET', '/api/state', true);
+    req.onreadystatechange = function () {
+      if (req.readyState !== 4) return;
+      var data = null;
+      try {
+        if (req.responseText) data = JSON.parse(req.responseText);
+      } catch (e) {
+        data = null;
+      }
+      callback(req.status >= 200 && req.status < 300, data);
+    };
+    req.send();
+  }
+
+  function sessionToTvPayload(session) {
+    if (!session) return {};
+    return {
+      machineId: session.machineId,
+      gameNumber: session.gameNumber,
+      gameName: session.gameName,
+      game: session.gameName,
+      score: session.score,
+      rank: session.rank,
+      confidence: session.ocrConfidence,
+      confirmScore: Boolean(session.confirmScore),
+      prizeWon: Boolean(session.prizeWon),
+      prizeText: session.prizeText || null,
+      playerInitials: session.playerInitials || null,
+      initials: session.playerInitials || null
+    };
+  }
+
+  /**
+   * Re-sync TV overlays from orchestrator state (WELCOME / reconnect / poll fallback).
+   * Leaderboard slides keep rotating; name-entry + celebration overlay on top.
+   */
+  function syncTvFromServerState(snap) {
+    if (!snap) return;
+    var orchState = snap.state;
+    var session = snap.session;
+    var payload;
+    var syncKey;
+
+    if (!session || orchState === 'IDLE') {
+      syncedSessionKey = '';
+      celebrationSubmitAt = 0;
+      clearCelebrationStartTimer();
+      pendingCelebrateGameNumber = null;
+      hideEntryBanner();
+      if (!celebrationActive) {
+        hideCelebration();
+      } else {
+        maybeResumeTvRotationAfterOverlay();
+      }
+      return;
+    }
+
+    payload = sessionToTvPayload(session);
+    syncKey = String(session.id || '') + '|' + String(orchState);
+    if (syncKey === syncedSessionKey) return;
+    syncedSessionKey = syncKey;
+
+    if (orchState === 'ENTER_NAME') {
+      primeTvAudio();
+      showEntryBanner(payload);
+      if (window.TvCelebrationEffects && window.TvCelebrationEffects.promptNameEntry) {
+        window.TvCelebrationEffects.promptNameEntry({
+          rank: payload.rank,
+          prizeWon: Boolean(payload.prizeWon)
+        });
+      }
+      if (session.playerInitials) {
+        updateNameEntryPreview(session.playerInitials);
+      }
+      if (payload.gameNumber) {
+        pendingCelebrateGameNumber = parseInt(payload.gameNumber, 10);
+        focusSlideForGame(pendingCelebrateGameNumber);
+      }
+      return;
+    }
+
+    if (orchState === 'CELEBRATING') {
+      primeTvAudio();
+      hideEntryBanner();
+      if (payload.gameNumber) {
+        pendingCelebrateGameNumber = parseInt(payload.gameNumber, 10);
+      }
+      scheduleCelebrationShow(payload);
+    }
+  }
+
+  /** /api/state exists only on the Optiplex event server, not on the public site. */
+  function isLocalEventServer() {
+    var host = String(location.hostname || '').toLowerCase();
+    return host === 'localhost' || host === '127.0.0.1' || String(location.port) === '3080';
+  }
+
+  function pollServerState() {
+    if (!isLocalEventServer()) return;
+    fetchLocalServerState(function (ok, snap) {
+      if (ok && snap) syncTvFromServerState(snap);
+    });
+  }
+
+  function startStatePolling() {
+    if (!isLocalEventServer()) return;
+    stopStatePolling();
+    statePollTimer = setInterval(pollServerState, wsEventsConnected ? 5000 : 2000);
+  }
+
+  function stopStatePolling() {
+    if (!statePollTimer) return;
+    clearInterval(statePollTimer);
+    statePollTimer = null;
+  }
+
+  function setEventsConnectionLabel(connected) {
+    var label = $('tv-status-label');
+    if (!label) return;
+    label.textContent = connected ? 'events connected' : 'events offline';
+    label.className = connected ? 'tv-status-label is-ready' : 'tv-status-label';
+  }
+
   function initArcadeEvents() {
-    if (typeof ArcadeWsClient === 'undefined') return;
+    if (typeof ArcadeWsClient === 'undefined') {
+      startStatePolling();
+      return;
+    }
 
     eventsClient = new ArcadeWsClient({ role: 'tv' });
+
+    eventsClient.on('open', function () {
+      wsEventsConnected = true;
+      setEventsConnectionLabel(true);
+      refreshData();
+      primeTvAudio();
+      pollServerState();
+      startStatePolling();
+    });
+
+    eventsClient.on('close', function () {
+      wsEventsConnected = false;
+      setEventsConnectionLabel(false);
+      stopStatePolling();
+      startStatePolling();
+    });
+
+    eventsClient.on('WELCOME', function (msg) {
+      if (msg && msg.state) syncTvFromServerState(msg.state);
+    });
+
+    eventsClient.on('REGISTERED', function (msg) {
+      if (msg && msg.state) syncTvFromServerState(msg.state);
+    });
+
+    eventsClient.on('STATE_CHANGED', function (msg) {
+      var p = msg && msg.payload;
+      if (p && p.state) {
+        syncTvFromServerState({ state: p.state, session: p.session || null });
+      }
+    });
 
     eventsClient.on('NEW_HIGH_SCORE', function (msg) {
       primeTvAudio();
@@ -2674,6 +2876,7 @@
 
     eventsClient.on('ENTER_PLAYER', function (msg) {
       var p = msg.payload || {};
+      syncedSessionKey = '';
       primeTvAudio();
       showEntryBanner(p);
       // Keyboard is up: greet the player (congrats for every tier; the 6–10 tier also
@@ -2697,20 +2900,6 @@
       flashNameEntryKey(p.action, p.key);
     });
 
-    eventsClient.on('open', function () {
-      hideEntryBanner();
-      hideCelebration();
-      refreshData();
-      primeTvAudio();
-      var label = $('tv-status-label');
-      if (label) label.textContent = 'events connected';
-    });
-
-    eventsClient.on('close', function () {
-      var label = $('tv-status-label');
-      if (label) label.textContent = 'events offline';
-    });
-
     eventsClient.on('PLAYER_IDENTIFIED', function (msg) {
       primeTvAudio();
       hideEntryBanner();
@@ -2718,6 +2907,7 @@
     });
 
     eventsClient.on('BACK_TO_IDLE', function () {
+      syncedSessionKey = '';
       clearCelebrationStartTimer();
       celebrationSubmitAt = 0;
       pendingCelebrateGameNumber = null;
@@ -2725,10 +2915,13 @@
       // Let the TV audio chain finish (incl. Claim Prize); onCelebrationEnd hides the overlay.
       if (!celebrationActive) {
         hideCelebration();
+      } else {
+        maybeResumeTvRotationAfterOverlay();
       }
     });
 
     eventsClient.on('PLAYER_TIMEOUT', function () {
+      syncedSessionKey = '';
       clearCelebrationStartTimer();
       celebrationSubmitAt = 0;
       pendingCelebrateGameNumber = null;
@@ -2786,6 +2979,7 @@
     });
 
     eventsClient.connect();
+    startStatePolling();
   }
 
   function init() {
@@ -2810,8 +3004,10 @@
         }
         refreshData(function () {
           startTitleColorCycle();
+          resumeTvRotation();
           startRotation();
           updateOnlineStatus();
+          setTimeout(ensureSlideRotation, 3000);
         });
       });
 
@@ -2820,6 +3016,7 @@
       bindVisibilityRefresh();
       bindResizeRefresh();
       bindScreenPauseToggle();
+      setInterval(ensureSlideRotation, 12000);
     });
   }
 
