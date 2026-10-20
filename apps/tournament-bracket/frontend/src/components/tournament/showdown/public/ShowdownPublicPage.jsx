@@ -29,6 +29,7 @@ import '../operator/ShowdownCloud.css';
 import './ShowdownPublic.css';
 
 const STATUS_POLL_MS = 4000;
+export const DIRECTOR_DEVICE_NOTE = 'You\u2019re on the director\u2019s device, so score reporting is off here. Enter scores on the operator screen; players report from their own phones.';
 
 function tabsFor(status) {
   const tabs = [['now', 'Now'], ['standings', 'Standings']];
@@ -104,6 +105,9 @@ function ShowdownPublicEvent({ api, eventId }) {
         {loading ? <p className="cc-meta">Loading this event&hellip;</p> : null}
         {!loading && !event ? <p className="cc-banner">{error || 'This event is not available. It may not have started yet.'}</p> : null}
         {notice ? <p className="cc-submit-status" role="status">{notice}</p> : null}
+        {event && source === 'tablet' && event.status !== 'completed' ? (
+          <p className="cc-banner" role="note">{DIRECTOR_DEVICE_NOTE}</p>
+        ) : null}
         {event ? (
           <>
             <nav className="sd-tabs" aria-label="Event sections">
