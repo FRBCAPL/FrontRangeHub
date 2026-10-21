@@ -50,7 +50,7 @@ test('final results: best overall with settings, times, guarantees, payouts, rea
   rec.alternatives.forEach((m) => assert.ok(body.includes(settingsText(m)), m.id));
   assert.ok(rec.alternatives.length > 0);
   assert.match(body, /Best of each other format/);
-  assert.match(body, /All 85 settings checked/);
+  assert.match(body, /All 99 settings checked/);
   assertNoInventedNumbers(html, result);
 });
 
@@ -59,8 +59,7 @@ test('16 players, 6 hours: the fuller-event card explains the championship-versu
   const body = text(await render('./SmartBuilderResults.jsx', { result, onTry() {} }));
   assert.match(body, /Comfortable fit/);
   assert.match(body, /Tight fit/);
-  assert.match(body, /KOH 2 offers a longer championship race \(race to 2 instead of 1\), but takes about .+ longer, leaving only .+ of cushion\./);
-  assert.match(body, /Short championship: King of the Hill race 1/);
+  assert.match(body, /KOH 2 offers .+ has a shorter championship race \(race to 2 instead of 3\) and takes about .+ longer, leaving only .+ of cushion\./);
   assert.match(body, /Showdown V1: No setting of this format fits your time limit\./);
 });
 

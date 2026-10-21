@@ -3,7 +3,7 @@
  * stays in integer arithmetic. Each locked plan records its money unit: plans locked by the original formula
  * have none and use 50¢; equal-rate plans use 25¢ (docs/showdown/SHOWDOWN_V3_PAYOUT_SPEC.md).
  */
-export const V3_QUALIFYING_GAMES = { min: 5, max: 15 };
+export const V3_QUALIFYING_GAMES = { min: 3, max: 15 };
 export const V3_PLAYOFF_RACE_TO = { min: 3, max: 9 };
 
 /** Money unit of plans locked by the original formula. */

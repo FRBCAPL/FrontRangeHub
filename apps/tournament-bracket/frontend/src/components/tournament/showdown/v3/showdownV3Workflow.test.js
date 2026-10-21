@@ -25,7 +25,7 @@ describe('V3 starts are open to operators', () => {
 
   it('the preview flag never bypasses a real setup problem', () => {
     const op = v3Op(2);
-    assert.throws(() => E.startShowdown(createV3(8, { games: 4 }, op), op()), /Games per qualifying match/);
+    assert.throws(() => E.startShowdown(createV3(8, { games: 2 }, op), op()), /Games per qualifying match/);
     assert.throws(() => E.startShowdown(createV3(8, { raceTo: 12 }, op), op()), /playoff race/);
   });
 });

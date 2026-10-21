@@ -27,7 +27,7 @@ test('candidate space: Cash Climb, V1, V2 and the full V3 grid; never V4', () =>
   assert.equal(list.filter((c) => c.family === 'cash-climb').length, 6);
   assert.deepEqual([...new Set(list.filter((c) => c.family === 'showdown').map((c) => c.version))].sort(), [1, 2, 3]);
   assert.equal(list.filter((c) => c.version === 3).length, V3_GAMES.length * V3_RACES.length);
-  assert.equal(V3_GAMES[0], 5);
+  assert.equal(V3_GAMES[0], 3);
   assert.equal(V3_GAMES.at(-1), 15);
   assert.deepEqual([V3_RACES[0], V3_RACES.at(-1)], [3, 9]);
   assert.equal(new Set(list.map((c) => c.id)).size, list.length);

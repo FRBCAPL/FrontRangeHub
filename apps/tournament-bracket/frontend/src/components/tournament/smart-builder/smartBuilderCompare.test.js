@@ -28,7 +28,7 @@ test('one column per shown option, in card order, with the same numbers the card
   });
   assert.match(body, /Players winning back their \$20/);
   assert.match(body, /Champion's share of \$160/);
-  assert.match(body, /All 85 settings checked/);
+  assert.match(body, /All 99 settings checked/);
 });
 
 test('cards stay the default view and the toggle is offered', async () => {

@@ -27,7 +27,7 @@ export default function ShowdownV3SetupFields({ settings, act, fieldText }) {
       </dl>
       <p className="sd-note">
         Supported: {V3_QUALIFYING_GAMES.min}&ndash;{V3_QUALIFYING_GAMES.max} qualifying games and a playoff race to {V3_PLAYOFF_RACE_TO.min}&ndash;{V3_PLAYOFF_RACE_TO.max}.
-        The payout plan below updates as you change them.
+        The time and money estimates update as you change them.
       </p>
     </>
   );

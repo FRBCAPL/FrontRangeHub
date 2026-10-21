@@ -108,7 +108,7 @@ describe('V3 settings validation', () => {
     assert.equal(v3SettingsProblems({ entrants: 16, entryFee: 50, qualifyingGames: 7, playoffRaceTo: 5 }).length, 0);
     assert.equal(v3SettingsProblems({ entrants: 7, entryFee: 50, qualifyingGames: 7, playoffRaceTo: 5 }).length, 1);
     assert.equal(v3SettingsProblems({ entrants: 16, entryFee: 19, qualifyingGames: 7, playoffRaceTo: 5 }).length, 1);
-    assert.equal(v3SettingsProblems({ entrants: 16, entryFee: 50, qualifyingGames: 4, playoffRaceTo: 5 }).length, 1);
+    assert.equal(v3SettingsProblems({ entrants: 16, entryFee: 50, qualifyingGames: 2, playoffRaceTo: 5 }).length, 1);
     assert.equal(v3SettingsProblems({ entrants: 16, entryFee: 50, qualifyingGames: 16, playoffRaceTo: 5 }).length, 1);
     assert.equal(v3SettingsProblems({ entrants: 16, entryFee: 50, qualifyingGames: 7, playoffRaceTo: 2 }).length, 1);
     assert.equal(v3SettingsProblems({ entrants: 16, entryFee: 50, qualifyingGames: 7, playoffRaceTo: 10 }).length, 1);

@@ -103,7 +103,7 @@ test('V3 pruning never drops a setting that would fit or be Close (brute force a
 
 test('every candidate is accounted for, and every family that fits is shown', () => {
   const { final } = searchSync({ ...EIGHT, targetMin: 360 }, QUICK);
-  assert.equal(final.evaluated.length + final.skipped.length + final.ineligible.length, 85);
+  assert.equal(final.evaluated.length + final.skipped.length + final.ineligible.length, 99);
   const fittingFamilies = new Set(final.recommendation.rows.filter((r) => ['comfortable', 'tight'].includes(r.fit)).map(familyOf));
   const shownFamilies = new Set(shownOptions(final.recommendation).map(familyOf));
   assert.deepEqual([...shownFamilies].sort(), [...fittingFamilies].sort());
@@ -121,8 +121,8 @@ test('bad inputs give a final result with problems and no preliminary', () => {
 
 // Regression case for the default timing assumptions. A deliberate timing-model or calibration change may
 // change these picks; update the case then, rather than treating the times as rules.
-test('16 players, 4 tables, 6 hours (default assumptions): Cash Climb 1/1 comfortable with 1/2 as the fuller event', () => {
+test('16 players, 4 tables, 6 hours (default assumptions): V3 3 games / race 3 comfortable with 4 games as the fuller event', () => {
   const { final } = searchSync({ entrants: 16, tables: 4, entryFee: 20, targetMin: 360 });
   const { primary, fullerEvent } = final.recommendation;
-  assert.deepEqual([primary.id, primary.fit, fullerEvent.id, fullerEvent.fit], ['cc-1-1', 'comfortable', 'cc-1-2', 'tight']);
+  assert.deepEqual([primary.id, primary.fit, fullerEvent.id, fullerEvent.fit], ['v3-3-3', 'comfortable', 'v3-4-3', 'tight']);
 });
