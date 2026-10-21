@@ -5,8 +5,10 @@
 import { RECOMMENDED_PAYOUT_VERSION } from '../showdownRules.js';
 import { formatFor } from '../showdownFormats.js';
 
-export function initialPick(current = null) {
-  return { selected: current ?? RECOMMENDED_PAYOUT_VERSION, confirmed: false };
+/** `suggested`: a format to preselect for a new event instead of the recommended one; never preconfirmed. */
+export function initialPick(current = null, suggested = null) {
+  const preselect = current === null && formatFor(suggested) ? suggested : null;
+  return { selected: current ?? preselect ?? RECOMMENDED_PAYOUT_VERSION, confirmed: false };
 }
 
 export function selectFormat(pick, version) {

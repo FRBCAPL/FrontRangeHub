@@ -12,6 +12,12 @@ import { v3PreviewAvailable, v3PreviewOn } from '../operator/v3/showdownV3Previe
 
 const PUBLIC_KEY = '__FRPH_SHOWDOWN_PUBLIC__';
 
+/**
+ * true lets the dev server write V3 events to the live database like the production site. Keep false so the
+ * development write guard applies; production builds are unaffected either way.
+ */
+const DEV_WRITES_LIVE = false;
+
 function publicClient() {
   const store = typeof globalThis !== 'undefined' ? globalThis : window;
   if (!store[PUBLIC_KEY]) {
@@ -26,6 +32,6 @@ export const showdownCloud = createGuardedCloud({
   live: createShowdownCloud({ operator: supabase, publicClient: publicClient() }),
   isolated: () => createIsolatedCloud(),
   isolationOn: () => v3PreviewOn(),
-  devBuild: () => v3PreviewAvailable(),
+  devBuild: () => !DEV_WRITES_LIVE && v3PreviewAvailable(),
   isolatedOrigin: savedToIsolatedCloud,
 });

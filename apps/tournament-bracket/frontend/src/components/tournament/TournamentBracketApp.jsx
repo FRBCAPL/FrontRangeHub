@@ -47,6 +47,7 @@ import {
 import TournamentHubHome from './TournamentHubHome.jsx';
 import TournamentFormatPicker from './TournamentFormatPicker.jsx';
 import TournamentEventsScreen from './TournamentEventsScreen.jsx';
+import { smartBuilderAvailable } from './smart-builder/smartBuilderAccess.js';
 import {
   mergeHubEvents,
   filterCurrentEvents,
@@ -57,6 +58,8 @@ import {
 } from './tournamentHubEvents.js';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
+
+const SmartBuilderApp = React.lazy(() => import('./smart-builder/SmartBuilderApp.jsx'));
 
 export default function TournamentBracketApp() {
   const navigate = useNavigate();
@@ -73,6 +76,11 @@ export default function TournamentBracketApp() {
   const [savedCashClimb, setSavedCashClimb] = useState([]);
   const [savedBreakAndRun, setSavedBreakAndRun] = useState([]);
   const [savedShowdown, setSavedShowdown] = useState([]);
+  const [handoff, setHandoff] = useState(null);
+
+  useEffect(() => {
+    if (handoff) setHandoff(null);
+  }, [handoff]);
 
   const persist = useCallback((t) => {
     const next = t ? withTournamentTimestamp(withElimStatus(t)) : null;
@@ -299,6 +307,26 @@ export default function TournamentBracketApp() {
     setScreen('cash-climb');
   };
 
+  const toTop = () => window.scrollTo?.(0, 0);
+
+  const leaveBuilder = () => {
+    setScreen('new');
+    toTop();
+  };
+
+  /** One-time, in-memory: the setup screen reads it as it opens, then the effect above drops it. */
+  const applyBuilderSettings = (next) => {
+    if (next?.family !== 'cash-climb' && next?.family !== 'showdown') return;
+    setHandoff(next);
+    if (next.family === 'showdown') {
+      setLeaveTo('new');
+      setScreen('showdown');
+    } else {
+      startNewCashClimb();
+    }
+    toTop();
+  };
+
   const startNewBreakAndRun = () => {
     const existing = loadBreakAndRun();
     if (existing && existing.status !== 'completed' && existing.status !== 'ended') {
@@ -336,6 +364,7 @@ export default function TournamentBracketApp() {
       <div className="tournament-bracket-app">
         <CashClimbApp
           intent={cashClimbIntent}
+          prefill={handoff?.family === 'cash-climb' ? handoff : null}
           onLeave={() => {
             setCashClimbIntent('open');
             setScreen(leaveTo);
@@ -364,7 +393,10 @@ export default function TournamentBracketApp() {
   if (screen === 'showdown') {
     return (
       <div className="tournament-bracket-app">
-        <ShowdownApp onLeave={() => { setScreen(leaveTo); refreshSaved(); }} />
+        <ShowdownApp
+          prefill={handoff?.family === 'showdown' ? handoff : null}
+          onLeave={() => { setScreen(leaveTo); refreshSaved(); }}
+        />
       </div>
     );
   }
@@ -399,10 +431,25 @@ export default function TournamentBracketApp() {
     );
   }
 
+  if (screen === 'smart-builder' && smartBuilderAvailable()) {
+    return (
+      <div className="tournament-bracket-app">
+        <React.Suspense fallback={<p className="tb-header">Loading…</p>}>
+          <SmartBuilderApp
+            onBack={leaveBuilder}
+            onUseSettings={applyBuilderSettings}
+            showdownOpen={Boolean(loadShowdown())}
+          />
+        </React.Suspense>
+      </div>
+    );
+  }
+
   if (screen === 'new') {
     return (
       <div className="tournament-bracket-app">
         <TournamentFormatPicker
+          onSmartBuilder={smartBuilderAvailable() ? () => setScreen('smart-builder') : undefined}
           onCashClimb={startNewCashClimb}
           onShowdown={() => { setLeaveTo('new'); setScreen('showdown'); }}
           showdownResume={loadShowdown()?.name || ''}

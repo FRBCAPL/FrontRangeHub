@@ -25,8 +25,10 @@ import './CashClimb.css';
 const PENDING_POLL_MS = 2500;
 const COPY_POLL_MS = 10000;
 
-export default function CashClimbApp({ onLeave, intent = 'open' }) {
+/** `prefill`: one-time setup starting values for a new event (Smart Builder), dropped once an event starts. */
+export default function CashClimbApp({ onLeave, intent = 'open', prefill = null }) {
   const [tournament, setTournament] = useState(() => (intent === 'new' ? null : loadCashClimb()));
+  const [setupPrefill, setSetupPrefill] = useState(() => (intent === 'new' ? prefill : null));
   const [submissions, setSubmissions] = useState([]);
   const [cloudError, setCloudError] = useState('');
   const [cloudNeedsSignIn, setCloudNeedsSignIn] = useState(false);
@@ -148,6 +150,7 @@ export default function CashClimbApp({ onLeave, intent = 'open' }) {
       }
       const created = createOpenTournament(config);
       persist(startTournament(created));
+      setSetupPrefill(null);
     } catch (err) {
       alert(err.message || 'Could not start tournament');
     }
@@ -259,6 +262,7 @@ export default function CashClimbApp({ onLeave, intent = 'open' }) {
       <CashClimbSetup
         onStart={handleStart}
         onCancel={onLeave}
+        prefill={setupPrefill}
       />
     );
   }

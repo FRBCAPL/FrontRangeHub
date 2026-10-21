@@ -2,7 +2,7 @@ import React from 'react';
 import BreakAndRunLogo from './break-and-run/BreakAndRunLogo.jsx';
 import './break-and-run/BreakAndRun.css';
 
-export default function TournamentFormatPicker({ onCashClimb, onShowdown, showdownResume, onBreakAndRun, onSingleElim, onDoubleElim, onBack }) {
+export default function TournamentFormatPicker({ onCashClimb, onShowdown, showdownResume, onBreakAndRun, onSingleElim, onDoubleElim, onBack, onSmartBuilder }) {
   return (
     <>
       <header className="tb-header">
@@ -11,6 +11,12 @@ export default function TournamentFormatPicker({ onCashClimb, onShowdown, showdo
       </header>
 
       <div className="cc-format-grid">
+        {onSmartBuilder ? (
+          <button type="button" className="cc-format-btn" onClick={onSmartBuilder}>
+            <strong>Help me choose</strong>
+            <span>Development preview: suggests a format and settings for your players, tables and time.</span>
+          </button>
+        ) : null}
         <button type="button" className="cc-format-btn cc-primary" onClick={onCashClimb}>
           <strong>Cash Climb</strong>
           <span>Round robin, 3-loss cut, then King of the Hill at 3 players.</span>

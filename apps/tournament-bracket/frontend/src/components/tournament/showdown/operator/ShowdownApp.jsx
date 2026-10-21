@@ -17,6 +17,7 @@ import { v3LimitsOf } from './v3/showdownV3ScoreDraft.js';
 import { v3PreviewOn } from './v3/showdownV3Preview.js';
 import { v3PlanPreview, v3PlanSummary } from './v3/showdownV3PlanView.js';
 import { closeObsoleteShowdown } from '../cloud/showdownHubActions.js';
+import { isShowdownPrefill, prefillConfig, prefillPickerNote, prefillSetupNote } from './showdownPrefill.js';
 import useShowdownCloud from './useShowdownCloud.js';
 import { showdownCloud } from '../cloud/showdownCloud.js';
 import { pendingView } from '../cloud/showdownPending.js';
@@ -28,12 +29,26 @@ import { createShowdownWithFormat, computeEarnings, raceToFor, payoutVersionOf, 
 import { legacyFormatProblem } from '../showdownState.js';
 import { downstreamOf } from '../showdownPlayoff.js';
 import '../../cash-climb/CashClimb.css';
+
+const PREFILL_BLOCKED = 'The Help me choose settings were not used: set this event aside first, then try again.';
+const DISCARD_COPY = { title: 'Discard this event?', message: 'The setup is deleted from this tablet and the cloud.', confirmLabel: 'Discard', danger: true };
+const newShowdownCopy = (state) => ({
+  title: 'Start a new Showdown?',
+  message: state.status === 'completed' ? 'This event stays in Past events on this tablet.' : 'This event is not finished. It is saved in Past events on this tablet and can be reopened.',
+  confirmLabel: 'Choose format',
+});
 import './Showdown.css';
 import './ShowdownBoard.css';
 import './ShowdownCloud.css';
 
-export default function ShowdownApp({ onLeave }) {
+/**
+ * `prefill`: one-time Smart Builder settings, applied through the format picker. With an event already
+ * loaded, the usual discard (setup) or start-a-new-Showdown confirmation comes first; cancelling drops them.
+ */
+export default function ShowdownApp({ onLeave, prefill = null }) {
   const [state, setState] = useState(loadShowdown);
+  const [handoff, setHandoff] = useState(() => (isShowdownPrefill(prefill) ? prefill : null));
+  const [builderNote, setBuilderNote] = useState(null);
   const [archive, setArchive] = useState(listArchivedShowdowns);
   const [tab, setTab] = useState('run');
   const [error, setError] = useState('');
@@ -41,7 +56,7 @@ export default function ShowdownApp({ onLeave }) {
   const [confirm, setConfirm] = useState(null);
   const [corrections, setCorrections] = useState(false);
   const [showConflict, setShowConflict] = useState(false);
-  const [picker, setPicker] = useState(null);
+  const [picker, setPicker] = useState(() => (handoff && !state ? 'create' : null));
   const [withdrawing, setWithdrawing] = useState(null);
   const v3 = Boolean(state) && isPayoutV3(state);
   const v3Preview = v3 && v3PreviewOn();
@@ -67,18 +82,36 @@ export default function ShowdownApp({ onLeave }) {
     return true;
   };
 
-  const ask = (copy, onYes) => { setError(''); setConfirm({ ...copy, onYes }); };
-  const closeConfirm = () => { setConfirm(null); setError(''); };
+  const ask = (copy, onYes, onNo) => { setError(''); setConfirm({ ...copy, onYes, onNo }); };
+  const closeConfirm = () => { confirm?.onNo?.(); setConfirm(null); setError(''); };
+  const discard = () => { showdownCloud.remove(state.id); commit(null); return true; };
+
+  useEffect(() => {
+    if (!handoff || !state) return;
+    if (formatSupportProblem(state) || (state.status !== 'setup' && legacyFormatProblem(state))) {
+      setHandoff(null);
+      setError(PREFILL_BLOCKED);
+      return;
+    }
+    const drop = () => setHandoff(null);
+    if (state.status === 'setup') ask(DISCARD_COPY, () => { discard(); setPicker('create'); return true; }, drop);
+    else ask(newShowdownCopy(state), () => { setPicker('create'); return true; }, drop);
+    // Runs once: the prefill is offered only when this screen opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const newEvent = (payoutVersion) => {
+    const prefilled = prefillConfig(handoff, payoutVersion);
     let created;
     try {
-      created = createShowdownWithFormat({ presetId: 'legends', payoutVersion, confirmed: true }, { by: currentOperator() });
+      created = createShowdownWithFormat({ ...prefilled, presetId: 'legends', payoutVersion, confirmed: true }, { by: currentOperator() });
     } catch (err) {
       setError(err.message);
       return false;
     }
     if (state && state.status !== 'setup') archiveShowdown(state);
+    setBuilderNote(Object.keys(prefilled).length ? { id: created.id, text: prefillSetupNote(handoff) } : null);
+    setHandoff(null);
     commit(created);
     setArchive(listArchivedShowdowns());
     setTab('run');
@@ -90,9 +123,11 @@ export default function ShowdownApp({ onLeave }) {
   const pickerModal = picker ? (
     <ShowdownFormatPicker
       current={picker === 'change' ? payoutVersionOf(state) : null}
+      suggested={picker === 'create' ? handoff?.version ?? null : null}
+      note={picker === 'create' ? prefillPickerNote(handoff) : ''}
       resetsFor={(v) => formatChangePreview(state, v).resets}
       error={error}
-      onCancel={() => { setPicker(null); setError(''); }}
+      onCancel={() => { setPicker(null); setHandoff(null); setError(''); }}
       onConfirm={(v) => { if (picker === 'change' ? act('changeFormat', v, { confirmed: true }) : newEvent(v)) setPicker(null); }}
     />
   ) : null;
@@ -188,6 +223,7 @@ export default function ShowdownApp({ onLeave }) {
     return (
       <>
         {error ? <p className="sd-error sd-banner" role="alert">{error}</p> : null}
+        {builderNote?.id === state.id ? <p className="sd-note sd-banner" role="status">{builderNote.text}</p> : null}
         {cloudParts}
         <ShowdownSetup
           state={state}
@@ -199,7 +235,7 @@ export default function ShowdownApp({ onLeave }) {
             ? { title: 'Start this V3 event?', message: 'The qualifying circle is drawn at random. Entrants, entry fee and the V3 payout plan shown on this screen are locked; the plan\u2019s financial terms cannot be edited after the start.', details: v3PlanSummary(v3PlanPreview(state).view), confirmLabel: 'Lock plan and start qualifying' }
             : { title: 'Start qualifying?', message: 'The qualifying circle is drawn at random. Entrants, entry fee, and payouts are locked.', confirmLabel: 'Start qualifying' },
           () => act('start', { v3Preview }))}
-          onDiscard={() => ask({ title: 'Discard this event?', message: 'The setup is deleted from this tablet and the cloud.', confirmLabel: 'Discard', danger: true }, () => { showdownCloud.remove(state.id); commit(null); return true; })}
+          onDiscard={() => ask(DISCARD_COPY, discard)}
         />
         {confirmModal}
         {pickerModal}
@@ -231,7 +267,7 @@ export default function ShowdownApp({ onLeave }) {
         corrections={corrections}
         onCorrections={setCorrections}
         onLeave={onLeave}
-        onNew={() => ask({ title: 'Start a new Showdown?', message: state.status === 'completed' ? 'This event stays in Past events on this tablet.' : 'This event is not finished. It is saved in Past events on this tablet and can be reopened.', confirmLabel: 'Choose format' }, () => { setPicker('create'); return true; })}
+        onNew={() => ask(newShowdownCopy(state), () => { setPicker('create'); return true; })}
       />
       {error && !score && !confirm && !withdrawing && tab !== 'settle' ? <p className="sd-error sd-banner" role="alert">{error} <button type="button" className="sd-link" onClick={() => setError('')}>Dismiss</button></p> : null}
       {cloudParts}

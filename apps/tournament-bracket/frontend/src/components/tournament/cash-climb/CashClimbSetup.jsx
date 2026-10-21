@@ -8,21 +8,24 @@ import { estimateCashClimbDuration } from './cashClimbDuration.js';
 import CashClimbDurationEstimate from './CashClimbDurationEstimate.jsx';
 import CashClimbRaceFields from './CashClimbRaceFields.jsx';
 import { defaultKohRaceTo, defaultRrRaceTo, requireRaceTo } from './cashClimbRace.js';
+import { cashClimbSetupStart, TABLE_PRESET_MAX } from './cashClimbSetupStart.js';
 import CashClimbRulesModal from './CashClimbRulesModal.jsx';
 
-const TABLE_COUNTS = Array.from({ length: 12 }, (_, i) => String(i + 1));
+const TABLE_COUNTS = Array.from({ length: TABLE_PRESET_MAX }, (_, i) => String(i + 1));
 
-export default function CashClimbSetup({ onStart, onCancel }) {
+/** `prefill`: optional one-time starting values (Smart Builder). Read once when the form opens. */
+export default function CashClimbSetup({ onStart, onCancel, prefill = null }) {
+  const [start] = useState(() => cashClimbSetupStart(prefill));
   const [name, setName] = useState('Cash Climb');
   const [tournamentDate, setTournamentDate] = useState(todayDateInput);
   const [gameType, setGameType] = useState(OPEN_TOURNAMENT_STRUCTURE.gameRules.gameType);
-  const [raceToMode, setRaceToMode] = useState(String(defaultRrRaceTo()));
-  const [otherRaceTo, setOtherRaceTo] = useState('');
-  const [kohRaceToMode, setKohRaceToMode] = useState(String(defaultKohRaceTo()));
-  const [otherKohRaceTo, setOtherKohRaceTo] = useState('');
-  const [tableCountMode, setTableCountMode] = useState('4');
-  const [otherTableCount, setOtherTableCount] = useState('');
-  const [entryFee, setEntryFee] = useState(String(OPEN_TOURNAMENT_STRUCTURE.entryFee));
+  const [raceToMode, setRaceToMode] = useState(start.raceToMode);
+  const [otherRaceTo, setOtherRaceTo] = useState(start.otherRaceTo);
+  const [kohRaceToMode, setKohRaceToMode] = useState(start.kohRaceToMode);
+  const [otherKohRaceTo, setOtherKohRaceTo] = useState(start.otherKohRaceTo);
+  const [tableCountMode, setTableCountMode] = useState(start.tableCountMode);
+  const [otherTableCount, setOtherTableCount] = useState(start.otherTableCount);
+  const [entryFee, setEntryFee] = useState(start.entryFee);
   const [players, setPlayers] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [rulesView, setRulesView] = useState(null);
@@ -118,6 +121,12 @@ export default function CashClimbSetup({ onStart, onCancel }) {
          Cash Climb Tournament. <br />
          Round robin, 3-loss cut, then King of the Hill when 3 players remain.
         </p>
+        {start.fromBuilder ? (
+          <p className="cc-setup-note cc-builder-note" role="status">
+            Races, tables and entry fee were filled in from Help me choose
+            {start.plannedPlayers ? `, planned for ${start.plannedPlayers} players` : ''}. Review and change anything, add your players, then start.
+          </p>
+        ) : null}
         <div className="cc-rules-btns">
           <button type="button" className="tb-btn-new cc-rules-open" onClick={() => setRulesView('tonight')}>
             Player rules

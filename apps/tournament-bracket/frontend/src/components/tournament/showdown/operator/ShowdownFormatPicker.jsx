@@ -18,8 +18,8 @@ function ResetList({ resets }) {
  * Format choice for a new event (`current` null) or a change during setup. The recommended format
  * is preselected, but the action stays disabled until the operator ticks the confirmation.
  */
-export default function ShowdownFormatPicker({ current = null, resetsFor = () => [], error = '', onConfirm, onCancel }) {
-  const [pick, setPick] = useState(() => initialPick(current));
+export default function ShowdownFormatPicker({ current = null, suggested = null, note = '', resetsFor = () => [], error = '', onConfirm, onCancel }) {
+  const [pick, setPick] = useState(() => initialPick(current, suggested));
   const changing = current !== null;
   const problem = pickProblem(pick, current);
   const chosen = SHOWDOWN_FORMATS.find((f) => f.version === pick.selected);
@@ -29,6 +29,7 @@ export default function ShowdownFormatPicker({ current = null, resetsFor = () =>
     <div className="cc-modal-overlay" role="presentation" onClick={onCancel}>
       <div className="cc-modal sd-confirm sd-format-picker" role="dialog" aria-modal="true" aria-labelledby="sd-format-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="sd-format-title">{changing ? 'Change tournament format' : 'Choose a tournament format'}</h2>
+        {note ? <p className="sd-note" role="status">{note}</p> : null}
         <fieldset className="sd-format-options">
           <legend className="sd-note">{changing ? 'The format can change until qualifying starts.' : 'The format is locked once qualifying starts.'}</legend>
           {SHOWDOWN_FORMATS.map((f) => (
