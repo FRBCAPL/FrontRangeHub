@@ -9,6 +9,9 @@
     "preview": "vite preview",
     "prepare": "husky || true",
     "sync-from-root": "node scripts/sync-from-root.cjs",
+    "sync:preview": "node scripts/sync.cjs preview",
+    "sync:apply": "node scripts/sync.cjs apply",
+    "test:sync": "node --test scripts/frontendSync.test.cjs",
     "sync-arcade-player": "node ../scripts/sync-arcade-player-to-events.cjs"
   },
   "dependencies": {

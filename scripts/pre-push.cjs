@@ -1,32 +1,34 @@
 #!/usr/bin/env node
 /**
- * Pre-push hook: sync shared and apps from root, commit if changed.
- * Runs automatically before every git push. No need to remember.
+ * Pre-push check. It never copies, stages or commits anything.
+ *   - Blocks the push when FrontEnd apps/ or shared/ have uncommitted changes, so what is pushed is
+ *     exactly what was committed.
+ *   - Warns (does not block) when root apps/ or shared/ differ from FrontEnd: run `npm run sync:preview`.
+ *   - If the check itself fails, it reports the error and lets the push continue.
  */
-const { execSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
+const { plan, dirtyFiles, defaultDirs } = require('./frontendSync.cjs');
 
-const frontendDir = path.resolve(__dirname, '..');
-
-try {
-  // 1. Sync from root (no-op if not in monorepo)
-  require('./sync-from-root.cjs');
-
-  // 2. Add shared and apps
-  execSync('git add shared apps', { cwd: frontendDir, stdio: 'pipe' });
-
-  // 3. Check if there are staged changes
-  const status = execSync('git status --short shared apps', {
-    cwd: frontendDir,
-    encoding: 'utf8'
-  });
-  if (status.trim()) {
-    execSync('git commit -m "Sync shared and apps from root"', {
-      cwd: frontendDir,
-      stdio: 'inherit'
-    });
-    console.log('[pre-push] Committed synced shared and apps');
+function runPrePush(dirs = defaultDirs(), log = console.log, warn = console.error) {
+  try {
+    const dirty = dirtyFiles(dirs.frontendDir);
+    if (dirty.length) {
+      warn(`[pre-push] Blocked: FrontEnd apps/ or shared/ has uncommitted changes. Commit or discard them first:\n  ${dirty.join('\n  ')}`);
+      return 1;
+    }
+    if (fs.existsSync(path.join(dirs.rootDir, 'shared'))) {
+      const p = plan(dirs);
+      const pending = p.add.length + p.change.length + p.delete.length;
+      if (pending) warn(`[pre-push] Note: root has ${pending} file change(s) not in FrontEnd (${p.held.length} held back). Run \`npm run sync:preview\` to review. Pushing what is committed.`);
+    }
+    return 0;
+  } catch (err) {
+    warn(`[pre-push] Check failed, push continues: ${err.message}`);
+    return 0;
   }
-} catch (e) {
-  // Don't block push on errors (e.g. not in monorepo)
 }
+
+if (require.main === module) process.exitCode = runPrePush();
+
+module.exports = { runPrePush };

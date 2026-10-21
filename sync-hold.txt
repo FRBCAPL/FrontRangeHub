@@ -1,0 +1,24 @@
+# Root files that `npm run sync:apply` must NOT copy into FrontEnd until separately approved.
+# One path per line, relative to the project root. A trailing "/" holds a whole folder.
+# Held paths are also never deleted from FrontEnd.
+
+# Local-only Showdown setup time estimator (not approved for deployment; not imported anywhere).
+apps/tournament-bracket/frontend/src/components/tournament/showdown/operator/showdownTimeEstimate.js
+apps/tournament-bracket/frontend/src/components/tournament/showdown/operator/showdownTimeEstimate.test.js
+apps/tournament-bracket/frontend/src/components/tournament/showdown/operator/ShowdownTimeEstimate.jsx
+
+# FrontEnd-only files with no root copy and no importers. Kept as they are until reviewed separately.
+apps/duezy/frontend/src/components/duezy/DuezyDivisionSeason.jsx
+apps/duezy/frontend/src/components/duezy/DuezyMoveTeam.jsx
+apps/duezy/frontend/src/components/duezy/DuezyNextSeason.jsx
+apps/duezy/frontend/src/components/duezy/DuezyNextSeasonDivision.jsx
+apps/duezy/frontend/src/components/duezy/DuezyNextSeasonLink.jsx
+apps/duezy/frontend/src/components/duezy/DuezyPastSeasons.jsx
+apps/duezy/frontend/src/components/duezy/DuezyQuickMethod.jsx
+apps/duezy/frontend/src/components/duezy/DuezyTeamEditForm.jsx
+apps/duezy/frontend/src/utils/duezyNextSeason.js
+apps/duezy/frontend/src/utils/duezyNextSeason.test.js
+apps/tournament-bracket/frontend/src/components/tournament/break-and-run/BreakAndRunSessionsPanel.jsx
+apps/tournament-bracket/frontend/src/components/tournament/showdown/public/v3/ShowdownV3PublicGuide.jsx
+apps/usapl/frontend/src/components/usapl/UsaplSinglesPage.jsx
+shared/assets/bcapl_wc_logo_color.png
