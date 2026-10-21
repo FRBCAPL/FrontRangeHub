@@ -1,16 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatMinutes } from './builderExplain.js';
 import { shownOptions } from './builderRefine.js';
 import { whyRecommended, tradeoffSentence, formatCoverage } from './builderNarrative.js';
 import SmartBuilderCard from './SmartBuilderCard.jsx';
+import SmartBuilderCompare from './SmartBuilderCompare.jsx';
 import SmartBuilderNothingFits from './SmartBuilderNothingFits.jsx';
 import SmartBuilderAllOptions from './SmartBuilderAllOptions.jsx';
+
+function ViewToggle({ view, onView }) {
+  return (
+    <div className="sb-view-toggle" role="group" aria-label="How to show the suggestions">
+      <button type="button" aria-pressed={view === 'cards'} onClick={() => onView('cards')}>Cards</button>
+      <button type="button" aria-pressed={view === 'compare'} onClick={() => onView('compare')}>Side by side</button>
+    </div>
+  );
+}
 
 /**
  * A final (refined) Builder result. `onTry(formPatch)` re-runs with changed inputs.
  * `onUse(m)` / `useProblem(m)` / `useNote(m)`: optional "Use these settings" on the recommended cards only.
+ * `initialView`: 'cards' (default) or 'compare' (side by side).
  */
-export default function SmartBuilderResults({ result, onTry, onUse = null, useProblem = () => '', useNote = () => '' }) {
+export default function SmartBuilderResults({ result, onTry, onUse = null, useProblem = () => '', useNote = () => '', initialView = 'cards' }) {
+  const [view, setView] = useState(initialView);
   if (result.status !== 'final') return null;
   const { inputs, recommendation: rec } = result;
   const heading = `${inputs.entrants} players \u00b7 ${inputs.tables} table${inputs.tables === 1 ? '' : 's'} \u00b7 ${formatMinutes(inputs.targetMin)} available`;
@@ -19,10 +31,16 @@ export default function SmartBuilderResults({ result, onTry, onUse = null, usePr
   }
   const coverage = formatCoverage(result, shownOptions(rec)).filter((c) => c.status !== 'shown');
   const use = (m) => (onUse ? { onUse, useProblem: useProblem(m), useNote: useNote(m) } : {});
+  const canCompare = !rec.nothingFits && shownOptions(rec).length > 1;
   return (
     <div className="sb-results">
       <p className="sb-results-for">{heading}</p>
-      {rec.nothingFits ? <SmartBuilderNothingFits result={result} onTry={onTry} /> : (
+      {canCompare ? <ViewToggle view={view} onView={setView} /> : null}
+      {rec.nothingFits ? <SmartBuilderNothingFits result={result} onTry={onTry} /> : null}
+      {canCompare && view === 'compare' ? (
+        <SmartBuilderCompare rec={rec} inputs={inputs} onUse={onUse} useProblem={useProblem} useNote={useNote} />
+      ) : null}
+      {rec.nothingFits || (canCompare && view === 'compare') ? null : (
         <>
           <section className="sb-section">
             <h2>Best overall</h2>
