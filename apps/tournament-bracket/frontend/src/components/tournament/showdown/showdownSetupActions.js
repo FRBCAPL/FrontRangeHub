@@ -4,6 +4,7 @@ import { SHOWDOWN_FORMAT_VERSION } from './showdownRules.js';
 import { isPayoutV2, isPayoutV3, v2RaceProblem, payoutVersionOf, noEngineError } from './showdownPayoutVersion.js';
 import { v3StartFields } from './v3/showdownV3Event.js';
 import { formatFor } from './showdownFormats.js';
+import { normalizePlannedPlayers } from './showdownPlannedPlayers.js';
 import { context, requireStatus, setupProblems, withAudit } from './showdownState.js';
 
 const EDITABLE_ANYTIME = ['tableCount'];
@@ -58,13 +59,15 @@ export function updateSettings(state, patch, ctxIn) {
   return withAudit({ ...state, settings }, c, 'settings', [], patch);
 }
 
-export function updateDetails(state, { name, tournamentDate, venue }, ctxIn) {
+export function updateDetails(state, { name, tournamentDate, venue, plannedPlayers }, ctxIn) {
   const c = context(ctxIn);
+  if (plannedPlayers !== undefined) requireStatus(state, ['setup'], 'Expected players only matters before the start.');
   return withAudit({
     ...state,
     ...(name !== undefined ? { name: String(name).trim() || state.name } : {}),
     ...(tournamentDate !== undefined ? { tournamentDate } : {}),
     ...(venue !== undefined ? { venue } : {}),
+    ...(plannedPlayers !== undefined ? { plannedPlayers: normalizePlannedPlayers(plannedPlayers) } : {}),
   }, c, 'details');
 }
 

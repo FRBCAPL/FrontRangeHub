@@ -9,6 +9,7 @@ import { fieldRuleFor, supportedFieldRange, unsupportedFieldMessage } from './sh
 import { venuePreset, DEFAULT_PRESET_ID } from './showdownVenuePresets.js';
 import { entryFeeProblem } from './showdownPayout.js';
 import { newId } from './showdownRandom.js';
+import { normalizePlannedPlayers } from './showdownPlannedPlayers.js';
 
 export function context(ctx = {}) {
   return {
@@ -101,6 +102,7 @@ export function createShowdown(config = {}, ctxIn = {}) {
     createdAt: c.now,
     startedAt: null,
     completedAt: null,
+    ...(config.plannedPlayers != null ? { plannedPlayers: normalizePlannedPlayers(config.plannedPlayers) } : {}),
     audit: [{ at: c.now, by: c.by, action: 'create', affected: [], detail: null }],
   };
 }

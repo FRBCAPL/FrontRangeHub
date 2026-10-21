@@ -11,6 +11,7 @@ import { money } from './showdownView.js';
 import { setupProblems, isPayoutV2, isPayoutV3, payoutVersionOf, formatFor } from '../showdownEngine.js';
 import { venuePreset } from '../showdownVenuePresets.js';
 import { supportedFieldRange } from '../showdownFieldRules.js';
+import { previewEntrants, usingPlannedPlayers } from '../showdownPlannedPlayers.js';
 
 /** Text input that commits on blur / Enter, so the audit log is not flooded per keystroke. */
 function CommitInput({ label, value, onCommit, ...rest }) {
@@ -33,11 +34,16 @@ function RaceFacts({ s }) {
   );
 }
 
+function EntrantsStat({ state }) {
+  const planned = usingPlannedPlayers(state);
+  return <div className="cc-stat"><span>Entrants</span><strong>{state.players.length}{planned ? ` of ${previewEntrants(state)} expected` : ''}</strong></div>;
+}
+
 function V3Stats({ state, plan }) {
   return (
     <div className="cc-stat-row">
-      <div className="cc-stat"><span>Entrants</span><strong>{state.players.length}</strong></div>
-      <div className="cc-stat"><span>Entry pool</span><strong>{plan ? plan.pool : money(state.players.length * (Number(state.settings.entryFee) || 0))}</strong></div>
+      <EntrantsStat state={state} />
+      <div className="cc-stat"><span>Entry pool</span><strong>{plan ? plan.pool : money(previewEntrants(state) * (Number(state.settings.entryFee) || 0))}</strong></div>
       <div className="cc-stat"><span>Playoff spots</span><strong>{plan ? plan.qualifiers : '—'}</strong></div>
       <div className="cc-stat"><span>Quarterfinal byes</span><strong>{plan ? plan.byes : '—'}</strong></div>
       {plan?.equalRate
@@ -59,8 +65,10 @@ export default function ShowdownSetup({ state, act, onStart, onDiscard, onLeave,
   const previewing = v3 && v3Preview;
   const problems = setupProblems(state).filter((p) => !(previewing && p === fmt?.notReady));
   const v2 = isPayoutV2(state);
-  const preview = payoutPreview(state.players.length, s.entryFee, version);
-  const plan = v3 ? v3PlanPreview(state) : null;
+  const count = previewEntrants(state);
+  const planned = usingPlannedPlayers(state);
+  const preview = payoutPreview(count, s.entryFee, version);
+  const plan = v3 ? v3PlanPreview(state, { entrants: count }) : null;
   const lockText = v3
     ? 'The match lengths and the payout plan below are locked too, and can never be edited after the start.'
     : v2
@@ -94,6 +102,14 @@ export default function ShowdownSetup({ state, act, onStart, onDiscard, onLeave,
           <CommitInput label="Event name" value={state.name} onCommit={(v) => act('updateDetails', { name: v })} />
           <CommitInput label="Date" type="date" value={state.tournamentDate} onCommit={(v) => act('updateDetails', { tournamentDate: v })} />
           <CommitInput label="Venue" value={state.venue} onCommit={(v) => act('updateDetails', { venue: v })} />
+          <CommitInput
+            key={`planned-${state.plannedPlayers ?? ''}`}
+            label={`Expected players (optional, ${field.min}\u2013${field.max})`}
+            inputMode="numeric"
+            placeholder="Uses the players entered"
+            value={state.plannedPlayers ?? ''}
+            onCommit={(v) => act('updateDetails', { plannedPlayers: v })}
+          />
           <CommitInput label="Entry fee ($, whole dollars)" inputMode="numeric" value={s.entryFee} onCommit={(v) => act('updateSettings', { entryFee: v })} />
           <label className="sd-field">
             Tables
@@ -124,13 +140,18 @@ export default function ShowdownSetup({ state, act, onStart, onDiscard, onLeave,
       <section className="sd-panel" aria-label="Start checklist">
         {v3 ? <V3Stats state={state} plan={plan.view} /> : (
           <div className="cc-stat-row">
-            <div className="cc-stat"><span>Entrants</span><strong>{state.players.length}</strong></div>
-            <div className="cc-stat"><span>Prize pool</span><strong>{money(state.players.length * (Number(s.entryFee) || 0))}</strong></div>
+            <EntrantsStat state={state} />
+            <div className="cc-stat"><span>Prize pool</span><strong>{money(count * (Number(s.entryFee) || 0))}</strong></div>
             <div className="cc-stat"><span>Playoff spots</span><strong>{preview.plan ? preview.plan.qualifiers : '—'}</strong></div>
             <div className="cc-stat"><span>Quarterfinal byes</span><strong>{preview.plan ? preview.plan.byes : '—'}</strong></div>
             <div className="cc-stat"><span>Qualifying win pays</span><strong>{preview.plan ? money(preview.plan.q) : '—'}</strong></div>
           </div>
         )}
+        {planned ? (
+          <p className="sd-note" role="status">
+            Money shown for {count} expected players ({state.players.length} entered so far). Starting recalculates and locks the payouts for the players actually entered.
+          </p>
+        ) : null}
         {problems.length ? (
           <ul className="sd-problems" aria-label="Before you can start">
             {problems.map((p) => <li key={p}>{p}</li>)}
@@ -140,7 +161,7 @@ export default function ShowdownSetup({ state, act, onStart, onDiscard, onLeave,
       </section>
 
       {v3 ? <ShowdownV3PlanPanel view={plan.view} problems={plan.problems} /> : null}
-      {!v3 && preview.ladder ? <ShowdownPayoutLadder ladder={preview.ladder} title={`Payout schedule for ${state.players.length} entrants`} /> : null}
+      {!v3 && preview.ladder ? <ShowdownPayoutLadder ladder={preview.ladder} title={`Payout schedule for ${count} ${planned ? 'expected ' : ''}entrants`} /> : null}
       {!v3 && !preview.ladder
         ? <section className="sd-panel"><p className="sd-note">Payout schedule appears once there are {field.min}–{field.max} entrants and a valid entry fee. {preview.problem}</p></section>
         : null}

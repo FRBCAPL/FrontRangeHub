@@ -1,6 +1,6 @@
 /** View data for a V3 payout plan: the preview during setup and the plan locked at the start. */
 import { buildV3Plan, V3_GUARANTEE_SCOPE } from '../../v3/showdownV3Plan.js';
-import { v3SettingsOf, v3SetupProblems } from '../../v3/showdownV3Event.js';
+import { v3SettingsOf, v3SettingsProblems } from '../../v3/showdownV3Event.js';
 import { formatCents, V3_CHAMPIONSHIP_PCT, V3_EQUAL_RATE, isEqualRatePlan, v3UnitCents } from '../../v3/showdownV3Rules.js';
 import { playoffTemplate, finalRound } from '../../showdownPlayoffTemplates.js';
 import { fieldRuleFor, supportedFieldRange } from '../../showdownFieldRules.js';
@@ -95,15 +95,16 @@ export function v3PlanSummary(view) {
 /**
  * Setup preview: the plan the current settings would lock, or why there is none yet.
  * Uses the same plan builder as the start, so what is shown is exactly what would be locked.
+ * `entrants` sizes the preview for a planned field instead of the players entered (setup only).
  */
-export function v3PlanPreview(state) {
-  const s = v3SettingsOf(state);
+export function v3PlanPreview(state, { entrants } = {}) {
+  const s = { ...v3SettingsOf(state), ...(entrants ? { entrants } : {}) };
   const range = supportedFieldRange();
   if (!fieldRuleFor(s.entrants)) {
     return { view: null, problems: [`The payout plan appears once there are ${range.min}\u2013${range.max} entrants (now ${s.entrants}).`] };
   }
   const fee = entryFeeProblem(s.entryFee);
-  const problems = [...(fee ? [fee] : []), ...v3SetupProblems(state)];
+  const problems = [...(fee ? [fee] : []), ...v3SettingsProblems(s)];
   if (problems.length) return { view: null, problems };
   try {
     return { view: v3PlanView(buildV3Plan(s)), problems: [] };

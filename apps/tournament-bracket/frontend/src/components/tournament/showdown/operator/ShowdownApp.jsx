@@ -17,7 +17,7 @@ import { v3LimitsOf } from './v3/showdownV3ScoreDraft.js';
 import { v3PreviewOn } from './v3/showdownV3Preview.js';
 import { v3PlanPreview, v3PlanSummary } from './v3/showdownV3PlanView.js';
 import { closeObsoleteShowdown } from '../cloud/showdownHubActions.js';
-import { isShowdownPrefill, prefillConfig, prefillPickerNote, prefillSetupNote } from './showdownPrefill.js';
+import { isShowdownPrefill, prefillConfig, prefillPlanned, prefillPickerNote, prefillSetupNote } from './showdownPrefill.js';
 import useShowdownCloud from './useShowdownCloud.js';
 import { showdownCloud } from '../cloud/showdownCloud.js';
 import { pendingView } from '../cloud/showdownPending.js';
@@ -104,7 +104,7 @@ export default function ShowdownApp({ onLeave, prefill = null }) {
     const prefilled = prefillConfig(handoff, payoutVersion);
     let created;
     try {
-      created = createShowdownWithFormat({ ...prefilled, presetId: 'legends', payoutVersion, confirmed: true }, { by: currentOperator() });
+      created = createShowdownWithFormat({ ...prefilled, ...prefillPlanned(handoff, payoutVersion), presetId: 'legends', payoutVersion, confirmed: true }, { by: currentOperator() });
     } catch (err) {
       setError(err.message);
       return false;

@@ -21,7 +21,11 @@ export function v3SettingsOf(state) {
 
 /** Setup problems specific to V3: game and race ranges, and payout feasibility for the current field. */
 export function v3SetupProblems(state) {
-  const s = v3SettingsOf(state);
+  return v3SettingsProblems(v3SettingsOf(state));
+}
+
+/** The same checks for plain V3 settings `{ entrants, entryFee, qualifyingGames, playoffRaceTo }`. */
+export function v3SettingsProblems(s) {
   const problems = [];
   const g = Number(s.qualifyingGames); const k = Number(s.playoffRaceTo);
   if (!Number.isInteger(g) || g < V3_QUALIFYING_GAMES.min || g > V3_QUALIFYING_GAMES.max) {
