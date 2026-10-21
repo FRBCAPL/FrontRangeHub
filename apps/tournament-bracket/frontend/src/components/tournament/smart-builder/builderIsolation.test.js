@@ -40,25 +40,29 @@ test('the Builder reaches no cloud, sync, storage, archive or database module', 
     const src = readFileSync(f, 'utf8');
     assert.doesNotMatch(src, /localStorage|sessionStorage|indexedDB|\bfetch\(|XMLHttpRequest|supabase/i, relative(TOURNAMENT, f));
   });
-  ['smartBuilder.worker.js', 'builderWorkerCore.js', 'builderClient.js', 'builderSearch.js', 'SmartBuilderApp.jsx', 'builderSession.js'].forEach((name) => {
+  ['smartBuilder.worker.js', 'builderWorkerCore.js', 'builderClient.js', 'builderSearch.js', 'SmartBuilderApp.jsx', 'builderSession.js', 'setupEstimate.worker.js', 'builderSetupEstimate.js'].forEach((name) => {
     assert.ok(reached.some((f) => f.endsWith(`${sep}${name}`)), name);
   });
   assert.ok(reached.some((f) => f.endsWith('showdownEngine.js')));
   assert.ok(reached.some((f) => f.endsWith('cashClimbEngine.js')));
 });
 
-test('only the tournament app opens the Builder: through its access gate and the lazy screen, nothing else', () => {
+const SETUP_ESTIMATE_CLIENT = join(TOURNAMENT, 'showdown', 'operator', 'showdownSetupEstimateClient.js');
+const refsOf = (src) => [...importsOf(src), ...[...src.matchAll(/new\s+URL\(\s*['"]([^'"]+)['"]/g)].map((m) => m[1])];
+
+test('only the tournament app opens the Builder (gate and lazy screen); setup reaches only the estimate worker', () => {
   const mentions = [];
   const visit = (dir) => readdirSync(dir).forEach((name) => {
     const full = join(dir, name);
     if (['node_modules', 'dist', '.git'].includes(name) || full === HERE) return;
     if (statSync(full).isDirectory()) { visit(full); return; }
-    if (/\.(jsx?|tsx?)$/.test(name) && importsOf(readFileSync(full, 'utf8')).some((s) => /smart-builder/i.test(s))) mentions.push(relative(REPO, full));
+    if (/\.(jsx?|tsx?)$/.test(name) && refsOf(readFileSync(full, 'utf8')).some((s) => /smart-builder/i.test(s))) mentions.push(relative(REPO, full));
   });
   const frontendSrc = [join(REPO, 'FrontEnd', 'src'), join(REPO, 'src')].find((dir) => existsSync(dir));
   assert.ok(frontendSrc, 'FrontEnd src folder (monorepo or FrontEnd-only layout)');
   [SRC, frontendSrc, join(REPO, 'shared')].forEach(visit);
-  assert.deepEqual(mentions, [relative(REPO, join(TOURNAMENT, 'TournamentBracketApp.jsx'))]);
-  const specs = importsOf(readFileSync(join(TOURNAMENT, 'TournamentBracketApp.jsx'), 'utf8')).filter((s) => s.includes('smart-builder'));
+  assert.deepEqual(mentions.sort(), [join(TOURNAMENT, 'TournamentBracketApp.jsx'), SETUP_ESTIMATE_CLIENT].map((f) => relative(REPO, f)).sort());
+  const specs = refsOf(readFileSync(join(TOURNAMENT, 'TournamentBracketApp.jsx'), 'utf8')).filter((s) => s.includes('smart-builder'));
   assert.deepEqual(specs.sort(), ['./smart-builder/SmartBuilderApp.jsx', './smart-builder/smartBuilderAccess.js']);
+  assert.deepEqual(refsOf(readFileSync(SETUP_ESTIMATE_CLIENT, 'utf8')), ['../../smart-builder/setupEstimate.worker.js']);
 });

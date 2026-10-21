@@ -293,6 +293,23 @@
   color: #e2e8f0;
 }
 
+.sd-time {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.sd-time h4 {
+  margin: 0 0 8px;
+  color: #c7d2fe;
+}
+
+.sd-time-stale {
+  opacity: 0.55;
+}
+
 .sd-problems {
   color: #fde68a;
   margin: 10px 0;

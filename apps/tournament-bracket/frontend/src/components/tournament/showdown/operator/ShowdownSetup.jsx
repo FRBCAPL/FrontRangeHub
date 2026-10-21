@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ShowdownEntrants from './ShowdownEntrants.jsx';
 import ShowdownPayoutLadder from './ShowdownPayoutLadder.jsx';
 import ShowdownFormatPanel from './ShowdownFormatPanel.jsx';
+import ShowdownSetupTime from './ShowdownSetupTime.jsx';
 import ShowdownV3SetupFields from './v3/ShowdownV3SetupFields.jsx';
 import ShowdownV3PlanPanel from './v3/ShowdownV3PlanPanel.jsx';
 import { v3PlanPreview } from './v3/showdownV3PlanView.js';
@@ -126,6 +127,7 @@ export default function ShowdownSetup({ state, act, onStart, onDiscard, onLeave,
               <p className="sd-note">{v2 ? 'Race lengths are fixed: per-game pay and the playoff game reserve depend on them.' : 'Race lengths are part of the V1 format settings.'}</p>
             </>
           )}
+          <ShowdownSetupTime state={state} />
           <p className="sd-note">The tournament director chooses the game and its playing rules. Showdown only records who wins each game.</p>
         </section>
 
