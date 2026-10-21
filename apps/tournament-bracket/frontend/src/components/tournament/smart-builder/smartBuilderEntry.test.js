@@ -6,15 +6,21 @@ import { smartBuilderAvailable } from './smartBuilderAccess.js';
 import { SMART_BUILDER_ENABLED } from './builderFlags.js';
 const pickerProps = { onCashClimb() {}, onShowdown() {}, showdownResume: '', onBreakAndRun() {}, onSingleElim() {}, onDoubleElim() {}, onBack() {} };
 
-test('the entry point is development-only while SMART_BUILDER_ENABLED is false', () => {
-  assert.equal(SMART_BUILDER_ENABLED, false);
+test('the entry point is on in production; switching the flag off hides it outside development', () => {
+  assert.equal(SMART_BUILDER_ENABLED, true);
   assert.match(readFileSync(new URL('../showdown/cloud/showdownCloud.js', import.meta.url), 'utf8'), /^const DEV_WRITES_LIVE = false;$/m);
-  assert.equal(smartBuilderAvailable({ DEV: false, PROD: true }), false);
-  assert.equal(smartBuilderAvailable({ DEV: true, PROD: true }), false);
-  assert.equal(smartBuilderAvailable({}), false);
-  assert.equal(smartBuilderAvailable(), false);
-  assert.equal(smartBuilderAvailable({ DEV: true, PROD: false }), true);
-  assert.equal(smartBuilderAvailable({ DEV: false, PROD: true }, true), true);
+  assert.equal(smartBuilderAvailable({ DEV: false, PROD: true }), true);
+  assert.equal(smartBuilderAvailable(), true);
+  assert.equal(smartBuilderAvailable({ DEV: false, PROD: true }, false), false);
+  assert.equal(smartBuilderAvailable({ DEV: true, PROD: true }, false), false);
+  assert.equal(smartBuilderAvailable({}, false), false);
+  assert.equal(smartBuilderAvailable({ DEV: true, PROD: false }, false), true);
+});
+
+test('operator copy has no development-preview wording and keeps the uncalibrated warning', () => {
+  const read = (rel) => readFileSync(new URL(rel, import.meta.url), 'utf8');
+  ['../TournamentFormatPicker.jsx', './SmartBuilderApp.jsx'].forEach((rel) => assert.doesNotMatch(read(rel), /Development preview/i, rel));
+  assert.match(read('./SmartBuilderApp.jsx'), /\{UNCALIBRATED_NOTE\}/);
 });
 
 test('the format picker is unchanged unless the Builder is offered', async () => {

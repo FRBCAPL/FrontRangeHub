@@ -55,7 +55,7 @@ export default function SmartBuilderApp({ onBack, onUseSettings = null, showdown
         <p>Describe your night and the Smart Builder suggests a format and settings that fit.</p>
       </header>
       <p className="sb-preview-note">
-        Development preview. Nothing is saved{onUseSettings ? '. Use these settings only fills in the normal setup screen, where you review and start the event' : ' and no tournament is created'}.
+        Suggestions only. Nothing is saved{onUseSettings ? '. Use these settings only fills in the normal setup screen, where you review and start the event' : ' and no tournament is created'}.
       </p>
       <SmartBuilderInputs form={form} problems={state.problems} onChange={change} />
       {useError ? <p className="sb-use-error" role="alert">{useError}</p> : null}

@@ -14,7 +14,7 @@ export default function TournamentFormatPicker({ onCashClimb, onShowdown, showdo
         {onSmartBuilder ? (
           <button type="button" className="cc-format-btn" onClick={onSmartBuilder}>
             <strong>Help me choose</strong>
-            <span>Development preview: suggests a format and settings for your players, tables and time.</span>
+            <span>Not sure which format fits tonight? Get a suggested format and settings for your players, tables and time.</span>
           </button>
         ) : null}
         <button type="button" className="cc-format-btn cc-primary" onClick={onCashClimb}>

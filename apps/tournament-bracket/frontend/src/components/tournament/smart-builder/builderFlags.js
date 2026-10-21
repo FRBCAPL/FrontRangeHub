@@ -3,7 +3,7 @@
  * events in memory. It never creates, stores or syncs an event; "Use these settings" only fills in the
  * normal setup screens, where the operator reviews and starts the event.
  */
-export const SMART_BUILDER_ENABLED = false;
+export const SMART_BUILDER_ENABLED = true;
 
 export const UNCALIBRATED_NOTE = 'Uncalibrated estimate: based on an assumed pace, not on timed events. Not a guarantee.';
 

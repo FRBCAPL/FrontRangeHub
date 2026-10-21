@@ -1,6 +1,6 @@
 /**
- * Whether the "Help me choose" entry point is offered. While SMART_BUILDER_ENABLED is false it needs a Vite
- * development build (import.meta.env.DEV is false in every production build), so production never shows it.
+ * Whether the "Help me choose" entry point is offered. SMART_BUILDER_ENABLED offers it everywhere the tournament
+ * screens are reachable; set it to false to hide it again in production (development builds still show it).
  */
 import { SMART_BUILDER_ENABLED } from './builderFlags.js';
 
