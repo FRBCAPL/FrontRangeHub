@@ -17,6 +17,7 @@ import { isSanctionedForCurrentSeason } from './ladderSanctionDisplay.js';
 
 const UserStatusCard = memo(({ 
   userLadderData, 
+  isGuestPreview = false,
   setShowUnifiedSignup, 
   setShowProfileModal,
   isAdmin,
@@ -399,6 +400,34 @@ const UserStatusCard = memo(({
       </div>
     </>
   );
+
+  if (isGuestPreview) {
+    return (
+      <div className="user-status-card">
+        <div className="status-info user-status-card-content">
+          <h3>Guest preview</h3>
+          <p style={{ margin: '8px 0 12px', color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.45 }}>
+            You are not on a ladder yet. Sign up to get a division and use challenges, Smart Match, and result reporting.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowUnifiedSignup(true)}
+            style={{
+              background: '#7c3aed',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '8px 14px',
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+          >
+            Sign up
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

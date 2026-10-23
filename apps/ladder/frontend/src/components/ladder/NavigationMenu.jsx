@@ -5,6 +5,7 @@ import { getCurrentPhase } from '@shared/utils/utils/phaseSystem.js';
 
 const NavigationMenu = memo(({
   isPublicView,
+  isGuestPreview = false,
   navigateToView,
   userLadderData,
   handleSmartMatch,
@@ -91,11 +92,19 @@ const NavigationMenu = memo(({
           </div>
         )}
 
-        {!isPublicView && userLadderData?.canChallenge && (
+        {!isPublicView && !isGuestPreview && userLadderData?.canChallenge && (
           <div className="nav-card" onClick={handleSmartMatch}>
             <div className="nav-icon">🧠</div>
             <h3>Smart Match</h3>
             <p>Suggested opponents to challenge</p>
+          </div>
+        )}
+
+        {!isPublicView && isGuestPreview && (
+          <div className="nav-card" onClick={() => setShowUnifiedSignup(true)}>
+            <div className="nav-icon">✍️</div>
+            <h3>Sign up</h3>
+            <p>Create an account to join a division</p>
           </div>
         )}
 
@@ -145,7 +154,7 @@ const NavigationMenu = memo(({
         )}
       </div>
 
-      {!isPublicView && !userLadderData?.canChallenge && userLadderData?.playerId !== 'guest' && (
+      {!isPublicView && !isGuestPreview && !userLadderData?.canChallenge && userLadderData?.playerId !== 'guest' && (
         <div className="nav-grid" style={{ marginBottom: '14px' }}>
           <div
             className="nav-card challenge-features-locked-card"
@@ -242,7 +251,7 @@ const NavigationMenu = memo(({
               </div>
             ) : null}
 
-            {userLadderData?.canChallenge ? (
+            {userLadderData?.canChallenge && !isGuestPreview ? (
               <div className="nav-card" onClick={() => setShowChallengesModal(true)}>
                 <div className="nav-icon">⚔️</div>
                 <h3>My Challenges</h3>
@@ -270,7 +279,7 @@ const NavigationMenu = memo(({
               </div>
             ) : null}
 
-            {userLadderData?.playerId === 'ladder' ? (
+            {userLadderData?.playerId === 'ladder' && !isGuestPreview ? (
               <div className="nav-card" onClick={() => navigateToView('matches')}>
                 <div className="nav-icon">🎯</div>
                 <h3>My Completed Matches</h3>

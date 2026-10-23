@@ -101,6 +101,12 @@ function readQuickTourSuppressAuto() {
   return false;
 }
 
+const LADDER_GUEST_EMAIL = 'guest@frontrangepool.com';
+
+function isLadderGuestEmail(email) {
+  return String(email || '').trim().toLowerCase() === LADDER_GUEST_EMAIL;
+}
+
 const LadderApp = ({ 
   playerName, 
   playerLastName, 
@@ -125,6 +131,7 @@ const LadderApp = ({
   const effectiveViewAsUser = viewAsUserProp !== undefined ? viewAsUserProp : viewAsUserState;
   const handleToggleUserView = onToggleUserViewProp || (() => setViewAsUserState(v => !v));
   const effectiveIsAdmin = isAdmin && !effectiveViewAsUser;
+  const isGuestPreview = isLadderGuestEmail(senderEmail);
   const [currentView, setCurrentView] = useState(initialView);
   const [userLadderData, setUserLadderData] = useState(null);
   const [ladderData, setLadderData] = useState([]);
@@ -298,12 +305,10 @@ const LadderApp = ({
   /** Once shown (or manually opened) for this visit to Home, do not auto-open again until they leave Home. */
   const mainVisitTourShownRef = useRef(false);
 
-  const handleQuickTourDismiss = useCallback((suppressFutureAuto) => {
-    if (suppressFutureAuto) {
-      try {
-        window.localStorage.setItem(LADDER_QUICK_TOUR_SUPPRESS_AUTO_KEY, '1');
-      } catch (_) {}
-    }
+  const handleQuickTourDismiss = useCallback(() => {
+    try {
+      window.localStorage.setItem(LADDER_QUICK_TOUR_SUPPRESS_AUTO_KEY, '1');
+    } catch (_) {}
     setQuickTourOpen(false);
     if (quickTourTimerRef.current) {
       window.clearTimeout(quickTourTimerRef.current);
@@ -340,7 +345,7 @@ const LadderApp = ({
       return undefined;
     }
 
-    if (isPublicView || loading || !userLadderData) return undefined;
+    if (isPublicView || isGuestPreview || loading || !userLadderData) return undefined;
     if (readQuickTourSuppressAuto()) return undefined;
     if (mainVisitTourShownRef.current) return undefined;
 
@@ -361,7 +366,7 @@ const LadderApp = ({
         quickTourTimerRef.current = null;
       }
     };
-  }, [isPublicView, currentView, loading, userLadderData]);
+  }, [isPublicView, isGuestPreview, currentView, loading, userLadderData]);
   
   // Derive display user data from ladderData to ensure W/L matches ladder table
   const displayUserData = React.useMemo(() => {
@@ -732,23 +737,33 @@ const LadderApp = ({
     checkProfileCompletion();
   }, [senderEmail, userLadderData?.playerId, profileRefreshKey]);
 
-  // Check notification permission on app load
+  // Ask for notifications only after the home intro is dismissed, and only for a placed member.
   useEffect(() => {
-    const checkNotificationPermission = () => {
-      if (!notificationPermissionRequested && userLadderData?.canChallenge) {
-        const status = notificationService.getStatus();
-        
-        // Show permission modal if notifications are supported but not yet requested
-        if (status.isSupported && status.permission === 'default') {
-          setShowNotificationPermission(true);
-        }
-        
-        setNotificationPermissionRequested(true);
-      }
-    };
+    const placedMember = !isGuestPreview
+      && !isPublicView
+      && userLadderData?.playerId === 'ladder'
+      && Number(userLadderData?.position) > 0;
 
-    checkNotificationPermission();
-  }, [userLadderData?.canChallenge, notificationPermissionRequested]);
+    if (!placedMember || quickTourOpen || currentView !== 'main' || !readQuickTourSuppressAuto()) {
+      setShowNotificationPermission(false);
+      return;
+    }
+    if (notificationPermissionRequested) return;
+
+    const status = notificationService.getStatus();
+    if (status.isSupported && status.permission === 'default') {
+      setShowNotificationPermission(true);
+    }
+    setNotificationPermissionRequested(true);
+  }, [
+    isGuestPreview,
+    isPublicView,
+    userLadderData?.playerId,
+    userLadderData?.position,
+    quickTourOpen,
+    currentView,
+    notificationPermissionRequested
+  ]);
 
   useEffect(() => {
     // Clear existing timeout
@@ -2086,12 +2101,13 @@ const LadderApp = ({
   }, [ladderData, userLadderData?.email, userLadderData?.firstName]);
 
   const handleSmartMatch = useCallback(() => {
+    if (isGuestPreview) return;
     console.log('🧠 Smart Match clicked');
     console.log('📊 Current ladder data:', ladderData);
     console.log('👤 User ladder data:', userLadderData);
     console.log('🎯 Available defenders:', availableDefenders);
     setShowSmartMatchModal(true);
-  }, [ladderData, userLadderData, availableDefenders]);
+  }, [isGuestPreview, ladderData, userLadderData, availableDefenders]);
 
   const handleChallengeComplete = useCallback((result) => {
     // Refresh challenges and ladder data
@@ -2745,7 +2761,14 @@ const LadderApp = ({
       cta: 'View Ladder',
       action: () => setCurrentView('ladders')
     };
-    if (isPendingApprovalUserLocal) {
+    if (isGuestPreview) {
+      nextStep = {
+        title: 'Sign up to play',
+        detail: 'This is a preview. Create an account to get placed on a division and challenge players.',
+        cta: 'Sign up',
+        action: () => setShowUnifiedSignup(true)
+      };
+    } else if (isPendingApprovalUserLocal) {
       nextStep = {
         title: 'Waiting for Admin Approval',
         detail: 'Your registration is pending. Message admin if this takes too long.',
@@ -2800,7 +2823,7 @@ const LadderApp = ({
 
     return (
       <>
-      {heroFirstName ? (
+      {heroFirstName && !isGuestPreview ? (
         <div className="status-ticker-sim-player-name" aria-live="polite">
           Hi, {heroFirstName}! 👋
         </div>
@@ -2818,7 +2841,7 @@ const LadderApp = ({
             }}
           >
             <div style={{ color: '#a5b4fc', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
-              {heroFirstName ? 'Welcome back — your next step' : 'Your Next Step'}
+              {isGuestPreview ? 'Guest preview' : (heroFirstName ? 'Welcome back — your next step' : 'Your Next Step')}
             </div>
             <div style={{ color: '#fff', fontSize: '1rem', fontWeight: 700, marginBottom: '2px' }}>{nextStep.title}</div>
             <div style={{ color: '#cbd5e1', fontSize: '0.88rem', marginBottom: '10px' }}>{nextStep.detail}</div>
@@ -2848,6 +2871,7 @@ const LadderApp = ({
                 </button>
                 <div style={{ color: '#94a3b8', fontSize: '0.7rem', textAlign: 'center' }}>{primaryActionHint}</div>
               </div>
+              {!isGuestPreview ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
                 <button
                   type="button"
@@ -2871,7 +2895,8 @@ const LadderApp = ({
                   Submit winner + score
                 </div>
               </div>
-              {completedMatchCount > 0 ? (
+              ) : null}
+              {completedMatchCount > 0 && !isGuestPreview ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
                   <button
                     type="button"
@@ -2944,6 +2969,7 @@ const LadderApp = ({
                 </div>
               </div>
             </div>
+            {nextStep.cta === 'Find Opponent' ? (
             <div
               style={{
                 marginTop: '8px',
@@ -2957,6 +2983,8 @@ const LadderApp = ({
             >
               Tip: <strong style={{ color: '#e2e8f0' }}>Find Opponent</strong> opens your choice: browse the ladder or use <strong style={{ color: '#e2e8f0' }}>Smart Match</strong>.
             </div>
+            ) : null}
+            {!isGuestPreview ? (
             <button
               type="button"
               title="Replay the home screen intro walkthrough"
@@ -2983,6 +3011,7 @@ const LadderApp = ({
             >
               Replay intro
             </button>
+            ) : null}
           </div>
         )}
         <div className="status-ticker-sim-section">
@@ -2994,6 +3023,7 @@ const LadderApp = ({
               <LadderErrorBoundary>
                 <UserStatusCard 
                   userLadderData={displayUserData || userLadderData}
+                  isGuestPreview={isGuestPreview}
                   setShowUnifiedSignup={setShowUnifiedSignup}
                   setShowProfileModal={setShowProfileModal}
                   isAdmin={effectiveIsAdmin}
@@ -3019,6 +3049,7 @@ const LadderApp = ({
         {/* Profile Completion Timeline - Show for users who need to complete profile */}
         {(userLadderData?.playerId === 'ladder' &&
           !isProfileComplete &&
+          !isGuestPreview &&
           !userLadderData?.unifiedAccount?.unifiedUserId) && !effectiveIsAdmin && (
           <LadderErrorBoundary>
             <div className="profile-completion-timeline">
@@ -3082,6 +3113,7 @@ const LadderApp = ({
         <LadderErrorBoundary>
           <NavigationMenu
             isPublicView={isPublicView}
+            isGuestPreview={isGuestPreview}
             navigateToView={navigateToView}
             userLadderData={userLadderData}
             handleSmartMatch={handleSmartMatch}
@@ -3203,7 +3235,40 @@ const LadderApp = ({
       {currentView === 'matches' && renderMatchesView()}
       {currentView === 'main' && renderMainView()}
 
-      {!isPublicView && !userLadderData?.canChallenge && !effectiveIsAdmin && (
+      {!isPublicView && isGuestPreview && !effectiveIsAdmin && (
+        <div style={{
+          marginTop: '16px',
+          padding: '12px',
+          background: 'rgba(139, 92, 246, 0.12)',
+          border: '1px solid rgba(139, 92, 246, 0.35)',
+          borderRadius: '8px',
+          color: '#e9d5ff',
+          marginBottom: '20px'
+        }}>
+          <p style={{ margin: '0 0 8px 0', fontWeight: 'bold' }}>Guest preview</p>
+          <p style={{ margin: '0 0 8px 0', fontSize: '0.9rem' }}>
+            You can look around the ladder. Sign up to get a division, send challenges, and report results.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowUnifiedSignup(true)}
+            style={{
+              background: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: '0.8rem',
+              fontWeight: 700
+            }}
+          >
+            Sign up
+          </button>
+        </div>
+      )}
+
+      {!isPublicView && !isGuestPreview && !userLadderData?.canChallenge && !effectiveIsAdmin && (
         <div style={{
           marginTop: '16px',
           padding: '12px',
@@ -3260,7 +3325,7 @@ const LadderApp = ({
         </div>
       )}
 
-      {!isPublicView && userLadderData?.canChallenge && isFreePhaseLocked && !effectiveIsAdmin && (
+      {!isPublicView && !isGuestPreview && userLadderData?.canChallenge && isFreePhaseLocked && !effectiveIsAdmin && (
         <div style={{
           marginTop: '16px',
           padding: '12px',

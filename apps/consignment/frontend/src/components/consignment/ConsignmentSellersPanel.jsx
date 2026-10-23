@@ -2,15 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { loadSellerAccounts, loadSellerItemRows, setConsignmentSeller } from '../../services/consignmentSellerAccessService.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
-import { sellerCountsLabel, sellerItemCounts } from '../../utils/consignmentSellerItems.js';
+import { sellerCountsLabel, sellerItemCounts, sellerMatches } from '../../utils/consignmentSellerItems.js';
+import ConsignmentSellerItems from './ConsignmentSellerItems.jsx';
 
 function AccountRow({ user, busy, onSet, itemRows, onViewItems }) {
+  const [open, setOpen] = useState(false);
   const who = bidderName(user) || 'Unknown';
   let tag = '';
   if (user.seller) tag = ' · Seller';
   else if (user.requested_at) tag = ` · Requested ${formatShortDate(user.requested_at)}`;
   const counts = itemRows ? sellerItemCounts(itemRows, user) : null;
-  const hasItems = counts && (counts.pending || counts.listed || counts.sold);
+  const hasItems = Boolean(itemRows?.some((row) => sellerMatches(row.seller, user)));
   return (
     <li>
       <span>
@@ -25,7 +27,12 @@ function AccountRow({ user, busy, onSet, itemRows, onViewItems }) {
       </span>
       <span className="cs-actions">
         {hasItems ? (
-          <button type="button" className="cs-btn-secondary" onClick={() => onViewItems(user)}>View items</button>
+          <>
+            <button type="button" className="cs-btn-secondary" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+              {open ? 'Hide items' : 'Show items'}
+            </button>
+            <button type="button" className="cs-btn-secondary" onClick={() => onViewItems(user)}>Manage items</button>
+          </>
         ) : null}
         {user.seller ? (
           <button type="button" className="cs-btn-secondary" disabled={busy} onClick={() => onSet(user, false)}>Remove seller</button>
@@ -38,6 +45,7 @@ function AccountRow({ user, busy, onSet, itemRows, onViewItems }) {
           </>
         )}
       </span>
+      {open ? <div className="cs-bidder-items-wrap"><ConsignmentSellerItems itemRows={itemRows} account={user} /></div> : null}
     </li>
   );
 }

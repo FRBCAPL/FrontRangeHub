@@ -1726,8 +1726,8 @@
 /* Public view specific styling - proper grid layout */
 .ladder-table:not(.logged-in-view) .table-header {
   display: grid;
-  grid-template-columns: 80px 1fr 80px 80px 1fr;
-  gap: 20px;
+  grid-template-columns: minmax(64px, 76px) minmax(0, 1.5fr) minmax(64px, 76px) 48px 48px minmax(0, 1fr);
+  gap: 12px;
   padding: 12px 0;
   position: sticky !important;
   top: 0 !important;
@@ -1745,8 +1745,8 @@
 
 .ladder-table:not(.logged-in-view) .table-row {
   display: grid;
-  grid-template-columns: 80px 1fr 80px 80px 1fr;
-  gap: 20px;
+  grid-template-columns: minmax(64px, 76px) minmax(0, 1.5fr) minmax(64px, 76px) 48px 48px minmax(0, 1fr);
+  gap: 12px;
   padding: 5px 0;
   align-items: center;
   width: 100% !important;
@@ -1866,37 +1866,50 @@
 .ladder-table:not(.logged-in-view) .header-cell:nth-child(2) {
   justify-content: flex-start;
   text-align: left;
-  transform: translateX(100px);
+  min-width: 0;
 }
 
 
 .ladder-table:not(.logged-in-view) .table-cell.name {
   justify-content: flex-start;
   text-align: left;
-  transform: translateX(80px);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ladder-table:not(.logged-in-view) .table-cell.name .player-name-clickable {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 
 
-/* More specific targeting for Last Match header - Desktop only */
+/* Last Match is the 6th public column (Rank, Player, Fargo, W, L, Last Match). */
 @media (min-width: 769px) {
-  .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(5) {
-    transform: translateX(-110px) !important;
+  .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(6),
+  .ladder-table:not(.logged-in-view) .table-row .table-cell.last-match {
+    transform: none !important;
     position: relative !important;
-    left: 0px !important;
-    margin-left: 0px !important;
-    padding-left: 0px !important;
-    text-align: right !important;
-    justify-content: flex-end !important;
+    left: auto !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    min-width: 0;
+    overflow: hidden;
   }
 
 }
 
 
 .ladder-table:not(.logged-in-view) .header-cell:nth-child(3),
-.ladder-table:not(.logged-in-view) .table-cell.fargo {
-  justify-content: flex-start;
-  text-align: left;
+.ladder-table:not(.logged-in-view) .table-cell.fargo,
+.ladder-table:not(.logged-in-view) .table-cell.fargo-rate {
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
 }
 
 
@@ -1907,21 +1920,28 @@
 }
 
 
-/* Color the W and L headers */
-.ladder-table:not(.logged-in-view) .header-cell:nth-child(3) {
+/* Color the W and L headers (4th and 5th columns on the public desktop grid) */
+.ladder-table:not(.logged-in-view) .header-cell:nth-child(4) {
   color: #4CAF50; /* Green for W */
 }
 
 
-.ladder-table:not(.logged-in-view) .header-cell:nth-child(4) {
+.ladder-table:not(.logged-in-view) .header-cell:nth-child(5) {
   color: #f44336; /* Red for L */
+  justify-content: center;
+  text-align: center;
+  min-width: 0;
+  flex: none;
 }
 
+.ladder-table:not(.logged-in-view) .header-cell,
+.ladder-table:not(.logged-in-view) .table-cell {
+  min-width: 0;
+}
 
-.ladder-table:not(.logged-in-view) .header-cell:nth-child(5) {
-  justify-content: flex-start;
-  text-align: center;
-  transform: translateX(60px);
+.ladder-table:not(.logged-in-view) .table-cell.last-match {
+  min-width: 0;
+  flex: none;
 }
 
 
@@ -1931,28 +1951,17 @@
 }
 
 
-/* Last Match column data alignment - Desktop only */
-@media (min-width: 769px) {
-  .ladder-table:not(.logged-in-view) .table-row .table-cell.last-match {
-    transform: translateX(0px) !important;
-    text-align: right !important;
-    justify-content: flex-end !important;
-  }
-
-}
-
-
-/* Rank column positioning - move slightly to the right - Desktop only */
+/* Rank column — stay inside the first grid cell */
 @media (min-width: 769px) {
   .ladder-table:not(.logged-in-view) .table-header .header-cell:nth-child(1) {
-    transform: translateX(10px) !important;
+    transform: none !important;
     text-align: center !important;
     color: #FFD700 !important;
   }
 
 
   .ladder-table:not(.logged-in-view) .table-row .table-cell:nth-child(1) {
-    transform: translateX(10px) !important;
+    transform: none !important;
     color: #FFD700 !important;
   }
 
@@ -7522,6 +7531,61 @@ body[data-iframe="true"] .ladder-app-container .ladder-navigation .nav-card {
     font-size: 0 !important;
     border-radius: 50% !important;
     overflow: hidden !important;
+  }
+}
+
+/* Desktop standings stay in their grid cells. Older translateX nudges
+   pulled rank, name, and Fargo on top of each other around laptop width. */
+@media (min-width: 769px) {
+  .ladder-table.logged-in-view .table-header,
+  .ladder-table.logged-in-view .table-row {
+    grid-template-columns: 48px minmax(0, 1.3fr) 60px 36px 36px 72px 112px minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .ladder-table.logged-in-view .table-header .header-cell:nth-child(n),
+  .ladder-table.logged-in-view .table-row .table-cell:nth-child(n) {
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    padding-left: 0 !important;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .ladder-table.logged-in-view .table-header .header-cell:nth-child(7) {
+    white-space: normal !important;
+    line-height: 1.15;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  .ladder-table.logged-in-view .header-cell:nth-child(2),
+  .ladder-table.logged-in-view .table-cell.name {
+    justify-content: flex-start !important;
+    text-align: left !important;
+    padding-left: 4px !important;
+    overflow: hidden;
+  }
+
+  .ladder-table.logged-in-view .table-cell.name .player-name-clickable {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+    margin-left: 0 !important;
+    transform: none !important;
+  }
+
+  .ladder-table.logged-in-view .header-cell:nth-child(7),
+  .ladder-table.logged-in-view .header-cell:nth-child(8),
+  .ladder-table.logged-in-view .last-match-header {
+    padding-left: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
   }
 }
 

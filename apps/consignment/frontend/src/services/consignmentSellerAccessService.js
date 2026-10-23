@@ -51,11 +51,14 @@ export async function loadSellerAccounts(search = '') {
   return data || [];
 }
 
-/** Every item's seller link and status, for per-seller counts: [{ seller, status, seller_paid_at }]. */
+/** Every item with its seller link, newest first, for per-seller counts and lists. */
 export async function loadSellerItemRows() {
   const [{ data: sellers, error: sellerError }, { data: items, error: itemError }] = await Promise.all([
     supabase.from('consignment_sellers').select('item_id, user_id, email'),
-    supabase.from('consignment_items').select('id, status, seller_paid_at'),
+    supabase
+      .from('consignment_items')
+      .select('id, item_number, name, category, status, sale_method, selling_price, seller_payout, sold_at, seller_paid_at, created_at')
+      .order('created_at', { ascending: false }),
   ]);
   if (sellerError || itemError) throw new Error((sellerError || itemError).message || 'Could not load seller items.');
   const byItem = Object.fromEntries((sellers || []).map((s) => [s.item_id, s]));

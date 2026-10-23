@@ -3,6 +3,7 @@ import { bidderName, setBidderSuspended } from '../../services/consignmentAuctio
 import { loadBidderAccounts } from '../../services/consignmentBidderAccountsService.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
 import ConsignmentAccountRequestsPanel from './ConsignmentAccountRequestsPanel.jsx';
+import ConsignmentBidderItems from './ConsignmentBidderItems.jsx';
 
 function plural(n, word) {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -19,9 +20,10 @@ function activity(b) {
 }
 
 function BidderRow({ bidder, onToggle }) {
+  const [open, setOpen] = useState(false);
   const canSuspend = bidder.suspended || bidder.defaults_count > 0;
   return (
-    <li>
+    <li style={{ flexWrap: 'wrap' }}>
       <span>
         <strong>{bidderName(bidder) || 'Unknown'}</strong>
         <span className="cs-meta">
@@ -32,13 +34,19 @@ function BidderRow({ bidder, onToggle }) {
         </span>
         <span className="cs-meta" style={{ display: 'block' }}>{activity(bidder)}</span>
       </span>
-      {canSuspend ? (
-        <span className="cs-actions">
+      <span className="cs-actions">
+        {bidder.bids ? (
+          <button type="button" className="cs-btn-secondary" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+            {open ? 'Hide items' : 'Show items'}
+          </button>
+        ) : null}
+        {canSuspend ? (
           <button type="button" className="cs-btn-secondary" onClick={() => onToggle(bidder)}>
             {bidder.suspended ? 'Unsuspend' : 'Suspend'}
           </button>
-        </span>
-      ) : null}
+        ) : null}
+      </span>
+      {open ? <div className="cs-bidder-items-wrap"><ConsignmentBidderItems userId={bidder.id} /></div> : null}
     </li>
   );
 }

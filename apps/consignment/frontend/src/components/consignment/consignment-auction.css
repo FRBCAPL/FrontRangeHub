@@ -244,3 +244,16 @@
   margin-top: 0;
   flex-wrap: nowrap;
 }
+
+.cs-bidders .cs-bidder-items-wrap {
+  flex-basis: 100%;
+  grid-column: 1 / -1;
+}
+
+.cs-bidders .cs-bidder-items li {
+  display: block;
+  padding: 6px 10px;
+  border: none;
+  border-left: 3px solid var(--cs-line);
+  border-radius: 0;
+}

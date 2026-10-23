@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 const STEPS = [
@@ -21,7 +21,7 @@ const STEPS = [
 
 /**
  * Lightweight 3-step coach overlay (no external tour library).
- * @param {(suppressFutureAuto: boolean) => void} onDismiss — `suppressFutureAuto` when the user checked “do not show again”.
+ * Closing the tour keeps it from opening again. Replay stays available from Home.
  */
 const LadderQuickTour = ({
   isOpen,
@@ -30,29 +30,19 @@ const LadderQuickTour = ({
   onOpenPaymentDashboard
 }) => {
   const [step, setStep] = useState(0);
-  const [doNotShowAgain, setDoNotShowAgain] = useState(false);
-  const doNotShowAgainRef = useRef(false);
 
   useEffect(() => {
-    doNotShowAgainRef.current = doNotShowAgain;
-  }, [doNotShowAgain]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setStep(0);
-      setDoNotShowAgain(false);
-      doNotShowAgainRef.current = false;
-    }
+    if (isOpen) setStep(0);
   }, [isOpen]);
 
-  const dismiss = (suppressFutureAuto) => {
-    onDismiss?.(!!suppressFutureAuto);
+  const dismiss = () => {
+    onDismiss?.();
   };
 
   useEffect(() => {
     if (!isOpen) return undefined;
     const onKey = (e) => {
-      if (e.key === 'Escape') onDismiss(!!doNotShowAgainRef.current);
+      if (e.key === 'Escape') onDismiss?.();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -80,7 +70,7 @@ const LadderQuickTour = ({
     >
       <div
         aria-hidden="true"
-        onClick={() => dismiss(doNotShowAgainRef.current)}
+        onClick={() => dismiss()}
         style={{
           position: 'absolute',
           inset: 0,
@@ -119,7 +109,7 @@ const LadderQuickTour = ({
           </div>
           <button
             type="button"
-            onClick={() => dismiss(doNotShowAgainRef.current)}
+            onClick={() => dismiss()}
             style={{
               flex: '0 0 auto',
               padding: '6px 12px',
@@ -144,7 +134,7 @@ const LadderQuickTour = ({
               type="button"
               onClick={() => {
                 onOpenRules?.();
-                dismiss(false);
+                dismiss();
               }}
               style={{
                 flex: '1 1 140px',
@@ -164,7 +154,7 @@ const LadderQuickTour = ({
               type="button"
               onClick={() => {
                 onOpenPaymentDashboard?.();
-                dismiss(false);
+                dismiss();
               }}
               style={{
                 flex: '1 1 140px',
@@ -183,31 +173,9 @@ const LadderQuickTour = ({
           </div>
         ) : null}
 
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '10px',
-            marginBottom: '12px',
-            cursor: 'pointer',
-            fontSize: '0.82rem',
-            color: '#cbd5e1',
-            lineHeight: 1.35
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={doNotShowAgain}
-            onChange={(e) => setDoNotShowAgain(e.target.checked)}
-            style={{ marginTop: '3px', width: '16px', height: '16px', flexShrink: 0 }}
-          />
-          <span>
-            Do not show this intro automatically again
-            <span style={{ display: 'block', color: '#94a3b8', fontSize: '0.74rem', marginTop: '4px' }}>
-              You can open it again under <strong style={{ color: '#e2e8f0' }}>Your Next Step</strong> → <strong style={{ color: '#e2e8f0' }}>Replay intro</strong> (bottom-right).
-            </span>
-          </span>
-        </label>
+        <p style={{ margin: '0 0 12px', fontSize: '0.78rem', lineHeight: 1.4, color: '#94a3b8' }}>
+          Closing this keeps it from opening on its own. Replay it from <strong style={{ color: '#e2e8f0' }}>Your Next Step</strong> → <strong style={{ color: '#e2e8f0' }}>Replay intro</strong>.
+        </p>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
           {step > 0 ? (
@@ -249,7 +217,7 @@ const LadderQuickTour = ({
           ) : (
             <button
               type="button"
-              onClick={() => dismiss(doNotShowAgainRef.current)}
+              onClick={() => dismiss()}
               style={{
                 padding: '8px 14px',
                 borderRadius: '8px',
