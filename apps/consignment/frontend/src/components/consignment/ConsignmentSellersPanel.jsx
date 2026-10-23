@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { bidderName } from '../../services/consignmentAuctionAdminService.js';
-import { loadSellerAccounts, setConsignmentSeller } from '../../services/consignmentSellerAccessService.js';
+import { loadSellerAccounts, loadSellerItemRows, setConsignmentSeller } from '../../services/consignmentSellerAccessService.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
+import { sellerCountsLabel, sellerItemCounts } from '../../utils/consignmentSellerItems.js';
 
-function AccountRow({ user, busy, onSet }) {
+function AccountRow({ user, busy, onSet, itemRows, onViewItems }) {
   const who = bidderName(user) || 'Unknown';
   let tag = '';
   if (user.seller) tag = ' · Seller';
   else if (user.requested_at) tag = ` · Requested ${formatShortDate(user.requested_at)}`;
+  const counts = itemRows ? sellerItemCounts(itemRows, user) : null;
+  const hasItems = counts && (counts.pending || counts.listed || counts.sold);
   return (
     <li>
       <span>
@@ -18,8 +21,12 @@ function AccountRow({ user, busy, onSet }) {
           {tag}
           {user.approved ? '' : ' · Account not approved yet'}
         </span>
+        {counts ? <span className="cs-meta" style={{ display: 'block' }}>{sellerCountsLabel(counts)}</span> : null}
       </span>
       <span className="cs-actions">
+        {hasItems ? (
+          <button type="button" className="cs-btn-secondary" onClick={() => onViewItems(user)}>View items</button>
+        ) : null}
         {user.seller ? (
           <button type="button" className="cs-btn-secondary" disabled={busy} onClick={() => onSet(user, false)}>Remove seller</button>
         ) : (
@@ -35,16 +42,20 @@ function AccountRow({ user, busy, onSet }) {
   );
 }
 
-/** Who can list items. Requests come from the "Request seller access" button on the Sell page. */
-export default function ConsignmentSellersPanel({ defaultOpen = false }) {
+/** Admin Sellers tab. Requests come from the "Request seller access" button on the Sell page. */
+export default function ConsignmentSellersPanel({ onViewItems }) {
   const [rows, setRows] = useState([]);
+  const [itemRows, setItemRows] = useState(null);
   const [search, setSearch] = useState('');
   const [results, setResults] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
 
   const refresh = () => loadSellerAccounts().then(setRows).catch((err) => setError(err.message));
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+    loadSellerItemRows().then(setItemRows).catch((err) => setError(err.message));
+  }, []);
 
   const find = async (e) => {
     e.preventDefault();
@@ -77,18 +88,18 @@ export default function ConsignmentSellersPanel({ defaultOpen = false }) {
 
   const requests = rows.filter((u) => !u.seller && u.requested_at);
   const sellers = rows.filter((u) => u.seller);
+  const row = (u) => (
+    <AccountRow key={u.id} user={u} busy={busyId === u.id} onSet={onSet} itemRows={itemRows} onViewItems={onViewItems} />
+  );
 
   return (
-    <details className="cs-history cs-bidders" open={defaultOpen || requests.length > 0}>
-      <summary>
-        Sellers ({sellers.length}){requests.length ? ` · ${requests.length} request${requests.length === 1 ? '' : 's'}` : ''}
-      </summary>
+    <section className="cs-history cs-bidders">
       <p className="cs-hint">Only sellers (and admins) can list items and see listing fees.</p>
       {error ? <p className="cs-error">{error}</p> : null}
       {requests.length ? (
         <>
-          <p className="cs-meta"><strong>Requests</strong></p>
-          <ul>{requests.map((u) => <AccountRow key={u.id} user={u} busy={busyId === u.id} onSet={onSet} />)}</ul>
+          <h3>Seller requests ({requests.length})</h3>
+          <ul>{requests.map(row)}</ul>
         </>
       ) : null}
       <form className="cs-filters" onSubmit={find}>
@@ -102,16 +113,10 @@ export default function ConsignmentSellersPanel({ defaultOpen = false }) {
         <button type="submit" className="cs-btn-secondary">Find</button>
       </form>
       {results ? (
-        results.length ? (
-          <ul>{results.map((u) => <AccountRow key={u.id} user={u} busy={busyId === u.id} onSet={onSet} />)}</ul>
-        ) : <p className="cs-meta">No accounts match.</p>
+        results.length ? <ul>{results.map(row)}</ul> : <p className="cs-meta">No accounts match.</p>
       ) : null}
-      {sellers.length ? (
-        <>
-          <p className="cs-meta"><strong>Current sellers</strong></p>
-          <ul>{sellers.map((u) => <AccountRow key={u.id} user={u} busy={busyId === u.id} onSet={onSet} />)}</ul>
-        </>
-      ) : <p className="cs-meta">No sellers yet.</p>}
-    </details>
+      <h3>Sellers ({sellers.length})</h3>
+      {sellers.length ? <ul>{sellers.map(row)}</ul> : <p className="cs-meta">No sellers yet.</p>}
+    </section>
   );
 }

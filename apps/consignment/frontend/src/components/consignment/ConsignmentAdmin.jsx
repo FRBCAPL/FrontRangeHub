@@ -18,7 +18,10 @@ import {
   updateItemIfStatus,
 } from '../../services/consignmentService.js';
 import ConsignmentAgreementSettings from './ConsignmentAgreementSettings.jsx';
-import ConsignmentPeoplePanel from './ConsignmentPeoplePanel.jsx';
+import ConsignmentSellersPanel from './ConsignmentSellersPanel.jsx';
+import ConsignmentBiddersPanel from './ConsignmentBiddersPanel.jsx';
+import { sellerMatches } from '../../utils/consignmentSellerItems.js';
+import { bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { expireOverdueItems } from '../../services/consignmentFeesService.js';
 import { clearSellerPaid } from '../../services/consignmentPayoutService.js';
 import ConsignmentSellerPaidModal from './ConsignmentSellerPaidModal.jsx';
@@ -47,7 +50,8 @@ function statusChangeQuestion(item, next) {
 const TABS = [
   { id: 'items', label: 'Items' },
   { id: 'auctions', label: 'Auctions' },
-  { id: 'people', label: 'People' },
+  { id: 'sellers', label: 'Sellers' },
+  { id: 'bidders', label: 'Bidders' },
   { id: 'messages', label: 'Messages' },
   { id: 'visitors', label: 'Visitors' },
   { id: 'settings', label: 'Settings' },
@@ -56,7 +60,8 @@ const TABS = [
 function tabFromParams(params) {
   const asked = params.get('tab');
   if (TABS.some((t) => t.id === asked)) return asked;
-  return params.get('sellers') === '1' ? 'people' : 'items';
+  if (asked === 'people') return 'bidders';
+  return params.get('sellers') === '1' ? 'sellers' : 'items';
 }
 
 export default function ConsignmentAdmin() {
@@ -78,6 +83,13 @@ export default function ConsignmentAdmin() {
   const [auctioning, setAuctioning] = useState(null);
   const [settings, setSettings] = useState(null);
   const [tab, setTab] = useState(linkedTab);
+  const [sellerFilter, setSellerFilter] = useState(null);
+  const shownRows = sellerFilter ? rows.filter((item) => sellerMatches(item.seller, sellerFilter)) : rows;
+  const viewSellerItems = (account) => {
+    setSellerFilter(account);
+    setStatus('all');
+    setTab('items');
+  };
   const policy = feePolicyFrom(settings);
 
   // The Admin Inbox links here with ?tab= / ?status=; follow them even when already on this page.
@@ -166,7 +178,8 @@ export default function ConsignmentAdmin() {
           </button>
         ))}
       </div>
-      {tab === 'people' ? <ConsignmentPeoplePanel /> : null}
+      {tab === 'sellers' ? <ConsignmentSellersPanel onViewItems={viewSellerItems} /> : null}
+      {tab === 'bidders' ? <ConsignmentBiddersPanel /> : null}
       {tab === 'messages' ? <ConsignmentMessagesPanel /> : null}
       {tab === 'visitors' ? <ConsignmentVisitsPanel /> : null}
       {tab === 'settings' ? (
@@ -191,6 +204,12 @@ export default function ConsignmentAdmin() {
               <option value="seller_unpaid">Sold – owed to seller</option>
               {STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
+            {sellerFilter ? (
+              <span className="cs-meta">
+                Seller: <strong>{bidderName(sellerFilter) || 'Unknown'}</strong> ({shownRows.length}){' '}
+                <button type="button" className="cs-btn-secondary" onClick={() => setSellerFilter(null)}>Show all sellers</button>
+              </span>
+            ) : null}
           </div>
           {error ? <p className="cs-error">{error}</p> : null}
           <table className="cs-table">
@@ -205,7 +224,7 @@ export default function ConsignmentAdmin() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((item) => (
+              {shownRows.map((item) => (
                 <ConsignmentAdminRow key={item.id} item={item} graceDays={graceDays} actions={actions} />
               ))}
             </tbody>

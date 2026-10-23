@@ -115,7 +115,7 @@ export async function loadAdminItems(status = 'all') {
   const ids = items.map((row) => row.id);
   if (!ids.length) return items;
   const [{ data: sellers, error: sellerError }, feesByItem, auctionByItem] = await Promise.all([
-    supabase.from('consignment_sellers').select('item_id, full_name, phone, email').in('item_id', ids),
+    supabase.from('consignment_sellers').select('item_id, user_id, full_name, phone, email').in('item_id', ids),
     loadFeesForItems(ids),
     loadLatestAuctionsForItems(ids),
   ]);
