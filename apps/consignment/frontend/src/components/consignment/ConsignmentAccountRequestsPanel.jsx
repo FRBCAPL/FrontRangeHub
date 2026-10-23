@@ -33,8 +33,9 @@ export default function ConsignmentAccountRequestsPanel() {
     setBusyId(user.id);
     setError('');
     try {
-      await setAccountApproval(user.id, approve);
+      // Seller first so the welcome email queued by the approval knows they can sell.
       if (approve && seller) await setConsignmentSeller(user.id, true);
+      await setAccountApproval(user.id, approve);
     } catch (err) {
       setError(err.message);
     }
