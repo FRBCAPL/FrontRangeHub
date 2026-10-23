@@ -22,7 +22,9 @@ export function ShowdownV3Reconciliation({ v }) {
         {v.heldCents ? <div className="cc-stat"><span>Still to be won</span><strong>{v.held}</strong></div> : null}
         {v.unresolvedCents ? <div className="cc-stat"><span>Unresolved</span><strong>{v.unresolved}</strong></div> : null}
         {v.unawardedCents ? <div className="cc-stat"><span>Not awarded</span><strong>{v.unawarded}</strong></div> : null}
+        {v.championFund ? <div className="cc-stat"><span>{v.championFund.label}</span><strong>{v.championFund.current}</strong></div> : null}
       </div>
+      {v.championFund ? <p className="sd-note">{v.championFund.text}</p> : null}
       <p className="sd-note">
         Qualifying games paid {v.qualifyingPaid} of the {v.qualifyingReserve} reserved. Playoff games paid {v.playoffGamesPaid} of the {v.playoffGameReserve} reserved.
         {v.heldCents ? ' Money not yet won stays in the pool until the event ends.' : ''}
@@ -48,6 +50,7 @@ export default function ShowdownV3Money({ view }) {
         <p className="sd-note">
           Earnings are worked out from recorded results, so a correction can never pay twice. Credits are administrative
           (games credited for a forfeit) and are shown apart from games actually won.
+          {v.escalating ? ' Bye credits are not games won.' : ''}
         </p>
         {v.credits.length ? <ul className="sd-note-list" aria-label="Administrative credits">{v.credits.map((c) => <li key={c.matchId}>{c.text}</li>)}</ul> : null}
         <div className="sd-table-wrap">
@@ -58,8 +61,8 @@ export default function ShowdownV3Money({ view }) {
                 <th className="sd-num">Qualifying games</th>
                 <th className="sd-num">Credits</th>
                 <th className="sd-num">Playoff games</th>
-                <th className="sd-num">Match wins</th>
-                <th className="sd-num">Bye</th>
+                {v.escalating ? null : <th className="sd-num">Match wins</th>}
+                <th className="sd-num">{v.escalating ? 'Bye credit' : 'Bye'}</th>
                 <th className="sd-num">Adjustments</th>
                 <th className="sd-num">{v.remainderColumn}</th>
                 <th className="sd-num">Total</th>
@@ -72,7 +75,7 @@ export default function ShowdownV3Money({ view }) {
                   <td className="sd-num">{p.qualifying}</td>
                   <td className="sd-num">{p.credit}</td>
                   <td className="sd-num">{p.playoffGames}</td>
-                  <td className="sd-num">{p.matchWins}</td>
+                  {v.escalating ? null : <td className="sd-num">{p.matchWins}</td>}
                   <td className="sd-num">{p.bye}</td>
                   <td className="sd-num">{p.adjustment}</td>
                   <td className="sd-num">{p.settlement}</td>
@@ -81,7 +84,7 @@ export default function ShowdownV3Money({ view }) {
               ))}
             </tbody>
             <tfoot>
-              <tr><td colSpan={8}>Earned by players</td><td className="sd-num">{v.paid}</td></tr>
+              <tr><td colSpan={v.escalating ? 7 : 8}>Earned by players</td><td className="sd-num">{v.paid}</td></tr>
             </tfoot>
           </table>
         </div>

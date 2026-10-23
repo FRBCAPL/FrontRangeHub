@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  buildV3Plan, v3PlanProblems, v3PlanChangeProblem, v3FeasibilityProblems, v3ExpectedPlan, canonicalJson,
+  buildV3Plan, buildV3EqualRatePlan, v3PlanProblems, v3PlanChangeProblem, v3FeasibilityProblems, v3ExpectedPlan, canonicalJson,
 } from './showdownV3Plan.js';
 import { buildV3LegacyPlan } from './showdownV3PlanLegacy.js';
 import { V3_EQUAL_RATE_FORMULA, v3UnitCents } from './showdownV3Rules.js';
@@ -93,7 +93,7 @@ describe('V3 finish-order guarantees (original formula)', () => {
 
 describe('V3 locked plan (equal-rate formula)', () => {
   it('records one game rate, 25¢ units, reserves, ladder, design champion and trace that add up to the pool', () => {
-    const plan = buildV3Plan(S(16, 50, 7, 5));
+    const plan = buildV3EqualRatePlan(S(16, 50, 7, 5));
     assert.equal(plan.payoutVersion, 3);
     assert.equal(plan.formula, V3_EQUAL_RATE_FORMULA);
     assert.equal(plan.unitCents, 25);
@@ -115,7 +115,7 @@ describe('V3 locked plan (equal-rate formula)', () => {
   it('settings the original formula rejected now start', () => {
     assert.equal(legacyOrNull(S(8, 20, 15, 5)), null);
     assert.deepEqual(v3FeasibilityProblems(S(8, 20, 15, 5)), []);
-    const plan = buildV3Plan(S(8, 20, 15, 5));
+    const plan = buildV3EqualRatePlan(S(8, 20, 15, 5));
     assert.equal(plan.rates.r1, 25);
     assert.deepEqual(v3PlanProblems(plan), []);
   });
@@ -123,13 +123,13 @@ describe('V3 locked plan (equal-rate formula)', () => {
   it('rejects settings outside the supported ranges', () => {
     assert.ok(v3FeasibilityProblems(S(7, 20, 7, 5)).length > 0);
     assert.ok(v3FeasibilityProblems(S(12, 19, 7, 5)).length > 0);
-    assert.throws(() => buildV3Plan(S(25, 20, 7, 5)));
+    assert.throws(() => buildV3EqualRatePlan(S(25, 20, 7, 5)));
   });
 
   it('refuses any change to the plan after the start', () => {
-    const plan = buildV3Plan(S(12, 30, 7, 5));
-    assert.equal(v3PlanChangeProblem(plan, buildV3Plan(S(12, 30, 7, 5))), '');
-    assert.match(v3PlanChangeProblem(plan, buildV3Plan(S(12, 30, 7, 7))), /locked/);
+    const plan = buildV3EqualRatePlan(S(12, 30, 7, 5));
+    assert.equal(v3PlanChangeProblem(plan, buildV3EqualRatePlan(S(12, 30, 7, 5))), '');
+    assert.match(v3PlanChangeProblem(plan, buildV3EqualRatePlan(S(12, 30, 7, 7))), /locked/);
     const tampered = { ...plan, ladder: { ...plan.ladder, perRound: { ...plan.ladder.perRound, final: plan.ladder.perRound.final + 1 } } };
     assert.match(v3PlanChangeProblem(plan, tampered), /locked/);
     assert.ok(v3PlanProblems(tampered).length > 0);
@@ -138,7 +138,7 @@ describe('V3 locked plan (equal-rate formula)', () => {
   });
 
   it('rejects unequal rates, rates off the 25¢ grid, a wrong unit and an unknown formula', () => {
-    const plan = buildV3Plan(S(12, 30, 7, 5));
+    const plan = buildV3EqualRatePlan(S(12, 30, 7, 5));
     const r = plan.rates.r1;
     assert.ok(v3PlanProblems({ ...plan, rates: { r1: r, r2: r + 25, playoff: r + 25 } }).some((p) => /same rate/.test(p)));
     assert.ok(v3PlanProblems({ ...plan, rates: { r1: r + 10, r2: r + 10, playoff: r + 10 } }).some((p) => /multiple of 25/.test(p)));
@@ -153,7 +153,7 @@ describe('V3 locked plan (equal-rate formula)', () => {
       if (v && typeof v === 'object') return Object.fromEntries(Object.keys(v).sort().reverse().map((k) => [k, reorder(v[k])]));
       return v;
     };
-    for (const plan of [buildV3Plan(S(16, 50, 7, 5)), buildV3LegacyPlan(S(16, 50, 7, 5))]) {
+    for (const plan of [buildV3EqualRatePlan(S(16, 50, 7, 5)), buildV3LegacyPlan(S(16, 50, 7, 5))]) {
       const reloaded = reorder(JSON.parse(JSON.stringify(plan)));
       assert.notEqual(JSON.stringify(reloaded.ladder), JSON.stringify(plan.ladder));
       assert.equal(canonicalJson(reloaded), canonicalJson(plan));

@@ -42,6 +42,23 @@ function Standings({ s }) {
 }
 
 function Payout({ p }) {
+  if (p.escalating) {
+    return (
+      <section className="sd-tv-card">
+        <h2>Every game won pays</h2>
+        <ul className="sd-tv-list">
+          {p.rates.map(([label, amount]) => <li key={label}>{label} <strong>{amount}</strong></li>)}
+          {p.bye ? <li>Bye credit <strong>{p.bye}</strong></li> : null}
+        </ul>
+        <h2>Champion Fund</h2>
+        <ul className="sd-tv-list">
+          <li>Starting fund <strong>{p.fund.start}</strong></li>
+          <li>{p.fund.label} <strong>{p.fund.current}</strong></li>
+        </ul>
+        <p className="sd-tv-close">Unplayed game money grows the fund. The champion takes it all.</p>
+      </section>
+    );
+  }
   return (
     <section className="sd-tv-card">
       <h2>Every game won pays</h2>
@@ -65,7 +82,7 @@ function Bracket({ b }) {
       <div className="sd-tv-rounds">
         {b.rounds.map((r) => (
           <div key={r.key}>
-            <h3>{r.label} <small>{r.bonus} winner&rsquo;s bonus</small></h3>
+            <h3>{r.label} <small>{b.escalating ? r.bonus : <>{r.bonus} winner&rsquo;s bonus</>}</small></h3>
             {r.key === 'quarterfinal' ? b.byes.map((x) => (
               <div key={`bye-${x.section}`} className="sd-tv-bm is-completed"><span className="is-win">{x.name}</span><small>Bye to Semifinal {x.semifinal} &middot; {b.byePay}</small></div>
             )) : null}

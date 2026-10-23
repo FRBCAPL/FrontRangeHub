@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ShowdownV3PartialScore from './ShowdownV3PartialScore.jsx';
-import { v3LimitsOf, v3PartialProblem, v3PartialEntry, emptyPartial, V3_VOLUNTARY_MESSAGE } from './showdownV3ScoreDraft.js';
+import { v3LimitsOf, v3PartialProblem, v3PartialEntry, emptyPartial, V3_VOLUNTARY_MESSAGE, v3WalkoverPayText } from './showdownV3ScoreDraft.js';
 import { earningsDropDetails } from '../showdownEarningsDrop.js';
 import { matchLabel, nameOf } from '../showdownView.js';
 import * as E from '../../showdownEngine.js';
@@ -9,8 +9,9 @@ const EFFECT = {
   qualifying: 'Their unfinished qualifying matches become forfeits. Games already played are paid to both players, and each opponent gets an administrative credit for the unplayed games. You can undo this while qualifying is still open.',
   shootout: 'If they are in the playoff picture, the next eligible player takes the spot. If they are outside it, nothing changes.',
   bracket: 'If they qualified, the drawn bracket is cleared and the next eligible player takes the spot. If not, the bracket stands.',
-  playoffs: 'They forfeit their next playoff match; the opponent advances by walkover and is paid the match-win bonus. Money already earned (including a bye) is kept.',
 };
+
+const playoffEffect = (plan) => `They forfeit their next playoff match; the opponent advances by walkover and ${v3WalkoverPayText(plan)}. Money already earned (including a bye) is kept.`;
 
 /**
  * V3 withdrawal. A match the player is on a table for needs the games already played (or an explicit
@@ -31,7 +32,7 @@ export default function ShowdownV3WithdrawModal({ state, player, error = '', onC
     <div className="cc-modal-overlay" role="presentation" onClick={onCancel}>
       <div className="cc-modal sd-confirm" role="dialog" aria-modal="true" aria-labelledby="sd-v3-withdraw-title" onClick={(e) => e.stopPropagation()}>
         <h2 id="sd-v3-withdraw-title">Withdraw {player.name}?</h2>
-        <p>{EFFECT[state.status] || ''}</p>
+        <p>{state.status === 'playoffs' ? playoffEffect(state.payoutPlan) : EFFECT[state.status] || ''}</p>
         {state.status !== 'qualifying' ? <p className="sd-note">This cannot be undone after qualifying.</p> : null}
         {onTable.map((m) => (
           <ShowdownV3PartialScore

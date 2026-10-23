@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildV3Plan, v3PlanProblems } from './showdownV3Plan.js';
+import { buildV3EqualRatePlan as buildV3Plan, v3PlanProblems } from './showdownV3Plan.js';
 import { selectV3EqualRate, v3EqualRateCandidate } from './showdownV3EqualRate.js';
 import { v3Ladder, canRebalance } from './showdownV3Ladder.js';
 import { v3ExactBounds, minWinsAtRank } from './showdownV3Bounds.js';

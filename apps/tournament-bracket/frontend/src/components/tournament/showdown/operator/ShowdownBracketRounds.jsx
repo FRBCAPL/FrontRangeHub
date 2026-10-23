@@ -14,13 +14,14 @@ function MiniMatch({ m, byeIds }) {
   );
 }
 
-function ByeCard({ b, byePay, confirmed, fmt }) {
+function ByeCard({ b, byePay, confirmed, fmt, credit }) {
+  const amount = `${fmt(byePay)}${credit ? ' bye credit' : ''}`;
   return (
     <li className="sd-mini sd-mini-bye">
       <span className="sd-mini-label">Section {b.section} &middot; Bye</span>
       <span className="is-winner">{b.name}</span>
       <small>
-        Straight to Semifinal {b.semifinal} &middot; {confirmed ? `earned ${fmt(byePay)}` : `${fmt(byePay)} when confirmed`}
+        Straight to Semifinal {b.semifinal} &middot; {confirmed ? `earned ${amount}` : `${amount} when confirmed`}
         {b.withdrawn ? ' \u00b7 withdrew, keeps the bye' : ''}
       </small>
     </li>
@@ -41,7 +42,7 @@ export default function ShowdownBracketRounds({ v, readOnly = false }) {
         const items = sectioned
           ? [1, 2, 3, 4].map((section) => {
             const b = v.byes.find((x) => x.section === section);
-            if (b) return <ByeCard key={`bye-${section}`} b={b} byePay={v.byePay} confirmed={v.confirmed || readOnly} fmt={fmt} />;
+            if (b) return <ByeCard key={`bye-${section}`} b={b} byePay={v.byePay} confirmed={v.confirmed || readOnly} fmt={fmt} credit={v.escalating} />;
             const m = r.matches.find((x) => x.section === section);
             return m ? <MiniMatch key={m.id} m={m} byeIds={byeIds} /> : null;
           })

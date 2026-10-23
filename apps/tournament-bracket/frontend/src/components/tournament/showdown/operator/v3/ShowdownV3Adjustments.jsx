@@ -27,7 +27,7 @@ export default function ShowdownV3Adjustments({ view, players, error = '', onAdj
     <section className="sd-panel" aria-label="Payout adjustments">
       <h3>Payout adjustments</h3>
       <p className="sd-note">
-        An adjustment is paid out of the money not yet earned by play: the champion bonus or split, unawarded money, or unresolved money.
+        An adjustment is paid out of the money not yet earned by play: the champion&rsquo;s remainder (the Champion Fund, or the champion bonus on older events) or split, unawarded money, or unresolved money.
         It lowers that amount by the same sum, so the pool is never exceeded. Earned pay cannot be reduced here; correct the result instead.
         A negative amount only takes back an earlier adjustment to the same player.
       </p>

@@ -7,6 +7,8 @@ import { formatCents } from '../../v3/showdownV3Rules.js';
 import { v3OutcomeOf } from '../../v3/showdownV3Money.js';
 import { nameOf } from '../showdownView.js';
 import { v3PlanView, V3_REMAINDER_LABEL } from './showdownV3PlanView.js';
+import { V3_CHAMPION_FUND_LABEL } from './showdownV3PlanViewEscalating.js';
+import { v3ChampionFund } from '../../v3/showdownV3Pay.js';
 
 export const V3_OUTCOME_LABELS = {
   'in-progress': 'In progress',
@@ -17,6 +19,23 @@ export const V3_OUTCOME_LABELS = {
 };
 
 const cents = (n) => (n ? formatCents(n) : '\u2014');
+
+/**
+ * Starting fund, unplayed game money moved in so far and where it stands. `final` once a completed event has
+ * paid it to the champion; after any other ending the money still to be won is settled by that ending's rule.
+ */
+function championFundView(fund, outcome, settlement) {
+  const final = outcome === 'completed' && settlement.ok;
+  return {
+    start: formatCents(fund.startCents),
+    transferred: formatCents(fund.transferredCents),
+    current: formatCents(fund.currentCents),
+    currentCents: fund.currentCents,
+    final,
+    label: final ? `Final ${V3_CHAMPION_FUND_LABEL}` : `${V3_CHAMPION_FUND_LABEL} so far`,
+    text: `${V3_CHAMPION_FUND_LABEL}: ${formatCents(fund.startCents)} reserved at the start + ${formatCents(fund.transferredCents)} from games not played = ${formatCents(fund.currentCents)}${final ? ', paid to the champion' : ''}.`,
+  };
+}
 
 export function moneyViewV3(state) {
   const e = E.computeEarnings(state);
@@ -48,12 +67,15 @@ export function moneyViewV3(state) {
     text: `${nameOf(state, c.playerId)}: ${c.games} credit game${c.games === 1 ? '' : 's'} (${formatCents(c.cents || 0)}) for ${c.unplayed} unplayed after ${nameOf(state, c.forfeitedBy)} forfeited${c.provisional ? ' \u00b7 provisional until qualifying locks' : ''}`,
   }));
   const plan = v3PlanView(state.payoutPlan);
+  const fund = v3ChampionFund(state.payoutPlan, e.qualifying, state.matches.filter((m) => m.phase === 'playoff'));
   return {
     payoutVersion: 3,
     plan,
+    escalating: Boolean(plan.escalating),
     unitCents: plan.unitCents,
-    remainderColumn: plan.equalRate ? 'Reserve remainder / split' : 'Bonus / split',
-    remainderPaidLabel: plan.equalRate ? `${V3_REMAINDER_LABEL} paid to` : 'Remainder paid to',
+    championFund: fund ? championFundView(fund, outcome, s) : null,
+    remainderColumn: plan.escalating ? `${V3_CHAMPION_FUND_LABEL} / split` : (plan.equalRate ? 'Reserve remainder / split' : 'Bonus / split'),
+    remainderPaidLabel: plan.escalating ? `${V3_CHAMPION_FUND_LABEL} paid to` : (plan.equalRate ? `${V3_REMAINDER_LABEL} paid to` : 'Remainder paid to'),
     outcome,
     outcomeLabel: V3_OUTCOME_LABELS[outcome] || outcome,
     players,

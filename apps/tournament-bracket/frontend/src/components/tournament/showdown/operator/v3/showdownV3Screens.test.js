@@ -11,6 +11,11 @@ import { queueViewV3 } from './showdownV3BoardView.js';
 import { standingsViewV3 } from './showdownV3StandingsView.js';
 import { moneyViewV3 } from './showdownV3MoneyView.js';
 import { nextStep } from '../showdownOperatorActions.js';
+import { buildV3EqualRatePlan } from '../../v3/showdownV3Plan.js';
+import { v3NewEventsUseD10 } from '../../v3/showdownV3Activation.js';
+import { V3_ESCALATING_FORMULA as D10, V3_EQUAL_RATE_FORMULA as EQUAL } from '../../v3/showdownV3Rules.js';
+
+const settingsOf = (p) => ({ entrants: p.entrants, entryFee: p.entryFee, qualifyingGames: p.qualifyingGames, playoffRaceTo: p.playoffRaceTo });
 
 const h = new Proxy({}, { get: () => () => true });
 const handlers = { act: () => true, ask: () => true, board: h, lock: h.x, reopenQualifying: h.x, reopenShootout: h.x, confirmBracket: h.x, complete: h.x, withdraw: h.x, reinstate: h.x };
@@ -47,11 +52,13 @@ before(() => {
   const [on2, m2] = startNext(states.tie, started.op, 'qualifying');
   states.forfeitMatch = m2;
   states.forfeit = E.recordForfeit(on2, m2.id, [m2.p1], started.op(), { score1: 2, score2: 1 });
-  states.bracket13 = (() => { const b = toBracketV3(13, { seed: 25 }); return E.drawPlayoff(b.s, b.op()); })();
-  const po = toPlayoffsV3(13, { seed: 25 });
+  states.bracket13 = (() => { const b = toBracketV3(13, { seed: 25, formula: D10 }); return E.drawPlayoff(b.s, b.op()); })();
+  const po = toPlayoffsV3(13, { seed: 25, formula: D10 });
+  states.playoffs13Equal = toPlayoffsV3(13, { seed: 25, formula: EQUAL }).s;
   states.playoffs13 = po.s;
   states.playoffOp = po.op;
-  states.completed = runV3(12, { seed: 9 }).s;
+  states.completed = runV3(12, { seed: 9, formula: D10 }).s;
+  states.completedEqual = runV3(12, { seed: 9, formula: EQUAL }).s;
   for (let seed = 1; seed <= 300 && !states.shootout; seed += 1) {
     const t = startV3(8, { seed, games: 6 });
     const locked = E.lockQualifying(playQualifyingV3(t.s, t.op, () => [3, 3]), t.op());
@@ -62,12 +69,17 @@ before(() => {
 describe('V3 setup: match lengths and the payout plan preview', () => {
   it('shows games and race controls, every plan term, and enables the start without the dev preview', async () => {
     const html = clean(await setup(states.setup12));
-    for (const t of ['Games per qualifying match', 'Playoff race', '8 games', 'Race to 5', 'Proposed V3 payout plan', 'Entry pool', '$240',
-      'Qualifying games', 'Playoff games', 'Match-win bonuses', 'Every game won', 'Quarterfinal bye',
-      'Champion design target', '4\u00d7 design target', 'Guaranteed:', 'Walkovers, withdrawals during qualifying and operator adjustments are exceptions', 'playoff reserve remainder']) {
+    for (const t of ['Games per qualifying match', 'Playoff race', '8 games', 'Race to 5', 'Proposed V3 payout plan', 'Entry pool', '$240', 'Qualifying games', 'Playoff games']) {
       assert.ok(html.includes(t), t);
     }
-    for (const t of ['Round 1 game win', 'Round 2 game win', 'Championship guarantee tier']) assert.ok(!html.includes(t), t);
+    const d10 = ['Bye credits', 'Starting Champion Fund', 'Game values by stage', 'Quarterfinal game', 'Championship game',
+      'Opening-round bye credit (not a game won)', 'Every game won earns money.', 'Always (hard rule): the champion out-earns every other player', 'joins the Champion Fund',
+      'Qualifying game / playoff games'];
+    const equal = ['Match-win bonuses', 'Every game won', 'Quarterfinal bye', 'Champion design target', '4\u00d7 design target', 'Guaranteed:',
+      'Walkovers, withdrawals during qualifying and operator adjustments are exceptions', 'playoff reserve remainder'];
+    const [shown, hidden] = v3NewEventsUseD10() ? [d10, ['Match-win bonuses', 'winner']] : [equal, ['Starting Champion Fund', 'bye credit']];
+    for (const t of shown) assert.ok(html.includes(t), t);
+    for (const t of ['Round 1 game win', 'Round 2 game win', 'Championship guarantee tier', ...hidden]) assert.ok(!html.includes(t), t);
     assert.ok(!html.includes(V3_NOT_READY_MESSAGE));
     assert.ok(!html.includes('Development preview'));
     assert.doesNotMatch(html, /disabled=""[^>]*>Start qualifying/);
@@ -132,7 +144,11 @@ describe('V3 qualifying screens', () => {
     assert.match(q, /disabled=""[^>]*>Save result/);
     const pm = queueViewV3(states.playoffs13, 'playoff').ready[0];
     const p = clean(await render('v3/ShowdownV3ScoreModal.jsx', { match: pm, limits: v3LimitsOf(states.playoffs13, 'playoff'), onSave() {}, onForfeit() {}, onCancel() {} }));
-    for (const t of ['Race to 5', 'walkover', 'match-win bonus']) assert.ok(p.includes(t), t);
+    for (const t of ['Race to 5', 'walkover', 'paid only for games actually won']) assert.ok(p.includes(t), t);
+    assert.ok(!p.includes('match-win bonus'));
+    const pe = queueViewV3(states.playoffs13Equal, 'playoff').ready[0];
+    const pEqual = clean(await render('v3/ShowdownV3ScoreModal.jsx', { match: pe, limits: v3LimitsOf(states.playoffs13Equal, 'playoff'), onSave() {}, onForfeit() {}, onCancel() {} }));
+    assert.ok(pEqual.includes('match-win bonus'), 'an equal-rate event keeps its walkover wording');
     const limits = v3LimitsOf(states.playoffs13, 'playoff');
     assert.ok(v3ScoreProblem(limits, 5, 5));
     assert.equal(v3ScoreProblem(limits, 5, 3), '');
@@ -192,12 +208,18 @@ describe('V3 shootouts, bracket, byes and walkovers', () => {
     assert.ok(html.includes('Qualifying $'));
   });
 
-  it('the bracket shows byes, the race, game pay and winner\'s bonuses in cents', async () => {
+  it('the bracket shows byes with their bye credit, the race and the per-game rate of every stage', async () => {
     const html = clean(await tab(states.bracket13, 'bracket'));
-    for (const t of ['Quarterfinal byes (3)', 'race to 5', 'Each game won pays', 'winner&#x27;s bonus', 'Confirm bracket', 'Straight to Semifinal']) assert.ok(html.includes(t), t);
+    for (const t of ['Quarterfinal byes (3)', 'race to 5', 'Each game won pays more every round', 'bye credit each', 'bye credit when confirmed', 'per game won', 'There are no match-win bonuses', 'Confirm bracket', 'Straight to Semifinal']) assert.ok(html.includes(t), t);
+    assert.ok(!html.includes('winner&#x27;s bonus'));
     assert.ok(!html.includes('per win'), 'no V1/V2 wording');
     const board = clean(await tab(states.playoffs13, 'run'));
-    for (const t of ['Playoff matches', 'Race to 5', 'per game won', 'winner&#x27;s bonus']) assert.ok(board.includes(t), t);
+    for (const t of ['Playoff matches', 'Race to 5', 'per game won', 'earned $']) assert.ok(board.includes(t), t);
+    assert.ok(!board.includes('winner&#x27;s bonus'));
+    const equal = { ...states.bracket13, payoutPlan: buildV3EqualRatePlan(settingsOf(states.bracket13.payoutPlan)) };
+    const old = clean(await tab(equal, 'bracket'));
+    for (const t of ['winner&#x27;s bonus', 'the match winner also gets']) assert.ok(old.includes(t), `an equal-rate event keeps its wording: ${t}`);
+    assert.ok(!old.includes('bye credit'));
   });
 
   it('a playoff withdrawal shows as a walkover', async () => {
@@ -211,7 +233,11 @@ describe('V3 shootouts, bracket, byes and walkovers', () => {
 describe('V3 money, results and endings', () => {
   it('a completed event reconciles to the cent and shows the locked plan', async () => {
     const html = clean(await tab(states.completed, 'money'));
-    for (const t of ['Payout reconciliation', 'Reconciled', 'Locked V3 payout plan', 'Reserve remainder / split', 'Playoff reserve remainder paid to:']) assert.ok(html.includes(t), t);
+    for (const t of ['Payout reconciliation', 'Reconciled', 'Locked V3 payout plan', 'Champion Fund / split', 'Champion Fund paid to:', 'Final Champion Fund', 'reserved at the start', 'Bye credit', 'Bye credits are not games won']) assert.ok(html.includes(t), t);
+    assert.ok(!html.includes('Match wins'));
+    const equal = clean(await tab(states.completedEqual, 'money'));
+    for (const t of ['Reconciled', 'Reserve remainder / split', 'Playoff reserve remainder paid to:']) assert.ok(equal.includes(t), `equal-rate: ${t}`);
+    assert.ok(!equal.includes('Champion Fund'));
     const results = clean(await tab(states.completed, 'results'));
     assert.ok(results.includes('Final results'));
     assert.match(nextStep(states.completed), /Every cent/);

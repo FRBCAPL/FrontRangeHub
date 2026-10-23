@@ -27,7 +27,7 @@ function ForfeitSection({ m, limits, onForfeit }) {
       <summary>Forfeit or no-show</summary>
       <p className="sd-note">
         {playoff
-          ? 'In the playoffs a forfeit is a walkover: the opponent advances and is paid the match-win bonus. Games already played are paid to both players.'
+          ? `In the playoffs a forfeit is a walkover: the opponent advances and ${limits.walkoverPay || 'is paid the match-win bonus'}. Games already played are paid to both players.`
           : 'Games already played are paid to both players. The opponent also gets an administrative credit for the unplayed games, at their own win rate.'}
         {' '}A double forfeit gives nobody the win.
       </p>

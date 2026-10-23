@@ -21,8 +21,17 @@ function standings(event) {
   };
 }
 
-function payout(plan) {
+function payout(plan, money) {
   const v = v3PlanView(plan);
+  if (v.escalating) {
+    return {
+      escalating: true,
+      rates: [['Qualifying game', v.rates.qualifying], ...v.stages.map((s) => [`${s.label} game`, s.rate])],
+      bonuses: [],
+      bye: v.bye ? v.bye.each : '',
+      fund: { start: v.championFund.start, current: money.championFund?.current || v.championFund.start, label: money.championFund?.label || 'Champion Fund' },
+    };
+  }
   return {
     rates: v.equalRate
       ? [['Every game won', v.rates.game]]
@@ -46,11 +55,12 @@ function rounds(event) {
     rounds: b.rounds.map((r) => ({
       key: r.key,
       label: r.label,
-      bonus: b.formatAmount(r.payout),
+      bonus: b.escalating ? `${b.formatAmount(r.payout)} a game` : b.formatAmount(r.payout),
       matches: r.matches.map((m) => ({ ...m, scoreText: m.status === 'completed' ? m.resultText : m.status === 'on-table' ? `On table ${m.table}` : '' })),
     })),
+    escalating: b.escalating,
     byes: b.byes,
-    byePay: b.formatAmount(b.byePay),
+    byePay: b.escalating ? `${b.formatAmount(b.byePay)} bye credit` : b.formatAmount(b.byePay),
     raceNote: b.raceNote,
     championshipStatus: b.championship,
   };
@@ -71,7 +81,7 @@ export function buildShowdownV3TvBoard(event) {
     formatLine: `Showdown V3 \u00b7 ${plan.qualifyingGames}-game qualifying matches \u00b7 playoff races to ${plan.playoffRaceTo}`,
     pool: money.pool,
     paid: money.paid,
-    payout: payout(plan),
+    payout: payout(plan, money),
   };
   if (event.status === 'qualifying') {
     const q = queueViewV3(event, 'qualifying');

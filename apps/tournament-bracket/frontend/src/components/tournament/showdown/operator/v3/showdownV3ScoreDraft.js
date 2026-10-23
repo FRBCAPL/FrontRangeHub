@@ -5,13 +5,21 @@
  */
 import { v3QualifyingScoreProblem, v3PlayoffScoreProblem, v3PartialScoreProblem } from '../../v3/showdownV3Results.js';
 import { V3_PARTIAL_SCORE_MESSAGE } from '../../v3/showdownV3Matches.js';
+import { isEscalatingPlan } from '../../v3/showdownV3Rules.js';
+
+/** What a playoff walkover pays the opponent, in the wording of the locked plan's formula. */
+export function v3WalkoverPayText(plan) {
+  return isEscalatingPlan(plan)
+    ? 'is paid only for games actually won (unplayed games join the Champion Fund)'
+    : 'is paid the match-win bonus';
+}
 
 export const V3_VOLUNTARY_MESSAGE = 'Choose whether this was the player\u2019s own choice or an emergency, venue closure or operator decision.';
 
 export const emptyPartial = () => ({ score1: null, score2: null, noGamesPlayed: false, voluntary: null });
 
 export function v3LimitsOf(state, phase) {
-  return { phase, games: state.payoutPlan.qualifyingGames, raceTo: state.payoutPlan.playoffRaceTo };
+  return { phase, games: state.payoutPlan.qualifyingGames, raceTo: state.payoutPlan.playoffRaceTo, walkoverPay: v3WalkoverPayText(state.payoutPlan) };
 }
 
 /** Highest score a player can have in an unfinished match. */

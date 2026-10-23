@@ -1,7 +1,7 @@
 /**
  * V3 money and format limits. All V3 money is in cents. Percentages are whole numbers so every comparison
  * stays in integer arithmetic. Each locked plan records its money unit: plans locked by the original formula
- * have none and use 50¢; equal-rate plans use 25¢ (docs/showdown/SHOWDOWN_V3_PAYOUT_SPEC.md).
+ * have none and use 50¢; equal-rate and escalating plans use 25¢ (docs/showdown/SHOWDOWN_V3_PAYOUT_SPEC.md).
  */
 export const V3_QUALIFYING_GAMES = { min: 3, max: 15 };
 export const V3_PLAYOFF_RACE_TO = { min: 3, max: 9 };
@@ -28,6 +28,20 @@ export const V3_EQUAL_RATE = {
   rebalanceSemifinalWeights: [130, 140, 150],
 };
 
+/**
+ * Escalating formula (D10): every game won pays its stage's rate, the qualifying rate is as high as the
+ * champion-first guarantee allows, each playoff stage pays at least 10% more per game than the stage before,
+ * opening-round byes earn half a full quarterfinal win, and what is left is the Champion Fund.
+ */
+export const V3_ESCALATING_FORMULA = 'escalating-d10-2026-10';
+export const V3_ESCALATING = {
+  unitCents: 25,
+  minStepPct: 10,
+  byeCreditPct: 50,
+  /** The champion-first proof assumes any number of players may withdraw during qualifying. */
+  coversQualifyingWithdrawals: true,
+};
+
 export function v3ChampionshipTiers() {
   const out = [];
   for (let p = V3_CHAMPIONSHIP_PCT.target; p >= V3_CHAMPIONSHIP_PCT.min; p -= V3_CHAMPIONSHIP_PCT.step) out.push(p);
@@ -42,9 +56,11 @@ export function maxPlayoffGames(raceTo) {
 export const isHalfUnit = (cents) => Number.isInteger(cents) && cents % V3_UNIT_CENTS === 0;
 
 export const isEqualRatePlan = (plan) => plan?.formula === V3_EQUAL_RATE_FORMULA;
+export const isEscalatingPlan = (plan) => plan?.formula === V3_ESCALATING_FORMULA;
 
-/** The money unit a locked plan pays in: 25¢ for equal-rate plans, 50¢ for plans without a formula marker. */
+/** The money unit a locked plan pays in: 25¢ for equal-rate and escalating plans, 50¢ for plans without a formula marker. */
 export function v3UnitCents(plan) {
+  if (isEscalatingPlan(plan)) return V3_ESCALATING.unitCents;
   return isEqualRatePlan(plan) ? V3_EQUAL_RATE.unitCents : V3_UNIT_CENTS;
 }
 

@@ -1,7 +1,8 @@
 /** View data for a V3 payout plan: the preview during setup and the plan locked at the start. */
 import { buildV3Plan, V3_GUARANTEE_SCOPE } from '../../v3/showdownV3Plan.js';
 import { v3SettingsOf, v3SettingsProblems } from '../../v3/showdownV3Event.js';
-import { formatCents, V3_CHAMPIONSHIP_PCT, V3_EQUAL_RATE, isEqualRatePlan, v3UnitCents } from '../../v3/showdownV3Rules.js';
+import { formatCents, V3_CHAMPIONSHIP_PCT, V3_EQUAL_RATE, isEqualRatePlan, isEscalatingPlan, v3UnitCents } from '../../v3/showdownV3Rules.js';
+import { escalatingPlanView, escalatingPlanSummary } from './showdownV3PlanViewEscalating.js';
 import { playoffTemplate, finalRound } from '../../showdownPlayoffTemplates.js';
 import { fieldRuleFor, supportedFieldRange } from '../../showdownFieldRules.js';
 import { entryFeeProblem } from '../../showdownPayout.js';
@@ -32,6 +33,7 @@ function equalRateTerms(plan) {
 
 /** Everything the operator sees about one plan, all amounts already formatted. */
 export function v3PlanView(plan) {
+  if (isEscalatingPlan(plan)) return escalatingPlanView(plan);
   const template = playoffTemplate(plan.templateId);
   const finalKey = finalRound(template).key;
   const r = plan.reserves;
@@ -82,6 +84,7 @@ export function v3PlanView(plan) {
 /** The plan's key terms, repeated in the start confirmation. */
 export function v3PlanSummary(view) {
   if (!view) return [];
+  if (view.escalating) return escalatingPlanSummary(view);
   return [
     `Entry pool ${view.pool} (${view.entrants} \u00d7 ${view.entryFee}).`,
     view.equalRate

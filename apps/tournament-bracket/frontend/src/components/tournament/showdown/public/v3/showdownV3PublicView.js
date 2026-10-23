@@ -2,7 +2,7 @@
  * What players see about a V3 event, built from the public copy only. Rates, bonuses and match lengths
  * always come from the payout plan locked at the start; no V1/V2 wording or money is used.
  */
-import { formatCents } from '../../v3/showdownV3Rules.js';
+import { formatCents, isEscalatingPlan } from '../../v3/showdownV3Rules.js';
 import { v3RoundLabels } from '../../v3/showdownV3Rounds.js';
 import { formatSupportProblem, isPayoutV3 } from '../../showdownPayoutVersion.js';
 import { matchView } from '../../operator/showdownView.js';
@@ -18,10 +18,25 @@ const whole = (n) => Number.isInteger(n) && n > 0;
 export function v3PublicProblem(event) {
   if (!event || !isPayoutV3(event) || formatSupportProblem(event)) return V3_PLAN_MISSING_MESSAGE;
   const p = event.payoutPlan;
+  const playoffPay = isEscalatingPlan(p)
+    ? p.rates?.byRound && Object.values(p.rates.byRound).every(Number.isFinite) && Number.isFinite(p.byeCreditCents) && Number.isFinite(p.reserves?.championFund)
+    : Number.isFinite(p?.rates?.playoff) && p?.ladder?.perRound;
   const ok = p && p.payoutVersion === 3 && whole(p.qualifyingGames) && whole(p.playoffRaceTo) && whole(p.poolCents)
-    && p.rates && Number.isFinite(p.rates.r1) && Number.isFinite(p.rates.r2) && Number.isFinite(p.rates.playoff)
-    && p.ladder?.perRound && p.templateId && Array.isArray(event.matches) && Array.isArray(event.players);
+    && p.rates && Number.isFinite(p.rates.r1) && Number.isFinite(p.rates.r2) && playoffPay
+    && p.templateId && Array.isArray(event.matches) && Array.isArray(event.players);
   return ok ? '' : V3_PLAN_MISSING_MESSAGE;
+}
+
+function escalatingRules(v) {
+  return [
+    v.summary,
+    `Every qualifying game you win pays ${v.rates.qualifying}. Every qualifying match is ${v.qualifyingGames} games and every game is played, so a match can end in a tie.`,
+    `The top ${v.qualifiers} in qualifying dollars reach the playoffs.${v.bye ? ` The top ${v.bye.count} get a bye to the semifinals and a ${v.bye.each} bye credit (half a full quarterfinal win). A bye credit is not a game won.` : ''}`,
+    `Playoff matches are races to ${v.playoffRaceTo}. Each game won pays more every round: ${v.stages.map((s) => `${s.rate} in the ${s.label.toLowerCase()}`).join(', ')}. There are no match-win bonuses.`,
+    'If a player forfeits, the games already played are paid to both players. The opponent gets an administrative credit for the unplayed games: it counts toward qualifying dollars, not games won.',
+    `The Champion Fund starts at ${v.championFund.start}, set aside from the ${v.pool} pool when the event starts. Money for games that are never played is added to it, and the champion receives the whole fund when the event is completed, so every cent goes to players.`,
+    'The champion always earns more than every other player, even with forfeits, walkovers or withdrawals.',
+  ];
 }
 
 /** Entry fee, entrants and format for the page header. */
@@ -71,6 +86,7 @@ export function v3PublicSchedule(event) {
 /** Plain-language payout rules with this event's locked amounts (no reserves or internal checks). */
 export function v3PayoutRules(plan) {
   const v = v3PlanView(plan);
+  if (v.escalating) return escalatingRules(v);
   const bonuses = v.rounds.map((r) => `${r.label} ${r.each}`).join(', ');
   return [
     v.equalRate
@@ -102,6 +118,9 @@ export function v3PublicSettlement(event) {
     lines.push('The director is reviewing the payouts.');
   } else if (m.outcome === 'in-progress') {
     lines.push(`${m.paid} of the ${m.pool} pool has been earned so far.${m.heldCents ? ` ${m.held} is still to be won.` : ''}`);
+    if (m.championFund) lines.push(`Champion Fund so far: ${m.championFund.current} (${m.championFund.start} set aside at the start plus ${m.championFund.transferred} from games not played).`);
+  } else if (m.outcome === 'completed' && m.championFund) {
+    lines.push(`Every cent of the ${m.pool} pool was paid to players.${m.recipients.length ? ` The ${m.championFund.current} Champion Fund (${m.championFund.start} set aside at the start plus ${m.championFund.transferred} from games not played) went to the champion, ${m.recipients.join(', ')}.` : ''}`);
   } else if (m.outcome === 'completed') {
     const toChampion = m.plan.equalRate ? 'The money nobody won (the playoff reserve remainder) went to the champion' : 'The money nobody won went to the champion';
     lines.push(`Every cent of the ${m.pool} pool was paid to players.${m.recipients.length ? ` ${toChampion}, ${m.recipients.join(', ')}.` : ''}`);
@@ -114,6 +133,8 @@ export function v3PublicSettlement(event) {
     status: m.outcome === 'in-progress' ? 'In progress' : OUTCOME_TEXT[m.outcome] || 'Final',
     pool: m.pool,
     paid: m.paid,
+    escalating: m.escalating,
+    championFund: m.championFund,
     lines,
     earners: m.players.filter((p) => p.totalCents > 0),
   };

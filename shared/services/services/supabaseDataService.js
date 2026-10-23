@@ -5111,9 +5111,16 @@ class SupabaseDataService {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/#/confirm-email`,
+          // app: 'frpl' tells the hub_signup_create_profile trigger to create the pending users row
+          // (and ladder profile); the browser can't insert them before the email is confirmed.
           data: {
+            app: 'frpl',
             first_name: signupData.firstName,
-            last_name: signupData.lastName
+            last_name: signupData.lastName,
+            phone: signupData.phone || null,
+            join_ladder: Boolean(signupData.joinLadder),
+            ladder_name: signupData.joinLadder ? (signupData.ladderName || '499-under') : null,
+            fargo_rate: signupData.joinLadder ? (signupData.fargoRate || 400) : null
           }
         }
       });
@@ -5190,39 +5197,51 @@ class SupabaseDataService {
         console.log('✅ User email already confirmed or confirmation disabled.');
       }
 
-      // Create user record in users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .insert({
-          id: authData.user.id,
-          email: signupData.email,
-          first_name: signupData.firstName,
-          last_name: signupData.lastName,
-          phone: signupData.phone,
-          is_pending_approval: true,
-          is_approved: false,
-          is_active: false,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+      const pendingUser = {
+        id: authData.user.id,
+        email: signupData.email,
+        first_name: signupData.firstName,
+        last_name: signupData.lastName,
+        phone: signupData.phone,
+        is_pending_approval: true,
+        is_approved: false,
+        is_active: false,
+        created_at: new Date().toISOString()
+      };
+      let userData = pendingUser;
 
-      if (userError) throw userError;
+      // No session means email confirmation is on: the database trigger has created the rows.
+      if (authData.session) {
+        const { data: inserted, error: userError } = await supabase
+          .from('users')
+          .insert(pendingUser)
+          .select()
+          .single();
+        // 23505: the trigger already created it.
+        if (userError && userError.code !== '23505') throw userError;
+        if (inserted) userData = inserted;
 
-      // If joining ladder, create pending ladder profile
-      if (signupData.joinLadder) {
-        await supabase
-          .from('ladder_profiles')
-          .insert({
-            user_id: authData.user.id,
-            ladder_name: signupData.ladderName || '499-under',
-            position: 999, // Temporary position, admin will assign real one
-            fargo_rate: signupData.fargoRate || 400,
-            wins: 0,
-            losses: 0,
-            total_matches: 0,
-            is_active: false // Will be activated after admin approval
-          });
+        if (signupData.joinLadder) {
+          const { data: existingProfile } = await supabase
+            .from('ladder_profiles')
+            .select('id')
+            .eq('user_id', authData.user.id)
+            .maybeSingle();
+          if (!existingProfile) {
+            await supabase
+              .from('ladder_profiles')
+              .insert({
+                user_id: authData.user.id,
+                ladder_name: signupData.ladderName || '499-under',
+                position: 999, // Temporary position, admin will assign real one
+                fargo_rate: signupData.fargoRate || 400,
+                wins: 0,
+                losses: 0,
+                total_matches: 0,
+                is_active: false // Will be activated after admin approval
+              });
+          }
+        }
       }
 
       // Don't send password reset email yet - wait for admin approval

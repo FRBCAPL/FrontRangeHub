@@ -5,7 +5,8 @@
  * games, match-win pay nobody earned and the ladder's leftover cents.
  *
  *   in-progress       — the remainder is held (not paid yet)
- *   completed         — the remainder goes to the champion (the playoff reserve remainder)
+ *   completed         — the remainder goes to the champion (the playoff reserve remainder; for escalating
+ *                       plans the Champion Fund: the initial fund plus every reserved cent nobody earned)
  *   interrupted-final — the final was not finished: the remainder (which includes the final's match-win
  *                       pay) is split between the two finalists
  *   interrupted       — the event stopped before the final: the remainder is split among the players still
@@ -17,7 +18,7 @@
  *                       exception, never a 100% player payout. Players keep what they earned; the remainder
  *                       is unawarded and recorded separately as proposed operator-retained funds. Retention
  *                       and live settlement of this exception are not approved yet.
- * Splits are paid in the plan's money unit (50¢ for original-formula plans, 25¢ for equal-rate plans);
+ * Splits are paid in the plan's money unit (50¢ for original-formula plans, 25¢ for equal-rate and escalating plans);
  * leftover units go to the earliest recipients in current standings order.
  */
 import { applyV3Adjustments } from './showdownV3Adjustments.js';

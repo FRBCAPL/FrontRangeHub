@@ -5,6 +5,7 @@ import { startV3, toBracketV3, toPlayoffsV3, runV3, startNext } from '../../v3/s
 import { makeOperator, setUpEvent, workBoard } from '../../operator/showdownOperatorKit.js';
 import { publicShowdown } from '../../cloud/showdownPublicState.js';
 import { render } from '../../operator/showdownRenderKit.js';
+import { V3_ESCALATING_FORMULA as D10 } from '../../v3/showdownV3Rules.js';
 import { buildShowdownTvBoard } from '../showdownTvBoard.js';
 import { sendPhoneScore } from '../showdownPhoneSubmit.js';
 import { buildShowdownV3TvBoard } from './showdownV3TvBoard.js';
@@ -26,18 +27,18 @@ function fakeApi(result = { data: { id: 's1', status: 'pending' }, error: null, 
 
 const ev = {};
 before(() => {
-  const st = startV3(8, { games: 6, seed: 2 });
+  const st = startV3(8, { games: 6, seed: 2, formula: D10 });
   let [s, m] = startNext(st.s, st.op, 'qualifying');
   ev.qualifying = publicShowdown(s);
   ev.qMatch = m;
   s = E.recordResult(s, m.id, { score1: 3, score2: 3 }, st.op());
   ev.tie = publicShowdown(E.withdrawPlayer(s, s.players[3].id, st.op()));
-  ev.bracket = publicShowdown(toBracketV3(8, { seed: 4 }).s);
-  const p = toPlayoffsV3(12, { seed: 3, games: 6 });
+  ev.bracket = publicShowdown(toBracketV3(8, { seed: 4, formula: D10 }).s);
+  const p = toPlayoffsV3(12, { seed: 3, games: 6, formula: D10 });
   const [ps, pm] = startNext(p.s, p.op, 'playoff');
   ev.playoffs = publicShowdown(ps);
   ev.pMatch = pm;
-  ev.done = publicShowdown(runV3(8, { seed: 4 }).s);
+  ev.done = publicShowdown(runV3(8, { seed: 4, formula: D10 }).s);
 });
 
 describe('V3 TV', () => {
@@ -50,19 +51,21 @@ describe('V3 TV', () => {
     assert.ok(t.recent.some((r) => r.resultText === '3\u20133 tie'));
     assert.ok(t.standings.hasCredits);
     const html = await tvHtml(t);
-    for (const x of ['Qualifying $', 'Games won', 'Credits', 'Every game won pays', 'Every game won', '$0.75', 'Winner\u2019s bonus', 'Credits are games credited for a forfeit, not games won.']) assert.ok(html.includes(x), x);
+    for (const x of ['Qualifying $', 'Games won', 'Credits', 'Every game won pays', 'Qualifying game', 'Semifinal game', 'Championship game', 'Starting fund', 'Champion Fund so far', 'Credits are games credited for a forfeit, not games won.']) assert.ok(html.includes(x), x);
+    assert.ok(!html.includes('Winner\u2019s bonus'));
     assert.ok(!html.includes('Round 1 game') && !html.includes('Round 2 game'));
     assert.ok(!NOT_GAME_AGNOSTIC.test(html));
   });
 
-  it('bracket and playoffs: race note, rounds with bonuses, byes, live table and scores', async () => {
+  it('bracket and playoffs: race note, per-game rates by round, bye credits, live table and scores', async () => {
     assert.equal(buildShowdownV3TvBoard(ev.bracket).mode, 'bracket');
     const b = buildShowdownV3TvBoard(ev.playoffs);
     assert.equal(b.mode, 'playoffs');
     assert.equal(b.byes.length, 3);
     assert.match(b.tables[0].round, /race to 5/);
     const html = await tvHtml(b);
-    for (const x of ['race to 5', 'Bye to Semifinal', 'winner\u2019s bonus', 'Quarterfinal', 'Semifinal', 'Championship', `On table ${b.tables[0].table}`]) assert.ok(html.includes(x), x);
+    for (const x of ['race to 5', 'Bye to Semifinal', 'bye credit', 'a game', 'There are no match-win bonuses', 'Quarterfinal', 'Semifinal', 'Championship', `On table ${b.tables[0].table}`]) assert.ok(html.includes(x), x);
+    assert.ok(!html.includes('winner\u2019s bonus'));
   });
 
   it('completed: champion, final standings with cent amounts and settlement', async () => {

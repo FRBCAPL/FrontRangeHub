@@ -7,6 +7,9 @@ import {
   SHOWDOWN_GUIDE_HASH, SHOW_OLDER_GUIDE_VERSIONS, isShowdownGuide, showdownGuideVersion, showdownGuideHash, showdownGuideHref, showdownGuideTvHref,
 } from './showdownGuideRoute.js';
 import { showdownGuideCompare, showdownGuideFor } from './guide/showdownGuides.js';
+import { showdownV3Guide } from './v3/showdownV3Guide.js';
+import { v3GuideCopy } from '../v3/showdownV3NewEventCopy.js';
+import { V3_D10_FOR_NEW_EVENTS } from '../v3/showdownV3Activation.js';
 import { raceEventFacts } from './showdownRaceFacts.js';
 import { CASH_CLIMB_GUIDE_HASH } from '../../cash-climb/cashClimbGuideRoute.js';
 import { loadComponent } from '../operator/showdownRenderKit.js';
@@ -59,11 +62,30 @@ describe('Showdown V1 and V2 guides', () => {
 });
 
 describe('Showdown V3 guide copy', () => {
-  it('explains the equal game rate and points to each event page for exact rates', () => {
-    const all = bodyOf(showdownGuideFor(3));
+  it('describes the formula new events use (the activation switch)', () => {
+    assert.deepEqual(showdownGuideFor(3), showdownV3Guide(v3GuideCopy(V3_D10_FOR_NEW_EVENTS)));
+    assert.deepEqual(showdownGuideCompare(), showdownGuideCompare(v3GuideCopy(V3_D10_FOR_NEW_EVENTS).compare));
+  });
+
+  it('equal-rate copy: the equal game rate, match-win bonuses and the leftover to the champion', () => {
+    const all = bodyOf(showdownV3Guide(v3GuideCopy(false)));
     assert.match(all, /Every game you win adds to your payout, in qualifying and in the playoffs/);
-    assert.match(all, /exact dollar amounts\? They are on your event page/);
+    assert.match(all, /the match winner also collects a bonus that gets bigger every round/);
     assert.match(all, /Money left over in the playoffs\? It goes to the champion/);
+    assert.match(all, /exact dollar amounts\? They are on your event page/);
+    assert.ok(!/Champion Fund|bye credit/i.test(JSON.stringify(showdownV3Guide(v3GuideCopy(false)))), 'no D10 wording');
+    assert.ok(!/Champion Fund/.test(JSON.stringify(showdownGuideCompare(v3GuideCopy(false).compare))));
+  });
+
+  it('D10 copy: escalating game values, bye credits and the Champion Fund, and points to each event page for exact rates', () => {
+    const all = bodyOf(showdownV3Guide(v3GuideCopy(true)));
+    assert.ok(all.includes('Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is awarded to the tournament champion.'));
+    assert.match(all, /Every game you win adds to your payout, in qualifying and in the playoffs/);
+    assert.match(all, /each playoff round pays more per game than the round before\. There are no match-win bonuses/);
+    assert.match(all, /A bye credit is not a game won/);
+    assert.match(all, /exact dollar amounts\? They are on your event page/);
+    assert.match(all, /The Champion Fund is set aside from the prize pool when the event starts/);
+    assert.ok(!/winner.s bonus|bonus that grows/i.test(all), 'no match-win bonus wording');
     assert.match(all, /Some earlier events worked a little differently/);
     assert.match(all, /With an even number of games, a match can end in a tie/);
     assert.ok(!/circle/i.test(all), 'no seating-circle detail');

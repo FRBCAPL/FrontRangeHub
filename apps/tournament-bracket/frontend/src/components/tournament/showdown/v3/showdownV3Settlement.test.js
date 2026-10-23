@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { v3Event, playQualifying, qualify, playPlayoffs, earnings } from './showdownV3TestKit.js';
 import { splitHalfUnits, splitUnits } from './showdownV3Settlement.js';
 import { v3UnitCents } from './showdownV3Rules.js';
+import { v3ByeCents } from './showdownV3Pay.js';
 import { v3AdjustmentAudit } from './showdownV3Adjustments.js';
 import { v3InterruptedResult } from './showdownV3Results.js';
 
@@ -23,7 +24,7 @@ describe('V3 settlement', () => {
     assert.equal(s.paidCents, ev.plan.poolCents);
     assert.deepEqual(s.bonusRecipients, [status.championId]);
     assert.equal(s.rows[status.championId].settlementCents, s.remainderCents);
-    assert.equal(sum(s.rows, 'byeCents'), ev.plan.byes * ev.plan.ladder.bye * 100);
+    assert.equal(sum(s.rows, 'byeCents'), ev.plan.byes * v3ByeCents(ev.plan));
   });
 
   it('in progress, the remainder is held and nothing is over-paid', () => {
@@ -33,8 +34,8 @@ describe('V3 settlement', () => {
     assert.equal(s.paidCents + s.heldCents, ev.plan.poolCents);
   });
 
-  it('walkovers pay the match win but no unplayed games; mid-match walkovers keep the games played', () => {
-    const base = qualify(playQualifying(v3Event(cfg(8))));
+  it('walkovers pay the match win but no unplayed games; mid-match walkovers keep the games played (equal-rate plan)', () => {
+    const base = qualify(playQualifying(v3Event(cfg(8, { equalRate: true }))));
     const quitter = base.qualifierIds[0];
     const ev = playPlayoffs(base, { quitAt: { [quitter]: 'semifinal' } });
     const sf = ev.playoffs.find((m) => m.result === 'walkover');
@@ -44,12 +45,12 @@ describe('V3 settlement', () => {
     assert.ok(playoffs.rows[sf.winnerId].matchWinCents >= ev.plan.ladder.perRound.semifinal * 100);
     assert.equal(settlement.ok, true, settlement.problems.join('; '));
 
-    const ev2 = playPlayoffs(qualify(playQualifying(v3Event(cfg(8, { seed: 11 })))), { quitAt: {}, midMatch: true });
+    const ev2 = playPlayoffs(qualify(playQualifying(v3Event(cfg(8, { seed: 11, equalRate: true })))), { quitAt: {}, midMatch: true });
     assert.equal(earnings(ev2, { outcome: 'completed' }).settlement.ok, true);
   });
 
-  it('champion by walkover is paid the championship; a double-forfeit semifinal leaves an empty final position', () => {
-    const base = qualify(playQualifying(v3Event(cfg(8, { seed: 3 }))));
+  it('champion by walkover is paid the championship; a double-forfeit semifinal leaves an empty final position (equal-rate plan)', () => {
+    const base = qualify(playQualifying(v3Event(cfg(8, { seed: 3, equalRate: true }))));
     const ev = playPlayoffs(base, { quitAt: Object.fromEntries(base.qualifierIds.map((id) => [id, 'semifinal'])) });
     // everyone quit: abandonment
     const { settlement: a } = earnings(ev, { outcome: 'abandoned', withdrawnIds: base.qualifierIds });

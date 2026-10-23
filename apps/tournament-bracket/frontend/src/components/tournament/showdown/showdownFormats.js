@@ -8,6 +8,7 @@ import {
 } from './showdownRules.js';
 import { supportedFieldRange } from './showdownFieldRules.js';
 import { V3_STARTS_ENABLED, V3_NOT_READY_MESSAGE, V3_SETTING_KEYS, v3Settings } from './v3/showdownV3Format.js';
+import { v3GuideCopy } from './v3/showdownV3NewEventCopy.js';
 
 const RACE_FORMAT_KEYS = ['entryFee', 'minEntrants', 'maxEntrants', 'tableCount', 'qualifyingRaceTo', 'playoffRaceTo'];
 
@@ -38,7 +39,7 @@ export const SHOWDOWN_FORMATS = [
     version: SHOWDOWN_PAYOUT_V3,
     code: 'V3',
     name: 'Fixed-length qualifying with per-game pay',
-    summary: 'Every qualifying match plays a fixed number of games, all of them played, and can end in a tie. Each game won pays; the playoffs are races with a graded championship guarantee.',
+    summary: v3GuideCopy().formatSummary,
     usesRaces: false,
     fixedRaces: false,
     settingKeys: V3_SETTING_KEYS,

@@ -8,7 +8,9 @@ import { screenPublicEvent, UNSUPPORTED_PUBLIC_MESSAGE } from '../useShowdownPub
 import { moneyViewV3 } from '../../operator/v3/showdownV3MoneyView.js';
 import { standingsViewV3 } from '../../operator/v3/showdownV3StandingsView.js';
 import { render } from '../../operator/showdownRenderKit.js';
+import { V3_ESCALATING_FORMULA as D10 } from '../../v3/showdownV3Rules.js';
 import { buildV3LegacyPlan } from '../../v3/showdownV3PlanLegacy.js';
+import { buildV3EqualRatePlan } from '../../v3/showdownV3Plan.js';
 import { V3_PLAN_MISSING_MESSAGE, v3PublicProblem, v3PublicFacts, v3PublicSchedule, v3PayoutRules, v3PublicSettlement } from './showdownV3PublicView.js';
 
 const V1V2_WORDS = /Qualifying win pays|Climb|ladder rung|V1|V2|race to \d+ in qualifying/i;
@@ -20,7 +22,7 @@ const tab = async (t, event, extra = {}) => clean(await render('../public/v3/Sho
 
 const ev = {};
 before(() => {
-  const st = startV3(8, { games: 6, seed: 2 });
+  const st = startV3(8, { games: 6, seed: 2, formula: D10 });
   let [s, m] = startNext(st.s, st.op, 'qualifying');
   ev.started = publicShowdown(s);
   s = E.recordResult(s, m.id, { score1: 3, score2: 3 }, st.op());
@@ -28,14 +30,14 @@ before(() => {
   ev.tieMatchId = m.id;
   ev.creditsState = E.withdrawPlayer(s, s.players[3].id, st.op());
   ev.credits = publicShowdown(ev.creditsState);
-  const p = toPlayoffsV3(12, { seed: 3, games: 6 });
+  const p = toPlayoffsV3(12, { seed: 3, games: 6, formula: D10 });
   ev.playoffs = publicShowdown(p.s);
   const qf = p.s.matches.find((x) => x.phase === 'playoff' && x.roundKey === 'quarterfinal');
   ev.walkover = publicShowdown(E.withdrawPlayer(p.s, qf.p1, p.op()));
   ev.walkoverQf = qf;
-  ev.doneState = runV3(8, { seed: 4 }).s;
+  ev.doneState = runV3(8, { seed: 4, formula: D10 }).s;
   ev.done = publicShowdown(ev.doneState);
-  const i = toPlayoffsV3(8, { seed: 4 });
+  const i = toPlayoffsV3(8, { seed: 4, formula: D10 });
   ev.interrupted = publicShowdown(E.interruptShowdown(i.s, { acknowledgeUnresolved: true }, CONFIRM, i.op()));
 });
 
@@ -122,17 +124,22 @@ describe('V3 player screens', () => {
   it('money: locked plan rules in plain language, game pay, bonuses and totals', async () => {
     const rules = v3PayoutRules(ev.tie.payoutPlan);
     assert.equal(rules.length, 7);
-    assert.equal(rules[0], 'Every game you win pays $0.75, in qualifying and in the playoffs.');
-    assert.match(rules[1], /6 games/);
-    assert.match(rules[3], /races to 5\. Each playoff game won pays \$0\.75/);
-    assert.match(rules[5], /goes to the champion as the playoff reserve remainder/);
-    assert.match(rules[6], /runner-up more than either semifinal loser.*Walkovers, withdrawals during qualifying and operator adjustments are exceptions/);
+    assert.equal(rules[0], 'Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is awarded to the tournament champion.');
+    assert.match(rules[1], /Every qualifying game you win pays \$1\.75.*6 games/);
+    assert.match(rules[3], /races to 5\. Each game won pays more every round: \$2 in the semifinal, \$2\.25 in the championship\. There are no match-win bonuses\./);
+    assert.match(rules[5], /Champion Fund starts at \$19\.75.*champion receives the whole fund/);
+    assert.match(rules[6], /champion always earns more than every other player, even with forfeits, walkovers or withdrawals/);
+    assert.ok(!rules.some((l) => /runner-up/.test(l)), 'the runner-up order is not promised');
+    const equal = v3PayoutRules(buildV3EqualRatePlan({ entrants: 8, entryFee: 20, qualifyingGames: 6, playoffRaceTo: 5 }));
+    assert.equal(equal[0], 'Every game you win pays $0.75, in qualifying and in the playoffs.');
+    assert.match(equal[5], /goes to the champion as the playoff reserve remainder/);
     const legacy = v3PayoutRules(buildV3LegacyPlan({ entrants: 8, entryFee: 20, qualifyingGames: 6, playoffRaceTo: 5 }));
     assert.equal(legacy.length, 6);
     assert.match(legacy[0], /Round 1 qualifying game pays \$0\.50 and a Round 2 game pays \$1\.50/);
     assert.ok(!legacy.some((l) => /reserve/i.test(l)));
     const html = await tab('money', ev.done);
-    for (const t of ['How the money works', 'Every cent of the $160 pool']) assert.ok(html.includes(t), t);
+    for (const t of ['How the money works', 'Every cent of the $160 pool', 'Starting Champion Fund', 'Final Champion Fund', 'Champion Fund / split', 'Bye credit', 'Neither are bye credits']) assert.ok(html.includes(t), t);
+    assert.ok(!html.includes('Match-win bonuses'));
     assert.ok(!/reserve|retain|operator keeps|house/i.test(html.replace(/playoff reserve remainder/gi, '')), 'no internal or retention wording beyond the approved remainder label');
     assert.ok(!V1V2_WORDS.test(html));
   });
@@ -140,7 +147,8 @@ describe('V3 player screens', () => {
   it('results and settlement: completed, interrupted and under review', async () => {
     const done = v3PublicSettlement(ev.done);
     assert.equal(done.status, 'Completed');
-    assert.match(done.lines[0], /Every cent of the \$160 pool was paid to players/);
+    assert.match(done.lines[0], /Every cent of the \$160 pool was paid to players\. The \$[\d.]+ Champion Fund/);
+    assert.equal(done.championFund.final, true);
     const html = await tab('results', ev.done);
     assert.ok(html.includes('Champion'));
     const intr = v3PublicSettlement(ev.interrupted);

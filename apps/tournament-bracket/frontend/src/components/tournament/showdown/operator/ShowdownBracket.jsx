@@ -6,7 +6,7 @@ function Byes({ v, fmt }) {
   if (!v.byeCount) return null;
   return (
     <div className="sd-byes">
-      <h4>Quarterfinal byes ({v.byeCount}) · {fmt(v.byePay)} each</h4>
+      <h4>Quarterfinal byes ({v.byeCount}) · {fmt(v.byePay)}{v.escalating ? ' bye credit' : ''} each</h4>
       <p className="sd-note">
         Byes go to the highest-ranked qualifiers by the qualifying tiebreakers. A tie for the last bye is settled by a bye
         shootout among the tied qualifiers only; {v.byeRule || 'a bye pays half a quarterfinal win'}.

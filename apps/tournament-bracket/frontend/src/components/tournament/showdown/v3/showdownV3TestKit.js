@@ -4,7 +4,8 @@ import { drawBracket, syncPlayoffPlayers } from '../showdownPlayoff.js';
 import { emptyPositionResult, CHAMPION_WALKOVER } from '../showdownResults.js';
 import { playoffTemplate, finalRound } from '../showdownPlayoffTemplates.js';
 import { seededRandom, shuffled } from '../showdownRandom.js';
-import { buildV3Plan } from './showdownV3Plan.js';
+import { buildV3Plan, buildV3EqualRatePlan } from './showdownV3Plan.js';
+import { buildV3EscalatingPlan } from './showdownV3PlanEscalating.js';
 import { buildV3LegacyPlan } from './showdownV3PlanLegacy.js';
 import { v3PlayedResult, v3ForfeitResult, v3InterruptedResult } from './showdownV3Results.js';
 import { v3QualifyingLedger } from './showdownV3Qualifying.js';
@@ -14,9 +15,13 @@ import { computeV3Earnings } from './showdownV3Earnings.js';
 export const ids = (n) => Array.from({ length: n }, (_, i) => `P${i + 1}`);
 const NOW = '2026-10-18T12:00:00.000Z';
 
-/** `legacy: true` locks a plan with the original formula, as events started before the equal-rate formula have. */
-export function v3Event({ entrants, entryFee, qualifyingGames, playoffRaceTo, seed = 1, legacy = false }) {
-  const plan = (legacy ? buildV3LegacyPlan : buildV3Plan)({ entrants, entryFee, qualifyingGames, playoffRaceTo });
+/**
+ * `legacy: true` locks a plan with the original formula, `equalRate: true` with the equal-rate formula and
+ * `escalating: true` with D10; otherwise the formula the activation switch picks for new events.
+ */
+export function v3Event({ entrants, entryFee, qualifyingGames, playoffRaceTo, seed = 1, legacy = false, equalRate = false, escalating = false }) {
+  const build = legacy ? buildV3LegacyPlan : equalRate ? buildV3EqualRatePlan : escalating ? buildV3EscalatingPlan : buildV3Plan;
+  const plan = build({ entrants, entryFee, qualifyingGames, playoffRaceTo });
   const playerIds = ids(entrants);
   const random = seededRandom(seed);
   const qualifying = circleMatches(buildCircle(playerIds, random));

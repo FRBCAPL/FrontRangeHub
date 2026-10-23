@@ -7,7 +7,7 @@ import { standingsViewV3 } from '../../operator/v3/showdownV3StandingsView.js';
 import { v3Dollars } from '../../operator/v3/showdownV3MoneyView.js';
 import { resultsView } from '../../operator/showdownBoardView.js';
 import { v3PublicSchedule, v3PayoutRules, v3PublicSettlement } from './showdownV3PublicView.js';
-import { isEqualRatePlan } from '../../v3/showdownV3Rules.js';
+import { isEqualRatePlan, isEscalatingPlan } from '../../v3/showdownV3Rules.js';
 
 /** Qualifying schedule: every match by round, with opponents, game count and the score once played. */
 export function ShowdownV3PublicSchedule({ event }) {
@@ -16,7 +16,7 @@ export function ShowdownV3PublicSchedule({ event }) {
       <h3>Qualifying schedule</h3>
       <p className="sd-note">
         Each player plays two qualifying matches: one in Round 1 and one in Round 2.
-        {isEqualRatePlan(event.payoutPlan) ? ' Every game won pays the same in both rounds.' : ' Round 2 games pay more.'}
+        {isEqualRatePlan(event.payoutPlan) || isEscalatingPlan(event.payoutPlan) ? ' Every game won pays the same in both rounds.' : ' Round 2 games pay more.'}
       </p>
       {v3PublicSchedule(event).map((g) => (
         <div key={g.title}>
@@ -56,7 +56,7 @@ export function ShowdownV3PublicBracket({ event }) {
       <h3>{v.size}-player playoff bracket</h3>
       <p className="sd-note">{v.raceNote}</p>
       {v.championship.status === 'unresolved' ? <p className="sd-warn">Championship unresolved: {v.championship.reason} The director will resolve it.</p> : null}
-      {v.byes.length ? <p className="sd-note">Semifinal byes ({v.formatAmount(v.byePay)} each): {v.byes.map((b) => b.name).join(', ')}.</p> : null}
+      {v.byes.length ? <p className="sd-note">Semifinal byes ({v.formatAmount(v.byePay)} {v.escalating ? 'bye credit ' : ''}each): {v.byes.map((b) => b.name).join(', ')}.</p> : null}
       <ShowdownBracketRounds v={v} readOnly />
     </section>
   );
@@ -74,6 +74,8 @@ export function ShowdownV3PublicMoney({ event }) {
         <div className="cc-stat-row">
           <div className="cc-stat"><span>Prize pool</span><strong>{s.pool}</strong></div>
           <div className="cc-stat"><span>Earned by players</span><strong>{s.paid}</strong></div>
+          {s.championFund ? <div className="cc-stat"><span>Starting Champion Fund</span><strong>{s.championFund.start}</strong></div> : null}
+          {s.championFund ? <div className="cc-stat"><span>{s.championFund.label}</span><strong>{s.championFund.current}</strong></div> : null}
         </div>
         {s.lines.map((l) => <p key={l} className="sd-note">{l}</p>)}
       </section>
@@ -89,8 +91,9 @@ export function ShowdownV3PublicMoney({ event }) {
               <thead>
                 <tr>
                   <th>Player</th><th className="sd-num">Qualifying games</th><th className="sd-num">Credits</th>
-                  <th className="sd-num">Playoff games</th><th className="sd-num">Match-win bonuses</th><th className="sd-num">Bye</th>
-                  <th className="sd-num">Champion / split</th><th className="sd-num">Adjustments</th><th className="sd-num">Total</th>
+                  <th className="sd-num">Playoff games</th>{s.escalating ? null : <th className="sd-num">Match-win bonuses</th>}
+                  <th className="sd-num">{s.escalating ? 'Bye credit' : 'Bye'}</th>
+                  <th className="sd-num">{s.escalating ? 'Champion Fund / split' : 'Champion / split'}</th><th className="sd-num">Adjustments</th><th className="sd-num">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -100,7 +103,7 @@ export function ShowdownV3PublicMoney({ event }) {
                     <td className="sd-num">{p.qualifying}</td>
                     <td className="sd-num">{p.credit}</td>
                     <td className="sd-num">{p.playoffGames}</td>
-                    <td className="sd-num">{p.matchWins}</td>
+                    {s.escalating ? null : <td className="sd-num">{p.matchWins}</td>}
                     <td className="sd-num">{p.bye}</td>
                     <td className="sd-num">{p.settlement}</td>
                     <td className="sd-num">{p.adjustment}</td>
@@ -111,7 +114,7 @@ export function ShowdownV3PublicMoney({ event }) {
             </table>
           </div>
         ) : <p className="sd-note">No money won yet.</p>}
-        <p className="sd-note">Credits are administrative (games credited for a forfeit) and are not games won.</p>
+        <p className="sd-note">Credits are administrative (games credited for a forfeit) and are not games won.{s.escalating ? ' Neither are bye credits.' : ''}</p>
       </section>
     </>
   );

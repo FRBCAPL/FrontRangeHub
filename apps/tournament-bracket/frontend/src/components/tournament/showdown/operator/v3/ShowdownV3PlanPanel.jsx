@@ -1,4 +1,5 @@
 import React from 'react';
+import ShowdownV3PlanEscalating from './ShowdownV3PlanEscalating.jsx';
 
 /**
  * A V3 payout plan. `locked` false: the preview shown before the start (what the start will lock).
@@ -17,7 +18,8 @@ export default function ShowdownV3PlanPanel({ view, problems = [], locked = fals
           {problems.map((p) => <li key={p}>{p}</li>)}
         </ul>
       ) : null}
-      {v ? (
+      {v?.escalating ? <ShowdownV3PlanEscalating v={v} /> : null}
+      {v && !v.escalating ? (
         <>
           <div className="cc-stat-row">
             <div className="cc-stat"><span>Entry pool</span><strong>{v.pool}</strong></div>

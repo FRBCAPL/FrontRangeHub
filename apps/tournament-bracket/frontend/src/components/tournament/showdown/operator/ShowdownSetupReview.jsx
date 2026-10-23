@@ -21,7 +21,8 @@ export function SetupMoneyStats({ state, v3, plan, preview }) {
         <div className="cc-stat"><span>Entry pool</span><strong>{plan ? plan.pool : money(count * fee)}</strong></div>
         <div className="cc-stat"><span>Playoff spots</span><strong>{plan ? plan.qualifiers : '—'}</strong></div>
         <div className="cc-stat"><span>Quarterfinal byes</span><strong>{plan ? plan.byes : '—'}</strong></div>
-        {plan?.equalRate
+        {plan?.escalating ? <div className="cc-stat"><span>Qualifying game / playoff games</span><strong>{`${plan.rates.qualifying} / ${plan.stages.map((s) => s.rate).join(' → ')}`}</strong></div> : null}
+        {plan?.escalating ? null : plan?.equalRate
           ? <div className="cc-stat"><span>Every game won</span><strong>{plan.rates.game}</strong></div>
           : <div className="cc-stat"><span>Round 1 / Round 2 game</span><strong>{plan ? `${plan.rates.r1} / ${plan.rates.r2}` : '—'}</strong></div>}
       </div>

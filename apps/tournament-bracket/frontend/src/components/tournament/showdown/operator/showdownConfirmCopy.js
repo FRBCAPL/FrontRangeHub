@@ -1,6 +1,8 @@
 /** Wording for every operator confirmation, kept in one place so the screens stay small. */
 import { nameOf, money } from './showdownView.js';
 import { isPayoutV2, isPayoutV3 } from '../showdownPayoutVersion.js';
+import { formatCents, isEscalatingPlan } from '../v3/showdownV3Rules.js';
+import { v3ByeCents } from '../v3/showdownV3Pay.js';
 import { earningsDropDetails, previewReopenQualifying, previewReopenShootout, previewUndoFrom, previewWithdraw } from './showdownEarningsDrop.js';
 
 export function withdrawCopy(state, player) {
@@ -65,8 +67,10 @@ export function undoFromCopy(state, match, downstream) {
 }
 
 export function confirmBracketCopy(state) {
-  const byePay = isPayoutV3(state) ? state.payoutPlan.ladder.bye : state.playoffPlan?.bye;
-  const byes = (state.playoff?.byes || []).map((b) => `${nameOf(state, b.playerId)} gets a quarterfinal bye (${money(byePay)}).`);
+  const v3 = isPayoutV3(state);
+  const byePay = v3 ? formatCents(v3ByeCents(state.payoutPlan)) : money(state.playoffPlan?.bye);
+  const kind = v3 && isEscalatingPlan(state.payoutPlan) ? 'bye credit ' : '';
+  const byes = (state.playoff?.byes || []).map((b) => `${nameOf(state, b.playerId)} gets a quarterfinal bye (${kind}${byePay}).`);
   return {
     title: 'Confirm the bracket?',
     message: 'Playoffs open and the bracket can no longer be redrawn.',
