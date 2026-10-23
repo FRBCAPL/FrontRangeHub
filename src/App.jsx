@@ -84,6 +84,8 @@ import MatchChat from "@apps/singles-league/frontend/src/components/chat/MatchCh
 import AdminDashboard from "@apps/singles-league/frontend/src/components/dashboard/AdminDashboard.jsx";
 import PlatformAdminDashboard from "@shared/components/PlatformAdminDashboard";
 import AdminInbox from "@apps/hub/frontend/src/components/admin-inbox/AdminInbox.jsx";
+import AdminLadderApplicationsPage from "@apps/hub/frontend/src/components/admin-inbox/AdminLadderApplicationsPage.jsx";
+import AdminPaymentsPage from "@apps/hub/frontend/src/components/admin-inbox/AdminPaymentsPage.jsx";
 import SupabaseLogin from "@shared/components/modal/modal/SupabaseLogin";
 import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';
@@ -1014,7 +1016,7 @@ function AppContent() {
                path="/admin"
                element={
                  isAuthenticated && isAdmin() ? (
-                   <AppRouteWrapper appName="Admin Dashboard">
+                   <AppRouteWrapper appName="Singles League Admin">
                      <div className="admin-app-content">
                        <AdminDashboard userToken={userToken} />
                      </div>
@@ -1029,9 +1031,39 @@ function AppContent() {
                path="/admin/inbox"
                element={
                  isAuthenticated && isAdmin() ? (
-                   <AppRouteWrapper appName="Admin Inbox">
+                   <AppRouteWrapper appName="Admin Home">
                      <main className="main-app-content">
                        <AdminInbox />
+                     </main>
+                   </AppRouteWrapper>
+                 ) : (
+                   <Navigate to="/" />
+                 )
+               }
+             />
+
+             <Route
+               path="/admin/ladder-applications"
+               element={
+                 isAuthenticated && isAdmin() ? (
+                   <AppRouteWrapper appName="Admin Home">
+                     <main className="main-app-content">
+                       <AdminLadderApplicationsPage userToken={userToken} />
+                     </main>
+                   </AppRouteWrapper>
+                 ) : (
+                   <Navigate to="/" />
+                 )
+               }
+             />
+
+             <Route
+               path="/admin/payments"
+               element={
+                 isAuthenticated && isAdmin() ? (
+                   <AppRouteWrapper appName="Admin Home">
+                     <main className="main-app-content">
+                       <AdminPaymentsPage />
                      </main>
                    </AppRouteWrapper>
                  ) : (

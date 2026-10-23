@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ATTENTION_GROUPS } from './adminAttentionSources.js';
+import { ADMIN_TOOLS } from './adminTools.js';
 import useAdminAttention from './useAdminAttention.js';
 import './adminInbox.css';
 
-/** One page listing everything across the apps that is waiting on the admin. */
+/** Admin Home: everything across the apps that is waiting on the admin, plus shortcuts to every admin screen. */
 export default function AdminInbox() {
   const navigate = useNavigate();
   const { counts, total, error, loading, checkedAt, refresh } = useAdminAttention(true);
@@ -13,7 +14,7 @@ export default function AdminInbox() {
     <div className="ai-page">
       <header className="ai-head">
         <div>
-          <h1>Admin Inbox</h1>
+          <h1>Admin Home</h1>
           <p className="ai-lede">
             {loading ? 'Checking every app…' : total ? `${total} thing${total === 1 ? '' : 's'} waiting on you.` : 'All clear. Nothing is waiting on you.'}
           </p>
@@ -24,8 +25,17 @@ export default function AdminInbox() {
         </div>
       </header>
 
+      <nav className="ai-tools" aria-label="Admin tools">
+        {ADMIN_TOOLS.map((t) => (
+          <button key={t.to} type="button" className="ai-tool" onClick={() => navigate(t.to)}>
+            <span aria-hidden="true">{t.icon}</span> {t.label}
+          </button>
+        ))}
+      </nav>
+
       {error ? <p className="ai-error">{error}</p> : null}
 
+      <h2 className="ai-section-title">Waiting on you</h2>
       <div className="ai-grid">
         {ATTENTION_GROUPS.map((g) => {
           const groupTotal = g.items.reduce((s, it) => s + (Number(counts[it.key]) || 0), 0);

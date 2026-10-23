@@ -60,7 +60,7 @@ export default function AdminAlertsBell({ attention }) {
               ))}
             </div>
           ))}
-          <button type="button" className="aib-all" onClick={() => go(ADMIN_INBOX_PATH)}>Open Admin Inbox</button>
+          <button type="button" className="aib-all" onClick={() => go(ADMIN_INBOX_PATH)}>Open Admin Home</button>
         </div>
       ) : null}
     </div>

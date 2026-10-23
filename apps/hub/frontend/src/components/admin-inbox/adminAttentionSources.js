@@ -8,11 +8,11 @@ export const ATTENTION_GROUPS = [
     app: 'Accounts & Ladder',
     icon: '🪜',
     items: [
-      { key: 'ladder_applications', label: 'Ladder applications to approve', to: '/admin' },
-      { key: 'account_requests', label: 'New accounts to approve (buyers, non-ladder)', to: '/consignment/admin?tab=auctions' },
+      { key: 'ladder_applications', label: 'Ladder applications to approve', to: '/admin/ladder-applications' },
+      { key: 'account_requests', label: 'New accounts to approve (buyers, non-ladder)', to: '/consignment/admin?tab=people' },
       { key: 'ladder_scheduling', label: 'Match scheduling requests', to: '/ladder/admin' },
       { key: 'ladder_forfeits', label: 'Forfeit requests', to: '/ladder/admin' },
-      { key: 'payments_pending', label: 'Payments to verify', to: '/admin' },
+      { key: 'payments_pending', label: 'Payments to verify', to: '/admin/payments' },
     ],
   },
   {
@@ -20,7 +20,7 @@ export const ATTENTION_GROUPS = [
     app: 'Consignment & Auctions',
     icon: '🏷️',
     items: [
-      { key: 'consignment_seller_requests', label: 'Seller access requests', to: '/consignment/admin?sellers=1' },
+      { key: 'consignment_seller_requests', label: 'Seller access requests', to: '/consignment/admin?tab=people' },
       { key: 'consignment_messages', label: 'New messages from buyers and sellers', to: '/consignment/admin?tab=messages' },
       { key: 'consignment_pending', label: 'New items submitted for review', to: '/consignment/admin?status=pending' },
       { key: 'consignment_expired', label: 'Expired items (renew or return)', to: '/consignment/admin?status=expired' },

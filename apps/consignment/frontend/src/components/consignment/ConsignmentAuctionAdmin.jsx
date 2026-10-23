@@ -16,8 +16,6 @@ import ConsignmentAuctionStartModal from './ConsignmentAuctionStartModal.jsx';
 import ConsignmentAuctionPaidModal from './ConsignmentAuctionPaidModal.jsx';
 import ConsignmentAuctionDefaultModal from './ConsignmentAuctionDefaultModal.jsx';
 import ConsignmentSecondChanceModal from './ConsignmentSecondChanceModal.jsx';
-import ConsignmentBidderStatusPanel from './ConsignmentBidderStatusPanel.jsx';
-import ConsignmentAccountRequestsPanel from './ConsignmentAccountRequestsPanel.jsx';
 
 const REFRESH_MS = 30000;
 
@@ -30,7 +28,6 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
   const [unpaid, setUnpaid] = useState(null);
   const [secondChance, setSecondChance] = useState(null);
   const [editingListing, setEditingListing] = useState(null);
-  const [bidderKey, setBidderKey] = useState(0);
 
   const statusRef = useRef(status);
   statusRef.current = status;
@@ -43,10 +40,7 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
   };
   const closeWith = (setter) => (saved) => {
     setter(null);
-    if (saved) {
-      refresh();
-      setBidderKey((k) => k + 1);
-    }
+    if (saved) refresh();
   };
 
   useEffect(() => {
@@ -86,7 +80,6 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
 
   return (
     <>
-      <ConsignmentAccountRequestsPanel />
       <div className="cs-filters">
         <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter auctions">
           {AUCTION_STATUSES.filter((s) => s.id !== 'draft').map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
@@ -135,7 +128,6 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
           onClose={() => setEditingListing(null)}
         />
       ) : null}
-      <ConsignmentBidderStatusPanel refreshKey={bidderKey} />
     </>
   );
 }

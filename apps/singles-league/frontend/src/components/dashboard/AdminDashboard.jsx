@@ -1880,8 +1880,8 @@ export default function AdminDashboard({ userToken }) {
       case 'overview':
         return (
           <div className={styles.overviewSection}>
-            <h2>Welcome to Admin Dashboard</h2>
-            <p>Select a section below to manage your league:</p>
+            <h2>Singles League admin</h2>
+            <p>Tools for the Singles League. For everything else, use Admin Home in the ⚙️ Admin menu.</p>
             
             <div className={styles.quickActions}>
               <button 

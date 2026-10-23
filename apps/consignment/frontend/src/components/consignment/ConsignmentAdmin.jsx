@@ -18,7 +18,7 @@ import {
   updateItemIfStatus,
 } from '../../services/consignmentService.js';
 import ConsignmentAgreementSettings from './ConsignmentAgreementSettings.jsx';
-import ConsignmentSellersPanel from './ConsignmentSellersPanel.jsx';
+import ConsignmentPeoplePanel from './ConsignmentPeoplePanel.jsx';
 import { expireOverdueItems } from '../../services/consignmentFeesService.js';
 import { clearSellerPaid } from '../../services/consignmentPayoutService.js';
 import ConsignmentSellerPaidModal from './ConsignmentSellerPaidModal.jsx';
@@ -44,10 +44,25 @@ function statusChangeQuestion(item, next) {
   return null;
 }
 
+const TABS = [
+  { id: 'items', label: 'Items' },
+  { id: 'auctions', label: 'Auctions' },
+  { id: 'people', label: 'People' },
+  { id: 'messages', label: 'Messages' },
+  { id: 'visitors', label: 'Visitors' },
+  { id: 'settings', label: 'Settings' },
+];
+
+function tabFromParams(params) {
+  const asked = params.get('tab');
+  if (TABS.some((t) => t.id === asked)) return asked;
+  return params.get('sellers') === '1' ? 'people' : 'items';
+}
+
 export default function ConsignmentAdmin() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const linkedTab = ['auctions', 'messages', 'visitors'].includes(params.get('tab')) ? params.get('tab') : 'items';
+  const linkedTab = tabFromParams(params);
   const linkedStatus = params.get('status');
   const [status, setStatus] = useState(linkedTab === 'items' && linkedStatus ? linkedStatus : 'pending');
   const [rows, setRows] = useState([]);
@@ -144,24 +159,22 @@ export default function ConsignmentAdmin() {
         Approve listings, print tags, renew, and record sales. Listings run {consignmentDays} days;
         expired items have {graceDays} days for pickup. Seller contact never appears on the public shop.
       </p>
-      <ConsignmentAgreementSettings settings={settings} onError={setError} />
-      <ConsignmentSellersPanel defaultOpen={params.get('sellers') === '1'} />
       <div className="cs-tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={tab === 'items'} className={tab === 'items' ? 'active' : ''} onClick={() => setTab('items')}>
-          Items
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'auctions'} className={tab === 'auctions' ? 'active' : ''} onClick={() => setTab('auctions')}>
-          Auctions
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'messages'} className={tab === 'messages' ? 'active' : ''} onClick={() => setTab('messages')}>
-          Messages
-        </button>
-        <button type="button" role="tab" aria-selected={tab === 'visitors'} className={tab === 'visitors' ? 'active' : ''} onClick={() => setTab('visitors')}>
-          Visitors
-        </button>
+        {TABS.map((t) => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
+            {t.label}
+          </button>
+        ))}
       </div>
+      {tab === 'people' ? <ConsignmentPeoplePanel /> : null}
       {tab === 'messages' ? <ConsignmentMessagesPanel /> : null}
       {tab === 'visitors' ? <ConsignmentVisitsPanel /> : null}
+      {tab === 'settings' ? (
+        <>
+          {error ? <p className="cs-error">{error}</p> : null}
+          <ConsignmentAgreementSettings settings={settings} onError={setError} />
+        </>
+      ) : null}
       {tab === 'auctions' ? (
         <ConsignmentAuctionAdmin
           key={linkedTab === 'auctions' ? linkedStatus || '' : ''}

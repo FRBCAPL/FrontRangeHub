@@ -23,7 +23,8 @@ function hubCenterTitle(pathname, currentAppName, userFirstName) {
   if (pathname === '/hub') return !userFirstName ? 'Ladder - Login' : 'Ladder of Legends';
   if (pathname === '/guest/ladder' || pathname === '/ladder') return 'Ladder of Legends';
   if (pathname === '/cueless') return 'Cueless in the Booth';
-  if (pathname === '/admin') return 'Admin Panel';
+  if (pathname === '/admin') return 'Singles League Admin';
+  if (['/admin/inbox', '/admin/ladder-applications', '/admin/payments'].includes(pathname)) return 'Admin Home';
   if (pathname === '/platform-admin') return 'Platform Admin';
   if (pathname === '/dues-tracker') return 'Dues Tracker';
   if (pathname === '/tournament-bracket/how-it-works') return 'How Cash Climb works';
@@ -330,13 +331,13 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                       {isAdmin && (
                         <>
                           <button onClick={() => navigate(ADMIN_INBOX_PATH)} className="dropdown-item">
-                            🔔 Admin Inbox{attention.total ? ` (${attention.total})` : ''}
+                            🏠 Admin Home{attention.total ? ` (${attention.total})` : ''}
                           </button>
                           <button onClick={handlePlayerManagementClick} className="dropdown-item">
                             👥 Players
                           </button>
                           <button onClick={handleAdminClick} className="dropdown-item">
-                            ⚙️ Admin
+                            ⚙️ Singles League admin
                           </button>
                         </>
                       )}
@@ -379,13 +380,13 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
                 {isAdmin && (
                   <>
                     <button onClick={() => { navigate(ADMIN_INBOX_PATH); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
-                      🔔 Admin Inbox{attention.total ? ` (${attention.total})` : ''}
+                      🏠 Admin Home{attention.total ? ` (${attention.total})` : ''}
                     </button>
                     <button onClick={() => { handlePlayerManagementClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
                       👥 Players
                     </button>
                     <button onClick={() => { handleAdminClick(); setIsMobileMenuOpen(false); }} className="mobile-menu-item">
-                      ⚙️ Admin
+                      ⚙️ Singles League admin
                     </button>
                   </>
                 )}
