@@ -219,9 +219,23 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
   const renderCheckStep = () => (
     <div style={{ padding: '20px' }}>
       <h3 style={{ color: '#fff', marginBottom: '10px', textAlign: 'center' }}>Join the Ladder</h3>
-      <p style={{ color: '#ccc', marginBottom: '30px', fontSize: '0.9rem', textAlign: 'center' }}>
+      <p style={{ color: '#ccc', marginBottom: '14px', fontSize: '0.9rem', textAlign: 'center' }}>
         Choose how you want to join:
       </p>
+      <div style={{
+        background: 'rgba(255, 193, 7, 0.08)',
+        border: '1px solid rgba(255, 193, 7, 0.35)',
+        borderRadius: '8px',
+        padding: '12px 14px',
+        marginBottom: '18px'
+      }}>
+        <p style={{ color: '#ffc107', margin: '0 0 8px', fontSize: '0.85rem', fontWeight: 700 }}>What it costs to play</p>
+        <ul style={{ color: '#e0e0e0', margin: 0, paddingLeft: '18px', fontSize: '0.82rem', lineHeight: 1.45 }}>
+          {LADDER_SIGNUP_COST_LINES.map((line) => (
+            <li key={line} style={{ marginBottom: '6px' }}>{line}</li>
+          ))}
+        </ul>
+      </div>
 
       {error && (
         <div style={{

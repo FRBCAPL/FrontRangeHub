@@ -131,7 +131,7 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
                 fontSize: isMobile ? '12px' : '14px',
                 fontWeight: 'bold'
               }}>
-                💰 Note: Match reporting still requires $5 per match fee
+                💰 Note: The winner still pays $10 to report a match ($5 prize pool, $5 platform)
               </p>
             </div>
           </div>
@@ -255,7 +255,7 @@ const PromotionalPeriodModal = ({ isOpen, onClose, userLadderData, isProfileComp
                   setShowPaymentInfo(true);
                 } else {
                   // Fallback: show a simple alert with payment info
-                  alert(`💳 Payment Information\n\n📅 Monthly Membership: $5/month\n🏆 Match Reporting Fee: $5 per match\n💳 Payment Methods: CashApp, Venmo, PayPal, Credit/Debit\n\nNote: Match reporting still requires $5 per match fee during the promotional period.`);
+                  alert(`💳 Payment Information\n\nLadder access is free. There is no monthly fee.\n🏆 Match reporting: $10 when the winner posts on time ($5 prize pool, $5 platform)\nLate reports add $5, which goes to the prize pool.\n💳 Payment methods: credits, card, cash at Legends, Venmo, Cash App`);
                 }
               }}
               style={{

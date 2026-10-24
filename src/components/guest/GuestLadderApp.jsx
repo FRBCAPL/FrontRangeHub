@@ -335,7 +335,7 @@ const GuestLadderApp = () => {
           const claimData = await claimResponse.json();
           console.log('Claim submitted:', claimData);
           
-          successMessage = `🎯 Ladder Position Claim Submitted!\n\nYou have submitted a claim for Position #${selectedLadderPosition.position} in the ${selectedLadderPosition.ladder} ladder.\n\nName: ${joinFormData.firstName} ${joinFormData.lastName}\nEmail: ${joinFormData.email}\nGenerated PIN: ${generatedPin}\n\nYour claim has been sent to admin for approval. Once approved, you can view the ladder for free, but you'll need a $5/month membership to challenge other players and report matches.\n\nWe'll contact you at ${joinFormData.email} within 24-48 hours with the approval decision.`;
+          successMessage = `🎯 Ladder Position Claim Submitted!\n\nYou have submitted a claim for Position #${selectedLadderPosition.position} in the ${selectedLadderPosition.ladder} ladder.\n\nName: ${joinFormData.firstName} ${joinFormData.lastName}\nEmail: ${joinFormData.email}\nGenerated PIN: ${generatedPin}\n\nYour claim has been sent to admin for approval. Once approved, ladder access is free. There is no monthly fee. The winner pays $10 to report a match.\n\nWe'll contact you at ${joinFormData.email} within 24-48 hours with the approval decision.`;
         }
       } else {
         // Handle joining as new player (existing logic)
@@ -643,12 +643,13 @@ const GuestLadderApp = () => {
                  <h3>💳 Payment Structure</h3>
                  <p>Simple and transparent pricing</p>
                  <ul>
-                   <li><strong>Account Creation:</strong> Free - no cost to claim a position</li>
-                   <li><strong>Ladder Membership:</strong> $5/month (required for challenges)</li>
-                   <li><strong>Match Fees:</strong> $5 per match (total)</li>
-                   <li><strong>Fee Distribution:</strong> $3 to prize pool<br></br>$2 to platform</li>
-                   <li><strong>Payment Methods:</strong> Venmo, Cashapp, CC/Debit, Cash</li>
-                   <li><strong>Billing:</strong> Monthly automatic renewal</li>
+                   <li><strong>Account Creation:</strong> Free - no cost to claim a position. No monthly ladder fee.</li>
+                   <li><strong>Match entry:</strong> $20 per player (499 & Under) or $25 per player (500–549 and 550+). The winner takes both entries.</li>
+                   <li><strong>Match reporting fee:</strong> $10 per match when the winner reports ($5 prize pool, $5 platform)</li>
+                   <li><strong>Sanctioning:</strong> $25 for the current calendar year, required to challenge and report</li>
+                   <li><strong>Cash Climb:</strong> separate event. Its entry (normally $20) stays in that event</li>
+                   <li><strong>Forfeits:</strong> $5 total when admin-confirmed</li>
+                   <li><strong>Reporting:</strong> Within 48 hours for the standard fee; $5 late fee after that (full late fee goes to the ladder prize pool)</li>
                  </ul>
                </div>
 
@@ -1239,7 +1240,7 @@ const GuestLadderApp = () => {
                   opacity: 0.9
                 }}>
                   Free account creation - no cost to claim a position!<br/>
-                  $5/month membership required for challenges and match reporting.
+                  No monthly fee. The winner pays $10 to report a match.
                 </p>
               </div>
             )}

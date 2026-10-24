@@ -646,7 +646,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       <span style={{ color: '#888', fontSize: '0.72rem', lineHeight: 1.35 }}>
                         {(() => {
                           const n = seedFundingData?.tournamentEntriesUsed ?? 0;
-                          const r = seedFundingData?.tournamentLedgerPerEntry ?? 15;
+                          const r = seedFundingData?.tournamentLedgerPerEntry ?? 5;
                           const pre = seedFundingData?.seedAmountFromEstimate ? '~' : '';
                           const suf = seedFundingData?.seedAmountFromEstimate ? ' (est.)' : '';
                           const tot = (seedFundingData?.seedAmount || 0) + (seedFundingData?.seedAmountClimber || 0);
@@ -706,7 +706,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.25rem' }}>
                     <span style={{ color: '#999', fontSize: '0.78rem' }}>Prizes</span>
-                    <span style={{ color: '#ccc', fontSize: '0.8rem' }}>Climber + top {seedFundingData?.payouts?.placesToPay || 1}</span>
+                    <span style={{ color: '#ccc', fontSize: '0.8rem' }}>{seedFundingData?.payouts?.placesToPay ? `Climber + top ${seedFundingData.payouts.placesToPay}` : 'Climber + top places'}</span>
                   </div>
                   <div style={{ 
                     display: 'flex', 

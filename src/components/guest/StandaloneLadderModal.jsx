@@ -9,7 +9,7 @@ import '../Homepage.css';
 import PlayerStatsModal from '@apps/ladder/frontend/src/components/ladder/PlayerStatsModal.jsx';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar.jsx';
 import SupabaseSignupModal from '../auth/SupabaseSignupModal.jsx';
-import LadderOfLegendsRulesModal from '../modal/LadderOfLegendsRulesModal.jsx';
+import LadderOfLegendsRulesModal from '@shared/components/modal/modal/LadderOfLegendsRulesModal.jsx';
 import ContactAdminModal from '@apps/ladder/frontend/src/components/ladder/ContactAdminModal.jsx';
 import LadderNewsTicker from '@apps/ladder/frontend/src/components/ladder/LadderNewsTicker.jsx';
 

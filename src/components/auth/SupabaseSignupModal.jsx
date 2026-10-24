@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import DraggableModal from '../modal/DraggableModal';
 import supabaseDataService from '../../services/supabaseDataService.js';
 import supabaseAuthService from '../../services/supabaseAuthService.js';
+import { LADDER_SIGNUP_COST_LINES } from '@shared/utils/utils/ladderPaymentCopy.js';
 
 const SHOW_FACEBOOK = false; // Hidden; use Google or email only
 
@@ -254,9 +255,23 @@ const SupabaseSignupModal = ({ isOpen, onClose, claimingPlayer = null, container
   const renderNewSignupStep = () => (
     <div style={{ padding: '20px' }}>
       <h3 style={{ color: '#fff', marginBottom: '15px', textAlign: 'center' }}>🆕 New Player Signup</h3>
-      <p style={{ color: '#ccc', marginBottom: '25px', fontSize: '0.95rem', textAlign: 'center', lineHeight: '1.6' }}>
-        Sign up with Google or email to create your account. Your account will be sent to admin for approval.
+      <p style={{ color: '#ccc', marginBottom: '12px', fontSize: '0.95rem', textAlign: 'center', lineHeight: '1.6' }}>
+        Sign up with Google or email. Contact admin is for help, not a second way to create an account.
       </p>
+      <div style={{
+        background: 'rgba(255, 193, 7, 0.08)',
+        border: '1px solid rgba(255, 193, 7, 0.35)',
+        borderRadius: '8px',
+        padding: '12px 14px',
+        marginBottom: '20px'
+      }}>
+        <p style={{ color: '#ffc107', margin: '0 0 8px', fontSize: '0.85rem', fontWeight: 700 }}>What it costs to play</p>
+        <ul style={{ color: '#e0e0e0', margin: 0, paddingLeft: '18px', fontSize: '0.82rem', lineHeight: 1.45 }}>
+          {LADDER_SIGNUP_COST_LINES.map((line) => (
+            <li key={line} style={{ marginBottom: '6px' }}>{line}</li>
+          ))}
+        </ul>
+      </div>
 
       {error && (
         <div style={{
