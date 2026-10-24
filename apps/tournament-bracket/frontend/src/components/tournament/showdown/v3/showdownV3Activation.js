@@ -10,7 +10,7 @@
  */
 import { V3_EQUAL_RATE_FORMULA, V3_ESCALATING_FORMULA } from './showdownV3Rules.js';
 
-export const V3_D10_FOR_NEW_EVENTS = false;
+export const V3_D10_FOR_NEW_EVENTS = true;
 
 /** The formula marker new events lock. */
 export function v3NewEventFormula(d10 = V3_D10_FOR_NEW_EVENTS) {
