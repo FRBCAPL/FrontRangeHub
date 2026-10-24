@@ -318,7 +318,21 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 <div>
                   <div style={{ color: '#00ff00', fontSize: '0.75rem', marginBottom: '0.15rem' }}>🏆 Prize Pools</div>
                   <div style={{ color: '#ffd700', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                    Tourn: {(Number(tournament.total_prize_pool) || 0) > 0 ? formatCurrency(tournament.total_prize_pool) : formatCurrency(totalRegistrations * (TOURNAMENT_STRUCTURE.entryFeeBreakdown.toTournament || 0))} • Qtr: {quarterlyPrizePool != null ? formatCurrency((quarterlyPrizePool || 0) + totalRegistrations * TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed) : '...'}
+                    {(() => {
+                      const entryEach = Number(tournament.entry_fee) || TOURNAMENT_STRUCTURE.entryFee;
+                      const seedEach = tournament.ladder_seed_amount != null && Number(tournament.ladder_seed_amount) > 0
+                        ? Number(tournament.ladder_seed_amount)
+                        : 0;
+                      const platformEach = seedEach > 0 ? (TOURNAMENT_STRUCTURE.entryFeeBreakdown.toPlatform ?? 0) : 0;
+                      const eventEach = Math.max(0, entryEach - seedEach - platformEach);
+                      const tournLabel = (Number(tournament.total_prize_pool) || 0) > 0
+                        ? formatCurrency(tournament.total_prize_pool)
+                        : formatCurrency(totalRegistrations * eventEach);
+                      const qtrLabel = quarterlyPrizePool != null
+                        ? formatCurrency((quarterlyPrizePool || 0) + totalRegistrations * seedEach)
+                        : '...';
+                      return `Tourn: ${tournLabel} • Qtr: ${qtrLabel}`;
+                    })()}
                   </div>
                 </div>
               </div>
@@ -334,9 +348,11 @@ const TournamentRegistrationModal = ({ isOpen, onClose, tournamentId, currentUse
                 💡 {(() => {
                   const eb = TOURNAMENT_STRUCTURE.entryFeeBreakdown;
                   const entryF = Number(tournament.entry_fee) || TOURNAMENT_STRUCTURE.entryFee;
-                  const seedTotal = (tournament.ladder_seed_amount != null && Number(tournament.ladder_seed_amount) > 0)
-                    ? Number(tournament.ladder_seed_amount)
-                    : eb.toLadderSeed;
+                  const hasLadderCredit = tournament.ladder_seed_amount != null && Number(tournament.ladder_seed_amount) > 0;
+                  if (!hasLadderCredit) {
+                    return `The full ${formatCurrency(entryF)} entry stays in this event.`;
+                  }
+                  const seedTotal = Number(tournament.ladder_seed_amount);
                   const plat = eb.toPlatform ?? 5;
                   const bracket = Math.max(0, entryF - seedTotal - plat);
                   const place = Math.round(seedTotal * (eb.toLadderPlacement / eb.toLadderSeed) * 100) / 100;

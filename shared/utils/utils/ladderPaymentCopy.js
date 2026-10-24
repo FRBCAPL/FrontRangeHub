@@ -53,8 +53,19 @@ export const MATCH_FEE_WHEN_YOU_PAY_BULLETS = [
 export const WINNER_PAYS_LOSER_NOT_LINE =
   'Winner pays the reporting fee; the loser pays nothing for that match.';
 
-export const TOURNAMENT_ENTRY_PRIZE_SPLIT_LINE =
-  'Tournament $20/entry → $10 tournament prize pool, $5 ladder prize pool ($4 placement + $1 climber), $5 platform.';
+export const CASH_CLIMB_ENTRY_STAYS_LINE =
+  'Cash Climb is a separate event. Its entry (normally $20, set for that event) stays in that event and does not feed the ladder quarterly prize pool.';
+
+export const TOURNAMENT_ENTRY_PRIZE_SPLIT_LINE = CASH_CLIMB_ENTRY_STAYS_LINE;
+
+/** Shown before a new ladder account is created. */
+export const LADDER_SIGNUP_COST_LINES = [
+  'No monthly fee. Creating an account is free; an admin approves it, usually within a day.',
+  'Match entry is $20 per player (499 & Under) or $25 per player (500–549 and 550+). The winner takes both entries.',
+  'The winner pays a $10 reporting fee per match ($5 prize pool, $5 platform), plus $5 if it is more than 48 hours after the match date.',
+  'BCAPL sanctioning is $25 for the current calendar year and is required to challenge and report.',
+  CASH_CLIMB_ENTRY_STAYS_LINE
+];
 
 export const CHALLENGE_CONFIRM_MATCH_FEE_BLURB =
   'The winner reports the match and pays the reporting fee ($10 standard: $5 prize pools, $5 platform; +$5 late after 48 hours from the match date to pool; forfeit per rules). Only one reporting payment per match — not per player!';

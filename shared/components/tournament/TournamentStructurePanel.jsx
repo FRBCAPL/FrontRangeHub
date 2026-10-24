@@ -10,7 +10,7 @@ const formatCurrency = (n) => new Intl.NumberFormat('en-US', { style: 'currency'
 
 const TournamentStructurePanel = () => {
   const [expanded, setExpanded] = useState(false);
-  const { name, finalStageName, entryFee, entryFeeBreakdown, phase1, phase2, prizeDistribution, gameRules } = TOURNAMENT_STRUCTURE;
+  const { name, finalStageName, entryFee, phase1, phase2, prizeDistribution, gameRules } = TOURNAMENT_STRUCTURE;
 
   return (
     <div style={{
@@ -60,12 +60,9 @@ const TournamentStructurePanel = () => {
             <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px' }}>
               <p style={{ margin: '0 0 0.35rem 0' }}><strong>Entry Fee:</strong> {formatCurrency(entryFee)}</p>
               <p style={{ margin: '0 0 0.35rem 0' }}>
-                <strong>Breakdown (default $20 entry):</strong>{' '}
-                {formatCurrency(entryFeeBreakdown.toTournament)} tournament prize pool •{' '}
-                {formatCurrency(entryFeeBreakdown.toLadderSeed)} ladder quarterly prize pool ({formatCurrency(entryFeeBreakdown.toLadderPlacement)} placement + {formatCurrency(entryFeeBreakdown.toClimberSeed)} climber) •{' '}
-                {formatCurrency(entryFeeBreakdown.toPlatform)} platform
+                The entry stays in this event. It feeds the ladder quarterly prize pool only when that event is set up with a ladder credit.
               </p>
-              <p style={{ margin: 0 }}><strong>Tournament prize pool from entry:</strong> players × {formatCurrency(entryFeeBreakdown.toTournament)} (use overrides/sponsors if $0)</p>
+              <p style={{ margin: 0 }}><strong>Tournament prize pool from entry:</strong> players × the event entry (use overrides/sponsors if $0)</p>
             </div>
           </section>
 

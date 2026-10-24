@@ -656,9 +656,11 @@ const GuestLadderApp = () => {
                  <h3>💳 Payment Structure</h3>
                  <p>Simple and transparent pricing</p>
                  <ul>
-                   <li><strong>Account Creation:</strong> Free - no cost to claim a position</li>
-                   <li><strong>Ladder access:</strong> Free (no monthly fee)</li>
+                   <li><strong>Account Creation:</strong> Free - no cost to claim a position. No monthly ladder fee.</li>
+                   <li><strong>Match entry:</strong> $20 per player (499 & Under) or $25 per player (500–549 and 550+). The winner takes both entries.</li>
                    <li><strong>Match reporting fee:</strong> $10 per match when the winner reports ($5 prize pool, $5 platform)</li>
+                   <li><strong>Sanctioning:</strong> $25 for the current calendar year, required to challenge and report</li>
+                   <li><strong>Cash Climb:</strong> separate event. Its entry (normally $20) stays in that event</li>
                    <li><strong>Forfeits:</strong> $5 total when admin-confirmed</li>
                    <li><strong>Payment methods:</strong> Credits, cash, card/Square where enabled</li>
                    <li><strong>Reporting:</strong> Within 48 hours for the standard fee; $5 late fee after that (full late fee goes to the ladder prize pool)</li>

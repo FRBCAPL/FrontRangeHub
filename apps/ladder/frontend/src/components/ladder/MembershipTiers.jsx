@@ -158,7 +158,7 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
             🏆 Quarterly Prize Pool
           </h3>
           <p className="text-lg mb-6 opacity-90">
-            Pools grow from tournament entries and from the prize-side portion of match reporting ($5 per standard $10 settlement toward placement and climber funds; late and forfeit add more per rules). Quarterly awards follow the ladder prize pool rules.
+            Quarterly pools grow from the prize-side portion of match reporting ($5 of each standard $10 fee toward placement and climber funds; late and forfeit add more per rules). A Cash Climb entry stays in that event and does not feed this pool.
           </p>
           
           <div className="max-w-2xl mx-auto text-sm opacity-90 text-left space-y-2">
@@ -175,28 +175,9 @@ const MembershipTiers = ({ onSelectTier, currentMembership }) => {
           </h3>
           <div className="bg-white rounded-lg p-6 shadow-sm max-w-md mx-auto">
             <div className="text-3xl font-bold text-purple-600 mb-4">$20</div>
-            <div className="text-sm text-gray-600 space-y-2">
-              <div className="flex justify-between items-center">
-                <span>→ Tournament Prize Pool:</span>
-                <span className="font-bold">$10</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>→ Ladder Prize Pool:</span>
-                <span className="font-bold">$5</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span style={{ paddingLeft: '1rem' }}>• Placement:</span>
-                <span className="font-bold">$4</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span style={{ paddingLeft: '1rem' }}>• Climber:</span>
-                <span className="font-bold">$1</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>→ Platform:</span>
-                <span className="font-bold">$5</span>
-              </div>
-            </div>
+            <p className="text-sm text-gray-600">
+              Cash Climb is a separate event. This entry normally stays in that event. The amount can be changed when the event is set up.
+            </p>
           </div>
         </div>
         

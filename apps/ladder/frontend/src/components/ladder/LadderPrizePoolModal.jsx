@@ -193,8 +193,8 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
       const completedMatches = prizePoolData?.totalMatches || 0;
       
       // Calendar quarter for period display; no monthly ladder fee in prize math.
-      // (1) Tournament $20 entry → $10 tournament prize pool, $5 ladder quarterly pool ($4 placement + $1 climber), $5 platform.
-      // (2) Match reporting $10 standard → $5 to ladder pool ($4 placement + $1 climber), $5 platform; +late credited in full to pool; forfeit per rules.
+      // Cash Climb entries stay in that event unless a ladder credit was stored. This estimate still uses a stored seed as $4 placement + $1 climber per counted entry.
+      // Match reporting $10 standard → $5 to ladder pool ($4 placement + $1 climber), $5 platform; +late credited in full to pool; forfeit per rules.
       let phase, membershipFee, periodStartDate, nextPayoutDate, periodLengthMonths;
       const tournamentPlacementPerEntry = 4;
       const tournamentClimberPerEntry = 1;
@@ -700,8 +700,7 @@ const LadderPrizePoolModal = ({ isOpen, onClose, selectedLadder }) => {
                       padding: '8px 6px 4px',
                       textAlign: 'left'
                     }}>
-                      <p style={{ margin: '0 0 8px' }}><strong style={{ color: '#eceff1' }}>Each ladder has its own tournament and prize pool. <br />
-                       $20 tournament entry</strong> — $10 to tournament prize pool, $5 to ladder prize pool ($4 placement, $1 climber), $5 to platform.</p>
+                      <p style={{ margin: '0 0 8px' }}><strong style={{ color: '#eceff1' }}>Each ladder has its own quarterly prize pool.</strong> Cash Climb is a separate event: its entry (normally $20, set for that event) stays in that event and does not feed this pool.</p>
                       <p style={{ margin: 0 }}>{PRIZEPOOL_MODAL_MATCH_FEE_LINE}</p>
                     </div>
                   )}

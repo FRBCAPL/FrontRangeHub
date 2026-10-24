@@ -259,7 +259,7 @@ const MatchFeePayment = ({
               <span>$5.00</span>
             </div>
             <div style={{ fontStyle: 'italic', color: '#aaa', fontSize: '0.75rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-              Tournament entries: $20 total = $10 tournament pool, $5 ladder pool ($4 placement + $1 climber), $5 platform.
+              Cash Climb is a separate event. Its entry (normally $20) stays in that event and does not feed the ladder quarterly prize pool.
             </div>
           </div>
         </div>

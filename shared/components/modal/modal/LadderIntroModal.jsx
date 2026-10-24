@@ -134,20 +134,20 @@ export default function LadderIntroModal({ isOpen, onClose, onViewLadder }) {
           <div style={bracketsBox}>
             <div style={bracketCard}>
               <div style={{ fontWeight: 700, color: '#ff6b6b', marginBottom: '0.25rem' }}>499 & Under</div>
-              <div style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>Race to 5 · $20 entry</div>
+              <div style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>Race to 5 · $20 per player</div>
             </div>
             <div style={bracketCard}>
               <div style={{ fontWeight: 700, color: '#ff6b6b', marginBottom: '0.25rem' }}>500–549</div>
-              <div style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>Race to 7 · $25 entry</div>
+              <div style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>Race to 7 · $25 per player</div>
             </div>
             <div style={bracketCard}>
               <div style={{ fontWeight: 700, color: '#ff6b6b', marginBottom: '0.25rem' }}>550+</div>
-              <div style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>Race to 7 · $25 entry</div>
+              <div style={{ fontSize: '0.85rem', color: '#e0e7ff' }}>Race to 7 · $25 per player</div>
             </div>
           </div>
           <p style={{ margin: 0, fontSize: '0.875rem', color: '#a5b4fc', lineHeight: 1.5 }}>
             Brackets based on FargoRate. 14-day grace periods when crossing bracket boundaries.
-            {' '}Cash Climb events normally use a <strong>$20</strong> entry: <strong>$10</strong> tournament prize pool, <strong>$5</strong> ladder quarterly prize pool (<strong>$4</strong> placement + <strong>$1</strong> climber), <strong>$5</strong> platform (each event may override the fee in the tournament card).
+            {' '}Cash Climb is a separate event. Its entry (normally <strong>$20</strong>, set on that event) stays in that event and does not feed the ladder quarterly prize pool.
           </p>
         </div>
 

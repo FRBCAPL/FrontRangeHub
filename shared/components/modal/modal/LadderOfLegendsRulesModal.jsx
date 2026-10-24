@@ -212,7 +212,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <h4 style={{ color: '#ffc107', margin: 0, fontSize: '1.1rem' }}>499 and under</h4>
             <div style={{ textAlign: 'right' }}>
               <p style={{ color: '#e0e0e0', margin: '0 0 2px 0', fontSize: '0.9rem' }}>Race to 5 (minimum)</p>
-              <p style={{ color: '#e0e0e0', margin: 0, fontSize: '0.9rem' }}>Entry Fee: $20</p>
+              <p style={{ color: '#e0e0e0', margin: 0, fontSize: '0.9rem' }}>Entry fee: $20 per player</p>
             </div>
           </div>
 
@@ -229,7 +229,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <h4 style={{ color: '#ffc107', margin: 0, fontSize: '1.1rem' }}>500-549</h4>
             <div style={{ textAlign: 'right' }}>
               <p style={{ color: '#e0e0e0', margin: '0 0 2px 0', fontSize: '0.9rem' }}>Race to 7 (minimum)</p>
-              <p style={{ color: '#e0e0e0', margin: 0, fontSize: '0.9rem' }}>Entry Fee: $25</p>
+              <p style={{ color: '#e0e0e0', margin: 0, fontSize: '0.9rem' }}>Entry fee: $25 per player</p>
             </div>
             </div>
 
@@ -246,7 +246,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <h4 style={{ color: '#ffc107', margin: 0, fontSize: '1.1rem' }}>550+</h4>
             <div style={{ textAlign: 'right' }}>
               <p style={{ color: '#e0e0e0', margin: '0 0 2px 0', fontSize: '0.9rem' }}>Race to 7 (minimum)</p>
-              <p style={{ color: '#e0e0e0', margin: 0, fontSize: '0.9rem' }}>Entry Fee: $25</p>
+              <p style={{ color: '#e0e0e0', margin: 0, fontSize: '0.9rem' }}>Entry fee: $25 per player</p>
             </div>
           </div>
 
@@ -573,7 +573,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
             <ul style={{ color: '#e0e0e0', paddingLeft: '15px', marginBottom: '12px', fontSize: '0.95rem' }}>
               <li><strong>Ladder standings:</strong> Completed matches count on the ladder when reported — that is separate from when data reaches FargoRate</li>
               <li><strong>Official Fargo / BCAPL:</strong> Matches are submitted for Fargo when <strong>both</strong> players are sanctioned; use the status on the ladder (✓ sanctioned · ✗ not yet)</li>
-              <li><strong>With sanctioning required from Jan 1, 2026:</strong> Most matches involve two sanctioned players; if something looks wrong, ask an admin</li>
+              <li><strong>Current-year sanctioning:</strong> A match is sent to FargoRate when both players are sanctioned for this calendar year. If a status looks wrong, ask an admin</li>
             </ul>
           </div>
 
@@ -629,7 +629,7 @@ export default function LadderOfLegendsRulesModal({ isOpen, onClose, isMobile, o
               <strong style={{ color: '#ffc107' }}>What feeds the pool</strong>
             </p>
             <ul style={{ margin: '0 0 12px 0', paddingLeft: '18px' }}>
-              <li style={{ marginBottom: '6px' }}><strong>Tournament ($20 entry):</strong> $10 to the tournament prize pool; $5 to this ladder&apos;s quarterly prize pool ($4 placement + $1 climber); $5 platform.</li>
+              <li style={{ marginBottom: '6px' }}><strong>Cash Climb:</strong> a separate event. Its entry (normally $20, set for that event) stays in that event and does not feed this quarterly pool.</li>
               <li><strong>Match report ($10 standard):</strong> $5 platform; $5 into the prize pool ($4 placement + $1 climber).<br />
                Extra late fees also add to the prize pool.</li>
             </ul>

@@ -55,7 +55,7 @@ const TournamentAdminDashboard = () => {
       round_robin_type: 'double',
       location: '',
       entry_fee: '20',
-      ladder_seed_amount: String(TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed),
+      ladder_seed_amount: '0',
       total_prize_pool: '0',
       first_place_prize: '0',
       // Structure overrides (from config defaults)
@@ -77,7 +77,7 @@ const TournamentAdminDashboard = () => {
     round_robin_type: 'double',
     location: '',
     entry_fee: '20',
-    ladder_seed_amount: String(TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed),
+    ladder_seed_amount: '0',
     total_prize_pool: '0',
     first_place_prize: '0',
     race_to: String(TOURNAMENT_STRUCTURE.gameRules.raceTo),
@@ -2133,7 +2133,7 @@ const TournamentAdminDashboard = () => {
         round_robin_type: createForm.round_robin_type,
         location: (createForm.location || '').trim() || null,
         entry_fee: parseFloat(createForm.entry_fee) || 20,
-        ladder_seed_amount: parseFloat(createForm.ladder_seed_amount) || TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed,
+        ladder_seed_amount: Number.isFinite(parseFloat(createForm.ladder_seed_amount)) ? parseFloat(createForm.ladder_seed_amount) : 0,
         total_prize_pool: parseFloat(createForm.total_prize_pool) || 0,
         first_place_prize: parseFloat(createForm.first_place_prize) || 0,
         status: 'registration',
@@ -2180,7 +2180,7 @@ const TournamentAdminDashboard = () => {
         round_robin_type: editForm.round_robin_type,
         location: (editForm.location || '').trim() || null,
         entry_fee: parseFloat(editForm.entry_fee) || 20,
-        ladder_seed_amount: parseFloat(editForm.ladder_seed_amount) || TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed,
+        ladder_seed_amount: Number.isFinite(parseFloat(editForm.ladder_seed_amount)) ? parseFloat(editForm.ladder_seed_amount) : 0,
         total_prize_pool: parseFloat(editForm.total_prize_pool) || 0,
         first_place_prize: parseFloat(editForm.first_place_prize) || 0,
         ...(Object.keys(structure_overrides).length > 0 ? { structure_overrides } : { structure_overrides: null })
@@ -2472,8 +2472,9 @@ const TournamentAdminDashboard = () => {
                       </div>
                       <div style={{ color: '#888', fontSize: '0.8rem' }}>
                         Entry: {formatCurrency(tournament.entry_fee || 0)}
-                        {tournament.ladder_seed_amount ? ` • Ladder pool: ${formatCurrency(tournament.ladder_seed_amount)}` : ''}
-                        {' '}($10 tournament • $4 placement • $1 climber • $5 platform)
+                        {tournament.ladder_seed_amount
+                          ? ` • Ladder pool: ${formatCurrency(tournament.ladder_seed_amount)}`
+                          : ' • full entry stays in this event'}
                       </div>
                     </div>
                     <div style={{
@@ -2832,7 +2833,7 @@ const TournamentAdminDashboard = () => {
                       round_robin_type: t.round_robin_type || 'double',
                       location: t.location || '',
                       entry_fee: String(t.entry_fee ?? 20),
-                      ladder_seed_amount: String(t.ladder_seed_amount ?? TOURNAMENT_STRUCTURE.entryFeeBreakdown.toLadderSeed),
+                      ladder_seed_amount: String(t.ladder_seed_amount ?? 0),
                       total_prize_pool: String(t.total_prize_pool ?? 0),
                       first_place_prize: String(t.first_place_prize ?? 0),
                       race_to: String(so.race_to ?? struct.gameRules.raceTo),
@@ -3556,7 +3557,7 @@ const TournamentAdminDashboard = () => {
                   <input type="number" min="0" step="0.01" value={createForm.entry_fee} onChange={(e) => setCreateForm(f => ({ ...f, entry_fee: e.target.value }))}
                     style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
-                <div title="Ladder prize-pool share from each $20 entry (default $5 = $4 placement + $1 climber)">
+                <div title="Optional dollars from each entry credited to the ladder quarterly pool. Leave at 0 so the full entry stays in this event.">
                   <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Ladder pool ($)</label>
                   <input type="number" min="0" step="0.01" value={createForm.ladder_seed_amount} onChange={(e) => setCreateForm(f => ({ ...f, ladder_seed_amount: e.target.value }))}
                     style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
@@ -3735,7 +3736,7 @@ const TournamentAdminDashboard = () => {
                   <input type="number" min="0" step="0.01" value={editForm.entry_fee} onChange={(e) => setEditForm(f => ({ ...f, entry_fee: e.target.value }))}
                     style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
                 </div>
-                <div title="Ladder prize-pool share from each $20 entry (default $5 = $4 placement + $1 climber)">
+                <div title="Optional dollars from each entry credited to the ladder quarterly pool. Leave at 0 so the full entry stays in this event.">
                   <label style={{ display: 'block', color: '#999', fontSize: '0.75rem', marginBottom: '0.15rem' }}>Ladder pool ($)</label>
                   <input type="number" min="0" step="0.01" value={editForm.ladder_seed_amount} onChange={(e) => setEditForm(f => ({ ...f, ladder_seed_amount: e.target.value }))}
                     style={{ width: '100%', minWidth: 0, padding: '0.4rem', fontSize: '0.85rem', background: '#222', color: '#fff', border: '1px solid #444', borderRadius: '6px', boxSizing: 'border-box' }} />
