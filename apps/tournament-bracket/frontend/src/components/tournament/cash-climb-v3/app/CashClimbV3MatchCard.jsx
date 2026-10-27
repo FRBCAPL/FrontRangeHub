@@ -1,13 +1,17 @@
 import React from 'react';
 import { matchCard, money } from './cashClimbV3View.js';
 
-/** One bracket match. `live` shows play status; `onEnter` (ready matches only) opens result entry. */
-export default function CashClimbV3MatchCard({ record, matchId, live, onEnter }) {
+/**
+ * One bracket match. `live` shows play status; `onEnter` (ready matches only) opens result entry.
+ * `round` { label, tone } adds the round's colour and a round chip.
+ */
+export default function CashClimbV3MatchCard({ record, matchId, live, onEnter, round }) {
   const card = matchCard(record, matchId);
   const resolved = card.status !== 'open';
   const tone = resolved ? 'is-resolved' : live ? `is-${card.readiness}` : '';
   return (
-    <article className={`ccv3-match ${tone}${card.championship ? ' is-championship' : ''}`} aria-label={card.title}>
+    <article className={`ccv3-match ${tone}${card.championship ? ' is-championship' : ''}${round ? ` tone-${round.tone}` : ''}`} aria-label={card.title}>
+      {round ? <span className={`ccv3-round-chip tone-${round.tone}`}>{round.label}</span> : null}
       <header className="ccv3-match-head">
         <strong>{card.title}</strong>
         {live || resolved ? <span className="ccv3-match-status">{card.statusText}</span> : null}

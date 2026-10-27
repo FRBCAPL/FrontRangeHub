@@ -104,7 +104,7 @@ describe('Cash Climb (V3) screens', () => {
   it('live view: ready matches can be entered; a settled tournament is read-only', async () => {
     const rec = startedRecord(8);
     const live = await render('./CashClimbV3LiveView.jsx', { record: rec, onPost() {}, onSettle() {} });
-    assert.equal(count(live, />Enter result</g), 2 * readyMatchIds(rec.event).length, 'each ready match appears in the ready list and its round');
+    assert.equal(count(live, />Enter result</g), readyMatchIds(rec.event).length, 'each ready match appears once, in the ready list');
     assert.match(live, /Ready to play \(4\)/);
     const done = settleCashClimbV3Record(finish(rec), { now: NOW }).record;
     const settled = await render('./CashClimbV3LiveView.jsx', { record: done, onPost() {}, onSettle() {} });

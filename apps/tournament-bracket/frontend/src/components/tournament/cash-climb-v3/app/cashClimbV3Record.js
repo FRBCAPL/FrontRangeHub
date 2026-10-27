@@ -46,6 +46,19 @@ export function settingsFromSetup(setup) {
   };
 }
 
+/** Optional player details from the Add Player form. Only filled-in ones are saved; they never affect the money. */
+export const CASH_CLIMB_V3_PLAYER_DETAILS = Object.freeze(['email', 'league', 'rank', 'fargorate']);
+
+/** A player as saved: id, name and any filled-in details (trimmed, at most 200 characters each). */
+export function cleanCashClimbV3Player(p) {
+  const out = { id: text(p?.id), name: text(p?.name) };
+  CASH_CLIMB_V3_PLAYER_DETAILS.forEach((k) => {
+    const v = text(typeof p?.[k] === 'number' ? String(p[k]) : p?.[k]).slice(0, 200);
+    if (v) out[k] = v;
+  });
+  return out;
+}
+
 export function playerProblems(players) {
   if (!Array.isArray(players)) return ['Players are missing.'];
   const problems = [];
@@ -111,7 +124,7 @@ function buildRecord(setup, { id, now, createdAt = now, lockedPayout = null }) {
   const settings = settingsFromSetup(setup);
   const payout = lockedPayout || cashClimbV3PayoutPreview(settings);
   if (payout.status && payout.status !== 'valid') return { status: 'invalid', problems: payout.problems };
-  const players = setup.players.map((p) => ({ id: text(p.id), name: text(p.name) }));
+  const players = setup.players.map(cleanCashClimbV3Player);
   const placement = structuredClone(setup.placement);
   let event;
   try {

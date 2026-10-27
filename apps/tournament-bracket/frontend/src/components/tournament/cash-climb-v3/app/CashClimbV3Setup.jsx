@@ -1,22 +1,26 @@
 import React, { useMemo, useRef, useState } from 'react';
 import AddPlayerModal from '../../AddPlayerModal.jsx';
 import { todayDateInput } from '../../cash-climb/cashClimbEngine.js';
-import { cashClimbV3Shape } from '../cashClimbV3Bracket.js';
 import {
-  cashClimbV3PayoutChanges, cashClimbV3PayoutPreview, cashClimbV3SetupProblems, centsFromDollarInput, createCashClimbV3Record,
-  settingsFromSetup, updateCashClimbV3Setup,
+  cashClimbV3PayoutChanges, cashClimbV3PayoutPreview, cashClimbV3SetupProblems, centsFromDollarInput, cleanCashClimbV3Player,
+  createCashClimbV3Record, settingsFromSetup, updateCashClimbV3Setup,
 } from './cashClimbV3Record.js';
+import CashClimbV3PlayerDialog from './CashClimbV3PlayerDialog.jsx';
 import { drawAfterAdd, drawAfterRemove, drawAfterSwap, drawDetails, drawFromRecord, freshDraw } from './cashClimbV3DrawState.js';
-import CashClimbV3DrawEditor from './CashClimbV3DrawEditor.jsx';
-import CashClimbV3Payouts from './CashClimbV3Payouts.jsx';
+import { ccv3InitialStep, ccv3StepIndex, ccv3StepIssues, CCV3_MIN_PLAYERS, CCV3_SETUP_STEPS } from './cashClimbV3SetupSteps.js';
+import { CashClimbV3StepBar, CashClimbV3StepFooter } from './CashClimbV3SetupStepper.jsx';
+import { CashClimbV3EventStep, CashClimbV3MoneyStep, CashClimbV3PlayersStep } from './CashClimbV3SetupFields.jsx';
+import CashClimbV3SetupReview from './CashClimbV3SetupReview.jsx';
+import './CashClimbV3Setup.css';
 
 const newId = (prefix) => `${prefix}-${globalThis.crypto?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`}`;
 const dollarText = (cents) => String(cents / 100);
 
 /**
- * New Cash Climb (V3) tournament, or the setup of a saved one that has not started (`initial`). The draw
- * is random by default and can be adjusted by hand. Saving never starts the tournament: the draw becomes
- * official only when the operator starts it.
+ * New Cash Climb (V3) tournament, or the setup of a saved one that has not started (`initial`), in four
+ * guided steps. Every step stays mounted (only the current one is shown), so nothing typed is lost when
+ * moving between steps. The draw is random by default and can be adjusted by hand on the Review step.
+ * Saving never starts the tournament: the draw becomes official only when the operator starts it.
  */
 export default function CashClimbV3Setup({ initial = null, onCreate, onCancel }) {
   const cfg = initial?.event.config;
@@ -30,9 +34,16 @@ export default function CashClimbV3Setup({ initial = null, onCreate, onCancel })
   const [players, setPlayers] = useState(() => initial?.players.map((p) => ({ ...p })) ?? []);
   const [draw, setDraw] = useState(() => (initial ? drawFromRecord(initial) : null));
   const [showAdd, setShowAdd] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState(null);
   const [problems, setProblems] = useState([]);
+  const [step, setStep] = useState(() => ccv3InitialStep(initial));
   const seq = useRef(0);
+  const top = useRef(null);
 
+  const f = {
+    name, setName, tournamentDate, setTournamentDate, game, setGame, notes, setNotes,
+    entryFee, setEntryFee, addedMoney, setAddedMoney, raceTo, setRaceTo,
+  };
   const setup = {
     name, tournamentDate, players, placement: draw?.placement ?? null, draw: drawDetails(draw),
     entryFeeCents: centsFromDollarInput(entryFee),
@@ -43,10 +54,19 @@ export default function CashClimbV3Setup({ initial = null, onCreate, onCancel })
   const { entryFeeCents, addedMoneyCents } = setup;
   const keepsPayout = initial && !cashClimbV3PayoutChanges(initial, setup);
   const preview = useMemo(
-    () => (players.length >= 8 && !keepsPayout ? cashClimbV3PayoutPreview(settingsFromSetup({ players, entryFeeCents, addedMoneyCents, raceTo: Number(raceTo) })) : null),
+    () => (players.length >= CCV3_MIN_PLAYERS && !keepsPayout ? cashClimbV3PayoutPreview(settingsFromSetup({ players, entryFeeCents, addedMoneyCents, raceTo: Number(raceTo) })) : null),
     [players, entryFeeCents, addedMoneyCents, raceTo, keepsPayout],
   );
+  const issues = ccv3StepIssues(setup);
+  const blocking = cashClimbV3SetupProblems(setup);
+  const stepped = [...issues.event, ...issues.money, ...issues.players];
+  const missing = blocking.length && stepped.length ? stepped : blocking;
+  const shown = [...problems, ...missing.filter((p) => !problems.includes(p))];
 
+  const goTo = (key) => {
+    setStep(key);
+    top.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  };
   const changeDraw = (make) => {
     try {
       setDraw(make());
@@ -57,10 +77,16 @@ export default function CashClimbV3Setup({ initial = null, onCreate, onCancel })
   };
   const addPlayer = (p) => {
     seq.current += 1;
-    const added = { id: `p${seq.current}-${Date.now().toString(36)}`, name: p.name };
+    const added = cleanCashClimbV3Player({ ...p, id: `p${seq.current}-${Date.now().toString(36)}` });
     const next = [...players, added];
     setPlayers(next);
     changeDraw(() => drawAfterAdd(draw, next, added.id));
+  };
+  const savePlayer = (edited) => {
+    const clean = cleanCashClimbV3Player(edited);
+    setPlayers(players.map((p) => (p.id === clean.id ? clean : p)));
+    setEditingPlayer(null);
+    setProblems([]);
   };
   const removePlayer = (id) => {
     const next = players.filter((p) => p.id !== id);
@@ -70,8 +96,11 @@ export default function CashClimbV3Setup({ initial = null, onCreate, onCancel })
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const found = cashClimbV3SetupProblems(setup);
-    if (found.length) { setProblems(found); return; }
+    if (step !== 'review') {
+      goTo(CCV3_SETUP_STEPS[ccv3StepIndex(step) + 1].key);
+      return;
+    }
+    if (blocking.length) { setProblems(blocking); return; }
     const result = initial ? updateCashClimbV3Setup(initial, setup) : createCashClimbV3Record(setup, { id: newId('ccv3') });
     if (result.status !== 'valid') { setProblems(result.problems); return; }
     setProblems([]);
@@ -80,61 +109,48 @@ export default function CashClimbV3Setup({ initial = null, onCreate, onCancel })
 
   return (
     <>
-      <form className="create-tournament-form cc-setup" onSubmit={handleSubmit}>
-        <h3>{initial ? `Edit setup: ${initial.name}` : 'New Cash Climb'}</h3>
-        <p className="cc-setup-note">Single elimination. Every match pays: opening matches share by score, later wins climb the payout ladder.</p>
-        <div className="cc-field-row">
-          <label>Tournament name<input value={name} onChange={(e) => setName(e.target.value)} /></label>
-          <label className="cc-date-field">Tournament date<input type="date" value={tournamentDate} onChange={(e) => setTournamentDate(e.target.value)} required /></label>
-        </div>
-        <div className="cc-field-row cc-field-row-3">
-          <label>Entry fee ($)<input type="number" min="10" step="1" value={entryFee} onChange={(e) => setEntryFee(e.target.value)} /></label>
-          <label>Added money ($)<input type="number" min="0" step="1" value={addedMoney} onChange={(e) => setAddedMoney(e.target.value)} /></label>
-          <label>Race to<input type="number" min="1" step="1" value={raceTo} onChange={(e) => setRaceTo(e.target.value)} /></label>
-        </div>
-        <div className="cc-field-row">
-          <label>
-            Game
-            <input list="ccv3-games" value={game} onChange={(e) => setGame(e.target.value)} placeholder="e.g. 9-Ball" />
-            <datalist id="ccv3-games"><option value="8-Ball" /><option value="9-Ball" /><option value="10-Ball" /></datalist>
-          </label>
-          <label>House rules (optional)<textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
-        </div>
-        <p className="cc-setup-note ccv3-muted">Game and house rules are shown to players. They do not change the money.</p>
-        <label>
-          Players
-          <div className="players-section">
-            <button type="button" className="add-player-btn" onClick={() => setShowAdd(true)}>+ Add Player</button>
-            {players.length > 0 && (
-              <ul className="players-list">
-                {players.map((p) => (
-                  <li key={p.id} className="player-list-item">
-                    <span className="player-list-name">{p.name}</span>
-                    <button type="button" className="player-list-remove" onClick={() => removePlayer(p.id)} aria-label={`Remove ${p.name}`}>&times;</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <p className="players-count">{players.length} player{players.length !== 1 ? 's' : ''} (at least 8)</p>
+      <form className="create-tournament-form cc-setup ccv3-setup" onSubmit={handleSubmit} ref={top}>
+        <div className="ccv3-setup-head">
+          <div>
+            <p className="ccv3-setup-kicker">Cash Climb · Setup</p>
+            <h3>{initial ? `Edit setup: ${initial.name}` : 'New Cash Climb'}</h3>
           </div>
-        </label>
-        {keepsPayout && players.length >= 8 ? <CashClimbV3Payouts payout={initial.payout} shape={cashClimbV3Shape(initial.players.length)} locked /> : null}
-        {preview?.status === 'valid' ? <CashClimbV3Payouts payout={preview} shape={preview.shape} /> : null}
-        {initial && preview?.status === 'valid' ? <p className="cc-setup-note ccv3-notice">The money settings changed, so the payouts above are new and replace the saved ones when you save.</p> : null}
-        {preview?.status === 'invalid' ? <ul className="ccv3-problems">{preview.problems.map((p) => <li key={p}>{p}</li>)}</ul> : null}
-        {players.length >= 8 && draw ? (
-          <CashClimbV3DrawEditor players={players} draw={draw}
-            onSwap={(a, b) => changeDraw(() => drawAfterSwap(draw, a, b))}
-            onRedraw={() => changeDraw(() => freshDraw(players))} />
-        ) : null}
-        {problems.length ? <ul className="ccv3-problems" role="alert">{problems.map((p) => <li key={p}>{p}</li>)}</ul> : null}
-        <p className="cc-setup-note ccv3-muted">Saving does not start the tournament. You will review the full draw and start it on the next screen.</p>
-        <div className="form-actions">
-          <button type="button" className="btn-secondary" onClick={onCancel}>{initial ? 'Cancel' : 'Back'}</button>
-          <button type="submit" className="btn-primary">Save tournament</button>
+          <button type="button" className="btn-secondary" onClick={onCancel}>{initial ? 'Cancel editing' : 'Back to tournaments'}</button>
         </div>
+        <p className="cc-setup-note">Single elimination. Every match pays: opening matches share by score, later wins climb the payout ladder.</p>
+
+        <CashClimbV3StepBar step={step} issues={issues} ready={blocking.length === 0} onStep={goTo} />
+
+        <div data-step="event" hidden={step !== 'event'}><CashClimbV3EventStep f={f} /></div>
+        <div data-step="money" hidden={step !== 'money'}>
+          <CashClimbV3MoneyStep f={f} playerCount={players.length} preview={preview} keepsPayout={keepsPayout}
+            lockedPrizeCents={initial?.payout?.prizePoolCents} />
+        </div>
+        <div data-step="players" hidden={step !== 'players'}>
+          <CashClimbV3PlayersStep players={players} onAdd={() => setShowAdd(true)} onEdit={setEditingPlayer} onRemove={removePlayer} />
+        </div>
+        <div data-step="review" hidden={step !== 'review'}>
+          <CashClimbV3SetupReview
+            f={f} initial={initial} players={players} draw={draw} preview={preview} keepsPayout={keepsPayout}
+            ready={blocking.length === 0} problems={shown} onStep={goTo}
+            onSwap={(a, b) => changeDraw(() => drawAfterSwap(draw, a, b))}
+            onRedraw={() => changeDraw(() => freshDraw(players))}
+          />
+        </div>
+
+        <CashClimbV3StepFooter step={step} issues={issues} onStep={goTo} />
       </form>
       <AddPlayerModal isOpen={showAdd} onClose={() => setShowAdd(false)} onAdd={addPlayer} />
+      {editingPlayer ? (
+        <CashClimbV3PlayerDialog
+          key={editingPlayer.id}
+          player={editingPlayer}
+          others={players.filter((p) => p.id !== editingPlayer.id)}
+          onSave={savePlayer}
+          onRemove={() => { removePlayer(editingPlayer.id); setEditingPlayer(null); }}
+          onClose={() => setEditingPlayer(null)}
+        />
+      ) : null}
     </>
   );
 }
