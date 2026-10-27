@@ -46,7 +46,7 @@ describe('V3 TV', () => {
     const b = buildShowdownV3TvBoard(ev.qualifying);
     assert.equal(b.mode, 'qualifying');
     assert.match(b.tables[0].round, /^Round [12].* \u00b7 6 games$|Round 1 \/ Round 2/);
-    assert.equal(b.formatLine, 'Showdown V3 \u00b7 6-game qualifying matches \u00b7 playoff races to 5');
+    assert.equal(b.formatLine, 'Showdown \u00b7 6-game qualifying matches \u00b7 playoff races to 5');
     const t = buildShowdownV3TvBoard(ev.tie);
     assert.ok(t.recent.some((r) => r.resultText === '3\u20133 tie'));
     assert.ok(t.standings.hasCredits);

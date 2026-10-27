@@ -43,7 +43,7 @@ function escalatingRules(v) {
 export function v3PublicFacts(event) {
   const p = event.payoutPlan;
   return [
-    'Showdown V3',
+    'Showdown',
     `Entry ${formatCents(p.entryFee * 100)}`,
     `${p.entrants} entrants`,
     `Qualifying: ${p.qualifyingGames} games per match`,

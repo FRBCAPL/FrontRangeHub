@@ -22,7 +22,7 @@ export default function ShowdownGuideBody({ guide, isTv = false }) {
     <>
       <header className="cc-guide-hero">
         <p className="cc-guide-brand">Front Range Pool</p>
-        <p className="cc-guide-kicker">Cash Climb Showdown {guide.code}</p>
+        <p className="cc-guide-kicker">{guide.kicker || `Cash Climb Showdown ${guide.code}`}</p>
         <h1>{guide.title}</h1>
         <p className="cc-guide-tagline">{guide.subtitle}</p>
         <div className="cc-guide-chips">{guide.chips.map((c) => <span key={c}>{c}</span>)}</div>

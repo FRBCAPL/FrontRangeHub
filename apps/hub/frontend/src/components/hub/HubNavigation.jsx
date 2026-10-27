@@ -12,7 +12,14 @@ import ball8 from '@shared/assets/ball8.svg';
 import ball9 from '@shared/assets/nineball.svg';
 import ball10 from '@shared/assets/tenball.svg';
 
-function hubCenterTitle(pathname, currentAppName, userFirstName) {
+function guideTitle(search) {
+  const format = new URLSearchParams(search || '').get('format');
+  if (format === 'cash-climb-v3') return 'How Cash Climb works';
+  if (format === 'showdown' || format === 'showdown-v3') return 'How Cash Climb: Showdown works';
+  return 'How Cash Climb: King of the Hill works';
+}
+
+function hubCenterTitle(pathname, currentAppName, userFirstName, search) {
   if (pathname === '/') return 'Front Range Pool.com';
   if (pathname === '/usapl' || String(pathname || '').startsWith('/usapl/')) {
     return 'Front Range USA Pool League';
@@ -27,7 +34,7 @@ function hubCenterTitle(pathname, currentAppName, userFirstName) {
   if (['/admin/inbox', '/admin/ladder-applications', '/admin/payments'].includes(pathname)) return 'Admin Home';
   if (pathname === '/platform-admin') return 'Platform Admin';
   if (pathname === '/dues-tracker') return 'Dues Tracker';
-  if (pathname === '/tournament-bracket/how-it-works') return 'How Cash Climb King of the Hill works';
+  if (pathname === '/tournament-bracket/how-it-works') return guideTitle(search);
   if (pathname.startsWith('/tournament-bracket/submit')) return 'Submit Cash Climb King of the Hill result';
   if (pathname === '/tournament-bracket') return 'Tournament Bracket';
   if (pathname === '/estate-inventory' || pathname.startsWith('/estate-inventory/')) return 'Estate Vault';
@@ -129,7 +136,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
     !location.pathname.startsWith('/tournament-bracket/break-and-run/tv') &&
     !location.pathname.startsWith('/tournament-bracket/break-and-run/view') &&
     !location.pathname.startsWith('/tournament-bracket/break-and-run/rules');
-  const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName);
+  const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName, location.search);
   const fullName = [userFirstName, userLastName].filter(Boolean).join(' ');
   const navRootRef = React.useRef(null);
   useNavSideWidth(navRootRef, (isConsignmentApp || isArcadeApp) && !isMobile, [userFirstName, isAdmin, isSuperAdmin]);

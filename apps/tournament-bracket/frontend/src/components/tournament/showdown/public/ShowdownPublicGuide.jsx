@@ -16,8 +16,8 @@ import './guide/showdownGuide.css';
 function OlderFormatNote({ onCurrent }) {
   return (
     <p className="cc-guide-callout sd-guide-older" role="note">
-      This page explains an earlier Showdown format used by some past events. New events use V3.{' '}
-      <button type="button" className="sd-guide-older-link" onClick={onCurrent}>See how V3 works</button>
+      This page explains an earlier Showdown format used by some past events. New events use the current format.{' '}
+      <button type="button" className="sd-guide-older-link" onClick={onCurrent}>See how Showdown works now</button>
     </p>
   );
 }

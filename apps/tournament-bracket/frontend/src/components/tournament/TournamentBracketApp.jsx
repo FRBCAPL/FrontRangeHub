@@ -28,6 +28,7 @@ import { sanitizeCashClimb } from './cash-climb/cashClimbEngine.js';
 import { preferTournamentCopy, withTournamentTimestamp, tournamentTime } from './cash-climb/cashClimbSaved.js';
 import { CASH_CLIMB_GUIDE_HASH, openCashClimbGuideTv } from './cash-climb/cashClimbGuideRoute.js';
 import { SHOWDOWN_GUIDE_HASH, openShowdownGuideTv } from './showdown/public/showdownGuideRoute.js';
+import { CASH_CLIMB_V3_GUIDE_HASH, openCashClimbV3GuideTv } from './cash-climb-v3/guide/cashClimbV3GuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
 import {
@@ -554,6 +555,8 @@ export default function TournamentBracketApp() {
         onCompleted={() => setScreen('completed')}
         onTvWide={() => openCashClimbTv('landscape')}
         onTvTall={() => openCashClimbTv('portrait')}
+        onClimbGuide={() => navigate(CASH_CLIMB_V3_GUIDE_HASH)}
+        onClimbGuideTv={() => openCashClimbV3GuideTv()}
         onGuideTv={() => openCashClimbGuideTv()}
         onGuide={() => navigate(CASH_CLIMB_GUIDE_HASH)}
         onShowdownGuideTv={() => openShowdownGuideTv()}

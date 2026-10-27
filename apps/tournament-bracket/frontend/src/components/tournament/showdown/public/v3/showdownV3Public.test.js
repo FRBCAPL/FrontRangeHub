@@ -73,7 +73,7 @@ describe('V3 public routing', () => {
 
 describe('V3 player screens', () => {
   it('header facts: entry fee, entrants, fixed games and race', () => {
-    assert.deepEqual(v3PublicFacts(ev.tie), ['Showdown V3', 'Entry $20', '8 entrants', 'Qualifying: 6 games per match', 'Playoffs: race to 5']);
+    assert.deepEqual(v3PublicFacts(ev.tie), ['Showdown', 'Entry $20', '8 entrants', 'Qualifying: 6 games per match', 'Playoffs: race to 5']);
   });
 
   it('schedule: R1/R2 groups, opponents, game counts, ties and pending matches', () => {

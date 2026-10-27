@@ -78,7 +78,7 @@ export function buildShowdownV3TvBoard(event) {
     dateLabel: formatTournamentDate(event.tournamentDate),
     status: event.status,
     statusLabel: STATUS_LABELS[event.status] || event.status,
-    formatLine: `Showdown V3 \u00b7 ${plan.qualifyingGames}-game qualifying matches \u00b7 playoff races to ${plan.playoffRaceTo}`,
+    formatLine: `Showdown \u00b7 ${plan.qualifyingGames}-game qualifying matches \u00b7 playoff races to ${plan.playoffRaceTo}`,
     pool: money.pool,
     paid: money.paid,
     payout: payout(plan, money),

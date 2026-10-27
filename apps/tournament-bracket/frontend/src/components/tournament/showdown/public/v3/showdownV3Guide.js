@@ -14,7 +14,8 @@ export function showdownV3Guide(copy = v3GuideCopy()) {
   const tiebreakers = V3_TIEBREAKERS.map((t) => t.label.charAt(0).toLowerCase() + t.label.slice(1)).join(', then ');
   return {
     code: 'V3',
-    title: 'How Cash Climb Showdown V3 works',
+    kicker: 'Cash Climb Showdown',
+    title: 'How Cash Climb Showdown works',
     subtitle: 'Win games, earn cash. Make the playoffs, earn more.',
     chips: ['Every game you win pays', 'Two Qualifer matches', 'Top players make the playoffs', copy.chip],
     stages: [

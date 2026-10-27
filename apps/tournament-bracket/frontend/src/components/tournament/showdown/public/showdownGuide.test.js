@@ -123,11 +123,11 @@ describe('Showdown guide versions', () => {
     assert.equal(SHOW_OLDER_GUIDE_VERSIONS, false);
     const html = await renderAt(GUIDE, SHOWDOWN_GUIDE_HASH);
     const page = text(html);
-    for (const t of ['How Cash Climb Showdown V3 works', 'Who makes the playoffs', 'Follow a Showdown', 'The short version', 'On your phone', 'Good to know']) {
+    for (const t of ['How Cash Climb Showdown works', 'Who makes the playoffs', 'Follow a Showdown', 'The short version', 'On your phone', 'Good to know']) {
       assert.ok(page.includes(t), t);
     }
     for (const cls of ['sd-guide-versions', 'sd-guide-compare', 'sd-guide-older']) assert.ok(!html.includes(cls), `no ${cls}`);
-    assert.ok(!/\bV1\b|\bV2\b/.test(page), 'no V1/V2 mentions');
+    assert.ok(!/\bV1\b|\bV2\b|\bV3\b/.test(page), 'no version mentions');
     assert.ok(!page.includes('3 losses out'), 'no original Cash Climb copy');
   });
 
@@ -142,15 +142,15 @@ describe('Showdown guide versions', () => {
 
   it('direct V1/V2 links (older event pages) show that version with an earlier-format note', async () => {
     const v1 = text(await renderAt(GUIDE, `${SHOWDOWN_GUIDE_HASH}&v=1`));
-    assert.ok(v1.includes('earlier Showdown format') && v1.includes('See how V3 works'));
+    assert.ok(v1.includes('earlier Showdown format') && v1.includes('See how Showdown works now') && !/\bV3\b/.test(v1));
     assert.ok(v1.includes('How Cash Climb Showdown V1 works') && v1.includes('Race to 3') && v1.includes('Race to 5'));
     assert.ok(v1.includes('Every qualifier is topped up to the entry fee'));
-    assert.ok(!v1.includes('How Cash Climb Showdown V3 works') && !v1.includes('Every game you win pays $1'));
+    assert.ok(!v1.includes('How Cash Climb Showdown works') && !v1.includes('Every game you win pays $1'));
     const v2 = text(await renderAt(GUIDE, `${SHOWDOWN_GUIDE_HASH}&v=2`));
     assert.ok(v2.includes('How Cash Climb Showdown V2 works') && v2.includes('Every game you win pays $1'));
     assert.ok(!v2.includes('Every qualifier is topped up'));
     const old = text(await renderAt(GUIDE, `${CASH_CLIMB_GUIDE_HASH}?format=showdown-v3`));
-    assert.ok(old.includes('How Cash Climb Showdown V3 works'));
+    assert.ok(old.includes('How Cash Climb Showdown works'));
   });
 
   it('every version and TV board is tournament procedure only', async () => {
@@ -166,7 +166,8 @@ describe('Showdown guide versions', () => {
     for (const v of [1, 2, 3]) {
       const tv = await renderAt(GUIDE, `${SHOWDOWN_GUIDE_HASH}&v=${v}&tv=1`);
       assert.ok(tv.includes('is-tv'));
-      assert.ok(text(tv).includes(`How Cash Climb Showdown V${v} works`));
+      assert.ok(text(tv).includes(v === 3 ? 'How Cash Climb Showdown works' : `How Cash Climb Showdown V${v} works`));
+      if (v === 3) assert.ok(!/\bV3\b/.test(text(tv)), 'no V3 on the TV board');
       for (const cls of ['cc-guide-switch', 'sd-guide-versions', 'sd-guide-compare', 'sd-guide-older', 'cc-guide-foot']) assert.ok(!tv.includes(cls), `V${v}: no ${cls}`);
     }
   });

@@ -4,6 +4,8 @@ import { cashClimbNewPlayerGuide } from './cashClimbNewPlayerGuide.js';
 import { cashClimbGuideHref } from './cashClimbGuideRoute.js';
 import { isShowdownGuide, showdownGuideVersion } from '../showdown/public/showdownGuideRoute.js';
 import ShowdownPublicGuide from '../showdown/public/ShowdownPublicGuide.jsx';
+import { isCashClimbV3Guide } from '../cash-climb-v3/guide/cashClimbV3GuideRoute.js';
+import CashClimbV3PublicGuide from '../cash-climb-v3/guide/CashClimbV3PublicGuide.jsx';
 import GuideFormatSwitch from '../GuideFormatSwitch.jsx';
 import '../TournamentBracketApp.css';
 import './CashClimbPublicGuide.css';
@@ -15,11 +17,15 @@ function lineClass(line) {
   return '';
 }
 
-/** Public how-it-works route: the original Cash Climb guide, or the Showdown guide with `?format=showdown&v=1|2|3`. */
+/**
+ * Public how-it-works route: the King of the Hill guide, the Cash Climb guide with `?format=cash-climb-v3`,
+ * or the Showdown guide with `?format=showdown&v=1|2|3`.
+ */
 export default function CashClimbPublicGuide() {
   const [searchParams] = useSearchParams();
   const isTv = searchParams.get('tv') === '1';
   const search = searchParams.toString();
+  if (isCashClimbV3Guide(search)) return <CashClimbV3PublicGuide isTv={isTv} />;
   if (isShowdownGuide(search)) return <ShowdownPublicGuide isTv={isTv} version={showdownGuideVersion(search)} />;
   return <CashClimbGuide isTv={isTv} />;
 }

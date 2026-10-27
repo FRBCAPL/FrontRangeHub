@@ -12,7 +12,7 @@ export function cashClimbNewPlayerGuide() {
         body: [
           'Cash Climb King of the Hill is a cash pool tournament. \nYou pay an entry, and the full entry stays in this event.',
           'You earn money during the night by winning matches, \nnot only at the end.',
-          'The game is CSI rules. Call your shots. May be 8-Ball, 9-Ball, or 10-Ball.',
+          "The game is CSI rules. Call your shots. The director picks 8-Ball, 9-Ball, 10-Ball, mixed, or lagger's choice.",
           'One house rule: no 9 on the break. If the 9-ball is pocketed on the break, spot it and the shooter continues with the table as it lays.',
         ],
       },

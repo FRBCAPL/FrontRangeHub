@@ -7,6 +7,7 @@ import CashClimbV3Money from './CashClimbV3Money.jsx';
 import CashClimbV3Settle from './CashClimbV3Settle.jsx';
 import CashClimbV3ResultDialog from './CashClimbV3ResultDialog.jsx';
 import CashClimbV3HistoryDialog from './CashClimbV3HistoryDialog.jsx';
+import { openCashClimbV3GuideTv } from '../guide/cashClimbV3GuideRoute.js';
 
 const TABS = [{ key: 'bracket', label: 'Bracket' }, { key: 'money', label: 'Money and earnings' }];
 
@@ -35,6 +36,7 @@ export default function CashClimbV3LiveView({ record, onPost, onSettle, onRefres
           <button type="button" key={t.key} className={`ccv3-round-tab${tab === t.key ? ' is-active' : ''}`} aria-pressed={tab === t.key} onClick={() => setTab(t.key)}>{t.label}</button>
         ))}
         <button type="button" className="ccv3-round-tab ccv3-history-btn" onClick={() => setHistory(true)}>Match history</button>
+        <button type="button" className="ccv3-round-tab" onClick={openCashClimbV3GuideTv}>How it works TV</button>
       </nav>
       {tab === 'bracket'
         ? <CashClimbV3Bracket record={record} live={!readOnly} onEnter={readOnly ? undefined : setEntering} />

@@ -1,9 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
+import { CASH_CLIMB_V3_GUIDE_HASH } from './cash-climb-v3/guide/cashClimbV3GuideRoute.js';
 import { SHOWDOWN_GUIDE_HASH } from './showdown/public/showdownGuideRoute.js';
 
-/** Lets readers of either public guide switch to the other format. Hidden on the TV board. */
+/** Lets readers of any Cash Climb public guide switch to another format. Hidden on the TV board. */
 export default function GuideFormatSwitch({ current }) {
   const navigate = useNavigate();
   const tab = (id, label, hash) => (
@@ -18,9 +19,10 @@ export default function GuideFormatSwitch({ current }) {
     </button>
   );
   return (
-    <div className="cc-guide-switch" role="tablist" aria-label="Tournament format">
-      {tab('cash-climb', 'Cash Climb King of the Hill', CASH_CLIMB_GUIDE_HASH)}
-      {tab('showdown', 'Cash Climb Showdown', SHOWDOWN_GUIDE_HASH)}
+    <div className="cc-guide-switch" role="tablist" aria-label="Cash Climb format">
+      {tab('cash-climb-v3', 'Cash Climb', CASH_CLIMB_V3_GUIDE_HASH)}
+      {tab('cash-climb', 'King of the Hill', CASH_CLIMB_GUIDE_HASH)}
+      {tab('showdown', 'Showdown', SHOWDOWN_GUIDE_HASH)}
     </div>
   );
 }

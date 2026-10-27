@@ -21,7 +21,7 @@ export default function TournamentFormatPicker({ onCashClimbV3, onCashClimb, onS
         {onCashClimbV3 ? (
           <button type="button" className="cc-format-btn" onClick={onCashClimbV3}>
             <strong>{cashClimbFormatLabel('cash-climb-v3')}</strong>
-            <span>Single elimination with money in every round. Set up, save and reopen; live match entry is coming next.</span>
+            <span>Single elimination, 8+ players. Opening matches pay both players by the score; every later win pays more, up to the championship.</span>
           </button>
         ) : null}
         <button type="button" className="cc-format-btn cc-primary" onClick={onCashClimb}>

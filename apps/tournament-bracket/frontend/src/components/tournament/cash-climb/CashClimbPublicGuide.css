@@ -202,6 +202,7 @@
 
 .cc-guide-switch {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 6px;
   margin: 0 auto 18px;

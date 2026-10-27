@@ -7,6 +7,7 @@ import {
 } from './tournamentOperators.js';
 import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
 import { SHOWDOWN_GUIDE_HASH } from './showdown/public/showdownGuideRoute.js';
+import { CASH_CLIMB_V3_GUIDE_HASH } from './cash-climb-v3/guide/cashClimbV3GuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { hasLocalTournamentWork, localTournamentWorkLabel } from './tournamentLocalWork.js';
 import './TournamentBracketApp.css';
@@ -63,8 +64,11 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
           <p>
             Cash Climb, Cash Climb: King of the Hill, Cash Climb: Showdown, Break and Run, and elimination are house formats. Sign in with the operator account to run an event.
           </p>
+          <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_V3_GUIDE_HASH)}>
+            How Cash Climb works
+          </button>
           <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
-            How Cash Climb King of the Hill works
+            How King of the Hill works
           </button>
           <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_GUIDE_HASH)}>
             How Showdown works
@@ -100,8 +104,11 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
         <SupabaseLogin compact onSuccess={handleLoginSuccess} />
       </section>
       <div className="tb-header">
+        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_V3_GUIDE_HASH)}>
+          How Cash Climb works
+        </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
-          How Cash Climb King of the Hill works
+          How King of the Hill works
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_GUIDE_HASH)}>
           How Showdown works
