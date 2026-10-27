@@ -1,0 +1,38 @@
+.ccv3-sync {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.9rem;
+}
+
+.ccv3-sync-synced { border-color: rgba(76, 175, 80, 0.55); }
+.ccv3-sync-sending,
+.ccv3-sync-idle { border-color: rgba(100, 181, 246, 0.55); }
+.ccv3-sync-offline,
+.ccv3-sync-missing,
+.ccv3-sync-update-required { border-color: rgba(255, 193, 7, 0.65); }
+.ccv3-sync-conflict,
+.ccv3-sync-error,
+.ccv3-sync-deleted { border-color: rgba(244, 67, 54, 0.7); background: rgba(244, 67, 54, 0.08); }
+
+.ccv3-sync-test {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+.ccv3-conflict-table td,
+.ccv3-conflict-table th {
+  font-size: 0.85rem;
+}
+
+.ccv3-ack {
+  display: block;
+  margin: 0.75rem 0;
+  line-height: 1.4;
+}

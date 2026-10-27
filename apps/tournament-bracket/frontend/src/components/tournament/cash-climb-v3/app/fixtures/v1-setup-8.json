@@ -1,0 +1,338 @@
+{
+  "type": "cash-climb-v3",
+  "schemaVersion": 1,
+  "id": "fixture-setup-8",
+  "name": "Friday Cash Climb",
+  "tournamentDate": "2026-11-06",
+  "status": "setup",
+  "createdAt": "2026-11-06T19:00:00.000Z",
+  "updatedAt": "2026-11-06T19:00:00.000Z",
+  "players": [
+    {
+      "id": "p1",
+      "name": "Player 1"
+    },
+    {
+      "id": "p2",
+      "name": "Player 2"
+    },
+    {
+      "id": "p3",
+      "name": "Player 3"
+    },
+    {
+      "id": "p4",
+      "name": "Player 4"
+    },
+    {
+      "id": "p5",
+      "name": "Player 5"
+    },
+    {
+      "id": "p6",
+      "name": "Player 6"
+    },
+    {
+      "id": "p7",
+      "name": "Player 7"
+    },
+    {
+      "id": "p8",
+      "name": "Player 8"
+    }
+  ],
+  "placement": {
+    "preliminary": [],
+    "main": [
+      {
+        "entrant": "p8"
+      },
+      {
+        "entrant": "p1"
+      },
+      {
+        "entrant": "p2"
+      },
+      {
+        "entrant": "p6"
+      },
+      {
+        "entrant": "p3"
+      },
+      {
+        "entrant": "p7"
+      },
+      {
+        "entrant": "p4"
+      },
+      {
+        "entrant": "p5"
+      }
+    ]
+  },
+  "draw": {
+    "method": "random",
+    "adjusted": false
+  },
+  "payout": {
+    "optimizerId": "cash-climb-v3-reference-2026-10-r90",
+    "reference": [
+      22,
+      36
+    ],
+    "ladder": [
+      22,
+      36
+    ],
+    "prizePoolCents": 16000,
+    "reserves": {
+      "mainDollars": 20,
+      "preliminaryDollars": 10
+    },
+    "lockedAt": "2026-11-06T19:00:00.000Z"
+  },
+  "event": {
+    "id": "fixture-setup-8",
+    "format": "cash-climb-v3",
+    "version": 1,
+    "config": {
+      "format": "cash-climb-v3",
+      "entrants": 8,
+      "entryFeeCents": 2000,
+      "addedMoneyCents": 0,
+      "raceTo": 7,
+      "rules": {
+        "game": "9-Ball",
+        "notes": ""
+      }
+    },
+    "ladder": [
+      22,
+      36
+    ],
+    "reserves": {
+      "mainDollars": 20,
+      "preliminaryDollars": 10
+    },
+    "entrants": [
+      "p1",
+      "p2",
+      "p3",
+      "p4",
+      "p5",
+      "p6",
+      "p7",
+      "p8"
+    ],
+    "matches": {
+      "O1": {
+        "id": "O1",
+        "stage": "opening",
+        "round": null,
+        "slots": [
+          {
+            "entrant": "p8"
+          },
+          {
+            "entrant": "p1"
+          }
+        ],
+        "allocationCents": 2000,
+        "kind": "opening-reserve",
+        "championship": false,
+        "feedsTo": {
+          "matchId": "L1-1",
+          "slot": 0
+        },
+        "status": "open",
+        "result": null,
+        "winner": null
+      },
+      "O2": {
+        "id": "O2",
+        "stage": "opening",
+        "round": null,
+        "slots": [
+          {
+            "entrant": "p2"
+          },
+          {
+            "entrant": "p6"
+          }
+        ],
+        "allocationCents": 2000,
+        "kind": "opening-reserve",
+        "championship": false,
+        "feedsTo": {
+          "matchId": "L1-1",
+          "slot": 1
+        },
+        "status": "open",
+        "result": null,
+        "winner": null
+      },
+      "O3": {
+        "id": "O3",
+        "stage": "opening",
+        "round": null,
+        "slots": [
+          {
+            "entrant": "p3"
+          },
+          {
+            "entrant": "p7"
+          }
+        ],
+        "allocationCents": 2000,
+        "kind": "opening-reserve",
+        "championship": false,
+        "feedsTo": {
+          "matchId": "L1-2",
+          "slot": 0
+        },
+        "status": "open",
+        "result": null,
+        "winner": null
+      },
+      "O4": {
+        "id": "O4",
+        "stage": "opening",
+        "round": null,
+        "slots": [
+          {
+            "entrant": "p4"
+          },
+          {
+            "entrant": "p5"
+          }
+        ],
+        "allocationCents": 2000,
+        "kind": "opening-reserve",
+        "championship": false,
+        "feedsTo": {
+          "matchId": "L1-2",
+          "slot": 1
+        },
+        "status": "open",
+        "result": null,
+        "winner": null
+      },
+      "L1-1": {
+        "id": "L1-1",
+        "stage": "later",
+        "round": 0,
+        "label": "Semifinal",
+        "slots": [
+          {
+            "winnerOf": "O1"
+          },
+          {
+            "winnerOf": "O2"
+          }
+        ],
+        "allocationCents": 2200,
+        "kind": "later-award",
+        "championship": false,
+        "feedsTo": {
+          "matchId": "L2-1",
+          "slot": 0
+        },
+        "status": "open",
+        "result": null,
+        "winner": null
+      },
+      "L1-2": {
+        "id": "L1-2",
+        "stage": "later",
+        "round": 0,
+        "label": "Semifinal",
+        "slots": [
+          {
+            "winnerOf": "O3"
+          },
+          {
+            "winnerOf": "O4"
+          }
+        ],
+        "allocationCents": 2200,
+        "kind": "later-award",
+        "championship": false,
+        "feedsTo": {
+          "matchId": "L2-1",
+          "slot": 1
+        },
+        "status": "open",
+        "result": null,
+        "winner": null
+      },
+      "L2-1": {
+        "id": "L2-1",
+        "stage": "later",
+        "round": 1,
+        "label": "Championship",
+        "slots": [
+          {
+            "winnerOf": "L1-1"
+          },
+          {
+            "winnerOf": "L1-2"
+          }
+        ],
+        "allocationCents": 3600,
+        "kind": "championship",
+        "championship": true,
+        "feedsTo": null,
+        "status": "open",
+        "result": null,
+        "winner": null
+      }
+    },
+    "order": [
+      "O1",
+      "O2",
+      "O3",
+      "O4",
+      "L1-1",
+      "L1-2",
+      "L2-1"
+    ],
+    "championshipId": "L2-1",
+    "ledger": {
+      "prizePoolCents": 16000,
+      "allocations": {
+        "O1": {
+          "cents": 2000,
+          "kind": "opening-reserve"
+        },
+        "O2": {
+          "cents": 2000,
+          "kind": "opening-reserve"
+        },
+        "O3": {
+          "cents": 2000,
+          "kind": "opening-reserve"
+        },
+        "O4": {
+          "cents": 2000,
+          "kind": "opening-reserve"
+        },
+        "L1-1": {
+          "cents": 2200,
+          "kind": "later-award"
+        },
+        "L1-2": {
+          "cents": 2200,
+          "kind": "later-award"
+        },
+        "L2-1": {
+          "cents": 3600,
+          "kind": "championship"
+        }
+      },
+      "resolved": {},
+      "entries": [],
+      "operatorRetainedCents": 0
+    },
+    "settlement": null
+  }
+}

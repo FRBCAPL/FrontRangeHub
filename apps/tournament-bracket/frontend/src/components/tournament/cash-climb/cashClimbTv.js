@@ -81,7 +81,7 @@ export function buildCashClimbTvBoard(tournament) {
   const paidOut = stats.reduce((sum, p) => sum + (p.total_payout || 0), 0);
 
   return {
-    name: tournament.name || 'Cash Climb',
+    name: tournament.name || 'Cash Climb King of the Hill',
     dateLabel: formatTournamentDate(tournament.tournamentDate),
     status: tournament.status,
     message: tournament.message || '',

@@ -16,7 +16,7 @@ const TABLE_COUNTS = Array.from({ length: TABLE_PRESET_MAX }, (_, i) => String(i
 /** `prefill`: optional one-time starting values (Smart Builder). Read once when the form opens. */
 export default function CashClimbSetup({ onStart, onCancel, prefill = null }) {
   const [start] = useState(() => cashClimbSetupStart(prefill));
-  const [name, setName] = useState('Cash Climb');
+  const [name, setName] = useState('Cash Climb King of the Hill');
   const [tournamentDate, setTournamentDate] = useState(todayDateInput);
   const [gameType, setGameType] = useState(OPEN_TOURNAMENT_STRUCTURE.gameRules.gameType);
   const [raceToMode, setRaceToMode] = useState(start.raceToMode);
@@ -101,7 +101,7 @@ export default function CashClimbSetup({ onStart, onCancel, prefill = null }) {
       return;
     }
     onStart({
-      name: name.trim() || 'Cash Climb',
+      name: name.trim() || 'Cash Climb King of the Hill',
       tournamentDate,
       gameType,
       raceTo: Math.round(raceTo),
@@ -116,9 +116,9 @@ export default function CashClimbSetup({ onStart, onCancel, prefill = null }) {
   return (
     <>
       <form className="create-tournament-form cc-setup" onSubmit={handleSubmit}>
-        <h3>New Cash Climb</h3>
+        <h3>New Cash Climb King of the Hill</h3>
         <p className="cc-setup-note">
-         Cash Climb Tournament. <br />
+         Cash Climb King of the Hill Tournament. <br />
          Round robin, 3-loss cut, then King of the Hill when 3 players remain.
         </p>
         {start.fromBuilder ? (

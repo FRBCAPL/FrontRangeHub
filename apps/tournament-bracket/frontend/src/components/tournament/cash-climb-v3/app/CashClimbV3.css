@@ -1,0 +1,330 @@
+.ccv3-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0;
+}
+
+.ccv3-table th,
+.ccv3-table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: left;
+}
+
+.ccv3-table td:last-child,
+.ccv3-table th:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ccv3-muted {
+  opacity: 0.75;
+  font-size: 0.9em;
+}
+
+.ccv3-problems {
+  color: #ffb4a8;
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.ccv3-place-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+}
+
+.ccv3-place-label {
+  min-width: 7.5rem;
+  font-weight: 600;
+}
+
+.ccv3-place-row select {
+  flex: 1 1 12rem;
+}
+
+.ccv3-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+}
+
+.ccv3-facts dt {
+  font-weight: 600;
+}
+
+.ccv3-facts dd {
+  margin: 0;
+}
+
+.ccv3-matches {
+  padding-left: 1.25rem;
+}
+
+.ccv3-notice {
+  color: #fde68a;
+}
+
+.ccv3-draw-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.ccv3-draw-head h4 {
+  margin: 0;
+}
+
+.ccv3-badge {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.25);
+  font-size: 0.85em;
+}
+
+.ccv3-badge.is-adjusted {
+  background: rgba(234, 179, 8, 0.25);
+}
+
+.ccv3-draw-grid,
+.ccv3-round-grid,
+.ccv3-ready-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.6rem;
+  margin: 0.5rem 0;
+}
+
+.ccv3-draw-match {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+}
+
+.ccv3-seat {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.6);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ccv3-seat.is-selected {
+  border-color: #facc15;
+  background: rgba(250, 204, 21, 0.2);
+}
+
+.ccv3-seat.is-fixed {
+  cursor: default;
+  border-style: dashed;
+  opacity: 0.8;
+}
+
+.ccv3-draw-list {
+  padding-left: 1.25rem;
+  columns: 2 18rem;
+}
+
+.ccv3-draw-list li {
+  break-inside: avoid;
+  margin: 0.2rem 0;
+}
+
+.ccv3-tabs,
+.ccv3-rounds {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding: 0.25rem 0;
+  margin: 0.5rem 0;
+}
+
+.ccv3-round-tab {
+  flex: 0 0 auto;
+  min-height: 2.5rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ccv3-round-tab.is-active {
+  background: rgba(99, 102, 241, 0.35);
+}
+
+.ccv3-match {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-left-width: 4px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.ccv3-match.is-ready {
+  border-left-color: #22c55e;
+}
+
+.ccv3-match.is-waiting {
+  border-left-color: rgba(148, 163, 184, 0.6);
+  opacity: 0.85;
+}
+
+.ccv3-match.is-resolved {
+  border-left-color: #6366f1;
+}
+
+.ccv3-match.is-championship {
+  border-color: rgba(250, 204, 21, 0.6);
+}
+
+.ccv3-match-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ccv3-match-status {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+.ccv3-match-players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ccv3-pos {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+}
+
+.ccv3-pos.is-winner {
+  font-weight: 700;
+}
+
+.ccv3-pos.is-pending,
+.ccv3-pos.is-vacant {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.ccv3-earned {
+  color: #86efac;
+}
+
+.ccv3-match-result,
+.ccv3-match-money {
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.ccv3-enter {
+  align-self: flex-start;
+  min-height: 2.5rem;
+}
+
+.ccv3-dialog.add-player-modal {
+  width: min(34rem, calc(100vw - 32px));
+  max-width: 34rem;
+}
+
+.ccv3-dialog-overlay {
+  padding-top: 96px;
+}
+
+.ccv3-dialog-body {
+  padding: 16px 18px 18px;
+}
+
+.ccv3-dialog .btn-primary,
+.ccv3-dialog .btn-secondary {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ccv3-dialog .btn-primary,
+.ccv3-dialog .form-actions button.btn-primary,
+.ccv3-event .form-actions button.btn-primary,
+.ccv3-event button.btn-primary {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #fff;
+}
+
+.ccv3-dialog .btn-secondary {
+  background: #475569;
+  color: #f8fafc;
+}
+
+.ccv3-dialog button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.ccv3-form label {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.ccv3-form select {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  margin-top: 0.25rem;
+}
+
+.ccv3-entries {
+  list-style: none;
+  margin: 0.25rem 0;
+  padding: 0;
+}
+
+.ccv3-entries li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ccv3-total {
+  font-weight: 700;
+}
+
+.ccv3-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ccv3-settle {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  border-radius: 8px;
+  margin: 0.5rem 0;
+}

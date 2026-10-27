@@ -8,7 +8,7 @@ export function cashClimbPlayerRules(tournament) {
   const entryFee = Number(tournament?.entryFee ?? OPEN_TOURNAMENT_STRUCTURE.entryFee) || 0;
   const { callShots, rulesNote, houseRules = [] } = OPEN_TOURNAMENT_STRUCTURE.gameRules;
   const tableRules = [
-    `Cash Climb is ${gameType}.`,
+    `Cash Climb King of the Hill is ${gameType}.`,
     rulesNote ? `${rulesNote}.` : null,
     callShots ? 'Call your shots.' : null,
   ].filter(Boolean).join(' ');

@@ -27,8 +27,8 @@ function hubCenterTitle(pathname, currentAppName, userFirstName) {
   if (['/admin/inbox', '/admin/ladder-applications', '/admin/payments'].includes(pathname)) return 'Admin Home';
   if (pathname === '/platform-admin') return 'Platform Admin';
   if (pathname === '/dues-tracker') return 'Dues Tracker';
-  if (pathname === '/tournament-bracket/how-it-works') return 'How Cash Climb works';
-  if (pathname.startsWith('/tournament-bracket/submit')) return 'Submit Cash Climb result';
+  if (pathname === '/tournament-bracket/how-it-works') return 'How Cash Climb King of the Hill works';
+  if (pathname.startsWith('/tournament-bracket/submit')) return 'Submit Cash Climb King of the Hill result';
   if (pathname === '/tournament-bracket') return 'Tournament Bracket';
   if (pathname === '/estate-inventory' || pathname.startsWith('/estate-inventory/')) return 'Estate Vault';
   if (pathname === '/calendar') return 'Match Calendar';

@@ -46,7 +46,7 @@ export const ATTENTION_GROUPS = [
     app: 'Tournaments',
     icon: '🏆',
     items: [
-      { key: 'cash_climb_results', label: 'Cash Climb results to confirm', to: '/tournament-bracket' },
+      { key: 'cash_climb_results', label: 'Cash Climb King of the Hill results to confirm', to: '/tournament-bracket' },
       { key: 'elim_results', label: 'Elimination results to confirm', to: '/tournament-bracket' },
     ],
   },

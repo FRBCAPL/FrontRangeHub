@@ -21,7 +21,7 @@ export default function CashClimbPlayerHistoryModal({ tournament, player, onClos
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="cc-history-title">
       <div className="cc-modal cc-history-modal" onClick={(e) => e.stopPropagation()}>
         <header className="cc-history-head">
-          <p className="cc-play-kicker">Cash Climb</p>
+          <p className="cc-play-kicker">Cash Climb King of the Hill</p>
           <div className="cc-history-name">
             <h3 id="cc-history-title">{player.player_name}</h3>
             <span className="cc-history-status">{tag(player)}</span>

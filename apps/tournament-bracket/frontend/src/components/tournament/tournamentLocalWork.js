@@ -12,7 +12,7 @@ export function hasLocalTournamentWork() {
 }
 
 export function localTournamentWorkLabel() {
-  if (loadCashClimb()) return 'Cash Climb';
+  if (loadCashClimb()) return 'Cash Climb King of the Hill';
   if (loadBreakAndRun()) return 'Break and Run';
   if (loadElim()) return 'elimination bracket';
   return 'tournament';

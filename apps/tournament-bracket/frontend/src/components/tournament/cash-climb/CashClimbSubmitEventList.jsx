@@ -5,7 +5,7 @@ import './CashClimbSubmitPickModal.css';
 function eventDetail(event) {
   const players = event.tournament?.players?.length || event.tournament?.stats?.length || 0;
   return [
-    event.tournament?.gameType || 'Cash Climb',
+    event.tournament?.gameType || 'Cash Climb King of the Hill',
     event.tournamentDate ? formatTournamentDate(event.tournamentDate) : '',
     players ? `${players} player${players === 1 ? '' : 's'}` : '',
   ].filter(Boolean).join(' • ');

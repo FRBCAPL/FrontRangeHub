@@ -44,8 +44,8 @@ function CashClimbSubmitEventPage({ eventId }) {
 
   useEffect(() => {
     document.title = tournament && tournament.status !== 'in-progress'
-      ? 'Cash Climb results'
-      : 'Submit Cash Climb result';
+      ? 'Cash Climb King of the Hill results'
+      : 'Submit Cash Climb King of the Hill result';
   }, [tournament?.status]);
 
   useEffect(() => {
@@ -101,12 +101,12 @@ function CashClimbSubmitEventPage({ eventId }) {
     <div className="cc-submit-shell">
       <div className="tournament-bracket-app cc-submit">
         <header className="cc-submit-head">
-          <p className="cc-play-kicker">Cash Climb</p>
+          <p className="cc-play-kicker">Cash Climb King of the Hill</p>
           <h1>{finished ? 'Final results' : 'Submit a result'}</h1>
           <p className="cc-submit-note">
             {finished
               ? `${tournament.name}${endedAtLabel(tournament) ? ` • Completed ${endedAtLabel(tournament)}` : ''}`
-              : `${tournament?.name || 'Cash Climb'} — click your match to submit a result. The director must confirm before standings or money change.`}
+              : `${tournament?.name || 'Cash Climb King of the Hill'} — click your match to submit a result. The director must confirm before standings or money change.`}
           </p>
         </header>
 

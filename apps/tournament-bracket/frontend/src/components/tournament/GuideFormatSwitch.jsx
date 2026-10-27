@@ -19,7 +19,7 @@ export default function GuideFormatSwitch({ current }) {
   );
   return (
     <div className="cc-guide-switch" role="tablist" aria-label="Tournament format">
-      {tab('cash-climb', 'Cash Climb', CASH_CLIMB_GUIDE_HASH)}
+      {tab('cash-climb', 'Cash Climb King of the Hill', CASH_CLIMB_GUIDE_HASH)}
       {tab('showdown', 'Cash Climb Showdown', SHOWDOWN_GUIDE_HASH)}
     </div>
   );

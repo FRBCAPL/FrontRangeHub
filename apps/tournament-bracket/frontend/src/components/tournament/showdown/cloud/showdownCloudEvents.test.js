@@ -165,8 +165,8 @@ describe('Tournament hub listing', () => {
     assert.ok(current.some((e) => e.id === 'showdown-live' && e.name === 'Friday Showdown' && e.venue === 'Front Range' && e.tournamentDate === '2026-10-18'));
     assert.deepEqual(completed.map((e) => e.id), ['showdown-done']);
     const live = current.find((e) => e.id === 'showdown-live');
-    assert.equal(hubFormatLabel(live), 'Cash Climb Showdown');
-    assert.match(hubEventDetailLine(live), /Cash Climb Showdown • Qualifying • .*Front Range/);
+    assert.equal(hubFormatLabel(live), 'Cash Climb: Showdown');
+    assert.match(hubEventDetailLine(live), /Cash Climb: Showdown • Qualifying • .*Front Range/);
     assert.ok(isShowdownHubEvent(live));
   });
 
@@ -183,7 +183,7 @@ describe('Tournament hub listing', () => {
     const before = mergeHubEvents({ cashClimbSaved: cash, elimSaved: elim });
     const after = mergeHubEvents({ cashClimbSaved: cash, elimSaved: elim, showdownSaved: [], localShowdown: null });
     assert.deepEqual(after, before);
-    assert.equal(hubFormatLabel(before[0]), 'Cash Climb');
+    assert.equal(hubFormatLabel(before[0]), 'Cash Climb: King of the Hill');
   });
 
   it('other operators only see their own events; players see none', async () => {

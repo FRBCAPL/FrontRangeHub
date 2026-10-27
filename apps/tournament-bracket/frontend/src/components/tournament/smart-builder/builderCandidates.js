@@ -12,11 +12,11 @@ const range = (lo, hi) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
 export const V3_GAMES = range(V3_QUALIFYING_GAMES.min, V3_QUALIFYING_GAMES.max);
 export const V3_RACES = range(V3_PLAYOFF_RACE_TO.min, V3_PLAYOFF_RACE_TO.max);
 
-export const familyOf = (c) => (c.family === 'cash-climb' ? 'Cash Climb' : `Showdown V${c.version}`);
+export const familyOf = (c) => (c.family === 'cash-climb' ? 'Cash Climb King of the Hill' : `Showdown V${c.version}`);
 
 export function candidateList() {
   const list = CASH_CLIMB_RACES.map(([raceTo, kohRaceTo]) => ({
-    family: 'cash-climb', id: `cc-${raceTo}-${kohRaceTo}`, label: `Cash Climb race ${raceTo} / King of the Hill race ${kohRaceTo}`, raceTo, kohRaceTo,
+    family: 'cash-climb', id: `cc-${raceTo}-${kohRaceTo}`, label: `Cash Climb King of the Hill race ${raceTo} / King of the Hill race ${kohRaceTo}`, raceTo, kohRaceTo,
   }));
   SHOWDOWN_RACE_FORMATS.forEach((version) => list.push({
     family: 'showdown', version, id: `v${version}`, label: `Showdown V${version} race ${SHOWDOWN_RACES.qualifyingRaceTo} / race ${SHOWDOWN_RACES.playoffRaceTo}`, ...SHOWDOWN_RACES,

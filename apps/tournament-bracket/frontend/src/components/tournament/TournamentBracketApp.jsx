@@ -6,6 +6,11 @@ import ElimPlayScreen from './ElimPlayScreen';
 import CashClimbApp from './cash-climb/CashClimbApp';
 import BreakAndRunApp from './break-and-run/BreakAndRunApp.jsx';
 import ShowdownApp from './showdown/operator/ShowdownApp.jsx';
+import CashClimbV3App from './cash-climb-v3/app/CashClimbV3App.jsx';
+import { cashClimbV3Store } from './cash-climb-v3/app/cashClimbV3Store.js';
+import { listCashClimbV3HubEvents } from './cash-climb-v3/app/cashClimbV3Hub.js';
+import { listCashClimbV3ForHub, removeCashClimbV3FromHub } from './cash-climb-v3/app/cashClimbV3HubActions.js';
+import { cashClimbV3Cloud, cashClimbV3SyncStore } from './cash-climb-v3/cloud/cashClimbV3Cloud.js';
 import { loadShowdown } from './showdown/operator/showdownStore.js';
 import { showdownCloud } from './showdown/cloud/showdownCloud.js';
 import { listShowdownsForHub, openShowdownFromHub, removeShowdownFromHub } from './showdown/cloud/showdownHubActions.js';
@@ -55,6 +60,7 @@ import {
   isCashClimbHubEvent,
   isBreakAndRunHubEvent,
   isShowdownHubEvent,
+  isCashClimbV3HubEvent,
 } from './tournamentHubEvents.js';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
@@ -76,6 +82,8 @@ export default function TournamentBracketApp() {
   const [savedCashClimb, setSavedCashClimb] = useState([]);
   const [savedBreakAndRun, setSavedBreakAndRun] = useState([]);
   const [savedShowdown, setSavedShowdown] = useState([]);
+  const [savedCashClimbV3, setSavedCashClimbV3] = useState(() => listCashClimbV3HubEvents(cashClimbV3Store(), { syncStore: cashClimbV3SyncStore() }));
+  const [cashClimbV3Open, setCashClimbV3Open] = useState({ intent: 'open', eventId: null });
   const [handoff, setHandoff] = useState(null);
 
   useEffect(() => {
@@ -102,6 +110,7 @@ export default function TournamentBracketApp() {
     setSavedCashClimb([...cashLive, ...cash]);
     setSavedBreakAndRun([...bnrLive, ...bnr]);
     setSavedShowdown(await listShowdownsForHub(showdownCloud));
+    setSavedCashClimbV3(await listCashClimbV3ForHub({ cloud: cashClimbV3Cloud, store: cashClimbV3Store(), syncStore: cashClimbV3SyncStore() }));
   }, []);
 
   useEffect(() => {
@@ -225,7 +234,7 @@ export default function TournamentBracketApp() {
     if (!item?.tournament && !item?.id) return;
     const local = loadCashClimb();
     if (local && local.status !== 'completed' && String(local.id) !== String(item.id)) {
-      const ok = window.confirm('Replace the Cash Climb on this tablet with the saved one? The current event stays in the database.');
+      const ok = window.confirm('Replace the Cash Climb King of the Hill event on this tablet with the saved one? The current event stays in the database.');
       if (!ok) return;
       if (local.status !== 'completed') retireCashClimbEvent(local);
     }
@@ -287,14 +296,34 @@ export default function TournamentBracketApp() {
     if (await removeShowdownFromHub(showdownCloud, item)) refreshSaved();
   };
 
+  const handleOpenSavedCashClimbV3 = (item) => {
+    setCashClimbV3Open({ intent: 'open', eventId: item.id });
+    setScreen('cash-climb-v3');
+  };
+
+  const handleRemoveSavedCashClimbV3 = (item) => {
+    const removed = removeCashClimbV3FromHub(item, {
+      store: cashClimbV3Store(), syncStore: cashClimbV3SyncStore(), confirm: (m) => window.confirm(m), alert: (m) => window.alert(m),
+    });
+    if (removed) refreshSaved();
+  };
+
+  const startNewCashClimbV3 = () => {
+    setCashClimbV3Open({ intent: 'new', eventId: null });
+    setLeaveTo('new');
+    setScreen('cash-climb-v3');
+  };
+
   const handleOpenHubEvent = (item) => {
-    if (isShowdownHubEvent(item)) handleOpenSavedShowdown(item);
+    if (isCashClimbV3HubEvent(item)) handleOpenSavedCashClimbV3(item);
+    else if (isShowdownHubEvent(item)) handleOpenSavedShowdown(item);
     else if (isBreakAndRunHubEvent(item)) handleOpenSavedBreakAndRun(item);
     else if (isCashClimbHubEvent(item)) handleOpenSavedCashClimb(item);
     else handleOpenSavedElim(item);
   };
 
   const handleRemoveHubEvent = (item) => {
+    if (isCashClimbV3HubEvent(item)) return handleRemoveSavedCashClimbV3(item);
     if (isShowdownHubEvent(item)) return handleRemoveSavedShowdown(item);
     if (isBreakAndRunHubEvent(item)) return handleRemoveSavedBreakAndRun(item);
     if (isCashClimbHubEvent(item)) return handleRemoveSavedCashClimb(item);
@@ -351,6 +380,7 @@ export default function TournamentBracketApp() {
     elimSaved: savedElim,
     breakAndRunSaved: savedBreakAndRun,
     showdownSaved: savedShowdown,
+    cashClimbV3Saved: savedCashClimbV3,
     localCashClimb: cashClimb,
     localElim: elim,
     localBreakAndRun: breakAndRun,
@@ -367,6 +397,23 @@ export default function TournamentBracketApp() {
           prefill={handoff?.family === 'cash-climb' ? handoff : null}
           onLeave={() => {
             setCashClimbIntent('open');
+            setScreen(leaveTo);
+            refreshSaved();
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (screen === 'cash-climb-v3') {
+    return (
+      <div className="tournament-bracket-app">
+        <CashClimbV3App
+          key={`${cashClimbV3Open.intent}:${cashClimbV3Open.eventId || ''}`}
+          intent={cashClimbV3Open.intent}
+          eventId={cashClimbV3Open.eventId}
+          onLeave={() => {
+            setCashClimbV3Open({ intent: 'open', eventId: null });
             setScreen(leaveTo);
             refreshSaved();
           }}
@@ -450,6 +497,7 @@ export default function TournamentBracketApp() {
       <div className="tournament-bracket-app">
         <TournamentFormatPicker
           onSmartBuilder={smartBuilderAvailable() ? () => setScreen('smart-builder') : undefined}
+          onCashClimbV3={startNewCashClimbV3}
           onCashClimb={startNewCashClimb}
           onShowdown={() => { setLeaveTo('new'); setScreen('showdown'); }}
           showdownResume={loadShowdown()?.name || ''}

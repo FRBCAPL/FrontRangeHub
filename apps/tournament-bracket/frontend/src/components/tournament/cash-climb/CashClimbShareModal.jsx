@@ -20,7 +20,7 @@ export default function CashClimbShareModal({ tournament, cloudError, onClose, o
   return (
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="cc-share-title">
       <div className="cc-modal cc-share-modal" onClick={(e) => e.stopPropagation()}>
-        <p className="cc-play-kicker">Cash Climb</p>
+        <p className="cc-play-kicker">Cash Climb King of the Hill</p>
         <h3 id="cc-share-title">Send this to players</h3>
         <p className="cc-modal-meta">
           {cloudError

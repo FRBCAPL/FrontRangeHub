@@ -37,7 +37,7 @@ function CashClimbLiveTv() {
   };
 
   useEffect(() => {
-    document.title = layout === 'portrait' ? 'Cash Climb TV 9:16' : 'Cash Climb TV 16:9';
+    document.title = layout === 'portrait' ? 'Cash Climb King of the Hill TV 9:16' : 'Cash Climb King of the Hill TV 16:9';
     storeTvLayout(layout);
     if (searchParams.get('layout') !== layout) {
       setSearchParams({ layout }, { replace: true });
@@ -74,11 +74,11 @@ function CashClimbLiveTv() {
         <header className="cc-tv-header">
           <div className="cc-tv-title-block">
             <p className="cc-tv-brand">Front Range Pool</p>
-            <h1>Cash Climb</h1>
+            <h1>Cash Climb King of the Hill</h1>
           </div>
         </header>
         <p className="cc-tv-empty">
-          No event is running in this browser. Start a Cash Climb in Tournament Bracket on this
+          No event is running in this browser. Start a Cash Climb King of the Hill in Tournament Bracket on this
           same computer, then open this TV view.
         </p>
       </div>
@@ -97,7 +97,7 @@ function CashClimbLiveTv() {
       <CashClimbTvLayoutBar layout={layout} onChange={setLayout} onBack={goToTournament} />
       <header className="cc-tv-header">
         <div className="cc-tv-title-block">
-          <p className="cc-tv-brand">Front Range Pool • Cash Climb</p>
+          <p className="cc-tv-brand">Front Range Pool • Cash Climb King of the Hill</p>
           <h1>{board.name}</h1>
           <div className="cc-tv-chips">
             {chips.map((chip) => (

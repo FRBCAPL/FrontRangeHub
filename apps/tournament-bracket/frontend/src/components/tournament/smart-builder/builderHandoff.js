@@ -26,8 +26,8 @@ const sameInputs = (a, b) => INPUT_KEYS.every((k) => a?.[k] === b?.[k]);
 function screenProblems(m, { tables, entryFee }) {
   if (m.family === 'cash-climb') {
     const problems = [];
-    if (tables > CASH_CLIMB_MAX_TABLES) problems.push(`The Cash Climb setup screen takes up to ${CASH_CLIMB_MAX_TABLES} tables.`);
-    if (!Number.isInteger(entryFee)) problems.push('The Cash Climb setup screen takes a whole-dollar entry fee.');
+    if (tables > CASH_CLIMB_MAX_TABLES) problems.push(`The Cash Climb King of the Hill setup screen takes up to ${CASH_CLIMB_MAX_TABLES} tables.`);
+    if (!Number.isInteger(entryFee)) problems.push('The Cash Climb King of the Hill setup screen takes a whole-dollar entry fee.');
     return problems;
   }
   const range = showdownTables();

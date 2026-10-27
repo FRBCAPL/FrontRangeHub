@@ -1,8 +1,9 @@
 import React from 'react';
 import BreakAndRunLogo from './break-and-run/BreakAndRunLogo.jsx';
 import './break-and-run/BreakAndRun.css';
+import { cashClimbFormatLabel } from './tournamentFormats.js';
 
-export default function TournamentFormatPicker({ onCashClimb, onShowdown, showdownResume, onBreakAndRun, onSingleElim, onDoubleElim, onBack, onSmartBuilder }) {
+export default function TournamentFormatPicker({ onCashClimbV3, onCashClimb, onShowdown, showdownResume, onBreakAndRun, onSingleElim, onDoubleElim, onBack, onSmartBuilder }) {
   return (
     <>
       <header className="tb-header">
@@ -17,13 +18,19 @@ export default function TournamentFormatPicker({ onCashClimb, onShowdown, showdo
             <span>Not sure which format fits tonight? Get a suggested format and settings for your players, tables and time.</span>
           </button>
         ) : null}
+        {onCashClimbV3 ? (
+          <button type="button" className="cc-format-btn" onClick={onCashClimbV3}>
+            <strong>{cashClimbFormatLabel('cash-climb-v3')}</strong>
+            <span>Single elimination with money in every round. Set up, save and reopen; live match entry is coming next.</span>
+          </button>
+        ) : null}
         <button type="button" className="cc-format-btn cc-primary" onClick={onCashClimb}>
-          <strong>Cash Climb</strong>
+          <strong>{cashClimbFormatLabel('cash-climb')}</strong>
           <span>Round robin, 3-loss cut, then King of the Hill at 3 players.</span>
         </button>
         {onShowdown ? (
           <button type="button" className="cc-format-btn" onClick={onShowdown}>
-            <strong>Cash Climb Showdown</strong>
+            <strong>{cashClimbFormatLabel('showdown')}</strong>
             <span>
               {showdownResume
                 ? `Open ${showdownResume} on this tablet.`

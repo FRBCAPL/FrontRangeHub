@@ -4,13 +4,13 @@
  */
 export function cashClimbNewPlayerGuide() {
   return {
-    title: 'How Cash Climb works',
+    title: 'How Cash Climb King of the Hill works',
     subtitle: 'Win a match, get paid.',
     sections: [
       {
         title: 'What it is',
         body: [
-          'Cash Climb is a cash pool tournament. \nYou pay an entry, and the full entry stays in this event.',
+          'Cash Climb King of the Hill is a cash pool tournament. \nYou pay an entry, and the full entry stays in this event.',
           'You earn money during the night by winning matches, \nnot only at the end.',
           'The game is CSI rules. Call your shots. May be 8-Ball, 9-Ball, or 10-Ball.',
           'One house rule: no 9 on the break. If the 9-ball is pocketed on the break, spot it and the shooter continues with the table as it lays.',

@@ -42,7 +42,7 @@ export default function CashClimbSubmitPicker() {
     <div className="cc-submit-shell">
       <div className="tournament-bracket-app cc-submit">
         <header className="cc-submit-head">
-          <p className="cc-play-kicker">Cash Climb</p>
+          <p className="cc-play-kicker">Cash Climb King of the Hill</p>
           <h1>Current tournaments</h1>
           <p className="cc-submit-note">
             Pick the event you are playing in, then submit your match result.
@@ -60,7 +60,7 @@ export default function CashClimbSubmitPicker() {
           Live Showdowns
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
-          How Cash Climb works
+          How Cash Climb King of the Hill works
         </button>
         <button type="button" className="tb-btn-new" onClick={() => navigate('/')}>
           Back to home

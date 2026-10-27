@@ -16,7 +16,7 @@ export default function CashClimbRulesModal({ tournament, onClose, initialView =
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="cc-rules-title">
       <div className="cc-modal cc-rules-modal" onClick={(e) => e.stopPropagation()}>
         <header className="cc-rules-head">
-          <p className="cc-play-kicker">Cash Climb</p>
+          <p className="cc-play-kicker">Cash Climb King of the Hill</p>
           <h3 id="cc-rules-title">{isTonight ? 'Player rules' : guide.title}</h3>
           <div className="cc-rules-tabs" role="tablist" aria-label="Rules version">
             <button

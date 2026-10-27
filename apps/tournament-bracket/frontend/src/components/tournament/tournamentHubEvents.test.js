@@ -35,7 +35,7 @@ describe('tournament hub events', () => {
     assert.equal(current.find((item) => item.id === 'bnr-1')?.name, 'Friday B&R (tablet)');
     assert.equal(current.some((item) => item.id === 'el-2'), true);
     assert.equal(completed.map((item) => item.id).sort().join(','), 'cc-2,el-1');
-    assert.equal(hubFormatLabel(current.find((item) => item.id === 'cc-1')), 'Cash Climb');
+    assert.equal(hubFormatLabel(current.find((item) => item.id === 'cc-1')), 'Cash Climb: King of the Hill');
     assert.equal(hubFormatLabel(current.find((item) => item.id === 'bnr-1')), 'Break and Run');
     assert.equal(isCashClimbHubEvent(current.find((item) => item.id === 'el-2')), false);
     assert.equal(isBreakAndRunHubEvent(current.find((item) => item.id === 'bnr-1')), true);

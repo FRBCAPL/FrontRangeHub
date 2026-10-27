@@ -32,7 +32,7 @@ export default function CashClimbSubmitPickModal({ onClose, onPick }) {
   return (
     <div className="cc-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="cc-submit-pick-title">
       <div className="cc-modal cc-submit-pick-modal" onClick={(e) => e.stopPropagation()}>
-        <p className="cc-play-kicker">Cash Climb</p>
+        <p className="cc-play-kicker">Cash Climb King of the Hill</p>
         <h3 id="cc-submit-pick-title">Current tournaments</h3>
         <p className="cc-modal-meta">Pick the event you are playing in.</p>
         <CashClimbSubmitEventList

@@ -61,7 +61,7 @@ export default function CashClimbPlayHeader({
     <header className="cc-play-header">
       <div className="cc-play-header-top">
         <div className="cc-play-title">
-          <p className="cc-play-kicker">Cash Climb</p>
+          <p className="cc-play-kicker">Cash Climb King of the Hill</p>
           <h1>{tournament.name}</h1>
         </div>
         <div className="cc-play-actions">

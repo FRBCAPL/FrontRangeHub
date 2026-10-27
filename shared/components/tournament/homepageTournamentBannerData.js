@@ -82,8 +82,8 @@ export async function loadHomepageTournamentBanner() {
     live.push({
       id: `cc-${event.id}`,
       path: cashClimbSubmitHash(event.id),
-      label: event.name || 'Cash Climb',
-      detail: detailLine(['Live Cash Climb', formatDate(event.tournamentDate), players ? `${players} players` : '']),
+      label: event.name || 'Cash Climb King of the Hill',
+      detail: detailLine(['Live Cash Climb King of the Hill', formatDate(event.tournamentDate), players ? `${players} players` : '']),
       live: true,
       cta: 'Submit a result',
     });

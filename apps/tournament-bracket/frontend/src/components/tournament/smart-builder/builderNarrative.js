@@ -15,10 +15,10 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 const list = (items) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`);
 
 export const FIT_NAMES = { comfortable: 'Comfortable fit', tight: 'Tight fit', close: 'Close, but over', over: 'Over' };
-export const FAMILIES = ['Cash Climb', 'Showdown V1', 'Showdown V2', 'Showdown V3'];
+export const FAMILIES = ['Cash Climb King of the Hill', 'Showdown V1', 'Showdown V2', 'Showdown V3'];
 
 export function formatName(m) {
-  return m.family === 'cash-climb' ? 'Cash Climb' : `Cash Climb Showdown \u2014 V${m.version}`;
+  return m.family === 'cash-climb' ? 'Cash Climb King of the Hill' : `Cash Climb Showdown \u2014 V${m.version}`;
 }
 
 export function formatSubtitle(m) {
@@ -32,7 +32,7 @@ export function settingsText(m) {
 }
 
 export function shortName(m) {
-  if (m.family === 'cash-climb') return `Cash Climb race ${m.raceTo} / KOH ${m.kohRaceTo}`;
+  if (m.family === 'cash-climb') return `Cash Climb King of the Hill race ${m.raceTo} / KOH ${m.kohRaceTo}`;
   if (m.version === 3) return `Showdown V3 (${m.qualifyingGames} games / race ${m.playoffRaceTo})`;
   return `Showdown V${m.version}`;
 }

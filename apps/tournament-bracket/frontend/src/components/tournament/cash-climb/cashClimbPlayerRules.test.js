@@ -33,7 +33,7 @@ describe('cash climb player rules', () => {
     const guide = cashClimbNewPlayerGuide();
     const tonight = cashClimbPlayerRules({ gameType: '9-Ball', raceTo: 4, kohRaceTo: 5, entryFee: 25 });
     const guideText = guide.sections.flatMap((s) => s.body).join(' ');
-    assert.equal(guide.title, 'How Cash Climb works');
+    assert.equal(guide.title, 'How Cash Climb King of the Hill works');
     assert.ok(guide.sections.length >= 4);
     assert.match(tonight.sections[0].body[0], /9-Ball/);
     assert.match(tonight.sections[1].body[0], /race to 4/);

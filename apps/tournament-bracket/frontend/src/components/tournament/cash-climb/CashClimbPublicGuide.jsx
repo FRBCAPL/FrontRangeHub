@@ -29,7 +29,7 @@ function CashClimbGuide({ isTv }) {
   const guide = cashClimbNewPlayerGuide();
 
   useEffect(() => {
-    document.title = isTv ? 'How Cash Climb works — TV' : (guide.title || 'How Cash Climb works');
+    document.title = isTv ? 'How Cash Climb King of the Hill works — TV' : (guide.title || 'How Cash Climb King of the Hill works');
     if (!isTv) return undefined;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -44,7 +44,7 @@ function CashClimbGuide({ isTv }) {
         {isTv ? null : <GuideFormatSwitch current="cash-climb" />}
         <header className="cc-guide-hero">
           <p className="cc-guide-brand">Front Range Pool</p>
-          <p className="cc-guide-kicker">Cash Climb</p>
+          <p className="cc-guide-kicker">Cash Climb King of the Hill</p>
           <h1>{guide.title}</h1>
           {guide.subtitle ? <p className="cc-guide-tagline">{guide.subtitle}</p> : null}
           <div className="cc-guide-chips">

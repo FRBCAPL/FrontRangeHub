@@ -143,7 +143,7 @@ export default function CashClimbApp({ onLeave, intent = 'open', prefill = null 
       const previous = loadCashClimb();
       if (previous && previous.status !== 'completed' && previous.status !== 'ended') {
         const ok = window.confirm(
-          'Start this new Cash Climb? The event on this tablet will be ended in the database. You can still open it from Current or Completed.'
+          'Start this new Cash Climb King of the Hill? The event on this tablet will be ended in the database. You can still open it from Current or Completed.'
         );
         if (!ok) return;
         retireCashClimbEvent(previous);
@@ -236,7 +236,7 @@ export default function CashClimbApp({ onLeave, intent = 'open', prefill = null 
     if (cloudError && !window.confirm(cashClimbUnsavedNewConfirm())) return;
     if (tournament && tournament.status !== 'completed') {
       const ok = window.confirm(
-        'Start a new Cash Climb? This event will be ended in the database and cleared from this tablet. You can open or remove it later from Current or Completed.'
+        'Start a new Cash Climb King of the Hill? This event will be ended in the database and cleared from this tablet. You can open or remove it later from Current or Completed.'
       );
       if (!ok) return;
       retireCashClimbEvent(tournament);

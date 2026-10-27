@@ -8,7 +8,7 @@ export function savedEventSummary(row) {
   if (!tournament?.id) return null;
   return {
     id: String(tournament.id),
-    name: String(tournament.name || (tournament.type ? 'Pool Tournament' : 'Cash Climb')).trim() || 'Tournament',
+    name: String(tournament.name || (tournament.type ? 'Pool Tournament' : 'Cash Climb King of the Hill')).trim() || 'Tournament',
     status: row.status || tournament.status || 'in-progress',
     type: tournament.type || '',
     tournamentDate: tournament.tournamentDate || '',

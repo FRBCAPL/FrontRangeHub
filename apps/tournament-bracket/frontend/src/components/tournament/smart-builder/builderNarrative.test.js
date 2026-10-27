@@ -16,7 +16,7 @@ test('the fuller-event trade-off is one plain sentence about the championship an
   assert.equal(rec.fullerEvent.id, 'cc-1-2');
   assert.equal(
     tradeoffSentence(rec.primary, rec.fullerEvent),
-    'Cash Climb race 1 / KOH 2 offers a longer championship race (race to 2 instead of 1), but takes about 1 hr 13 min longer, leaving only 10 min of cushion.',
+    'Cash Climb King of the Hill race 1 / KOH 2 offers a longer championship race (race to 2 instead of 1), but takes about 1 hr 13 min longer, leaving only 10 min of cushion.',
   );
 });
 
@@ -39,7 +39,7 @@ test('why the primary was chosen: fit, what it leads on, and that shorter is not
   const why = whyRecommended(rec);
   assert.equal(why[0], 'It fits with room to spare: even the conservative estimate leaves 40 min before your time limit.');
   assert.match(why[1], /^Compared with the other 1 option that fit comfortably, it has the most guaranteed games per player, the longest championship race/);
-  assert.match(why[2], /^Cash Climb race 1 \/ KOH 1 would finish about 2 hr sooner, but it scores lower/);
+  assert.match(why[2], /^Cash Climb King of the Hill race 1 \/ KOH 1 would finish about 2 hr sooner, but it scores lower/);
   const tightOnly = recommend([cc({ p80: 345 })], T);
   assert.match(whyRecommended(tightOnly)[0], /^Nothing fits with a 30-minute cushion/);
   assert.equal(whyRecommended(tightOnly)[1], 'It is the only option that would fit.');
@@ -64,7 +64,7 @@ test('every format is accounted for: shown, over, or not allowed with the engine
     ineligible: [{ candidate: { family: 'showdown', version: 2, id: 'v2' }, problems: ['Showdown needs at least 8 players.'] }],
   };
   assert.deepEqual(formatCoverage(result, [cc({ id: 'cc-1-1' })]), [
-    { family: 'Cash Climb', status: 'shown' },
+    { family: 'Cash Climb King of the Hill', status: 'shown' },
     { family: 'Showdown V1', status: 'over', reason: 'No setting of this format fits your time limit.' },
     { family: 'Showdown V2', status: 'ineligible', reason: 'Showdown needs at least 8 players.' },
     { family: 'Showdown V3', status: 'over', reason: 'No setting of this format fits your time limit.' },

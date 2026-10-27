@@ -84,7 +84,7 @@ export function createOpenTournament(config) {
   const totalPrizePool = money(entryFee * players.length);
   const next = {
     id: uid(),
-    name: config.name || 'Cash Climb',
+    name: config.name || 'Cash Climb King of the Hill',
     type: 'cash-climb',
     status: 'setup',
     tournamentDate: config.tournamentDate || todayDateInput(),

@@ -29,7 +29,7 @@ test('the format picker is unchanged unless the Builder is offered', async () =>
   assert.doesNotMatch(without, /Help me choose/);
   const button = withIt.match(/<button[^>]*>(?:(?!<\/button>).)*Help me choose(?:(?!<\/button>).)*<\/button>/)[0];
   assert.equal(withIt.replace(button, ''), without);
-  ['Cash Climb', 'Cash Climb Showdown', 'Break &amp; Run', 'Single elimination', 'Double elimination', 'Back'].forEach((label) => assert.ok(without.includes(label), label));
+  ['Cash Climb: King of the Hill', 'Cash Climb: Showdown', 'Break &amp; Run', 'Single elimination', 'Double elimination', 'Back'].forEach((label) => assert.ok(without.includes(label), label));
 });
 
 test('the tournament app only reaches the Builder through the gate, lazily, with no route', () => {
