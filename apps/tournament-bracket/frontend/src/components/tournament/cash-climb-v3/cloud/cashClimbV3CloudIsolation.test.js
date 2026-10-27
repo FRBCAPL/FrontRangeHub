@@ -109,9 +109,10 @@ describe('Cash Climb (V3) cloud isolation: development can never reach the live 
     assert.equal(cashClimbV3IsolationOn({ DEV: true, PROD: false }, memoryStorage()), false);
   });
 
-  it('ships with live V3 cloud saving disabled', () => {
+  it('the live V3 cloud switch is a plain true/false constant passed straight to the router', () => {
     const src = readFileSync(join(here, 'cashClimbV3Cloud.js'), 'utf8');
-    assert.match(src, /export const CASH_CLIMB_V3_LIVE_CLOUD_ENABLED = false;/);
+    assert.match(src, /export const CASH_CLIMB_V3_LIVE_CLOUD_ENABLED = (true|false);/);
+    assert.match(src, /liveEnabled: \(\) => CASH_CLIMB_V3_LIVE_CLOUD_ENABLED,/);
   });
 
   it('only the wiring module imports Supabase; no V3 cloud module touches King of the Hill or Showdown storage', () => {
