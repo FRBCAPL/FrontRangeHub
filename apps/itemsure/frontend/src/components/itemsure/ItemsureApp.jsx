@@ -98,7 +98,12 @@ export default function ItemsureApp() {
         <Link to={ITEMSURE_PATH} className="isu-brand" aria-label="ItemSure home"><Wordmark /></Link>
         <div className="isu-header-actions">
           {session ? (
-            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={handleSignOut}>Sign out</button>
+            <div className="isu-account">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={handleSignOut}>Sign out</button>
+              {session.user?.email ? (
+                <span className="isu-account-email" title={session.user.email}>{session.user.email}</span>
+              ) : null}
+            </div>
           ) : session === null && !authMode ? (
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => goAuth('signin')}>Sign in</button>
           ) : null}

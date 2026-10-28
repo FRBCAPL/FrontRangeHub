@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listRecentActivity, loadDashboardCounts } from '../../services/itemsureActivityService.js';
+import { loadDashboardCounts } from '../../services/itemsureActivityService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
-import { formatWhen } from '../../utils/itemsureText.js';
-import { Card, PageHead } from './ItemsureUi.jsx';
+import { PageHead } from './ItemsureUi.jsx';
 
 const NOT_BUILT = [
   { title: 'Par levels', body: 'Set target quantities and flag what is running low.' },
@@ -23,20 +22,17 @@ function Stat({ label, value, to }) {
 }
 
 export default function ItemsureDashboard() {
-  const { organization, can } = useItemsureWorkspace();
+  const { organization } = useItemsureWorkspace();
   const [counts, setCounts] = useState(null);
-  const [activity, setActivity] = useState(null);
-  const canReviewActivity = can('audit.read');
 
   useEffect(() => {
     if (!organization) return;
     let alive = true;
     loadDashboardCounts(organization.id).then((c) => alive && setCounts(c));
-    if (canReviewActivity) listRecentActivity(organization.id).then((a) => alive && setActivity(a));
     return () => {
       alive = false;
     };
-  }, [organization, canReviewActivity]);
+  }, [organization]);
 
   return (
     <div className="isu-page">
@@ -47,25 +43,6 @@ export default function ItemsureDashboard() {
         <Stat label="Active items" value={counts?.items} to={`${ITEMSURE_PATH}/items`} />
         <Stat label="Storage areas" value={counts?.storageAreas} to={`${ITEMSURE_PATH}/locations`} />
       </div>
-
-      <Card title="Recent activity">
-        {!canReviewActivity ? (
-          <p className="isu-muted">Your role does not include reviewing activity.</p>
-        ) : activity === null ? (
-          <p className="isu-muted">Loading…</p>
-        ) : activity.length === 0 ? (
-          <p className="isu-muted">No activity yet.</p>
-        ) : (
-          <ul className="isu-activity">
-            {activity.map((a) => (
-              <li key={a.id}>
-                <span>{a.label}</span>
-                <time dateTime={a.createdAt}>{formatWhen(a.createdAt)}</time>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
 
       <h2 className="isu-section-title">Coming next</h2>
       <div className="isu-placeholders">

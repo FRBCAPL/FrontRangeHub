@@ -19,13 +19,14 @@ export async function loadDashboardCounts(organizationId) {
   return { locations, items, storageAreas };
 }
 
-export async function listRecentActivity(organizationId, limit = 8) {
+export async function listRecentActivity(organizationId, limit = 8, offset = 0) {
   const { data, error } = await itemsure
     .from('audit_events')
     .select('id, action, metadata, created_at')
     .eq('organization_id', organizationId)
     .order('created_at', { ascending: false })
-    .limit(limit);
+    .order('id', { ascending: false })
+    .range(offset, offset + limit - 1);
   if (error) return [];
   return (data || []).map((row) => ({
     id: row.id,

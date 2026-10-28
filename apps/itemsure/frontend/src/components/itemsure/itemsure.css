@@ -95,6 +95,23 @@
   gap: 12px;
 }
 
+.isu-account {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.isu-account-email {
+  max-width: min(220px, 36vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--isu-muted);
+}
+
 .isu-main {
   width: 100%;
   max-width: 1120px;

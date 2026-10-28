@@ -8,6 +8,7 @@ const WITH_ORG = [
   { to: `${ITEMSURE_PATH}/items`, label: 'Items', icon: '\u2630' },
   { to: `${ITEMSURE_PATH}/counts`, label: 'Counts', icon: '\u2713', permission: 'counts.view' },
   { to: `${ITEMSURE_PATH}/stock`, label: 'Stock', icon: '\u25A4', permission: 'inventory.view' },
+  { to: `${ITEMSURE_PATH}/activity`, label: 'Activity log', icon: '\u25F7', permission: 'audit.read' },
   { to: `${ITEMSURE_PATH}/settings`, label: 'Settings', icon: '\u2699' },
 ];
 
