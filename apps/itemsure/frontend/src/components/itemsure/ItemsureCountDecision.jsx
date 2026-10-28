@@ -5,6 +5,7 @@ import { loadPeopleNames } from '../../services/itemsureCountService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { formatWhen } from '../../utils/itemsureText.js';
+import { notifyInventoryChanged } from '../../utils/itemsureChanges.js';
 import { ErrorNote } from './ItemsureUi.jsx';
 import ItemsureCountApproval from './ItemsureCountApproval.jsx';
 
@@ -62,5 +63,9 @@ export default function ItemsureCountDecision({ session, areaName }) {
       </>
     );
   }
-  return <ItemsureCountApproval session={session} areaName={areaName} onDecided={load} />;
+  const decided = async () => {
+    notifyInventoryChanged();
+    await load();
+  };
+  return <ItemsureCountApproval session={session} areaName={areaName} onDecided={decided} />;
 }

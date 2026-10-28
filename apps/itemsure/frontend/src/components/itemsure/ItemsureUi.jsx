@@ -17,6 +17,17 @@ export function ErrorNote({ message }) {
   return <p className="isu-error" role="alert">{message}</p>;
 }
 
+/** A page whose data could not load. Never shown as an empty list. */
+export function LoadFailed({ message, onRetry }) {
+  return (
+    <div className="isu-card isu-empty">
+      <h2>Couldn&apos;t load this page</h2>
+      <p className="isu-muted">{message}</p>
+      {onRetry ? <button type="button" className="isu-btn isu-btn--ghost" onClick={onRetry}>Try again</button> : null}
+    </div>
+  );
+}
+
 export function Card({ title, eyebrow, children, actions }) {
   return (
     <section className="isu-card">

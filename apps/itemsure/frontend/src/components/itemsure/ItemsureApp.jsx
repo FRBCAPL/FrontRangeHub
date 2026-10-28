@@ -12,6 +12,7 @@ import './itemsure.css';
 import './itemsure-pages.css';
 import './itemsure-counts.css';
 import './itemsure-stock.css';
+import './itemsure-restock.css';
 
 function Wordmark() {
   return (

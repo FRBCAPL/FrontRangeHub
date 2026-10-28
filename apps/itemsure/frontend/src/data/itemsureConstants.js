@@ -23,6 +23,8 @@ export const AUDIT_ENTITY_LABELS = {
   profiles: 'Profile',
   count_sessions: 'Count',
   inventory: 'Stock',
+  inventory_targets: 'Par levels',
+  planned_transfers: 'Planned transfer',
 };
 
 export const AUDIT_VERB_LABELS = {
@@ -38,6 +40,7 @@ export const AUDIT_VERB_LABELS = {
   added: 'added',
   removed: 'removed',
   transferred: 'transferred',
+  copied: 'copied',
 };
 
 export const COUNT_STATUS_LABELS = {

@@ -13,10 +13,15 @@ import ItemsureCountStart from './ItemsureCountStart.jsx';
 import ItemsureCountSession from './ItemsureCountSession.jsx';
 import ItemsureStock from './ItemsureStock.jsx';
 import ItemsureActivity from './ItemsureActivity.jsx';
+import ItemsureLowStock from './ItemsureLowStock.jsx';
+import ItemsureRestock from './ItemsureRestock.jsx';
+import ItemsureTargets from './ItemsureTargets.jsx';
+import useStockAlerts from '../../hooks/useStockAlerts.js';
 
 /** Signed-in area. Pages that need an organization redirect to setup without one. */
 export default function ItemsureWorkspace() {
   const { workspace, error, organization, can } = useItemsureWorkspace();
+  const alerts = useStockAlerts(organization?.id, Boolean(organization) && can('inventory.view'));
 
   if (error) return <p className="isu-error isu-center" role="alert">{error}</p>;
   if (!workspace) return <p className="isu-muted isu-center">Loading your workspace…</p>;
@@ -36,7 +41,7 @@ export default function ItemsureWorkspace() {
 
   return (
     <div className="isu-workspace">
-      <ItemsureNav hasOrganization={Boolean(organization)} can={can} />
+      <ItemsureNav hasOrganization={Boolean(organization)} can={can} alerts={alerts} />
       <div className="isu-content">
         <Routes>
           <Route index element={needsOrg(<ItemsureDashboard />)} />
@@ -47,6 +52,9 @@ export default function ItemsureWorkspace() {
           <Route path="counts/:sessionId" element={needsCounts(<ItemsureCountSession />)} />
           <Route path="counts/:sessionId/review" element={needsCounts(<ItemsureCountSession review />)} />
           <Route path="stock" element={needsStock(<ItemsureStock />)} />
+          <Route path="low-stock" element={needsStock(<ItemsureLowStock />)} />
+          <Route path="restock" element={needsStock(<ItemsureRestock />)} />
+          <Route path="levels" element={needsStock(<ItemsureTargets />)} />
           <Route path="activity" element={needsAudit(<ItemsureActivity />)} />
           <Route path="settings" element={needsOrg(<ItemsureSettings />)} />
           <Route path="setup" element={<ItemsureSetup />} />

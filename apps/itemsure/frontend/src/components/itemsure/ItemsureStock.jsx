@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useStockData from '../../hooks/useStockData.js';
+import { notifyInventoryChanged } from '../../utils/itemsureChanges.js';
 import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureStockBalances from './ItemsureStockBalances.jsx';
 import ItemsureStockActivity from './ItemsureStockActivity.jsx';
@@ -12,7 +14,8 @@ export default function ItemsureStock() {
   const { organization, can } = useItemsureWorkspace();
   const { data, error, reload } = useStockData(organization.id);
   const [tab, setTab] = useState('balances');
-  const [locationId, setLocationId] = useState('');
+  const [params] = useSearchParams();
+  const [locationId, setLocationId] = useState(() => params.get('location') || '');
   const [modal, setModal] = useState('');
   const [activityVersion, setActivityVersion] = useState(0);
   const canSeeActivity = can('inventory.activity');
@@ -26,6 +29,7 @@ export default function ItemsureStock() {
   const afterChange = useCallback(async () => {
     setModal('');
     setActivityVersion((v) => v + 1);
+    notifyInventoryChanged();
     await reload();
   }, [reload]);
 

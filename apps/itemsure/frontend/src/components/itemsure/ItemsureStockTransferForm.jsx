@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { transferStock } from '../../services/itemsureInventoryService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import useTransferGuard from '../../hooks/useTransferGuard.js';
+import ItemsureTransferWarning from './ItemsureTransferWarning.jsx';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { findBalance, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
@@ -24,12 +26,16 @@ export default function ItemsureStockTransferForm({ data, defaultLocationId, onD
   const toBalance = item ? findBalance(data.balances, item.id, to.locationId, to.storageAreaId) : null;
   const sameSlot = fromKey === toKey;
 
+  const { warning, guard, confirm, clear } = useTransferGuard();
+  useEffect(clear, [itemId, fromKey, toKey, quantity, clear]);
+
+  const transfer = async () => {
+    await transferStock({ item, from, to, quantity, note });
+    await onDone();
+  };
   const submit = (event) => {
     event.preventDefault();
-    run(async () => {
-      await transferStock({ item, from, to, quantity, note });
-      await onDone();
-    });
+    run(() => guard({ item, from, quantity }, transfer));
   };
 
   if (!items.length || options.length < 2) return <p className="isu-muted">Transfers need at least two places to hold stock.</p>;
@@ -70,9 +76,13 @@ export default function ItemsureStockTransferForm({ data, defaultLocationId, onD
       </Field>
 
       <ErrorNote message={error} />
-      <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy || sameSlot || !fromBalance || !toBalance}>
-        {busy ? 'Transferring…' : 'Transfer'}
-      </button>
+      {warning ? (
+        <ItemsureTransferWarning warning={warning} busy={busy} onCancel={clear} onConfirm={() => run(() => confirm({ item, from, quantity }, transfer))} />
+      ) : (
+        <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy || sameSlot || !fromBalance || !toBalance}>
+          {busy ? 'Checking…' : 'Transfer'}
+        </button>
+      )}
     </form>
   );
 }

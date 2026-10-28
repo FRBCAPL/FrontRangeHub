@@ -8,22 +8,33 @@ const WITH_ORG = [
   { to: `${ITEMSURE_PATH}/items`, label: 'Items', icon: '\u2630' },
   { to: `${ITEMSURE_PATH}/counts`, label: 'Counts', icon: '\u2713', permission: 'counts.view' },
   { to: `${ITEMSURE_PATH}/stock`, label: 'Stock', icon: '\u25A4', permission: 'inventory.view' },
+  { to: `${ITEMSURE_PATH}/low-stock`, label: 'Low stock', icon: '\u26A0', permission: 'inventory.view', badge: 'low' },
+  { to: `${ITEMSURE_PATH}/restock`, label: 'Restock', icon: '\u21C4', permission: 'inventory.view' },
+  { to: `${ITEMSURE_PATH}/levels`, label: 'Par levels', icon: '\u2195', permission: 'inventory.view' },
   { to: `${ITEMSURE_PATH}/activity`, label: 'Activity log', icon: '\u25F7', permission: 'audit.read' },
   { to: `${ITEMSURE_PATH}/settings`, label: 'Settings', icon: '\u2699' },
 ];
 
 const WITHOUT_ORG = [{ to: `${ITEMSURE_PATH}/setup`, label: 'Set up', icon: '+' }];
 
-export default function ItemsureNav({ hasOrganization, can }) {
+export default function ItemsureNav({ hasOrganization, can, alerts }) {
   const links = hasOrganization ? WITH_ORG.filter((link) => !link.permission || can(link.permission)) : WITHOUT_ORG;
   return (
     <nav className="isu-nav" aria-label="ItemSure">
-      {links.map((link) => (
-        <NavLink key={link.to} to={link.to} end={link.end} className={({ isActive }) => `isu-nav-link${isActive ? ' is-active' : ''}`}>
-          <span aria-hidden="true" className="isu-nav-icon">{link.icon}</span>
-          <span>{link.label}</span>
-        </NavLink>
-      ))}
+      {links.map((link) => {
+        const count = link.badge ? alerts?.[link.badge] : null;
+        return (
+          <NavLink key={link.to} to={link.to} end={link.end} className={({ isActive }) => `isu-nav-link${isActive ? ' is-active' : ''}`}>
+            <span aria-hidden="true" className="isu-nav-icon">{link.icon}</span>
+            <span>{link.label}</span>
+            {count ? (
+              <span className="isu-nav-badge" aria-label={`${count} low-stock slot${count === 1 ? '' : 's'}`}>
+                {count > 99 ? '99+' : count}
+              </span>
+            ) : null}
+          </NavLink>
+        );
+      })}
     </nav>
   );
 }
