@@ -9,6 +9,7 @@ import { formatWhen } from '../../utils/itemsureText.js';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsureCountReport from './ItemsureCountReport.jsx';
 import ItemsureCountSubmitForm from './ItemsureCountSubmitForm.jsx';
+import ItemsureCountDecision from './ItemsureCountDecision.jsx';
 
 /** Review step for an open count, and the read-only record of a closed one. */
 export default function ItemsureCountReview({ data, onReload }) {
@@ -91,6 +92,8 @@ export default function ItemsureCountReview({ data, onReload }) {
         <div className="isu-stat"><span className="isu-stat-value">{totals ? stats.zero : '\u2014'}</span><span className="isu-stat-label">Counted as zero</span></div>
         <div className="isu-stat"><span className="isu-stat-value">{stats.omitted}</span><span className="isu-stat-label">Not counted</span></div>
       </div>
+
+      {session.status === 'submitted' ? <ItemsureCountDecision session={session} areaName={areaName} /> : null}
 
       <ItemsureCountReport items={items} entries={entries} totals={totals} names={names} areaName={areaName} />
 

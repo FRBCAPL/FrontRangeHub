@@ -7,7 +7,7 @@ import { formatWhen } from '../../utils/itemsureText.js';
 import { Card, PageHead } from './ItemsureUi.jsx';
 
 const NOT_BUILT = [
-  { title: 'Shortages', body: 'Compare counts with expected quantities and flag what is low.' },
+  { title: 'Par levels', body: 'Set target quantities and flag what is running low.' },
   { title: 'Vendors and purchase orders', body: 'Keep suppliers and turn shortages into orders.' },
   { title: 'Receiving', body: 'Check deliveries against orders and add them to stock.' },
   { title: 'Inventory value', body: 'Track cost and value over time.' },

@@ -22,6 +22,7 @@ export const AUDIT_ENTITY_LABELS = {
   inventory_storage_areas: 'Storage area',
   profiles: 'Profile',
   count_sessions: 'Count',
+  inventory: 'Stock',
 };
 
 export const AUDIT_VERB_LABELS = {
@@ -32,6 +33,11 @@ export const AUDIT_VERB_LABELS = {
   submitted: 'submitted',
   cancelled: 'cancelled',
   renamed: 'renamed',
+  approved: 'approved',
+  rejected: 'rejected',
+  added: 'added',
+  removed: 'removed',
+  transferred: 'transferred',
 };
 
 export const COUNT_STATUS_LABELS = {
@@ -39,6 +45,13 @@ export const COUNT_STATUS_LABELS = {
   in_progress: 'In progress',
   submitted: 'Submitted',
   cancelled: 'Cancelled',
+};
+
+/** Status shown for a submitted count, from its review. */
+export const REVIEW_STATUS_LABELS = {
+  awaiting: 'Awaiting approval',
+  approved: 'Approved',
+  rejected: 'Rejected',
 };
 
 export const TIMEZONES = [

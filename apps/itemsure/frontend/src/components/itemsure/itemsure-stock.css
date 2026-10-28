@@ -1,0 +1,70 @@
+/* ItemSure stock, activity, and count approval. Scoped under .isu-app. */
+
+.isu-app .isu-stock-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.isu-app .isu-chip-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+
+.isu-app .isu-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--isu-paper);
+  border: 1px solid var(--isu-line);
+}
+.isu-app .isu-tab {
+  flex: 1 1 0;
+  min-height: 40px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--isu-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.isu-app .isu-tab.is-active { background: var(--isu-pine-btn); color: #fff; }
+
+.isu-app .isu-stock-summary { text-align: center; margin: 0; }
+.isu-app .isu-stock-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.isu-app .isu-stock-filters input[type='search'] { flex: 1 1 200px; }
+.isu-app .isu-stock-row { padding: 14px 16px; }
+.isu-app .isu-stock-unset { background: var(--isu-warn-soft); color: var(--isu-amber); }
+.isu-app .isu-stock-zero { font-weight: 700; color: var(--isu-muted); font-variant-numeric: tabular-nums; }
+
+.isu-app .isu-stock-move { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.isu-app .isu-stock-move p { margin: 0; }
+.isu-app .isu-stock-delta.is-in { color: var(--isu-pine); }
+.isu-app .isu-stock-delta.is-out { color: var(--isu-amber); }
+
+.isu-app .isu-notice--warn { background: var(--isu-warn-soft); color: var(--isu-amber); border-color: var(--isu-warn-line); }
+
+/* Count status from the review */
+.isu-app .isu-count-status--awaiting { background: var(--isu-warn-soft); color: var(--isu-amber); }
+.isu-app .isu-count-status--approved { background: var(--isu-pine-soft); color: var(--isu-pine); }
+.isu-app .isu-count-status--rejected { background: var(--isu-danger-soft); color: var(--isu-danger); }
+
+.isu-app .isu-decision { line-height: 1.5; }
+.isu-app .isu-decision-reason { margin: 6px 0 0; color: var(--isu-ink); }
+
+/* Approval */
+.isu-app .isu-approval { border-color: var(--isu-pine-line); }
+.isu-app .isu-approval h2 { margin: 0 0 4px; }
+.isu-app .isu-approval-group h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-size: 1rem; }
+.isu-app .isu-approval-group > p { margin: 0 0 4px; }
+.isu-app .isu-count-breakdown .isu-approval-item { flex-direction: column; gap: 4px; }
+.isu-app .isu-approval-item p { margin: 0; }
+.isu-app .isu-approval-item .isu-error,
+.isu-app .isu-approval-item .isu-notice { margin: 4px 0 0; padding: 6px 10px; }
+.isu-app .isu-approval-line { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; }
+.isu-app .isu-approval-figures {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px 12px;
+  font-variant-numeric: tabular-nums;
+}
+.isu-app .isu-approval-actions { justify-content: flex-end; }
+@media (max-width: 520px) {
+  .isu-app .isu-approval-figures { justify-content: flex-start; }
+  .isu-app .isu-approval-actions .isu-btn { flex: 1 1 auto; }
+}

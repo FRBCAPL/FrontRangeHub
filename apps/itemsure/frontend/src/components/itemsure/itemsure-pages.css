@@ -52,7 +52,9 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  min-width: 64px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 88px;
   min-height: 52px;
   justify-content: center;
   border-radius: 12px;
@@ -76,7 +78,7 @@
     border: 1px solid var(--isu-line);
     border-radius: var(--isu-radius);
   }
-  .isu-app .isu-nav-link { flex-direction: row; justify-content: flex-start; gap: 10px; padding: 0 14px; font-size: 0.95rem; min-height: 46px; }
+  .isu-app .isu-nav-link { flex: none; max-width: none; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 0 14px; font-size: 0.95rem; min-height: 46px; }
 }
 
 .isu-app .isu-content { min-width: 0; width: 100%; max-width: 880px; margin: 0 auto; }

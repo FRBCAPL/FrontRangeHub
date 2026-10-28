@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { acceptEmailLink, getSession, onAuthChange, signOut } from '../../services/itemsureAuthService.js';
 import { itemsureAuthFromHash } from '../../utils/itemsureAuthLanding.js';
@@ -11,6 +11,7 @@ import ItemsureNewPassword from './ItemsureNewPassword.jsx';
 import './itemsure.css';
 import './itemsure-pages.css';
 import './itemsure-counts.css';
+import './itemsure-stock.css';
 
 function Wordmark() {
   return (
@@ -27,10 +28,14 @@ export default function ItemsureApp() {
   const [linkLanding] = useState(() => itemsureAuthFromHash(window.location.hash));
   const [linkError, setLinkError] = useState('');
   const [newPassword, setNewPassword] = useState(false);
+  const landingHandled = useRef(false);
   const authMode = new URLSearchParams(location.search).get('auth');
 
+  // `navigate` changes on every route change, so without the ref this would send
+  // every later page back to the start (and loop with the setup redirect).
   useEffect(() => {
-    if (!linkLanding) return;
+    if (!linkLanding || landingHandled.current) return;
+    landingHandled.current = true;
     navigate(ITEMSURE_PATH, { replace: true });
     if (linkLanding.error) {
       setLinkError(linkLanding.error);

@@ -109,13 +109,25 @@ async function conflictWith(sessionId, itemId, storageAreaId) {
   }
 }
 
+// Databases without the Phase 2B timing column reject it as unknown (PGRST204).
+async function withTimingFallback(timing, write) {
+  const result = await write(timing);
+  if (result.error?.code === 'PGRST204' && /client_anchor_at/.test(result.error.message || '')) {
+    return write({});
+  }
+  return result;
+}
+
 /**
  * Writes one entry with optimistic concurrency. baseRevision is the revision the
  * counter started from (null when there was no entry). Never overwrites a newer
  * value: a mismatch comes back as { kind: 'conflict', server }.
  * value '' clears the entry, which marks the item not counted in that area.
  */
-export async function persistEntry({ sessionId, itemId, storageAreaId, unitId, value, entryId, baseRevision }) {
+export async function persistEntry({ sessionId, itemId, storageAreaId, unitId, value, anchorAt, entryId, baseRevision }) {
+  // anchorAt is a server timestamp received before the value was typed. Without
+  // one the server assumes the value could date from the start of the count.
+  const timing = { client_anchor_at: anchorAt || null };
   try {
     if (value === '') {
       if (baseRevision === null || baseRevision === undefined) return { kind: 'saved', entry: null };
@@ -132,22 +144,26 @@ export async function persistEntry({ sessionId, itemId, storageAreaId, unitId, v
     }
 
     if (baseRevision === null || baseRevision === undefined) {
-      const { data, error } = await itemsure
-        .from('count_entries')
-        .insert({ session_id: sessionId, item_id: itemId, storage_area_id: storageAreaId || null, quantity: value, unit_id: unitId })
-        .select(ENTRY_COLUMNS)
-        .single();
+      const { data, error } = await withTimingFallback(timing, (extra) =>
+        itemsure
+          .from('count_entries')
+          .insert({ session_id: sessionId, item_id: itemId, storage_area_id: storageAreaId || null, quantity: value, unit_id: unitId, ...extra })
+          .select(ENTRY_COLUMNS)
+          .single(),
+      );
       if (error?.code === '23505') return conflictWith(sessionId, itemId, storageAreaId);
       if (error) return failure(error);
       return { kind: 'saved', entry: data };
     }
 
-    const { data, error } = await itemsure
-      .from('count_entries')
-      .update({ quantity: value })
-      .eq('id', entryId)
-      .eq('revision', baseRevision)
-      .select(ENTRY_COLUMNS);
+    const { data, error } = await withTimingFallback(timing, (extra) =>
+      itemsure
+        .from('count_entries')
+        .update({ quantity: value, ...extra })
+        .eq('id', entryId)
+        .eq('revision', baseRevision)
+        .select(ENTRY_COLUMNS),
+    );
     if (error) return failure(error);
     if (data?.length) return { kind: 'saved', entry: data[0] };
     return conflictWith(sessionId, itemId, storageAreaId);

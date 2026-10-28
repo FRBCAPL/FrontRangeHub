@@ -41,7 +41,7 @@ export default function ItemsureWelcome({ onSignIn, onSignUp }) {
       <section className="isu-foundation-note">
         <h2>What works today</h2>
         <p className="isu-muted">
-          You can create an organization, add locations and storage areas, keep an item catalog, and run physical counts.
+          You can create an organization, add locations and storage areas, keep an item catalog, run physical counts, approve them into on-hand stock, and record adjustments and transfers.
           Purchasing, receiving, and inventory value are not built yet, and they are labeled that way inside the app.
         </p>
       </section>

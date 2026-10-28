@@ -11,6 +11,7 @@ import ItemsureSetup from './ItemsureSetup.jsx';
 import ItemsureCounts from './ItemsureCounts.jsx';
 import ItemsureCountStart from './ItemsureCountStart.jsx';
 import ItemsureCountSession from './ItemsureCountSession.jsx';
+import ItemsureStock from './ItemsureStock.jsx';
 
 /** Signed-in area. Pages that need an organization redirect to setup without one. */
 export default function ItemsureWorkspace() {
@@ -29,6 +30,7 @@ export default function ItemsureWorkspace() {
 
   const needsOrg = (page) => (organization ? page : <Navigate to={`${ITEMSURE_PATH}/setup`} replace />);
   const needsCounts = (page) => needsOrg(can('counts.view') ? page : <Navigate to={ITEMSURE_PATH} replace />);
+  const needsStock = (page) => needsOrg(can('inventory.view') ? page : <Navigate to={ITEMSURE_PATH} replace />);
 
   return (
     <div className="isu-workspace">
@@ -42,6 +44,7 @@ export default function ItemsureWorkspace() {
           <Route path="counts/new" element={needsCounts(<ItemsureCountStart />)} />
           <Route path="counts/:sessionId" element={needsCounts(<ItemsureCountSession />)} />
           <Route path="counts/:sessionId/review" element={needsCounts(<ItemsureCountSession review />)} />
+          <Route path="stock" element={needsStock(<ItemsureStock />)} />
           <Route path="settings" element={needsOrg(<ItemsureSettings />)} />
           <Route path="setup" element={<ItemsureSetup />} />
           <Route path="*" element={<Navigate to={ITEMSURE_PATH} replace />} />

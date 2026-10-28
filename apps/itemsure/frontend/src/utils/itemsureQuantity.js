@@ -41,3 +41,21 @@ export function sameQuantity(a, b) {
 export function displayQuantity(text) {
   return canonicalQuantity(text) || '0';
 }
+
+/** -1 / 0 / 1 for a numeric string, read from its text alone. */
+export function quantitySign(text) {
+  const raw = String(text ?? '').trim();
+  const negative = raw.startsWith('-');
+  const magnitude = displayQuantity(negative || raw.startsWith('+') ? raw.slice(1) : raw);
+  if (magnitude === '0') return 0;
+  return negative ? -1 : 1;
+}
+
+/** "+2", "\u22122.5", or "0" for a signed change. */
+export function displaySigned(text) {
+  const raw = String(text ?? '').trim();
+  const sign = quantitySign(raw);
+  if (sign === 0) return '0';
+  const magnitude = displayQuantity(raw.replace(/^[-+]/, ''));
+  return `${sign < 0 ? '\u2212' : '+'}${magnitude}`;
+}

@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listSessions, OPEN_STATUSES } from '../../services/itemsureCountService.js';
+import { listReviews } from '../../services/itemsureCountReviewService.js';
 import { listLocations } from '../../services/itemsureLocationService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
-import { COUNT_STATUS_LABELS, ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { COUNT_STATUS_LABELS, ITEMSURE_PATH, REVIEW_STATUS_LABELS } from '../../data/itemsureConstants.js';
 import { formatWhen } from '../../utils/itemsureText.js';
 import { ErrorNote, PageHead } from './ItemsureUi.jsx';
 
@@ -13,8 +14,16 @@ function placeLabel(session, locations) {
   return [location?.name || 'Location', area?.name].filter(Boolean).join(' \u00b7 ');
 }
 
-function SessionRow({ session, locations }) {
+/** Submitted counts are awaiting approval until a review row exists. */
+function statusOf(session, reviews) {
+  if (session.status !== 'submitted') return { key: session.status, label: COUNT_STATUS_LABELS[session.status] };
+  const decision = reviews[session.id]?.decision || 'awaiting';
+  return { key: decision, label: REVIEW_STATUS_LABELS[decision] };
+}
+
+function SessionRow({ session, locations, reviews }) {
   const closedAt = session.submitted_at || session.cancelled_at;
+  const status = statusOf(session, reviews);
   return (
     <li>
       <Link to={`${ITEMSURE_PATH}/counts/${session.id}`} className="isu-card isu-count-link">
@@ -28,9 +37,21 @@ function SessionRow({ session, locations }) {
               : ''}
           </p>
         </div>
-        <span className={`isu-badge isu-count-status isu-count-status--${session.status}`}>{COUNT_STATUS_LABELS[session.status]}</span>
+        <span className={`isu-badge isu-count-status isu-count-status--${status.key}`}>{status.label}</span>
       </Link>
     </li>
+  );
+}
+
+function SessionSection({ title, sessions, locations, reviews }) {
+  if (!sessions.length) return null;
+  return (
+    <section className="isu-stack">
+      <h2 className="isu-section-title">{title}</h2>
+      <ul className="isu-count-list">
+        {sessions.map((s) => <SessionRow key={s.id} session={s} locations={locations} reviews={reviews} />)}
+      </ul>
+    </section>
   );
 }
 
@@ -38,16 +59,18 @@ export default function ItemsureCounts() {
   const { organization, can } = useItemsureWorkspace();
   const [sessions, setSessions] = useState(null);
   const [locations, setLocations] = useState([]);
+  const [reviews, setReviews] = useState({});
   const [error, setError] = useState('');
   const canStart = can('counts.create');
 
   useEffect(() => {
     let alive = true;
-    Promise.all([listSessions(organization.id), listLocations(organization.id)])
-      .then(([s, l]) => {
+    Promise.all([listSessions(organization.id), listLocations(organization.id), listReviews(organization.id).catch(() => ({}))])
+      .then(([s, l, r]) => {
         if (!alive) return;
         setSessions(s);
         setLocations(l);
+        setReviews(r);
       })
       .catch((e) => {
         if (!alive) return;
@@ -59,10 +82,15 @@ export default function ItemsureCounts() {
     };
   }, [organization.id]);
 
-  const [open, closed] = useMemo(() => {
+  const { open, awaiting, closed } = useMemo(() => {
     const list = sessions || [];
-    return [list.filter((s) => OPEN_STATUSES.includes(s.status)), list.filter((s) => !OPEN_STATUSES.includes(s.status))];
-  }, [sessions]);
+    const isAwaiting = (s) => s.status === 'submitted' && !reviews[s.id];
+    return {
+      open: list.filter((s) => OPEN_STATUSES.includes(s.status)),
+      awaiting: list.filter(isAwaiting),
+      closed: list.filter((s) => !OPEN_STATUSES.includes(s.status) && !isAwaiting(s)),
+    };
+  }, [sessions, reviews]);
 
   return (
     <div className="isu-page">
@@ -81,19 +109,9 @@ export default function ItemsureCounts() {
         </div>
       ) : null}
 
-      {open.length ? (
-        <section className="isu-stack">
-          <h2 className="isu-section-title">Open</h2>
-          <ul className="isu-count-list">{open.map((s) => <SessionRow key={s.id} session={s} locations={locations} />)}</ul>
-        </section>
-      ) : null}
-
-      {closed.length ? (
-        <section className="isu-stack">
-          <h2 className="isu-section-title">History</h2>
-          <ul className="isu-count-list">{closed.map((s) => <SessionRow key={s.id} session={s} locations={locations} />)}</ul>
-        </section>
-      ) : null}
+      <SessionSection title="Awaiting approval" sessions={awaiting} locations={locations} reviews={reviews} />
+      <SessionSection title="Open" sessions={open} locations={locations} reviews={reviews} />
+      <SessionSection title="History" sessions={closed} locations={locations} reviews={reviews} />
     </div>
   );
 }

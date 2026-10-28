@@ -59,6 +59,7 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
   const goToReview = () =>
     run(async () => {
       await autosave.retryAll();
+      await onReload();
       navigate(`${ITEMSURE_PATH}/counts/${session.id}/review`);
     });
 

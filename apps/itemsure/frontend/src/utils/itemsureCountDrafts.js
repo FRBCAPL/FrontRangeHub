@@ -20,6 +20,7 @@ export function readDraftBackup(userId, sessionId) {
           text: d.text,
           itemId: d.itemId,
           storageAreaId: d.storageAreaId || null,
+          anchorAt: typeof d.anchorAt === 'string' ? d.anchorAt : null,
           entryId: d.entryId || null,
           baseRevision: Number.isInteger(d.baseRevision) ? d.baseRevision : null,
           status: 'pending',
@@ -41,6 +42,7 @@ export function writeDraftBackup(userId, sessionId, drafts) {
       text: d.text,
       itemId: d.itemId,
       storageAreaId: d.storageAreaId,
+      anchorAt: d.anchorAt,
       entryId: d.entryId,
       baseRevision: d.baseRevision,
     };

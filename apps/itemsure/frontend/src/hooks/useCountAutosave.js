@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { entryKey, persistEntry } from '../services/itemsureCountService.js';
 import { checkQuantity, displayQuantity, sameQuantity } from '../utils/itemsureQuantity.js';
 import { readDraftBackup, writeDraftBackup } from '../utils/itemsureCountDrafts.js';
+import { anchorForDraft, noteServerTime, startServerClock } from '../utils/itemsureServerClock.js';
 
 const SAVE_DELAY_MS = 700;
 
@@ -88,12 +89,14 @@ export default function useCountAutosave({ sessionId, userId, initialEntries, it
         storageAreaId: draft.storageAreaId,
         unitId: item.base_unit_id,
         value,
+        anchorAt: draft.anchorAt,
         entryId: draft.entryId,
         baseRevision: draft.baseRevision,
       });
       delete inFlight.current[key];
 
       if (result.kind === 'saved') {
+        if (result.entry) noteServerTime(result.entry.updated_at);
         setEntries((prev) => {
           const next = { ...prev };
           if (result.entry) next[key] = result.entry;
@@ -140,6 +143,7 @@ export default function useCountAutosave({ sessionId, userId, initialEntries, it
           itemId,
           storageAreaId: storageAreaId || null,
           text,
+          anchorAt: anchorForDraft(existing),
           baseRevision: existing ? existing.baseRevision : server?.revision ?? null,
           entryId: existing ? existing.entryId : server?.id ?? null,
           status,
@@ -183,6 +187,8 @@ export default function useCountAutosave({ sessionId, userId, initialEntries, it
   );
 
   const replaceEntries = useCallback((list) => setEntries(() => indexEntries(list)), [setEntries]);
+
+  useEffect(() => startServerClock(), []);
 
   // Drafts restored from an earlier visit are retried right away.
   useEffect(() => {
