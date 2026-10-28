@@ -1,0 +1,52 @@
+import React from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
+import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import ItemsureNav from './ItemsureNav.jsx';
+import ItemsureDashboard from './ItemsureDashboard.jsx';
+import ItemsureLocations from './ItemsureLocations.jsx';
+import ItemsureItems from './ItemsureItems.jsx';
+import ItemsureSettings from './ItemsureSettings.jsx';
+import ItemsureSetup from './ItemsureSetup.jsx';
+import ItemsureCounts from './ItemsureCounts.jsx';
+import ItemsureCountStart from './ItemsureCountStart.jsx';
+import ItemsureCountSession from './ItemsureCountSession.jsx';
+
+/** Signed-in area. Pages that need an organization redirect to setup without one. */
+export default function ItemsureWorkspace() {
+  const { workspace, error, organization, can } = useItemsureWorkspace();
+
+  if (error) return <p className="isu-error isu-center" role="alert">{error}</p>;
+  if (!workspace) return <p className="isu-muted isu-center">Loading your workspace…</p>;
+  if (workspace.databaseMessage) {
+    return (
+      <div className="isu-card isu-empty isu-center-card">
+        <h2>ItemSure can&apos;t reach its data</h2>
+        <p className="isu-muted">{workspace.databaseMessage}</p>
+      </div>
+    );
+  }
+
+  const needsOrg = (page) => (organization ? page : <Navigate to={`${ITEMSURE_PATH}/setup`} replace />);
+  const needsCounts = (page) => needsOrg(can('counts.view') ? page : <Navigate to={ITEMSURE_PATH} replace />);
+
+  return (
+    <div className="isu-workspace">
+      <ItemsureNav hasOrganization={Boolean(organization)} can={can} />
+      <div className="isu-content">
+        <Routes>
+          <Route index element={needsOrg(<ItemsureDashboard />)} />
+          <Route path="locations" element={needsOrg(<ItemsureLocations />)} />
+          <Route path="items" element={needsOrg(<ItemsureItems />)} />
+          <Route path="counts" element={needsCounts(<ItemsureCounts />)} />
+          <Route path="counts/new" element={needsCounts(<ItemsureCountStart />)} />
+          <Route path="counts/:sessionId" element={needsCounts(<ItemsureCountSession />)} />
+          <Route path="counts/:sessionId/review" element={needsCounts(<ItemsureCountSession review />)} />
+          <Route path="settings" element={needsOrg(<ItemsureSettings />)} />
+          <Route path="setup" element={<ItemsureSetup />} />
+          <Route path="*" element={<Navigate to={ITEMSURE_PATH} replace />} />
+        </Routes>
+      </div>
+    </div>
+  );
+}

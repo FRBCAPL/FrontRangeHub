@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, lazy, Suspense } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { applyEstateAuthLanding, estateOAuthCallbackHash } from "@shared/utils/estateAuthLanding.js";
 import { applyFrusaplHostRedirect } from "./frusaplHostRedirect.js";
@@ -126,6 +126,7 @@ import ConsignmentApp from '@apps/consignment/frontend/src/components/consignmen
 import ConsignmentPrintTag from '@apps/consignment/frontend/src/components/consignment/ConsignmentPrintTag.jsx';
 import { isConsignmentPath, isConsignmentPrintPath } from '@apps/consignment/frontend/src/utils/consignmentPaths.js';
 import DuezyApp from '@apps/duezy/frontend/src/components/duezy/DuezyApp.jsx';
+const ItemsureApp = lazy(() => import('@apps/itemsure/frontend/src/components/itemsure/ItemsureApp.jsx'));
 import { isCashClimbSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { isElimSubmitPath } from '@apps/tournament-bracket/frontend/src/components/tournament/elimSubmit.js';
 import { isBreakAndRunDisplayPath, isBreakAndRunRulesTvPath } from '@apps/tournament-bracket/frontend/src/components/tournament/break-and-run/breakAndRunDisplay.js';
@@ -211,6 +212,7 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/trap-em': '#/trap-em',
   '/consignment': '#/consignment',
   '/duezy': '#/duezy',
+  '/itemsure': '#/itemsure',
   '/tournament-bracket/how-it-works': '#/tournament-bracket/how-it-works',
   '/tournament-bracket/submit': '#/tournament-bracket/submit',
   '/tournament-bracket/elim': '#/tournament-bracket/elim',
@@ -316,6 +318,7 @@ function AppContent() {
       || (pathname.startsWith('/usapl') ? `#${pathname}` : null)
       || (pathname === '/consignment' || pathname.startsWith('/consignment/') ? `#${pathname}` : null)
       || (pathname.startsWith('/duezy/') ? `#${pathname}` : null)
+      || (pathname.startsWith('/itemsure/') ? `#${pathname}` : null)
       || (isCashClimbSubmitPath(pathname) ? `#${pathname}` : null)
       || (isElimSubmitPath(pathname) ? `#${pathname}` : null);
     if (targetHash) {
@@ -831,6 +834,19 @@ function AppContent() {
         <Routes>
           <Route path="/duezy/*" element={<DuezyApp />} />
         </Routes>
+      </div>
+    );
+  }
+
+  // ItemSure — standalone inventory app with its own accounts, no hub nav
+  if (location.pathname === '/itemsure' || location.pathname.startsWith('/itemsure/')) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, overflowY: 'auto', zIndex: 9999, background: '#0f1412' }}>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/itemsure/*" element={<ItemsureApp />} />
+          </Routes>
+        </Suspense>
       </div>
     );
   }

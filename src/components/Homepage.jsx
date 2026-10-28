@@ -400,6 +400,9 @@ const Homepage = ({ canRunTournament = false }) => {
           <button type="button" className="homepage-footer-app" onClick={handleNavigateToEstateIt}>
             <span aria-hidden="true">🗄️</span> Estate Vault
           </button>
+          <button type="button" className="homepage-footer-app homepage-footer-app--itemsure" onClick={() => navigate('/itemsure')}>
+            <span aria-hidden="true">📦</span> ItemSure
+          </button>
           <button type="button" className="homepage-footer-app homepage-footer-app--duezy" onClick={handleNavigateToDuesTracker}>
             <span aria-hidden="true">💰</span> FRUSAPL Dues Tracker
           </button>

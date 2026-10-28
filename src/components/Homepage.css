@@ -277,6 +277,18 @@
   color: #e0e7ff;
 }
 
+.homepage-footer .homepage-footer-app--itemsure {
+  border-color: rgba(52, 168, 113, 0.55);
+  background: rgba(52, 168, 113, 0.1);
+  color: #d6f5e3;
+}
+
+.homepage-footer .homepage-footer-app--itemsure:hover,
+.homepage-footer .homepage-footer-app--itemsure:focus-visible {
+  background: rgba(52, 168, 113, 0.25);
+  border-color: #34a871;
+}
+
 .homepage-footer .homepage-footer-app--duezy:hover,
 .homepage-footer .homepage-footer-app--duezy:focus-visible {
   background: rgba(129, 140, 248, 0.25);

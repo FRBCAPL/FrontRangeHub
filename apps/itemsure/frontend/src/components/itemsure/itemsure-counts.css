@@ -1,0 +1,120 @@
+/* ItemSure physical counts. Scoped under .isu-app like the rest of ItemSure. */
+
+.isu-app .isu-check input[type='radio'] { width: 20px; min-height: 20px; height: 20px; padding: 0; accent-color: var(--isu-pine); }
+.isu-app .isu-fieldset { border: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; }
+.isu-app .isu-fieldset legend { font-weight: 600; font-size: 0.92rem; margin-bottom: 4px; }
+
+/* Session list */
+.isu-app .isu-count-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.isu-app .isu-count-link {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.isu-app .isu-count-link:hover { border-color: var(--isu-pine); }
+.isu-app .isu-count-status--in_progress { background: var(--isu-pine-soft); color: var(--isu-pine); }
+.isu-app .isu-count-status--submitted { background: var(--isu-info-soft); color: var(--isu-info); }
+.isu-app .isu-count-status--cancelled { background: var(--isu-danger-soft); color: var(--isu-danger); }
+
+/* Counting */
+.isu-app .isu-chip--choice { cursor: pointer; font: inherit; font-size: 0.92rem; min-height: 40px; color: var(--isu-ink); }
+.isu-app .isu-chip--choice.is-selected { background: var(--isu-pine-btn); border-color: var(--isu-pine-btn); color: #fff; }
+
+.isu-app .isu-count-savebar {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  border: 1px solid var(--isu-line);
+  background: var(--isu-paper);
+}
+.isu-app .isu-count-savebar.is-saved { color: var(--isu-pine); background: #13241c; border-color: var(--isu-pine-line); }
+.isu-app .isu-count-savebar.is-saving { color: var(--isu-muted); }
+.isu-app .isu-count-savebar.is-offline { color: var(--isu-amber); background: #2a2116; border-color: var(--isu-warn-line); }
+.isu-app .isu-count-savebar.is-problem { color: var(--isu-danger); background: #2c1a18; border-color: var(--isu-danger-line); }
+
+.isu-app .isu-count-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.isu-app .isu-count-row { padding: 14px 16px; }
+.isu-app .isu-count-row.has-conflict { border-color: var(--isu-amber); }
+.isu-app .isu-count-row-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.isu-app .isu-count-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; cursor: pointer; }
+.isu-app .isu-count-input { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.isu-app .isu-count-input input {
+  width: 110px;
+  min-height: 52px;
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.isu-app .isu-count-unit { min-width: 32px; color: var(--isu-muted); font-weight: 600; }
+.isu-app .isu-count-row-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+.isu-app .isu-count-row-foot > .isu-muted { flex: 1 1 180px; }
+.isu-app .isu-count-quick { display: flex; gap: 6px; }
+.isu-app .isu-count-quick .isu-link { min-height: 40px; min-width: 48px; padding: 4px 8px; }
+.isu-app .isu-count-state { font-size: 0.85rem; font-weight: 600; color: var(--isu-muted); }
+.isu-app .isu-count-state.is-saved { color: var(--isu-pine); }
+.isu-app .isu-count-state.is-offline { color: var(--isu-amber); }
+.isu-app .isu-count-state.is-problem { color: var(--isu-danger); }
+.isu-app .isu-count-conflict {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--isu-warn-soft);
+  border: 1px solid var(--isu-warn-line);
+  font-size: 0.92rem;
+}
+.isu-app .isu-count-conflict .isu-card-actions { margin-top: 8px; }
+
+.isu-app .isu-count-footer {
+  position: sticky;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 0;
+  background: linear-gradient(to bottom, rgba(15, 20, 18, 0), var(--isu-sand) 30%);
+}
+@media (min-width: 820px) {
+  .isu-app .isu-count-footer { bottom: 0; }
+}
+
+/* Review and history */
+.isu-app .isu-count-report { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.isu-app .isu-count-report-head { display: flex; justify-content: space-between; gap: 12px; }
+.isu-app .isu-count-total { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.isu-app .isu-count-breakdown { list-style: none; margin: 8px 0 0; padding: 0; font-size: 0.9rem; }
+.isu-app .isu-count-breakdown li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid var(--isu-line);
+  font-variant-numeric: tabular-nums;
+}
+.isu-app .isu-count-omitted { margin: 0; padding-left: 36px; display: flex; flex-direction: column; gap: 6px; }
+.isu-app .isu-count-confirm { align-items: flex-start; }
+.isu-app .isu-count-confirm input { margin-top: 2px; flex: 0 0 auto; }
+
+.isu-app .isu-btn--danger { color: var(--isu-danger); }
+.isu-app .isu-btn--danger:hover:not(:disabled) { border-color: var(--isu-danger); color: var(--isu-danger); }
+.isu-app .isu-btn--danger-solid { background: #b4433a; color: #fff; }
+.isu-app .isu-btn--danger-solid:hover:not(:disabled) { background: #c95147; }
