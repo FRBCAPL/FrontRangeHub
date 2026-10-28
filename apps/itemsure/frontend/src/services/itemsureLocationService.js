@@ -25,10 +25,9 @@ export async function listLocations(organizationId) {
   }));
 }
 
-export async function createLocation(organizationId, form) {
-  const timezone = TIMEZONES.includes(form.timezone) ? form.timezone : 'UTC';
-  const row = {
-    organization_id: organizationId,
+function locationFields(form, keepTimezone) {
+  const timezone = TIMEZONES.includes(form.timezone) || form.timezone === keepTimezone ? form.timezone : 'UTC';
+  return {
     name: requiredText(form.name, 'location name', 120),
     address_line1: optionalText(form.address_line1, 'address', 160) || '',
     address_line2: optionalText(form.address_line2, 'address line 2', 160) || '',
@@ -38,7 +37,24 @@ export async function createLocation(organizationId, form) {
     country: optionalText(form.country, 'country', 80) || '',
     timezone,
   };
+}
+
+export async function createLocation(organizationId, form) {
+  const row = { organization_id: organizationId, ...locationFields(form) };
   assertOk(await itemsure.from('locations').insert(row), 'create location');
+}
+
+export async function updateLocation(organizationId, location, form) {
+  const data = assertOk(
+    await itemsure
+      .from('locations')
+      .update(locationFields(form, location.timezone))
+      .eq('id', location.id)
+      .eq('organization_id', organizationId)
+      .select('id'),
+    'update location',
+  );
+  if (!data?.length) throw new Error('You do not have permission to change this location.');
 }
 
 export async function setLocationActive(organizationId, locationId, isActive) {
@@ -49,14 +65,29 @@ export async function setLocationActive(organizationId, locationId, isActive) {
   if (!data?.length) throw new Error('You do not have permission to change this location.');
 }
 
-export async function createStorageArea(organizationId, locationId, form) {
-  const row = {
-    organization_id: organizationId,
-    location_id: locationId,
+function areaFields(form) {
+  return {
     name: requiredText(form.name, 'storage area name', 120),
     description: optionalText(form.description, 'description', 400) || '',
   };
+}
+
+export async function createStorageArea(organizationId, locationId, form) {
+  const row = { organization_id: organizationId, location_id: locationId, ...areaFields(form) };
   assertOk(await itemsure.from('inventory_storage_areas').insert(row), 'create storage area');
+}
+
+export async function updateStorageArea(organizationId, areaId, form) {
+  const data = assertOk(
+    await itemsure
+      .from('inventory_storage_areas')
+      .update(areaFields(form))
+      .eq('id', areaId)
+      .eq('organization_id', organizationId)
+      .select('id'),
+    'update storage area',
+  );
+  if (!data?.length) throw new Error('You do not have permission to change this storage area.');
 }
 
 export async function setStorageAreaActive(organizationId, areaId, isActive) {

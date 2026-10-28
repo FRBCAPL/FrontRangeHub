@@ -11,7 +11,8 @@ export default function ItemsureLocations() {
   const { organization, can } = useItemsureWorkspace();
   const [locations, setLocations] = useState(null);
   const [adding, setAdding] = useState(false);
-  const [areaFor, setAreaFor] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [areaForm, setAreaForm] = useState(null);
   const { busy, error, setError, run } = useItemsureAction();
   const canManageLocations = can('locations.manage');
   const canManageStorage = can('storage.manage');
@@ -41,8 +42,15 @@ export default function ItemsureLocations() {
       await refresh();
     });
 
-  const closeAdding = useCallback(() => setAdding(false), []);
-  const closeArea = useCallback(() => setAreaFor(null), []);
+  const closeAdding = useCallback(() => {
+    setAdding(false);
+    setEditing(null);
+  }, []);
+  const closeArea = useCallback(() => setAreaForm(null), []);
+  const savedLocation = async () => {
+    closeAdding();
+    await refresh();
+  };
 
   return (
     <div className="isu-page">
@@ -74,29 +82,37 @@ export default function ItemsureLocations() {
             canManageStorage={canManageStorage}
             busy={busy}
             onToggle={toggleLocation}
-            onAddArea={setAreaFor}
+            onEdit={setEditing}
+            onAddArea={(loc) => setAreaForm({ location: loc, area: null })}
+            onEditArea={(loc, area) => setAreaForm({ location: loc, area })}
             onToggleArea={toggleArea}
           />
         ))}
       </div>
 
       <Modal open={adding} title="Add location" onClose={closeAdding}>
-        <ItemsureLocationForm
-          organizationId={organization.id}
-          onSaved={async () => {
-            setAdding(false);
-            await refresh();
-          }}
-        />
+        <ItemsureLocationForm organizationId={organization.id} onSaved={savedLocation} />
       </Modal>
 
-      <Modal open={Boolean(areaFor)} title="Add storage area" onClose={closeArea}>
-        {areaFor ? (
+      <Modal open={Boolean(editing)} title={editing ? `Edit ${editing.name}` : 'Edit location'} onClose={closeAdding}>
+        {editing ? (
+          <ItemsureLocationForm key={editing.id} organizationId={organization.id} location={editing} onSaved={savedLocation} />
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={Boolean(areaForm)}
+        title={areaForm?.area ? `Edit ${areaForm.area.name}` : 'Add storage area'}
+        onClose={closeArea}
+      >
+        {areaForm ? (
           <ItemsureStorageAreaForm
+            key={areaForm.area?.id || areaForm.location.id}
             organizationId={organization.id}
-            location={areaFor}
+            location={areaForm.location}
+            area={areaForm.area}
             onSaved={async () => {
-              setAreaFor(null);
+              setAreaForm(null);
               await refresh();
             }}
           />

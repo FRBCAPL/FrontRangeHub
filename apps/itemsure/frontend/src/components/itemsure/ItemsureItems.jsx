@@ -2,19 +2,25 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { listCatalog, setItemActive } from '../../services/itemsureItemService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import useItemPlaces from '../../hooks/useItemPlaces.js';
 import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureItemForm from './ItemsureItemForm.jsx';
+import ItemsureItemRow from './ItemsureItemRow.jsx';
 import ItemsureCategoryForm from './ItemsureCategoryForm.jsx';
 
 export default function ItemsureItems() {
   const { organization, can } = useItemsureWorkspace();
   const [catalog, setCatalog] = useState(null);
   const [query, setQuery] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [modal, setModal] = useState('');
+  const [editing, setEditing] = useState(null);
   const { busy, error, setError, run } = useItemsureAction();
+  const places = useItemPlaces(organization.id);
   const canManageItems = can('items.manage');
   const canManageCategories = can('categories.manage');
+  const activeLocations = places.locations.filter((l) => l.is_active);
 
   const refresh = useCallback(async () => {
     try {
@@ -33,10 +39,11 @@ export default function ItemsureItems() {
     const needle = query.trim().toLowerCase();
     return (catalog?.items || []).filter((item) => {
       if (!showArchived && !item.is_active) return false;
+      if (locationFilter && !(places.placesFor(item.id) || []).some((p) => p.location_id === locationFilter)) return false;
       if (!needle) return true;
       return [item.name, item.sku, item.barcode, item.categoryName].some((v) => String(v || '').toLowerCase().includes(needle));
     });
-  }, [catalog, query, showArchived]);
+  }, [catalog, query, showArchived, locationFilter, places]);
 
   const toggleItem = (item) =>
     run(async () => {
@@ -44,11 +51,22 @@ export default function ItemsureItems() {
       await refresh();
     });
 
-  const closeModal = useCallback(() => setModal(''), []);
-  const saved = async () => {
+  const closeModal = useCallback(() => {
     setModal('');
-    await refresh();
+    setEditing(null);
+  }, []);
+  const saved = async () => {
+    closeModal();
+    await Promise.all([refresh(), places.reload()]);
   };
+  const formProps = catalog ? {
+    organizationId: organization.id,
+    categories: catalog.categories,
+    units: catalog.units,
+    canManageCategories,
+    locations: places.locations,
+    onSaved: saved,
+  } : null;
 
   return (
     <div className="isu-page">
@@ -79,6 +97,12 @@ export default function ItemsureItems() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        {places.ready && activeLocations.length > 1 ? (
+          <select className="isu-item-filter" aria-label="Kept at location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+            <option value="">All locations</option>
+            {activeLocations.map((l) => <option key={l.id} value={l.id}>Kept at {l.name}</option>)}
+          </select>
+        ) : null}
         <label className="isu-check">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Show archived
         </label>
@@ -88,41 +112,30 @@ export default function ItemsureItems() {
       {catalog && visibleItems.length === 0 ? (
         <div className="isu-card isu-empty">
           <h2>{catalog.items.length ? 'No matching items' : 'No items yet'}</h2>
-          <p className="isu-muted">{catalog.items.length ? 'Try a different search.' : canManageItems ? 'Add your first item to start the catalog.' : 'Nothing has been added yet.'}</p>
+          <p className="isu-muted">{catalog.items.length ? 'Try a different search or location.' : canManageItems ? 'Add your first item to start the catalog.' : 'Nothing has been added yet.'}</p>
         </div>
       ) : null}
 
       <ul className="isu-item-list">
         {visibleItems.map((item) => (
-          <li key={item.id} className={`isu-card isu-item${item.is_active ? '' : ' is-archived'}`}>
-            <div>
-              <strong>{item.name}</strong>
-              <p className="isu-muted isu-small">
-                {[item.categoryName || 'No category', item.unitName, item.sku && `SKU ${item.sku}`, item.barcode && `Barcode ${item.barcode}`]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </p>
-            </div>
-            {canManageItems ? (
-              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => toggleItem(item)}>
-                {item.is_active ? 'Archive' : 'Restore'}
-              </button>
-            ) : !item.is_active ? (
-              <span className="isu-badge">Archived</span>
-            ) : null}
-          </li>
+          <ItemsureItemRow
+            key={item.id}
+            item={item}
+            keptAt={places.ready ? places.labelsFor(item.id) : null}
+            canManage={canManageItems}
+            busy={busy}
+            onEdit={() => setEditing(item)}
+            onToggle={() => toggleItem(item)}
+          />
         ))}
       </ul>
 
       <Modal open={modal === 'item'} title="Add item" onClose={closeModal}>
-        {catalog ? (
-          <ItemsureItemForm
-            organizationId={organization.id}
-            categories={catalog.categories}
-            units={catalog.units}
-            canManageCategories={canManageCategories}
-            onSaved={saved}
-          />
+        {formProps ? <ItemsureItemForm {...formProps} places={places.ready ? [] : null} /> : null}
+      </Modal>
+      <Modal open={Boolean(editing)} title={editing ? `Edit ${editing.name}` : 'Edit item'} onClose={closeModal}>
+        {formProps && editing ? (
+          <ItemsureItemForm key={editing.id} {...formProps} item={editing} places={places.placesFor(editing.id)} />
         ) : null}
       </Modal>
       <Modal open={modal === 'category'} title="Add category" onClose={closeModal}>

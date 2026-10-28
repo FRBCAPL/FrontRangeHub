@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createLocation } from '../../services/itemsureLocationService.js';
+import { createLocation, updateLocation } from '../../services/itemsureLocationService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { TIMEZONES } from '../../data/itemsureConstants.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
@@ -15,14 +15,19 @@ function guessTimezone() {
   }
 }
 
-export default function ItemsureLocationForm({ organizationId, onSaved }) {
-  const [form, setForm] = useState(() => ({ ...EMPTY, timezone: guessTimezone() }));
+/** Adds a location, or edits `location` when one is given. */
+export default function ItemsureLocationForm({ organizationId, location, onSaved }) {
+  const [form, setForm] = useState(() => (location
+    ? { ...EMPTY, ...Object.fromEntries(Object.keys(EMPTY).map((k) => [k, location[k] || ''])), timezone: location.timezone }
+    : { ...EMPTY, timezone: guessTimezone() }));
   const { busy, error, run } = useItemsureAction();
   const set = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }));
+  const zones = location && !TIMEZONES.includes(location.timezone) ? [location.timezone, ...TIMEZONES] : TIMEZONES;
 
   const submit = async (event) => {
     event.preventDefault();
-    if (await run(() => createLocation(organizationId, form))) onSaved();
+    const save = location ? () => updateLocation(organizationId, location, form) : () => createLocation(organizationId, form);
+    if (await run(save)) onSaved();
   };
 
   return (
@@ -53,13 +58,13 @@ export default function ItemsureLocationForm({ organizationId, onSaved }) {
       </div>
       <Field label="Time zone">
         <select value={form.timezone} onChange={set('timezone')}>
-          {TIMEZONES.map((zone) => (
+          {zones.map((zone) => (
             <option key={zone} value={zone}>{zone.replace(/_/g, ' ')}</option>
           ))}
         </select>
       </Field>
       <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy}>
-        {busy ? 'Saving…' : 'Add location'}
+        {busy ? 'Saving…' : location ? 'Save changes' : 'Add location'}
       </button>
     </form>
   );

@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { createStorageArea } from '../../services/itemsureLocationService.js';
+import { createStorageArea, updateStorageArea } from '../../services/itemsureLocationService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 
-export default function ItemsureStorageAreaForm({ organizationId, location, onSaved }) {
-  const [form, setForm] = useState({ name: '', description: '' });
+/** Adds a storage area to `location`, or edits `area` when one is given. */
+export default function ItemsureStorageAreaForm({ organizationId, location, area, onSaved }) {
+  const [form, setForm] = useState({ name: area?.name || '', description: area?.description || '' });
   const { busy, error, run } = useItemsureAction();
   const set = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }));
 
   const submit = async (event) => {
     event.preventDefault();
-    if (await run(() => createStorageArea(organizationId, location.id, form))) onSaved();
+    const save = area
+      ? () => updateStorageArea(organizationId, area.id, form)
+      : () => createStorageArea(organizationId, location.id, form);
+    if (await run(save)) onSaved();
   };
 
   return (
@@ -23,7 +27,7 @@ export default function ItemsureStorageAreaForm({ organizationId, location, onSa
         <textarea value={form.description} onChange={set('description')} rows={3} maxLength={400} />
       </Field>
       <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy}>
-        {busy ? 'Saving…' : `Add to ${location.name}`}
+        {busy ? 'Saving…' : area ? 'Save changes' : `Add to ${location.name}`}
       </button>
     </form>
   );

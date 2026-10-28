@@ -10,7 +10,7 @@ export async function listCatalog(organizationId) {
   const [items, categories, units] = await Promise.all([
     itemsure
       .from('inventory_items')
-      .select('id, name, description, sku, barcode, is_active, category_id, inventory_categories(name), units_of_measure(name, symbol)')
+      .select('id, name, description, sku, barcode, is_active, category_id, base_unit_id, inventory_categories(name), units_of_measure(name, symbol)')
       .eq('organization_id', organizationId)
       .order('name'),
     itemsure
@@ -46,7 +46,7 @@ export async function createCategory(organizationId, name) {
   return data.id;
 }
 
-export async function createItem(organizationId, form, { canManageCategories }) {
+async function itemFields(organizationId, form, canManageCategories) {
   const name = requiredText(form.name, 'item name', 160);
   if (!form.base_unit_id) throw new Error('Choose a unit of measure.');
 
@@ -57,8 +57,7 @@ export async function createItem(organizationId, form, { canManageCategories }) 
     categoryId = await createCategory(organizationId, newCategory);
   }
 
-  const row = {
-    organization_id: organizationId,
+  return {
     name,
     description: optionalText(form.description, 'description', 4000) || '',
     sku: optionalText(form.sku, 'SKU', 64),
@@ -66,7 +65,22 @@ export async function createItem(organizationId, form, { canManageCategories }) 
     base_unit_id: form.base_unit_id,
     category_id: categoryId,
   };
-  assertOk(await itemsure.from('inventory_items').insert(row), 'create item');
+}
+
+export async function createItem(organizationId, form, { canManageCategories }) {
+  const row = { organization_id: organizationId, ...(await itemFields(organizationId, form, canManageCategories)) };
+  return assertOk(await itemsure.from('inventory_items').insert(row).select('id').single(), 'create item').id;
+}
+
+/** The unit is only sent when it changed; the database refuses it once the item has stock history or levels. */
+export async function updateItem(organizationId, item, form, { canManageCategories }) {
+  const fields = await itemFields(organizationId, form, canManageCategories);
+  if (fields.base_unit_id === item.base_unit_id) delete fields.base_unit_id;
+  const data = assertOk(
+    await itemsure.from('inventory_items').update(fields).eq('id', item.id).eq('organization_id', organizationId).select('id'),
+    'update item',
+  );
+  if (!data?.length) throw new Error('You do not have permission to change this item.');
 }
 
 export async function setItemActive(organizationId, itemId, isActive) {

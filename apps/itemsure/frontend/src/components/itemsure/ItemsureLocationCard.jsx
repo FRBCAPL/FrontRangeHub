@@ -6,7 +6,9 @@ function addressLine(location) {
     .join(', ');
 }
 
-export default function ItemsureLocationCard({ location, canManageLocation, canManageStorage, busy, onToggle, onAddArea, onToggleArea }) {
+export default function ItemsureLocationCard({
+  location, canManageLocation, canManageStorage, busy, onToggle, onEdit, onAddArea, onEditArea, onToggleArea,
+}) {
   const address = addressLine(location);
   const areas = location.storageAreas;
 
@@ -19,7 +21,15 @@ export default function ItemsureLocationCard({ location, canManageLocation, canM
             {address || 'No address'} · {location.timezone.replace(/_/g, ' ')}
           </p>
         </div>
-        {!location.is_active ? <span className="isu-badge">Archived</span> : null}
+        <div className="isu-item-actions">
+          {!location.is_active ? <span className="isu-badge">Archived</span> : null}
+          {canManageLocation ? (
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy}
+              onClick={() => onEdit(location)} aria-label={`Edit ${location.name}`}>
+              Edit
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <h3 className="isu-subhead">Storage areas</h3>
@@ -34,9 +44,15 @@ export default function ItemsureLocationCard({ location, canManageLocation, canM
                 {area.description ? <p className="isu-muted isu-small">{area.description}</p> : null}
               </div>
               {canManageStorage ? (
-                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onToggleArea(area)}>
-                  {area.is_active ? 'Archive' : 'Restore'}
-                </button>
+                <div className="isu-item-actions">
+                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy}
+                    onClick={() => onEditArea(location, area)} aria-label={`Edit ${area.name}`}>
+                    Edit
+                  </button>
+                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onToggleArea(area)}>
+                    {area.is_active ? 'Archive' : 'Restore'}
+                  </button>
+                </div>
               ) : !area.is_active ? (
                 <span className="isu-badge">Archived</span>
               ) : null}
