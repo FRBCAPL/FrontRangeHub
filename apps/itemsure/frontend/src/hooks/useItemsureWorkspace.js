@@ -1,5 +1,6 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { loadWorkspace, rememberActiveOrg } from '../services/itemsureOrgService.js';
+import { ALL_FEATURES_ON } from '../utils/itemsureFeatures.js';
 
 const WorkspaceContext = createContext(null);
 
@@ -38,6 +39,7 @@ export function ItemsureWorkspaceProvider({ session, children }) {
       reload,
       switchOrganization,
       organization: workspace?.organization || null,
+      features: workspace?.organization?.features || ALL_FEATURES_ON,
       can: (permission) => permissions.has(permission),
     };
   }, [user, workspace, error, reload, switchOrganization]);

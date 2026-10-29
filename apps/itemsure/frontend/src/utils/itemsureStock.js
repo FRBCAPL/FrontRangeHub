@@ -1,6 +1,6 @@
 // A "slot" is where stock sits: a location plus an optional storage area.
 
-export const NO_AREA_LABEL = 'No specific area';
+export const NO_AREA_LABEL = 'Loose (no specific spot)';
 
 export function slotKey(locationId, storageAreaId) {
   return `${locationId}|${storageAreaId || ''}`;
@@ -11,22 +11,23 @@ export function parseSlotKey(key) {
   return { locationId, storageAreaId: storageAreaId || null };
 }
 
-/** Every place stock can sit in the locations the user can see, for pickers. */
-export function slotOptions(locations) {
+/** Every place stock can sit in the locations the user can see, for pickers. `spots: false` lists locations only. */
+export function slotOptions(locations, { spots = true } = {}) {
   return locations
     .filter((location) => location.is_active)
-    .flatMap((location) => [
-      { key: slotKey(location.id, null), label: `${location.name} \u00b7 ${NO_AREA_LABEL}` },
-      ...location.storageAreas
-        .filter((area) => area.is_active)
-        .map((area) => ({ key: slotKey(location.id, area.id), label: `${location.name} \u00b7 ${area.name}` })),
-    ]);
+    .flatMap((location) => {
+      const areas = spots ? (location.storageAreas || []).filter((area) => area.is_active) : [];
+      return [
+        ...areas.map((area) => ({ key: slotKey(location.id, area.id), label: `${location.name} \u00b7 ${area.name}` })),
+        { key: slotKey(location.id, null), label: areas.length ? `${location.name} \u00b7 ${NO_AREA_LABEL}` : location.name },
+      ];
+    });
 }
 
 export function slotLabel(locations, locationId, storageAreaId) {
   const location = locations.find((l) => l.id === locationId);
   const area = storageAreaId ? location?.storageAreas.find((a) => a.id === storageAreaId) : null;
-  return [location?.name || 'Location', storageAreaId ? area?.name || 'Storage area' : NO_AREA_LABEL].join(' \u00b7 ');
+  return [location?.name || 'Location', storageAreaId ? area?.name || 'Spot' : NO_AREA_LABEL].join(' \u00b7 ');
 }
 
 /** The established balance for one item in one slot, or null when none exists yet. */

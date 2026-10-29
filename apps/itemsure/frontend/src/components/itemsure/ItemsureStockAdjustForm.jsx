@@ -1,19 +1,24 @@
 import React, { useMemo, useState } from 'react';
 import { adjustStock } from '../../services/itemsureInventoryService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import { stockEntry, usablePackages } from '../../utils/itemsurePackages.js';
 import { findBalance, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
+import ItemsurePackageQuantity from './ItemsurePackageQuantity.jsx';
 
 const REASONS = ['Delivery received', 'Used', 'Damaged', 'Expired', 'Returned', 'Correction'];
 
 /** Adds to or removes from an established balance. Never sets one up. */
 export default function ItemsureStockAdjustForm({ data, defaultLocationId, onDone }) {
-  const options = useMemo(() => slotOptions(data.locations), [data.locations]);
+  const { features } = useItemsureWorkspace();
+  const options = useMemo(() => slotOptions(data.locations, { spots: features.spots }), [data.locations, features.spots]);
   const items = useMemo(() => data.items.filter((i) => i.isActive), [data.items]);
   const [slot, setSlot] = useState(() => (options.some((o) => o.key === slotKey(defaultLocationId)) ? slotKey(defaultLocationId) : options[0]?.key || ''));
   const [itemId, setItemId] = useState(items[0]?.id || '');
   const [direction, setDirection] = useState('add');
+  const [packageId, setPackageId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState('');
   const { busy, error, run } = useItemsureAction();
@@ -21,11 +26,25 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, onDon
   const { locationId, storageAreaId } = parseSlotKey(slot);
   const item = items.find((i) => i.id === itemId) || null;
   const balance = item ? findBalance(data.balances, item.id, locationId, storageAreaId) : null;
+  const packages = useMemo(
+    () => (features.packaging ? usablePackages((data.packages || []).filter((p) => p.item_id === itemId)) : []),
+    [data.packages, itemId, features.packaging],
+  );
+  const pkg = packages.find((p) => p.id === packageId) || null;
+  const entry = item ? stockEntry(quantity, pkg, item) : null;
+
+  const chooseItem = (id) => {
+    setItemId(id);
+    if (packageId) {
+      setPackageId('');
+      setQuantity('');
+    }
+  };
 
   const submit = (event) => {
     event.preventDefault();
     run(async () => {
-      await adjustStock({ locationId, storageAreaId, item, direction, quantity, reason });
+      await adjustStock({ locationId, storageAreaId, item, direction, quantity, reason, pkg });
       await onDone();
     });
   };
@@ -40,7 +59,7 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, onDon
         </select>
       </Field>
       <Field label="Item">
-        <select value={itemId} onChange={(e) => setItemId(e.target.value)}>
+        <select value={itemId} onChange={(e) => chooseItem(e.target.value)}>
           {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
         </select>
       </Field>
@@ -62,9 +81,17 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, onDon
         </div>
       </fieldset>
 
-      <Field label={`Quantity${item ? ` (${item.unitName})` : ''}`}>
-        <input inputMode="decimal" autoComplete="off" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-      </Field>
+      {item ? (
+        <ItemsurePackageQuantity
+          item={item}
+          packages={packages}
+          packageId={packageId}
+          onPackageChange={setPackageId}
+          quantity={quantity}
+          onQuantityChange={setQuantity}
+          entry={entry}
+        />
+      ) : null}
       <Field label="Reason" hint="Required. Shown in stock activity.">
         <input list="isu-adjust-reasons" maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
       </Field>

@@ -19,6 +19,24 @@ export async function loadDashboardCounts(organizationId) {
   return { locations, items, storageAreas };
 }
 
+async function hasAny(table, organizationId) {
+  const { count, error } = await itemsure
+    .from(table)
+    .select('id', { count: 'exact', head: true })
+    .eq('organization_id', organizationId)
+    .limit(1);
+  return error ? null : (count ?? 0) > 0;
+}
+
+/** For the getting-started checklist: has any amount, and any warning level, been set yet. */
+export async function loadSetupProgress(organizationId) {
+  const [amounts, levels] = await Promise.all([
+    hasAny('inventory_balances', organizationId),
+    hasAny('inventory_targets', organizationId),
+  ]);
+  return { amounts, levels };
+}
+
 export async function listRecentActivity(organizationId, limit = 8, offset = 0) {
   const { data, error } = await itemsure
     .from('audit_events')

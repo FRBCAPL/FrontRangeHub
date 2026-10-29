@@ -1,7 +1,7 @@
 /* ItemSure page layouts. Scoped under .isu-app. */
 
 /* Welcome */
-.isu-app .isu-hero { padding: clamp(24px, 6vw, 64px) 0 32px; max-width: 720px; margin: 0 auto; text-align: center; }
+.isu-app .isu-hero { padding: clamp(24px, 6vw, 64px) 0 32px; max-width: 720px !important; margin: 0 auto; text-align: center; }
 .isu-app .isu-hero h1 { font-size: clamp(2.4rem, 8vw, 4rem); }
 .isu-app .isu-lede { font-size: 1.15rem; color: var(--isu-muted); margin-top: 16px; }
 .isu-app .isu-hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
@@ -14,14 +14,14 @@
   margin: 32px auto 0;
   padding-top: 24px;
   border-top: 1px solid var(--isu-line);
-  max-width: 720px;
+  max-width: 720px !important;
   text-align: center;
 }
 .isu-app .isu-foundation-note h2 { margin-bottom: 8px; }
 
 /* Auth */
 .isu-app .isu-auth { display: flex; justify-content: center; padding-top: 16px; }
-.isu-app .isu-auth-card { width: 100%; max-width: 440px; }
+.isu-app .isu-auth-card { width: 100%; max-width: 440px !important; }
 .isu-app .isu-auth-card h1 { font-size: 1.8rem; margin-bottom: 8px; text-align: center; }
 .isu-app .isu-auth-card > .isu-muted { margin-bottom: 16px; font-size: 0.92rem; text-align: center; }
 .isu-app .isu-auth-card .isu-field > label,
@@ -54,7 +54,7 @@
   gap: 2px;
   flex: 1 1 0;
   min-width: 0;
-  max-width: 88px;
+  max-width: 88px !important;
   min-height: 52px;
   justify-content: center;
   border-radius: 12px;
@@ -78,10 +78,10 @@
     border: 1px solid var(--isu-line);
     border-radius: var(--isu-radius);
   }
-  .isu-app .isu-nav-link { flex: none; max-width: none; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 0 14px; font-size: 0.95rem; min-height: 46px; }
+  .isu-app .isu-nav-link { flex: none; max-width: none !important; flex-direction: row; justify-content: flex-start; gap: 10px; padding: 0 14px; font-size: 0.95rem; min-height: 46px; }
 }
 
-.isu-app .isu-content { min-width: 0; width: 100%; max-width: 880px; margin: 0 auto; }
+.isu-app .isu-content { min-width: 0; width: 100%; max-width: 880px !important; margin: 0 auto; }
 .isu-app .isu-page { display: flex; flex-direction: column; gap: 18px; }
 .isu-app .isu-page-head {
   display: flex;
@@ -94,7 +94,7 @@
 .isu-app .isu-stack { display: flex; flex-direction: column; gap: 14px; }
 .isu-app .isu-empty { text-align: center; padding: 32px 20px; }
 .isu-app .isu-empty h2 { margin-bottom: 6px; }
-.isu-app .isu-center-card { max-width: 520px; margin: 48px auto; }
+.isu-app .isu-center-card { max-width: 520px !important; margin: 48px auto; }
 .isu-app .isu-section-title { margin-top: 8px; text-align: center; }
 .isu-app .isu-subhead { font-size: 0.95rem; margin: 6px 0 8px; font-family: inherit; }
 
@@ -111,6 +111,7 @@
   text-decoration: none;
   color: var(--isu-ink);
 }
+.isu-app a.isu-stat { align-items: center; text-align: center; }
 .isu-app .isu-stat:hover { border-color: var(--isu-pine); }
 .isu-app .isu-stat-value { font-family: 'Fraunces', Georgia, serif; font-size: 2rem; font-weight: 600; }
 .isu-app .isu-stat-label { font-size: 0.85rem; color: var(--isu-muted); }
@@ -138,9 +139,26 @@
 .isu-app .isu-places { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
 .isu-app .isu-places-group { border: 1px solid var(--isu-line); border-radius: 10px; margin: 0; padding: 6px 10px 8px; display: flex; flex-direction: column; }
 .isu-app .isu-places-group legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
-.isu-app .isu-item-filter { max-width: 220px; }
+.isu-app .isu-item-filter { max-width: 220px !important; }
 .isu-app .isu-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.isu-app .isu-chip-rows { display: grid; gap: 10px; }
+.isu-app .isu-category-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: -4px 0 14px;
+}
+.isu-app .isu-category-add input { flex: 1 1 180px; min-width: 0; }
+.isu-app .isu-category-add .isu-error { flex-basis: 100%; margin: 0; }
+.isu-app .isu-chips--sub {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--isu-pine-soft);
+  border: 1px solid var(--isu-pine-line);
+}
 .isu-app .isu-chip { padding: 6px 12px; border-radius: 999px; background: var(--isu-paper); border: 1px solid var(--isu-line); font-size: 0.88rem; }
+.isu-app .isu-chip-count { margin-left: 4px; opacity: 0.7; font-size: 0.8em; }
 .isu-app .isu-chip--add { cursor: pointer; color: var(--isu-pine); font-weight: 600; font: inherit; font-size: 0.88rem; }
 .isu-app .isu-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .isu-app .isu-toolbar .isu-search { flex: 1 1 260px; }

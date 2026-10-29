@@ -7,6 +7,7 @@ import ItemsureTransferWarning from './ItemsureTransferWarning.jsx';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { slotLabel } from '../../utils/itemsureStock.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
+import ItemsureStepper from './ItemsureStepper.jsx';
 
 const COPY = {
   transfer: { button: 'Transfer now', busy: 'Transferring…', note: 'Stock moves right away. ItemSure re-checks what is on hand first.' },
@@ -52,7 +53,7 @@ export default function ItemsureRestockAction({ action, locations, onDone }) {
         </span>
       </p>
       <Field label={`Quantity (${item.unitName})`}>
-        <input inputMode="decimal" autoComplete="off" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
+        <ItemsureStepper label={item.unitName} value={quantity} onChange={setQuantity} />
       </Field>
       {action.kind !== 'complete' ? (
         <Field label="Note" hint="Optional.">

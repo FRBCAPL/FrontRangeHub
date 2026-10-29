@@ -13,7 +13,7 @@ function defaultName(location, area) {
 }
 
 export default function ItemsureCountStart() {
-  const { organization, can } = useItemsureWorkspace();
+  const { organization, features, can } = useItemsureWorkspace();
   const navigate = useNavigate();
   const [locations, setLocations] = useState(null);
   const [form, setForm] = useState({ locationId: '', scope: 'location', storageAreaId: '', name: '' });
@@ -44,7 +44,7 @@ export default function ItemsureCountStart() {
     e.preventDefault();
     run(async () => {
       if (!location) throw new Error('Choose a location.');
-      if (form.scope === 'storage_area' && !area) throw new Error('Choose a storage area.');
+      if (form.scope === 'storage_area' && !area) throw new Error('Choose a spot.');
       const id = await startSession({ locationId: location.id, storageAreaId: area?.id || null, name });
       navigate(`${ITEMSURE_PATH}/counts/${id}`);
     });
@@ -78,7 +78,7 @@ export default function ItemsureCountStart() {
               </select>
             </Field>
 
-            <fieldset className="isu-fieldset">
+            {features.spots ? <fieldset className="isu-fieldset">
               <legend>What are you counting?</legend>
               <label className="isu-check">
                 <input type="radio" name="scope" value="location" checked={form.scope === 'location'} onChange={set('scope')} />
@@ -93,14 +93,14 @@ export default function ItemsureCountStart() {
                   onChange={set('scope')}
                   disabled={!areas.length}
                 />
-                One storage area{location && !areas.length ? ' (this location has none)' : ''}
+                One spot{location && !areas.length ? ' (this location has none)' : ''}
               </label>
-            </fieldset>
+            </fieldset> : null}
 
             {form.scope === 'storage_area' && areas.length ? (
-              <Field label="Storage area">
+              <Field label="Spot">
                 <select value={form.storageAreaId} onChange={set('storageAreaId')} required>
-                  <option value="">Choose a storage area</option>
+                  <option value="">Choose a spot</option>
                   {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </select>
               </Field>

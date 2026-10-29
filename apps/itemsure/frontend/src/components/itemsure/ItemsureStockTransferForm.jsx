@@ -1,25 +1,48 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { transferStock } from '../../services/itemsureInventoryService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useTransferGuard from '../../hooks/useTransferGuard.js';
 import ItemsureTransferWarning from './ItemsureTransferWarning.jsx';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import { stockEntry, usablePackages } from '../../utils/itemsurePackages.js';
 import { findBalance, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
+import ItemsurePackageQuantity from './ItemsurePackageQuantity.jsx';
 
 /** Moves stock between two established balances in one step: both sides post or neither does. */
 export default function ItemsureStockTransferForm({ data, defaultLocationId, onDone }) {
-  const options = useMemo(() => slotOptions(data.locations), [data.locations]);
+  const { features } = useItemsureWorkspace();
+  const options = useMemo(() => slotOptions(data.locations, { spots: features.spots }), [data.locations, features.spots]);
   const items = useMemo(() => data.items.filter((i) => i.isActive), [data.items]);
   const firstKey = options.some((o) => o.key === slotKey(defaultLocationId)) ? slotKey(defaultLocationId) : options[0]?.key || '';
   const [itemId, setItemId] = useState(items[0]?.id || '');
   const [fromKey, setFromKey] = useState(firstKey);
   const [toKey, setToKey] = useState(() => options.find((o) => o.key !== firstKey)?.key || firstKey);
+  const [packageId, setPackageId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [note, setNote] = useState('');
   const { busy, error, run } = useItemsureAction();
 
   const item = items.find((i) => i.id === itemId) || null;
+  const packages = useMemo(
+    () => (features.packaging ? usablePackages((data.packages || []).filter((p) => p.item_id === itemId)) : []),
+    [data.packages, itemId, features.packaging],
+  );
+  const pkg = packages.find((p) => p.id === packageId) || null;
+  const entry = item ? stockEntry(quantity, pkg, item) : null;
+  const chooseItem = (id) => {
+    setItemId(id);
+    if (packageId) {
+      setPackageId('');
+      setQuantity('');
+    }
+  };
+  /** The base quantity the source check needs; a bad package amount stops here with its own message. */
+  const baseQuantity = () => {
+    if (entry?.error) throw new Error(entry.error);
+    return entry?.base ?? quantity;
+  };
   const from = parseSlotKey(fromKey);
   const to = parseSlotKey(toKey);
   const fromBalance = item ? findBalance(data.balances, item.id, from.locationId, from.storageAreaId) : null;
@@ -27,26 +50,26 @@ export default function ItemsureStockTransferForm({ data, defaultLocationId, onD
   const sameSlot = fromKey === toKey;
 
   const { warning, guard, confirm, clear } = useTransferGuard();
-  useEffect(clear, [itemId, fromKey, toKey, quantity, clear]);
+  useEffect(clear, [itemId, fromKey, toKey, quantity, packageId, clear]);
 
   const transfer = async () => {
-    await transferStock({ item, from, to, quantity, note });
+    await transferStock({ item, from, to, quantity, note, pkg });
     await onDone();
   };
   const submit = (event) => {
     event.preventDefault();
-    run(() => guard({ item, from, quantity }, transfer));
+    run(async () => guard({ item, from, quantity: baseQuantity() }, transfer));
   };
 
   if (!items.length || options.length < 2) return <p className="isu-muted">Transfers need at least two places to hold stock.</p>;
 
   const onHand = (balance) =>
-    balance ? `On hand: ${displayQuantity(balance.quantity_text)} ${item.unitSymbol}` : 'Not set up here yet';
+    balance ? `On hand: ${displayQuantity(balance.quantity_text)} ${item.unitSymbol}` : 'No amount here yet';
 
   return (
     <form className="isu-stack" onSubmit={submit}>
       <Field label="Item">
-        <select value={itemId} onChange={(e) => setItemId(e.target.value)}>
+        <select value={itemId} onChange={(e) => chooseItem(e.target.value)}>
           {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
         </select>
       </Field>
@@ -68,16 +91,24 @@ export default function ItemsureStockTransferForm({ data, defaultLocationId, onD
         </p>
       ) : null}
 
-      <Field label={`Quantity${item ? ` (${item.unitName})` : ''}`}>
-        <input inputMode="decimal" autoComplete="off" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
-      </Field>
+      {item ? (
+        <ItemsurePackageQuantity
+          item={item}
+          packages={packages}
+          packageId={packageId}
+          onPackageChange={setPackageId}
+          quantity={quantity}
+          onQuantityChange={setQuantity}
+          entry={entry}
+        />
+      ) : null}
       <Field label="Note" hint="Optional.">
         <input maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
 
       <ErrorNote message={error} />
       {warning ? (
-        <ItemsureTransferWarning warning={warning} busy={busy} onCancel={clear} onConfirm={() => run(() => confirm({ item, from, quantity }, transfer))} />
+        <ItemsureTransferWarning warning={warning} busy={busy} onCancel={clear} onConfirm={() => run(async () => confirm({ item, from, quantity: baseQuantity() }, transfer))} />
       ) : (
         <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy || sameSlot || !fromBalance || !toBalance}>
           {busy ? 'Checking…' : 'Transfer'}

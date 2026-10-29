@@ -7,6 +7,7 @@ import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { Card, ErrorNote, Field, PageHead } from './ItemsureUi.jsx';
 import ItemsureMemberAccess from './ItemsureMemberAccess.jsx';
+import ItemsureFeatureSwitches from './ItemsureFeatureSwitches.jsx';
 
 function ProfileCard() {
   const { user, workspace, reload } = useItemsureWorkspace();
@@ -103,6 +104,7 @@ export default function ItemsureSettings() {
       <div className="isu-stack">
         <ProfileCard />
         <OrganizationCard key={organization.id} />
+        <ItemsureFeatureSwitches key={`features-${organization.id}`} />
         {can('members.read') ? (
           <ItemsureMemberAccess
             key={`members-${organization.id}`}

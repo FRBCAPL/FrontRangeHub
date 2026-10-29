@@ -32,7 +32,7 @@ export function transferWarning(check, item) {
     case 'ok':
       return { block: false, confirm: false };
     case 'not_set_up':
-      return { block: true, text: `${name} has no starting balance here yet. Count it and approve the count first.` };
+      return { block: true, text: `${name} has no amount here yet. Open the item and set its starting amount first.` };
     case 'below_zero':
       return { block: true, text: `Only ${fmt(check.on_hand, unit)} on hand here, so you can't move that much.` };
     case 'low':
@@ -41,8 +41,8 @@ export function transferWarning(check, item) {
         confirm: true,
         check,
         tone: 'danger',
-        title: 'This will leave the source low on stock',
-        text: `${fmt(check.on_hand, unit)} on hand now, ${fmt(check.after, unit)} after the transfer. Its minimum is ${fmt(check.minimum, unit)}.`,
+        title: 'This will leave the source running low',
+        text: `${fmt(check.on_hand, unit)} on hand now, ${fmt(check.after, unit)} after the move. It warns at ${fmt(check.minimum, unit)}.`,
       };
     case 'below_par':
       return {
@@ -50,8 +50,8 @@ export function transferWarning(check, item) {
         confirm: true,
         check,
         tone: 'warn',
-        title: 'This will take the source below par',
-        text: `${fmt(check.on_hand, unit)} on hand now, ${fmt(check.after, unit)} after the transfer. Its par is ${fmt(check.par, unit)}.`,
+        title: 'This will leave the source below full',
+        text: `${fmt(check.on_hand, unit)} on hand now, ${fmt(check.after, unit)} after the move. It fills up to ${fmt(check.par, unit)}.`,
       };
     default:
       return { block: true, text: 'Could not check stock at the source. Try again.' };

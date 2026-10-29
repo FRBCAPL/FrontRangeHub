@@ -2,6 +2,7 @@ import itemsure from './itemsureClient.js';
 import { assertOk, readableDatabaseError } from '../utils/itemsureErrors.js';
 import { requiredText, slugify, suffixedSlug } from '../utils/itemsureText.js';
 import { ROLE_LABELS } from '../data/itemsureConstants.js';
+import { ALL_FEATURES_ON, FEATURES, readFeatures } from '../utils/itemsureFeatures.js';
 
 const ACTIVE_ORG_KEY = 'itemsure-active-organization';
 
@@ -71,13 +72,21 @@ export async function loadWorkspace(user) {
 
   let permissions = [];
   let industryName = '';
+  let features = ALL_FEATURES_ON;
+  let featuresSaved = false;
   if (active) {
-    const [grants, industry] = await Promise.all([
+    const [grants, industry, featureRow] = await Promise.all([
       itemsure.from('role_permissions').select('permission_code').eq('role_code', active.roleCode),
       itemsure.from('industry_types').select('name').eq('code', active.industryType).maybeSingle(),
+      // Kept separate so a database without the features column still loads.
+      itemsure.from('organizations').select('features').eq('id', active.organizationId).maybeSingle(),
     ]);
     permissions = (grants.data || []).map((g) => g.permission_code);
     industryName = industry.data?.name || active.industryType;
+    if (!featureRow.error && featureRow.data) {
+      features = readFeatures(featureRow.data.features);
+      featuresSaved = true;
+    }
   }
 
   return {
@@ -85,7 +94,9 @@ export async function loadWorkspace(user) {
     fullName: profile.data?.full_name || '',
     email: profile.data?.email || user.email || '',
     memberships,
-    organization: active ? { ...active, id: active.organizationId, name: active.organizationName, industryName } : null,
+    organization: active
+      ? { ...active, id: active.organizationId, name: active.organizationName, industryName, features, featuresSaved }
+      : null,
     permissions,
   };
 }
@@ -127,6 +138,16 @@ export async function renameOrganization(organizationId, name) {
     'rename organization',
   );
   if (!data?.length) throw new Error('You do not have permission to rename this organization.');
+}
+
+/** Saves all four switches at once. Needs organization.update (owner or administrator). */
+export async function saveFeatures(organizationId, features) {
+  const clean = Object.fromEntries(FEATURES.map(({ key }) => [key, features[key] === true]));
+  const data = assertOk(
+    await itemsure.from('organizations').update({ features: clean }).eq('id', organizationId).select('id'),
+    'save settings',
+  );
+  if (!data?.length) throw new Error('Only the owner or an administrator can change these settings.');
 }
 
 export async function updateProfileName(userId, fullName) {

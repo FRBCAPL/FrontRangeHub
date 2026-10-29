@@ -10,7 +10,7 @@ const STATUS_COLUMNS =
 /** Categories plus each item's category, for filters. */
 export async function listCategoryRows(organizationId) {
   const [categories, itemCategories] = await Promise.all([
-    itemsure.from('inventory_categories').select('id, name').eq('organization_id', organizationId).order('name'),
+    itemsure.from('inventory_categories').select('id, name, is_active, parent_category_id').eq('organization_id', organizationId).order('name'),
     itemsure.from('inventory_items').select('id, category_id').eq('organization_id', organizationId),
   ]);
   return { categories: assertOk(categories, 'categories') || [], itemCategories: assertOk(itemCategories, 'items') || [] };

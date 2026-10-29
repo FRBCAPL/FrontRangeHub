@@ -1,7 +1,6 @@
 import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
 import { placeChanges } from '../utils/itemsurePlaces.js';
-
 /** Every place the person can see; places at other locations stay hidden by the database. */
 export async function listPlaces(organizationId) {
   return assertOk(

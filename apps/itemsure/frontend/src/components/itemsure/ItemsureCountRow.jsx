@@ -1,6 +1,8 @@
-import React, { useId } from 'react';
+import React, { useId, useState } from 'react';
 import { entryKey } from '../../services/itemsureCountService.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import ItemsureCountPackHelper from './ItemsureCountPackHelper.jsx';
+import ItemsureStepper from './ItemsureStepper.jsx';
 
 const STATUS_TEXT = {
   pending: 'Not saved yet',
@@ -20,8 +22,9 @@ function RowStatus({ draft, saved }) {
 }
 
 /** One item in the selected storage area. Blank means not counted; 0 means counted, none on hand. */
-export default function ItemsureCountRow({ item, storageAreaId, autosave, otherAreaNames }) {
+export default function ItemsureCountRow({ item, storageAreaId, autosave, otherAreaNames, packages = [] }) {
   const inputId = useId();
+  const [packing, setPacking] = useState(false);
   const key = entryKey(item.item_id, storageAreaId);
   const draft = autosave.drafts[key];
   const saved = autosave.entries[key];
@@ -41,14 +44,14 @@ export default function ItemsureCountRow({ item, storageAreaId, autosave, otherA
           </span>
         </label>
         <div className="isu-count-input">
-          <input
+          <ItemsureStepper
             id={inputId}
+            label={item.item_name}
             inputMode={decimals > 0 ? 'decimal' : 'numeric'}
-            autoComplete="off"
             placeholder="—"
             value={value}
             aria-describedby={`${inputId}-hint`}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={setValue}
             onBlur={() => autosave.flush(item.item_id, storageAreaId)}
           />
           <span className="isu-count-unit">{unit}</span>
@@ -62,10 +65,24 @@ export default function ItemsureCountRow({ item, storageAreaId, autosave, otherA
         </span>
         <RowStatus draft={draft} saved={saved} />
         <div className="isu-count-quick">
+          {packages.length && !packing ? <button type="button" className="isu-link" onClick={() => setPacking(true)}>Count in packages</button> : null}
           <button type="button" className="isu-link" onClick={() => setValue('0')}>Zero</button>
           {value !== '' ? <button type="button" className="isu-link" onClick={() => setValue('')}>Clear</button> : null}
         </div>
       </div>
+
+      {packing ? (
+        <ItemsureCountPackHelper
+          packages={packages}
+          unitName={item.base_unit_name}
+          precision={decimals}
+          onClose={() => setPacking(false)}
+          onUse={(base) => {
+            setValue(base);
+            setPacking(false);
+          }}
+        />
+      ) : null}
 
       {draft?.status === 'conflict' ? (
         <div className="isu-count-conflict" role="alert">

@@ -13,6 +13,13 @@ import './itemsure-pages.css';
 import './itemsure-counts.css';
 import './itemsure-stock.css';
 import './itemsure-restock.css';
+import './itemsure-packaging.css';
+import './itemsure-stepper.css';
+import './itemsure-levels-help.css';
+import './itemsure-help.css';
+import './itemsure-item-detail.css';
+import './itemsure-home.css';
+import './itemsure-wizard.css';
 
 function Wordmark() {
   return (

@@ -20,7 +20,7 @@ export default function ItemsureStorageAreaForm({ organizationId, location, area
   return (
     <form onSubmit={submit} noValidate>
       <ErrorNote message={error} />
-      <Field label="Storage area name" hint="For example a back room, a shelf, a cooler, or a warehouse section.">
+      <Field label="Spot name" hint="For example a back room, a shelf, a cooler, or a warehouse section.">
         <input value={form.name} onChange={set('name')} maxLength={120} />
       </Field>
       <Field label="Description">

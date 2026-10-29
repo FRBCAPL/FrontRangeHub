@@ -4,7 +4,7 @@
 @media (max-width: 819px) {
   .isu-app .isu-nav { overflow-x: auto; justify-content: flex-start; scrollbar-width: none; }
   .isu-app .isu-nav::-webkit-scrollbar { display: none; }
-  .isu-app .isu-nav-link { flex: 0 0 auto; min-width: 72px; max-width: none; padding: 0 6px; }
+  .isu-app .isu-nav-link { flex: 0 0 auto; min-width: 72px; max-width: none !important; padding: 0 6px; }
 }
 .isu-app .isu-nav-link { position: relative; }
 .isu-app .isu-nav-badge {
@@ -83,7 +83,7 @@
 .isu-app .isu-copy-map-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 10px; align-items: center; }
 .isu-app .isu-copy-map-row select { min-height: 40px; }
 .isu-app .isu-copy-summary { display: flex; flex-wrap: wrap; gap: 6px; }
-.isu-app .isu-copy-lines { max-height: 260px; overflow-y: auto; list-style: none; margin: 0; padding: 0; font-size: 0.88rem; }
+.isu-app .isu-copy-lines { max-height: 260px !important; overflow-y: auto; list-style: none; margin: 0; padding: 0; font-size: 0.88rem; }
 .isu-app .isu-copy-lines li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--isu-line); }
 
 /* Restock */

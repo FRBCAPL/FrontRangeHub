@@ -3,16 +3,14 @@ export function placeKey(locationId, storageAreaId) {
   return `${locationId}|${storageAreaId || ''}`;
 }
 
-/** Readable "Location · Area" labels for an item's places, sorted like the locations list. */
+/** One label per location, naming its areas once: "Location (Area, Area)". Sorted like the locations list. */
 export function placeLabels(places, locations) {
   const out = [];
   for (const location of locations) {
     const here = places.filter((p) => p.location_id === location.id);
     if (!here.length) continue;
-    if (here.some((p) => !p.storage_area_id)) out.push(location.name);
-    for (const area of location.storageAreas || []) {
-      if (here.some((p) => p.storage_area_id === area.id)) out.push(`${location.name} \u00b7 ${area.name}`);
-    }
+    const areas = (location.storageAreas || []).filter((area) => here.some((p) => p.storage_area_id === area.id)).map((area) => area.name);
+    out.push(areas.length ? `${location.name} (${areas.join(', ')})` : location.name);
   }
   return out;
 }

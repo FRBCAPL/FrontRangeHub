@@ -104,7 +104,7 @@
 }
 
 .isu-account-email {
-  max-width: min(220px, 36vw);
+  max-width: min(220px, 36vw) !important;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -112,9 +112,11 @@
   color: var(--isu-muted);
 }
 
+/* The Hub's index.css unsets max-width/max-height on every element with
+   !important, so ItemSure's own limits are marked !important to apply. */
 .isu-main {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1120px !important;
   margin: 0 auto;
   padding: 20px clamp(16px, 4vw, 32px) 96px;
 }
@@ -284,9 +286,11 @@
 }
 .isu-modal {
   width: 100%;
-  max-width: 560px;
-  max-height: 92vh;
+  max-width: 560px !important;
+  max-height: 92vh !important;
+  max-height: 92dvh !important;
   overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--isu-paper);
   border: 1px solid var(--isu-line);
   border-radius: 22px 22px 0 0;

@@ -1,0 +1,18 @@
+/* Packaging sizes: item editor section, package-aware quantity entry, count helper */
+.isu-app .isu-packaging { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--isu-line); display: flex; flex-direction: column; gap: 10px; }
+.isu-app .isu-packaging h3 { margin: 0; font-size: 1.05rem; }
+.isu-app .isu-package-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.isu-app .isu-package { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--isu-sand); }
+.isu-app .isu-package .isu-badge { margin-left: 8px; }
+.isu-app .isu-package.is-archived { opacity: 0.7; }
+.isu-app .isu-package-form { padding: 12px; border: 1px solid var(--isu-line); border-radius: 12px; }
+.isu-app .isu-package-ids { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0 12px; }
+.isu-app .isu-package-preview { margin: 0; font-weight: 600; color: var(--isu-pine); }
+.isu-app .isu-package-problem { margin: 0; color: var(--isu-danger); }
+.isu-app .isu-count-packs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--isu-line); }
+.isu-app .isu-count-packs select { flex: 1 1 180px; }
+.isu-app .isu-count-packs input { flex: 0 1 140px; }
+@media (max-width: 560px) {
+  .isu-app .isu-package { flex-direction: column; align-items: stretch; }
+  .isu-app .isu-package .isu-item-actions { flex-wrap: wrap; }
+}

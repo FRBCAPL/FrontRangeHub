@@ -7,13 +7,18 @@ const locations = [
   { id: 's', name: 'South', storageAreas: [{ id: 'store', name: 'Store' }] },
 ];
 
-test('labels follow the locations list and name the area when there is one', () => {
+test('labels follow the locations list and name each location once, with its areas', () => {
   const places = [
     { location_id: 's', storage_area_id: 'store' },
     { location_id: 'n', storage_area_id: 'cellar' },
     { location_id: 'n', storage_area_id: null },
+    { location_id: 'n', storage_area_id: 'bar' },
   ];
-  assert.deepEqual(placeLabels(places, locations), ['North', 'North \u00b7 Cellar', 'South \u00b7 Store']);
+  assert.deepEqual(placeLabels(places, locations), ['North (Bar, Cellar)', 'South (Store)']);
+});
+
+test('a location with no areas chosen is just its name', () => {
+  assert.deepEqual(placeLabels([{ location_id: 'n', storage_area_id: null }], locations), ['North']);
 });
 
 test('places at locations the person cannot see are left out of labels', () => {

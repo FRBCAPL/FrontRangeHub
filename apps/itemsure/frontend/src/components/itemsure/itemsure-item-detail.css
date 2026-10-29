@@ -1,0 +1,190 @@
+/* Item list "on hand" line and the single-item page. */
+
+.isu-app a.isu-item-name {
+  color: var(--isu-ink);
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+
+.isu-app a.isu-item-name:hover,
+.isu-app a.isu-item-name:focus-visible {
+  color: var(--isu-pine);
+  text-decoration: underline;
+}
+
+.isu-item-onhand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.isu-item-total {
+  margin: 0;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.isu-item-usage {
+  margin: 0;
+  text-align: center;
+}
+
+.isu-place-left {
+  color: var(--isu-ink);
+}
+
+.isu-level-suggest {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--isu-pine-soft);
+  border: 1px solid var(--isu-pine-line);
+}
+
+.isu-level-suggest p {
+  margin: 0;
+}
+
+.isu-place-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.isu-place-location-total {
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--isu-pine-soft);
+  border: 1px solid var(--isu-pine-line);
+}
+
+.isu-place-row {
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.isu-place-row.is-low {
+  border-color: var(--isu-danger-line);
+}
+
+.isu-place-row.has-badges-1,
+.isu-place-row.has-badges-2 {
+  position: relative;
+  padding-top: 40px;
+}
+
+.isu-place-row.has-badges-2 {
+  padding-top: 68px;
+}
+
+.isu-place-badges {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.isu-place-par {
+  background: var(--isu-info-soft);
+  color: var(--isu-info);
+}
+
+.isu-undo-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px 10px 16px;
+  border-radius: 12px;
+  background: var(--isu-raised);
+  border: 1px solid var(--isu-pine-line);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  color: var(--isu-ink);
+}
+
+.isu-undo-btn {
+  border: 0;
+  background: none;
+  color: var(--isu-pine);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.isu-undo-close {
+  border: 0;
+  background: none;
+  color: var(--isu-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.isu-place-row-head {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.isu-place-row-head p {
+  margin: 4px 0 0;
+}
+
+.isu-place-amount {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  font-size: 1.15rem;
+  white-space: nowrap;
+}
+
+.isu-place-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.isu-other-place {
+  justify-self: center;
+  max-width: 100%;
+  text-align: center;
+}
+
+.isu-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.isu-history-row {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--isu-line);
+  text-align: center;
+}
+
+.isu-history-row p {
+  margin: 2px 0 0;
+}
+
+.isu-history-row > span {
+  white-space: nowrap;
+}

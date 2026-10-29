@@ -42,6 +42,25 @@ export function displayQuantity(text) {
   return canonicalQuantity(text) || '0';
 }
 
+/**
+ * Adds `delta` whole units to a typed quantity, exactly, never below zero.
+ * Blank plus one is "1"; blank minus one stays blank. Text that isn't a valid
+ * quantity is returned unchanged so the person can see and fix it.
+ */
+export function stepQuantity(text, delta) {
+  const raw = String(text ?? '').trim();
+  if (raw === '') return delta > 0 ? String(delta) : '';
+  const checked = checkQuantity(raw, 6);
+  if (!checked.value) return raw;
+  const [whole, fraction = ''] = checked.value.split('.');
+  const scale = fraction.length;
+  let scaled = BigInt(whole + fraction) + BigInt(delta) * 10n ** BigInt(scale);
+  if (scaled < 0n) scaled = 0n;
+  if (scale === 0) return scaled.toString();
+  const digits = scaled.toString().padStart(scale + 1, '0');
+  return canonicalQuantity(`${digits.slice(0, -scale)}.${digits.slice(-scale)}`);
+}
+
 /** -1 / 0 / 1 for a numeric string, read from its text alone. */
 export function quantitySign(text) {
   const raw = String(text ?? '').trim();

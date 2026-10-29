@@ -15,7 +15,7 @@ test('below par asks for confirmation with a warning', () => {
   assert.equal(w.confirm, true);
   assert.equal(w.tone, 'warn');
   assert.match(w.text, /100 ea on hand now, 50 ea after/);
-  assert.match(w.text, /par is 60 ea/);
+  assert.match(w.text, /fills up to 60 ea/);
 });
 
 test('reaching the minimum asks for confirmation with a stronger warning', () => {
@@ -23,7 +23,7 @@ test('reaching the minimum asks for confirmation with a stronger warning', () =>
   assert.equal(w.confirm, true);
   assert.equal(w.tone, 'danger');
   assert.match(w.title, /low/);
-  assert.match(w.text, /minimum is 20 ea/);
+  assert.match(w.text, /warns at 20 ea/);
 });
 
 test('below zero and uncounted sources are blocked, never confirmed', () => {
@@ -33,7 +33,7 @@ test('below zero and uncounted sources are blocked, never confirmed', () => {
     assert.notEqual(w.confirm, true, level);
   }
   assert.match(transferWarning(check('below_zero'), item).text, /Only 100 ea on hand/);
-  assert.match(transferWarning(check('not_set_up'), item).text, /no starting balance/);
+  assert.match(transferWarning(check('not_set_up'), item).text, /no amount here yet/);
 });
 
 test('confirming proceeds only when the fresh check matches what was confirmed', () => {

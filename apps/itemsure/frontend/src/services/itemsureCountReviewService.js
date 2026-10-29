@@ -30,6 +30,24 @@ export async function approveCount(sessionId, watermark) {
   );
 }
 
+/**
+ * For businesses with count approvals switched off: approves a just-submitted count
+ * through the normal preview and watermark, exactly as a person clicking Approve would.
+ * Returns false (leaving the count waiting for approval) if any line is blocked or
+ * anything fails; it never throws.
+ */
+export async function approveIfClear(sessionId) {
+  try {
+    const preview = await previewApproval(sessionId);
+    if (!preview || preview.reviewed || (preview.lines || []).some((line) => line.blocked_reason)) return false;
+    await approveCount(sessionId, preview.watermark);
+    return true;
+  } catch (e) {
+    console.warn('[itemsure] count left for approval', e?.message || e);
+    return false;
+  }
+}
+
 export async function rejectCount(sessionId, reason) {
   const clean = String(reason || '').trim();
   if (!clean) throw new Error('Enter a reason for rejecting this count.');

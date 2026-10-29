@@ -30,8 +30,8 @@ function Line({ line, areaName, showExpected }) {
       {line.mixed_area ? (
         <p className="isu-notice isu-notice--warn isu-small">
           {line.storage_area_id
-            ? 'This item also has stock under \u201cNo specific area\u201d here.'
-            : 'This item also has stock in named storage areas here.'}{' '}
+            ? 'This item also has stock under \u201cLoose (no specific spot)\u201d here.'
+            : 'This item also has stock in named spots here.'}{' '}
           Each place keeps its own balance, so check it was counted in the right place.
         </p>
       ) : null}

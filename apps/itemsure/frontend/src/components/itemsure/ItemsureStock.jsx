@@ -11,7 +11,7 @@ import ItemsureStockTransferForm from './ItemsureStockTransferForm.jsx';
 
 /** On-hand stock per location, plus the activity that produced it. */
 export default function ItemsureStock() {
-  const { organization, can } = useItemsureWorkspace();
+  const { organization, features, can } = useItemsureWorkspace();
   const { data, error, reload } = useStockData(organization.id);
   const [tab, setTab] = useState('balances');
   const [params] = useSearchParams();
@@ -37,17 +37,17 @@ export default function ItemsureStock() {
   const actions = (
     <div className="isu-stock-actions">
       {can('inventory.adjust') ? (
-        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setModal('adjust')}>Adjust</button>
+        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setModal('adjust')}>Add / Use</button>
       ) : null}
-      {can('inventory.transfer') ? (
-        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setModal('transfer')}>Transfer</button>
+      {can('inventory.transfer') && features.transfers ? (
+        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setModal('transfer')}>Move</button>
       ) : null}
     </div>
   );
 
   return (
     <div className="isu-page">
-      <PageHead title="Stock" description="On-hand quantities from approved counts and recorded changes." action={actions} />
+      <PageHead title="Stock by location" description={`How many of everything you have at one location, plus add${features.transfers ? ', use, and move' : ' and use'}.`} action={actions} />
       <ErrorNote message={error} />
       {!data ? <p className="isu-muted">Loading…</p> : null}
 
@@ -88,10 +88,10 @@ export default function ItemsureStock() {
         </>
       ) : null}
 
-      <Modal open={modal === 'adjust'} title="Adjust stock" onClose={closeModal}>
+      <Modal open={modal === 'adjust'} title="Add or use stock" onClose={closeModal}>
         {data ? <ItemsureStockAdjustForm data={data} defaultLocationId={locationId} onDone={afterChange} /> : null}
       </Modal>
-      <Modal open={modal === 'transfer'} title="Transfer stock" onClose={closeModal}>
+      <Modal open={modal === 'transfer'} title="Move stock" onClose={closeModal}>
         {data ? <ItemsureStockTransferForm data={data} defaultLocationId={locationId} onDone={afterChange} /> : null}
       </Modal>
     </div>

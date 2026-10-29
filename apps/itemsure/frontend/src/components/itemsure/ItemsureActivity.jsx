@@ -36,7 +36,7 @@ export default function ItemsureActivity() {
 
   return (
     <div className="isu-page">
-      <PageHead title="Activity log" description="Changes made across your organization, newest first." />
+      <PageHead title="History" description="Every change made in your business, newest first." />
       <Card>
         {activity === null ? (
           <p className="isu-muted">Loading…</p>

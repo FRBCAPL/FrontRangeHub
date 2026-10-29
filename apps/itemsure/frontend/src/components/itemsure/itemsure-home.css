@@ -1,0 +1,159 @@
+/* Home page: getting-started checklist. */
+
+.isu-getting-started {
+  display: grid;
+  gap: 12px;
+  border-color: var(--isu-pine-line);
+}
+
+.isu-getting-started h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.isu-gs-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.isu-gs-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.isu-gs-mark {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 1px solid var(--isu-line);
+  color: var(--isu-muted);
+}
+
+.isu-gs-step.is-next .isu-gs-mark {
+  border-color: var(--isu-pine);
+  color: var(--isu-pine);
+}
+
+.isu-gs-step.is-done .isu-gs-mark {
+  background: var(--isu-pine-soft);
+  border-color: var(--isu-pine-line);
+  color: var(--isu-pine);
+}
+
+.isu-gs-step.is-done .isu-gs-text strong {
+  color: var(--isu-muted);
+  text-decoration: line-through;
+}
+
+.isu-gs-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.isu-gs-text p {
+  margin: 2px 0 0;
+}
+
+/* Home page: Today list. */
+
+.isu-today {
+  display: grid;
+  gap: 12px;
+}
+
+.isu-today h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.isu-today-clear {
+  margin: 0;
+  color: var(--isu-pine);
+}
+
+.isu-today-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.isu-today-task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--isu-line);
+  border-left-width: 4px;
+}
+
+.isu-today-task.is-danger { border-left-color: var(--isu-danger); }
+.isu-today-task.is-warn { border-left-color: var(--isu-amber); }
+.isu-today-task.is-info { border-left-color: var(--isu-info); }
+
+.isu-today-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.isu-today-text p {
+  margin: 2px 0 0;
+}
+
+.isu-today-task .isu-btn {
+  flex: 0 0 auto;
+}
+
+.isu-app .isu-stats.is-two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Settings: feature switches. */
+
+.isu-feature-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.isu-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.isu-feature input {
+  margin-top: 4px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  accent-color: var(--isu-pine-btn);
+}
+
+.isu-feature-hint {
+  display: block;
+  margin-top: 2px;
+}
+
+.isu-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

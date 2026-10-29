@@ -20,7 +20,7 @@ test('blank is unset, zero is a value', () => {
 
 test('minimum may equal par but not exceed it', () => {
   assert.deepEqual(validateTargetEdit({ minimum: '5', par: '5.0' }, 1, 'Liter'), { minimum: '5', par: '5' });
-  assert.match(validateTargetEdit({ minimum: '5.1', par: '5' }, 1, 'Liter').error, /cannot be more than par/);
+  assert.match(validateTargetEdit({ minimum: '5.1', par: '5' }, 1, 'Liter').error, /cannot be more than "Fill up to"/);
 });
 
 test('rejects negatives, text, and extra decimals', () => {
@@ -67,6 +67,6 @@ test('batch rows keep valid edits, report invalid ones, and carry the version', 
   assert.deepEqual(keys, [k1, k2]);
   assert.deepEqual(rows[0], { item_id: 'i1', location_id: 'L1', storage_area_id: 'A1', minimum: '2', par: '4', expected_updated_at: '2026-10-28T00:00:00Z' });
   assert.deepEqual(rows[1], { item_id: 'i2', location_id: 'L1', storage_area_id: null, minimum: '1.5', par: '3.25', expected_updated_at: null });
-  assert.match(errors[k3], /cannot be more than par/);
+  assert.match(errors[k3], /cannot be more than "Fill up to"/);
   assert.equal(errors[k4], undefined);
 });

@@ -7,11 +7,14 @@ import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 
 const q = (text, unit) => (text === null || text === undefined ? '—' : `${displayQuantity(text)} ${unit}`);
 
-/** One shortage: figures, suggested internal transfers, and what is left to get from outside. */
-export default function ItemsureRestockCard({ rec, canTransfer, onAction }) {
+/**
+ * One shortage: figures, suggested internal transfers, and what is left to get from outside.
+ * With moving switched off (`showMoves` false) the whole need is shown as the amount to buy.
+ */
+export default function ItemsureRestockCard({ rec, canTransfer, showMoves = true, onAction }) {
   const unit = rec.unit_symbol;
   const status = TARGET_STATUS[rec.status];
-  const visibleMoves = rec.transfers.filter((t) => !t.hidden);
+  const visibleMoves = showMoves ? rec.transfers.filter((t) => !t.hidden) : [];
   const levelsLink = `${ITEMSURE_PATH}/levels?location=${rec.location_id}&area=${rec.storage_area_id || ''}&search=${encodeURIComponent(rec.item_name)}`;
 
   return (
@@ -26,14 +29,14 @@ export default function ItemsureRestockCard({ rec, canTransfer, onAction }) {
 
       <div className="isu-restock-figures">
         <span>On hand <strong>{q(rec.on_hand, unit)}</strong></span>
-        <span>Minimum {q(rec.minimum, unit)}</span>
-        <span>Par {q(rec.par, unit)}</span>
+        <span>Warn me at {q(rec.minimum, unit)}</span>
+        <span>Fill up to {q(rec.par, unit)}</span>
         {rec.need !== null ? <span>Needed <strong>{q(rec.need, unit)}</strong></span> : null}
       </div>
 
       {rec.need === null ? (
         <p className="isu-restock-external isu-muted">
-          No par set, so there&apos;s no suggested amount. <Link to={levelsLink}>Set a par</Link>
+          No &ldquo;Fill up to&rdquo; number, so there&apos;s no suggested amount. <Link to={levelsLink}>Set one</Link>
         </p>
       ) : null}
 
@@ -58,23 +61,27 @@ export default function ItemsureRestockCard({ rec, canTransfer, onAction }) {
         </ul>
       ) : null}
 
-      {rec.has_hidden_sources ? (
+      {showMoves && rec.has_hidden_sources ? (
         <p className="isu-restock-external isu-muted">Some spare stock may be at a location you can&apos;t see. Ask an administrator.</p>
       ) : null}
 
-      {rec.need !== null && !rec.transfers.length ? (
+      {showMoves && rec.need !== null && !rec.transfers.length ? (
         <p className="isu-restock-external isu-muted">No spare stock elsewhere.</p>
       ) : null}
 
-      {rec.need !== null ? (
+      {rec.need !== null && !showMoves ? (
+        <p className="isu-restock-external">Buy: <strong>{q(rec.need, unit)}</strong></p>
+      ) : null}
+
+      {rec.need !== null && showMoves ? (
         rec.external !== null ? (
           displayQuantity(rec.external) !== '0' ? (
-            <p className="isu-restock-external">Get from outside: <strong>{q(rec.external, unit)}</strong></p>
+            <p className="isu-restock-external">Buy: <strong>{q(rec.external, unit)}</strong></p>
           ) : (
             <p className="isu-restock-external isu-muted">Covered by the transfers above.</p>
           )
         ) : (
-          <p className="isu-restock-external">Get from outside: <strong>up to {q(rec.external_at_most, unit)}</strong></p>
+          <p className="isu-restock-external">Buy: <strong>up to {q(rec.external_at_most, unit)}</strong></p>
         )
       ) : null}
     </li>

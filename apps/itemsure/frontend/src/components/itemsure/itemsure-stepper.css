@@ -1,0 +1,46 @@
+/* − / + quantity stepper, shared by counts, par levels, stock changes, and restock */
+.isu-app .isu-stepper { display: flex; align-items: stretch; gap: 4px; min-width: 0; }
+.isu-app .isu-stepper input { flex: 1 1 auto; min-width: 0; text-align: center; font-variant-numeric: tabular-nums; }
+.isu-app .isu-stepper-btn {
+  flex: 0 0 44px;
+  min-height: 44px;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  background: var(--isu-paper);
+  color: var(--isu-pine);
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.isu-app .isu-stepper-btn:hover:not(:disabled) { border-color: var(--isu-pine); background: var(--isu-pine-soft); }
+.isu-app .isu-stepper-btn:focus-visible { outline: 2px solid var(--isu-pine); outline-offset: 2px; }
+.isu-app .isu-stepper-btn:disabled { color: var(--isu-muted); opacity: 0.45; cursor: default; }
+
+/* Counting: big targets for fast taps */
+.isu-app .isu-count-input .isu-stepper input { width: 84px; text-align: center; }
+.isu-app .isu-count-input .isu-stepper-btn { flex-basis: 52px; min-height: 52px; }
+@media (max-width: 520px) {
+  .isu-app .isu-count-row-main { flex-wrap: wrap; }
+  .isu-app .isu-count-input { width: 100%; }
+  .isu-app .isu-count-input .isu-stepper { flex: 1 1 auto; }
+  .isu-app .isu-count-input .isu-stepper input { width: auto; }
+}
+
+/* Par levels: wider columns for the buttons; minimum and par get their own line on phones */
+.isu-app .isu-level-row { grid-template-columns: minmax(0, 1fr) 150px 150px; }
+.isu-app .isu-level-input .isu-stepper input { padding: 6px 4px; text-align: center; }
+.isu-app .isu-level-input .isu-stepper-btn { flex-basis: 40px; min-height: 40px; }
+@media (max-width: 640px) {
+  .isu-app .isu-level-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'name name' 'meta meta' 'min par' 'error error';
+    gap: 6px 10px;
+  }
+}
+
+/* Count package helper */
+.isu-app .isu-count-packs .isu-stepper { flex: 0 1 190px; }
+.isu-app .isu-count-packs .isu-stepper input { flex: 1 1 auto; }

@@ -8,7 +8,7 @@ import ItemsureLocationForm from './ItemsureLocationForm.jsx';
 import ItemsureStorageAreaForm from './ItemsureStorageAreaForm.jsx';
 
 export default function ItemsureLocations() {
-  const { organization, can } = useItemsureWorkspace();
+  const { organization, features, can } = useItemsureWorkspace();
   const [locations, setLocations] = useState(null);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -56,7 +56,7 @@ export default function ItemsureLocations() {
     <div className="isu-page">
       <PageHead
         title="Locations"
-        description="Physical sites and the storage areas inside them."
+        description="Your sites (like a store, a warehouse, or a van) and any spots inside them."
         action={canManageLocations ? (
           <button type="button" className="isu-btn isu-btn--primary" onClick={() => setAdding(true)}>Add location</button>
         ) : null}
@@ -80,6 +80,7 @@ export default function ItemsureLocations() {
             location={location}
             canManageLocation={canManageLocations}
             canManageStorage={canManageStorage}
+            showSpots={features.spots}
             busy={busy}
             onToggle={toggleLocation}
             onEdit={setEditing}
@@ -102,7 +103,7 @@ export default function ItemsureLocations() {
 
       <Modal
         open={Boolean(areaForm)}
-        title={areaForm?.area ? `Edit ${areaForm.area.name}` : 'Add storage area'}
+        title={areaForm?.area ? `Edit ${areaForm.area.name}` : 'Add spot'}
         onClose={closeArea}
       >
         {areaForm ? (

@@ -96,7 +96,7 @@ export default function ItemsureCounts() {
     <div className="isu-page">
       <PageHead
         title="Counts"
-        description="Physical counts by location or storage area."
+        description="Walk around and count everything at a location (or one spot) in one go."
         action={canStart ? <Link to={`${ITEMSURE_PATH}/counts/new`} className="isu-btn isu-btn--primary">Start count</Link> : null}
       />
       <ErrorNote message={error} />

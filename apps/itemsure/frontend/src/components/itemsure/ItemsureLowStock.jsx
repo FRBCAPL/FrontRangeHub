@@ -28,20 +28,20 @@ function AlertRow({ row, pending }) {
           <strong>{row.item_name}</strong>
           <p className="isu-muted isu-small">{row.area_name || NO_AREA_LABEL}{row.sku ? ` · ${row.sku}` : ''}</p>
         </div>
-        <span className={`isu-badge ${pending ? 'isu-status--muted' : 'isu-status--danger'}`}>{pending ? 'Not set up' : 'Low stock'}</span>
+        <span className={`isu-badge ${pending ? 'isu-status--muted' : 'isu-status--danger'}`}>{pending ? 'No amount yet' : 'Running low'}</span>
       </div>
       <div className="isu-restock-figures">
         {pending ? null : <span>On hand <strong>{q(row.on_hand_text, row.unit_symbol)}</strong></span>}
-        <span>Minimum {q(row.minimum_text, row.unit_symbol)}</span>
-        <span>Par {q(row.par_text, row.unit_symbol)}</span>
+        <span>Warn me at {q(row.minimum_text, row.unit_symbol)}</span>
+        <span>Fill up to {q(row.par_text, row.unit_symbol)}</span>
       </div>
       <div className="isu-restock-move-actions">
-        {pending ? (
-          <Link className="isu-btn isu-btn--ghost isu-btn--sm" to={`${ITEMSURE_PATH}/counts/new`}>Count it</Link>
-        ) : (
-          <Link className="isu-btn isu-btn--ghost isu-btn--sm" to={`${ITEMSURE_PATH}/restock`}>Restock</Link>
+        <Link className="isu-btn isu-btn--primary isu-btn--sm" to={`${ITEMSURE_PATH}/items/${row.item_id}`}>
+          {pending ? 'Set amount' : 'Open item'}
+        </Link>
+        {pending ? null : (
+          <Link className="isu-btn isu-btn--ghost isu-btn--sm" to={`${ITEMSURE_PATH}/restock`}>Shopping list</Link>
         )}
-        <Link className="isu-btn isu-btn--ghost isu-btn--sm" to={`${ITEMSURE_PATH}/stock?location=${row.location_id}`}>Stock</Link>
         <Link className="isu-btn isu-btn--ghost isu-btn--sm" to={levels}>Levels</Link>
       </div>
     </li>
@@ -78,17 +78,17 @@ export default function ItemsureLowStock() {
 
   return (
     <div className="isu-page">
-      <PageHead title="Low stock" description="Items at or under their minimum, in the places you can see." />
+      <PageHead title="Running low" description="Items at or below their &quot;Warn me at&quot; number, in the places you can see." />
       {rows ? <ErrorNote message={error} /> : null}
       {!rows && error ? <LoadFailed message={error} onRetry={load} /> : null}
       {!rows && !error ? <p className="isu-muted">Loading…</p> : null}
 
       {rows && !low.length ? (
         <div className="isu-card isu-empty">
-          <h2>Nothing is low</h2>
+          <h2>Nothing is running low</h2>
           <p className="isu-muted">
-            Every item with a minimum is above it.{' '}
-            <Link to={`${ITEMSURE_PATH}/levels`}>Set minimums</Link> for more items to get alerts here.
+            Every item with a &ldquo;Warn me at&rdquo; number is above it.{' '}
+            <Link to={`${ITEMSURE_PATH}/levels`}>Set warning levels</Link> for more items to get alerts here.
           </p>
         </div>
       ) : null}
@@ -102,15 +102,15 @@ export default function ItemsureLowStock() {
 
       {belowPar ? (
         <p className="isu-notice">
-          {belowPar} more {belowPar === 1 ? 'item is' : 'items are'} below par but above minimum.{' '}
-          <Link to={`${ITEMSURE_PATH}/restock`}>See restock suggestions</Link>
+          {belowPar} more {belowPar === 1 ? 'item needs' : 'items need'} topping up but {belowPar === 1 ? 'is not' : 'are not'} running low yet.{' '}
+          <Link to={`${ITEMSURE_PATH}/restock`}>See the shopping list</Link>
         </p>
       ) : null}
 
       {notSetUp.length ? (
         <section className="isu-restock-group">
-          <h2>Levels set, stock not set up <span className="isu-muted isu-small">({notSetUp.length})</span></h2>
-          <p className="isu-muted isu-small">These have a minimum or par, but no approved count yet, so ItemSure can&apos;t tell if they&apos;re low.</p>
+          <h2>Levels set, but no amount yet <span className="isu-muted isu-small">({notSetUp.length})</span></h2>
+          <p className="isu-muted isu-small">These have warning levels but no amount yet, so ItemSure can&apos;t tell if they&apos;re low. Set the amount to fix that.</p>
           <ul className="isu-levels-list">{notSetUp.map((r) => <AlertRow key={r.target_id} row={r} pending />)}</ul>
         </section>
       ) : null}

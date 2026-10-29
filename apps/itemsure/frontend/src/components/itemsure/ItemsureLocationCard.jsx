@@ -7,10 +7,11 @@ function addressLine(location) {
 }
 
 export default function ItemsureLocationCard({
-  location, canManageLocation, canManageStorage, busy, onToggle, onEdit, onAddArea, onEditArea, onToggleArea,
+  location, canManageLocation, canManageStorage, showSpots = true, busy, onToggle, onEdit, onAddArea, onEditArea, onToggleArea,
 }) {
   const address = addressLine(location);
   const areas = location.storageAreas;
+  const spotsSection = showSpots || areas.length > 0;
 
   return (
     <article className={`isu-card isu-location${location.is_active ? '' : ' is-archived'}`}>
@@ -32,9 +33,9 @@ export default function ItemsureLocationCard({
         </div>
       </div>
 
-      <h3 className="isu-subhead">Storage areas</h3>
-      {areas.length === 0 ? (
-        <p className="isu-muted isu-small">No storage areas yet.</p>
+      {spotsSection ? <h3 className="isu-subhead">Spots (optional)</h3> : null}
+      {!spotsSection ? null : areas.length === 0 ? (
+        <p className="isu-muted isu-small">No spots yet. You only need them if you want to track shelves or rooms separately.</p>
       ) : (
         <ul className="isu-list">
           {areas.map((area) => (
@@ -63,9 +64,9 @@ export default function ItemsureLocationCard({
 
       {canManageStorage || canManageLocation ? (
         <div className="isu-card-actions">
-          {canManageStorage && location.is_active ? (
+          {canManageStorage && showSpots && location.is_active ? (
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAddArea(location)}>
-              Add storage area
+              Add spot
             </button>
           ) : null}
           {canManageLocation ? (

@@ -1,0 +1,10 @@
+/* Par levels: "How minimum and par work" explainer */
+.isu-app .isu-levels-help { display: flex; flex-direction: column; gap: 10px; border-color: var(--isu-pine-line); }
+.isu-app .isu-levels-help h2 { margin: 0; font-size: 1.05rem; }
+.isu-app .isu-levels-help-terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 16px; margin: 0; }
+.isu-app .isu-levels-help-terms dt { font-weight: 700; }
+.isu-app .isu-levels-help-terms dd { margin: 2px 0 0; color: var(--isu-muted); font-size: 0.92rem; }
+.isu-app .isu-levels-help-example { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 6px 12px; font-size: 0.9rem; }
+.isu-app .isu-levels-help-example .isu-badge { margin-right: 6px; }
+.isu-app .isu-levels-help p { margin: 0; }
+.isu-app .isu-levels-help-open { align-self: flex-start; }

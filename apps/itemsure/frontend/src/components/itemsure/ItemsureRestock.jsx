@@ -6,6 +6,7 @@ import { listOpenPlans, loadRecommendations } from '../../services/itemsureResto
 import { notifyInventoryChanged, onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { findBalance, NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
+import { categoryOptions, categoryPath, categoryTree, inCategory } from '../../utils/itemsureCategories.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import ItemsureRestockAction from './ItemsureRestockAction.jsx';
 import ItemsureRestockCard from './ItemsureRestockCard.jsx';
@@ -14,7 +15,7 @@ import { ErrorNote, Field, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx'
 
 const GROUPS = {
   location: { label: 'Location', of: (r) => r.location_name },
-  area: { label: 'Storage area', of: (r) => `${r.location_name} · ${r.area_name || NO_AREA_LABEL}` },
+  area: { label: 'Spot', of: (r) => `${r.location_name} · ${r.area_name || NO_AREA_LABEL}` },
   category: { label: 'Category', of: (r, cats) => cats.get(r.category_id) || 'No category' },
   status: { label: 'Status', of: (r) => TARGET_STATUS[r.status].label },
 };
@@ -26,21 +27,21 @@ function EmptyState({ data }) {
     <div className="isu-card isu-empty">
       {hasPar ? (
         <>
-          <h2>Nothing needs restocking</h2>
-          <p className="isu-muted">Everything with a minimum or par is at or above it.</p>
+          <h2>Nothing to buy or move</h2>
+          <p className="isu-muted">Everything with warning levels is full enough.</p>
         </>
       ) : data.targets.length ? (
         <>
-          <h2>Nothing is low</h2>
-          <p className="isu-muted">You&apos;ve set minimums but no par levels. Add a par to get suggested restock amounts.</p>
+          <h2>Nothing is running low</h2>
+          <p className="isu-muted">You&apos;ve set &ldquo;Warn me at&rdquo; numbers but no &ldquo;Fill up to&rdquo; numbers. Add a &ldquo;Fill up to&rdquo; to get suggested amounts.</p>
         </>
       ) : (
         <>
-          <h2>No par levels yet</h2>
-          <p className="isu-muted">Set a par for your items and ItemSure will suggest how much to restock.</p>
+          <h2>No &ldquo;Fill up to&rdquo; numbers yet</h2>
+          <p className="isu-muted">Open an item, choose Set levels, and enter &ldquo;Fill up to&rdquo;. ItemSure will then tell you how many to buy or move.</p>
         </>
       )}
-      <p><Link to={`${ITEMSURE_PATH}/levels`}>Go to par levels</Link></p>
+      <p><Link to={`${ITEMSURE_PATH}/levels`}>Set warning levels for many items</Link></p>
       {pending ? <p className="isu-muted isu-small">{pending} level{pending === 1 ? ' is' : 's are'} set for stock that isn&apos;t set up yet. Count those first.</p> : null}
     </div>
   );
@@ -48,7 +49,7 @@ function EmptyState({ data }) {
 
 /** Below-par and low shortages with internal transfer suggestions first, then outside purchase. */
 export default function ItemsureRestock() {
-  const { organization, can } = useItemsureWorkspace();
+  const { organization, features, can } = useItemsureWorkspace();
   const { data, error: dataError, reload: reloadData } = useTargetsData(organization.id);
   const [recs, setRecs] = useState(null);
   const [plans, setPlans] = useState([]);
@@ -83,17 +84,18 @@ export default function ItemsureRestock() {
   };
 
   const itemsById = useMemo(() => new Map((data?.items || []).map((i) => [i.id, i])), [data]);
-  const categoryNames = useMemo(() => new Map((data?.categories || []).map((c) => [c.id, c.name])), [data]);
+  const tree = useMemo(() => categoryTree(data?.categories || []), [data]);
+  const categoryNames = useMemo(() => new Map([...tree.byId.keys()].map((id) => [id, categoryPath(tree, id)])), [tree]);
 
   const shown = useMemo(
     () =>
       (recs || []).filter(
         (r) =>
           (!filters.locationId || r.location_id === filters.locationId) &&
-          (!filters.categoryId || r.category_id === filters.categoryId) &&
+          inCategory(tree, r, filters.categoryId) &&
           (!filters.status || r.status === filters.status),
       ),
-    [recs, filters],
+    [recs, filters, tree],
   );
 
   const groups = useMemo(() => {
@@ -132,7 +134,12 @@ export default function ItemsureRestock() {
 
   return (
     <div className="isu-page">
-      <PageHead title="Restock" description="What to move between places you manage, and what to get from outside." />
+      <PageHead
+        title="Shopping list"
+        description={features.transfers
+          ? 'What to buy, and what you can move from another place instead. Amounts fill each place back up to its "Fill up to" number.'
+          : 'What to buy. Amounts fill each place back up to its "Fill up to" number.'}
+      />
       {ready ? <ErrorNote message={error || dataError} /> : null}
       {!ready && (error || dataError) ? <LoadFailed message={error || dataError} onRetry={() => { load(); reloadData(); }} /> : null}
       {!ready && !error && !dataError ? <p className="isu-muted">Loading…</p> : null}
@@ -148,19 +155,21 @@ export default function ItemsureRestock() {
           <Field label="Category">
             <select value={filters.categoryId} onChange={(e) => set({ categoryId: e.target.value })}>
               <option value="">All categories</option>
-              {data.categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {categoryOptions(tree).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </Field>
           <Field label="Status">
             <select value={filters.status} onChange={(e) => set({ status: e.target.value })}>
-              <option value="">Low and below par</option>
-              <option value="low">Low stock only</option>
-              <option value="below_par">Below par only</option>
+              <option value="">Running low and needs topping up</option>
+              <option value="low">Running low only</option>
+              <option value="below_par">Needs topping up only</option>
             </select>
           </Field>
           <Field label="Group by">
             <select value={filters.group} onChange={(e) => set({ group: e.target.value })}>
-              {Object.entries(GROUPS).map(([key, g]) => <option key={key} value={key}>{g.label}</option>)}
+              {Object.entries(GROUPS)
+                .filter(([key]) => features.spots || key !== 'area' || filters.group === 'area')
+                .map(([key, g]) => <option key={key} value={key}>{g.label}</option>)}
             </select>
           </Field>
         </div>
@@ -173,7 +182,9 @@ export default function ItemsureRestock() {
         <section key={label} className="isu-restock-group">
           <h2>{label} <span className="isu-muted isu-small">({rows.length})</span></h2>
           <ul className="isu-levels-list">
-            {rows.map((r) => <ItemsureRestockCard key={r.target_id} rec={r} canTransfer={canTransfer} onAction={openAction} />)}
+            {rows.map((r) => (
+              <ItemsureRestockCard key={r.target_id} rec={r} canTransfer={canTransfer} showMoves={features.transfers} onAction={openAction} />
+            ))}
           </ul>
         </section>
       ))}

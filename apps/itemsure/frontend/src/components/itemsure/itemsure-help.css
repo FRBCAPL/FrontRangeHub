@@ -1,0 +1,94 @@
+/* "More" menu: a panel above the bottom bar on phones, an in-place group in the sidebar */
+.isu-app .isu-nav-more { display: flex; }
+.isu-app .isu-nav-more-btn {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.isu-app .isu-nav-more-caret { display: none; }
+.isu-app .isu-nav-more-panel {
+  position: fixed;
+  right: 8px;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  z-index: 31;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+  padding: 6px;
+  background: var(--isu-paper);
+  border: 1px solid var(--isu-line);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+.isu-app .isu-nav-more-panel .isu-nav-link {
+  flex: none;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+  max-width: none !important;
+  min-height: 46px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 819px) {
+  .isu-app .isu-nav-more { flex: 0 0 auto; }
+  .isu-app .isu-nav-more-btn { min-width: 72px; padding: 0 6px; }
+}
+
+@media (min-width: 820px) {
+  .isu-app .isu-nav-more { flex-direction: column; gap: 4px; }
+  .isu-app .isu-nav-more-btn { width: 100%; font-size: 0.95rem; }
+  .isu-app .isu-nav-more-caret { display: inline; margin-left: auto; font-size: 0.8rem; }
+  .isu-app .isu-nav-more.is-open .isu-nav-more-btn.is-active { background: transparent; }
+  .isu-app .isu-nav-more-panel {
+    position: static;
+    min-width: 0;
+    padding: 0 0 0 12px;
+    background: transparent;
+    border: 0;
+    border-left: 2px solid var(--isu-line);
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .isu-app .isu-nav-more-panel .isu-nav-link { min-height: 40px; font-size: 0.9rem; }
+}
+
+/* Help page */
+.isu-app .isu-help-banner {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--isu-line);
+  border-radius: var(--isu-radius);
+  background: var(--isu-pine-soft);
+}
+.isu-app .isu-help-topics { display: flex; flex-wrap: wrap; gap: 8px; }
+.isu-app .isu-help-topics .isu-chip { cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--isu-ink); }
+.isu-app .isu-help-topics .isu-chip:hover { border-color: var(--isu-pine); color: var(--isu-pine); }
+.isu-app .isu-help-list { display: flex; flex-direction: column; gap: 12px; }
+.isu-app .isu-help-section { padding: 0; scroll-margin-top: 90px; }
+.isu-app .isu-help-section > summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 20px;
+  cursor: pointer;
+  list-style: none;
+}
+.isu-app .isu-help-section > summary::-webkit-details-marker { display: none; }
+.isu-app .isu-help-title { font-weight: 700; font-size: 1.05rem; }
+.isu-app .isu-help-title::before { content: '\25B8'; display: inline-block; width: 1.2em; color: var(--isu-pine); }
+.isu-app .isu-help-section[open] .isu-help-title::before { content: '\25BE'; }
+.isu-app .isu-help-body { padding: 0 20px 18px; line-height: 1.55; }
+.isu-app .isu-help-body p { margin: 0 0 10px; }
+.isu-app .isu-help-subhead { margin: 14px 0 6px; font-size: 0.95rem; }
+.isu-app .isu-help-steps,
+.isu-app .isu-help-tips { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 6px; }
+.isu-app .isu-help-faq { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.isu-app .isu-help-faq dt { font-weight: 700; }
+.isu-app .isu-help-faq dd { margin: 2px 0 0; }

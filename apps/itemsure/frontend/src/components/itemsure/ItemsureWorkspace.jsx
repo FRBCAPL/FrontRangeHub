@@ -6,6 +6,8 @@ import ItemsureNav from './ItemsureNav.jsx';
 import ItemsureDashboard from './ItemsureDashboard.jsx';
 import ItemsureLocations from './ItemsureLocations.jsx';
 import ItemsureItems from './ItemsureItems.jsx';
+import ItemsureItemDetail from './ItemsureItemDetail.jsx';
+import ItemsureItemWizard from './ItemsureItemWizard.jsx';
 import ItemsureSettings from './ItemsureSettings.jsx';
 import ItemsureSetup from './ItemsureSetup.jsx';
 import ItemsureCounts from './ItemsureCounts.jsx';
@@ -16,6 +18,8 @@ import ItemsureActivity from './ItemsureActivity.jsx';
 import ItemsureLowStock from './ItemsureLowStock.jsx';
 import ItemsureRestock from './ItemsureRestock.jsx';
 import ItemsureTargets from './ItemsureTargets.jsx';
+import ItemsureHelp from './ItemsureHelp.jsx';
+import ItemsureComingNext from './ItemsureComingNext.jsx';
 import useStockAlerts from '../../hooks/useStockAlerts.js';
 
 /** Signed-in area. Pages that need an organization redirect to setup without one. */
@@ -47,6 +51,9 @@ export default function ItemsureWorkspace() {
           <Route index element={needsOrg(<ItemsureDashboard />)} />
           <Route path="locations" element={needsOrg(<ItemsureLocations />)} />
           <Route path="items" element={needsOrg(<ItemsureItems />)} />
+          <Route path="items/new" element={needsOrg(<ItemsureItemWizard />)} />
+          <Route path="items/:itemId" element={needsOrg(<ItemsureItemDetail />)} />
+          <Route path="items/:itemId/edit" element={needsOrg(<ItemsureItemWizard />)} />
           <Route path="counts" element={needsCounts(<ItemsureCounts />)} />
           <Route path="counts/new" element={needsCounts(<ItemsureCountStart />)} />
           <Route path="counts/:sessionId" element={needsCounts(<ItemsureCountSession />)} />
@@ -58,6 +65,8 @@ export default function ItemsureWorkspace() {
           <Route path="activity" element={needsAudit(<ItemsureActivity />)} />
           <Route path="settings" element={needsOrg(<ItemsureSettings />)} />
           <Route path="setup" element={<ItemsureSetup />} />
+          <Route path="help" element={<ItemsureHelp />} />
+          <Route path="coming-next" element={needsOrg(<ItemsureComingNext />)} />
           <Route path="*" element={<Navigate to={ITEMSURE_PATH} replace />} />
         </Routes>
       </div>

@@ -3,12 +3,12 @@
 import { canonicalQuantity, checkQuantity } from './itemsureQuantity.js';
 
 export const TARGET_STATUS = {
-  low: { label: 'Low stock', tone: 'danger' },
-  below_par: { label: 'Below par', tone: 'warn' },
-  at_target: { label: 'At par', tone: 'ok' },
-  above_target: { label: 'Above par', tone: 'ok' },
-  above_minimum: { label: 'Above minimum', tone: 'ok' },
-  not_set_up: { label: 'Not set up', tone: 'muted' },
+  low: { label: 'Running low', tone: 'danger' },
+  below_par: { label: 'Needs topping up', tone: 'warn' },
+  at_target: { label: 'Full', tone: 'ok' },
+  above_target: { label: 'More than full', tone: 'ok' },
+  above_minimum: { label: 'OK', tone: 'ok' },
+  not_set_up: { label: 'No amount yet', tone: 'muted' },
 };
 
 export function targetKey(itemId, locationId, storageAreaId) {
@@ -34,13 +34,13 @@ export function compareQuantity(a, b) {
  */
 export function validateTargetEdit(edit, precision, unitName) {
   const parsed = {};
-  for (const [field, label] of [['minimum', 'Minimum'], ['par', 'Par']]) {
+  for (const [field, label] of [['minimum', 'Warn me at'], ['par', 'Fill up to']]) {
     const result = checkQuantity(edit?.[field], precision, unitName);
     if (result.error) return { error: `${label}: ${result.error}` };
     parsed[field] = result.empty ? null : result.value;
   }
   if (parsed.minimum !== null && parsed.par !== null && compareQuantity(parsed.minimum, parsed.par) > 0) {
-    return { error: 'The minimum cannot be more than par.' };
+    return { error: '"Warn me at" cannot be more than "Fill up to". Warn me at is usually the lower number.' };
   }
   return parsed;
 }

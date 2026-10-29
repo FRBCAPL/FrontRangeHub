@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listMovements, MOVEMENT_LABELS } from '../../services/itemsureInventoryService.js';
 import { loadPeopleNames } from '../../services/itemsureCountService.js';
+import { listMovementPackages } from '../../services/itemsurePackageService.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { displayQuantity, displaySigned, quantitySign } from '../../utils/itemsureQuantity.js';
 import { slotLabel } from '../../utils/itemsureStock.js';
@@ -14,6 +15,7 @@ const PAGE = 100;
 export default function ItemsureStockActivity({ organizationId, location, locations }) {
   const [rows, setRows] = useState(null);
   const [names, setNames] = useState({});
+  const [packages, setPackages] = useState({});
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -22,8 +24,13 @@ export default function ItemsureStockActivity({ organizationId, location, locati
       .then(async (list) => {
         if (!alive) return;
         setRows(list);
-        const people = await loadPeopleNames(list.map((m) => m.created_by));
-        if (alive) setNames(people);
+        const [people, packs] = await Promise.all([
+          loadPeopleNames(list.map((m) => m.created_by)),
+          listMovementPackages(list.map((m) => m.id)).catch(() => ({})),
+        ]);
+        if (!alive) return;
+        setNames(people);
+        setPackages(packs);
       })
       .catch((e) => {
         if (!alive) return;
@@ -49,6 +56,7 @@ export default function ItemsureStockActivity({ organizationId, location, locati
       <ul className="isu-count-report">
         {rows.map((m) => {
           const sign = quantitySign(m.quantity_text);
+          const pack = packages[m.id];
           return (
             <li key={m.id} className="isu-card isu-stock-move">
               <div className="isu-count-report-head">
@@ -67,6 +75,11 @@ export default function ItemsureStockActivity({ organizationId, location, locati
               </p>
               {m.effective_at !== m.posted_at && m.source_type === 'count_session' ? (
                 <p className="isu-muted isu-small">As of the count, {formatWhen(m.effective_at)}</p>
+              ) : null}
+              {pack ? (
+                <p className="isu-muted isu-small">
+                  Entered as {displayQuantity(pack.package_quantity_text)} {'\u00d7'} {pack.package_name} {'\u00b7'} 1 {pack.package_name} = {displayQuantity(pack.base_per_package_text)} {m.unit_symbol || m.unit_name}
+                </p>
               ) : null}
               {m.reason ? <p className="isu-small">{m.reason}</p> : null}
               {m.source_type === 'count_session' ? (

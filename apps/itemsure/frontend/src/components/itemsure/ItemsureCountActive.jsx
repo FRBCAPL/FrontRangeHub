@@ -4,6 +4,8 @@ import { listEntries } from '../../services/itemsureCountService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useCountAutosave from '../../hooks/useCountAutosave.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import useItemPackages from '../../hooks/useItemPackages.js';
+import { usablePackages } from '../../utils/itemsurePackages.js';
 import { COUNT_STATUS_LABELS, ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsureCountRow from './ItemsureCountRow.jsx';
@@ -16,16 +18,17 @@ const NO_AREA = '';
 function countingAreas(session, storageAreas, entries) {
   if (session.scope === 'storage_area') {
     const area = storageAreas.find((a) => a.id === session.storage_area_id);
-    return [{ id: session.storage_area_id, name: area?.name || 'Storage area' }];
+    return [{ id: session.storage_area_id, name: area?.name || 'Spot' }];
   }
   const used = new Set(Object.values(entries).map((e) => e.storage_area_id).filter(Boolean));
   const list = storageAreas.filter((a) => a.is_active || used.has(a.id)).map((a) => ({ id: a.id, name: a.name }));
-  return [...list, { id: NO_AREA, name: 'No specific area' }];
+  return [...list, { id: NO_AREA, name: 'Loose (no specific spot)' }];
 }
 
 export default function ItemsureCountActive({ data, userId, onReload }) {
   const { session, items, location, storageAreas } = data;
-  const { organization, can } = useItemsureWorkspace();
+  const { organization, features, can } = useItemsureWorkspace();
+  const packaging = useItemPackages(organization.id);
   const navigate = useNavigate();
   const itemsById = useMemo(() => Object.fromEntries(items.map((i) => [i.item_id, i])), [items]);
   const autosave = useCountAutosave({ sessionId: session.id, userId, initialEntries: data.entries, itemsById });
@@ -70,7 +73,7 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
   };
 
   const selectedAreaId = areaId || null;
-  const areaName = (id) => areas.find((a) => (a.id || null) === (id || null))?.name || 'No specific area';
+  const areaName = (id) => areas.find((a) => (a.id || null) === (id || null))?.name || 'Loose (no specific spot)';
 
   return (
     <div className="isu-page isu-count-active">
@@ -88,7 +91,7 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
       <ErrorNote message={error} />
 
       {areas.length > 1 ? (
-        <div className="isu-chips" role="group" aria-label="Storage area being counted">
+        <div className="isu-chips" role="group" aria-label="Spot being counted">
           {areas.map((a) => (
             <button
               key={a.id || 'none'}
@@ -124,6 +127,7 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
             otherAreaNames={Object.values(entries)
               .filter((e) => e.item_id === item.item_id && (e.storage_area_id || null) !== selectedAreaId)
               .map((e) => areaName(e.storage_area_id))}
+            packages={features.packaging && packaging.ready ? usablePackages(packaging.packagesFor(item.item_id)) : []}
           />
         ))}
       </ul>

@@ -31,7 +31,7 @@ export default function ItemsureStockBalances({ location, items, balances }) {
       (!onlySetUp || row.slots.length) &&
       (!term || row.item.name.toLowerCase().includes(term) || (row.item.sku || '').toLowerCase().includes(term)),
   );
-  const areaName = (id) => (id ? location.storageAreas.find((a) => a.id === id)?.name || 'Storage area' : NO_AREA_LABEL);
+  const areaName = (id) => (id ? location.storageAreas.find((a) => a.id === id)?.name || 'Spot' : NO_AREA_LABEL);
 
   if (!rows.length) {
     return (
@@ -64,7 +64,7 @@ export default function ItemsureStockBalances({ location, items, balances }) {
                 <strong>{item.name}</strong>
                 {item.sku ? <p className="isu-muted isu-small">{item.sku}</p> : null}
               </div>
-              {slots.length ? null : <span className="isu-badge isu-stock-unset">Not set up</span>}
+              {slots.length ? null : <span className="isu-badge isu-stock-unset">No amount yet</span>}
             </div>
             {slots.length ? (
               <ul className="isu-count-breakdown">

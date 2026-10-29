@@ -25,6 +25,8 @@ export const AUDIT_ENTITY_LABELS = {
   inventory: 'Stock',
   inventory_targets: 'Par levels',
   planned_transfers: 'Planned transfer',
+  item_places: 'Item place',
+  item_unit_relationships: 'Packaging size',
 };
 
 export const AUDIT_VERB_LABELS = {

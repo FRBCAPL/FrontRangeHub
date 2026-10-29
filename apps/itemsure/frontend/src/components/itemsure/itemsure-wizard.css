@@ -1,0 +1,228 @@
+/* Guided Add / Edit item page. */
+
+.isu-wizard-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.isu-wizard-step > button,
+.isu-wizard-step > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--isu-line);
+  background: var(--isu-paper);
+  color: var(--isu-muted);
+  font: inherit;
+  font-size: 0.9rem;
+}
+
+.isu-wizard-step > button {
+  cursor: pointer;
+  color: var(--isu-ink);
+}
+
+.isu-wizard-step > button:hover {
+  border-color: var(--isu-pine-line);
+}
+
+.isu-wizard-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  background: var(--isu-badge);
+}
+
+.isu-wizard-step.is-done .isu-wizard-num {
+  background: var(--isu-pine-soft);
+  color: var(--isu-pine);
+}
+
+.isu-wizard-step.is-current > span {
+  border-color: var(--isu-pine);
+  color: var(--isu-ink);
+  font-weight: 600;
+}
+
+.isu-wizard-step.is-current .isu-wizard-num {
+  background: var(--isu-pine-btn);
+  color: #fff;
+}
+
+@media (max-width: 560px) {
+  .isu-wizard-step:not(.is-current) .isu-wizard-label {
+    display: none;
+  }
+
+  .isu-wizard-step:not(.is-current) > button,
+  .isu-wizard-step:not(.is-current) > span {
+    padding-right: 4px;
+  }
+}
+
+.isu-wizard-intro {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--isu-line);
+}
+
+.isu-wizard-intro p {
+  margin: 0;
+}
+
+.isu-wizard-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.isu-wizard-onhand {
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--isu-info-soft);
+  color: var(--isu-info);
+  justify-self: start;
+}
+
+.isu-wizard-onhand strong {
+  color: var(--isu-ink);
+}
+
+.isu-wizard-section {
+  display: grid;
+  gap: 10px;
+}
+
+.isu-wizard-section + .isu-wizard-section {
+  padding-top: 14px;
+  border-top: 1px solid var(--isu-line);
+}
+
+.isu-wizard-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.isu-wizard-section-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.isu-wizard-places {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.isu-wizard-place {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-raised);
+}
+
+.isu-wizard-place.is-removing {
+  border-style: dashed;
+  border-color: var(--isu-danger-line);
+  background: var(--isu-danger-soft);
+}
+
+.isu-wizard-place.is-removing > .isu-wizard-place-head strong,
+.isu-wizard-place.is-removing > strong {
+  text-decoration: line-through;
+}
+
+.isu-wizard-removing {
+  margin: 0;
+  color: var(--isu-danger);
+  font-size: 0.9rem;
+}
+
+.isu-wizard-place-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.isu-wizard-amount {
+  display: grid;
+  gap: 4px;
+}
+
+.isu-wizard-amount > span:first-child {
+  font-size: 0.9rem;
+  color: var(--isu-muted);
+}
+
+.isu-wizard-levels {
+  display: grid;
+  gap: 10px;
+}
+
+@media (min-width: 560px) {
+  .isu-wizard-levels {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.isu-wizard-summary {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+}
+
+.isu-wizard-summary dt {
+  color: var(--isu-muted);
+}
+
+.isu-wizard-summary dd {
+  margin: 0;
+}
+
+.isu-wizard-problems {
+  padding: 12px;
+  border: 1px solid var(--isu-danger-line);
+  border-radius: 12px;
+  background: var(--isu-danger-soft);
+}
+
+.isu-wizard-problems ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+
+.isu-wizard-problems p {
+  margin: 0;
+}
+
+.isu-wizard-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.isu-wizard-nav > :last-child {
+  margin-left: auto;
+}

@@ -6,8 +6,10 @@ import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { saveTargets } from '../../services/itemsureTargetService.js';
 import { buildSaveRows, isTargetChanged, targetKey } from '../../utils/itemsureTargets.js';
 import { findBalance, NO_AREA_LABEL } from '../../utils/itemsureStock.js';
+import { categoryTree, inCategory } from '../../utils/itemsureCategories.js';
 import { notifyInventoryChanged } from '../../utils/itemsureChanges.js';
 import { ErrorNote, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
+import ItemsureLevelsHelp from './ItemsureLevelsHelp.jsx';
 import ItemsureTargetFilters from './ItemsureTargetFilters.jsx';
 import ItemsureTargetRow from './ItemsureTargetRow.jsx';
 import ItemsureTargetCopy from './ItemsureTargetCopy.jsx';
@@ -69,9 +71,10 @@ export default function ItemsureTargets() {
       (s) => filters.areaId === 'all' || (s.id || '') === filters.areaId,
     );
     const term = filters.search.trim().toLowerCase();
+    const tree = categoryTree(data.categories);
     return data.items
       .filter((i) => i.isActive)
-      .filter((i) => !filters.categoryId || i.categoryId === filters.categoryId)
+      .filter((i) => inCategory(tree, { category_id: i.categoryId }, filters.categoryId))
       .filter((i) => !term || i.name.toLowerCase().includes(term) || (i.sku || '').toLowerCase().includes(term))
       .flatMap((item) =>
         slots.map((slot) => {
@@ -142,7 +145,8 @@ export default function ItemsureTargets() {
 
   return (
     <div className="isu-page">
-      <PageHead title="Par levels" description="Minimum is when an item counts as low. Par is how much you want on hand. Either is optional." action={action} />
+      <PageHead title="Warning levels" description="Set &quot;Warn me at&quot; and &quot;Fill up to&quot; for many items at once." action={action} />
+      <ItemsureLevelsHelp />
       {data ? <ErrorNote message={error} /> : null}
       {!data && error ? <LoadFailed message={error} onRetry={reload} /> : null}
       {!data && !error ? <p className="isu-muted">Loading…</p> : null}

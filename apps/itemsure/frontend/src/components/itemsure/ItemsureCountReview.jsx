@@ -14,7 +14,7 @@ import ItemsureCountDecision from './ItemsureCountDecision.jsx';
 /** Review step for an open count, and the read-only record of a closed one. */
 export default function ItemsureCountReview({ data, onReload }) {
   const { session, items, entries, location, storageAreas } = data;
-  const { can } = useItemsureWorkspace();
+  const { features, can } = useItemsureWorkspace();
   const navigate = useNavigate();
   const [totals, setTotals] = useState(null);
   const [names, setNames] = useState({});
@@ -40,7 +40,7 @@ export default function ItemsureCountReview({ data, onReload }) {
   }, [session, entries, setError]);
 
   const areaName = useCallback(
-    (id) => (id ? storageAreas.find((a) => a.id === id)?.name || 'Storage area' : 'No specific area'),
+    (id) => (id ? storageAreas.find((a) => a.id === id)?.name || 'Spot' : 'Loose (no specific spot)'),
     [storageAreas],
   );
 
@@ -118,7 +118,12 @@ export default function ItemsureCountReview({ data, onReload }) {
       ) : null}
 
       <Modal open={modal === 'submit'} title="Submit count" onClose={closeModal}>
-        <ItemsureCountSubmitForm sessionId={session.id} omittedCount={stats.omitted} onSubmitted={afterClose} />
+        <ItemsureCountSubmitForm
+          sessionId={session.id}
+          omittedCount={stats.omitted}
+          applyNow={!features.approvals && can('counts.approve')}
+          onSubmitted={afterClose}
+        />
       </Modal>
       <Modal open={modal === 'cancel'} title="Cancel count" onClose={closeModal}>
         <div className="isu-stack">
