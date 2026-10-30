@@ -215,6 +215,56 @@
   margin: 0;
 }
 
+.isu-wizard-archive {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  border-color: var(--isu-danger-line);
+}
+
+.isu-wizard-archive.is-restore {
+  border-color: var(--isu-line);
+}
+
+.isu-wizard-archive h3 {
+  margin: 0 0 2px;
+  font-size: 1rem;
+}
+
+.isu-wizard-archive p {
+  margin: 0;
+}
+
+.isu-wizard-archive-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.isu-app .isu-btn--danger {
+  background: var(--isu-danger);
+  color: #1a0f0e;
+}
+
+.isu-app .isu-btn--danger:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.isu-app .isu-btn--danger-ghost {
+  color: var(--isu-danger);
+  border-color: var(--isu-danger-line);
+}
+
+.isu-app .isu-btn--danger-ghost:hover:not(:disabled) {
+  color: var(--isu-danger);
+  border-color: var(--isu-danger);
+  background: var(--isu-danger-soft);
+}
+
 .isu-wizard-nav {
   display: flex;
   align-items: center;
@@ -225,4 +275,10 @@
 
 .isu-wizard-nav > :last-child {
   margin-left: auto;
+}
+
+.isu-wizard-nav-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

@@ -3,7 +3,7 @@ import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { categoryOptions, categoryTree } from '../../utils/itemsureCategories.js';
 import { Field } from './ItemsureUi.jsx';
 
-/** Location, area, category, search, and "missing levels" filters for the levels editor. */
+/** Location, area, category, search, "missing levels", and "every spot" filters for the levels editor. */
 export default function ItemsureTargetFilters({ filters, setFilters, locations, categories }) {
   const location = locations.find((l) => l.id === filters.locationId);
   const areas = (location?.storageAreas || []).filter((a) => a.is_active);
@@ -35,6 +35,10 @@ export default function ItemsureTargetFilters({ filters, setFilters, locations, 
       <label className="isu-check">
         <input type="checkbox" checked={filters.missingOnly} onChange={set('missingOnly')} />
         <span>Missing levels only</span>
+      </label>
+      <label className="isu-check">
+        <input type="checkbox" checked={filters.everySpot} onChange={set('everySpot')} />
+        <span title="Also list spots an item isn't kept in yet, to set levels there">Show every spot</span>
       </label>
     </div>
   );

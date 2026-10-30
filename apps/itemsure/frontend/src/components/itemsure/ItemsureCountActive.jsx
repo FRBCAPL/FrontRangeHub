@@ -11,19 +11,7 @@ import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsureCountRow from './ItemsureCountRow.jsx';
 import ItemsureCountSaveBar from './ItemsureCountSaveBar.jsx';
 import ItemsureCountAddItems from './ItemsureCountAddItems.jsx';
-
-const NO_AREA = '';
-
-/** Areas offered while counting: the session's own area, or the location's active areas plus "no specific area". */
-function countingAreas(session, storageAreas, entries) {
-  if (session.scope === 'storage_area') {
-    const area = storageAreas.find((a) => a.id === session.storage_area_id);
-    return [{ id: session.storage_area_id, name: area?.name || 'Spot' }];
-  }
-  const used = new Set(Object.values(entries).map((e) => e.storage_area_id).filter(Boolean));
-  const list = storageAreas.filter((a) => a.is_active || used.has(a.id)).map((a) => ({ id: a.id, name: a.name }));
-  return [...list, { id: NO_AREA, name: 'Loose (no specific spot)' }];
-}
+import { countingAreas, NO_AREA } from '../../utils/itemsureCountAreas.js';
 
 export default function ItemsureCountActive({ data, userId, onReload }) {
   const { session, items, location, storageAreas } = data;

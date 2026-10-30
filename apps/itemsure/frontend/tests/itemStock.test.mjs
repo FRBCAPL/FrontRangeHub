@@ -1,6 +1,33 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { addQuantity, isEmptySlot, itemSlots, itemSummary, visibleSlots, whereLabels, worstStatus } from '../src/utils/itemsureItemStock.js';
+import { addQuantity, isEmptySlot, itemSlots, itemSummary, slotsInUse, sortByAttention, visibleSlots, whereAmounts, whereLabels, worstStatus } from '../src/utils/itemsureItemStock.js';
+
+test('slotsInUse: kept, levels, or stock other than 0; Loose only when actually used', () => {
+  const keys = slotsInUse({
+    places: [{ item_id: 'rum', location_id: 'L', storage_area_id: 'bar' }],
+    targets: [{ item_id: 'gin', location_id: 'L', storage_area_id: 'back' }],
+    balances: [
+      { item_id: 'vod', location_id: 'L', storage_area_id: null, quantity_text: '3' },
+      { item_id: 'teq', location_id: 'L', storage_area_id: null, quantity_text: '0.000' },
+    ],
+  });
+  assert.deepEqual([...keys].sort(), ['gin|L|back', 'rum|L|bar', 'vod|L|']);
+});
+
+test('sortByAttention puts low first, then topping up, no amount, fine, no par, archived', () => {
+  const items = [
+    { id: 'fine', is_active: true },
+    { id: 'nopar', is_active: true },
+    { id: 'old', is_active: false },
+    { id: 'low', is_active: true },
+    { id: 'empty', is_active: true },
+    { id: 'top', is_active: true },
+    { id: 'full', is_active: true },
+  ];
+  const status = { fine: 'above_minimum', nopar: null, old: 'low', low: 'low', empty: 'not_set_up', top: 'below_par', full: 'at_target' };
+  const order = sortByAttention(items, (i) => ({ status: status[i.id] })).map((i) => i.id);
+  assert.deepEqual(order, ['low', 'top', 'empty', 'fine', 'full', 'nopar', 'old']);
+});
 
 const locations = [
   { id: 'n', name: 'North', storageAreas: [{ id: 'bar', name: 'Bar' }, { id: 'cellar', name: 'Cellar' }] },
@@ -63,6 +90,19 @@ test('where labels call the no-spot place "Loose" next to spots', () => {
     ],
   });
   assert.deepEqual(whereLabels(groups), ['North (Bar, Loose)']);
+  assert.deepEqual(whereAmounts(groups), [{ name: 'North', spots: [{ name: 'Bar', quantity: '2' }, { name: 'Loose', quantity: '5' }] }]);
+});
+
+test('where amounts give each spot its count; loose-only locations have no spot name', () => {
+  const groups = visibleSlots('rice', {
+    locations,
+    places: [{ item_id: 'rice', location_id: 'n', storage_area_id: 'cellar' }],
+    balances: [{ item_id: 'rice', location_id: 's', storage_area_id: null, quantity_text: '3' }],
+  });
+  assert.deepEqual(whereAmounts(groups), [
+    { name: 'North', spots: [{ name: 'Cellar', quantity: null }] },
+    { name: 'South', spots: [{ name: null, quantity: '3' }] },
+  ]);
 });
 
 test('places at locations the person cannot see are left out', () => {
@@ -79,6 +119,6 @@ test('summary totals every visible slot and reports the worst status', () => {
     ],
     targets: [{ item_id: 'rice', location_id: 's', storage_area_id: null, minimum_text: null, par_text: '2' }],
   });
-  assert.deepEqual(summary, { total: '3.5', status: 'below_par' });
-  assert.deepEqual(itemSummary('rice', { locations }), { total: null, status: null });
+  assert.deepEqual(summary, { total: '3.5', par: '2', minimum: null, status: 'below_par' });
+  assert.deepEqual(itemSummary('rice', { locations }), { total: null, par: null, minimum: null, status: null });
 });

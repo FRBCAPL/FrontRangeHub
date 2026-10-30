@@ -157,6 +157,24 @@
   background: var(--isu-pine-soft);
   border: 1px solid var(--isu-pine-line);
 }
+.isu-app .isu-chips-head {
+  flex: 1 0 100%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.isu-app .isu-chips-head .isu-chip--add { justify-self: end; }
+.isu-app .isu-chips-label {
+  grid-column: 2;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--isu-pine);
+}
 .isu-app .isu-chip { padding: 6px 12px; border-radius: 999px; background: var(--isu-paper); border: 1px solid var(--isu-line); font-size: 0.88rem; }
 .isu-app .isu-chip-count { margin-left: 4px; opacity: 0.7; font-size: 0.8em; }
 .isu-app .isu-chip--add { cursor: pointer; color: var(--isu-pine); font-weight: 600; font: inherit; font-size: 0.88rem; }

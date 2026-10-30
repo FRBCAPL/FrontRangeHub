@@ -9,16 +9,33 @@ import { stockEntry, usablePackages } from '../../utils/itemsurePackages.js';
 import { findBalance, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 import ItemsurePackageQuantity from './ItemsurePackageQuantity.jsx';
+import ItemsureSpotCountNotice from './ItemsureSpotCountNotice.jsx';
 
-/** Moves stock between two established balances in one step: both sides post or neither does. */
-export default function ItemsureStockTransferForm({ data, defaultLocationId, onDone }) {
+/**
+ * Moves stock between two established balances in one step: both sides post or neither does.
+ * `preset` ({ itemId, locationId, storageAreaId }) fills in the item and "From" when opened from a spot.
+ */
+export default function ItemsureStockTransferForm({ data, defaultLocationId, preset = null, onDone }) {
   const { features } = useItemsureWorkspace();
   const options = useMemo(() => slotOptions(data.locations, { spots: features.spots }), [data.locations, features.spots]);
   const items = useMemo(() => data.items.filter((i) => i.isActive), [data.items]);
-  const firstKey = options.some((o) => o.key === slotKey(defaultLocationId)) ? slotKey(defaultLocationId) : options[0]?.key || '';
-  const [itemId, setItemId] = useState(items[0]?.id || '');
+  const presetKey = preset ? slotKey(preset.locationId, preset.storageAreaId) : null;
+  const firstKey = presetKey && options.some((o) => o.key === presetKey)
+    ? presetKey
+    : options.some((o) => o.key === slotKey(defaultLocationId)) ? slotKey(defaultLocationId) : options[0]?.key || '';
+  const [itemId, setItemId] = useState(() => (preset && items.some((i) => i.id === preset.itemId) ? preset.itemId : items[0]?.id || ''));
   const [fromKey, setFromKey] = useState(firstKey);
-  const [toKey, setToKey] = useState(() => options.find((o) => o.key !== firstKey)?.key || firstKey);
+  const [toKey, setToKey] = useState(() => {
+    const others = options.filter((o) => o.key !== firstKey);
+    // From a spot, start "To" on another place that already holds this item.
+    const held = preset
+      ? others.find((o) => {
+          const { locationId, storageAreaId } = parseSlotKey(o.key);
+          return findBalance(data.balances, preset.itemId, locationId, storageAreaId);
+        })
+      : null;
+    return (held || others[0])?.key || firstKey;
+  });
   const [packageId, setPackageId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [note, setNote] = useState('');
@@ -84,7 +101,12 @@ export default function ItemsureStockTransferForm({ data, defaultLocationId, onD
         </select>
       </Field>
 
-      {sameSlot ? <p className="isu-notice isu-notice--warn">Choose two different places.</p> : null}
+      {sameSlot ? <p className="isu-notice isu-notice--warn">Choose two different places.</p> : (
+        <ItemsureSpotCountNotice
+          itemId={item?.id}
+          spots={[{ ...from, label: 'Moving from here' }, { ...to, label: 'Moving to here' }]}
+        />
+      )}
       {!sameSlot && item && (!fromBalance || !toBalance) ? (
         <p className="isu-notice isu-notice--warn">
           Both places need a starting balance for {item.name}. Count and approve the place that isn&apos;t set up first.

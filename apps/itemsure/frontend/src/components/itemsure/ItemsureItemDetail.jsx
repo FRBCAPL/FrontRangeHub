@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
@@ -16,33 +16,56 @@ import ItemsureSetAmountForm from './ItemsureSetAmountForm.jsx';
 import ItemsureQuickChangeForm from './ItemsureQuickChangeForm.jsx';
 import ItemsureSlotLevelsForm from './ItemsureSlotLevelsForm.jsx';
 import ItemsureUndoBar from './ItemsureUndoBar.jsx';
-import ItemsureItemUsage from './ItemsureItemUsage.jsx';
+import ItemsureItemSummary from './ItemsureItemSummary.jsx';
+import ItemsureItemCountButton from './ItemsureItemCountButton.jsx';
+import ItemsureItemInfo from './ItemsureItemInfo.jsx';
+import ItemsureTabs from './ItemsureTabs.jsx';
+import ItemsureCountNotice from './ItemsureCountNotice.jsx';
+import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useItemUsage from '../../hooks/useItemUsage.js';
 import { suggestLevels } from '../../utils/itemsureUsage.js';
 
 const TITLES = { set: 'Set amount', add: 'Add stock', remove: 'Use stock', levels: 'Warning and full-up levels' };
 
-/** Everything about one item: how many and where, its levels, quick changes, and history. */
+/** Everything about one item: a summary, then tabs for its places, history, and details. */
 export default function ItemsureItemDetail() {
   const { itemId } = useParams();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
   const { organization, features, can } = useItemsureWorkspace();
   const [catalog, setCatalog] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [action, setAction] = useState(null);
   const [done, setDone] = useState(null);
   const [removeError, setRemoveError] = useState('');
+  const [toggled, setToggled] = useState(() => new Set());
   const clearDone = useCallback(() => setDone(null), []);
   const places = useItemPlaces(organization.id);
   const canView = can('inventory.view');
+  const canHistory = can('inventory.activity');
   const { stock } = useItemStock(organization.id, canView);
-  const usage = useItemUsage(organization.id, itemId, canView && can('inventory.activity'));
+  const usage = useItemUsage(organization.id, itemId, canView && canHistory);
+  const openCounts = useOpenCounts(organization.id, can('counts.view') || can('counts.edit'));
   const allowed = {
     set: can('inventory.adjust') && can('counts.approve'),
     adjust: can('inventory.adjust'),
     levels: can('inventory.targets.manage'),
     items: can('items.manage'),
   };
+
+  const tabs = [
+    canView && { id: 'stock', label: 'Stock' },
+    canHistory && { id: 'history', label: 'History' },
+    { id: 'details', label: 'Details' },
+  ].filter(Boolean);
+  const tab = tabs.some((t) => t.id === params.get('tab')) ? params.get('tab') : tabs[0].id;
+  const chooseTab = (id) =>
+    setParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (id === tabs[0].id) next.delete('tab');
+      else next.set('tab', id);
+      return next;
+    }, { replace: true });
 
   const load = useCallback(async () => {
     try {
@@ -66,8 +89,18 @@ export default function ItemsureItemDetail() {
   const sources = { places: places.placesFor(itemId) || [], balances: stock?.balances || [], targets: stock?.targets || [], locations: places.locations };
   const groups = visibleSlots(itemId, sources);
   const summary = itemSummary(itemId, sources);
+  const slotCount = groups.reduce((n, g) => n + g.slots.length, 0);
   const shown = new Set(groups.flatMap((g) => g.slots.map((s) => slotKey(s.locationId, s.storageAreaId))));
   const otherPlaces = slotOptions(places.locations, { spots: features.spots }).filter((o) => !shown.has(o.key));
+  // With a single place it starts open; otherwise rows start closed.
+  const isOpen = (key) => (slotCount === 1 ? !toggled.has(key) : toggled.has(key));
+  const toggle = (key) =>
+    setToggled((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
 
   const labelFor = (slot) => {
     const location = places.locations.find((l) => l.id === slot.locationId);
@@ -76,6 +109,7 @@ export default function ItemsureItemDetail() {
     const sharesLocation = groups.some((g) => g.location.id === slot.locationId && g.slots.length > 1);
     return hasSpots || sharesLocation ? `${location?.name} \u00b7 ${NO_AREA_LABEL}` : location?.name || 'Location';
   };
+  const rowLabel = (slot, group) => (group.slots.length > 1 ? slot.areaName || NO_AREA_LABEL : labelFor(slot));
   const groupTotal = (group) =>
     group.slots.reduce((sum, s) => (s.quantity === null ? sum : addQuantity(sum, s.quantity)), null);
   const openOther = (key) => {
@@ -106,6 +140,7 @@ export default function ItemsureItemDetail() {
     if (result?.undo) setDone(result);
   };
   const formProps = action ? { item, slot: action.slot, placeName: labelFor(action.slot), onDone: finish } : null;
+  const editItem = can('items.manage') ? () => navigate(`${ITEMSURE_PATH}/items/${raw.id}/edit`) : null;
 
   const removePlace = async (slot) => {
     setRemoveError('');
@@ -130,22 +165,22 @@ export default function ItemsureItemDetail() {
       <Link to={`${ITEMSURE_PATH}/items`} className="isu-link isu-small">{'\u2190'} Inventory</Link>
       <PageHead
         title={raw.name}
-        description={[`Counted in ${item.unitName}`, raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ')}
-        action={can('items.manage') ? (
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => navigate(`${ITEMSURE_PATH}/items/${raw.id}/edit`)}>Edit item</button>
-        ) : null}
+        description={[raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ')}
+        action={editItem ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit item</button> : null}
       />
 
-      {!canView ? <p className="isu-muted">Your role doesn&apos;t include seeing stock amounts.</p> : null}
-
-      {canView && summary.total !== null && groups.length > 1 ? (
-        <p className="isu-item-total"><strong>{displayQuantity(summary.total)}</strong> {item.unitSymbol} in total at all locations</p>
-      ) : null}
-      {canView ? <ItemsureItemUsage usage={usage} total={summary.total} unit={item.unitSymbol} /> : null}
-
       {canView ? (
+        <ItemsureItemSummary item={raw} summary={summary} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null}>
+          <ItemsureItemCountButton organizationId={organization.id} item={raw} counts={openCounts} keptAt={groups} precision={item.precision} can={can} />
+        </ItemsureItemSummary>
+      ) : (
+        <p className="isu-muted">Your role doesn&apos;t include seeing stock amounts.</p>
+      )}
+
+      {tabs.length > 1 ? <ItemsureTabs tabs={tabs} selected={tab} onSelect={chooseTab} label="Item sections" /> : null}
+
+      {tab === 'stock' ? (
         <section className="isu-stack" aria-label="Where it is">
-          <h2 className="isu-section-title">Where it is</h2>
           {stock === null ? <p className="isu-muted">Loading amounts…</p> : null}
           {stock && !groups.length ? (
             <p className="isu-muted">
@@ -158,9 +193,8 @@ export default function ItemsureItemDetail() {
               <React.Fragment key={g.location.id}>
                 {g.slots.length > 1 ? (
                   <li className="isu-place-location-total">
-                    <strong>{g.location.name}</strong>: {groupTotal(g) === null ? 'no amounts yet' : (
-                      <><strong>{displayQuantity(groupTotal(g))}</strong> {item.unitSymbol} in total across the {g.slots.length} places below</>
-                    )}
+                    <strong>{g.location.name}</strong>
+                    <span>{groupTotal(g) === null ? 'no amounts yet' : <><strong>{displayQuantity(groupTotal(g))}</strong> {item.unitSymbol} in {g.slots.length} spots</>}</span>
                   </li>
                 ) : null}
                 {g.slots.map((slot) => (
@@ -168,9 +202,11 @@ export default function ItemsureItemDetail() {
                     key={slot.key}
                     item={item}
                     slot={slot}
-                    label={labelFor(slot)}
+                    label={rowLabel(slot, g)}
                     can={allowed}
                     perDay={usage ? usage.forSlot(slot.locationId, slot.storageAreaId) : null}
+                    open={isOpen(slot.key)}
+                    onToggle={() => toggle(slot.key)}
                     onAction={(kind, s) => (kind === 'removePlace' ? removePlace(s) : setAction({ kind, slot: s }))}
                   />
                 ))}
@@ -186,14 +222,20 @@ export default function ItemsureItemDetail() {
         </section>
       ) : null}
 
-      {can('inventory.activity') ? (
+      {tab === 'history' ? (
         <section className="isu-stack" aria-label="History">
-          <h2 className="isu-section-title">History</h2>
           <ItemsureItemHistory organizationId={organization.id} itemId={raw.id} locations={places.locations} />
         </section>
       ) : null}
 
+      {tab === 'details' ? (
+        <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} onEdit={editItem} />
+      ) : null}
+
       <Modal open={Boolean(action)} title={action ? TITLES[action.kind] : ''} onClose={close}>
+        {action && action.kind !== 'levels' ? (
+          <ItemsureCountNotice covering={openCounts.coveringSpot(raw.id, action.slot.locationId, action.slot.storageAreaId)} />
+        ) : null}
         {action?.kind === 'set' ? <ItemsureSetAmountForm {...formProps} /> : null}
         {action?.kind === 'add' || action?.kind === 'remove' ? <ItemsureQuickChangeForm {...formProps} direction={action.kind} /> : null}
         {action?.kind === 'levels' ? (

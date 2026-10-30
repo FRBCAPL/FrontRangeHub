@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryOptions, categoryPath, categoryTree, inCategory, NO_CATEGORY, rootOf } from '../src/utils/itemsureCategories.js';
+import { categoryOptions, categoryPath, categoryTree, inCategory, NO_CATEGORY, rootOf, searchCategories } from '../src/utils/itemsureCategories.js';
 
 const categories = [
   { id: 'liq', name: 'Liquor', is_active: true, parent_category_id: null },
@@ -39,6 +39,14 @@ test('a main category includes its subcategories; a subcategory is just itself',
   assert.equal(inCategory(tree, loose, NO_CATEGORY), true);
   assert.equal(inCategory(tree, archived, NO_CATEGORY), true);
   assert.equal(inCategory(tree, wellRum, NO_CATEGORY), false);
+});
+
+test('category search keeps a matching main whole and narrows the rest', () => {
+  const ids = (groups) => groups.map((g) => [g.root.id, g.children.map((c) => c.id)]);
+  assert.deepEqual(ids(searchCategories(tree, '')), [['liq', ['rum', 'vod']], ['beer', []], ['orphan', []]]);
+  assert.deepEqual(ids(searchCategories(tree, 'rum')), [['liq', ['rum']]]);
+  assert.deepEqual(ids(searchCategories(tree, 'LIQ')), [['liq', ['rum', 'vod']]]);
+  assert.deepEqual(ids(searchCategories(tree, 'zzz')), []);
 });
 
 test('the open main category for a chosen chip', () => {

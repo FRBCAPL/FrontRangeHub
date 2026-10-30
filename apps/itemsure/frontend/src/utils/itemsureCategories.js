@@ -50,6 +50,23 @@ export function inCategory(tree, item, selected) {
   return item.category_id === selected || tree.parentOf(item.category_id) === selected;
 }
 
+/**
+ * Main categories with their subcategories, narrowed by a typed search.
+ * A main category that matches keeps all its subcategories; otherwise only matching ones show.
+ * Returns [{ root, children }].
+ */
+export function searchCategories(tree, query) {
+  const needle = String(query || '').trim().toLowerCase();
+  const hit = (c) => c.name.toLowerCase().includes(needle);
+  return tree.roots
+    .map((root) => {
+      const children = tree.childrenOf(root.id);
+      if (!needle || hit(root)) return { root, children };
+      return { root, children: children.filter(hit) };
+    })
+    .filter(({ root, children }) => !needle || hit(root) || children.length);
+}
+
 /** The main category a chosen chip sits in (itself for a main one), or null. */
 export function rootOf(tree, selected) {
   if (!tree.byId.has(selected)) return null;

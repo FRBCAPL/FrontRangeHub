@@ -7,17 +7,25 @@ import { stockEntry, usablePackages } from '../../utils/itemsurePackages.js';
 import { findBalance, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 import ItemsurePackageQuantity from './ItemsurePackageQuantity.jsx';
+import ItemsureSpotCountNotice from './ItemsureSpotCountNotice.jsx';
 
 const REASONS = ['Delivery received', 'Used', 'Damaged', 'Expired', 'Returned', 'Correction'];
 
-/** Adds to or removes from an established balance. Never sets one up. */
-export default function ItemsureStockAdjustForm({ data, defaultLocationId, onDone }) {
+/**
+ * Adds to or removes from an established balance. Never sets one up.
+ * `preset` ({ itemId, locationId, storageAreaId, direction }) fills it in when opened from a spot.
+ */
+export default function ItemsureStockAdjustForm({ data, defaultLocationId, preset = null, onDone }) {
   const { features } = useItemsureWorkspace();
   const options = useMemo(() => slotOptions(data.locations, { spots: features.spots }), [data.locations, features.spots]);
   const items = useMemo(() => data.items.filter((i) => i.isActive), [data.items]);
-  const [slot, setSlot] = useState(() => (options.some((o) => o.key === slotKey(defaultLocationId)) ? slotKey(defaultLocationId) : options[0]?.key || ''));
-  const [itemId, setItemId] = useState(items[0]?.id || '');
-  const [direction, setDirection] = useState('add');
+  const [slot, setSlot] = useState(() => {
+    const wanted = preset ? slotKey(preset.locationId, preset.storageAreaId) : slotKey(defaultLocationId);
+    if (options.some((o) => o.key === wanted)) return wanted;
+    return options.some((o) => o.key === slotKey(defaultLocationId)) ? slotKey(defaultLocationId) : options[0]?.key || '';
+  });
+  const [itemId, setItemId] = useState(() => (preset && items.some((i) => i.id === preset.itemId) ? preset.itemId : items[0]?.id || ''));
+  const [direction, setDirection] = useState(preset?.direction === 'remove' ? 'remove' : 'add');
   const [packageId, setPackageId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState('');
@@ -64,6 +72,7 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, onDon
         </select>
       </Field>
 
+      <ItemsureSpotCountNotice itemId={item?.id} spots={[{ locationId, storageAreaId }]} />
       {balance ? (
         <p className="isu-muted isu-small">On hand here: {displayQuantity(balance.quantity_text)} {item.unitSymbol}</p>
       ) : (

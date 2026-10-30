@@ -17,6 +17,7 @@ import ItemsureWizardWhere from './ItemsureWizardWhere.jsx';
 import ItemsureWizardLevels from './ItemsureWizardLevels.jsx';
 import ItemsureWizardExtras from './ItemsureWizardExtras.jsx';
 import ItemsureWizardReview from './ItemsureWizardReview.jsx';
+import ItemsureWizardArchive from './ItemsureWizardArchive.jsx';
 
 const emptyForm = (item, units) => ({
   name: item?.name || '',
@@ -202,16 +203,36 @@ export default function ItemsureItemWizard() {
       </section>
 
       <div className="isu-wizard-nav">
-        {index > 0 ? <button type="button" className="isu-btn isu-btn--ghost" onClick={() => goTo(steps[index - 1])}>Back</button> : <span />}
-        {step === 'review' || editing ? (
-          <button type="button" className="isu-btn isu-btn--primary" disabled={saving} onClick={save}>
-            {saving ? 'Saving…' : problems.length ? 'Save again' : editing ? 'Save changes' : 'Save item'}
+        <div className="isu-wizard-nav-group">
+          <button
+            type="button"
+            className="isu-btn isu-btn--ghost"
+            disabled={saving}
+            onClick={() => navigate(editing ? `${ITEMSURE_PATH}/items/${routeItemId}` : `${ITEMSURE_PATH}/items`)}
+          >
+            Cancel
           </button>
-        ) : null}
-        {step !== 'review' ? (
-          <button type="button" className={`isu-btn ${editing ? 'isu-btn--ghost' : 'isu-btn--primary'}`} onClick={() => goTo(steps[index + 1])}>Next</button>
-        ) : null}
+          {index > 0 ? <button type="button" className="isu-btn isu-btn--ghost" onClick={() => goTo(steps[index - 1])}>Back</button> : null}
+        </div>
+        <div className="isu-wizard-nav-group">
+          {step === 'review' || editing ? (
+            <button type="button" className="isu-btn isu-btn--primary" disabled={saving} onClick={save}>
+              {saving ? 'Saving…' : problems.length ? 'Save again' : editing ? 'Save changes' : 'Save item'}
+            </button>
+          ) : null}
+          {step !== 'review' ? (
+            <button type="button" className={`isu-btn ${editing ? 'isu-btn--ghost' : 'isu-btn--primary'}`} onClick={() => goTo(steps[index + 1])}>Next</button>
+          ) : null}
+        </div>
       </div>
+
+      {editing ? (
+        <ItemsureWizardArchive
+          organizationId={organization.id}
+          item={item}
+          onDone={(active) => navigate(active ? `${ITEMSURE_PATH}/items/${item.id}` : `${ITEMSURE_PATH}/items`)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -1,25 +1,24 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useTargetsData from '../../hooks/useTargetsData.js';
-import useItemsureAction from '../../hooks/useItemsureAction.js';
-import { saveTargets } from '../../services/itemsureTargetService.js';
-import { buildSaveRows, isTargetChanged, targetKey } from '../../utils/itemsureTargets.js';
+import { targetKey } from '../../utils/itemsureTargets.js';
 import { findBalance, NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { categoryTree, inCategory } from '../../utils/itemsureCategories.js';
+import { slotsInUse } from '../../utils/itemsureItemStock.js';
 import { notifyInventoryChanged } from '../../utils/itemsureChanges.js';
 import { ErrorNote, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureLevelsHelp from './ItemsureLevelsHelp.jsx';
 import ItemsureTargetFilters from './ItemsureTargetFilters.jsx';
-import ItemsureTargetRow from './ItemsureTargetRow.jsx';
+import ItemsureTargetItemCard from './ItemsureTargetItemCard.jsx';
+import ItemsureTargetEditor from './ItemsureTargetEditor.jsx';
 import ItemsureTargetCopy from './ItemsureTargetCopy.jsx';
 
 const PAGE = 100;
 
 /**
- * Minimum and par per item and place. Edits are kept by slot, so changing
- * filters never drops them; Save sends every changed slot and reports each
- * failure on its row while the rest are saved.
+ * Minimum and par per item and place. One card per item lists the spots it uses;
+ * tapping a card opens its spots to edit and save together.
  */
 export default function ItemsureTargets() {
   const { organization, can } = useItemsureWorkspace();
@@ -32,13 +31,12 @@ export default function ItemsureTargets() {
     categoryId: '',
     search: params.get('search') || '',
     missingOnly: false,
+    everySpot: false,
   });
-  const [edits, setEdits] = useState({});
-  const [rowErrors, setRowErrors] = useState({});
   const [limit, setLimit] = useState(PAGE);
   const [copying, setCopying] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState('');
-  const { busy, error: saveError, run } = useItemsureAction();
 
   const locations = useMemo(() => (data?.locations || []).filter((l) => l.is_active), [data]);
   useEffect(() => {
@@ -48,84 +46,59 @@ export default function ItemsureTargets() {
   }, [locations, filters.locationId]);
   useEffect(() => setLimit(PAGE), [filters]);
 
-  const itemsById = useMemo(() => Object.fromEntries((data?.items || []).map((i) => [i.id, i])), [data]);
-  const dirtyKeys = useMemo(
-    () => Object.keys(edits).filter((k) => isTargetChanged(edits[k], data?.targetsByKey[k])),
-    [edits, data],
-  );
+  const location = locations.find((l) => l.id === filters.locationId) || null;
 
-  useEffect(() => {
-    if (!dirtyKeys.length) return undefined;
-    const warn = (e) => {
-      e.preventDefault();
-      e.returnValue = '';
+  /** Every spot at this location for an item, split into the ones it uses and the rest. */
+  const spotsFor = useMemo(() => {
+    if (!data || !location) return () => ({ used: [], other: [] });
+    const spots = [{ id: null, name: NO_AREA_LABEL }, ...location.storageAreas.filter((a) => a.is_active)];
+    // Places that can't load mean "show every spot" rather than hiding anything.
+    const inUse = data.places ? slotsInUse(data) : null;
+    return (item) => {
+      const used = [];
+      const other = [];
+      for (const spot of spots) {
+        const key = targetKey(item.id, location.id, spot.id);
+        const row = {
+          key,
+          item,
+          areaId: spot.id || '',
+          areaName: spot.name,
+          saved: data.targetsByKey[key] || null,
+          balance: findBalance(data.balances, item.id, location.id, spot.id),
+        };
+        if (!inUse || inUse.has(`${item.id}|${location.id}|${spot.id || ''}`)) used.push(row);
+        else other.push(row);
+      }
+      return { used, other };
     };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [dirtyKeys.length]);
+  }, [data, location]);
 
-  const rows = useMemo(() => {
-    const location = locations.find((l) => l.id === filters.locationId);
+  const cards = useMemo(() => {
     if (!data || !location) return [];
-    const slots = [{ id: null, name: NO_AREA_LABEL }, ...location.storageAreas.filter((a) => a.is_active)].filter(
-      (s) => filters.areaId === 'all' || (s.id || '') === filters.areaId,
-    );
     const term = filters.search.trim().toLowerCase();
     const tree = categoryTree(data.categories);
     return data.items
       .filter((i) => i.isActive)
       .filter((i) => inCategory(tree, { category_id: i.categoryId }, filters.categoryId))
       .filter((i) => !term || i.name.toLowerCase().includes(term) || (i.sku || '').toLowerCase().includes(term))
-      .flatMap((item) =>
-        slots.map((slot) => {
-          const key = targetKey(item.id, location.id, slot.id);
-          return {
-            key,
-            item,
-            areaName: slot.name,
-            saved: data.targetsByKey[key] || null,
-            balance: findBalance(data.balances, item.id, location.id, slot.id),
-          };
-        }),
-      )
-      .filter((r) => !filters.missingOnly || !r.saved);
-  }, [data, locations, filters]);
+      .map((item) => {
+        const { used, other } = spotsFor(item);
+        return { item, rows: filters.everySpot ? [...used, ...other] : used };
+      })
+      .filter(({ rows }) => rows.length)
+      .filter(({ rows }) => filters.areaId === 'all' || rows.some((r) => r.areaId === filters.areaId))
+      .filter(({ rows }) => !filters.missingOnly || rows.some((r) => !r.saved));
+  }, [data, location, filters, spotsFor]);
 
-  const onChange = useCallback(
-    (key, field, value) => {
-      setMessage('');
-      setRowErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
-      setEdits((prev) => {
-        const saved = data?.targetsByKey[key];
-        const base = prev[key] || { minimum: saved?.minimum_text ?? '', par: saved?.par_text ?? '' };
-        return { ...prev, [key]: { ...base, [field]: value } };
-      });
-    },
-    [data],
-  );
+  const editing = editingId && data ? data.items.find((i) => i.id === editingId) : null;
+  const editingSpots = editing ? spotsFor(editing) : null;
 
-  const save = () =>
-    run(async () => {
-      setMessage('');
-      const { rows: payload, keys, errors } = buildSaveRows(edits, data.targetsByKey, itemsById);
-      const results = payload.length ? await saveTargets(organization.id, payload) : [];
-      const failed = { ...errors };
-      const saved = [];
-      results.forEach((r) => (r.ok ? saved.push(keys[r.index]) : (failed[keys[r.index]] = r.error)));
-      // Reload after any server answer: a conflicted row keeps the person's numbers,
-      // and the fresh levels let their next save replace the other person's.
-      if (results.length) await reload();
-      if (saved.length) notifyInventoryChanged();
-      setEdits((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => failed[k])));
-      setRowErrors(failed);
-      const bad = Object.keys(failed).length;
-      setMessage(`${saved.length ? `Saved ${saved.length}.` : 'Nothing saved.'}${bad ? ` ${bad} need${bad === 1 ? 's' : ''} fixing (marked below).` : ''}`);
-    });
-
-  const discard = () => {
-    setEdits({});
-    setRowErrors({});
-    setMessage('');
+  const afterSave = async (count, { stayOpen = false } = {}) => {
+    await reload();
+    if (stayOpen) return;
+    setEditingId(null);
+    setMessage(count ? `Saved levels for ${editing?.name}.` : '');
   };
 
   const afterCopy = async () => {
@@ -134,18 +107,14 @@ export default function ItemsureTargets() {
     notifyInventoryChanged();
   };
 
-  const visible = rows.slice(0, limit);
-  const hiddenDirty = dirtyKeys.filter((k) => !rows.some((r) => r.key === k)).length;
+  const visible = cards.slice(0, limit);
   const action = canEdit && locations.length > 1 ? (
-    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setCopying(true)} disabled={dirtyKeys.length > 0}
-      title={dirtyKeys.length ? 'Save or discard your changes first' : undefined}>
-      Copy to another location
-    </button>
+    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setCopying(true)}>Copy to another location</button>
   ) : null;
 
   return (
     <div className="isu-page">
-      <PageHead title="Warning levels" description="Set &quot;Warn me at&quot; and &quot;Fill up to&quot; for many items at once." action={action} />
+      <PageHead title="Warning levels" description="Set &quot;Warn me at&quot; and &quot;Fill up to&quot; for each item. Tap an item to change its levels." action={action} />
       <ItemsureLevelsHelp />
       {data ? <ErrorNote message={error} /> : null}
       {!data && error ? <LoadFailed message={error} onRetry={reload} /> : null}
@@ -156,41 +125,55 @@ export default function ItemsureTargets() {
         <>
           <ItemsureTargetFilters filters={filters} setFilters={setFilters} locations={locations} categories={data.categories} />
           {!canEdit ? <p className="isu-notice">You can view levels here. Your role can&apos;t change them.</p> : null}
+          {message ? <p className="isu-notice" role="status">{message}</p> : null}
 
-          {canEdit && (dirtyKeys.length || message || saveError) ? (
-            <div className="isu-levels-bar" role="status">
-              <p>
-                {dirtyKeys.length ? `${dirtyKeys.length} unsaved change${dirtyKeys.length === 1 ? '' : 's'}` : message}
-                {hiddenDirty ? ` (${hiddenDirty} hidden by filters)` : ''}
-              </p>
-              {dirtyKeys.length ? (
-                <div className="isu-stock-actions">
-                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={discard} disabled={busy}>Discard</button>
-                  <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-          <ErrorNote message={saveError} />
-          {dirtyKeys.length && message ? <p className="isu-muted isu-small">{message}</p> : null}
-
-          {rows.length ? (
+          {cards.length ? (
             <ul className="isu-levels-list">
-              {visible.map((row) => (
-                <ItemsureTargetRow key={row.key} row={row} edit={edits[row.key]} error={rowErrors[row.key]}
-                  dirty={dirtyKeys.includes(row.key)} canEdit={canEdit} onChange={onChange} />
+              {visible.map(({ item, rows }) => (
+                <ItemsureTargetItemCard
+                  key={item.id}
+                  item={item}
+                  rows={rows}
+                  canEdit={canEdit}
+                  onOpen={() => {
+                    setMessage('');
+                    setEditingId(item.id);
+                  }}
+                />
               ))}
             </ul>
           ) : (
-            <p className="isu-muted isu-center">{data.items.some((i) => i.isActive) ? 'Nothing matches these filters.' : 'Add items to your catalog first.'}</p>
+            <p className="isu-muted isu-center">
+              {!data.items.some((i) => i.isActive)
+                ? 'Add items to your catalog first.'
+                : filters.everySpot
+                  ? 'Nothing matches these filters.'
+                  : 'No items are kept in this spot yet. Tick "Show every spot" to set levels somewhere new.'}
+            </p>
           )}
-          {rows.length > limit ? (
+          {cards.length > limit ? (
             <button type="button" className="isu-btn isu-btn--ghost" onClick={() => setLimit((n) => n + PAGE)}>
-              Show more ({rows.length - limit} left)
+              Show more ({cards.length - limit} left)
             </button>
           ) : null}
         </>
       ) : null}
+
+      <Modal open={Boolean(editing)} title={editing ? `${editing.name} \u00b7 ${location?.name || ''}` : ''} onClose={() => setEditingId(null)}>
+        {editing ? (
+          <ItemsureTargetEditor
+            key={editing.id}
+            organizationId={organization.id}
+            item={editing}
+            rows={filters.everySpot ? [...editingSpots.used, ...editingSpots.other] : editingSpots.used}
+            otherSpots={filters.everySpot ? [] : editingSpots.other}
+            savedByKey={data.targetsByKey}
+            canEdit={canEdit}
+            onSaved={afterSave}
+            onCancel={() => setEditingId(null)}
+          />
+        ) : null}
+      </Modal>
 
       <Modal open={copying} title="Copy levels to another location" onClose={() => setCopying(false)}>
         {data && copying ? <ItemsureTargetCopy locations={locations} defaultFromId={filters.locationId} onDone={afterCopy} /> : null}

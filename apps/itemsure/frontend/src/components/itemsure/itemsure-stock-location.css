@@ -1,0 +1,161 @@
+/* Stock by location: summary strip, item cards with spot chips, the by-spot view, and the spot window. */
+
+.isu-stock-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.isu-app .isu-stock-strip-btn {
+  min-height: 0;
+  min-width: 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--isu-line);
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.isu-app .isu-stock-strip-btn.is-danger { color: var(--isu-danger); border-color: var(--isu-danger-line); }
+.isu-app .isu-stock-strip-btn.is-warn { color: var(--isu-amber); border-color: var(--isu-amber); }
+.isu-app .isu-stock-strip-btn.is-muted { color: var(--isu-muted); }
+.isu-app .isu-stock-strip-btn.is-selected {
+  background: var(--isu-pine-soft);
+  border-color: var(--isu-pine);
+  box-shadow: inset 0 0 0 1px var(--isu-pine);
+}
+
+.isu-app .isu-stock-view {
+  flex: 0 0 auto;
+  padding: 3px;
+}
+
+.isu-app .isu-stock-view .isu-tab {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Item cards: same stripe and bar as Inventory, without the initials badge. */
+.isu-app .isu-stockcard.isu-stockloc-card {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 8px 12px 10px 16px;
+}
+
+.isu-stockloc-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.isu-app a.isu-stockloc-name {
+  min-height: 0;
+  min-width: 0;
+  color: var(--isu-ink);
+  font-weight: 700;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.isu-app a.isu-stockloc-name:hover {
+  color: var(--isu-pine);
+}
+
+.isu-stockloc-spots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.isu-app .isu-spot-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  min-height: 0;
+  min-width: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--isu-line);
+  background: var(--isu-badge);
+  color: var(--isu-ink);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.isu-app .isu-spot-chip:hover { border-color: var(--isu-pine); }
+.isu-app .isu-spot-chip.is-danger strong { color: var(--isu-danger); }
+.isu-app .isu-spot-chip.is-warn strong { color: var(--isu-amber); }
+.isu-spot-chip-par { color: var(--isu-muted); }
+
+/* By spot view. */
+.isu-app .isu-stockspot {
+  padding: 10px 12px;
+}
+
+.isu-stockspot-title {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.isu-stockspot-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.isu-app .isu-stockspot-row {
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(90px, auto);
+  align-items: center;
+  gap: 10px;
+  padding: 7px 4px;
+  border: 0;
+  border-top: 1px solid var(--isu-line);
+  background: none;
+  color: var(--isu-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.isu-app .isu-stockspot-list li:first-child .isu-stockspot-row { border-top: 0; }
+.isu-app .isu-stockspot-row:hover { background: var(--isu-pine-soft); }
+.isu-stockspot-name { overflow-wrap: anywhere; }
+.isu-stockspot-amount { white-space: nowrap; }
+.isu-stockspot-amount.is-danger strong { color: var(--isu-danger); }
+.isu-stockspot-amount.is-warn strong { color: var(--isu-amber); }
+.isu-stockspot-row .isu-stockcard-label { text-align: right; }
+
+/* Spot window. */
+.isu-spot-actions-facts {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.isu-spot-actions-facts p {
+  margin: 0;
+}
+
+.isu-spot-actions-amount strong {
+  font-size: 1.8rem;
+}
+
+.isu-spot-actions-btns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}

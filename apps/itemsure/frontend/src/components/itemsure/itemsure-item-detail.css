@@ -1,25 +1,4 @@
-/* Item list "on hand" line and the single-item page. */
-
-.isu-app a.isu-item-name {
-  color: var(--isu-ink);
-  font-weight: 700;
-  font-size: 1.05rem;
-  text-decoration: none;
-}
-
-.isu-app a.isu-item-name:hover,
-.isu-app a.isu-item-name:focus-visible {
-  color: var(--isu-pine);
-  text-decoration: underline;
-}
-
-.isu-item-onhand {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 4px 0;
-}
+/* The single-item page. */
 
 .isu-item-total {
   margin: 0;
@@ -59,45 +38,190 @@
 }
 
 .isu-place-location-total {
-  text-align: center;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: var(--isu-pine-soft);
-  border: 1px solid var(--isu-pine-line);
-}
-
-.isu-place-row {
-  display: grid;
+  display: flex;
+  justify-content: space-between;
   gap: 10px;
-  text-align: center;
+  margin-top: 6px;
+  padding: 0 4px;
+  font-size: 0.9rem;
 }
 
-.isu-place-row.is-low {
+.isu-place-location-total:first-child {
+  margin-top: 0;
+}
+
+/* One compact row per place; tapping it opens its buttons. */
+.isu-app .isu-place-row {
+  --stripe: transparent;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: inset 4px 0 0 var(--stripe);
+}
+
+.isu-app .isu-place-row--ok { --stripe: var(--isu-pine); }
+.isu-app .isu-place-row--muted { --stripe: var(--isu-muted); }
+.isu-app .isu-place-row--warn { --stripe: var(--isu-amber); }
+.isu-app .isu-place-row--danger {
+  --stripe: var(--isu-danger);
   border-color: var(--isu-danger-line);
 }
 
-.isu-place-row.has-badges-1,
-.isu-place-row.has-badges-2 {
-  position: relative;
-  padding-top: 40px;
-}
-
-.isu-place-row.has-badges-2 {
-  padding-top: 68px;
-}
-
-.isu-place-badges {
-  position: absolute;
-  top: 12px;
-  right: 14px;
+.isu-app .isu-place-row-toggle {
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
   display: grid;
-  justify-items: end;
-  gap: 4px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'name amount arrow'
+    'status status status';
+  align-items: center;
+  gap: 4px 10px;
+  padding: 9px 12px 9px 16px;
+  border: 0;
+  background: none;
+  color: var(--isu-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.isu-place-par {
-  background: var(--isu-info-soft);
-  color: var(--isu-info);
+.isu-app .isu-place-row-toggle:hover {
+  background: var(--isu-pine-soft);
+}
+
+.isu-place-row-name {
+  grid-area: name;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.isu-place-row-amount {
+  grid-area: amount;
+  white-space: nowrap;
+}
+
+.isu-place-row-amount strong {
+  font-size: 1.1rem;
+}
+
+.isu-place-row-status {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.isu-place-row-arrow {
+  grid-area: arrow;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-place-row--warn .isu-place-row-amount strong { color: var(--isu-amber); }
+.isu-app .isu-place-row--danger .isu-place-row-amount strong { color: var(--isu-danger); }
+
+.isu-place-row-body {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 12px 16px;
+  border-top: 1px solid var(--isu-line);
+  text-align: center;
+}
+
+.isu-place-row-body p {
+  margin: 0;
+}
+
+/* Summary card at the top of the item page. */
+.isu-app .isu-stockcard.isu-item-summary {
+  padding: 12px 14px 12px 16px;
+}
+
+.isu-app .isu-stockcard.isu-item-summary:hover {
+  border-color: var(--isu-line);
+}
+
+.isu-app .isu-stockcard--danger.isu-item-summary,
+.isu-app .isu-stockcard--danger.isu-item-summary:hover {
+  border-color: var(--isu-danger-line);
+}
+
+.isu-app .isu-item-summary .isu-stockcard-badge {
+  width: 44px;
+  height: 44px;
+  font-size: 0.95rem;
+  align-self: start;
+}
+
+.isu-item-summary-body {
+  gap: 6px;
+}
+
+.isu-item-summary-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.isu-app .isu-item-summary-amount strong {
+  font-size: 1.6rem;
+}
+
+.isu-app .isu-item-summary .isu-item-usage {
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.isu-item-summary-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.isu-item-summary-actions:empty {
+  display: none;
+}
+
+/* Heads-up on stock forms while a count is open. */
+.isu-count-notice {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--isu-amber);
+  background: var(--isu-warn-soft);
+  font-size: 0.9rem;
+}
+
+.isu-count-notice p {
+  margin: 0;
+}
+
+/* Details tab. */
+.isu-item-info dl {
+  margin: 0 0 12px;
+  display: grid;
+  gap: 0;
+}
+
+.isu-item-info-row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--isu-line);
+}
+
+.isu-item-info-row dt {
+  color: var(--isu-muted);
+  font-size: 0.9rem;
+}
+
+.isu-item-info-row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .isu-undo-bar {
@@ -133,24 +257,6 @@
   color: var(--isu-muted);
   font-size: 1.2rem;
   cursor: pointer;
-}
-
-.isu-place-row-head {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-}
-
-.isu-place-row-head p {
-  margin: 4px 0 0;
-}
-
-.isu-place-amount {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  font-size: 1.15rem;
-  white-space: nowrap;
 }
 
 .isu-place-actions {

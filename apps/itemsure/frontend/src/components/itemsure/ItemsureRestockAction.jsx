@@ -8,6 +8,7 @@ import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { slotLabel } from '../../utils/itemsureStock.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 import ItemsureStepper from './ItemsureStepper.jsx';
+import ItemsureSpotCountNotice from './ItemsureSpotCountNotice.jsx';
 
 const COPY = {
   transfer: { button: 'Transfer now', busy: 'Transferring…', note: 'Stock moves right away. ItemSure re-checks what is on hand first.' },
@@ -52,6 +53,12 @@ export default function ItemsureRestockAction({ action, locations, onDone }) {
           To {slotLabel(locations, action.to.locationId, action.to.storageAreaId)}
         </span>
       </p>
+      {action.kind !== 'plan' ? (
+        <ItemsureSpotCountNotice
+          itemId={item.id}
+          spots={[{ ...action.from, label: 'Moving from here' }, { ...action.to, label: 'Moving to here' }]}
+        />
+      ) : null}
       <Field label={`Quantity (${item.unitName})`}>
         <ItemsureStepper label={item.unitName} value={quantity} onChange={setQuantity} />
       </Field>

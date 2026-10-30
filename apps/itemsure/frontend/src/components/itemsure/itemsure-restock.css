@@ -56,6 +56,33 @@
 }
 .isu-app .isu-levels-bar p { margin: 0; }
 .isu-app .isu-levels-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+/* One card per item on the Warning levels page; tapping opens its editor. */
+.isu-app .isu-target-card {
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px;
+  color: var(--isu-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.isu-app .isu-target-card:hover { border-color: var(--isu-pine-line); }
+.isu-app .isu-target-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.isu-app .isu-target-card-edit { margin-left: auto; color: var(--isu-pine); font-weight: 700; font-size: 0.85rem; }
+.isu-app .isu-target-card-spots { display: grid; grid-template-columns: max-content minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; font-size: 0.9rem; }
+.isu-app .isu-target-card-spot { display: contents; }
+.isu-app .isu-target-card-spot-name { font-weight: 600; }
+
+/* Inside the editor modal each spot stacks: name, then the two boxes side by side. */
+.isu-app .isu-target-editor .isu-level-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas: 'name name' 'meta meta' 'min par' 'error error';
+  gap: 6px 10px;
+}
 .isu-app .isu-level-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 96px 96px;

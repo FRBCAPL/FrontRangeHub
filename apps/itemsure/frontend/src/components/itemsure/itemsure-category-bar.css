@@ -1,0 +1,198 @@
+/* Inventory category row: one swipeable line plus "All categories ▾" and its searchable panel. */
+
+.isu-app .isu-chipbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.isu-app .isu-chips--scroll {
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding: 2px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  padding-inline: 12px;
+}
+
+.isu-app .isu-chips--scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Centered when everything fits; scrolls from the start when it doesn't. */
+.isu-app .isu-chips--scroll > :first-child { margin-left: auto; }
+.isu-app .isu-chips--scroll > :last-child { margin-right: auto; }
+
+.isu-app .isu-chips--scroll > .isu-chip {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  scroll-snap-align: center;
+}
+
+/* Arrows for mouse users; touch screens just swipe. Hidden when everything fits. */
+.isu-app .isu-chip-arrow {
+  display: none;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--isu-line);
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .isu-app .isu-chipbar:has(.isu-chip-arrow:not(:disabled)) .isu-chip-arrow {
+    display: grid;
+    place-items: center;
+  }
+}
+
+.isu-app .isu-chip-arrow:hover:not(:disabled) {
+  border-color: var(--isu-pine);
+  color: var(--isu-pine);
+}
+
+.isu-app .isu-chip-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.isu-app .isu-chip--more {
+  flex: 0 0 auto;
+  min-height: 40px;
+  white-space: nowrap;
+  cursor: pointer;
+  color: var(--isu-pine);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-color: var(--isu-pine-line);
+}
+
+.isu-app .isu-chip--more:hover {
+  background: var(--isu-pine-soft);
+}
+
+/* Panel */
+.isu-catpanel {
+  display: grid;
+  gap: 12px;
+}
+
+.isu-app .isu-catpanel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  max-height: min(60vh, 480px);
+  overflow-y: auto;
+}
+
+.isu-app .isu-catpanel-item {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.isu-app .isu-catpanel-toggle {
+  flex: 0 0 auto;
+  min-width: 52px;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 10px;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--isu-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.isu-app .isu-catpanel-toggle:hover {
+  border-color: var(--isu-pine-line);
+  color: var(--isu-pine);
+}
+
+.isu-app .isu-catpanel-toggle.is-open {
+  color: var(--isu-pine);
+  border-color: var(--isu-pine-line);
+  background: var(--isu-pine-soft);
+}
+
+.isu-app .isu-catpanel-subs {
+  font-size: 0.75rem;
+}
+
+.isu-catpanel-arrow {
+  display: inline-block;
+  transition: transform 0.15s;
+}
+
+.isu-catpanel-toggle.is-open .isu-catpanel-arrow {
+  transform: rotate(180deg);
+}
+
+.isu-app .isu-catpanel-row {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--isu-ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.isu-app .isu-catpanel-row.is-sub {
+  padding-left: 32px;
+  font-weight: 400;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-catpanel-row.is-sub::before {
+  content: '\203A';
+  margin-left: -16px;
+  margin-right: 6px;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-catpanel-row.is-sub span:first-child {
+  flex: 1;
+}
+
+.isu-app .isu-catpanel-row:hover {
+  background: var(--isu-raised);
+}
+
+.isu-app .isu-catpanel-row.is-selected {
+  border-color: var(--isu-pine-line);
+  background: var(--isu-pine-soft);
+  color: var(--isu-pine);
+}

@@ -1,0 +1,370 @@
+/* Inventory list: one card per item with on hand vs par and a status bar. */
+
+.isu-app .isu-stockcard {
+  --stripe: transparent;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px 7px 14px;
+  border-radius: 12px;
+  box-shadow: inset 4px 0 0 var(--stripe);
+  transition: border-color 0.15s;
+}
+
+.isu-app .isu-item-list:has(.isu-stockcard) {
+  gap: 5px;
+}
+
+.isu-app .isu-stockcard:hover {
+  border-color: var(--isu-pine-line);
+}
+
+/* Status stripe down the left edge; problem cards get a faint tint too. */
+.isu-app .isu-stockcard--ok { --stripe: var(--isu-pine); }
+.isu-app .isu-stockcard--muted { --stripe: var(--isu-muted); }
+.isu-app .isu-stockcard--warn {
+  --stripe: var(--isu-amber);
+  background: linear-gradient(90deg, var(--isu-warn-soft), transparent 70%), var(--isu-paper);
+}
+.isu-app .isu-stockcard--danger {
+  --stripe: var(--isu-danger);
+  background: linear-gradient(90deg, var(--isu-danger-soft), transparent 70%), var(--isu-paper);
+  border-color: var(--isu-danger-line);
+}
+
+.isu-app .isu-stockcard--warn .isu-stockcard-amount strong { color: var(--isu-amber); }
+.isu-app .isu-stockcard--danger .isu-stockcard-amount strong { color: var(--isu-danger); }
+
+/* Initials badge, coloured by category so each category keeps its own colour. */
+.isu-stockcard-badge {
+  --badge-hue: 150;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: hsl(var(--badge-hue) 70% 72%);
+  background: hsl(var(--badge-hue) 45% 22%);
+  border: 1px solid hsl(var(--badge-hue) 45% 34%);
+}
+
+.isu-stockcard-badge.is-plain {
+  color: var(--isu-muted);
+  background: var(--isu-badge);
+  border-color: var(--isu-line);
+}
+
+.isu-stockcard-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Name centered; the amount sits on the right without pushing it off center. */
+.isu-stockcard-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  line-height: 1.15;
+}
+
+.isu-stockcard-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.isu-stockcard-title {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  text-align: center;
+}
+
+/* The name link covers the whole card, so tapping anywhere opens the item. */
+.isu-app a.isu-stockcard-link {
+  color: var(--isu-ink);
+  font-weight: 700;
+  font-size: 1rem;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  min-height: 0;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.isu-app a.isu-stockcard-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.isu-app a.isu-stockcard-link:focus-visible {
+  outline: none;
+}
+
+.isu-app .isu-stockcard:has(a.isu-stockcard-link:focus-visible) {
+  outline: 2px solid var(--isu-pine);
+  outline-offset: 2px;
+}
+
+.isu-stockcard-amount {
+  grid-column: 3;
+  justify-self: end;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+
+.isu-stockcard-amount strong {
+  font-size: 1.15rem;
+}
+
+.isu-stockcard-par {
+  font-size: 0.9rem;
+  color: var(--isu-muted);
+}
+
+.isu-stockcard-unit {
+  font-size: 0.75rem;
+  color: var(--isu-muted);
+}
+
+.isu-stockcard-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.isu-stockbar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--isu-badge);
+  overflow: hidden;
+}
+
+.isu-stockbar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.3s;
+}
+
+.isu-stockbar--ok { background: var(--isu-pine); }
+.isu-stockbar--warn { background: var(--isu-amber); }
+.isu-stockbar--danger { background: var(--isu-danger); }
+.isu-stockbar--muted { background: var(--isu-muted); }
+
+.isu-stockcard-label {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.isu-stockcard-label--ok { color: var(--isu-pine); }
+.isu-stockcard-label--warn { color: var(--isu-amber); }
+.isu-stockcard-label--danger { color: var(--isu-danger); }
+.isu-stockcard-label--muted { color: var(--isu-muted); font-weight: 400; }
+
+/* Things above the card-wide link stay tappable on their own. */
+.isu-app .isu-stockcard-edit,
+.isu-app .isu-stockcard-more {
+  position: relative;
+  z-index: 1;
+}
+
+.isu-stockcard-more {
+  justify-self: center;
+  text-align: center;
+}
+
+.isu-stockcard-more summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--isu-pine);
+}
+
+.isu-stockcard-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.isu-stockcard-more summary::after {
+  content: '\25BE';
+  transition: transform 0.15s;
+}
+
+.isu-stockcard-more[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.isu-stockcard-more p {
+  margin: 2px 0;
+}
+
+.isu-app .isu-stockcard-details {
+  margin: 2px 0 0;
+  text-align: center;
+}
+
+.isu-stockcard-details span + span::before {
+  content: ' \00b7  ';
+}
+
+.isu-stockcard-qty {
+  color: var(--isu-ink);
+}
+
+/* Edit button */
+.isu-app .isu-stockcard-edit {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--isu-line);
+  background: transparent;
+  color: var(--isu-ink);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.isu-app .isu-stockcard-edit:hover {
+  border-color: var(--isu-pine);
+  color: var(--isu-pine);
+}
+
+.isu-stockcard-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.isu-app .isu-stockcard-edit.is-count {
+  border-color: var(--isu-pine);
+  background: var(--isu-pine);
+  color: #fff;
+}
+
+.isu-app .isu-stockcard-edit.is-count:hover {
+  filter: brightness(1.1);
+  color: #fff;
+}
+
+.isu-app .isu-stockcard-counted {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--isu-pine) 12%, transparent);
+  color: var(--isu-pine);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.isu-app .isu-stockcard-counted:hover {
+  border-color: var(--isu-pine);
+}
+
+/* Quick count modal */
+.isu-quickcount {
+  display: grid;
+  gap: 12px;
+}
+
+.isu-quickcount-spots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.isu-quickcount-spot {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+}
+
+.isu-quickcount-spot.has-problem {
+  border-color: var(--isu-amber, #d89b2b);
+}
+
+.isu-quickcount-spot-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.isu-app .isu-quickcount-spot-head .isu-link {
+  min-height: 0;
+  min-width: 0;
+}
+
+.isu-quickcount-hint,
+.isu-quickcount-problem {
+  margin: 0;
+}
+
+.isu-quickcount-problem {
+  color: var(--isu-danger, #b42318);
+  font-size: 0.85rem;
+}
+
+.isu-quickcount-add {
+  display: grid;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--isu-pine);
+}
+
+.isu-quickcount-item {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.isu-quickcount-conflict {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--isu-amber, #d89b2b) 14%, transparent);
+}
+
+.isu-quickcount-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

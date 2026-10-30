@@ -1,22 +1,23 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { listCatalog, setItemActive } from '../../services/itemsureItemService.js';
+import { listCatalog } from '../../services/itemsureItemService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
-import useItemPackages from '../../hooks/useItemPackages.js';
 import useItemStock from '../../hooks/useItemStock.js';
-import { itemSummary, visibleSlots, whereLabels } from '../../utils/itemsureItemStock.js';
+import { itemSummary, sortByAttention, visibleSlots, whereAmounts } from '../../utils/itemsureItemStock.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
-import { usablePackages } from '../../utils/itemsurePackages.js';
 import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureItemRow from './ItemsureItemRow.jsx';
 import ItemsureCategoryForm from './ItemsureCategoryForm.jsx';
 import ItemsureCategoryChips from './ItemsureCategoryChips.jsx';
 import { categoryTree, inCategory } from '../../utils/itemsureCategories.js';
+import useOpenCounts from '../../hooks/useOpenCounts.js';
+import ItemsureQuickCount from './ItemsureQuickCount.jsx';
+import ItemsureUndoBar from './ItemsureUndoBar.jsx';
 
 export default function ItemsureItems() {
-  const { organization, features, can } = useItemsureWorkspace();
+  const { organization, can } = useItemsureWorkspace();
   const [catalog, setCatalog] = useState(null);
   const [query, setQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
@@ -33,13 +34,16 @@ export default function ItemsureItems() {
     }, { replace: true });
   const [modal, setModal] = useState('');
   const [newCategoryParent, setNewCategoryParent] = useState('');
-  const { busy, error, setError, run } = useItemsureAction();
+  const { error, setError } = useItemsureAction();
   const places = useItemPlaces(organization.id);
-  const packaging = useItemPackages(organization.id);
   const { stock } = useItemStock(organization.id, can('inventory.view'));
   const canManageItems = can('items.manage');
   const canManageCategories = can('categories.manage');
   const activeLocations = places.locations.filter((l) => l.is_active);
+  const openCounts = useOpenCounts(organization.id, can('counts.edit'));
+  const [countItem, setCountItem] = useState(null);
+  const [counted, setCounted] = useState(null);
+  const closeCounted = useCallback(() => setCounted(null), []);
 
   const refresh = useCallback(async () => {
     try {
@@ -77,18 +81,14 @@ export default function ItemsureItems() {
   const visibleItems = useMemo(() => {
     if (browsing) return [];
     const tree = categoryTree(activeCategories);
-    return filteredItems.filter((item) => {
+    const matches = filteredItems.filter((item) => {
       if (!inCategory(tree, item, category)) return false;
       if (!needle) return true;
       return [item.name, item.sku, item.barcode, item.categoryName].some((v) => String(v || '').toLowerCase().includes(needle));
     });
-  }, [browsing, activeCategories, filteredItems, category, needle]);
-
-  const toggleItem = (item) =>
-    run(async () => {
-      await setItemActive(organization.id, item.id, !item.is_active);
-      await refresh();
-    });
+    if (!stock) return matches;
+    return sortByAttention(matches, (item) => itemSummary(item.id, { ...stock, locations: places.locations }));
+  }, [browsing, activeCategories, filteredItems, category, needle, stock, places.locations]);
 
   const closeModal = useCallback(() => setModal(''), []);
   const categorySaved = async () => {
@@ -96,7 +96,7 @@ export default function ItemsureItems() {
     await refresh();
   };
   const sourcesFor = (itemId) => ({ ...(stock || {}), places: places.placesFor(itemId) || [], locations: places.locations });
-  const whereFor = (itemId) => whereLabels(visibleSlots(itemId, sourcesFor(itemId)));
+  const whereFor = (itemId) => whereAmounts(visibleSlots(itemId, sourcesFor(itemId)));
 
   return (
     <div className="isu-page">
@@ -160,14 +160,44 @@ export default function ItemsureItems() {
             item={item}
             summary={stock ? itemSummary(item.id, { ...stock, locations: places.locations }) : null}
             keptAt={stock || places.ready ? whereFor(item.id) : null}
-            packages={features.packaging && packaging.ready ? usablePackages(packaging.packagesFor(item.id)) : null}
             canManage={canManageItems}
-            busy={busy}
             onEdit={() => navigate(`${ITEMSURE_PATH}/items/${item.id}/edit`)}
-            onToggle={() => toggleItem(item)}
+            onCount={item.is_active && openCounts.sessions.length ? () => setCountItem(item) : null}
+            counted={item.is_active && openCounts.sessions.length > 0 && !openCounts.waitingFor(item.id).length}
           />
         ))}
       </ul>
+
+      <Modal
+        open={Boolean(countItem)}
+        title={countItem && !openCounts.waitingFor(countItem.id).length ? 'Edit count' : 'Add to count'}
+        onClose={() => setCountItem(null)}
+      >
+        {countItem ? (
+          <ItemsureQuickCount
+            organizationId={organization.id}
+            item={countItem}
+            sessions={openCounts.sessions}
+            startSessionId={openCounts.waitingFor(countItem.id)[0]?.id || openCounts.sessions[0]?.id}
+            keptAt={visibleSlots(countItem.id, sourcesFor(countItem.id))}
+            precision={catalog?.units.find((u) => u.id === countItem.base_unit_id)?.precision_scale ?? 0}
+            canAddItems={can('counts.create')}
+            onCancel={() => setCountItem(null)}
+            onSaved={(done) => {
+              openCounts.markCounted(done.sessionId, countItem.id, done.areaIds);
+              setCountItem(null);
+              setCounted({
+                message: done.message,
+                undo: async () => {
+                  await done.undo();
+                  await openCounts.reload();
+                },
+              });
+            }}
+          />
+        ) : null}
+      </Modal>
+      <ItemsureUndoBar done={counted} onClose={closeCounted} />
 
       <Modal open={modal === 'category'} title={newCategoryParent ? 'Add subcategory' : 'Add category'} onClose={closeModal}>
         {modal === 'category' ? (

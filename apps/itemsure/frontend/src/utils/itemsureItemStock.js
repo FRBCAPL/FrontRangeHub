@@ -22,7 +22,33 @@ export function worstStatus(statuses) {
   return statuses.filter(Boolean).sort((a, b) => STATUS_RANK[a] - STATUS_RANK[b])[0] || null;
 }
 
+/**
+ * Items most in need of attention first: running low, needs topping up, no amount yet,
+ * fine, no par set, then archived. Ties keep their order (by name).
+ */
+export function sortByAttention(items, summaryFor) {
+  const rank = (item) => {
+    if (!(item.is_active ?? item.isActive ?? true)) return 5;
+    const status = summaryFor(item)?.status;
+    return status ? STATUS_RANK[status] ?? 4 : 4;
+  };
+  return items.map((item) => ({ item, r: rank(item) })).sort((a, b) => a.r - b.r).map((x) => x.item);
+}
+
 const slotOf = (row) => `${row.location_id}|${row.storage_area_id || ''}`;
+
+/**
+ * The item+spot pairs actually in use, matching what an item's page shows: kept there,
+ * levels set there, or stock other than 0 there. Keys are 'itemId|locationId|areaId' ('' for Loose).
+ */
+export function slotsInUse({ places = [], balances = [], targets = [] }) {
+  const keys = new Set();
+  const add = (row) => keys.add(`${row.item_id}|${slotOf(row)}`);
+  places.forEach(add);
+  targets.forEach(add);
+  balances.filter((b) => canonicalQuantity(b.quantity_text) !== '0').forEach(add);
+  return keys;
+}
 
 /**
  * Every place an item is kept, has stock, or has levels, grouped by location in
@@ -81,15 +107,35 @@ export function whereLabels(groups) {
   });
 }
 
+/**
+ * Per location, each spot and how many are there:
+ * [{ name: 'North', spots: [{ name: 'Bar', quantity: '4' }, { name: 'Loose', quantity: null }] }].
+ * A location with only loose stock has one spot with name null.
+ */
+export function whereAmounts(groups) {
+  return groups.map(({ location, slots }) => {
+    const hasSpots = slots.some((s) => s.storageAreaId);
+    const spots = slots
+      .filter((s) => s.storageAreaId)
+      .map((s) => ({ name: s.areaName, quantity: s.quantity }));
+    for (const s of slots.filter((x) => !x.storageAreaId)) spots.push({ name: hasSpots ? 'Loose' : null, quantity: s.quantity });
+    return { name: location.name, spots };
+  });
+}
+
 /** Total on hand across the item's visible slots, and the status needing most attention. */
 export function itemSummary(itemId, sources) {
   let total = null;
+  let par = null;
+  let minimum = null;
   const statuses = [];
   for (const group of itemSlots(itemId, sources)) {
     for (const slot of group.slots) {
       if (slot.quantity !== null) total = addQuantity(total, slot.quantity);
+      if (slot.target?.par_text != null) par = addQuantity(par, slot.target.par_text);
+      if (slot.target?.minimum_text != null) minimum = addQuantity(minimum, slot.target.minimum_text);
       statuses.push(slot.status);
     }
   }
-  return { total, status: worstStatus(statuses) };
+  return { total, par, minimum, status: worstStatus(statuses) };
 }

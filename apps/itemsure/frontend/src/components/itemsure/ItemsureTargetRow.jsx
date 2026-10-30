@@ -9,8 +9,8 @@ function StatusBadge({ status }) {
   return <span className={`isu-badge isu-status--${info.tone}`}>{info.label}</span>;
 }
 
-/** One item in one place: on hand, saved status, and editable minimum and par. */
-export default function ItemsureTargetRow({ row, edit, error, dirty, canEdit, onChange }) {
+/** One item in one place: on hand, saved status, and editable minimum and par. `title` replaces the item name (the spot, inside an item's editor). */
+export default function ItemsureTargetRow({ row, title, edit, error, dirty, canEdit, onChange }) {
   const { key, item, areaName, saved, balance } = row;
   const value = (field, savedText) => edit?.[field] ?? (savedText ? displayQuantity(savedText) : '');
   const minimum = value('minimum', saved?.minimum_text);
@@ -21,9 +21,9 @@ export default function ItemsureTargetRow({ row, edit, error, dirty, canEdit, on
 
   return (
     <li className={`isu-card isu-level-row${dirty ? ' is-dirty' : ''}${error ? ' has-error' : ''}`}>
-      <div className="isu-level-name">{item.name}</div>
+      <div className="isu-level-name">{title ?? item.name}</div>
       <div className="isu-level-meta">
-        <span>{areaName}</span>
+        {title ? null : <span>{areaName}</span>}
         <span>{balance ? `On hand ${displayQuantity(balance.quantity_text)} ${unit}` : 'No amount yet'}</span>
         {status && !dirty ? <StatusBadge status={status} /> : null}
         {dirty ? <span className="isu-badge isu-status--warn">Unsaved</span> : null}
