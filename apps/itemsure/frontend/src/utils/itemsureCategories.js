@@ -51,6 +51,23 @@ export function inCategory(tree, item, selected) {
 }
 
 /**
+ * For browsing the item list: like inCategory, but an item also shows under its extra
+ * categories (`item.extraCategoryIds`). Counts, levels, and restock use inCategory only.
+ */
+export function foundIn(tree, item, selected) {
+  if (inCategory(tree, item, selected)) return true;
+  if (!tree.byId.has(selected)) return false;
+  return (item.extraCategoryIds || []).some((id) => tree.byId.has(id) && (id === selected || tree.parentOf(id) === selected));
+}
+
+/** Paths like "Bar › Garnish" for an item's extra categories that are still active. */
+export function extraCategoryNames(tree, item) {
+  return (item.extraCategoryIds || [])
+    .filter((id) => id !== item.category_id && tree.byId.has(id))
+    .map((id) => categoryPath(tree, id));
+}
+
+/**
  * Main categories with their subcategories, narrowed by a typed search.
  * A main category that matches keeps all its subcategories; otherwise only matching ones show.
  * Returns [{ root, children }].

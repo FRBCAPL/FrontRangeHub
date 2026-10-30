@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ALL_ITEMS, categoryTree, inCategory, NO_CATEGORY, rootOf } from '../../utils/itemsureCategories.js';
+import { ALL_ITEMS, categoryTree, foundIn, NO_CATEGORY, rootOf } from '../../utils/itemsureCategories.js';
 import ItemsureCategoryPanel from './ItemsureCategoryPanel.jsx';
 
 export { ALL_ITEMS, NO_CATEGORY };
@@ -23,7 +23,7 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
   const [panelOpen, setPanelOpen] = useState(false);
   const scroller = useRef(null);
   const tree = categoryTree(categories);
-  const count = (key) => items.filter((item) => inCategory(tree, item, key)).length;
+  const count = (key) => items.filter((item) => foundIn(tree, item, key)).length;
   const uncategorized = count(NO_CATEGORY);
   const openRoot = rootOf(tree, selected);
   const subs = openRoot ? tree.childrenOf(openRoot) : [];

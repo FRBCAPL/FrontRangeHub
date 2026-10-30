@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { listCatalog } from '../../services/itemsureItemService.js';
 import { saveItemWizard } from '../../services/itemsureItemWizardSave.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
+import { variantLabelFor } from '../../utils/itemsureItemDetails.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
 import useItemUsage from '../../hooks/useItemUsage.js';
@@ -12,6 +13,8 @@ import { SITE } from '../../data/itemsureTerms.js';
 import { visibleSlots } from '../../utils/itemsureItemStock.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { checkAmounts, checkLevels, entriesFromGroups, STEPS, wizardSteps } from '../../utils/itemsureItemWizard.js';
+import { mergeUnits } from '../../utils/itemsureUnits.js';
+import { findNameClash } from '../../utils/itemsureItemNames.js';
 import { ErrorNote, LoadFailed, PageHead } from './ItemsureUi.jsx';
 import ItemsureWizardProgress from './ItemsureWizardProgress.jsx';
 import ItemsureWizardBasics from './ItemsureWizardBasics.jsx';
@@ -21,7 +24,11 @@ import ItemsureWizardExtras from './ItemsureWizardExtras.jsx';
 import ItemsureWizardReview from './ItemsureWizardReview.jsx';
 import ItemsureWizardArchive from './ItemsureWizardArchive.jsx';
 
-const emptyForm = (item, units, suppliers) => ({
+/** ?supplier=<id> (from a supplier card) pre-selects it for a new item, if it is an active supplier. */
+const startingSupplier = (suppliers, wanted) =>
+  (wanted && suppliers.suppliers.some((s) => s.id === wanted && s.is_active) ? wanted : '');
+
+const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, detailsOn) => ({
   name: item?.name || '',
   description: item?.description || '',
   sku: item?.sku || '',
@@ -29,7 +36,12 @@ const emptyForm = (item, units, suppliers) => ({
   category_id: item?.category_id || '',
   base_unit_id: item?.base_unit_id || units.find((u) => u.code === 'each' && !u.organization_id)?.id || units[0]?.id || '',
   // Only once suppliers are set up in the database, so saving never sends an unknown column.
-  ...(suppliers.available ? { supplier_id: (item && suppliers.supplierIdFor(item.id)) || '' } : {}),
+  ...(suppliers.available
+    ? { supplier_id: item ? suppliers.supplierIdFor(item.id) || '' : startingSupplier(suppliers, wantedSupplier) }
+    : {}),
+  ...(extrasAvailable ? { extra_category_ids: item?.extraCategoryIds || [] } : {}),
+  // Only when brand and details are set up and switched on, so a hidden value is never cleared.
+  ...(detailsOn ? { brand: item?.brand || '', variant: item?.variant || '' } : {}),
 });
 
 /** Guided Add item (/items/new) and Edit item (/items/:itemId/edit, ?step=levels to jump). */
@@ -53,6 +65,7 @@ export default function ItemsureItemWizard() {
   const [problems, setProblems] = useState([]);
   const [saving, setSaving] = useState(false);
   const [addedCategories, setAddedCategories] = useState([]);
+  const [addedUnits, setAddedUnits] = useState([]);
   const places = useItemPlaces(organization.id);
   const suppliers = useSuppliers(organization.id);
   const { stock } = useItemStock(organization.id, canView);
@@ -73,15 +86,18 @@ export default function ItemsureItemWizard() {
 
   const item = catalog?.items.find((i) => i.id === routeItemId) || null;
   const editing = Boolean(routeItemId);
+  // Opened from the Suppliers page: Back, Cancel, and Save return there.
+  const fromSuppliers = params.get('from') === 'suppliers';
+  const leaveTo = fromSuppliers ? `${ITEMSURE_PATH}/suppliers` : editing ? `${ITEMSURE_PATH}/items/${routeItemId}` : `${ITEMSURE_PATH}/items`;
 
   // Fill the form and places once everything has loaded; later reloads never overwrite typing.
   useEffect(() => {
     if (started.current || !catalog || (editing && !item) || !places.ready || !suppliers.ready || (canView && !stock)) return;
     started.current = true;
-    setForm(emptyForm(item, catalog.units, suppliers));
+    setForm(emptyForm(item, catalog.units, suppliers, catalog.extrasAvailable, params.get('supplier'), catalog.detailsAvailable && features.details));
     const sources = { places: places.placesFor(routeItemId) || [], balances: stock?.balances || [], targets: stock?.targets || [], locations: places.locations };
     setEntries(editing ? entriesFromGroups(visibleSlots(routeItemId, sources)) : []);
-  }, [catalog, item, editing, places, suppliers, stock, canView, routeItemId]);
+  }, [catalog, item, editing, places, suppliers, stock, canView, routeItemId, params, features.details]);
 
   if (!can('items.manage')) return <p className="isu-muted">Your role doesn&apos;t include adding or changing items.</p>;
   if (loadError) return <LoadFailed message={loadError} onRetry={load} />;
@@ -97,7 +113,8 @@ export default function ItemsureItemWizard() {
 
   const knownCategories = new Set(catalog.categories.map((c) => c.id));
   const categories = [...catalog.categories, ...addedCategories.filter((c) => !knownCategories.has(c.id))];
-  const unit = catalog.units.find((u) => u.id === form.base_unit_id);
+  const units = mergeUnits(catalog.units, addedUnits);
+  const unit = units.find((u) => u.id === form.base_unit_id);
   const unitInfo = { precision: unit?.precision_scale ?? 0, unitName: unit?.name || 'This unit', unitSymbol: unit?.symbol || unit?.name || '' };
   const labelFor = (e) => {
     const location = places.locations.find((l) => l.id === e.locationId);
@@ -106,9 +123,14 @@ export default function ItemsureItemWizard() {
     return hasSpots ? `${location?.name} \u00b7 ${NO_AREA_LABEL}` : location?.name || SITE;
   };
 
+  const nameClash = findNameClash(catalog.items, form.name, { itemId, originalName: item?.name ?? null });
+  const renamingArchived = Boolean(nameClash?.archived && form.rename_archived_id === nameClash.item.id);
+
   const problemFor = (id) => {
     if (id === 'basics') {
       if (!form.name.trim()) return 'Give the item a name.';
+      if (nameClash && !nameClash.archived) return `You already have an item called "${nameClash.item.name}". Use a different name.`;
+      if (nameClash && !renamingArchived) return `You have an archived item called "${nameClash.item.name}". Restore it, or choose "Create a new one".`;
       if (!form.base_unit_id) return 'Choose what it is counted in.';
     }
     if (id === 'where' && allowed.amounts) {
@@ -161,6 +183,7 @@ export default function ItemsureItemWizard() {
       entries,
       unit,
       labelFor,
+      renameArchivedId: renamingArchived ? nameClash.item.id : null,
       canAmounts: allowed.amounts,
       canLevels: allowed.levels,
     });
@@ -168,19 +191,19 @@ export default function ItemsureItemWizard() {
     setItemId(result.itemId);
     setEntries(result.entries);
     if (!result.problems.length) {
-      navigate(`${ITEMSURE_PATH}/items/${result.itemId}`);
+      navigate(fromSuppliers ? leaveTo : `${ITEMSURE_PATH}/items/${result.itemId}`);
       return;
     }
     setProblems(result.problems);
     setStep('review');
   };
 
-  const shared = { form, setForm, entries, setEntries, labelFor, unitInfo, allowed, features };
+  const shared = { form, setForm, entries, setEntries, labelFor, unitInfo, allowed, features, variantLabel: variantLabelFor(organization) };
 
   return (
     <div className="isu-page isu-wizard">
-      <Link to={editing ? `${ITEMSURE_PATH}/items/${routeItemId}` : `${ITEMSURE_PATH}/items`} className="isu-link isu-small">
-        {'\u2190'} {editing ? item.name : 'Inventory'}
+      <Link to={leaveTo} className="isu-link isu-small">
+        {'\u2190'} {fromSuppliers ? 'Suppliers' : editing ? item.name : 'Inventory'}
       </Link>
       <PageHead title={editing ? `Edit ${item.name}` : 'Add item'} description={`Step ${index + 1} of ${steps.length}: ${STEPS[step]}`} />
       <ItemsureWizardProgress steps={steps} current={step} reachable={(id) => editing || visited.has(id)} onPick={goTo} />
@@ -192,10 +215,20 @@ export default function ItemsureItemWizard() {
             {...shared}
             organizationId={organization.id}
             categories={categories}
-            units={catalog.units}
+            units={units}
+            items={catalog.items}
+            itemId={itemId}
+            nameClash={nameClash}
+            renamingArchived={renamingArchived}
+            onRestored={(id) => navigate(`${ITEMSURE_PATH}/items/${id}`)}
             canManageCategories={can('categories.manage')}
             onCategoryAdded={(row) => {
               setAddedCategories((list) => [...list, row]);
+              load();
+            }}
+            canManageUnits={can('units.manage')}
+            onUnitAdded={(row) => {
+              setAddedUnits((list) => [...list, row]);
               load();
             }}
             editing={editing}
@@ -219,7 +252,7 @@ export default function ItemsureItemWizard() {
             type="button"
             className="isu-btn isu-btn--ghost"
             disabled={saving}
-            onClick={() => navigate(editing ? `${ITEMSURE_PATH}/items/${routeItemId}` : `${ITEMSURE_PATH}/items`)}
+            onClick={() => navigate(leaveTo)}
           >
             Cancel
           </button>

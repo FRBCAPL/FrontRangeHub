@@ -3,7 +3,8 @@ import { assertOk } from '../utils/itemsureErrors.js';
 import { notifyInventoryChanged } from '../utils/itemsureChanges.js';
 import { hasSavedStock, savePlan } from '../utils/itemsureItemWizard.js';
 import { removeEmptyPlace } from './itemsurePlaceCleanup.js';
-import { createItem, updateItem } from './itemsureItemService.js';
+import { createItem, renameArchivedItem, updateItem } from './itemsureItemService.js';
+import { saveExtraCategories } from './itemsureExtraCategoryService.js';
 import { setStockAmount } from './itemsureInventoryService.js';
 import { saveTargets } from './itemsureTargetService.js';
 
@@ -15,14 +16,23 @@ const needsAmountUpdate = (message) => /set_inventory_quantity|could not find th
  * works is reflected in the returned entries, so a retry only redoes what failed.
  * Returns { itemId, entries, problems: [{ key|null, message }] }.
  */
-export async function saveItemWizard({ organizationId, item, itemId, form, entries, unit, labelFor, canAmounts, canLevels }) {
+export async function saveItemWizard({ organizationId, item, itemId, form, entries, unit, labelFor, renameArchivedId = null, canAmounts, canLevels }) {
   const problems = [];
   let id = itemId;
   try {
+    if (renameArchivedId) await renameArchivedItem(renameArchivedId);
     if (id) await updateItem(organizationId, item || { id, base_unit_id: form.base_unit_id }, form);
     else id = await createItem(organizationId, form);
   } catch (e) {
     return { itemId: id, entries, problems: [{ key: null, message: `The item wasn't saved: ${e.message}` }] };
+  }
+
+  if ('extra_category_ids' in form) {
+    try {
+      await saveExtraCategories(organizationId, id, form.extra_category_ids.filter((c) => c !== form.category_id));
+    } catch (err) {
+      problems.push({ key: null, message: `"Also find it under" not saved. ${err.message}` });
+    }
   }
 
   const stockItem = { id, precision: unit?.precision_scale ?? 0, unitName: unit?.name || 'This unit' };

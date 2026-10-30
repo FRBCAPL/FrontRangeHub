@@ -299,6 +299,41 @@
   gap: 6px;
 }
 
+.isu-place-picker-group {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+}
+
+.isu-place-picker-group + .isu-place-picker-group {
+  padding-top: 8px;
+  border-top: 1px solid var(--isu-line);
+}
+
+.isu-place-picker-group-name {
+  margin: 0;
+  color: var(--isu-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.isu-app .isu-place-picker .isu-chip--choice {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+.isu-app .isu-place-picker .isu-chip--choice.is-loose {
+  border-style: dashed;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-place-picker-search {
+  width: min(100%, 320px);
+}
+
 .isu-app .isu-place-picker-cancel {
   min-height: 0;
   min-width: 0;

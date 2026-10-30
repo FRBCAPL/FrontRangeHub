@@ -151,6 +151,17 @@
 }
 .isu-app .isu-category-add input { flex: 1 1 180px; min-width: 0; }
 .isu-app .isu-category-add .isu-error { flex-basis: 100%; margin: 0; }
+.isu-app .isu-unit-add {
+  display: grid;
+  gap: 10px;
+  margin: -4px 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--isu-pine-soft);
+}
+.isu-app .isu-unit-add-parts { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; }
+.isu-app .isu-unit-add-parts legend { padding: 0; margin-bottom: 4px; font-weight: 600; font-size: 0.9rem; }
+.isu-app .isu-unit-add-parts label { display: flex; align-items: center; gap: 8px; }
 .isu-app .isu-chips--sub {
   padding: 10px 12px;
   border-radius: 12px;

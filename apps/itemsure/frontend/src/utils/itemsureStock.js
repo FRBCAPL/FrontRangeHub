@@ -19,9 +19,12 @@ export function slotOptions(locations, { spots = true } = {}) {
     .filter((location) => location.is_active)
     .flatMap((location) => {
       const areas = spots ? (location.storageAreas || []).filter((area) => area.is_active) : [];
+      // `group` and `short` let pickers show spots under their site without repeating its name.
       return [
-        ...areas.map((area) => ({ key: slotKey(location.id, area.id), label: `${location.name} \u00b7 ${area.name}` })),
-        { key: slotKey(location.id, null), label: areas.length ? `${location.name} \u00b7 ${NO_AREA_LABEL}` : location.name },
+        ...areas.map((area) => ({ key: slotKey(location.id, area.id), label: `${location.name} \u00b7 ${area.name}`, group: location.name, short: area.name })),
+        areas.length
+          ? { key: slotKey(location.id, null), label: `${location.name} \u00b7 ${NO_AREA_LABEL}`, group: location.name, short: NO_AREA_LABEL, loose: true }
+          : { key: slotKey(location.id, null), label: location.name },
       ];
     });
 }

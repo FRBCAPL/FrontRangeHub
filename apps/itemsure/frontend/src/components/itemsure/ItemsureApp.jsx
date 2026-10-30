@@ -21,6 +21,7 @@ import './itemsure-item-detail.css';
 import './itemsure-home.css';
 import './itemsure-wizard.css';
 import './itemsure-item-card.css';
+import './itemsure-item-grid.css';
 import './itemsure-category-bar.css';
 import './itemsure-stock-location.css';
 import './itemsure-history.css';

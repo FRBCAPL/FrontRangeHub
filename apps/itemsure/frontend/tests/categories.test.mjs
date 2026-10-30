@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryOptions, categoryPath, categoryTree, inCategory, NO_CATEGORY, rootOf, searchCategories } from '../src/utils/itemsureCategories.js';
+import { categoryOptions, categoryPath, categoryTree, extraCategoryNames, foundIn, inCategory, NO_CATEGORY, rootOf, searchCategories } from '../src/utils/itemsureCategories.js';
 
 const categories = [
   { id: 'liq', name: 'Liquor', is_active: true, parent_category_id: null },
@@ -47,6 +47,21 @@ test('category search keeps a matching main whole and narrows the rest', () => {
   assert.deepEqual(ids(searchCategories(tree, 'rum')), [['liq', ['rum']]]);
   assert.deepEqual(ids(searchCategories(tree, 'LIQ')), [['liq', ['rum', 'vod']]]);
   assert.deepEqual(ids(searchCategories(tree, 'zzz')), []);
+});
+
+test('extra categories help find an item; the main category alone decides "No category"', () => {
+  const lime = { category_id: 'beer', extraCategoryIds: ['rum', 'old'] };
+  assert.equal(foundIn(tree, lime, 'beer'), true);
+  assert.equal(foundIn(tree, lime, 'rum'), true);
+  assert.equal(foundIn(tree, lime, 'liq'), true);
+  assert.equal(foundIn(tree, lime, 'vod'), false);
+  assert.equal(foundIn(tree, lime, 'old'), false);
+  assert.equal(foundIn(tree, lime, 'all'), true);
+  assert.equal(foundIn(tree, { category_id: null, extraCategoryIds: ['rum'] }, NO_CATEGORY), true);
+  assert.equal(foundIn(tree, { category_id: 'beer' }, 'rum'), false);
+  assert.equal(inCategory(tree, lime, 'rum'), false);
+  assert.deepEqual(extraCategoryNames(tree, lime), ['Liquor \u203a Rum']);
+  assert.deepEqual(extraCategoryNames(tree, { category_id: 'rum', extraCategoryIds: ['rum'] }), []);
 });
 
 test('the open main category for a chosen chip', () => {

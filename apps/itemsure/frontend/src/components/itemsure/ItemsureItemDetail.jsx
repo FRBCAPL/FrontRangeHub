@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { listCatalog } from '../../services/itemsureItemService.js';
+import { detailsLine, variantLabelFor } from '../../utils/itemsureItemDetails.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
@@ -144,6 +145,7 @@ export default function ItemsureItemDetail() {
     if (result?.undo) setDone(result);
   };
   const formProps = action ? { item, slot: action.slot, placeName: labelFor(action.slot), onDone: finish } : null;
+  const showDetails = Boolean(features.details && catalog.detailsAvailable);
   const editItem = can('items.manage') ? () => navigate(`${ITEMSURE_PATH}/items/${raw.id}/edit`) : null;
 
   const removePlace = async (slot) => {
@@ -169,7 +171,7 @@ export default function ItemsureItemDetail() {
       <Link to={`${ITEMSURE_PATH}/items`} className="isu-link isu-small">{'\u2190'} Inventory</Link>
       <PageHead
         title={raw.name}
-        description={[raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ')}
+        description={[showDetails && detailsLine(raw), raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ')}
         action={editItem ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit item</button> : null}
       />
 
@@ -230,7 +232,7 @@ export default function ItemsureItemDetail() {
       ) : null}
 
       {tab === 'details' ? (
-        <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} onEdit={editItem} />
+        <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} variantLabel={showDetails ? variantLabelFor(organization) : ''} onEdit={editItem} />
       ) : null}
 
       <Modal open={Boolean(action)} title={action ? TITLES[action.kind] : ''} onClose={close}>

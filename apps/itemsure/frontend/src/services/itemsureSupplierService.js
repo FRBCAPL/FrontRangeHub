@@ -25,6 +25,14 @@ export async function listItemSuppliers(organizationId) {
   return new Map((result.data || []).map((row) => [row.id, row.supplier_id || null]));
 }
 
+/** Items whose main supplier is this one, archived included, by name. */
+export async function listSupplierItems(organizationId, supplierId) {
+  return assertOk(
+    await itemsure.from('inventory_items').select('id, name, is_active').eq('organization_id', organizationId).eq('supplier_id', supplierId).order('name'),
+    'supplier items',
+  ) || [];
+}
+
 function supplierFields(form) {
   const email = optionalText(form.email, 'email', 254) || '';
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Check the email address.');

@@ -10,7 +10,7 @@ export const HISTORY_KINDS = [
     id: 'items',
     title: 'Items',
     blurb: 'Items added or edited, where they are kept, pack sizes, and categories.',
-    entities: ['inventory_items', 'item_places', 'item_unit_relationships', 'inventory_categories'],
+    entities: ['inventory_items', 'item_places', 'item_unit_relationships', 'inventory_categories', 'item_extra_categories'],
   },
   {
     id: 'levels',

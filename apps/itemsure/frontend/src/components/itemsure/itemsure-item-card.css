@@ -221,7 +221,7 @@
 }
 
 .isu-app .isu-stockcard-details {
-  margin: 2px 0 0;
+  margin: 2px 0;
   text-align: center;
 }
 
@@ -367,4 +367,20 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.isu-stockcard-brand {
+  flex-basis: 100%;
+  color: var(--isu-ink-soft, var(--isu-muted));
+  font-size: 0.85rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.isu-stockcard-also {
+  flex-basis: 100%;
+  color: var(--isu-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+  overflow-wrap: anywhere;
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { categoryPath, categoryTree } from '../../utils/itemsureCategories.js';
+import { categoryPath, categoryTree, extraCategoryNames } from '../../utils/itemsureCategories.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { hasSavedStock } from '../../utils/itemsureItemWizard.js';
 import ItemsureWizardIntro from './ItemsureWizardIntro.jsx';
@@ -21,9 +21,11 @@ function Section({ title, step, steps, onEdit, children }) {
 }
 
 /** Step 5: a plain summary in sections, and anything that didn't save last time. */
-export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo, allowed, categories, suppliers = [], problems, editing, steps, onEdit }) {
+export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo, allowed, categories, suppliers = [], problems, editing, steps, onEdit, variantLabel }) {
   const unit = unitInfo.unitSymbol || unitInfo.unitName;
-  const category = categoryPath(categoryTree(categories), form.category_id) || 'No category';
+  const tree = categoryTree(categories);
+  const category = categoryPath(tree, form.category_id) || 'No category';
+  const alsoIn = extraCategoryNames(tree, { category_id: form.category_id, extraCategoryIds: form.extra_category_ids });
   const section = { steps, onEdit };
 
   return (
@@ -43,10 +45,18 @@ export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo
         <dl className="isu-wizard-summary">
           <dt>Name</dt>
           <dd><strong>{form.name || 'No name yet'}</strong></dd>
+          {form.brand?.trim() ? <><dt>Brand</dt><dd>{form.brand.trim()}</dd></> : null}
+          {form.variant?.trim() ? <><dt>{variantLabel}</dt><dd>{form.variant.trim()}</dd></> : null}
           <dt>Counted in</dt>
           <dd>{unitInfo.unitName}</dd>
           <dt>Category</dt>
           <dd>{category}</dd>
+          {alsoIn.length ? (
+            <>
+              <dt>Also find it under</dt>
+              <dd>{alsoIn.join(', ')}</dd>
+            </>
+          ) : null}
           {'supplier_id' in form ? (
             <>
               <dt>Buy from</dt>

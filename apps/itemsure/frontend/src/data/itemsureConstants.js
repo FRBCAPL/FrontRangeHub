@@ -38,6 +38,7 @@ export const AUDIT_ENTITY_LABELS = {
   inventory_targets: 'Warning levels',
   planned_transfers: 'Planned move',
   item_places: 'Item spot',
+  item_extra_categories: 'Extra category',
   item_unit_relationships: 'Pack size',
   suppliers: 'Supplier',
   invitations: 'Invite',

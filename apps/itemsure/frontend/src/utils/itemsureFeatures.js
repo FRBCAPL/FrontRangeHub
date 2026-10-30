@@ -24,7 +24,19 @@ export const FEATURES = [
     label: 'Count approvals',
     hint: 'A finished count waits for someone to approve it. When off, a count from someone who can approve is applied straight away.',
   },
+  {
+    key: 'details',
+    label: 'Brand and item details',
+    hint: 'Add a brand and one more detail (you choose its name, like Model or Style) to each item.',
+    // Only once its database update is applied; until then it stays on and is not offered.
+    needs: 'detailsAvailable',
+  },
 ];
+
+/** The switches this business can change now. */
+export function availableFeatures(organization) {
+  return FEATURES.filter((f) => !f.needs || organization?.[f.needs]);
+}
 
 /** Missing keys (older businesses, or before the database change) mean "on". */
 export function readFeatures(raw) {

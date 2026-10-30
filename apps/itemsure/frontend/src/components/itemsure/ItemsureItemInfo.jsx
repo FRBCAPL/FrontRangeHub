@@ -13,7 +13,7 @@ function Row({ label, children }) {
 }
 
 /** The Details tab: the item's catalog facts, including who it is bought from. */
-export default function ItemsureItemInfo({ organizationId, item, unitName, showPackaging, onEdit }) {
+export default function ItemsureItemInfo({ organizationId, item, unitName, showPackaging, variantLabel, onEdit }) {
   const [packages, setPackages] = useState(null);
   const suppliers = useSuppliers(organizationId);
   const supplier = suppliers.supplierFor(item.id);
@@ -32,6 +32,12 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
   return (
     <section className="isu-card isu-item-info" aria-label="Details">
       <dl>
+        {variantLabel ? (
+          <>
+            <Row label="Brand">{item.brand}</Row>
+            <Row label={variantLabel}>{item.variant}</Row>
+          </>
+        ) : null}
         <Row label="Category">{item.categoryName}</Row>
         <Row label="Counted in">{unitName}</Row>
         {suppliers.available ? (

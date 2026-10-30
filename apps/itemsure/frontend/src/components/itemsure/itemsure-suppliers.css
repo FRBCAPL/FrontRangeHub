@@ -85,6 +85,40 @@
   margin-top: 4px;
 }
 
+.isu-app .isu-supplier .isu-supplier-item-actions {
+  padding-top: 8px;
+  border-top: 1px solid var(--isu-line);
+}
+
+/* "Items from <supplier>" window. */
+.isu-app .isu-supplier-items {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.isu-app .isu-supplier-items li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 10px;
+  background: var(--isu-sand);
+}
+
+.isu-app .isu-supplier-items li > a {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-wrap: anywhere;
+}
+
+.isu-app .isu-supplier-items li.is-archived > a {
+  color: var(--isu-muted);
+}
+
 /* Item cards: the main supplier under the item name. */
 .isu-supplier-line {
   flex-basis: 100%;

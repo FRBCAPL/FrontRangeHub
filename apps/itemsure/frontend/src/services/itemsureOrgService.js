@@ -1,6 +1,6 @@
 import itemsure from './itemsureClient.js';
 import { assertOk, readableDatabaseError } from '../utils/itemsureErrors.js';
-import { requiredText, slugify, suffixedSlug } from '../utils/itemsureText.js';
+import { optionalText, requiredText, slugify, suffixedSlug } from '../utils/itemsureText.js';
 import { ROLE_LABELS } from '../data/itemsureConstants.js';
 import { ALL_FEATURES_ON, FEATURES, readFeatures } from '../utils/itemsureFeatures.js';
 import { effectivePermissions } from '../utils/itemsureRolePermissions.js';
@@ -90,8 +90,10 @@ export async function loadWorkspace(user) {
   let industryName = '';
   let features = ALL_FEATURES_ON;
   let featuresSaved = false;
+  let variantLabel = '';
+  let detailsAvailable = false;
   if (active) {
-    const [grants, choices, industry, featureRow] = await Promise.all([
+    const [grants, choices, industry, featureRow, labelRow] = await Promise.all([
       itemsure.from('role_permissions').select('permission_code').eq('role_code', active.roleCode),
       // This business's role settings; missing on older databases, which means defaults.
       itemsure
@@ -102,7 +104,13 @@ export async function loadWorkspace(user) {
       itemsure.from('industry_types').select('name').eq('code', active.industryType).maybeSingle(),
       // Kept separate so a database without the features column still loads.
       itemsure.from('organizations').select('features').eq('id', active.organizationId).maybeSingle(),
+      // Brand and details: missing until that database update is applied.
+      itemsure.from('organizations').select('variant_label').eq('id', active.organizationId).maybeSingle(),
     ]);
+    if (!labelRow.error && labelRow.data) {
+      detailsAvailable = true;
+      variantLabel = labelRow.data.variant_label || '';
+    }
     permissions = effectivePermissions(
       (grants.data || []).map((g) => g.permission_code),
       choices.error ? [] : choices.data || [],
@@ -122,7 +130,7 @@ export async function loadWorkspace(user) {
     archived,
     archiveAvailable,
     organization: active
-      ? { ...active, id: active.organizationId, name: active.organizationName, industryName, features, featuresSaved }
+      ? { ...active, id: active.organizationId, name: active.organizationName, industryName, features, featuresSaved, variantLabel, detailsAvailable }
       : null,
     permissions,
   };
@@ -180,12 +188,22 @@ export async function setOrganizationArchived(organizationId, archived) {
   if (!data?.length) throw new Error('Only the owner can archive or restore this business.');
 }
 
-/** Saves all four switches at once. Needs organization.update (owner or administrator). */
-export async function saveFeatures(organizationId, features) {
-  const clean = Object.fromEntries(FEATURES.map(({ key }) => [key, features[key] === true]));
+/** Saves the given switches (default: all) at once. Needs organization.update (owner or administrator). */
+export async function saveFeatures(organizationId, features, list = FEATURES) {
+  const clean = Object.fromEntries(list.map(({ key }) => [key, features[key] === true]));
   const data = assertOk(
     await itemsure.from('organizations').update({ features: clean }).eq('id', organizationId).select('id'),
     'save settings',
+  );
+  if (!data?.length) throw new Error('Only the owner or an administrator can change these settings.');
+}
+
+/** What the business calls the second item detail; blank goes back to the industry default. */
+export async function saveVariantLabel(organizationId, label) {
+  const clean = optionalText(label, 'name', 30);
+  const data = assertOk(
+    await itemsure.from('organizations').update({ variant_label: clean }).eq('id', organizationId).select('id'),
+    'save detail name',
   );
   if (!data?.length) throw new Error('Only the owner or an administrator can change these settings.');
 }

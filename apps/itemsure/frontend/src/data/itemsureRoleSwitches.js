@@ -29,8 +29,8 @@ export const ROLE_SWITCHES = [
   },
   {
     key: 'items',
-    label: 'Add and edit items and categories',
-    permissions: ['items.manage', 'categories.manage'],
+    label: 'Add and edit items, categories, and units',
+    permissions: ['items.manage', 'categories.manage', 'units.manage'],
   },
   {
     key: 'levels',

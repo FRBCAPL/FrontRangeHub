@@ -69,6 +69,7 @@ export const GUIDE_BASICS = [
     paragraphs: [
       'Items are shared across your whole business. You add an item once. It shows up at a place as soon as you put stock there.',
       '"Counted in" is the unit you count the item in, for example each, bottle, kilogram, or litre. Amounts are always kept in this unit.',
+      'Not in the list? Pick "Other…" at the bottom, type your own unit (for example Keg or Tray), and choose whole numbers only or allow parts like 0.5. It is saved for your business, so it is in the list for every item from then on.',
     ],
     steps: [
       'Open Inventory and choose Add item.',
@@ -82,12 +83,15 @@ export const GUIDE_BASICS = [
       '"Set amount" is for when you know the real number (for example after looking at the shelf). ItemSure records the difference for you.',
       'Tap a category button to see the items in it. Tap it again to close it. "All items" shows everything.',
       'Categories can have subcategories, like Rum inside Liquor. Tap Liquor to see everything in it, then tap Rum to narrow it down. Use "+ Sub in Liquor" to add one.',
-      'Use the search box to find items by name, SKU, barcode, or category.',
+      'An item has one main category, but it can also be found under others. In Add or Edit item, use "Also find it under" (for example, a lime in Produce, also under Bar garnish). It then shows when you tap either category or search for it. Counts, warning levels, and restock still use the main category only, so nothing is counted twice.',
+      'Items can have a Brand and one more detail, like Model or Style. Pick your own word for that detail in Settings, then Features. Brands you have used before are suggested as you type, so spelling stays the same. Item names still have to be different; the brand is extra detail. Switch "Brand and item details" off in Settings if you don\'t need it.',
+      'Use the search box to find items by name, brand, SKU, barcode, or category.',
       'Use the site filter to see only the items at one site.',
       'A place with nothing in it and no warning levels disappears on its own. An empty place with levels has a "Remove place" button.',
       'After a change, tap Undo on the bar at the bottom if you made a mistake.',
       'After about a week of history, the item page shows how much you use and when it runs out. The levels window then suggests "Warn me at" and "Fill up to" numbers; tap "Use these" to fill them in.',
       'Archive an item you no longer stock. Its history is kept, and you can restore it later.',
+      'Each item name can only be used once (capital letters and extra spaces don\'t count). If the name belongs to an archived item, you can restore it, or create a new one: the archived one is renamed to "Name (archived 1)" and keeps its history.',
     ],
   },
   {

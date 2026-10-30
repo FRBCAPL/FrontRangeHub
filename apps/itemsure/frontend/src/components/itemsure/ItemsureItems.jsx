@@ -12,14 +12,15 @@ import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureItemRow from './ItemsureItemRow.jsx';
 import ItemsureCategoryForm from './ItemsureCategoryForm.jsx';
 import ItemsureCategoryChips from './ItemsureCategoryChips.jsx';
-import { categoryTree, inCategory } from '../../utils/itemsureCategories.js';
+import { categoryTree, extraCategoryNames, foundIn } from '../../utils/itemsureCategories.js';
+import { detailsLine } from '../../utils/itemsureItemDetails.js';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import ItemsureQuickCount from './ItemsureQuickCount.jsx';
 import ItemsureUndoBar from './ItemsureUndoBar.jsx';
 
 export default function ItemsureItems() {
-  const { organization, can } = useItemsureWorkspace();
+  const { organization, can, features } = useItemsureWorkspace();
   const [catalog, setCatalog] = useState(null);
   const [query, setQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
@@ -81,18 +82,20 @@ export default function ItemsureItems() {
   // With categories set up, the list waits until a category, search, or location is chosen.
   const browsing = !category && !needle && !locationFilter && activeCategories.length > 0;
 
+  const tree = useMemo(() => categoryTree(activeCategories), [activeCategories]);
+  const showDetails = Boolean(features.details && catalog?.detailsAvailable);
   const visibleItems = useMemo(() => {
     if (browsing) return [];
-    const tree = categoryTree(activeCategories);
     const matches = filteredItems.filter((item) => {
-      if (!inCategory(tree, item, category)) return false;
+      if (!foundIn(tree, item, category)) return false;
       if (!needle) return true;
-      return [item.name, item.sku, item.barcode, item.categoryName, suppliers.supplierFor(item.id)?.name]
+      const details = showDetails ? [item.brand, item.variant] : [];
+      return [item.name, item.sku, item.barcode, item.categoryName, suppliers.supplierFor(item.id)?.name, ...details, ...extraCategoryNames(tree, item)]
         .some((v) => String(v || '').toLowerCase().includes(needle));
     });
     if (!stock) return matches;
     return sortByAttention(matches, (item) => itemSummary(item.id, { ...stock, locations: places.locations }));
-  }, [browsing, activeCategories, filteredItems, category, needle, stock, places.locations, suppliers]);
+  }, [browsing, tree, filteredItems, category, needle, stock, places.locations, suppliers, showDetails]);
 
   const closeModal = useCallback(() => setModal(''), []);
   const categorySaved = async () => {
@@ -130,7 +133,7 @@ export default function ItemsureItems() {
         <input
           type="search"
           className="isu-search"
-          placeholder="Search name, SKU, barcode, category, or supplier"
+          placeholder={showDetails ? 'Search name, brand, SKU, barcode, category, or supplier' : 'Search name, SKU, barcode, category, or supplier'}
           aria-label="Search items"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -157,7 +160,7 @@ export default function ItemsureItems() {
         </div>
       ) : null}
 
-      <ul className="isu-item-list">
+      <ul className="isu-item-list isu-item-grid">
         {visibleItems.map((item) => (
           <ItemsureItemRow
             key={item.id}
@@ -165,6 +168,8 @@ export default function ItemsureItems() {
             summary={stock ? itemSummary(item.id, { ...stock, locations: places.locations }) : null}
             keptAt={stock || places.ready ? whereFor(item.id) : null}
             supplier={suppliers.supplierFor(item.id)}
+            alsoIn={extraCategoryNames(tree, item)}
+            details={showDetails ? detailsLine(item) : ''}
             canManage={canManageItems}
             onEdit={() => navigate(`${ITEMSURE_PATH}/items/${item.id}/edit`)}
             onCount={item.is_active && openCounts.sessions.length ? () => setCountItem(item) : null}

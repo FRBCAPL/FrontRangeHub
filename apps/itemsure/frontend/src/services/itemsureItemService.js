@@ -2,13 +2,16 @@ import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
 import { optionalText, requiredText } from '../utils/itemsureText.js';
 import { categoryPath, categoryTree } from '../utils/itemsureCategories.js';
+import { unitCode } from '../utils/itemsureUnits.js';
+import { listExtraCategories } from './itemsureExtraCategoryService.js';
+import { listItemDetails } from './itemsureItemDetailsService.js';
 
 function one(value) {
   return Array.isArray(value) ? value[0] || null : value || null;
 }
 
 export async function listCatalog(organizationId) {
-  const [items, categories, units] = await Promise.all([
+  const [items, categories, units, extras, details] = await Promise.all([
     itemsure
       .from('inventory_items')
       .select('id, name, description, sku, barcode, is_active, category_id, base_unit_id, inventory_categories(name), units_of_measure(name, symbol)')
@@ -25,6 +28,8 @@ export async function listCatalog(organizationId) {
       .eq('is_active', true)
       .or(`organization_id.is.null,organization_id.eq.${organizationId}`)
       .order('name'),
+    listExtraCategories(organizationId),
+    listItemDetails(organizationId),
   ]);
 
   const categoryRows = assertOk(categories, 'categories') || [];
@@ -34,9 +39,14 @@ export async function listCatalog(organizationId) {
       ...item,
       categoryName: categoryPath(tree, item.category_id) || one(item.inventory_categories)?.name || '',
       unitName: one(item.units_of_measure)?.name || '',
+      extraCategoryIds: extras?.get(item.id) || [],
+      brand: details?.get(item.id)?.brand || '',
+      variant: details?.get(item.id)?.variant || '',
     })),
     categories: categoryRows,
     units: assertOk(units, 'units') || [],
+    extrasAvailable: extras !== null,
+    detailsAvailable: details !== null,
   };
 }
 
@@ -49,6 +59,25 @@ export async function createCategory(organizationId, name, parentId = null) {
     throw new Error(parentId ? `There is already a "${clean}" in that category.` : `There is already a category called "${clean}".`);
   }
   return assertOk(result, 'create category').id;
+}
+
+/** A unit only this business uses, e.g. "Keg". `decimals` is 0 for whole numbers, 2 to allow parts. */
+export async function createUnit(organizationId, { name, symbol, decimals }) {
+  const clean = requiredText(name, 'unit name', 80);
+  const code = unitCode(clean);
+  if (!code) throw new Error('Use at least one letter or number in the unit name.');
+  const row = {
+    organization_id: organizationId,
+    code,
+    name: clean,
+    symbol: optionalText(symbol, 'short name', 16),
+    measurement_kind: 'custom',
+    precision_scale: decimals ? 2 : 0,
+  };
+  const result = await itemsure.from('units_of_measure').insert(row)
+    .select('id, code, name, symbol, measurement_kind, precision_scale, organization_id').single();
+  if (result.error?.code === '23505') throw new Error(`You already have a unit called "${clean}".`);
+  return assertOk(result, 'create unit');
 }
 
 function itemFields(form) {
@@ -67,6 +96,9 @@ function itemFields(form) {
   };
   // Only present once the item-supplier database update is applied (see useSuppliers).
   if ('supplier_id' in form) fields.supplier_id = form.supplier_id || null;
+  // Only present once brand and details are set up and switched on.
+  if ('brand' in form) fields.brand = optionalText(form.brand, 'brand', 80);
+  if ('variant' in form) fields.variant = optionalText(form.variant, 'detail', 80);
   return fields;
 }
 
@@ -85,6 +117,11 @@ export async function updateItem(organizationId, item, form) {
     'update item',
   );
   if (!data?.length) throw new Error('You do not have permission to change this item.');
+}
+
+/** Renames an archived item to "<name> (archived N)" so a new item can use its name. Returns the new name. */
+export async function renameArchivedItem(itemId) {
+  return assertOk(await itemsure.rpc('rename_archived_item', { p_item_id: itemId }), 'rename archived item');
 }
 
 export async function setItemActive(organizationId, itemId, isActive) {

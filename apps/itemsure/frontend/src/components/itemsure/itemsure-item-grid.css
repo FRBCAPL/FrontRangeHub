@@ -1,0 +1,38 @@
+/* Inventory page only: compact item cards, two per row on wider screens (one on phones). */
+
+.isu-app .isu-item-list.isu-item-grid:has(.isu-stockcard) {
+  gap: 8px;
+}
+
+.isu-app .isu-item-grid .isu-stockcard {
+  gap: 8px;
+  padding: 5px 10px 5px 12px;
+}
+
+.isu-app .isu-item-grid .isu-stockcard-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+}
+
+.isu-app .isu-item-grid a.isu-stockcard-link {
+  font-size: 0.95rem;
+}
+
+.isu-app .isu-item-grid .isu-stockcard-amount strong {
+  font-size: 1.05rem;
+}
+
+.isu-app .isu-item-grid .isu-stockcard-details {
+  margin: 1px 0;
+  font-size: 0.78rem;
+}
+
+@media (min-width: 760px) {
+  .isu-app .isu-item-list.isu-item-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
