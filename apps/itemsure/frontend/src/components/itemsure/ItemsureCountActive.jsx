@@ -7,6 +7,7 @@ import useItemsureAction from '../../hooks/useItemsureAction.js';
 import useItemPackages from '../../hooks/useItemPackages.js';
 import { usablePackages } from '../../utils/itemsurePackages.js';
 import { COUNT_STATUS_LABELS, ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { SITE } from '../../data/itemsureTerms.js';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsureCountRow from './ItemsureCountRow.jsx';
 import ItemsureCountSaveBar from './ItemsureCountSaveBar.jsx';
@@ -70,7 +71,7 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
           <p className="isu-eyebrow">{COUNT_STATUS_LABELS[session.status]}</p>
           <h1>{session.name}</h1>
           <p className="isu-muted">
-            {location?.name || 'Location'} · {countedItems.size} of {items.length} items counted
+            {location?.name || SITE} · {countedItems.size} of {items.length} items counted
           </p>
         </div>
       </div>

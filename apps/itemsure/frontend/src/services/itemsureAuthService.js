@@ -73,6 +73,18 @@ export async function sendReset(email) {
   if (error) throw new Error(friendly(error.message));
 }
 
+/**
+ * Emails someone a sign-in link back to ItemSure (creating their login if needed),
+ * where their waiting invite is shown. Does not touch the sender's own session.
+ */
+export async function sendInviteLink(email) {
+  const { error } = await itemsure.auth.signInWithOtp({
+    email: email.trim().toLowerCase(),
+    options: { emailRedirectTo: returnUrl(), shouldCreateUser: true, data: { app: ITEMSURE_APP_CODE } },
+  });
+  if (error) throw new Error(friendly(error.message));
+}
+
 export async function updatePassword(password) {
   const { error } = await itemsure.auth.updateUser({ password });
   if (error) throw new Error(friendly(error.message));

@@ -1,0 +1,189 @@
+/* The business you're working in, at the top of every page, and the switch list. */
+
+.isu-business-bar {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.isu-app .isu-business-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  min-width: 0;
+  padding: 4px 12px;
+  border: 1px solid var(--isu-line);
+  border-radius: 999px;
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.isu-app .isu-business-name.is-button {
+  cursor: pointer;
+}
+
+.isu-app .isu-business-name.is-button:hover {
+  border-color: var(--isu-pine);
+}
+
+.isu-business-menu {
+  display: grid;
+  gap: 6px;
+  width: min(360px, 100%);
+  padding: 10px;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-paper);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.isu-business-menu p {
+  margin: 0 0 2px;
+  text-align: center;
+}
+
+.isu-app .isu-business-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 0;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  background: none;
+  color: var(--isu-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.isu-app .isu-business-option:hover {
+  border-color: var(--isu-pine);
+}
+
+.isu-app .isu-business-option.is-current {
+  border-color: var(--isu-pine);
+  background: var(--isu-pine-soft);
+  font-weight: 600;
+}
+
+.isu-business-new {
+  margin: 0;
+  text-align: center;
+}
+
+.isu-setup-confirm p {
+  margin: 0 0 12px;
+}
+
+/* Settings menu: one tappable row per section. */
+.isu-settings-menu {
+  display: grid;
+  gap: 8px;
+}
+
+.isu-app .isu-settings-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+  text-decoration: none;
+}
+
+.isu-app .isu-settings-tile:hover,
+.isu-app .isu-settings-tile:focus-visible {
+  border-color: var(--isu-pine);
+}
+
+.isu-settings-icon {
+  font-size: 1.3rem;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.isu-settings-text {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.isu-settings-chevron {
+  font-size: 1.5rem;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-settings-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 0;
+  margin-bottom: 6px;
+}
+
+/* "What's the difference?" Business → Site → Spot explainer. */
+.isu-levels {
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-paper);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.isu-levels summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.isu-levels-list {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.isu-levels-list li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+
+.isu-levels-list li:nth-child(2) { margin-left: 14px; }
+.isu-levels-list li:nth-child(3) { margin-left: 28px; }
+
+.isu-levels-list li.is-focus {
+  background: var(--isu-pine-soft);
+}
+
+.isu-levels > p {
+  margin: 0;
+}
+
+.isu-archived-list {
+  display: grid;
+  gap: 8px;
+}
+
+.isu-archived-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}

@@ -4,6 +4,7 @@ import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { site } from '../../data/itemsureTerms.js';
 
 const q = (text, unit) => (text === null || text === undefined ? '—' : `${displayQuantity(text)} ${unit}`);
 
@@ -46,7 +47,7 @@ export default function ItemsureRestockCard({ rec, canTransfer, showMoves = true
             <li key={`${t.location_id}-${t.storage_area_id || ''}`} className="isu-restock-move">
               <span>
                 Move <strong>{q(t.quantity, unit)}</strong> from {t.same_location ? '' : `${t.location_name} · `}{t.area_name || NO_AREA_LABEL}
-                <span className="isu-muted">{t.same_location ? ' (same location)' : ' (other location)'}</span>
+                <span className="isu-muted">{t.same_location ? ` (same ${site})` : ` (other ${site})`}</span>
               </span>
               {canTransfer ? (
                 <span className="isu-restock-move-actions">
@@ -62,7 +63,7 @@ export default function ItemsureRestockCard({ rec, canTransfer, showMoves = true
       ) : null}
 
       {showMoves && rec.has_hidden_sources ? (
-        <p className="isu-restock-external isu-muted">Some spare stock may be at a location you can&apos;t see. Ask an administrator.</p>
+        <p className="isu-restock-external isu-muted">Some spare stock may be at a {site} you can&apos;t see. Ask an administrator.</p>
       ) : null}
 
       {showMoves && rec.need !== null && !rec.transfers.length ? (

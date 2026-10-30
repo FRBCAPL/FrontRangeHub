@@ -1,11 +1,13 @@
 // Per-business feature switches ("Simple mode"). Display only: turning one off
 // hides screens and choices, never data, and the database rules stay the same.
 
+import { site, sites } from '../data/itemsureTerms.js';
+
 export const FEATURES = [
   {
     key: 'spots',
-    label: 'Spots inside locations',
-    hint: 'Track shelves, rooms, or coolers separately inside a location.',
+    label: `Spots inside ${sites}`,
+    hint: `Track shelves, rooms, or coolers separately inside a ${site}.`,
   },
   {
     key: 'packaging',
@@ -15,7 +17,7 @@ export const FEATURES = [
   {
     key: 'transfers',
     label: 'Moving stock between places',
-    hint: 'Move stock from one location or spot to another, and plan moves on the shopping list.',
+    hint: `Move stock from one ${site} or spot to another, and plan moves on the shopping list.`,
   },
   {
     key: 'approvals',

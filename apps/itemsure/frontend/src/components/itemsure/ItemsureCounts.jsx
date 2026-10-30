@@ -6,12 +6,13 @@ import { listLocations } from '../../services/itemsureLocationService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { COUNT_STATUS_LABELS, ITEMSURE_PATH, REVIEW_STATUS_LABELS } from '../../data/itemsureConstants.js';
 import { formatWhen } from '../../utils/itemsureText.js';
+import { site, SITE } from '../../data/itemsureTerms.js';
 import { ErrorNote, PageHead } from './ItemsureUi.jsx';
 
 function placeLabel(session, locations) {
   const location = locations.find((l) => l.id === session.location_id);
   const area = location?.storageAreas.find((a) => a.id === session.storage_area_id);
-  return [location?.name || 'Location', area?.name].filter(Boolean).join(' \u00b7 ');
+  return [location?.name || SITE, area?.name].filter(Boolean).join(' \u00b7 ');
 }
 
 /** Submitted counts are awaiting approval until a review row exists. */
@@ -96,7 +97,7 @@ export default function ItemsureCounts() {
     <div className="isu-page">
       <PageHead
         title="Counts"
-        description="Walk around and count everything at a location (or one spot) in one go."
+        description={`Walk around and count everything at a ${site} (or one spot) in one go.`}
         action={canStart ? <Link to={`${ITEMSURE_PATH}/counts/new`} className="isu-btn isu-btn--primary">Start count</Link> : null}
       />
       <ErrorNote message={error} />

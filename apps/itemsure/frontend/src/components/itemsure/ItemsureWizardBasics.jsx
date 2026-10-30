@@ -2,9 +2,10 @@ import React from 'react';
 import { Field } from './ItemsureUi.jsx';
 import ItemsureCategoryPicker from './ItemsureCategoryPicker.jsx';
 import ItemsureWizardIntro from './ItemsureWizardIntro.jsx';
+import ItemsureSupplierPicker from './ItemsureSupplierPicker.jsx';
 
-/** Step 1: name, what it's counted in, and category. */
-export default function ItemsureWizardBasics({ form, setForm, organizationId, categories, units, canManageCategories, onCategoryAdded, editing }) {
+/** Step 1: name, what it's counted in, category, and supplier (once suppliers are set up). */
+export default function ItemsureWizardBasics({ form, setForm, organizationId, categories, units, canManageCategories, onCategoryAdded, editing, suppliers, canAddSupplier, onSupplierAdded }) {
   const set = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }));
   return (
     <div className="isu-stack">
@@ -32,6 +33,16 @@ export default function ItemsureWizardBasics({ form, setForm, organizationId, ca
         canManage={canManageCategories}
         onAdded={onCategoryAdded}
       />
+      {'supplier_id' in form ? (
+        <ItemsureSupplierPicker
+          organizationId={organizationId}
+          suppliers={suppliers}
+          value={form.supplier_id}
+          onChange={(id) => setForm((f) => ({ ...f, supplier_id: id }))}
+          canAdd={canAddSupplier}
+          onAdded={onSupplierAdded}
+        />
+      ) : null}
     </div>
   );
 }

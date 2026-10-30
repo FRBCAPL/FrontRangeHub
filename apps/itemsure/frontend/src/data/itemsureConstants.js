@@ -1,3 +1,5 @@
+import { SITE } from './itemsureTerms.js';
+
 export const ITEMSURE_PATH = '/itemsure';
 
 /** Sent as sign-up metadata so database triggers know which app created the login. */
@@ -12,21 +14,34 @@ export const ROLE_LABELS = {
   staff: 'Staff',
 };
 
+export const ROLE_ORDER = ['owner', 'administrator', 'manager', 'staff'];
+
+/** One line per role, shown next to the role picker. Keep in step with role_permissions. */
+export const ROLE_HELP = {
+  owner: 'Everything, including archiving the business and managing other owners.',
+  administrator: 'Everything else: people, sites, items, stock, and settings.',
+  manager: 'By default: runs sites, items, warning levels, suppliers, and stock, and approves counts.',
+  staff: 'By default: sees items and stock, and counts, but cannot send counts in or approve them.',
+};
+
 export const AUDIT_ENTITY_LABELS = {
-  organizations: 'Organization',
-  organization_memberships: 'Membership',
-  locations: 'Location',
-  location_access: 'Location access',
+  organizations: 'Business',
+  organization_memberships: 'Team member',
+  locations: SITE,
+  location_access: `${SITE} access`,
   inventory_categories: 'Category',
   inventory_items: 'Item',
-  inventory_storage_areas: 'Storage area',
+  inventory_storage_areas: 'Spot',
   profiles: 'Profile',
   count_sessions: 'Count',
   inventory: 'Stock',
-  inventory_targets: 'Par levels',
-  planned_transfers: 'Planned transfer',
-  item_places: 'Item place',
-  item_unit_relationships: 'Packaging size',
+  inventory_targets: 'Warning levels',
+  planned_transfers: 'Planned move',
+  item_places: 'Item spot',
+  item_unit_relationships: 'Pack size',
+  suppliers: 'Supplier',
+  invitations: 'Invite',
+  organization_role_permissions: 'Role setting',
 };
 
 export const AUDIT_VERB_LABELS = {
@@ -41,7 +56,7 @@ export const AUDIT_VERB_LABELS = {
   rejected: 'rejected',
   added: 'added',
   removed: 'removed',
-  transferred: 'transferred',
+  transferred: 'moved',
   copied: 'copied',
 };
 

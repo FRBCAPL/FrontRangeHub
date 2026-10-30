@@ -7,12 +7,14 @@ import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
 import { itemSummary, sortByAttention, visibleSlots, whereAmounts } from '../../utils/itemsureItemStock.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { site, sites, SITE } from '../../data/itemsureTerms.js';
 import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureItemRow from './ItemsureItemRow.jsx';
 import ItemsureCategoryForm from './ItemsureCategoryForm.jsx';
 import ItemsureCategoryChips from './ItemsureCategoryChips.jsx';
 import { categoryTree, inCategory } from '../../utils/itemsureCategories.js';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
+import useSuppliers from '../../hooks/useSuppliers.js';
 import ItemsureQuickCount from './ItemsureQuickCount.jsx';
 import ItemsureUndoBar from './ItemsureUndoBar.jsx';
 
@@ -41,6 +43,7 @@ export default function ItemsureItems() {
   const canManageCategories = can('categories.manage');
   const activeLocations = places.locations.filter((l) => l.is_active);
   const openCounts = useOpenCounts(organization.id, can('counts.edit'));
+  const suppliers = useSuppliers(organization.id);
   const [countItem, setCountItem] = useState(null);
   const [counted, setCounted] = useState(null);
   const closeCounted = useCallback(() => setCounted(null), []);
@@ -84,11 +87,12 @@ export default function ItemsureItems() {
     const matches = filteredItems.filter((item) => {
       if (!inCategory(tree, item, category)) return false;
       if (!needle) return true;
-      return [item.name, item.sku, item.barcode, item.categoryName].some((v) => String(v || '').toLowerCase().includes(needle));
+      return [item.name, item.sku, item.barcode, item.categoryName, suppliers.supplierFor(item.id)?.name]
+        .some((v) => String(v || '').toLowerCase().includes(needle));
     });
     if (!stock) return matches;
     return sortByAttention(matches, (item) => itemSummary(item.id, { ...stock, locations: places.locations }));
-  }, [browsing, activeCategories, filteredItems, category, needle, stock, places.locations]);
+  }, [browsing, activeCategories, filteredItems, category, needle, stock, places.locations, suppliers]);
 
   const closeModal = useCallback(() => setModal(''), []);
   const categorySaved = async () => {
@@ -126,14 +130,14 @@ export default function ItemsureItems() {
         <input
           type="search"
           className="isu-search"
-          placeholder="Search name, SKU, barcode, or category"
+          placeholder="Search name, SKU, barcode, category, or supplier"
           aria-label="Search items"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
         {places.ready && activeLocations.length > 1 ? (
-          <select className="isu-item-filter" aria-label="Location" value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-            <option value="">All locations</option>
+          <select className="isu-item-filter" aria-label={SITE} value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+            <option value="">All {sites}</option>
             {activeLocations.map((l) => <option key={l.id} value={l.id}>At {l.name}</option>)}
           </select>
         ) : null}
@@ -149,7 +153,7 @@ export default function ItemsureItems() {
       {catalog && !browsing && visibleItems.length === 0 ? (
         <div className="isu-card isu-empty">
           <h2>{catalog.items.length ? 'No matching items' : 'No items yet'}</h2>
-          <p className="isu-muted">{catalog.items.length ? 'Try a different category, search, or location.' : canManageItems ? 'Add your first item to start the catalog.' : 'Nothing has been added yet.'}</p>
+          <p className="isu-muted">{catalog.items.length ? `Try a different category, search, or ${site}.` : canManageItems ? 'Add your first item to start the catalog.' : 'Nothing has been added yet.'}</p>
         </div>
       ) : null}
 
@@ -160,6 +164,7 @@ export default function ItemsureItems() {
             item={item}
             summary={stock ? itemSummary(item.id, { ...stock, locations: places.locations }) : null}
             keptAt={stock || places.ready ? whereFor(item.id) : null}
+            supplier={suppliers.supplierFor(item.id)}
             canManage={canManageItems}
             onEdit={() => navigate(`${ITEMSURE_PATH}/items/${item.id}/edit`)}
             onCount={item.is_active && openCounts.sessions.length ? () => setCountItem(item) : null}

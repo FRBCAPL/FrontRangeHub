@@ -1,10 +1,10 @@
 import React from 'react';
 import { cardTone, categoryHue, itemInitials } from '../../utils/itemsureItemLook.js';
-import { StockAmount, StockBar } from './ItemsureStockBits.jsx';
+import { StockAmount, StockBar, SupplierLine } from './ItemsureStockBits.jsx';
 import ItemsureItemUsage from './ItemsureItemUsage.jsx';
 
-/** Top of the item page: badge, on hand vs par, status bar, usage, and where it's kept. `children` are extra buttons. */
-export default function ItemsureItemSummary({ item, summary, usage, unitSymbol, placeCount, children }) {
+/** Top of the item page: badge, on hand vs par, status bar, usage, where it's kept, and its supplier. `children` are extra buttons. */
+export default function ItemsureItemSummary({ item, summary, usage, unitSymbol, placeCount, supplier, children }) {
   const tone = cardTone(summary);
   const hue = categoryHue(item.category_id);
   return (
@@ -24,6 +24,7 @@ export default function ItemsureItemSummary({ item, summary, usage, unitSymbol, 
             {placeCount ? `in ${placeCount} place${placeCount === 1 ? '' : 's'}` : 'Not kept anywhere yet'}
           </span>
         </div>
+        {supplier ? <SupplierLine supplier={supplier} /> : null}
         <StockBar summary={summary} />
         <ItemsureItemUsage usage={usage} total={summary.total} unit={unitSymbol} />
         {children ? <div className="isu-item-summary-actions">{children}</div> : null}

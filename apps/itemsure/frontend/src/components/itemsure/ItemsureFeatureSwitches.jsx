@@ -24,7 +24,7 @@ export default function ItemsureFeatureSwitches() {
   };
 
   return (
-    <Card title="Features">
+    <Card>
       <p className="isu-muted isu-small">
         Keep ItemSure simple by switching off what you don&apos;t use. Switching something off only hides it; nothing is deleted, and you can switch it back on any time.
       </p>

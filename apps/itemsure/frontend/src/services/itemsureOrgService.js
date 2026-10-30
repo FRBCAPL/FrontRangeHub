@@ -3,6 +3,7 @@ import { assertOk, readableDatabaseError } from '../utils/itemsureErrors.js';
 import { requiredText, slugify, suffixedSlug } from '../utils/itemsureText.js';
 import { ROLE_LABELS } from '../data/itemsureConstants.js';
 import { ALL_FEATURES_ON, FEATURES, readFeatures } from '../utils/itemsureFeatures.js';
+import { effectivePermissions } from '../utils/itemsureRolePermissions.js';
 
 const ACTIVE_ORG_KEY = 'itemsure-active-organization';
 
@@ -24,6 +25,14 @@ export function rememberActiveOrg(userId, organizationId) {
 
 function one(value) {
   return Array.isArray(value) ? value[0] || null : value || null;
+}
+
+/** Ids of archived businesses among `ids`, or null when the database has no archive column yet. */
+async function loadArchivedIds(ids) {
+  if (!ids.length) return new Set();
+  const { data, error } = await itemsure.from('organizations').select('id, archived_at').in('id', ids);
+  if (error) return null;
+  return new Set((data || []).filter((row) => row.archived_at).map((row) => row.id));
 }
 
 /**
@@ -50,7 +59,7 @@ export async function loadWorkspace(user) {
     return { databaseMessage: readableDatabaseError(memberRows.error), memberships: [], organization: null, permissions: [] };
   }
 
-  const memberships = (memberRows.data || [])
+  const allMemberships = (memberRows.data || [])
     .map((row) => {
       const org = one(row.organizations);
       if (!org) return null;
@@ -67,6 +76,13 @@ export async function loadWorkspace(user) {
     .filter(Boolean)
     .sort((a, b) => a.organizationName.localeCompare(b.organizationName));
 
+  // Kept separate so a database without archived_at still loads (nothing archived).
+  const archivedIds = await loadArchivedIds(allMemberships.map((m) => m.organizationId));
+  const archiveAvailable = archivedIds !== null;
+  const memberships = allMemberships.filter((m) => !archivedIds?.has(m.organizationId));
+  // Only the owner can restore, so only owners see their archived businesses.
+  const archived = allMemberships.filter((m) => archivedIds?.has(m.organizationId) && m.roleCode === 'owner');
+
   const preferred = readActiveOrg(userId);
   const active = memberships.find((m) => m.organizationId === preferred) || memberships[0] || null;
 
@@ -75,13 +91,22 @@ export async function loadWorkspace(user) {
   let features = ALL_FEATURES_ON;
   let featuresSaved = false;
   if (active) {
-    const [grants, industry, featureRow] = await Promise.all([
+    const [grants, choices, industry, featureRow] = await Promise.all([
       itemsure.from('role_permissions').select('permission_code').eq('role_code', active.roleCode),
+      // This business's role settings; missing on older databases, which means defaults.
+      itemsure
+        .from('organization_role_permissions')
+        .select('permission_code, granted')
+        .eq('organization_id', active.organizationId)
+        .eq('role_code', active.roleCode),
       itemsure.from('industry_types').select('name').eq('code', active.industryType).maybeSingle(),
       // Kept separate so a database without the features column still loads.
       itemsure.from('organizations').select('features').eq('id', active.organizationId).maybeSingle(),
     ]);
-    permissions = (grants.data || []).map((g) => g.permission_code);
+    permissions = effectivePermissions(
+      (grants.data || []).map((g) => g.permission_code),
+      choices.error ? [] : choices.data || [],
+    );
     industryName = industry.data?.name || active.industryType;
     if (!featureRow.error && featureRow.data) {
       features = readFeatures(featureRow.data.features);
@@ -94,6 +119,8 @@ export async function loadWorkspace(user) {
     fullName: profile.data?.full_name || '',
     email: profile.data?.email || user.email || '',
     memberships,
+    archived,
+    archiveAvailable,
     organization: active
       ? { ...active, id: active.organizationId, name: active.organizationName, industryName, features, featuresSaved }
       : null,
@@ -138,6 +165,19 @@ export async function renameOrganization(organizationId, name) {
     'rename organization',
   );
   if (!data?.length) throw new Error('You do not have permission to rename this organization.');
+}
+
+/** Archive hides the business for everyone in it; restore brings it back. Owner only; no data is removed. */
+export async function setOrganizationArchived(organizationId, archived) {
+  const data = assertOk(
+    await itemsure
+      .from('organizations')
+      .update({ archived_at: archived ? new Date().toISOString() : null })
+      .eq('id', organizationId)
+      .select('id'),
+    archived ? 'archive business' : 'restore business',
+  );
+  if (!data?.length) throw new Error('Only the owner can archive or restore this business.');
 }
 
 /** Saves all four switches at once. Needs organization.update (owner or administrator). */

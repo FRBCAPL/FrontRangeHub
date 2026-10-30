@@ -1,0 +1,95 @@
+/* Suppliers page: search bar and one card per supplier. */
+
+.isu-supplier-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.isu-supplier-tools input[type='search'] {
+  flex: 1 1 220px;
+}
+
+.isu-supplier-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 760px) {
+  .isu-supplier-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.isu-app .isu-supplier {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 14px 16px;
+}
+
+.isu-app .isu-supplier.is-archived {
+  opacity: 0.7;
+}
+
+.isu-supplier-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.isu-supplier-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+.isu-supplier p {
+  margin: 0;
+}
+
+.isu-supplier-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.isu-app .isu-supplier-links a {
+  min-height: 0;
+  min-width: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--isu-line);
+  border-radius: 999px;
+  color: var(--isu-pine);
+  font-size: 0.85rem;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.isu-app .isu-supplier-links a:hover {
+  border-color: var(--isu-pine);
+}
+
+.isu-supplier-notes {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--isu-badge);
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+}
+
+.isu-app .isu-supplier .isu-card-actions {
+  margin-top: 4px;
+}
+
+/* Item cards: the main supplier under the item name. */
+.isu-supplier-line {
+  flex-basis: 100%;
+  color: var(--isu-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}

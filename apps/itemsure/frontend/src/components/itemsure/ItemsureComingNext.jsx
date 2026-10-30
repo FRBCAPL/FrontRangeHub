@@ -2,7 +2,8 @@ import React from 'react';
 import { PageHead } from './ItemsureUi.jsx';
 
 const NOT_BUILT = [
-  { title: 'Vendors and purchase orders', body: 'Keep suppliers and turn shortages into orders.' },
+  { title: 'Suppliers on items', body: 'Say who you buy each item from, their product code, the pack you order, and what it costs.' },
+  { title: 'Purchase orders', body: 'Turn the shopping list into orders, grouped by supplier.' },
   { title: 'Receiving', body: 'Check deliveries against orders and add them to stock.' },
   { title: 'Inventory value', body: 'Track cost and value over time.' },
 ];

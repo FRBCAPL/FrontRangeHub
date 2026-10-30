@@ -5,6 +5,7 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { stockEntry, usablePackages } from '../../utils/itemsurePackages.js';
 import { findBalance, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
+import { sites } from '../../data/itemsureTerms.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 import ItemsurePackageQuantity from './ItemsurePackageQuantity.jsx';
 import ItemsureSpotCountNotice from './ItemsureSpotCountNotice.jsx';
@@ -57,7 +58,7 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, prese
     });
   };
 
-  if (!items.length || !options.length) return <p className="isu-muted">Add items and locations first.</p>;
+  if (!items.length || !options.length) return <p className="isu-muted">Add items and {sites} first.</p>;
 
   return (
     <form className="isu-stack" onSubmit={submit}>

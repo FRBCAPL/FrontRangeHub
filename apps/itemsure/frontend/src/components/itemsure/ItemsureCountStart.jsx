@@ -5,6 +5,7 @@ import { listLocations } from '../../services/itemsureLocationService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { site, sites, SITE } from '../../data/itemsureTerms.js';
 import { Card, ErrorNote, Field, PageHead } from './ItemsureUi.jsx';
 
 function defaultName(location, area) {
@@ -43,7 +44,7 @@ export default function ItemsureCountStart() {
   const submit = (e) => {
     e.preventDefault();
     run(async () => {
-      if (!location) throw new Error('Choose a location.');
+      if (!location) throw new Error(`Choose a ${site}.`);
       if (form.scope === 'storage_area' && !area) throw new Error('Choose a spot.');
       const id = await startSession({ locationId: location.id, storageAreaId: area?.id || null, name });
       navigate(`${ITEMSURE_PATH}/counts/${id}`);
@@ -66,14 +67,14 @@ export default function ItemsureCountStart() {
         {locations === null ? <p className="isu-muted">Loading…</p> : null}
         {locations && locations.length === 0 ? (
           <p className="isu-muted">
-            No active locations you can access. <Link to={`${ITEMSURE_PATH}/locations`}>Add a location</Link> first.
+            No active {sites} you can access. <Link to={`${ITEMSURE_PATH}/locations`}>Add a {site}</Link> first.
           </p>
         ) : null}
         {locations && locations.length ? (
           <form onSubmit={submit} className="isu-stack">
-            <Field label="Location">
+            <Field label={SITE}>
               <select value={form.locationId} onChange={set('locationId')} required>
-                <option value="">Choose a location</option>
+                <option value="">Choose a {site}</option>
                 {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
               </select>
             </Field>
@@ -82,7 +83,7 @@ export default function ItemsureCountStart() {
               <legend>What are you counting?</legend>
               <label className="isu-check">
                 <input type="radio" name="scope" value="location" checked={form.scope === 'location'} onChange={set('scope')} />
-                The whole location
+                The whole {site}
               </label>
               <label className="isu-check">
                 <input
@@ -93,7 +94,7 @@ export default function ItemsureCountStart() {
                   onChange={set('scope')}
                   disabled={!areas.length}
                 />
-                One spot{location && !areas.length ? ' (this location has none)' : ''}
+                One spot{location && !areas.length ? ` (this ${site} has none)` : ''}
               </label>
             </fieldset> : null}
 

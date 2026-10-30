@@ -8,13 +8,14 @@ import { findBalance, NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
 import { categoryOptions, categoryPath, categoryTree, inCategory } from '../../utils/itemsureCategories.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { sites, SITE } from '../../data/itemsureTerms.js';
 import ItemsureRestockAction from './ItemsureRestockAction.jsx';
 import ItemsureRestockCard from './ItemsureRestockCard.jsx';
 import ItemsureRestockPlans from './ItemsureRestockPlans.jsx';
 import { ErrorNote, Field, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
 
 const GROUPS = {
-  location: { label: 'Location', of: (r) => r.location_name },
+  location: { label: SITE, of: (r) => r.location_name },
   area: { label: 'Spot', of: (r) => `${r.location_name} · ${r.area_name || NO_AREA_LABEL}` },
   category: { label: 'Category', of: (r, cats) => cats.get(r.category_id) || 'No category' },
   status: { label: 'Status', of: (r) => TARGET_STATUS[r.status].label },
@@ -146,9 +147,9 @@ export default function ItemsureRestock() {
 
       {ready && recs.length ? (
         <div className="isu-filters">
-          <Field label="Location">
+          <Field label={SITE}>
             <select value={filters.locationId} onChange={(e) => set({ locationId: e.target.value })}>
-              <option value="">All locations</option>
+              <option value="">All {sites}</option>
               {data.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </select>
           </Field>

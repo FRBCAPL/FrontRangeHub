@@ -23,7 +23,7 @@ export default function ItemsureWizardLevels({ entries, setEntries, labelFor, un
   if (!active.length) {
     return (
       <ItemsureWizardIntro title="Low-stock warning and restock target">
-        Add a place in the On hand step first. These are set for each place you keep the item.
+        Add where it&apos;s kept in the On hand step first. These are set for each place you keep the item.
       </ItemsureWizardIntro>
     );
   }

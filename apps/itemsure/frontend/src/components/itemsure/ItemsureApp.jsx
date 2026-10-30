@@ -23,7 +23,9 @@ import './itemsure-wizard.css';
 import './itemsure-item-card.css';
 import './itemsure-category-bar.css';
 import './itemsure-stock-location.css';
-
+import './itemsure-history.css';
+import './itemsure-suppliers.css';
+import './itemsure-business.css';
 function Wordmark() {
   return (
     <span className="isu-wordmark">

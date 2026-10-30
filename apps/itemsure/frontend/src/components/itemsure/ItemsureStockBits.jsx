@@ -16,6 +16,15 @@ export function StockAmount({ summary, unitName, className = '' }) {
   );
 }
 
+/** "Buy from Southern Glazer's", on its own line under the item name. `supplier` is { name, is_active }. */
+export function SupplierLine({ supplier }) {
+  return (
+    <span className="isu-supplier-line" title="Main supplier">
+      <span aria-hidden="true">{'\u26DF'}</span> {supplier.name}{supplier.is_active ? '' : ' (archived)'}
+    </span>
+  );
+}
+
 /** The bar comparing on hand with par, coloured by status, plus the status words. `summary` is { total, par, status }. */
 export function StockBar({ summary }) {
   if (!summary) return null;

@@ -2,6 +2,7 @@ import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
 import { optionalText, requiredText } from '../utils/itemsureText.js';
 import { TIMEZONES } from '../data/itemsureConstants.js';
+import { site } from '../data/itemsureTerms.js';
 
 export async function listLocations(organizationId) {
   const [locations, areas] = await Promise.all([
@@ -28,7 +29,7 @@ export async function listLocations(organizationId) {
 function locationFields(form, keepTimezone) {
   const timezone = TIMEZONES.includes(form.timezone) || form.timezone === keepTimezone ? form.timezone : 'UTC';
   return {
-    name: requiredText(form.name, 'location name', 120),
+    name: requiredText(form.name, `${site} name`, 120),
     address_line1: optionalText(form.address_line1, 'address', 160) || '',
     address_line2: optionalText(form.address_line2, 'address line 2', 160) || '',
     city: optionalText(form.city, 'city', 80) || '',
@@ -54,7 +55,7 @@ export async function updateLocation(organizationId, location, form) {
       .select('id'),
     'update location',
   );
-  if (!data?.length) throw new Error('You do not have permission to change this location.');
+  if (!data?.length) throw new Error(`You do not have permission to change this ${site}.`);
 }
 
 export async function setLocationActive(organizationId, locationId, isActive) {
@@ -62,12 +63,12 @@ export async function setLocationActive(organizationId, locationId, isActive) {
     await itemsure.from('locations').update({ is_active: isActive }).eq('id', locationId).eq('organization_id', organizationId).select('id'),
     'update location',
   );
-  if (!data?.length) throw new Error('You do not have permission to change this location.');
+  if (!data?.length) throw new Error(`You do not have permission to change this ${site}.`);
 }
 
 function areaFields(form) {
   return {
-    name: requiredText(form.name, 'storage area name', 120),
+    name: requiredText(form.name, 'spot name', 120),
     description: optionalText(form.description, 'description', 400) || '',
   };
 }
@@ -87,7 +88,7 @@ export async function updateStorageArea(organizationId, areaId, form) {
       .select('id'),
     'update storage area',
   );
-  if (!data?.length) throw new Error('You do not have permission to change this storage area.');
+  if (!data?.length) throw new Error('You do not have permission to change this spot.');
 }
 
 export async function setStorageAreaActive(organizationId, areaId, isActive) {
@@ -100,5 +101,5 @@ export async function setStorageAreaActive(organizationId, areaId, isActive) {
       .select('id'),
     'update storage area',
   );
-  if (!data?.length) throw new Error('You do not have permission to change this storage area.');
+  if (!data?.length) throw new Error('You do not have permission to change this spot.');
 }

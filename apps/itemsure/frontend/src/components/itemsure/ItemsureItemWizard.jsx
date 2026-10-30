@@ -6,7 +6,9 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
 import useItemUsage from '../../hooks/useItemUsage.js';
+import useSuppliers from '../../hooks/useSuppliers.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { SITE } from '../../data/itemsureTerms.js';
 import { visibleSlots } from '../../utils/itemsureItemStock.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { checkAmounts, checkLevels, entriesFromGroups, STEPS, wizardSteps } from '../../utils/itemsureItemWizard.js';
@@ -19,13 +21,15 @@ import ItemsureWizardExtras from './ItemsureWizardExtras.jsx';
 import ItemsureWizardReview from './ItemsureWizardReview.jsx';
 import ItemsureWizardArchive from './ItemsureWizardArchive.jsx';
 
-const emptyForm = (item, units) => ({
+const emptyForm = (item, units, suppliers) => ({
   name: item?.name || '',
   description: item?.description || '',
   sku: item?.sku || '',
   barcode: item?.barcode || '',
   category_id: item?.category_id || '',
   base_unit_id: item?.base_unit_id || units.find((u) => u.code === 'each' && !u.organization_id)?.id || units[0]?.id || '',
+  // Only once suppliers are set up in the database, so saving never sends an unknown column.
+  ...(suppliers.available ? { supplier_id: (item && suppliers.supplierIdFor(item.id)) || '' } : {}),
 });
 
 /** Guided Add item (/items/new) and Edit item (/items/:itemId/edit, ?step=levels to jump). */
@@ -50,6 +54,7 @@ export default function ItemsureItemWizard() {
   const [saving, setSaving] = useState(false);
   const [addedCategories, setAddedCategories] = useState([]);
   const places = useItemPlaces(organization.id);
+  const suppliers = useSuppliers(organization.id);
   const { stock } = useItemStock(organization.id, canView);
   const usage = useItemUsage(organization.id, routeItemId, Boolean(routeItemId) && canView && can('inventory.activity'));
   const started = useRef(false);
@@ -71,12 +76,12 @@ export default function ItemsureItemWizard() {
 
   // Fill the form and places once everything has loaded; later reloads never overwrite typing.
   useEffect(() => {
-    if (started.current || !catalog || (editing && !item) || !places.ready || (canView && !stock)) return;
+    if (started.current || !catalog || (editing && !item) || !places.ready || !suppliers.ready || (canView && !stock)) return;
     started.current = true;
-    setForm(emptyForm(item, catalog.units));
+    setForm(emptyForm(item, catalog.units, suppliers));
     const sources = { places: places.placesFor(routeItemId) || [], balances: stock?.balances || [], targets: stock?.targets || [], locations: places.locations };
     setEntries(editing ? entriesFromGroups(visibleSlots(routeItemId, sources)) : []);
-  }, [catalog, item, editing, places, stock, canView, routeItemId]);
+  }, [catalog, item, editing, places, suppliers, stock, canView, routeItemId]);
 
   if (!can('items.manage')) return <p className="isu-muted">Your role doesn&apos;t include adding or changing items.</p>;
   if (loadError) return <LoadFailed message={loadError} onRetry={load} />;
@@ -98,7 +103,7 @@ export default function ItemsureItemWizard() {
     const location = places.locations.find((l) => l.id === e.locationId);
     if (e.storageAreaId) return `${location?.name} \u00b7 ${location?.storageAreas.find((a) => a.id === e.storageAreaId)?.name || 'Spot'}`;
     const hasSpots = features.spots && (location?.storageAreas || []).some((a) => a.is_active);
-    return hasSpots ? `${location?.name} \u00b7 ${NO_AREA_LABEL}` : location?.name || 'Location';
+    return hasSpots ? `${location?.name} \u00b7 ${NO_AREA_LABEL}` : location?.name || SITE;
   };
 
   const problemFor = (id) => {
@@ -194,12 +199,18 @@ export default function ItemsureItemWizard() {
               load();
             }}
             editing={editing}
+            suppliers={suppliers.suppliers}
+            canAddSupplier={can('suppliers.manage')}
+            onSupplierAdded={async (id) => {
+              await suppliers.reload();
+              setForm((f) => ({ ...f, supplier_id: id }));
+            }}
           />
         ) : null}
         {step === 'where' ? <ItemsureWizardWhere {...shared} locations={places.locations} /> : null}
         {step === 'levels' ? <ItemsureWizardLevels {...shared} usage={usage} /> : null}
         {step === 'extras' ? <ItemsureWizardExtras {...shared} organizationId={organization.id} itemId={itemId} /> : null}
-        {step === 'review' ? <ItemsureWizardReview {...shared} categories={categories} problems={problems} editing={editing} steps={steps} onEdit={goTo} /> : null}
+        {step === 'review' ? <ItemsureWizardReview {...shared} categories={categories} suppliers={suppliers.suppliers} problems={problems} editing={editing} steps={steps} onEdit={goTo} /> : null}
       </section>
 
       <div className="isu-wizard-nav">

@@ -256,6 +256,22 @@
   gap: 12px;
   margin-bottom: 12px;
 }
+
+/* Location name centred on the card; actions stay on the right. */
+.isu-card-head.isu-location-head {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, auto) 1fr;
+}
+
+.isu-location-title {
+  grid-column: 2;
+  text-align: center;
+}
+
+.isu-location-head > .isu-item-actions {
+  grid-column: 3;
+  justify-self: end;
+}
 .isu-card-actions {
   display: flex;
   flex-wrap: wrap;

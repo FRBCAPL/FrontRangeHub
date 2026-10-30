@@ -5,6 +5,7 @@ import { buildSaveRows, isTargetChanged } from '../../utils/itemsureTargets.js';
 import { notifyInventoryChanged } from '../../utils/itemsureChanges.js';
 import { ErrorNote } from './ItemsureUi.jsx';
 import ItemsureTargetRow from './ItemsureTargetRow.jsx';
+import ItemsurePlacePicker from './ItemsurePlacePicker.jsx';
 
 /**
  * Warning levels for one item at one location, one row per spot. Saves only changed
@@ -72,19 +73,15 @@ export default function ItemsureTargetEditor({ organizationId, item, rows, other
         ))}
       </ul>
 
-      {canEdit && remaining.length ? (
-        <select
-          className="isu-other-place"
-          value=""
-          onChange={(e) => {
-            const pick = remaining.find((s) => s.key === e.target.value);
+      {canEdit ? (
+        <ItemsurePlacePicker
+          label="Set levels at another spot"
+          options={remaining.map((s) => ({ key: s.key, label: s.areaName }))}
+          onPick={(key) => {
+            const pick = remaining.find((s) => s.key === key);
             if (pick) setAdded((list) => [...list, pick]);
           }}
-          aria-label="Set levels at another spot"
-        >
-          <option value="">+ Set levels at another spot…</option>
-          {remaining.map((s) => <option key={s.key} value={s.key}>{s.areaName}</option>)}
-        </select>
+        />
       ) : null}
 
       <ErrorNote message={error} />

@@ -37,11 +37,14 @@ export async function loadSetupProgress(organizationId) {
   return { amounts, levels };
 }
 
-export async function listRecentActivity(organizationId, limit = 8, offset = 0) {
-  const { data, error } = await itemsure
+/** Newest audit events first; `entities` (audit table names) limits it to one kind of history. */
+export async function listRecentActivity(organizationId, limit = 8, offset = 0, entities = null) {
+  let query = itemsure
     .from('audit_events')
     .select('id, action, metadata, created_at')
-    .eq('organization_id', organizationId)
+    .eq('organization_id', organizationId);
+  if (entities?.length) query = query.or(entities.map((e) => `action.like.${e}.*`).join(','));
+  const { data, error } = await query
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
     .range(offset, offset + limit - 1);

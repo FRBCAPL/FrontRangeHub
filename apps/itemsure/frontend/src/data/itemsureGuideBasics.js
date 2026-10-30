@@ -4,6 +4,22 @@
  */
 export const GUIDE_BASICS = [
   {
+    id: 'business-sites-spots',
+    title: 'Business, sites, and spots',
+    summary: 'The three levels, and which one to add.',
+    paragraphs: [
+      'Business: your company account. It has its own sites, items, team, and stock. Most people only ever need one.',
+      'Site: a place your business runs, with its own address, like a bar, a store, a warehouse, or a delivery van.',
+      'Spot: a place inside a site where stock sits, like a back bar shelf, a walk-in cooler, or a storage room.',
+      'A business holds sites, and a site holds spots. Opening a second bar? Add a site, not a business.',
+    ],
+    tips: [
+      'Only create a separate business for a company with its own books and its own team.',
+      'If you have more than one business, tap the business name at the top of any page to switch.',
+      'The owner can archive a business in Settings \u2192 Business. It is hidden for everyone on its team, but nothing is deleted. Restore it from the same place any time.',
+    ],
+  },
+  {
     id: 'getting-started',
     title: 'Getting started',
     summary: 'What ItemSure does and the order to set things up.',
@@ -14,9 +30,9 @@ export const GUIDE_BASICS = [
     ],
     steps: [
       'Set up your business. You become its owner.',
-      'Add a location (for example a store, a warehouse, or a van). Spots inside it, like "Back room" or "Walk-in cooler", are optional.',
+      'Add a site (for example a bar, a store, a warehouse, or a van). Spots inside it, like "Back room" or "Walk-in cooler", are optional.',
       'Add your items.',
-      'Open each item and pick "Set an amount at another place" to say where it is and how many you have.',
+      'Open each item and pick "Set an amount somewhere else" to say where it is and how many you have.',
       'On the item page, choose "Set levels": "Warn me at" (when to warn you) and "Fill up to" (how full to restock).',
       'Check Home and the Shopping list to see what needs attention.',
     ],
@@ -27,24 +43,24 @@ export const GUIDE_BASICS = [
     summary: 'The main menu, and what is under More.',
     paragraphs: [
       'The main menu holds the four things most people use: Home, Inventory, Count, and Shopping list. On a phone it sits along the bottom of the screen; on a bigger screen it is on the left.',
-      'Everything else is under More: Running low, Warning levels (for many items at once), Stock by location, Locations, History, Settings, this Help page, and Coming next.',
+      'Everything else is under More: Running low, Warning levels (for many items at once), Stock by site, Sites, History, Settings, this Help page, and Coming next.',
       'Some pages only appear if your role allows them. If you expect to see something and it is missing, ask the owner of your business.',
     ],
   },
   {
     id: 'locations',
-    title: 'Locations and spots',
+    title: 'Sites and spots',
     summary: 'Where your stock lives.',
     paragraphs: [
-      'A location is a physical site, like a shop, a warehouse, or a vehicle. A spot is a place inside a location, like a shelf, a cooler, or a back room.',
-      'Spots are optional. If a location is small, keep everything at the location itself.',
+      'Your business is the company. A site is one of its physical places with an address, like a bar, a shop, a warehouse, or a vehicle. A spot is a place inside a site, like a shelf, a cooler, or a back room.',
+      'Spots are optional. If a site is small, keep everything at the site itself.',
     ],
     steps: [
-      'Open More, then Locations.',
-      'Choose Add location and give it a name.',
-      'On the location card, add any spots you want to count or stock separately.',
+      'Open More, then Sites.',
+      'Choose Add site and give it a name.',
+      'On the site card, add any spots you want to count or stock separately.',
     ],
-    tips: ['Archiving a location hides it without deleting its history.'],
+    tips: ['Archiving a site hides it without deleting its history.', 'A new bar or store you run belongs here as a site. Only create a separate business for a company with its own books.'],
   },
   {
     id: 'items',
@@ -59,7 +75,7 @@ export const GUIDE_BASICS = [
       'Enter the name and pick what it is counted in.',
       'Optionally add a SKU, barcode, category, and description.',
       'Save. The item\'s own page opens.',
-      'Pick "Set an amount at another place" to say where it is and how many.',
+      'Pick "Set an amount somewhere else" to say where it is and how many.',
     ],
     tips: [
       'The item page shows how many you have at each place. From there you can set the amount, add a delivery, take some out, set warning levels, and see its history.',
@@ -67,7 +83,7 @@ export const GUIDE_BASICS = [
       'Tap a category button to see the items in it. Tap it again to close it. "All items" shows everything.',
       'Categories can have subcategories, like Rum inside Liquor. Tap Liquor to see everything in it, then tap Rum to narrow it down. Use "+ Sub in Liquor" to add one.',
       'Use the search box to find items by name, SKU, barcode, or category.',
-      'Use the location filter to see only the items at one location.',
+      'Use the site filter to see only the items at one site.',
       'A place with nothing in it and no warning levels disappears on its own. An empty place with levels has a "Remove place" button.',
       'After a change, tap Undo on the bar at the bottom if you made a mistake.',
       'After about a week of history, the item page shows how much you use and when it runs out. The levels window then suggests "Warn me at" and "Fill up to" numbers; tap "Use these" to fill them in.',
@@ -96,14 +112,14 @@ export const GUIDE_BASICS = [
   {
     id: 'counting',
     title: 'Counting',
-    summary: 'Count everything at a location in one go.',
+    summary: 'Count everything at a site in one go.',
     paragraphs: [
       'For one item, the item page is quicker: just choose Set amount. Use Count when you want to walk around and count everything at once.',
       'Counts are "blind": the person counting does not see the expected number, so they count what is actually there. Amounts do not change until someone approves the count.',
     ],
     steps: [
       'Open Count and choose Start count.',
-      'Pick a location, then choose the whole location or one spot.',
+      'Pick a site, then choose the whole site or one spot.',
       'Enter what you see for each item. Use the + and \u2212 buttons or type a number. Your entries save as you go.',
       'Leave an item blank if you did not count it. Blank is not the same as zero.',
       'When you are done, choose Review, check your numbers, then choose Submit count.',

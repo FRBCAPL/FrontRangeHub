@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { cardTone, categoryHue, itemInitials } from '../../utils/itemsureItemLook.js';
-import { StockAmount as Amount, StockBar } from './ItemsureStockBits.jsx';
+import { StockAmount as Amount, StockBar, SupplierLine } from './ItemsureStockBits.jsx';
 
 /**
  * One catalog item as a card: name, on hand vs par, a status bar, and where it is. Tap the card to open it.
  * `onCount` (only while a count is open) shows "Add to count", or a "✓ Counted" button that reopens it once counted.
  */
-export default function ItemsureItemRow({ item, summary, keptAt, canManage, onEdit, onCount, counted }) {
+export default function ItemsureItemRow({ item, summary, keptAt, supplier, canManage, onEdit, onCount, counted }) {
   const tone = cardTone(summary);
   const hue = categoryHue(item.category_id);
   return (
@@ -27,6 +27,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, canManage, onEd
           <div className="isu-stockcard-title">
             <Link to={`${ITEMSURE_PATH}/items/${item.id}`} className="isu-stockcard-link">{item.name}</Link>
             {!item.is_active ? <span className="isu-badge">Archived</span> : null}
+            {supplier ? <SupplierLine supplier={supplier} /> : null}
           </div>
           <Amount summary={summary} unitName={item.unitName} />
         </div>

@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { createLocation, updateLocation } from '../../services/itemsureLocationService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { TIMEZONES } from '../../data/itemsureConstants.js';
+import { site, SITE } from '../../data/itemsureTerms.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
+import ItemsureLevelsExplainer from './ItemsureLevelsExplainer.jsx';
 
 const EMPTY = { name: '', address_line1: '', address_line2: '', city: '', region: '', postal_code: '', country: '' };
 
@@ -33,7 +35,8 @@ export default function ItemsureLocationForm({ organizationId, location, onSaved
   return (
     <form onSubmit={submit} noValidate>
       <ErrorNote message={error} />
-      <Field label="Location name">
+      {location ? null : <ItemsureLevelsExplainer focus="site" />}
+      <Field label={`${SITE} name`}>
         <input value={form.name} onChange={set('name')} maxLength={120} />
       </Field>
       <Field label="Street address">
@@ -64,7 +67,7 @@ export default function ItemsureLocationForm({ organizationId, location, onSaved
         </select>
       </Field>
       <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy}>
-        {busy ? 'Saving…' : location ? 'Save changes' : 'Add location'}
+        {busy ? 'Saving…' : location ? 'Save changes' : `Add ${site}`}
       </button>
     </form>
   );

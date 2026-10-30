@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { site, SITES } from '../../data/itemsureTerms.js';
 import ItemsureNavMore from './ItemsureNavMore.jsx';
 
 /** Everyday pages, always visible. */
@@ -15,8 +16,9 @@ const MAIN = [
 const MORE = [
   { to: `${ITEMSURE_PATH}/low-stock`, label: 'Running low', icon: '\u26A0', permission: 'inventory.view' },
   { to: `${ITEMSURE_PATH}/levels`, label: 'Warning levels', icon: '\u2195', permission: 'inventory.view' },
-  { to: `${ITEMSURE_PATH}/stock`, label: 'Stock by location', icon: '\u25A4', permission: 'inventory.view' },
-  { to: `${ITEMSURE_PATH}/locations`, label: 'Locations', icon: '\u25A6' },
+  { to: `${ITEMSURE_PATH}/stock`, label: `Stock by ${site}`, icon: '\u25A4', permission: 'inventory.view' },
+  { to: `${ITEMSURE_PATH}/locations`, label: SITES, icon: '\u25A6' },
+  { to: `${ITEMSURE_PATH}/suppliers`, label: 'Suppliers', icon: '\u26DF' },
   { to: `${ITEMSURE_PATH}/activity`, label: 'History', icon: '\u25F7', permission: 'audit.read' },
   { to: `${ITEMSURE_PATH}/settings`, label: 'Settings', icon: '\u2699' },
   { to: `${ITEMSURE_PATH}/help`, label: 'Help', icon: '?' },

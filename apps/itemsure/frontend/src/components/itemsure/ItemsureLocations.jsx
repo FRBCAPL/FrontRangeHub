@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { listLocations, setLocationActive, setStorageAreaActive } from '../../services/itemsureLocationService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import { site, sites, SITES } from '../../data/itemsureTerms.js';
 import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureLocationCard from './ItemsureLocationCard.jsx';
 import ItemsureLocationForm from './ItemsureLocationForm.jsx';
 import ItemsureStorageAreaForm from './ItemsureStorageAreaForm.jsx';
-
+import ItemsureLevelsExplainer from './ItemsureLevelsExplainer.jsx';
 export default function ItemsureLocations() {
   const { organization, features, can } = useItemsureWorkspace();
   const [locations, setLocations] = useState(null);
@@ -55,20 +56,21 @@ export default function ItemsureLocations() {
   return (
     <div className="isu-page">
       <PageHead
-        title="Locations"
-        description="Your sites (like a store, a warehouse, or a van) and any spots inside them."
+        title={SITES}
+        description={`Your ${sites} (like a bar, a store, a warehouse, or a van) and any spots inside them.`}
         action={canManageLocations ? (
-          <button type="button" className="isu-btn isu-btn--primary" onClick={() => setAdding(true)}>Add location</button>
+          <button type="button" className="isu-btn isu-btn--primary" onClick={() => setAdding(true)}>Add {site}</button>
         ) : null}
       />
+      <ItemsureLevelsExplainer focus="site" />
       <ErrorNote message={error} />
 
       {locations === null ? <p className="isu-muted">Loading…</p> : null}
       {locations?.length === 0 ? (
         <div className="isu-card isu-empty">
-          <h2>No locations yet</h2>
+          <h2>No {sites} yet</h2>
           <p className="isu-muted">
-            {canManageLocations ? 'Add your first site to start organizing storage.' : 'No locations are shared with you yet.'}
+            {canManageLocations ? `Add your first ${site} to start organizing storage.` : `No ${sites} are shared with you yet.`}
           </p>
         </div>
       ) : null}
@@ -91,11 +93,11 @@ export default function ItemsureLocations() {
         ))}
       </div>
 
-      <Modal open={adding} title="Add location" onClose={closeAdding}>
+      <Modal open={adding} title={`Add ${site}`} onClose={closeAdding}>
         <ItemsureLocationForm organizationId={organization.id} onSaved={savedLocation} />
       </Modal>
 
-      <Modal open={Boolean(editing)} title={editing ? `Edit ${editing.name}` : 'Edit location'} onClose={closeAdding}>
+      <Modal open={Boolean(editing)} title={editing ? `Edit ${editing.name}` : `Edit ${site}`} onClose={closeAdding}>
         {editing ? (
           <ItemsureLocationForm key={editing.id} organizationId={organization.id} location={editing} onSaved={savedLocation} />
         ) : null}

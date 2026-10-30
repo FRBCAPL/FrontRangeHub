@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { loadDashboardCounts, loadSetupProgress } from '../../services/itemsureActivityService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { sites, SITES } from '../../data/itemsureTerms.js';
 import { onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { PageHead } from './ItemsureUi.jsx';
 import ItemsureGettingStarted from './ItemsureGettingStarted.jsx';
 import ItemsureToday from './ItemsureToday.jsx';
-
 function Stat({ label, value, to }) {
   return (
     <Link to={to} className="isu-stat">
@@ -43,12 +43,18 @@ export default function ItemsureDashboard() {
     <div className="isu-page">
       <PageHead title={organization.name} description={organization.roleName} />
 
+      {organization.roleCode === 'owner' && can('inventory.view') ? (
+        <Link to={`${ITEMSURE_PATH}/all-needs`} className="isu-btn isu-btn--primary isu-all-needs-btn">
+          See needs for all {sites}
+        </Link>
+      ) : null}
+
       {canSetUp ? <ItemsureGettingStarted organizationId={organization.id} counts={counts} progress={progress} /> : null}
 
       <ItemsureToday organizationId={organization.id} can={can} features={features} />
 
       <div className={`isu-stats${features.spots ? '' : ' is-two'}`}>
-        <Stat label="Locations" value={counts?.locations} to={`${ITEMSURE_PATH}/locations`} />
+        <Stat label={SITES} value={counts?.locations} to={`${ITEMSURE_PATH}/locations`} />
         {features.spots ? <Stat label="Spots" value={counts?.storageAreas} to={`${ITEMSURE_PATH}/locations`} /> : null}
         <Stat label="Items" value={counts?.items} to={`${ITEMSURE_PATH}/items?category=all`} />
       </div>

@@ -21,7 +21,7 @@ function Section({ title, step, steps, onEdit, children }) {
 }
 
 /** Step 5: a plain summary in sections, and anything that didn't save last time. */
-export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo, allowed, categories, problems, editing, steps, onEdit }) {
+export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo, allowed, categories, suppliers = [], problems, editing, steps, onEdit }) {
   const unit = unitInfo.unitSymbol || unitInfo.unitName;
   const category = categoryPath(categoryTree(categories), form.category_id) || 'No category';
   const section = { steps, onEdit };
@@ -47,6 +47,12 @@ export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo
           <dd>{unitInfo.unitName}</dd>
           <dt>Category</dt>
           <dd>{category}</dd>
+          {'supplier_id' in form ? (
+            <>
+              <dt>Buy from</dt>
+              <dd>{suppliers.find((s) => s.id === form.supplier_id)?.name || 'No supplier'}</dd>
+            </>
+          ) : null}
         </dl>
       </Section>
 
@@ -77,7 +83,7 @@ export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo
               ))}
             </ul>
           ) : (
-            <p className="isu-muted">No places yet.{editing ? '' : ' You can add them later from the item page.'}</p>
+            <p className="isu-muted">Not kept anywhere yet.{editing ? '' : ' You can add them later from the item page.'}</p>
           )}
           {entries.length && steps.includes('levels') ? (
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onEdit('levels')}>Change warning and restock levels</button>

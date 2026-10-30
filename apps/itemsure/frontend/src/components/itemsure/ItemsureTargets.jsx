@@ -7,6 +7,7 @@ import { findBalance, NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { categoryTree, inCategory } from '../../utils/itemsureCategories.js';
 import { slotsInUse } from '../../utils/itemsureItemStock.js';
 import { notifyInventoryChanged } from '../../utils/itemsureChanges.js';
+import { site, sites } from '../../data/itemsureTerms.js';
 import { ErrorNote, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureLevelsHelp from './ItemsureLevelsHelp.jsx';
 import ItemsureTargetFilters from './ItemsureTargetFilters.jsx';
@@ -109,7 +110,7 @@ export default function ItemsureTargets() {
 
   const visible = cards.slice(0, limit);
   const action = canEdit && locations.length > 1 ? (
-    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setCopying(true)}>Copy to another location</button>
+    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setCopying(true)}>Copy to another {site}</button>
   ) : null;
 
   return (
@@ -119,7 +120,7 @@ export default function ItemsureTargets() {
       {data ? <ErrorNote message={error} /> : null}
       {!data && error ? <LoadFailed message={error} onRetry={reload} /> : null}
       {!data && !error ? <p className="isu-muted">Loading…</p> : null}
-      {data && !locations.length ? <div className="isu-card isu-empty"><h2>No locations</h2><p className="isu-muted">Add a location first.</p></div> : null}
+      {data && !locations.length ? <div className="isu-card isu-empty"><h2>No {sites}</h2><p className="isu-muted">Add a {site} first.</p></div> : null}
 
       {data && locations.length ? (
         <>
@@ -175,7 +176,7 @@ export default function ItemsureTargets() {
         ) : null}
       </Modal>
 
-      <Modal open={copying} title="Copy levels to another location" onClose={() => setCopying(false)}>
+      <Modal open={copying} title={`Copy levels to another ${site}`} onClose={() => setCopying(false)}>
         {data && copying ? <ItemsureTargetCopy locations={locations} defaultFromId={filters.locationId} onDone={afterCopy} /> : null}
       </Modal>
     </div>

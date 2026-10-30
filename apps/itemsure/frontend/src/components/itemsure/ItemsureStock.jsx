@@ -4,6 +4,7 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useStockData from '../../hooks/useStockData.js';
 import { notifyInventoryChanged } from '../../utils/itemsureChanges.js';
 import { spotName } from '../../utils/itemsureLocationStock.js';
+import { site, sites, SITE } from '../../data/itemsureTerms.js';
 import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureStockBalances from './ItemsureStockBalances.jsx';
 import ItemsureStockActivity from './ItemsureStockActivity.jsx';
@@ -73,8 +74,8 @@ export default function ItemsureStock() {
   return (
     <div className="isu-page">
       <PageHead
-        title="Stock by location"
-        description={`How many of everything you have at one location. Tap a spot to add${canMove ? ', use, or move' : ' or use'}.`}
+        title={`Stock by ${site}`}
+        description={`How many of everything you have at one ${site}. Tap a spot to add${canMove ? ', use, or move' : ' or use'}.`}
         action={actions}
       />
       <ErrorNote message={error} />
@@ -82,15 +83,15 @@ export default function ItemsureStock() {
 
       {data && !locations.length ? (
         <div className="isu-card isu-empty">
-          <h2>No locations</h2>
-          <p className="isu-muted">Add a location, then count it to set up stock.</p>
+          <h2>No {sites}</h2>
+          <p className="isu-muted">Add a {site}, then count it to set up stock.</p>
         </div>
       ) : null}
 
       {data && locations.length ? (
         <>
           {locations.length > 1 ? (
-            <div className="isu-chip-row" role="group" aria-label="Location">
+            <div className="isu-chip-row" role="group" aria-label={SITE}>
               {locations.map((l) => (
                 <button key={l.id} type="button" className={`isu-chip isu-chip--choice${l.id === locationId ? ' is-selected' : ''}`} aria-pressed={l.id === locationId} onClick={() => setLocationId(l.id)}>
                   {l.name}

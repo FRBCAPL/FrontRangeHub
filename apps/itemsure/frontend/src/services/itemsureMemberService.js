@@ -32,6 +32,30 @@ export async function listMemberAccess(organizationId) {
   });
 }
 
+async function updateMembership(organizationId, userId, changes, scope) {
+  const updated = assertOk(
+    await itemsure
+      .from('organization_memberships')
+      .update(changes)
+      .eq('organization_id', organizationId)
+      .eq('user_id', userId)
+      .select('user_id'),
+    scope,
+  );
+  if (!updated?.length) throw new Error('You do not have permission to change this person.');
+}
+
+/** Needs members.manage. Only an owner can give or take away the owner role. */
+export function changeMemberRole(organizationId, userId, roleCode) {
+  if (!ROLE_LABELS[roleCode]) throw new Error('Choose a role.');
+  return updateMembership(organizationId, userId, { role_code: roleCode }, 'change role');
+}
+
+/** Remove = suspended: access ends now, history keeps their name. Let back in = active. */
+export function setMemberActive(organizationId, userId, active) {
+  return updateMembership(organizationId, userId, { status: active ? 'active' : 'suspended' }, active ? 'restore member' : 'remove member');
+}
+
 export async function updateMemberAccess(organizationId, userId, { scope, locationIds }, validLocationIds) {
   const locationScope = scope === 'restricted' ? 'restricted' : 'all';
   const allowed = new Set(validLocationIds);

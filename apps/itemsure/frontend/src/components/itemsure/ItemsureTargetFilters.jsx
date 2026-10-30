@@ -1,6 +1,7 @@
 import React from 'react';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { categoryOptions, categoryTree } from '../../utils/itemsureCategories.js';
+import { SITE } from '../../data/itemsureTerms.js';
 import { Field } from './ItemsureUi.jsx';
 
 /** Location, area, category, search, "missing levels", and "every spot" filters for the levels editor. */
@@ -11,7 +12,7 @@ export default function ItemsureTargetFilters({ filters, setFilters, locations, 
 
   return (
     <div className="isu-filters">
-      <Field label="Location">
+      <Field label={SITE}>
         <select value={filters.locationId} onChange={(e) => setFilters((f) => ({ ...f, locationId: e.target.value, areaId: 'all' }))}>
           {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
         </select>

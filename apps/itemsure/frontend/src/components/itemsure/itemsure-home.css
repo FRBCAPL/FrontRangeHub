@@ -115,6 +115,26 @@
   flex: 0 0 auto;
 }
 
+.isu-app .isu-all-needs-btn {
+  justify-self: stretch;
+  text-align: center;
+}
+
+.isu-app .isu-all-needs-business {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.isu-app .isu-all-needs-business .isu-restock-group h3 { margin: 6px 0 8px; }
+
+.isu-app h2.isu-all-needs-business-name {
+  margin: 8px 0 0;
+  font-size: 1.15rem;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--isu-line);
+}
+
 .isu-app .isu-stats.is-two {
   grid-template-columns: repeat(2, 1fr);
 }

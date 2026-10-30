@@ -57,7 +57,7 @@ function itemFields(form) {
 
   const categoryId = form.category_id || null;
 
-  return {
+  const fields = {
     name,
     description: optionalText(form.description, 'description', 4000) || '',
     sku: optionalText(form.sku, 'SKU', 64),
@@ -65,6 +65,9 @@ function itemFields(form) {
     base_unit_id: form.base_unit_id,
     category_id: categoryId,
   };
+  // Only present once the item-supplier database update is applied (see useSuppliers).
+  if ('supplier_id' in form) fields.supplier_id = form.supplier_id || null;
+  return fields;
 }
 
 /** New categories are saved on their own first (see ItemsureCategoryPicker); the item only links one. */

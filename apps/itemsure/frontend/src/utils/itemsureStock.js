@@ -1,5 +1,7 @@
 // A "slot" is where stock sits: a location plus an optional storage area.
 
+import { SITE } from '../data/itemsureTerms.js';
+
 export const NO_AREA_LABEL = 'Loose (no specific spot)';
 
 export function slotKey(locationId, storageAreaId) {
@@ -27,7 +29,7 @@ export function slotOptions(locations, { spots = true } = {}) {
 export function slotLabel(locations, locationId, storageAreaId) {
   const location = locations.find((l) => l.id === locationId);
   const area = storageAreaId ? location?.storageAreas.find((a) => a.id === storageAreaId) : null;
-  return [location?.name || 'Location', storageAreaId ? area?.name || 'Spot' : NO_AREA_LABEL].join(' \u00b7 ');
+  return [location?.name || SITE, storageAreaId ? area?.name || 'Spot' : NO_AREA_LABEL].join(' \u00b7 ');
 }
 
 /** The established balance for one item in one slot, or null when none exists yet. */

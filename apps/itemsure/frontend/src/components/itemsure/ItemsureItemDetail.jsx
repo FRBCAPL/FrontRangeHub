@@ -5,6 +5,7 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { SITE } from '../../data/itemsureTerms.js';
 import { addQuantity, itemSummary, visibleSlots } from '../../utils/itemsureItemStock.js';
 import { canonicalQuantity, displayQuantity } from '../../utils/itemsureQuantity.js';
 import { removeEmptyPlace, restorePlace } from '../../services/itemsurePlaceCleanup.js';
@@ -22,6 +23,8 @@ import ItemsureItemInfo from './ItemsureItemInfo.jsx';
 import ItemsureTabs from './ItemsureTabs.jsx';
 import ItemsureCountNotice from './ItemsureCountNotice.jsx';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
+import useSuppliers from '../../hooks/useSuppliers.js';
+import ItemsurePlacePicker from './ItemsurePlacePicker.jsx';
 import useItemUsage from '../../hooks/useItemUsage.js';
 import { suggestLevels } from '../../utils/itemsureUsage.js';
 
@@ -46,6 +49,7 @@ export default function ItemsureItemDetail() {
   const { stock } = useItemStock(organization.id, canView);
   const usage = useItemUsage(organization.id, itemId, canView && canHistory);
   const openCounts = useOpenCounts(organization.id, can('counts.view') || can('counts.edit'));
+  const suppliers = useSuppliers(organization.id);
   const allowed = {
     set: can('inventory.adjust') && can('counts.approve'),
     adjust: can('inventory.adjust'),
@@ -107,7 +111,7 @@ export default function ItemsureItemDetail() {
     if (slot.storageAreaId) return `${location?.name} \u00b7 ${slot.areaName}`;
     const hasSpots = (location?.storageAreas || []).some((a) => a.is_active);
     const sharesLocation = groups.some((g) => g.location.id === slot.locationId && g.slots.length > 1);
-    return hasSpots || sharesLocation ? `${location?.name} \u00b7 ${NO_AREA_LABEL}` : location?.name || 'Location';
+    return hasSpots || sharesLocation ? `${location?.name} \u00b7 ${NO_AREA_LABEL}` : location?.name || SITE;
   };
   const rowLabel = (slot, group) => (group.slots.length > 1 ? slot.areaName || NO_AREA_LABEL : labelFor(slot));
   const groupTotal = (group) =>
@@ -170,7 +174,7 @@ export default function ItemsureItemDetail() {
       />
 
       {canView ? (
-        <ItemsureItemSummary item={raw} summary={summary} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null}>
+        <ItemsureItemSummary item={raw} summary={summary} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null} supplier={suppliers.supplierFor(raw.id)}>
           <ItemsureItemCountButton organizationId={organization.id} item={raw} counts={openCounts} keptAt={groups} precision={item.precision} can={can} />
         </ItemsureItemSummary>
       ) : (
@@ -184,7 +188,7 @@ export default function ItemsureItemDetail() {
           {stock === null ? <p className="isu-muted">Loading amounts…</p> : null}
           {stock && !groups.length ? (
             <p className="isu-muted">
-              Not kept anywhere yet.{allowed.set ? ' Pick a place below to set how many are there.' : ''}
+              Not kept anywhere yet.{allowed.set ? ' Use the button below to pick where, and set how many are there.' : ''}
             </p>
           ) : null}
           <ErrorNote message={removeError} />
@@ -213,11 +217,8 @@ export default function ItemsureItemDetail() {
               </React.Fragment>
             ))}
           </ul>
-          {stock && allowed.set && otherPlaces.length ? (
-            <select className="isu-other-place" value="" onChange={(e) => openOther(e.target.value)} aria-label="Set an amount at another place">
-              <option value="">+ Set an amount at another place…</option>
-              {otherPlaces.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-            </select>
+          {stock && allowed.set ? (
+            <ItemsurePlacePicker label="Set an amount somewhere else" options={otherPlaces} onPick={openOther} />
           ) : null}
         </section>
       ) : null}

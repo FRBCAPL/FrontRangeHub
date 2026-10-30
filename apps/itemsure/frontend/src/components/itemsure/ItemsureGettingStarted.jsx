@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { site } from '../../data/itemsureTerms.js';
 
 const hiddenKey = (orgId) => `itemsure.gettingStarted.hidden.${orgId}`;
 
@@ -28,10 +29,10 @@ export default function ItemsureGettingStarted({ organizationId, counts, progres
   const steps = [
     {
       done: counts.locations > 0,
-      title: 'Add a location',
-      body: 'Where you keep stock, like a store, a warehouse, or a van.',
+      title: `Add a ${site}`,
+      body: 'Where you keep stock, like a bar, a store, a warehouse, or a van.',
       to: `${ITEMSURE_PATH}/locations`,
-      action: 'Add location',
+      action: `Add ${site}`,
     },
     {
       done: counts.items > 0,

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { listPackages } from '../../services/itemsurePackageService.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import useSuppliers from '../../hooks/useSuppliers.js';
 
 function Row({ label, children }) {
   return (
@@ -11,9 +12,11 @@ function Row({ label, children }) {
   );
 }
 
-/** The Details tab: the item's catalog facts. Room for vendor and cost later. */
+/** The Details tab: the item's catalog facts, including who it is bought from. */
 export default function ItemsureItemInfo({ organizationId, item, unitName, showPackaging, onEdit }) {
   const [packages, setPackages] = useState(null);
+  const suppliers = useSuppliers(organizationId);
+  const supplier = suppliers.supplierFor(item.id);
 
   useEffect(() => {
     if (!showPackaging) return undefined;
@@ -31,6 +34,17 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
       <dl>
         <Row label="Category">{item.categoryName}</Row>
         <Row label="Counted in">{unitName}</Row>
+        {suppliers.available ? (
+          <Row label="Buy from">
+            {supplier ? (
+              <>
+                {supplier.name}{supplier.is_active ? '' : ' (archived)'}
+                {supplier.phone ? <> · <a href={`tel:${supplier.phone.replace(/[^\d+]/g, '')}`}>{supplier.phone}</a></> : null}
+                {supplier.email ? <> · <a href={`mailto:${supplier.email}`}>{supplier.email}</a></> : null}
+              </>
+            ) : null}
+          </Row>
+        ) : null}
         <Row label="SKU">{item.sku}</Row>
         <Row label="Barcode">{item.barcode}</Row>
         <Row label="Description">{item.description}</Row>

@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { GUIDE_BASICS } from '../../data/itemsureGuideBasics.js';
 import { GUIDE_STOCK } from '../../data/itemsureGuideStock.js';
+import { GUIDE_TEAM } from '../../data/itemsureGuideTeam.js';
 import { PageHead } from './ItemsureUi.jsx';
 import ItemsureHelpSection from './ItemsureHelpSection.jsx';
 
-const SECTIONS = [...GUIDE_BASICS, ...GUIDE_STOCK];
+const isFaq = (s) => s.id === 'faq';
+const SECTIONS = [...GUIDE_BASICS, ...GUIDE_STOCK.filter((s) => !isFaq(s)), ...GUIDE_TEAM, ...GUIDE_STOCK.filter(isFaq)];
 
 /** The ItemSure user guide. `?topic=<id>` opens and scrolls to one topic. */
 export default function ItemsureHelp() {

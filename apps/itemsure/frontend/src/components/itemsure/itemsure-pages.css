@@ -186,4 +186,14 @@
 .isu-app .isu-member:first-child { border-top: none; }
 .isu-app .isu-member-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .isu-app .isu-member-edit { margin-top: 10px; }
+.isu-app .isu-member-role { margin-top: 10px; }
+.isu-app .isu-role-tabs { display: flex; gap: 8px; margin: 4px 0 10px; }
+.isu-app .isu-invites { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.isu-app .isu-invite { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--isu-line); }
+.isu-app .isu-invite p { margin: 2px 0 0; }
+.isu-app .isu-invite-banner { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.isu-app .isu-invite-card { border-color: var(--isu-pine); background: var(--isu-pine-soft); }
+.isu-app .isu-invite-card p { margin: 0 0 8px; }
+.isu-app .isu-member-role p { margin: 4px 0 8px; }
+.isu-app .isu-member.is-removed strong { color: var(--isu-muted); text-decoration: line-through; }
 .isu-app .isu-checks { display: flex; flex-direction: column; margin-bottom: 10px; }

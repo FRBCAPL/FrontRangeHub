@@ -18,8 +18,12 @@ import ItemsureActivity from './ItemsureActivity.jsx';
 import ItemsureLowStock from './ItemsureLowStock.jsx';
 import ItemsureRestock from './ItemsureRestock.jsx';
 import ItemsureTargets from './ItemsureTargets.jsx';
+import ItemsureAllNeeds from './ItemsureAllNeeds.jsx';
 import ItemsureHelp from './ItemsureHelp.jsx';
 import ItemsureComingNext from './ItemsureComingNext.jsx';
+import ItemsureSuppliers from './ItemsureSuppliers.jsx';
+import ItemsureBusinessBar from './ItemsureBusinessBar.jsx';
+import ItemsureInviteBanner from './ItemsureInviteBanner.jsx';
 import useStockAlerts from '../../hooks/useStockAlerts.js';
 
 /** Signed-in area. Pages that need an organization redirect to setup without one. */
@@ -41,15 +45,19 @@ export default function ItemsureWorkspace() {
   const needsOrg = (page) => (organization ? page : <Navigate to={`${ITEMSURE_PATH}/setup`} replace />);
   const needsCounts = (page) => needsOrg(can('counts.view') ? page : <Navigate to={ITEMSURE_PATH} replace />);
   const needsStock = (page) => needsOrg(can('inventory.view') ? page : <Navigate to={ITEMSURE_PATH} replace />);
+  const needsOwner = (page) => needsStock(organization?.roleCode === 'owner' ? page : <Navigate to={ITEMSURE_PATH} replace />);
   const needsAudit = (page) => needsOrg(can('audit.read') ? page : <Navigate to={ITEMSURE_PATH} replace />);
 
   return (
     <div className="isu-workspace">
       <ItemsureNav hasOrganization={Boolean(organization)} can={can} alerts={alerts} />
       <div className="isu-content">
+        <ItemsureBusinessBar />
+        <ItemsureInviteBanner />
         <Routes>
           <Route index element={needsOrg(<ItemsureDashboard />)} />
           <Route path="locations" element={needsOrg(<ItemsureLocations />)} />
+          <Route path="suppliers" element={needsOrg(<ItemsureSuppliers />)} />
           <Route path="items" element={needsOrg(<ItemsureItems />)} />
           <Route path="items/new" element={needsOrg(<ItemsureItemWizard />)} />
           <Route path="items/:itemId" element={needsOrg(<ItemsureItemDetail />)} />
@@ -62,8 +70,9 @@ export default function ItemsureWorkspace() {
           <Route path="low-stock" element={needsStock(<ItemsureLowStock />)} />
           <Route path="restock" element={needsStock(<ItemsureRestock />)} />
           <Route path="levels" element={needsStock(<ItemsureTargets />)} />
+          <Route path="all-needs" element={needsOwner(<ItemsureAllNeeds />)} />
           <Route path="activity" element={needsAudit(<ItemsureActivity />)} />
-          <Route path="settings" element={needsOrg(<ItemsureSettings />)} />
+          <Route path="settings/*" element={needsOrg(<ItemsureSettings />)} />
           <Route path="setup" element={<ItemsureSetup />} />
           <Route path="help" element={<ItemsureHelp />} />
           <Route path="coming-next" element={needsOrg(<ItemsureComingNext />)} />

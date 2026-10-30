@@ -4,6 +4,8 @@ import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { parseSlotKey, slotOptions } from '../../utils/itemsureStock.js';
 import ItemsureStepper from './ItemsureStepper.jsx';
 import ItemsureWizardIntro from './ItemsureWizardIntro.jsx';
+import ItemsurePlacePicker from './ItemsurePlacePicker.jsx';
+import { site, SITES } from '../../data/itemsureTerms.js';
 
 /** Step 2: the places it's kept, and how many are on hand at each right now. */
 export default function ItemsureWizardWhere({ entries, setEntries, labelFor, unitInfo, allowed, features, locations }) {
@@ -70,16 +72,11 @@ export default function ItemsureWizardWhere({ entries, setEntries, labelFor, uni
           ))}
         </ul>
       ) : (
-        <p className="isu-muted">No places yet.</p>
+        <p className="isu-muted">Not kept anywhere yet.</p>
       )}
 
-      {options.length ? (
-        <select className="isu-other-place" value="" onChange={(ev) => add(ev.target.value)} aria-label="Add a place">
-          <option value="">+ Add a place…</option>
-          {options.map((o) => <option key={o.key} value={o.key}>{o.label}</option>)}
-        </select>
-      ) : null}
-      {!locations.length ? <p className="isu-muted isu-small">Add a location first (More → Locations).</p> : null}
+      <ItemsurePlacePicker label="Add where it's kept" options={options} onPick={add} />
+      {!locations.length ? <p className="isu-muted isu-small">Add a {site} first (More → {SITES}).</p> : null}
     </div>
   );
 }

@@ -1,66 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { listMemberAccess, updateMemberAccess } from '../../services/itemsureMemberService.js';
+import { changeMemberRole, listMemberAccess, setMemberActive, updateMemberAccess } from '../../services/itemsureMemberService.js';
 import { listLocations } from '../../services/itemsureLocationService.js';
-import useItemsureAction from '../../hooks/useItemsureAction.js';
+import { Link } from 'react-router-dom';
+import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
+import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { site, sites } from '../../data/itemsureTerms.js';
 import { Card, ErrorNote } from './ItemsureUi.jsx';
-
-function MemberRow({ member, locations, canManage, isSelf, onSave }) {
-  const [scope, setScope] = useState(member.locationScope);
-  const [chosen, setChosen] = useState(member.locationIds);
-  const { busy, error, run } = useItemsureAction();
-  const editable = canManage && !isSelf && member.roleCode !== 'owner';
-
-  const toggle = (id) => setChosen((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
-
-  return (
-    <li className="isu-member">
-      <div className="isu-member-head">
-        <div>
-          <strong>{member.name}</strong>
-          <p className="isu-muted isu-small">{member.email} · {member.roleName}{member.status !== 'active' ? ` · ${member.status}` : ''}</p>
-        </div>
-        {!editable ? (
-          <span className="isu-badge">{member.locationScope === 'all' ? 'All locations' : `${member.locationIds.length} location(s)`}</span>
-        ) : null}
-      </div>
-      {editable ? (
-        <div className="isu-member-edit">
-          <ErrorNote message={error} />
-          <label className="isu-field">
-            <span>Location access</span>
-            <select value={scope} onChange={(e) => setScope(e.target.value)}>
-              <option value="all">All locations</option>
-              <option value="restricted">Only selected locations</option>
-            </select>
-          </label>
-          {scope === 'restricted' ? (
-            <div className="isu-checks">
-              {locations.map((l) => (
-                <label key={l.id} className="isu-check">
-                  <input type="checkbox" checked={chosen.includes(l.id)} onChange={() => toggle(l.id)} /> {l.name}
-                </label>
-              ))}
-              {locations.length === 0 ? <p className="isu-muted isu-small">Add a location first.</p> : null}
-            </div>
-          ) : null}
-          <button
-            type="button"
-            className="isu-btn isu-btn--ghost isu-btn--sm"
-            disabled={busy}
-            onClick={() => run(() => onSave(member.userId, { scope, locationIds: chosen }))}
-          >
-            {busy ? 'Saving…' : 'Save access'}
-          </button>
-        </div>
-      ) : null}
-    </li>
-  );
-}
+import ItemsureMemberRow from './ItemsureMemberRow.jsx';
 
 export default function ItemsureMemberAccess({ organizationId, currentUserId, canManage }) {
+  const { organization } = useItemsureWorkspace();
   const [members, setMembers] = useState(null);
   const [locations, setLocations] = useState([]);
   const [error, setError] = useState('');
+  const viewerIsOwner = organization?.roleCode === 'owner';
 
   const refresh = useCallback(async () => {
     try {
@@ -77,25 +30,43 @@ export default function ItemsureMemberAccess({ organizationId, currentUserId, ca
     refresh();
   }, [refresh]);
 
-  const save = async (userId, access) => {
+  const saveAccess = async (userId, access) => {
     await updateMemberAccess(organizationId, userId, access, locations.map((l) => l.id));
     await refresh();
   };
+  const saveRole = async (userId, roleCode) => {
+    await changeMemberRole(organizationId, userId, roleCode);
+    await refresh();
+  };
+  const saveActive = async (userId, active) => {
+    await setMemberActive(organizationId, userId, active);
+    await refresh();
+  };
+
+  const sorted = (members || []).slice().sort((a, b) => (a.status === 'suspended') - (b.status === 'suspended'));
 
   return (
-    <Card title="People and location access">
-      <p className="isu-muted isu-small">Inviting people and changing roles are not available yet.</p>
+    <Card title={`People and ${site} access`}>
+      <p className="isu-muted isu-small">
+        {canManage
+          ? `Change what each person can do, which ${sites} they see, or remove them.`
+          : 'Only the owner or an administrator can change people.'}{' '}
+        <Link to={`${ITEMSURE_PATH}/help?topic=roles`} className="isu-link">How roles work</Link>
+      </p>
       <ErrorNote message={error} />
       {members === null ? <p className="isu-muted">Loading…</p> : null}
       <ul className="isu-members">
-        {(members || []).map((m) => (
-          <MemberRow
-            key={`${m.userId}:${m.locationScope}:${m.locationIds.join(',')}`}
+        {sorted.map((m) => (
+          <ItemsureMemberRow
+            key={`${m.userId}:${m.roleCode}:${m.status}:${m.locationScope}:${m.locationIds.join(',')}`}
             member={m}
             locations={locations}
             canManage={canManage}
             isSelf={m.userId === currentUserId}
-            onSave={save}
+            viewerIsOwner={viewerIsOwner}
+            onSave={saveAccess}
+            onRole={saveRole}
+            onActive={saveActive}
           />
         ))}
       </ul>

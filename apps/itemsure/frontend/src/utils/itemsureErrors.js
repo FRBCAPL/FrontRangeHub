@@ -13,6 +13,7 @@ export function readableDatabaseError(error) {
   if (error.code === '42P01' || /schema cache/i.test(message)) {
     return 'The ItemSure database is not ready. Apply the ItemSure migrations, then reload.';
   }
+  if (error.code === '42501' && /^(Only (an|the) owner|You cannot)/.test(message)) return message;
   if (error.code === '42501' || /row-level security|permission/i.test(message)) {
     return 'You do not have permission to do that.';
   }
