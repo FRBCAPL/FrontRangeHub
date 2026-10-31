@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useTargetsData from '../../hooks/useTargetsData.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
@@ -20,6 +20,9 @@ import ItemsureShoppingMoves from './ItemsureShoppingMoves.jsx';
 import { ErrorNote, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** `?show=low` or `?show=topoff` opens the list on that status (links from the Inventory headings). */
+const SHOW_STATUS = { low: 'low', topoff: 'below_par' };
 
 function EmptyState({ data }) {
   const hasPar = data.targets.some((t) => t.par_text !== null);
@@ -56,7 +59,8 @@ export default function ItemsureRestock() {
   const [recs, setRecs] = useState(null);
   const [plans, setPlans] = useState([]);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ locationId: '', categoryId: '', status: '', group: '' });
+  const [params] = useSearchParams();
+  const [filters, setFilters] = useState(() => ({ locationId: '', categoryId: '', status: SHOW_STATUS[params.get('show')] || '', group: '' }));
   const [action, setAction] = useState(null);
   const canTransfer = can('inventory.transfer');
   const showMoves = features.transfers;

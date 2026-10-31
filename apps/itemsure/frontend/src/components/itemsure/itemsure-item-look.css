@@ -98,13 +98,13 @@
   gap: 4px;
 }
 
-/* "Top Offs" label inside "Needs attention", with space above it after the running-low cards. */
+/* "Top Offs" label under "Running Low", with space above it after the running-low cards. */
 .isu-app .isu-item-part-title {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 0 0 6px;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -179,6 +179,40 @@
 
 .isu-app .isu-item-group--attention .isu-item-group-title {
   color: var(--isu-amber);
+}
+
+.isu-app .isu-item-group--attention.is-low .isu-item-group-title {
+  color: var(--isu-danger);
+}
+
+/* Running Low / Top Offs headings link to the Shopping list. */
+.isu-app a.isu-item-group-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-decoration: none;
+}
+
+.isu-app .isu-item-group-go {
+  margin-left: auto;
+  font-family: 'Outfit', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--isu-muted);
+}
+
+.isu-app a.isu-item-group-link:hover .isu-item-group-go,
+.isu-app a.isu-item-group-link:focus-visible .isu-item-group-go {
+  color: var(--isu-pine);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .isu-app .isu-item-group--good .isu-item-group-title {

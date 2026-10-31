@@ -34,7 +34,7 @@ export function fillPercent(total, par) {
 }
 
 export const ITEM_GROUPS = [
-  { key: 'attention', title: 'Needs attention' },
+  { key: 'attention', title: 'Running Low' },
   { key: 'good', title: 'All good' },
   { key: 'other', title: 'No warning levels yet' },
   { key: 'archived', title: 'Archived' },
@@ -44,7 +44,9 @@ export const ITEM_GROUPS = [
  * Splits items (already in order) into ITEM_GROUPS by how they look: running low or
  * needing topping up, fine, everything else, then archived. Empty groups are left out.
  * `toneFor(item)` is cardTone of the item's summary. Each group has `parts` ({ label?, items },
- * shown with a gap between): "Needs attention" is running low, then "Top Offs".
+ * shown with a gap between) and `count` for its heading. The first section is "Running Low"
+ * then a "Top Offs" part (needing topping up), or just "Top Offs" when nothing is running low.
+ * `show` ('low' | 'topoff') marks headings that link to the Shopping list on that status.
  */
 export function groupByStatus(items, toneFor) {
   const buckets = { attention: [], good: [], other: [], archived: [] };
@@ -60,13 +62,19 @@ export function groupByStatus(items, toneFor) {
     else buckets.other.push(item);
   }
   return ITEM_GROUPS
-    .map((g) => ({
-      ...g,
-      items: buckets[g.key],
-      parts: g.key === 'attention'
-        ? [{ items: danger }, { label: 'Top Offs', items: warn }].filter((p) => p.items.length)
-        : [{ items: buckets[g.key] }],
-    }))
+    .map((g) => {
+      const items = buckets[g.key];
+      if (g.key !== 'attention') return { ...g, items, count: items.length, parts: [{ items }] };
+      if (!danger.length) return { ...g, title: 'Top Offs', show: 'topoff', items, count: warn.length, parts: [{ items: warn }] };
+      return {
+        ...g,
+        items,
+        low: true,
+        show: 'low',
+        count: danger.length,
+        parts: [{ items: danger }, { label: 'Top Offs', show: 'topoff', items: warn }].filter((p) => p.items.length),
+      };
+    })
     .filter((g) => g.items.length);
 }
 
