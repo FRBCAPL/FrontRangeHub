@@ -1,0 +1,147 @@
+/* Category management: items and archiving under the edit form, moving items, order, archived list. */
+
+.isu-app .isu-catpanel-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.isu-app .isu-cattools {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--isu-line);
+}
+
+.isu-app .isu-cattools-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.isu-app .isu-cattools-row p,
+.isu-app .isu-cattools-confirm p { margin: 0; }
+
+.isu-app .isu-cattools-archive { justify-self: start; }
+
+.isu-app .isu-cattools-confirm {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--isu-danger-line);
+  border-radius: 10px;
+  background: var(--isu-danger-soft);
+}
+
+.isu-app .isu-cattools-actions,
+.isu-app .isu-catorder-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.isu-app .isu-catorder-actions { justify-content: space-between; }
+
+/* Move items */
+.isu-app .isu-catmove-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.isu-app .isu-catmove-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.isu-app .isu-catmove-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.isu-app .isu-catmove-item:has(input:checked) {
+  border-color: var(--isu-pine-line);
+  background: var(--isu-pine-soft);
+}
+
+.isu-app .isu-catmove-item input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--isu-pine-btn);
+}
+
+/* Order and archived lists */
+.isu-app .isu-catorder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.isu-app .isu-catorder-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+}
+
+.isu-app .isu-catorder-pos {
+  width: 22px;
+  text-align: right;
+  color: var(--isu-muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.isu-app .isu-catorder-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.isu-app .isu-catorder-btn {
+  width: 38px;
+  height: 36px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--isu-line);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--isu-ink);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.isu-app .isu-catorder-btn:hover:not(:disabled) {
+  border-color: var(--isu-pine);
+  color: var(--isu-pine);
+}
+
+.isu-app .isu-catorder-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}

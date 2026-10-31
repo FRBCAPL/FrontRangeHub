@@ -1,26 +1,32 @@
 import React, { useState } from 'react';
-import { createSupplier, updateSupplier } from '../../services/itemsureSupplierService.js';
+import { createSupplier, saveSupplierIcon, updateSupplier } from '../../services/itemsureSupplierService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import { SUPPLIER_ICONS } from '../../data/itemsureCategoryIcons.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
+import ItemsureIconPicker from './ItemsureIconPicker.jsx';
 
 const EMPTY = { name: '', contact_name: '', phone: '', email: '', website: '', account_number: '', notes: '' };
 
-/** Adds a supplier, or edits `supplier` when one is given. `onSaved(id)` gets the supplier's id. */
-export default function ItemsureSupplierForm({ organizationId, supplier, onSaved, onCancel }) {
+/**
+ * Adds a supplier, or edits `supplier` when one is given. `onSaved(id)` gets the supplier's id.
+ * The icon choice only shows once that database update is applied (`iconsAvailable`).
+ */
+export default function ItemsureSupplierForm({ organizationId, supplier, iconsAvailable = false, onSaved, onCancel }) {
   const [form, setForm] = useState(() => (supplier
     ? Object.fromEntries(Object.keys(EMPTY).map((k) => [k, supplier[k] || '']))
     : EMPTY));
+  const [icon, setIcon] = useState(supplier?.icon || '');
   const { busy, error, run } = useItemsureAction();
   const set = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }));
 
   const submit = async (event) => {
     event.preventDefault();
     let id = supplier?.id || null;
-    const save = supplier
-      ? () => updateSupplier(organizationId, supplier.id, form)
-      : async () => {
-          id = await createSupplier(organizationId, form);
-        };
+    const save = async () => {
+      if (supplier) await updateSupplier(organizationId, supplier.id, form);
+      else id = await createSupplier(organizationId, form);
+      if (iconsAvailable && icon !== (supplier?.icon || '')) await saveSupplierIcon(organizationId, id, icon);
+    };
     if (await run(save)) onSaved(id);
   };
 
@@ -30,6 +36,12 @@ export default function ItemsureSupplierForm({ organizationId, supplier, onSaved
       <Field label="Supplier name">
         <input value={form.name} onChange={set('name')} maxLength={120} placeholder="e.g. Southern Glazer's" />
       </Field>
+      {iconsAvailable ? (
+        <>
+          <ItemsureIconPicker value={icon} onChange={setIcon} icons={SUPPLIER_ICONS} />
+          <p className="isu-hint">Shown with this supplier on the shopping list and on its items. Letters work too: search SY to use SY for Sysco.</p>
+        </>
+      ) : null}
       <div className="isu-grid-2">
         <Field label="Contact person">
           <input value={form.contact_name} onChange={set('contact_name')} maxLength={120} autoComplete="off" />

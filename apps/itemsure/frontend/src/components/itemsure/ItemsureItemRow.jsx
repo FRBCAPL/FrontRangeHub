@@ -6,6 +6,7 @@ import { cardTone, categoryHue, itemInitials } from '../../utils/itemsureItemLoo
 import { StockAmount as Amount, StockBar } from './ItemsureStockBits.jsx';
 import ItemsureItemMeta, { spotCount } from './ItemsureItemMeta.jsx';
 import useFitText from '../../hooks/useFitText.js';
+import { isLetterIcon } from '../../utils/itemsureIcons.js';
 
 /** On hand vs par in a pill coloured by status, with a check when it's fine. */
 function Pill({ summary, unitName, tone, hidden = false }) {
@@ -39,7 +40,8 @@ function CountButton({ item, counted, onCount }) {
  * The amount sits in a pill coloured by status; running low or needing topping up adds
  * the bar and words. The grey line shows the supplier when it needs ordering (or
  * `showSupplier`), where it is kept when split across spots, and "Also in" when `showAlsoIn`.
- * `compact` is a single line (name and amount) for items that are fine.
+ * `compact` is a single line (name and amount) for items that are fine, or whose topping up can wait.
+ * Needing topping up is a slim card: name and amount, then supplier and the status bar.
  * `icon` is the category's icon, shown instead of the initials.
  * `onCount` (only while a count is open) shows "Add to count", or a "✓ Counted" button that reopens it once counted.
  */
@@ -54,7 +56,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
 
   const badge = (
     <span
-      className={`isu-stockcard-badge${hue === null ? ' is-plain' : ''}${icon ? ' is-icon' : ''}`}
+      className={`isu-stockcard-badge${hue === null ? ' is-plain' : ''}${icon && !isLetterIcon(icon) ? ' is-icon' : ''}`}
       style={hue === null ? undefined : { '--badge-hue': hue }}
       title={item.categoryName || 'No category'}
       aria-hidden="true"
@@ -65,12 +67,31 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
 
   if (compact) {
     return (
-      <li className={`isu-card isu-stockcard isu-stockcard--${tone} is-compact${item.is_active ? '' : ' is-archived'}`}>
+      <li className={`isu-card isu-stockcard isu-stockcard--${tone === 'warn' ? 'ok' : tone} is-compact${item.is_active ? '' : ' is-archived'}`}>
         {badge}
         <div className="isu-stockcard-line">
           <div className="isu-stockcard-name">{link}</div>
           <Pill summary={summary} unitName={item.unitName} tone={tone} />
           <CountButton item={item} counted={counted} onCount={onCount} />
+        </div>
+      </li>
+    );
+  }
+
+  if (tone === 'warn') {
+    return (
+      <li className={`isu-card isu-stockcard isu-stockcard--warn is-slim${item.is_active ? '' : ' is-archived'}`}>
+        {badge}
+        <div className="isu-stockcard-body">
+          <div className="isu-stockcard-line">
+            <div className="isu-stockcard-name">{link}</div>
+            <Pill summary={summary} unitName={item.unitName} tone={tone} />
+          </div>
+          <div className="isu-stockcard-slim-sub">
+            <ItemsureItemMeta supplier={supplier} />
+            <StockBar summary={summary} />
+            <CountButton item={item} counted={counted} onCount={onCount} />
+          </div>
         </div>
       </li>
     );

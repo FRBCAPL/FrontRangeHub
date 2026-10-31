@@ -95,7 +95,9 @@ export default function ItemsureItemWizard() {
   useEffect(() => {
     if (started.current || !catalog || (editing && !item) || !places.ready || !suppliers.ready || (canView && !stock)) return;
     started.current = true;
-    setForm(emptyForm(item, catalog.units, suppliers, catalog.extrasAvailable, params.get('supplier'), catalog.detailsAvailable && features.details));
+    const fresh = emptyForm(item, catalog.units, suppliers, catalog.extrasAvailable, params.get('supplier'), catalog.detailsAvailable && features.details);
+    const typedName = editing ? '' : (params.get('name') || '').trim();
+    setForm(typedName ? { ...fresh, name: typedName } : fresh);
     const sources = { places: places.placesFor(routeItemId) || [], balances: stock?.balances || [], targets: stock?.targets || [], locations: places.locations };
     setEntries(editing ? entriesFromGroups(visibleSlots(routeItemId, sources)) : []);
   }, [catalog, item, editing, places, suppliers, stock, canView, routeItemId, params, features.details]);

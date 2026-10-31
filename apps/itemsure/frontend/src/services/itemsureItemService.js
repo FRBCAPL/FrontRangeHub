@@ -20,8 +20,9 @@ export async function listCatalog(organizationId) {
       .order('name'),
     itemsure
       .from('inventory_categories')
-      .select('id, name, is_active, parent_category_id')
+      .select('id, name, is_active, parent_category_id, sort_order')
       .eq('organization_id', organizationId)
+      .order('sort_order')
       .order('name'),
     itemsure
       .from('units_of_measure')
@@ -53,13 +54,15 @@ export async function listCatalog(organizationId) {
   };
 }
 
-/** `parentId` makes it a subcategory ("Rum" inside "Liquor"). */
-export async function createCategory(organizationId, name, parentId = null) {
+const ARCHIVED_HINT = ' If you archived it, restore it from Browse/Edit Categories \u203a Archived.';
+
+/** `parentId` makes it a subcategory ("Rum" inside "Liquor"). `sortOrder` places it among its siblings. */
+export async function createCategory(organizationId, name, parentId = null, sortOrder = 0) {
   const clean = requiredText(name, 'category name', 80);
-  const row = { organization_id: organizationId, name: clean, parent_category_id: parentId || null };
+  const row = { organization_id: organizationId, name: clean, parent_category_id: parentId || null, sort_order: sortOrder };
   const result = await itemsure.from('inventory_categories').insert(row).select('id').single();
   if (result.error?.code === '23505') {
-    throw new Error(parentId ? `There is already a "${clean}" in that category.` : `There is already a category called "${clean}".`);
+    throw new Error((parentId ? `There is already a "${clean}" in that category.` : `There is already a category called "${clean}".`) + ARCHIVED_HINT);
   }
   return assertOk(result, 'create category').id;
 }

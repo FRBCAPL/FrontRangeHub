@@ -97,6 +97,42 @@ export function categoryIcon(tree, id) {
   return (p && tree.byId.get(p)?.icon) || '';
 }
 
+const ORDER_STEP = 10;
+
+/** The sort_order values to save for siblings in their new order: only the ones that change. */
+export function orderChanges(ordered) {
+  return ordered
+    .map((c, index) => ({ id: c.id, sort_order: (index + 1) * ORDER_STEP, before: c.sort_order ?? 0 }))
+    .filter((c) => c.sort_order !== c.before)
+    .map(({ id, sort_order }) => ({ id, sort_order }));
+}
+
+/** Where a new category goes among its siblings: last once someone has set an order, otherwise 0 (A–Z). */
+export function nextSortOrder(siblings) {
+  const highest = Math.max(0, ...siblings.map((c) => c.sort_order ?? 0));
+  return highest > 0 ? highest + ORDER_STEP : 0;
+}
+
+/** Moves one entry up (-1) or down (+1) in a list, returning a new list. */
+export function moveInList(list, index, direction) {
+  const target = index + direction;
+  if (target < 0 || target >= list.length) return list;
+  const next = [...list];
+  [next[index], next[target]] = [next[target], next[index]];
+  return next;
+}
+
+/**
+ * What stops a category being archived: its active subcategories and the active items
+ * whose main category it is. { subs, items }; archive only when both are empty.
+ */
+export function archiveBlockers(tree, items, categoryId) {
+  return {
+    subs: tree.childrenOf(categoryId),
+    items: items.filter((i) => i.is_active && i.category_id === categoryId),
+  };
+}
+
 /** The main category a chosen chip sits in (itself for a main one), or null. */
 export function rootOf(tree, selected) {
   if (!tree.byId.has(selected)) return null;

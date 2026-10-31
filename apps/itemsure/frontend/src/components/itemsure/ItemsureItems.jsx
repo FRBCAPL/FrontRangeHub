@@ -10,11 +10,11 @@ import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, sites, SITE } from '../../data/itemsureTerms.js';
 import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureItemRow from './ItemsureItemRow.jsx';
-import ItemsureCategoryForm from './ItemsureCategoryForm.jsx';
+import ItemsureCategoryManager from './ItemsureCategoryManager.jsx';
 import ItemsureCategoryChips from './ItemsureCategoryChips.jsx';
 import ItemsureItemGroups from './ItemsureItemGroups.jsx';
 import { categoryIcon, categoryTree, extraCategoryNames, foundIn } from '../../utils/itemsureCategories.js';
-import { cardTone, groupByStatus } from '../../utils/itemsureItemLook.js';
+import { groupByStatus, listTone } from '../../utils/itemsureItemLook.js';
 import { detailsLine } from '../../utils/itemsureItemDetails.js';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
@@ -37,9 +37,7 @@ export default function ItemsureItems() {
       else next.delete('category');
       return next;
     }, { replace: true });
-  const [modal, setModal] = useState('');
-  const [newCategoryParent, setNewCategoryParent] = useState('');
-  const [editingCategory, setEditingCategory] = useState(null);
+  const [categoryRequest, setCategoryRequest] = useState(null);
   const { error, setError } = useItemsureAction();
   const places = useItemPlaces(organization.id);
   const { stock } = useItemStock(organization.id, can('inventory.view'));
@@ -92,7 +90,7 @@ export default function ItemsureItems() {
       // Before a category is picked, only what needs attention.
       if (!stock) return [];
       const summary = (item) => itemSummary(item.id, { ...stock, locations: places.locations });
-      const attention = filteredItems.filter((item) => ['danger', 'warn'].includes(cardTone(summary(item))));
+      const attention = filteredItems.filter((item) => ['danger', 'warn'].includes(listTone(summary(item))));
       return sortByAttention(attention, summary);
     }
     const matches = filteredItems.filter((item) => {
@@ -106,23 +104,17 @@ export default function ItemsureItems() {
     return sortByAttention(matches, (item) => itemSummary(item.id, { ...stock, locations: places.locations }));
   }, [browsing, tree, filteredItems, category, needle, stock, places.locations, suppliers, showDetails]);
 
-  const closeModal = useCallback(() => setModal(''), []);
-  const categorySaved = async () => {
-    closeModal();
-    await refresh();
-  };
+  const archivedCategories = (catalog?.categories || []).length - activeCategories.length;
   const summaryFor = (itemId) => (stock ? itemSummary(itemId, { ...stock, locations: places.locations }) : null);
   const sourcesFor = (itemId) => ({ ...(stock || {}), places: places.placesFor(itemId) || [], locations: places.locations });
   const whereFor = (itemId) => whereAmounts(visibleSlots(itemId, sourcesFor(itemId)));
+  const addItem = (name = '') => navigate(`${ITEMSURE_PATH}/items/new${name ? `?name=${encodeURIComponent(name)}` : ''}`);
 
   return (
     <div className="isu-page">
       <PageHead
         title="Inventory"
         description="Everything you stock. Tap an item to see how many you have and change it."
-        action={canManageItems ? (
-          <button type="button" className="isu-btn isu-btn--primary" onClick={() => navigate(`${ITEMSURE_PATH}/items/new`)}>Add item</button>
-        ) : null}
       />
       <ErrorNote message={error} />
 
@@ -132,28 +124,29 @@ export default function ItemsureItems() {
           items={filteredItems}
           selected={category}
           onSelect={chooseCategory}
-          onAdd={canManageCategories ? (parentId) => {
-            setEditingCategory(null);
-            setNewCategoryParent(parentId || '');
-            setModal('category');
-          } : null}
-          onEdit={canManageCategories ? (cat) => {
-            setEditingCategory(cat);
-            setModal('category');
-          } : null}
+          onAdd={canManageCategories ? (parentId) => setCategoryRequest({ kind: 'add', parentId: parentId || '' }) : null}
+          onEdit={canManageCategories ? (cat) => setCategoryRequest({ kind: 'edit', category: cat }) : null}
+          onReorder={canManageCategories ? (parentId) => setCategoryRequest({ kind: 'order', parentId: parentId || '' }) : null}
+          archivedCount={canManageCategories ? archivedCategories : 0}
+          onShowArchived={() => setCategoryRequest({ kind: 'archived' })}
         />
       ) : null}
 
       <div className="isu-toolbar">
-        <input
-          type="search"
-          className="isu-search"
-          placeholder={showDetails ? 'Search name, brand, SKU, barcode, category, or supplier' : 'Search name, SKU, barcode, category, or supplier'}
-          aria-label="Search items"
-          autoFocus={params.get('find') === '1'}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <div className="isu-search-add">
+          <input
+            type="search"
+            className="isu-search"
+            placeholder={showDetails ? 'Search name, brand, SKU, barcode, category, or supplier' : 'Search name, SKU, barcode, category, or supplier'}
+            aria-label="Search items"
+            autoFocus={params.get('find') === '1'}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          {canManageItems ? (
+            <button type="button" className="isu-btn isu-btn--primary isu-search-add-btn" onClick={() => addItem()} >Add Item</button>
+          ) : null}
+        </div>
         {places.ready && activeLocations.length > 1 ? (
           <select className="isu-item-filter" aria-label={SITE} value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
             <option value="">All {sites}</option>
@@ -170,11 +163,16 @@ export default function ItemsureItems() {
         <div className="isu-card isu-empty">
           <h2>{catalog.items.length ? 'No matching items' : 'No items yet'}</h2>
           <p className="isu-muted">{catalog.items.length ? `Try a different category, search, or ${site}.` : canManageItems ? 'Add your first item to start the catalog.' : 'Nothing has been added yet.'}</p>
+          {canManageItems && (needle || !catalog.items.length) ? (
+            <button type="button" className="isu-btn isu-btn--primary" onClick={() => addItem(query.trim())}>
+              {needle ? `+ Add \u201c${query.trim()}\u201d as a new item` : '+ Add your first item'}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
       <ItemsureItemGroups
-        groups={groupByStatus(visibleItems, (item) => cardTone(summaryFor(item.id)))}
+        groups={groupByStatus(visibleItems, (item) => listTone(summaryFor(item.id)))}
         titled={browsing}
         renderItem={(item, compact) => (
           <ItemsureItemRow
@@ -232,23 +230,14 @@ export default function ItemsureItems() {
       </Modal>
       <ItemsureUndoBar done={counted} onClose={closeCounted} />
 
-      <Modal
-        open={modal === 'category'}
-        title={editingCategory ? `Edit ${editingCategory.name}` : newCategoryParent ? 'Add subcategory' : 'Add category'}
-        onClose={closeModal}
-      >
-        {modal === 'category' ? (
-          <ItemsureCategoryForm
-            key={editingCategory?.id || 'new'}
-            organizationId={organization.id}
-            categories={activeCategories}
-            parentId={newCategoryParent}
-            category={editingCategory}
-            iconsAvailable={Boolean(catalog?.iconsAvailable)}
-            onSaved={categorySaved}
-          />
-        ) : null}
-      </Modal>
+      <ItemsureCategoryManager
+        organizationId={organization.id}
+        catalog={catalog}
+        request={categoryRequest}
+        onRequest={setCategoryRequest}
+        onChanged={refresh}
+        canMoveItems={canManageItems}
+      />
     </div>
   );
 }

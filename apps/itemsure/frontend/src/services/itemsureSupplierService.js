@@ -7,11 +7,37 @@ const COLUMNS = 'id, name, contact_name, phone, email, website, account_number, 
 /** True when the suppliers table has not been added to the database yet. */
 const tableMissing = (error) => error?.code === '42P01' || error?.code === 'PGRST205' || /suppliers.*(schema cache|does not exist)/i.test(error?.message || '');
 
-/** { suppliers, missing }: missing is true until the suppliers database update is applied. */
+/**
+ * Each supplier's icon: Map(supplierId -> icon), or null until the supplier icon database
+ * update is applied. Kept apart so suppliers still load without it.
+ */
+async function listSupplierIcons(organizationId) {
+  const { data, error } = await itemsure.from('suppliers').select('id, icon').eq('organization_id', organizationId);
+  if (error) return null;
+  return new Map((data || []).filter((row) => row.icon).map((row) => [row.id, row.icon]));
+}
+
+/**
+ * { suppliers, missing, iconsAvailable }: missing is true until the suppliers database update
+ * is applied; each supplier has `icon` ('' when none or not available yet).
+ */
 export async function listSuppliers(organizationId) {
-  const result = await itemsure.from('suppliers').select(COLUMNS).eq('organization_id', organizationId).order('name');
-  if (tableMissing(result.error)) return { suppliers: [], missing: true };
-  return { suppliers: assertOk(result, 'suppliers') || [], missing: false };
+  const [result, icons] = await Promise.all([
+    itemsure.from('suppliers').select(COLUMNS).eq('organization_id', organizationId).order('name'),
+    listSupplierIcons(organizationId),
+  ]);
+  if (tableMissing(result.error)) return { suppliers: [], missing: true, iconsAvailable: false };
+  const suppliers = (assertOk(result, 'suppliers') || []).map((s) => ({ ...s, icon: icons?.get(s.id) || '' }));
+  return { suppliers, missing: false, iconsAvailable: icons !== null };
+}
+
+/** Sets or clears ('' / null) a supplier's icon. */
+export async function saveSupplierIcon(organizationId, supplierId, icon) {
+  const data = assertOk(
+    await itemsure.from('suppliers').update({ icon: icon || null }).eq('id', supplierId).eq('organization_id', organizationId).select('id'),
+    'save supplier icon',
+  );
+  if (!data?.length) throw new Error('You do not have permission to change this supplier.');
 }
 
 /**

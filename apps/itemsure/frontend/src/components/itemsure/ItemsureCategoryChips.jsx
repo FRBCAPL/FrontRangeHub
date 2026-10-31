@@ -15,12 +15,13 @@ function Chip({ value, label, count, selected, onSelect, closeTo = '' }) {
 
 /**
  * A one-line swipe row of main categories with item counts (a main category counts its
- * subcategories too), with "All categories ▾" under it for a searchable list of everything.
+ * subcategories too). Under it, "All items" and "Browse/Edit Categories ▾" (a searchable list of everything).
  * Choosing a main category opens a second row with its subcategories. Choosing again closes it.
  * `onAdd(parentId)` adds a category; with a parent it adds a subcategory.
- * `onEdit(category)` renames or moves one, from the "All categories" panel.
+ * `onEdit(category)` edits one, from the "All categories" panel. `onReorder(parentId)` opens the
+ * order window ('' for main categories); `onShowArchived` lists the `archivedCount` archived ones.
  */
-export default function ItemsureCategoryChips({ categories, items, selected, onSelect, onAdd, onEdit }) {
+export default function ItemsureCategoryChips({ categories, items, selected, onSelect, onAdd, onEdit, onReorder = null, archivedCount = 0, onShowArchived }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const scroller = useRef(null);
   const tree = categoryTree(categories);
@@ -66,7 +67,6 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
           {'\u2039'}
         </button>
         <div className="isu-chips isu-chips--scroll" role="group" aria-label="Categories" ref={scroller} onScroll={measure}>
-          <Chip value={ALL_ITEMS} label="All items" count={items.length} selected={selected} onSelect={onSelect} />
           {tree.roots.map((c) => (
             <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={openRoot} onSelect={onSelect} />
           ))}
@@ -76,9 +76,12 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
           {'\u203A'}
         </button>
       </div>
-      <button type="button" className="isu-chip isu-chip--more" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">
-        All categories {'\u25BE'}
-      </button>
+      <div className="isu-chips-actions">
+        <Chip value={ALL_ITEMS} label="All items" count={items.length} selected={selected} onSelect={onSelect} />
+        <button type="button" className="isu-chip isu-chip--more" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">
+          Browse/Edit Categories {'\u25BE'}
+        </button>
+      </div>
       <ItemsureCategoryPanel
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
@@ -90,6 +93,9 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
         onSelect={onSelect}
         onAdd={onAdd}
         onEdit={onEdit}
+        onReorder={onReorder}
+        archivedCount={archivedCount}
+        onShowArchived={onShowArchived}
       />
       {openRoot && (subs.length || onAdd) ? (
         <div className="isu-chips isu-chips--sub" role="group" aria-label={`Subcategories in ${rootName}`}>

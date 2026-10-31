@@ -43,3 +43,31 @@ export const CATEGORY_ICONS = [
   { icon: '\u{1F4C4}', name: 'Office' },
   { icon: '\u2B50', name: 'Special' },
 ];
+
+// Starting choices for suppliers: kinds of store and delivery. More can be found by searching (utils/itemsureIcons.js).
+export const SUPPLIER_ICONS = [
+  { icon: '\u{1F6D2}', name: 'Cart' },
+  { icon: '\u{1F3EA}', name: 'Store' },
+  { icon: '\u{1F3EC}', name: 'Big store' },
+  { icon: '\u{1F3ED}', name: 'Warehouse' },
+  { icon: '\u{1F69A}', name: 'Delivery truck' },
+  { icon: '\u{1F4E6}', name: 'Package' },
+  { icon: '\u{1F310}', name: 'Online' },
+  { icon: '\u{1F4DE}', name: 'Phone order' },
+  { icon: '\u{1F4B2}', name: 'Discount' },
+  { icon: '\u{1F37A}', name: 'Beer' },
+  { icon: '\u{1F377}', name: 'Wine' },
+  { icon: '\u{1F943}', name: 'Spirits' },
+  { icon: '\u{1F964}', name: 'Soda' },
+  { icon: '\u{1F96C}', name: 'Produce' },
+  { icon: '\u{1F969}', name: 'Meat' },
+  { icon: '\u{1F35E}', name: 'Bakery' },
+  { icon: '\u{1F9CA}', name: 'Ice' },
+  { icon: '\u{1F9FD}', name: 'Cleaning' },
+  { icon: '\u{1F527}', name: 'Hardware' },
+  { icon: '\u2B50', name: 'Favourite' },
+  { icon: '\u{1F534}', name: 'Red' },
+  { icon: '\u{1F535}', name: 'Blue' },
+  { icon: '\u{1F7E2}', name: 'Green' },
+  { icon: '\u{1F7E1}', name: 'Yellow' },
+];

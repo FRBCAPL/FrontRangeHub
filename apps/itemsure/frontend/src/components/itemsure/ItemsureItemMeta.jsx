@@ -33,7 +33,7 @@ export default function ItemsureItemMeta({ supplier = null, keptAt = null, alsoI
   if (supplier) {
     parts.push(
       <span key="supplier" title="Main supplier">
-        <span aria-hidden="true">{'\u26DF'}</span> {supplier.name}{supplier.is_active ? '' : ' (archived)'}
+        <span aria-hidden="true">{supplier.icon || '\u26DF'}</span> {supplier.name}{supplier.is_active ? '' : ' (archived)'}
       </span>,
     );
   }

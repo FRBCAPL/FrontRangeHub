@@ -7,7 +7,7 @@ import { labelWithIcon } from '../../utils/itemsureCategories.js';
  * The subcategories of one main category, opened from "All categories".
  * `onBack` returns to the full list; picking, editing, or adding closes both.
  */
-export default function ItemsureSubcategoryPanel({ root, tree, count, selected, onPick, onEdit, onAdd, onBack, onClose }) {
+export default function ItemsureSubcategoryPanel({ root, tree, count, selected, onPick, onEdit, onAdd, onReorder = null, onBack, onClose }) {
   const subs = root ? tree.childrenOf(root.id) : [];
   const editable = Boolean(onEdit);
 
@@ -50,6 +50,11 @@ export default function ItemsureSubcategoryPanel({ root, tree, count, selected, 
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--block" onClick={() => onAdd(root.id)}>
               + Add a subcategory in {root.name}
             </button>
+          ) : null}
+          {onReorder && subs.length > 1 ? (
+            <div className="isu-catpanel-tools">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onReorder(root.id)}>Change order</button>
+            </div>
           ) : null}
         </div>
       ) : null}

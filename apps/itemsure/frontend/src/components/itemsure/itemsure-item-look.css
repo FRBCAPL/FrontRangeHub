@@ -34,6 +34,10 @@
   border-color: var(--isu-warn-line);
 }
 
+.isu-app .isu-stockcard-pill--warn .isu-stockcard-amount strong {
+  color: var(--isu-amber);
+}
+
 .isu-app .isu-stockcard-pill--danger {
   background: var(--isu-danger-soft);
   border-color: var(--isu-danger-line);
@@ -92,6 +96,55 @@
 
 .isu-app .isu-item-list.is-compact:has(.isu-stockcard) {
   gap: 4px;
+}
+
+/* Gap between running low and needing topping up inside "Needs attention". */
+.isu-app .isu-item-list.isu-item-part {
+  margin-top: 14px !important;
+}
+
+/* Needs topping up: a slim card, name and amount over supplier and the status bar. */
+.isu-app .isu-stockcard.is-slim {
+  padding: 5px 10px 5px 12px;
+}
+
+.isu-app .isu-item-grid .isu-stockcard.is-slim .isu-stockcard-badge {
+  width: 26px;
+  height: 26px;
+}
+
+.isu-app .isu-stockcard.is-slim .isu-stockcard-body {
+  gap: 3px;
+}
+
+.isu-app .isu-stockcard.is-slim .isu-stockcard-pill {
+  padding: 2px 9px;
+}
+
+.isu-app .isu-stockcard.is-slim .isu-stockcard-pill .isu-stockcard-amount strong {
+  font-size: 0.92rem;
+}
+
+.isu-stockcard-slim-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.isu-app .isu-stockcard-slim-sub .isu-stockcard-meta {
+  flex: 0 1 auto;
+  margin: 0;
+  min-width: 0;
+  max-width: 45%;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.isu-app .isu-stockcard-slim-sub .isu-stockcard-label {
+  font-size: 0.75rem;
 }
 
 /* Status sections. */
@@ -179,4 +232,47 @@
   border-color: var(--isu-pine);
   background: var(--isu-pine-soft);
   box-shadow: 0 0 0 2px var(--isu-pine-soft);
+}
+
+/* Search the icon library by word. */
+.isu-iconpick-search {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.isu-app .isu-iconpick-search input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.isu-app .isu-iconpick-clear {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--isu-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.isu-app .isu-iconpick-letters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 0;
+  font-size: 0.88rem;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-iconpick-btn.is-letters {
+  min-width: 52px;
+  padding: 0 10px;
+  font-size: 0.95rem;
+  font-weight: 800;
 }

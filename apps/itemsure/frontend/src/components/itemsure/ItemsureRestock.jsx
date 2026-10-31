@@ -106,6 +106,7 @@ export default function ItemsureRestock() {
     return choices;
   }, [hasSuppliers, supplierLinks, supplierList, features.spots, categoryNames]);
   const group = groupChoices[filters.group] ? filters.group : Object.keys(groupChoices)[0];
+  const supplierIcons = useMemo(() => new Map(supplierList.map((s) => [s.name, s.icon])), [supplierList]);
 
   const placed = useMemo(
     () => (recs || []).filter((r) => (!filters.locationId || r.location_id === filters.locationId) && inCategory(tree, r, filters.categoryId)),
@@ -177,7 +178,7 @@ export default function ItemsureRestock() {
       {ready && !recs.length ? <EmptyState data={data} /> : null}
       {ready && recs.length > 0 && !shown.length ? <p className="isu-muted">Nothing matches these filters.</p> : null}
 
-      {ready ? <ItemsureShoppingBuy groups={toBuy} ticks={ticks} withLocation={withLocation} /> : null}
+      {ready ? <ItemsureShoppingBuy groups={toBuy} ticks={ticks} withLocation={withLocation} iconFor={group === 'supplier' ? (label) => supplierIcons.get(label) || '' : null} /> : null}
       {ready ? <ItemsureShoppingMoves moves={moves} canTransfer={canTransfer} withLocation={withLocation} onAction={openAction} /> : null}
       {data ? <ItemsureRestockPlans plans={plans} data={data} canTransfer={canTransfer} onComplete={openComplete} onChanged={async () => notifyInventoryChanged()} /> : null}
 

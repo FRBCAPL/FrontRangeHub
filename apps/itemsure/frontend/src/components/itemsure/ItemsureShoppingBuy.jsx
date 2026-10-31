@@ -6,7 +6,7 @@ import { Modal } from './ItemsureUi.jsx';
 const ticksLast = (rows, ticked) => [...rows.filter((r) => !ticked.has(r.itemId)), ...rows.filter((r) => ticked.has(r.itemId))];
 
 /** "To buy": one block per group, a "Got it" tick per item, and a plain-text copy of what's left. */
-export default function ItemsureShoppingBuy({ groups, ticks, withLocation }) {
+export default function ItemsureShoppingBuy({ groups, ticks, withLocation, iconFor = null }) {
   const { ticked, toggle, clear } = ticks;
   const [copied, setCopied] = useState('');
   const [copyText, setCopyText] = useState('');
@@ -41,7 +41,9 @@ export default function ItemsureShoppingBuy({ groups, ticks, withLocation }) {
       </p>
       {groups.map((g) => (
         <div key={g.label} className="isu-shop-group">
-          <h3 className="isu-shop-group-title">{g.label} <span className="isu-muted isu-small">({g.rows.length})</span></h3>
+          <h3 className="isu-shop-group-title">
+            {iconFor?.(g.label) ? <span className="isu-shop-group-icon" aria-hidden="true">{iconFor(g.label)}</span> : null}
+            {g.label} <span className="isu-muted isu-small">({g.rows.length})</span></h3>
           <ul className="isu-shop-list">
             {ticksLast(g.rows, ticked).map((row) => (
               <ItemsureShoppingRow key={row.key} row={row} ticked={ticked.has(row.itemId)} onTick={() => toggle(row.itemId)} withLocation={withLocation} />

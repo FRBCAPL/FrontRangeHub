@@ -138,6 +138,14 @@
   text-align: center;
 }
 
+/* Narrow cards (phones, two-column tablets): the name takes the mirror's space too, so it stays on one line far more often. */
+.isu-stockcard-body { container-type: inline-size; }
+
+@container (max-width: 480px) {
+  .isu-stockcard-top .isu-stockcard-mirror { display: none; }
+  .isu-stockcard-top .isu-stockcard-title { grid-column: 1 / 3; grid-row: 1; }
+}
+
 /* The name link covers the whole card, so tapping anywhere opens the item. */
 .isu-app a.isu-stockcard-link {
   color: var(--isu-ink);

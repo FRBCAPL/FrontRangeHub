@@ -68,6 +68,7 @@ export const GUIDE_STOCK = [
     paragraphs: [
       'Suppliers (under More) keeps the companies you order from: a contact person, phone, email, website, your account number with them, and ordering notes such as delivery days or minimum orders.',
       'Link items to the supplier you buy them from with "Buy from" in Add or Edit item. The supplier then shows on the item, and you can search Inventory by supplier name. On each supplier card, "+ Add item" starts a new item with that supplier already chosen, and "View/edit items" lists everything you buy from them.',
+      'Give a supplier an icon in Edit supplier: tap one, or type a word like "truck" or "store" to search for more. You can also use up to 2 letters (type SY and tap "Or use letters" for Sysco). It shows on the supplier card, on the shopping list headings, and next to the supplier on its items.',
       'Tap a phone number to call, or an email address to write. Everyone in your business can see suppliers; owners, administrators, and managers can add and edit them.',
       'Suppliers are archived, not deleted. Tick "Show archived" to see them again and choose Restore.',
     ],

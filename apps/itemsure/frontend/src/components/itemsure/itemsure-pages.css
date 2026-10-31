@@ -178,6 +178,9 @@
 .isu-app .isu-chip--add { cursor: pointer; color: var(--isu-pine); font-weight: 600; font: inherit; font-size: 0.88rem; }
 .isu-app .isu-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .isu-app .isu-toolbar .isu-search { flex: 1 1 260px; }
+.isu-app .isu-toolbar .isu-search-add { flex: 1 1 300px; display: flex; align-items: stretch; gap: 8px; min-width: 0; }
+.isu-app .isu-toolbar .isu-search-add .isu-search { flex: 1 1 auto; min-width: 0; }
+.isu-app .isu-search-add-btn { flex: 0 0 auto; padding: 0 16px; white-space: nowrap; }
 
 /* Members */
 .isu-app .isu-member { padding: 12px 0; border-top: 1px solid var(--isu-line); }

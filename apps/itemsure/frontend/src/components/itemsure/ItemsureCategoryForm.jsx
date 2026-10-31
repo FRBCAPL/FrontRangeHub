@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createCategory, updateCategory } from '../../services/itemsureItemService.js';
 import { saveCategoryIcon } from '../../services/itemsureCategoryIconService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
-import { categoryTree } from '../../utils/itemsureCategories.js';
+import { categoryTree, nextSortOrder } from '../../utils/itemsureCategories.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 import ItemsureIconPicker from './ItemsureIconPicker.jsx';
 
@@ -25,7 +25,7 @@ export default function ItemsureCategoryForm({ organizationId, categories = [], 
     const save = async () => {
       let id = category?.id;
       if (category) await updateCategory(organizationId, id, name, parent || null);
-      else id = await createCategory(organizationId, name, parent || null);
+      else id = await createCategory(organizationId, name, parent || null, nextSortOrder(parent ? tree.childrenOf(parent) : tree.roots));
       if (iconsAvailable && icon !== (category?.icon || '')) await saveCategoryIcon(organizationId, id, icon);
     };
     if (await run(save)) onSaved();

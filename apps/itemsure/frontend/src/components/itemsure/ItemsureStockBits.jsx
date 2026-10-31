@@ -20,7 +20,7 @@ export function StockAmount({ summary, unitName, className = '' }) {
 export function SupplierLine({ supplier }) {
   return (
     <span className="isu-supplier-line" title="Main supplier">
-      <span aria-hidden="true">{'\u26DF'}</span> {supplier.name}{supplier.is_active ? '' : ' (archived)'}
+      <span aria-hidden="true">{supplier.icon || '\u26DF'}</span> {supplier.name}{supplier.is_active ? '' : ' (archived)'}
     </span>
   );
 }

@@ -43,18 +43,25 @@ export const ITEM_GROUPS = [
 /**
  * Splits items (already in order) into ITEM_GROUPS by how they look: running low or
  * needing topping up, fine, everything else, then archived. Empty groups are left out.
- * `toneFor(item)` is cardTone of the item's summary.
+ * `toneFor(item)` is cardTone of the item's summary. Each group has `parts` (lists shown
+ * with a gap between): "Needs attention" is running low, then needing topping up.
  */
 export function groupByStatus(items, toneFor) {
   const buckets = { attention: [], good: [], other: [], archived: [] };
+  const danger = [];
+  const warn = [];
   for (const item of items) {
     const tone = toneFor(item);
     if (!(item.is_active ?? true)) buckets.archived.push(item);
-    else if (tone === 'danger' || tone === 'warn') buckets.attention.push(item);
-    else if (tone === 'ok') buckets.good.push(item);
+    else if (tone === 'danger' || tone === 'warn') {
+      buckets.attention.push(item);
+      (tone === 'danger' ? danger : warn).push(item);
+    } else if (tone === 'ok') buckets.good.push(item);
     else buckets.other.push(item);
   }
-  return ITEM_GROUPS.map((g) => ({ ...g, items: buckets[g.key] })).filter((g) => g.items.length);
+  return ITEM_GROUPS
+    .map((g) => ({ ...g, items: buckets[g.key], parts: g.key === 'attention' ? [danger, warn].filter((p) => p.length) : [buckets[g.key]] }))
+    .filter((g) => g.items.length);
 }
 
 /** 'danger' | 'warn' | 'ok' | 'muted' | 'none' for the card stripe and tint. */
@@ -63,4 +70,20 @@ export function cardTone(summary) {
   const status = summary.status ? TARGET_STATUS[summary.status] : null;
   if (status) return status.tone;
   return 'none';
+}
+
+/**
+ * True when an item needs topping up but is still more than halfway from "warn me at"
+ * (or 0 without one) up to par, e.g. 26–39 for warn at 10, par 40. Display only.
+ */
+export function topUpCanWait(summary) {
+  if (summary?.status !== 'below_par' || summary.par == null || summary.total == null) return false;
+  const par = Number(summary.par);
+  const minimum = summary.minimum == null ? 0 : Number(summary.minimum);
+  return Number(summary.total) > minimum + (par - minimum) / 2;
+}
+
+/** Tone for sorting the Inventory list into sections: topping up that can wait counts as fine. */
+export function listTone(summary) {
+  return topUpCanWait(summary) ? 'ok' : cardTone(summary);
 }

@@ -31,6 +31,10 @@
   text-transform: none;
 }
 
+.isu-app .isu-shop-group-icon { margin-right: 6px; font-size: 1.05rem; }
+
+.isu-app .isu-supplier-icon { margin-right: 8px; }
+
 .isu-app .isu-shop-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
 
 .isu-app .isu-shop-row {

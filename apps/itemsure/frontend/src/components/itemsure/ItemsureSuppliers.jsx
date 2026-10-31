@@ -129,6 +129,7 @@ export default function ItemsureSuppliers() {
             key={editing === 'new' ? 'new' : editing.id}
             organizationId={organization.id}
             supplier={editing === 'new' ? null : editing}
+            iconsAvailable={Boolean(data?.iconsAvailable)}
             onSaved={saved}
             onCancel={close}
           />

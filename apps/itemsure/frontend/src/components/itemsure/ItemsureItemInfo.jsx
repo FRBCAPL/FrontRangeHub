@@ -44,7 +44,7 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
           <Row label="Buy from">
             {supplier ? (
               <>
-                {supplier.name}{supplier.is_active ? '' : ' (archived)'}
+                {supplier.icon ? `${supplier.icon} ` : ''}{supplier.name}{supplier.is_active ? '' : ' (archived)'}
                 {supplier.phone ? <> · <a href={`tel:${supplier.phone.replace(/[^\d+]/g, '')}`}>{supplier.phone}</a></> : null}
                 {supplier.email ? <> · <a href={`mailto:${supplier.email}`}>{supplier.email}</a></> : null}
               </>

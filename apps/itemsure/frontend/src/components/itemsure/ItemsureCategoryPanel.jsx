@@ -12,7 +12,7 @@ const TWO_COLUMNS_FROM = 10;
  * Picking one closes the panel. `onEdit(category)` adds a pencil for renaming or moving it.
  * Categories without items sit at the bottom; long lists use two columns on wide screens.
  */
-export default function ItemsureCategoryPanel({ open, onClose, tree, count, total, uncategorized, selected, onSelect, onAdd, onEdit }) {
+export default function ItemsureCategoryPanel({ open, onClose, tree, count, total, uncategorized, selected, onSelect, onAdd, onEdit, onReorder = null, archivedCount = 0, onShowArchived }) {
   const [query, setQuery] = useState('');
   const [subsOf, setSubsOf] = useState(null);
   const searching = query.trim() !== '';
@@ -116,6 +116,16 @@ export default function ItemsureCategoryPanel({ open, onClose, tree, count, tota
               + Add a category
             </button>
           ) : null}
+          {(onReorder && tree.roots.length > 1) || archivedCount ? (
+            <div className="isu-catpanel-tools">
+              {onReorder && tree.roots.length > 1 ? (
+                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => finish(() => onReorder(''))}>Change order</button>
+              ) : null}
+              {archivedCount ? (
+                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => finish(onShowArchived)}>Archived ({archivedCount})</button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </Modal>
       <ItemsureSubcategoryPanel
@@ -126,6 +136,7 @@ export default function ItemsureCategoryPanel({ open, onClose, tree, count, tota
         onPick={pick}
         onEdit={onEdit ? (c) => finish(() => onEdit(c)) : null}
         onAdd={onAdd ? (parentId) => finish(() => onAdd(parentId)) : null}
+        onReorder={onReorder ? (parentId) => finish(() => onReorder(parentId)) : null}
         onBack={() => setSubsOf(null)}
         onClose={() => finish()}
       />

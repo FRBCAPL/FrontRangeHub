@@ -9,7 +9,7 @@ export default function ItemsureSupplierCard({ supplier, canManage, busy, onEdit
   return (
     <article className={`isu-card isu-supplier${s.is_active ? '' : ' is-archived'}`}>
       <div className="isu-supplier-head">
-        <h2>{s.name}</h2>
+        <h2>{s.icon ? <span className="isu-supplier-icon" aria-hidden="true">{s.icon}</span> : null}{s.name}</h2>
         {!s.is_active ? <span className="isu-badge">Archived</span> : null}
       </div>
       {s.contact_name ? <p className="isu-muted isu-small">Contact: {s.contact_name}</p> : null}

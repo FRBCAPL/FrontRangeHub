@@ -1,18 +1,24 @@
 import React from 'react';
 
+function Lists({ group, renderItem }) {
+  const compact = group?.key === 'good';
+  const parts = group?.parts || [group?.items || []];
+  return parts.map((items, n) => (
+    <ul key={n} className={`isu-item-list isu-item-grid${compact ? ' is-compact' : ''}${n ? ' isu-item-part' : ''}`}>
+      {items.map((item) => renderItem(item, compact))}
+    </ul>
+  ));
+}
+
 /**
- * The Inventory list in sections: "Needs attention" first, then "All good" as compact
- * one-line rows, then the rest. With only one section there is no heading, unless `titled`.
+ * The Inventory list in sections: "Needs attention" first (running low, a gap, then needing
+ * topping up), then "All good" as compact one-line rows, then the rest. With only one
+ * section there is no heading, unless `titled`.
  * `groups` comes from groupByStatus; `renderItem(item, compact)` draws one row.
  */
 export default function ItemsureItemGroups({ groups, renderItem, titled = false }) {
   if (groups.length <= 1 && !titled) {
-    const only = groups[0];
-    return (
-      <ul className={`isu-item-list isu-item-grid${only?.key === 'good' ? ' is-compact' : ''}`}>
-        {(only?.items || []).map((item) => renderItem(item, only.key === 'good'))}
-      </ul>
-    );
+    return <Lists group={groups[0]} renderItem={renderItem} />;
   }
   return (
     <div className="isu-item-groups">
@@ -21,9 +27,7 @@ export default function ItemsureItemGroups({ groups, renderItem, titled = false 
           <h2 className="isu-item-group-title">
             {g.title} <span className="isu-item-group-count">{g.items.length}</span>
           </h2>
-          <ul className={`isu-item-list isu-item-grid${g.key === 'good' ? ' is-compact' : ''}`}>
-            {g.items.map((item) => renderItem(item, g.key === 'good'))}
-          </ul>
+          <Lists group={g} renderItem={renderItem} />
         </section>
       ))}
     </div>

@@ -14,6 +14,7 @@ import './itemsure-counts.css';
 import './itemsure-stock.css';
 import './itemsure-restock.css';
 import './itemsure-shopping.css';
+import './itemsure-category-manage.css';
 import './itemsure-packaging.css';
 import './itemsure-stepper.css';
 import './itemsure-levels-help.css';
