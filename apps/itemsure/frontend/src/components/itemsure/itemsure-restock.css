@@ -101,9 +101,6 @@
 .isu-app .isu-level-input--par { grid-area: par; }
 .isu-app .isu-level-value { font-variant-numeric: tabular-nums; color: var(--isu-ink); font-size: 0.95rem; text-align: right; }
 .isu-app .isu-level-error { grid-area: error; margin: 6px 0 0; padding: 6px 10px; }
-@media (max-width: 420px) {
-  .isu-app .isu-level-row { grid-template-columns: minmax(0, 1fr) 78px 78px; }
-}
 
 /* Copy preview */
 .isu-app .isu-copy-map { display: flex; flex-direction: column; gap: 8px; }

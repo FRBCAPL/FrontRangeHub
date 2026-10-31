@@ -4,6 +4,7 @@ import { acceptEmailLink, getSession, onAuthChange, signOut } from '../../servic
 import { itemsureAuthFromHash } from '../../utils/itemsureAuthLanding.js';
 import { ItemsureWorkspaceProvider } from '../../hooks/useItemsureWorkspace.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import useCompactView from '../../hooks/useCompactView.js';
 import ItemsureAuth from './ItemsureAuth.jsx';
 import ItemsureWelcome from './ItemsureWelcome.jsx';
 import ItemsureWorkspace from './ItemsureWorkspace.jsx';
@@ -27,6 +28,7 @@ import './itemsure-stock-location.css';
 import './itemsure-history.css';
 import './itemsure-suppliers.css';
 import './itemsure-business.css';
+import './itemsure-compact.css';
 function Wordmark() {
   return (
     <span className="isu-wordmark">
@@ -44,6 +46,7 @@ export default function ItemsureApp() {
   const [newPassword, setNewPassword] = useState(false);
   const landingHandled = useRef(false);
   const authMode = new URLSearchParams(location.search).get('auth');
+  const [compact] = useCompactView();
 
   // `navigate` changes on every route change, so without the ref this would send
   // every later page back to the start (and loop with the setup redirect).
@@ -103,7 +106,7 @@ export default function ItemsureApp() {
   }
 
   return (
-    <div className="isu-app">
+    <div className={`isu-app${compact ? ' is-compact' : ''}`}>
       <header className="isu-header">
         <Link to="/" className="isu-link isu-small isu-header-back" aria-label="Front Range hub">
           <span className="isu-wide-only">Front Range hub</span>

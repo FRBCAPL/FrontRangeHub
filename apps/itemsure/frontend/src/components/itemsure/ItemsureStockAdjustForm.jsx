@@ -3,6 +3,7 @@ import { adjustStock } from '../../services/itemsureInventoryService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import { amountProblem } from '../../utils/itemsureAmountCheck.js';
 import { stockEntry, usablePackages } from '../../utils/itemsurePackages.js';
 import { findBalance, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
 import { sites } from '../../data/itemsureTerms.js';
@@ -41,6 +42,7 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, prese
   );
   const pkg = packages.find((p) => p.id === packageId) || null;
   const entry = item ? stockEntry(quantity, pkg, item) : null;
+  const amount = amountProblem({ entry, item, onHand: balance?.quantity_text ?? null, removing: direction === 'remove' });
 
   const chooseItem = (id) => {
     setItemId(id);
@@ -102,6 +104,7 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, prese
           entry={entry}
         />
       ) : null}
+      {amount.message ? <p className="isu-hint isu-package-problem" aria-live="polite">{amount.message}</p> : null}
       <Field label="Reason" hint="Required. Shown in stock activity.">
         <input list="isu-adjust-reasons" maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
       </Field>
@@ -110,7 +113,7 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, prese
       </datalist>
 
       <ErrorNote message={error} />
-      <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy || !balance}>
+      <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy || !balance || !amount.ready}>
         {busy ? 'Saving…' : direction === 'add' ? 'Add to stock' : 'Remove from stock'}
       </button>
     </form>

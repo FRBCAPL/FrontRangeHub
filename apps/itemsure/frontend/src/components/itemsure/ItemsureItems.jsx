@@ -170,8 +170,6 @@ export default function ItemsureItems() {
             supplier={suppliers.supplierFor(item.id)}
             alsoIn={extraCategoryNames(tree, item)}
             details={showDetails ? detailsLine(item) : ''}
-            canManage={canManageItems}
-            onEdit={() => navigate(`${ITEMSURE_PATH}/items/${item.id}/edit`)}
             onCount={item.is_active && openCounts.sessions.length ? () => setCountItem(item) : null}
             counted={item.is_active && openCounts.sessions.length > 0 && !openCounts.waitingFor(item.id).length}
           />

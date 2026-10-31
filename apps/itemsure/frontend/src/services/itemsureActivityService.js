@@ -37,6 +37,11 @@ export async function loadSetupProgress(organizationId) {
   return { amounts, levels };
 }
 
+/** Whether any warning level is set, so "nothing is running low" is only said when it can be known. */
+export function hasAnyLevels(organizationId) {
+  return hasAny('inventory_targets', organizationId);
+}
+
 /** Newest audit events first; `entities` (audit table names) limits it to one kind of history. */
 export async function listRecentActivity(organizationId, limit = 8, offset = 0, entities = null) {
   let query = itemsure

@@ -31,13 +31,21 @@
 
 /* Par levels: wider columns for the buttons; minimum and par get their own line on phones */
 .isu-app .isu-level-row { grid-template-columns: minmax(0, 1fr) 150px 150px; }
-.isu-app .isu-level-input .isu-stepper input { padding: 6px 4px; text-align: center; }
+.isu-app .isu-level-input .isu-stepper input { min-width: 56px; padding: 6px 4px; text-align: center; }
 .isu-app .isu-level-input .isu-stepper-btn { flex-basis: 40px; min-height: 40px; }
 @media (max-width: 640px) {
   .isu-app .isu-level-row {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas: 'name name' 'meta meta' 'min par' 'error error';
     gap: 6px 10px;
+  }
+}
+/* Very narrow phones: one field per line so the number box stays usable */
+@media (max-width: 400px) {
+  .isu-app .isu-level-row,
+  .isu-app .isu-target-editor .isu-level-row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'name' 'meta' 'min' 'par' 'error';
   }
 }
 

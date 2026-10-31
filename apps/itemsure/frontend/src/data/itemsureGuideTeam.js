@@ -9,6 +9,7 @@ export const GUIDE_TEAM = [
     summary: 'Your profile, your business, and who is on your team.',
     paragraphs: [
       'Settings (under More) is a short menu: Your profile, Business, People, What each role can do, Features, and Billing. Tap one to open it, and use "Settings" at the top to go back.',
+      'Want more on screen? Turn on "Compact view" in Settings \u2192 Your profile. It uses smaller headings and tighter spacing, and shows three items per row on a wide screen. It only changes the device you turn it on for.',
       'The business you are working in is shown at the top of every page. If you belong to more than one, tap its name to switch. Each business has its own sites, items, team, and stock.',
       'To add a site (a bar, store, warehouse, or van) to the same business, use Sites. "Create a separate business" in Settings \u2192 Business makes a brand-new business instead.',
     ],

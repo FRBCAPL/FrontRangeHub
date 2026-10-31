@@ -9,7 +9,7 @@ import { StockAmount as Amount, StockBar, SupplierLine } from './ItemsureStockBi
  * One catalog item as a card: name, on hand vs par, where it is, then a status bar. Tap the card to open it.
  * `onCount` (only while a count is open) shows "Add to count", or a "✓ Counted" button that reopens it once counted.
  */
-export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoIn, details, canManage, onEdit, onCount, counted }) {
+export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoIn, details, onCount, counted }) {
   const tone = cardTone(summary);
   const hue = categoryHue(item.category_id);
   return (
@@ -53,19 +53,15 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
 
         <div className="isu-stockcard-bottom">
           <StockBar summary={summary} />
-          {onCount || canManage ? (
+          {onCount ? (
             <div className="isu-stockcard-actions">
-              {counted && onCount ? (
+              {counted ? (
                 <button type="button" className="isu-stockcard-counted" onClick={onCount} aria-label={`Edit the count for ${item.name}`} title="Edit the count">
                   {'\u2713'} Counted
                 </button>
-              ) : null}
-              {onCount && !counted ? (
+              ) : (
                 <button type="button" className="isu-stockcard-edit is-count" onClick={onCount} aria-label={`Add ${item.name} to the count`}>Add to count</button>
-              ) : null}
-              {canManage ? (
-                <button type="button" className="isu-stockcard-edit" onClick={onEdit} aria-label={`Edit ${item.name}`}>Edit Item</button>
-              ) : null}
+              )}
             </div>
           ) : null}
         </div>

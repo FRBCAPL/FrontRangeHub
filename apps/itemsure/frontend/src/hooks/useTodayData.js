@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { listOpenPlans, loadRecommendations } from '../services/itemsureRestockService.js';
 import { listSessions } from '../services/itemsureCountService.js';
 import { listReviews } from '../services/itemsureCountReviewService.js';
+import { hasAnyLevels } from '../services/itemsureActivityService.js';
 import { onInventoryChanged } from '../utils/itemsureChanges.js';
 
 const quietly = (promise) => promise.catch((e) => {
@@ -19,13 +20,14 @@ export default function useTodayData(organizationId, { stock, counts }) {
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const [recs, plans, sessions, reviews] = await Promise.all([
+      const [recs, plans, sessions, reviews, hasLevels] = await Promise.all([
         stock ? quietly(loadRecommendations(organizationId)) : null,
         stock ? quietly(listOpenPlans(organizationId)) : null,
         counts ? quietly(listSessions(organizationId)) : null,
         counts ? quietly(listReviews(organizationId)) : null,
+        stock ? hasAnyLevels(organizationId) : null,
       ]);
-      if (alive) setData({ loaded: true, recs, plans, sessions, reviews: reviews || {} });
+      if (alive) setData({ loaded: true, recs, plans, sessions, reviews: reviews || {}, hasLevels });
     };
     load();
     const off = onInventoryChanged(load);

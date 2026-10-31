@@ -3,6 +3,7 @@ import { adjustStock } from '../../services/itemsureInventoryService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { notifyInventoryChanged } from '../../utils/itemsureChanges.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import { amountProblem } from '../../utils/itemsureAmountCheck.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 import ItemsureStepper from './ItemsureStepper.jsx';
 
@@ -17,6 +18,7 @@ export default function ItemsureQuickChangeForm({ item, slot, placeName, directi
   const [reason, setReason] = useState(REASONS[direction][0]);
   const { busy, error, run } = useItemsureAction();
   const adding = direction === 'add';
+  const amount = amountProblem({ entry: { base: quantity }, item, onHand: slot.quantity ?? null, removing: !adding });
 
   const submit = (event) => {
     event.preventDefault();
@@ -42,6 +44,7 @@ export default function ItemsureQuickChangeForm({ item, slot, placeName, directi
       <Field label={`How many (${item.unitName})`}>
         <ItemsureStepper label={item.unitName} value={quantity} onChange={setQuantity} inputMode="decimal" autoComplete="off" />
       </Field>
+      {amount.message ? <p className="isu-hint isu-package-problem" aria-live="polite">{amount.message}</p> : null}
       <fieldset className="isu-fieldset">
         <legend>Why</legend>
         <div className="isu-chip-row">
@@ -53,7 +56,7 @@ export default function ItemsureQuickChangeForm({ item, slot, placeName, directi
         </div>
       </fieldset>
       <ErrorNote message={error} />
-      <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy}>
+      <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy || !amount.ready}>
         {busy ? 'Saving…' : adding ? 'Add' : 'Take out'}
       </button>
     </form>

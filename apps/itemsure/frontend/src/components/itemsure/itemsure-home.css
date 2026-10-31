@@ -80,6 +80,19 @@
   color: var(--isu-pine);
 }
 
+.isu-today-nolevels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.isu-today-nolevels p {
+  margin: 0;
+  flex: 1 1 260px;
+}
+
 .isu-today-list {
   list-style: none;
   margin: 0;

@@ -21,6 +21,8 @@ export default function ItemsureToday({ organizationId, can, features }) {
   const tasks = data.loaded
     ? buildTodayTasks({ ...data, canApprove: can('counts.approve'), showMoves: features.transfers, paths: PATHS })
     : [];
+  const noLevels = canStock && data.hasLevels === false;
+  const clear = data.loaded && !tasks.length && !(canStock && data.recs === null);
 
   return (
     <section className="isu-card isu-today" aria-label="Today">
@@ -29,8 +31,20 @@ export default function ItemsureToday({ organizationId, can, features }) {
       {data.loaded && canStock && data.recs === null ? (
         <p className="isu-muted isu-small">Couldn&apos;t check stock levels just now. Open the shopping list to see them.</p>
       ) : null}
-      {data.loaded && !tasks.length && !(canStock && data.recs === null) ? (
+      {clear && !noLevels ? (
         <p className="isu-today-clear">You&apos;re all caught up. Nothing is running low and no counts are waiting.</p>
+      ) : null}
+      {clear && noLevels ? (
+        <div className="isu-today-nolevels">
+          <p>
+            {canCounts ? 'No counts are waiting. ' : ''}ItemSure can&apos;t tell you what&apos;s running low yet, because no warning levels are set.
+          </p>
+          {can('inventory.targets.manage') ? (
+            <Link to={`${ITEMSURE_PATH}/levels`} className="isu-btn isu-btn--ghost isu-btn--sm">Set warning levels</Link>
+          ) : (
+            <p className="isu-muted isu-small">Ask the owner or a manager to set them.</p>
+          )}
+        </div>
       ) : null}
       {tasks.length ? (
         <ul className="isu-today-list">

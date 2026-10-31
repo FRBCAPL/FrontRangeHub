@@ -1,0 +1,49 @@
+/* Compact view (Settings → Your profile → Display): tighter spacing and smaller
+   headings so more fits on screen. Per device; see useCompactView. Buttons and
+   inputs only shrink with a mouse, so touch targets stay large on phones. */
+
+.isu-app.is-compact .isu-header { padding-top: 8px; padding-bottom: 8px; }
+.isu-app.is-compact .isu-wordmark { font-size: 1.25rem; }
+.isu-app.is-compact .isu-main {
+  max-width: 1320px !important;
+  padding-top: 12px;
+}
+
+.isu-app.is-compact h1 { font-size: clamp(1.35rem, 2.6vw, 1.6rem); }
+.isu-app.is-compact h2 { font-size: 1.1rem; }
+.isu-app.is-compact h3 { font-size: 1rem; }
+
+.isu-app.is-compact .isu-page { gap: 12px; }
+.isu-app.is-compact .isu-page-head { gap: 8px; }
+.isu-app.is-compact .isu-page-head .isu-muted { margin-top: 2px; }
+.isu-app.is-compact .isu-stack { gap: 10px; }
+.isu-app.is-compact .isu-card { padding: 12px 14px; border-radius: 14px; }
+.isu-app.is-compact .isu-field { margin-bottom: 10px; gap: 4px; }
+
+/* Home */
+.isu-app.is-compact .isu-stats { gap: 8px; }
+.isu-app.is-compact .isu-stat { padding: 10px 12px; border-radius: 14px; }
+.isu-app.is-compact .isu-stat-value { font-size: 1.5rem; }
+.isu-app.is-compact .isu-today { gap: 8px; }
+
+/* Category chips and toolbars */
+.isu-app.is-compact .isu-chips { gap: 6px; }
+.isu-app.is-compact .isu-chip { padding: 4px 10px; font-size: 0.84rem; }
+.isu-app.is-compact .isu-toolbar { gap: 8px 12px; }
+
+/* Lists and item cards: tighter rows, three columns on wide screens */
+.isu-app.is-compact .isu-item-list,
+.isu-app.is-compact .isu-item-list.isu-item-grid:has(.isu-stockcard) { gap: 6px; }
+.isu-app.is-compact .isu-item-grid .isu-stockcard { padding-top: 3px; padding-bottom: 3px; }
+.isu-app.is-compact .isu-list li { padding: 7px 10px; }
+@media (min-width: 1100px) {
+  .isu-app.is-compact .isu-item-list.isu-item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (pointer: fine) {
+  .isu-app.is-compact .isu-btn { min-height: 36px; padding: 6px 14px; }
+  .isu-app.is-compact .isu-btn--sm { min-height: 32px; padding: 4px 12px; }
+  .isu-app.is-compact input:not([type='checkbox']):not([type='radio']),
+  .isu-app.is-compact select,
+  .isu-app.is-compact textarea { min-height: 38px; }
+}
