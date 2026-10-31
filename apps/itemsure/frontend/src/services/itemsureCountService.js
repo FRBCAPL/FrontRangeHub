@@ -58,10 +58,20 @@ export async function loadSession(sessionId) {
   if (!session) return null;
 
   const [items, entries] = await Promise.all([
-    itemsure.from('count_session_items').select(ITEM_COLUMNS).eq('session_id', sessionId).order('item_name'),
+    itemsure.from('count_session_items').select(`${ITEM_COLUMNS}, units_of_measure(precision_scale)`).eq('session_id', sessionId).order('item_name'),
     listEntries(sessionId),
   ]);
-  return { session, items: assertOk(items, 'count items') || [], entries };
+  return { session, items: (assertOk(items, 'count items') || []).map(withLivePrecision), entries };
+}
+
+/**
+ * The saved copy keeps the unit's decimals from when the item joined the count, but the
+ * database checks entries against the unit as it is now. Use whichever allows more, so a
+ * unit that started allowing parts works in counts already open.
+ */
+function withLivePrecision({ units_of_measure: unit, ...item }) {
+  const live = (Array.isArray(unit) ? unit[0] : unit)?.precision_scale;
+  return live > item.base_precision_scale ? { ...item, base_precision_scale: live } : item;
 }
 
 export async function listEntries(sessionId) {

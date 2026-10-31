@@ -1,0 +1,132 @@
+/* Shopping list: compact rows to buy (by supplier) and to move, with "Got it" ticks. */
+
+.isu-app .isu-shop-summary {
+  margin: 0 0 8px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.02rem;
+}
+
+.isu-app .isu-shop-filters { margin-bottom: 14px; }
+.isu-app .isu-shop-filter-btn { font-weight: 600; }
+.isu-app .isu-shop-filter-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+.isu-app .isu-shop-section { margin: 0 0 22px; }
+.isu-app .isu-shop-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.isu-app .isu-shop-heading { font-size: 1.1rem; margin: 6px 0 2px; }
+.isu-app .isu-shop-tools { display: flex; gap: 6px; }
+.isu-app .isu-shop-note { margin: 0 0 10px; }
+
+.isu-app .isu-shop-group { margin-bottom: 14px; }
+.isu-app .isu-shop-group-title {
+  font-size: 0.95rem;
+  margin: 0 0 6px;
+  color: var(--isu-pine);
+  text-transform: none;
+}
+
+.isu-app .isu-shop-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+
+.isu-app .isu-shop-row {
+  --stripe: var(--isu-amber);
+  background: linear-gradient(90deg, var(--isu-warn-soft), transparent 60%), var(--isu-paper);
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  box-shadow: inset 4px 0 0 var(--stripe);
+  padding: 6px 12px 6px 10px;
+}
+.isu-app .isu-shop-row.is-low {
+  --stripe: var(--isu-danger);
+  background: linear-gradient(90deg, var(--isu-danger-soft), transparent 60%), var(--isu-paper);
+  border-color: var(--isu-danger-line);
+}
+.isu-app .isu-shop-row.is-ticked {
+  --stripe: var(--isu-pine-line);
+  background: var(--isu-paper);
+  border-color: var(--isu-line);
+  opacity: 0.6;
+}
+.isu-app .isu-shop-row.is-ticked .isu-shop-name,
+.isu-app .isu-shop-row.is-ticked .isu-shop-amount { text-decoration: line-through; }
+
+.isu-app .isu-shop-row-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.isu-app .isu-shop-move .isu-shop-row-main { grid-template-columns: minmax(0, 1fr) auto; padding-left: 4px; }
+
+.isu-app .isu-shop-tick {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 9px;
+  border: 2px solid var(--isu-line);
+  background: transparent;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+.isu-app .isu-shop-tick[aria-pressed='true'] { background: var(--isu-pine-btn); border-color: var(--isu-pine-btn); }
+
+.isu-app .isu-shop-row-body {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+  padding: 4px 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.isu-app .isu-shop-row-body.is-static { cursor: default; }
+.isu-app .isu-shop-name { font-weight: 700; overflow-wrap: anywhere; }
+.isu-app .isu-shop-where {
+  font-size: 0.82rem;
+  color: var(--isu-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.isu-app .isu-shop-amount {
+  font-weight: 800;
+  font-size: 1.08rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.isu-app .isu-shop-amount.is-unset { font-size: 0.82rem; font-weight: 600; color: var(--isu-muted); }
+
+.isu-app .isu-shop-detail {
+  margin: 4px 0 4px 44px;
+  font-size: 0.86rem;
+  display: grid;
+  gap: 6px;
+}
+.isu-app .isu-shop-detail a { color: var(--isu-pine); font-weight: 600; justify-self: start; }
+.isu-app .isu-shop-detail ul { margin: 0; padding-left: 16px; display: grid; gap: 3px; }
+
+.isu-app .isu-shop-move-actions { justify-content: flex-end; margin: 4px 0 2px; }
+
+.isu-app .isu-shop-copy {
+  width: 100%;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--isu-line);
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+}

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import { detailsLine, variantLabelFor } from '../../utils/itemsureItemDetails.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
@@ -11,31 +11,26 @@ import { addQuantity, itemSummary, visibleSlots } from '../../utils/itemsureItem
 import { canonicalQuantity, displayQuantity } from '../../utils/itemsureQuantity.js';
 import { removeEmptyPlace, restorePlace } from '../../services/itemsurePlaceCleanup.js';
 import { findBalance, NO_AREA_LABEL, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
-import { ErrorNote, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
+import { ErrorNote, LoadFailed, Modal } from './ItemsureUi.jsx';
 import ItemsureItemPlaceRow from './ItemsureItemPlaceRow.jsx';
 import ItemsureItemHistory from './ItemsureItemHistory.jsx';
-import ItemsureSetAmountForm from './ItemsureSetAmountForm.jsx';
-import ItemsureQuickChangeForm from './ItemsureQuickChangeForm.jsx';
-import ItemsureSlotLevelsForm from './ItemsureSlotLevelsForm.jsx';
 import ItemsureUndoBar from './ItemsureUndoBar.jsx';
 import ItemsureItemSummary from './ItemsureItemSummary.jsx';
 import ItemsureItemCountButton from './ItemsureItemCountButton.jsx';
 import ItemsureItemInfo from './ItemsureItemInfo.jsx';
 import ItemsureTabs from './ItemsureTabs.jsx';
-import ItemsureCountNotice from './ItemsureCountNotice.jsx';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import ItemsurePlacePicker from './ItemsurePlacePicker.jsx';
 import useItemUsage from '../../hooks/useItemUsage.js';
-import { suggestLevels } from '../../utils/itemsureUsage.js';
+import ItemsureItemAction, { ACTION_TITLES } from './ItemsureItemAction.jsx';
 
-const TITLES = { set: 'Set amount', add: 'Add stock', remove: 'Use stock', levels: 'Warning and full-up levels' };
-
-/** Everything about one item: a summary, then tabs for its places, history, and details. */
-export default function ItemsureItemDetail() {
-  const { itemId } = useParams();
+/**
+ * Everything about one item in a window: a summary, then tabs for its places, history, and
+ * details. Setting an amount or levels swaps the window's content, with a way back.
+ */
+export default function ItemsureItemModal({ itemId, onClose }) {
   const navigate = useNavigate();
-  const [params, setParams] = useSearchParams();
   const { organization, features, can } = useItemsureWorkspace();
   const [catalog, setCatalog] = useState(null);
   const [loadError, setLoadError] = useState('');
@@ -43,6 +38,7 @@ export default function ItemsureItemDetail() {
   const [done, setDone] = useState(null);
   const [removeError, setRemoveError] = useState('');
   const [toggled, setToggled] = useState(() => new Set());
+  const [chosenTab, setChosenTab] = useState('');
   const clearDone = useCallback(() => setDone(null), []);
   const places = useItemPlaces(organization.id);
   const canView = can('inventory.view');
@@ -63,14 +59,7 @@ export default function ItemsureItemDetail() {
     canHistory && { id: 'history', label: 'History' },
     { id: 'details', label: 'Details' },
   ].filter(Boolean);
-  const tab = tabs.some((t) => t.id === params.get('tab')) ? params.get('tab') : tabs[0].id;
-  const chooseTab = (id) =>
-    setParams((prev) => {
-      const next = new URLSearchParams(prev);
-      if (id === tabs[0].id) next.delete('tab');
-      else next.set('tab', id);
-      return next;
-    }, { replace: true });
+  const tab = tabs.some((t) => t.id === chosenTab) ? chosenTab : tabs[0].id;
 
   const load = useCallback(async () => {
     try {
@@ -83,6 +72,11 @@ export default function ItemsureItemDetail() {
   useEffect(() => {
     load();
   }, [load]);
+  useEffect(() => {
+    setAction(null);
+    setToggled(new Set());
+    setChosenTab('');
+  }, [itemId]);
 
   const raw = catalog?.items.find((i) => i.id === itemId) || null;
   const item = useMemo(() => {
@@ -128,25 +122,11 @@ export default function ItemsureItemDetail() {
     setAction({ kind: 'set', slot: { locationId, storageAreaId, areaName: area?.name || '', quantity, target: null } });
   };
 
-  if (loadError) return <LoadFailed message={loadError} onRetry={load} />;
-  if (!catalog) return <p className="isu-muted">Loading…</p>;
-  if (!raw) {
-    return (
-      <div className="isu-card isu-empty">
-        <h2>Item not found</h2>
-        <Link to={`${ITEMSURE_PATH}/items`}>Back to items</Link>
-      </div>
-    );
-  }
-
-  const close = () => setAction(null);
   const finish = (result) => {
     setAction(null);
     if (result?.undo) setDone(result);
   };
-  const formProps = action ? { item, slot: action.slot, placeName: labelFor(action.slot), onDone: finish } : null;
-  const showDetails = Boolean(features.details && catalog.detailsAvailable);
-  const editItem = can('items.manage') ? () => navigate(`${ITEMSURE_PATH}/items/${raw.id}/edit`) : null;
+  const editItem = can('items.manage') && raw ? () => navigate(`${ITEMSURE_PATH}/items/${raw.id}/edit`) : null;
 
   const removePlace = async (slot) => {
     setRemoveError('');
@@ -166,91 +146,106 @@ export default function ItemsureItemDetail() {
     }
   };
 
-  return (
-    <div className="isu-page">
-      <Link to={`${ITEMSURE_PATH}/items`} className="isu-link isu-small">{'\u2190'} Inventory</Link>
-      <PageHead
-        title={raw.name}
-        description={[showDetails && detailsLine(raw), raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ')}
-        action={editItem ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit item</button> : null}
+  const title = action ? ACTION_TITLES[action.kind] : raw?.name || 'Item';
+  let body;
+  if (loadError) body = <LoadFailed message={loadError} onRetry={load} />;
+  else if (!catalog) body = <p className="isu-muted">Loading…</p>;
+  else if (!raw) body = <p className="isu-muted">This item was not found. It may have been deleted.</p>;
+  else if (action) {
+    body = (
+      <ItemsureItemAction
+        action={action}
+        item={item}
+        itemName={raw.name}
+        placeName={labelFor(action.slot)}
+        organizationId={organization.id}
+        openCounts={openCounts}
+        usage={usage}
+        onDone={finish}
+        onBack={() => setAction(null)}
       />
-
-      {canView ? (
-        <ItemsureItemSummary item={raw} summary={summary} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null} supplier={suppliers.supplierFor(raw.id)}>
-          <ItemsureItemCountButton organizationId={organization.id} item={raw} counts={openCounts} keptAt={groups} precision={item.precision} can={can} />
-        </ItemsureItemSummary>
-      ) : (
-        <p className="isu-muted">Your role doesn&apos;t include seeing stock amounts.</p>
-      )}
-
-      {tabs.length > 1 ? <ItemsureTabs tabs={tabs} selected={tab} onSelect={chooseTab} label="Item sections" /> : null}
-
-      {tab === 'stock' ? (
-        <section className="isu-stack" aria-label="Where it is">
-          {stock === null ? <p className="isu-muted">Loading amounts…</p> : null}
-          {stock && !groups.length ? (
-            <p className="isu-muted">
-              Not kept anywhere yet.{allowed.set ? ' Use the button below to pick where, and set how many are there.' : ''}
-            </p>
-          ) : null}
-          <ErrorNote message={removeError} />
-          <ul className="isu-place-list">
-            {groups.map((g) => (
-              <React.Fragment key={g.location.id}>
-                {g.slots.length > 1 ? (
-                  <li className="isu-place-location-total">
-                    <strong>{g.location.name}</strong>
-                    <span>{groupTotal(g) === null ? 'no amounts yet' : <><strong>{displayQuantity(groupTotal(g))}</strong> {item.unitSymbol} in {g.slots.length} spots</>}</span>
-                  </li>
-                ) : null}
-                {g.slots.map((slot) => (
-                  <ItemsureItemPlaceRow
-                    key={slot.key}
-                    item={item}
-                    slot={slot}
-                    label={rowLabel(slot, g)}
-                    can={allowed}
-                    perDay={usage ? usage.forSlot(slot.locationId, slot.storageAreaId) : null}
-                    open={isOpen(slot.key)}
-                    onToggle={() => toggle(slot.key)}
-                    onAction={(kind, s) => (kind === 'removePlace' ? removePlace(s) : setAction({ kind, slot: s }))}
-                  />
-                ))}
-              </React.Fragment>
-            ))}
-          </ul>
-          {stock && allowed.set ? (
-            <ItemsurePlacePicker label="Set an amount somewhere else" options={otherPlaces} onPick={openOther} />
-          ) : null}
-        </section>
-      ) : null}
-
-      {tab === 'history' ? (
-        <section className="isu-stack" aria-label="History">
-          <ItemsureItemHistory organizationId={organization.id} itemId={raw.id} locations={places.locations} />
-        </section>
-      ) : null}
-
-      {tab === 'details' ? (
-        <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} variantLabel={showDetails ? variantLabelFor(organization) : ''} onEdit={editItem} />
-      ) : null}
-
-      <Modal open={Boolean(action)} title={action ? TITLES[action.kind] : ''} onClose={close}>
-        {action && action.kind !== 'levels' ? (
-          <ItemsureCountNotice covering={openCounts.coveringSpot(raw.id, action.slot.locationId, action.slot.storageAreaId)} />
+    );
+  } else {
+    const showDetails = Boolean(features.details && catalog.detailsAvailable);
+    const description = [showDetails && detailsLine(raw), raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ');
+    body = (
+      <div className="isu-stack isu-item-modal">
+        {description || editItem ? (
+          <div className="isu-item-modal-head">
+            <p className="isu-muted isu-small">{description}</p>
+            {editItem ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit item</button> : null}
+          </div>
         ) : null}
-        {action?.kind === 'set' ? <ItemsureSetAmountForm {...formProps} /> : null}
-        {action?.kind === 'add' || action?.kind === 'remove' ? <ItemsureQuickChangeForm {...formProps} direction={action.kind} /> : null}
-        {action?.kind === 'levels' ? (
-          <ItemsureSlotLevelsForm
-            {...formProps}
-            organizationId={organization.id}
-            usageReady={usage ? usage.enough : null}
-            suggestion={usage ? suggestLevels(usage.forSlot(action.slot.locationId, action.slot.storageAreaId), item.precision) : null}
-          />
+
+        {canView ? (
+          <ItemsureItemSummary item={raw} summary={summary} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null} supplier={suppliers.supplierFor(raw.id)}>
+            <ItemsureItemCountButton organizationId={organization.id} item={raw} counts={openCounts} keptAt={groups} precision={item.precision} can={can} />
+          </ItemsureItemSummary>
+        ) : (
+          <p className="isu-muted">Your role doesn&apos;t include seeing stock amounts.</p>
+        )}
+
+        {tabs.length > 1 ? <ItemsureTabs tabs={tabs} selected={tab} onSelect={setChosenTab} label="Item sections" /> : null}
+
+        {tab === 'stock' ? (
+          <section className="isu-stack" aria-label="Where it is">
+            {stock === null ? <p className="isu-muted">Loading amounts…</p> : null}
+            {stock && !groups.length ? (
+              <p className="isu-muted">
+                Not kept anywhere yet.{allowed.set ? ' Use the button below to pick where, and set how many are there.' : ''}
+              </p>
+            ) : null}
+            <ErrorNote message={removeError} />
+            <ul className="isu-place-list">
+              {groups.map((g) => (
+                <React.Fragment key={g.location.id}>
+                  {g.slots.length > 1 ? (
+                    <li className="isu-place-location-total">
+                      <strong>{g.location.name}</strong>
+                      <span>{groupTotal(g) === null ? 'no amounts yet' : <><strong>{displayQuantity(groupTotal(g))}</strong> {item.unitSymbol} in {g.slots.length} spots</>}</span>
+                    </li>
+                  ) : null}
+                  {g.slots.map((slot) => (
+                    <ItemsureItemPlaceRow
+                      key={slot.key}
+                      item={item}
+                      slot={slot}
+                      label={rowLabel(slot, g)}
+                      can={allowed}
+                      perDay={usage ? usage.forSlot(slot.locationId, slot.storageAreaId) : null}
+                      open={isOpen(slot.key)}
+                      onToggle={() => toggle(slot.key)}
+                      onAction={(kind, s) => (kind === 'removePlace' ? removePlace(s) : setAction({ kind, slot: s }))}
+                    />
+                  ))}
+                </React.Fragment>
+              ))}
+            </ul>
+            {stock && allowed.set ? (
+              <ItemsurePlacePicker label="Set an amount somewhere else" options={otherPlaces} onPick={openOther} />
+            ) : null}
+          </section>
         ) : null}
+
+        {tab === 'history' ? (
+          <section className="isu-stack" aria-label="History">
+            <ItemsureItemHistory organizationId={organization.id} itemId={raw.id} locations={places.locations} />
+          </section>
+        ) : null}
+
+        {tab === 'details' ? (
+          <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} variantLabel={showDetails ? variantLabelFor(organization) : ''} onEdit={editItem} />
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Modal open title={title} onClose={onClose} className="isu-modal--item">
+        {body}
       </Modal>
       <ItemsureUndoBar done={done} onClose={clearDone} />
-    </div>
+    </>
   );
 }

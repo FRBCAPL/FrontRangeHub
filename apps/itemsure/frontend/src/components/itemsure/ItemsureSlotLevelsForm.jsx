@@ -66,7 +66,7 @@ export default function ItemsureSlotLevelsForm({ organizationId, item, slot, pla
       <Field label="Warn me at" hint="When the amount drops to this number or lower, it shows as Low stock.">
         <ItemsureStepper label="warn me at" value={minimum} onChange={setMinimum} inputMode="decimal" autoComplete="off" />
       </Field>
-      <Field label="Fill up to" hint="How many you want after restocking. Restock suggestions top you up to this.">
+      <Field label="Fill up to" hint="This sets the par. How many you want after restocking. Restock suggestions top you up to this.">
         <ItemsureStepper label="fill up to" value={par} onChange={setPar} inputMode="decimal" autoComplete="off" />
       </Field>
       <ErrorNote message={error} />

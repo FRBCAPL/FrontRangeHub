@@ -7,6 +7,7 @@ import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { ErrorNote, LoadFailed, PageHead } from './ItemsureUi.jsx';
+import { useItemLink } from '../../hooks/useItemModal.js';
 
 const q = (text, unit) => (text === null || text === undefined ? '—' : `${displayQuantity(text)} ${unit}`);
 
@@ -20,6 +21,7 @@ function byLocation(rows) {
 }
 
 function AlertRow({ row, pending }) {
+  const itemLink = useItemLink();
   const levels = `${ITEMSURE_PATH}/levels?location=${row.location_id}&area=${row.storage_area_id || ''}&search=${encodeURIComponent(row.item_name)}`;
   return (
     <li className={`isu-card isu-restock-card${pending ? '' : ' is-low'}`}>
@@ -36,7 +38,7 @@ function AlertRow({ row, pending }) {
         <span>Fill up to {q(row.par_text, row.unit_symbol)}</span>
       </div>
       <div className="isu-restock-move-actions">
-        <Link className="isu-btn isu-btn--primary isu-btn--sm" to={`${ITEMSURE_PATH}/items/${row.item_id}`}>
+        <Link className="isu-btn isu-btn--primary isu-btn--sm" {...itemLink(row.item_id)}>
           {pending ? 'Set amount' : 'Open item'}
         </Link>
         {pending ? null : (

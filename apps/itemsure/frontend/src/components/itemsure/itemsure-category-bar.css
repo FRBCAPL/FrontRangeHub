@@ -104,14 +104,56 @@
 }
 
 .isu-app .isu-catpanel-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px;
   align-items: stretch;
   gap: 4px;
 }
 
+.isu-app .isu-catpanel-list.is-editable .isu-catpanel-item {
+  grid-template-columns: minmax(0, 1fr) 52px 42px;
+}
+
+.isu-app .isu-catpanel-list.is-subs .isu-catpanel-item {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.isu-app .isu-catpanel-list.is-subs.is-editable .isu-catpanel-item {
+  grid-template-columns: minmax(0, 1fr) 42px;
+}
+
+.isu-app .isu-catpanel-back {
+  justify-self: start;
+}
+
+.isu-app .isu-catpanel-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  align-items: end;
+  padding: 0 0 6px;
+  border-bottom: 1px solid var(--isu-line);
+  background: var(--isu-paper);
+  color: var(--isu-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.isu-app .isu-catpanel-head > span {
+  text-align: center;
+}
+
+.isu-app .isu-catpanel-head > .isu-catpanel-headrow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 12px;
+  text-align: left;
+}
+
 .isu-app .isu-catpanel-toggle {
-  flex: 0 0 auto;
-  min-width: 52px;
+  min-width: 0;
   min-height: 42px;
   display: inline-flex;
   align-items: center;
@@ -127,28 +169,32 @@
   cursor: pointer;
 }
 
+.isu-app .isu-catpanel-edit {
+  min-width: 0;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--isu-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.isu-app .isu-catpanel-edit:hover {
+  border-color: var(--isu-pine-line);
+  color: var(--isu-pine);
+}
+
 .isu-app .isu-catpanel-toggle:hover {
   border-color: var(--isu-pine-line);
   color: var(--isu-pine);
 }
 
-.isu-app .isu-catpanel-toggle.is-open {
-  color: var(--isu-pine);
-  border-color: var(--isu-pine-line);
-  background: var(--isu-pine-soft);
-}
-
 .isu-app .isu-catpanel-subs {
   font-size: 0.75rem;
-}
-
-.isu-catpanel-arrow {
-  display: inline-block;
-  transition: transform 0.15s;
-}
-
-.isu-catpanel-toggle.is-open .isu-catpanel-arrow {
-  transform: rotate(180deg);
 }
 
 .isu-app .isu-catpanel-row {

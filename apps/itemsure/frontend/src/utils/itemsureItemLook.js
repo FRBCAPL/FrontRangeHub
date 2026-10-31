@@ -33,6 +33,30 @@ export function fillPercent(total, par) {
   return Math.max(0, Math.min(1, Number(total || 0) / goal)) * 100;
 }
 
+export const ITEM_GROUPS = [
+  { key: 'attention', title: 'Needs attention' },
+  { key: 'good', title: 'All good' },
+  { key: 'other', title: 'No warning levels yet' },
+  { key: 'archived', title: 'Archived' },
+];
+
+/**
+ * Splits items (already in order) into ITEM_GROUPS by how they look: running low or
+ * needing topping up, fine, everything else, then archived. Empty groups are left out.
+ * `toneFor(item)` is cardTone of the item's summary.
+ */
+export function groupByStatus(items, toneFor) {
+  const buckets = { attention: [], good: [], other: [], archived: [] };
+  for (const item of items) {
+    const tone = toneFor(item);
+    if (!(item.is_active ?? true)) buckets.archived.push(item);
+    else if (tone === 'danger' || tone === 'warn') buckets.attention.push(item);
+    else if (tone === 'ok') buckets.good.push(item);
+    else buckets.other.push(item);
+  }
+  return ITEM_GROUPS.map((g) => ({ ...g, items: buckets[g.key] })).filter((g) => g.items.length);
+}
+
 /** 'danger' | 'warn' | 'ok' | 'muted' | 'none' for the card stripe and tint. */
 export function cardTone(summary) {
   if (!summary) return 'none';

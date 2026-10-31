@@ -42,6 +42,14 @@ export function displayQuantity(text) {
   return canonicalQuantity(text) || '0';
 }
 
+/** An amount to buy, rounded up to a whole number: "2.5" → "3", "4" stays "4". You can't buy half a case. */
+export function wholeToBuy(text) {
+  const shown = displayQuantity(text);
+  const [whole, fraction] = shown.split('.');
+  if (!fraction) return shown;
+  return (BigInt(whole || '0') + 1n).toString();
+}
+
 /**
  * Adds `delta` whole units to a typed quantity, exactly, never below zero.
  * Blank plus one is "1"; blank minus one stays blank. Text that isn't a valid

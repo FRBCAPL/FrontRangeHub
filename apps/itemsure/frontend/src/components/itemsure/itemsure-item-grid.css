@@ -24,9 +24,8 @@
   font-size: 1.05rem;
 }
 
-.isu-app .isu-item-grid .isu-stockcard-details {
-  margin: 1px 0;
-  font-size: 0.78rem;
+.isu-app .isu-item-grid .isu-stockcard-meta {
+  font-size: 0.76rem;
 }
 
 @media (min-width: 760px) {

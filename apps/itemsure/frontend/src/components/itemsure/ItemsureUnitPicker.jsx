@@ -1,107 +1,35 @@
 import React, { useState } from 'react';
-import { createUnit } from '../../services/itemsureItemService.js';
-import { findUnit } from '../../utils/itemsureUnits.js';
-import { ErrorNote, Field } from './ItemsureUi.jsx';
-
-const OTHER = '__other__';
+import { Field } from './ItemsureUi.jsx';
+import ItemsureUnitChooser from './ItemsureUnitChooser.jsx';
 
 /**
- * "Counted in" dropdown. "Other…" lets the business name its own unit (for example Keg or Tray),
- * saves it right away, and selects it. `onAdded(row)` lets the parent remember it.
+ * "Counted in": a button showing the unit ("Bottle (btl)") that opens a window to pick it.
+ * Units named there are saved right away; `onAdded(row)` lets the parent remember them.
  */
-export default function ItemsureUnitPicker({ organizationId, units, value, onChange, canManage, onAdded, hint }) {
-  const [adding, setAdding] = useState(false);
-  const [name, setName] = useState('');
-  const [symbol, setSymbol] = useState('');
-  const [decimals, setDecimals] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  const pick = (id) => {
-    if (id !== OTHER) {
-      setAdding(false);
-      onChange(id);
-      return;
-    }
-    setAdding(true);
-    setName('');
-    setSymbol('');
-    setDecimals(false);
-    setError('');
-  };
-
-  const save = async () => {
-    const existing = findUnit(units, name);
-    if (existing) {
-      onChange(existing.id);
-      setAdding(false);
-      return;
-    }
-    setBusy(true);
-    setError('');
-    try {
-      const row = await createUnit(organizationId, { name, symbol, decimals });
-      onAdded?.(row);
-      onChange(row.id);
-      setAdding(false);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const own = units.filter((u) => u.organization_id);
-  const shared = units.filter((u) => !u.organization_id);
-  const option = (u) => <option key={u.id} value={u.id}>{u.name}{u.symbol ? ` (${u.symbol})` : ''}</option>;
+export default function ItemsureUnitPicker({ organizationId, units, items = [], value, onChange, canManage, onAdded, hint }) {
+  const [open, setOpen] = useState(false);
+  const unit = units.find((u) => u.id === value);
+  const label = unit ? `${unit.name}${unit.symbol && unit.symbol !== unit.name ? ` (${unit.symbol})` : ''}` : '';
 
   return (
     <>
       <Field label="Counted in" hint={hint}>
-        <select value={adding ? OTHER : value} onChange={(e) => pick(e.target.value)}>
-          {own.length ? (
-            <>
-              <optgroup label="Standard">{shared.map(option)}</optgroup>
-              <optgroup label="Your units">{own.map(option)}</optgroup>
-            </>
-          ) : shared.map(option)}
-          {canManage ? <option value={OTHER}>Other… (name your own)</option> : null}
-        </select>
+        <button type="button" className={`isu-catpick-button${label ? '' : ' is-empty'}`} aria-haspopup="dialog" onClick={() => setOpen(true)}>
+          <span>{label || 'Choose a unit'}</span>
+          <span className="isu-catpick-change">{label ? 'Change' : 'Choose'} {'\u203A'}</span>
+        </button>
       </Field>
-      {adding ? (
-        <div className="isu-unit-add">
-          <Field label="Unit name">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={80}
-              autoFocus
-              placeholder="For example: Keg, Tray, Sleeve"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (name.trim()) save();
-                }
-              }}
-            />
-          </Field>
-          <Field label="Short name (optional)" hint="Shown next to amounts, for example 12 kg.">
-            <input value={symbol} onChange={(e) => setSymbol(e.target.value)} maxLength={16} placeholder="kg" />
-          </Field>
-          <fieldset className="isu-unit-add-parts">
-            <legend>How is it counted?</legend>
-            <label><input type="radio" checked={!decimals} onChange={() => setDecimals(false)} /> Whole numbers only (1, 2, 3)</label>
-            <label><input type="radio" checked={decimals} onChange={() => setDecimals(true)} /> Allow parts (0.5, 1.25)</label>
-          </fieldset>
-          <div className="isu-quickcount-actions">
-            <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy || !name.trim()} onClick={save}>
-              {busy ? 'Saving…' : 'Add unit'}
-            </button>
-            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setAdding(false)}>Cancel</button>
-          </div>
-          <ErrorNote message={error} />
-        </div>
-      ) : null}
+      <ItemsureUnitChooser
+        open={open}
+        organizationId={organizationId}
+        units={units}
+        items={items}
+        value={value}
+        canManage={canManage}
+        onChoose={onChange}
+        onAdded={onAdded}
+        onClose={() => setOpen(false)}
+      />
     </>
   );
 }

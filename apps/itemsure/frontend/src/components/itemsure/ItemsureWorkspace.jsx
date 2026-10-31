@@ -6,7 +6,7 @@ import ItemsureNav from './ItemsureNav.jsx';
 import ItemsureDashboard from './ItemsureDashboard.jsx';
 import ItemsureLocations from './ItemsureLocations.jsx';
 import ItemsureItems from './ItemsureItems.jsx';
-import ItemsureItemDetail from './ItemsureItemDetail.jsx';
+import ItemsureItemModalHost, { ItemsureItemRedirect } from './ItemsureItemModalHost.jsx';
 import ItemsureItemWizard from './ItemsureItemWizard.jsx';
 import ItemsureSettings from './ItemsureSettings.jsx';
 import ItemsureSetup from './ItemsureSetup.jsx';
@@ -60,7 +60,7 @@ export default function ItemsureWorkspace() {
           <Route path="suppliers" element={needsOrg(<ItemsureSuppliers />)} />
           <Route path="items" element={needsOrg(<ItemsureItems />)} />
           <Route path="items/new" element={needsOrg(<ItemsureItemWizard />)} />
-          <Route path="items/:itemId" element={needsOrg(<ItemsureItemDetail />)} />
+          <Route path="items/:itemId" element={needsOrg(<ItemsureItemRedirect />)} />
           <Route path="items/:itemId/edit" element={needsOrg(<ItemsureItemWizard />)} />
           <Route path="counts" element={needsCounts(<ItemsureCounts />)} />
           <Route path="counts/new" element={needsCounts(<ItemsureCountStart />)} />
@@ -78,6 +78,7 @@ export default function ItemsureWorkspace() {
           <Route path="coming-next" element={needsOrg(<ItemsureComingNext />)} />
           <Route path="*" element={<Navigate to={ITEMSURE_PATH} replace />} />
         </Routes>
+        {organization ? <ItemsureItemModalHost /> : null}
       </div>
     </div>
   );

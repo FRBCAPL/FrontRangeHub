@@ -21,6 +21,21 @@ export function findUnit(units, name) {
     u.name?.toLowerCase() === typed || u.symbol?.toLowerCase() === typed || u.code === code) || null;
 }
 
+/**
+ * Units split for the "Counted in" window: the business's own, the standard ones its items
+ * already use (plus the chosen one), and the rest, which start hidden. With nothing to show
+ * up front, every standard unit counts as in use so the window is never empty.
+ */
+export function unitSections(units, items, value) {
+  const used = new Set(items.map((i) => i.base_unit_id));
+  if (value) used.add(value);
+  const own = units.filter((u) => u.organization_id);
+  const shared = units.filter((u) => !u.organization_id);
+  const inUse = shared.filter((u) => used.has(u.id));
+  if (!own.length && !inUse.length) return { own, inUse: shared, more: [] };
+  return { own, inUse, more: shared.filter((u) => !used.has(u.id)) };
+}
+
 /** Loaded units plus any added since, without duplicates. */
 export function mergeUnits(units, added) {
   const known = new Set(units.map((u) => u.id));

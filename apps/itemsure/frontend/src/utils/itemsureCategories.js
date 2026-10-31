@@ -84,6 +84,19 @@ export function searchCategories(tree, query) {
     .filter(({ root, children }) => !needle || hit(root) || children.length);
 }
 
+/** "🥃 Liquor" when the category has its own icon, otherwise just the name. */
+export function labelWithIcon(category) {
+  return category?.icon ? `${category.icon} ${category.name}` : category?.name || '';
+}
+
+/** A category's icon, or its main category's when it has none; '' when neither has one. */
+export function categoryIcon(tree, id) {
+  const own = tree.byId.get(id)?.icon;
+  if (own) return own;
+  const p = tree.parentOf(id);
+  return (p && tree.byId.get(p)?.icon) || '';
+}
+
 /** The main category a chosen chip sits in (itself for a main one), or null. */
 export function rootOf(tree, selected) {
   if (!tree.byId.has(selected)) return null;

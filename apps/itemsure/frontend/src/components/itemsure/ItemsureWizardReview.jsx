@@ -86,14 +86,14 @@ export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo
                     <dd>{show(e.amount, unit) || 'not set yet'}</dd>
                     <dt>Warn me at</dt>
                     <dd>{show(e.minimum, unit) || 'not set'}</dd>
-                    <dt>Fill up to</dt>
+                    <dt>Fill up to (par)</dt>
                     <dd>{show(e.par, unit) || 'not set'}</dd>
                   </dl>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="isu-muted">Not kept anywhere yet.{editing ? '' : ' You can add them later from the item page.'}</p>
+            <p className="isu-muted">Not kept anywhere yet.{editing ? '' : ' You can add them later: tap the item to open it.'}</p>
           )}
           {entries.length && steps.includes('levels') ? (
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onEdit('levels')}>Change warning and restock levels</button>

@@ -12,7 +12,10 @@ import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsureCountRow from './ItemsureCountRow.jsx';
 import ItemsureCountSaveBar from './ItemsureCountSaveBar.jsx';
 import ItemsureCountAddItems from './ItemsureCountAddItems.jsx';
-import { countingAreas, NO_AREA } from '../../utils/itemsureCountAreas.js';
+import { countingAreas, NO_AREA, splitForSpot } from '../../utils/itemsureCountAreas.js';
+import { slotsInUse } from '../../utils/itemsureItemStock.js';
+import useItemPlaces from '../../hooks/useItemPlaces.js';
+import useItemStock from '../../hooks/useItemStock.js';
 
 export default function ItemsureCountActive({ data, userId, onReload }) {
   const { session, items, location, storageAreas } = data;
@@ -26,6 +29,9 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
   const [areaId, setAreaId] = useState(areas[0]?.id ?? NO_AREA);
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
+  const [showOthers, setShowOthers] = useState(false);
+  const places = useItemPlaces(organization.id);
+  const { stock } = useItemStock(organization.id, can('inventory.view'));
   const { busy, error, run } = useItemsureAction();
 
   const countedItems = useMemo(() => {
@@ -36,11 +42,26 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
     return ids;
   }, [entries, drafts]);
 
-  const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    if (!needle) return items;
-    return items.filter((i) => [i.item_name, i.sku, i.barcode, i.category_name].some((v) => String(v || '').toLowerCase().includes(needle)));
-  }, [items, query]);
+  const selectedAreaId = areaId || null;
+  // Items kept, levelled, or stocked in this spot come first; the rest wait behind a button.
+  const inUse = useMemo(
+    () => (places.places ? slotsInUse({ places: places.places, balances: stock?.balances || [], targets: stock?.targets || [] }) : null),
+    [places.places, stock],
+  );
+  // Counts saved when the screen loaded, so a row never jumps between lists while typing.
+  const countedHere = useMemo(
+    () => new Set(Object.values(data.entries || {}).filter((e) => (e.storage_area_id || null) === selectedAreaId).map((e) => e.item_id)),
+    [data.entries, selectedAreaId],
+  );
+  const { here, others } = useMemo(
+    () => splitForSpot(items, inUse, session.location_id, selectedAreaId, countedHere),
+    [items, inUse, session.location_id, selectedAreaId, countedHere],
+  );
+
+  const needle = query.trim().toLowerCase();
+  const matches = (i) => !needle || [i.item_name, i.sku, i.barcode, i.category_name].some((v) => String(v || '').toLowerCase().includes(needle));
+  const visible = here.filter(matches);
+  const othersShown = showOthers || Boolean(needle) ? others.filter(matches) : [];
 
   const refresh = () =>
     run(async () => {
@@ -61,8 +82,19 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
     await onReload();
   };
 
-  const selectedAreaId = areaId || null;
   const areaName = (id) => areas.find((a) => (a.id || null) === (id || null))?.name || 'Loose (no specific spot)';
+  const row = (item) => (
+    <ItemsureCountRow
+      key={`${item.item_id}:${areaId}`}
+      item={item}
+      storageAreaId={selectedAreaId}
+      autosave={autosave}
+      otherAreaNames={Object.values(entries)
+        .filter((e) => e.item_id === item.item_id && (e.storage_area_id || null) !== selectedAreaId)
+        .map((e) => areaName(e.storage_area_id))}
+      packages={features.packaging && packaging.ready ? usablePackages(packaging.packagesFor(item.item_id)) : []}
+    />
+  );
 
   return (
     <div className="isu-page isu-count-active">
@@ -87,7 +119,10 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
               type="button"
               className={`isu-chip isu-chip--choice${(a.id || NO_AREA) === areaId ? ' is-selected' : ''}`}
               aria-pressed={(a.id || NO_AREA) === areaId}
-              onClick={() => setAreaId(a.id || NO_AREA)}
+              onClick={() => {
+                setAreaId(a.id || NO_AREA);
+                setShowOthers(false);
+              }}
             >
               {a.name}
             </button>
@@ -106,21 +141,24 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      <ul className="isu-count-rows">
-        {visible.map((item) => (
-          <ItemsureCountRow
-            key={`${item.item_id}:${areaId}`}
-            item={item}
-            storageAreaId={selectedAreaId}
-            autosave={autosave}
-            otherAreaNames={Object.values(entries)
-              .filter((e) => e.item_id === item.item_id && (e.storage_area_id || null) !== selectedAreaId)
-              .map((e) => areaName(e.storage_area_id))}
-            packages={features.packaging && packaging.ready ? usablePackages(packaging.packagesFor(item.item_id)) : []}
-          />
-        ))}
-      </ul>
-      {visible.length === 0 ? <p className="isu-muted">No items match that search.</p> : null}
+      {others.length ? (
+        <p className="isu-muted isu-small isu-center">
+          Showing the {here.length} item{here.length === 1 ? '' : 's'} kept in {areaName(selectedAreaId)}.
+        </p>
+      ) : null}
+      <ul className="isu-count-rows">{visible.map(row)}</ul>
+      {othersShown.length ? (
+        <>
+          <h2 className="isu-count-others-title">Not usually kept here ({othersShown.length})</h2>
+          <ul className="isu-count-rows">{othersShown.map(row)}</ul>
+        </>
+      ) : null}
+      {!visible.length && !othersShown.length ? <p className="isu-muted">No items match that search.</p> : null}
+      {others.length && !needle ? (
+        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm isu-count-others-toggle" onClick={() => setShowOthers((v) => !v)}>
+          {showOthers ? 'Hide items not kept here' : `Show ${others.length} more item${others.length === 1 ? '' : 's'} not kept here`}
+        </button>
+      ) : null}
 
       <div className="isu-count-footer">
         <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={refresh}>

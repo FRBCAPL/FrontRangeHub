@@ -45,6 +45,8 @@
 .isu-app .isu-count-savebar.is-problem { color: var(--isu-danger); background: #2c1a18; border-color: var(--isu-danger-line); }
 
 .isu-app .isu-count-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.isu-app .isu-count-others-title { margin: 8px 0 0; color: var(--isu-muted); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-align: center; text-transform: uppercase; }
+.isu-app .isu-count-others-toggle { align-self: center; }
 .isu-app .isu-count-row { padding: 14px 16px; }
 .isu-app .isu-count-row.has-conflict { border-color: var(--isu-amber); }
 .isu-app .isu-count-row-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

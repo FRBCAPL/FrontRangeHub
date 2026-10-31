@@ -30,6 +30,8 @@ test('a move is suggested before buying, unless moving is switched off', () => {
   const r = rec(1, { transfers: [{ quantity: '5', same_location: true, area_name: 'Storeroom', location_name: 'Legends' }], external: '3' });
   assert.match(buildTodayTasks({ recs: [r], paths })[0].detail, /Move 5 btl from Storeroom\.$/);
   assert.match(buildTodayTasks({ recs: [r], showMoves: false, paths })[0].detail, /Buy 8 btl\.$/);
+  const half = { ...r, need: '2.5', external: '2.5' };
+  assert.match(buildTodayTasks({ recs: [half], showMoves: false, paths })[0].detail, /Buy 3 btl\.$/);
 });
 
 test('many low items are capped, with a link to the rest', () => {

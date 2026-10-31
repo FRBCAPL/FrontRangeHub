@@ -62,7 +62,7 @@ export default function ItemsureCountStart() {
 
   return (
     <div className="isu-page">
-      <PageHead title="Start count" description="Every active catalog item is included. Quantities are entered blind." />
+      <PageHead title="Start count" description="Items kept where you count are listed first; every other item is one tap away. Quantities are entered blind." />
       <Card>
         {locations === null ? <p className="isu-muted">Loading…</p> : null}
         {locations && locations.length === 0 ? (

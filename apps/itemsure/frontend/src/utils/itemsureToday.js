@@ -1,5 +1,5 @@
 // The home page "Today" list: what needs doing, most urgent first, one action each.
-import { displayQuantity } from './itemsureQuantity.js';
+import { displayQuantity, wholeToBuy } from './itemsureQuantity.js';
 
 export const MAX_LOW_SHOWN = 5;
 const OPEN_COUNT = ['draft', 'in_progress'];
@@ -16,7 +16,7 @@ function fixFor(rec, showMoves) {
     return `Move ${qty(move.quantity, rec.unit_symbol)} from ${from}`;
   }
   const buy = showMoves ? rec.external ?? rec.external_at_most ?? rec.need : rec.need;
-  return buy !== null && buy !== undefined && displayQuantity(buy) !== '0' ? `Buy ${qty(buy, rec.unit_symbol)}` : null;
+  return buy !== null && buy !== undefined && displayQuantity(buy) !== '0' ? `Buy ${qty(wholeToBuy(buy), rec.unit_symbol)}` : null;
 }
 
 /**

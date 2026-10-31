@@ -7,6 +7,7 @@ import { needCountText } from '../../utils/itemsureAllNeeds.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, sites } from '../../data/itemsureTerms.js';
 import ItemsureNeedRow from './ItemsureNeedRow.jsx';
+import { itemAddress } from '../../hooks/useItemModal.js';
 import { ErrorNote, PageHead } from './ItemsureUi.jsx';
 
 function BusinessNeeds({ business, showName, current, onOpen }) {
@@ -47,7 +48,7 @@ export default function ItemsureAllNeeds() {
 
   const openIn = async (organizationId, itemId) => {
     await switchOrganization(organizationId);
-    navigate(`${ITEMSURE_PATH}/items/${itemId}`);
+    navigate(itemAddress(itemId));
   };
 
   const ordered = businesses

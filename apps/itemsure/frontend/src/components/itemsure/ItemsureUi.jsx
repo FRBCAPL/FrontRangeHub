@@ -55,7 +55,7 @@ export function PageHead({ title, description, action }) {
   );
 }
 
-export function Modal({ open, title, onClose, children }) {
+export function Modal({ open, title, onClose, wide = false, className = '', children }) {
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export function Modal({ open, title, onClose, children }) {
   if (!open) return null;
   return (
     <div className="isu-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="isu-modal" role="dialog" aria-modal="true" aria-label={title} ref={panelRef}>
+      <div className={`isu-modal${wide ? ' is-wide' : ''}${className ? ` ${className}` : ''}`} role="dialog" aria-modal="true" aria-label={title} ref={panelRef}>
         <div className="isu-modal-head">
           <h2>{title}</h2>
           <button type="button" className="isu-icon-btn" onClick={onClose} aria-label="Close">

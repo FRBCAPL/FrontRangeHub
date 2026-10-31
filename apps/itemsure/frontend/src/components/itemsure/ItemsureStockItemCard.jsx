@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { useItemLink } from '../../hooks/useItemModal.js';
 import { cardTone } from '../../utils/itemsureItemLook.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
@@ -22,11 +22,12 @@ export function SpotChip({ slot, onClick }) {
 /** One item at this location: totals vs par, status bar, and its spots. Tap a spot to add, use, or move. */
 export default function ItemsureStockItemCard({ row, onSpot }) {
   const { item, slots, summary } = row;
+  const itemLink = useItemLink();
   return (
     <li className={`isu-card isu-stockcard isu-stockcard--${cardTone(summary)} isu-stockloc-card`}>
       <div className="isu-stockcard-body">
         <div className="isu-stockloc-top">
-          <Link to={`${ITEMSURE_PATH}/items/${item.id}`} className="isu-stockloc-name">{item.name}</Link>
+          <Link {...itemLink(item.id)} className="isu-stockloc-name">{item.name}</Link>
           <StockAmount summary={summary} unitName={item.unitName} />
         </div>
         <StockBar summary={summary} />

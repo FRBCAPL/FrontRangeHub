@@ -2,24 +2,24 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useTargetsData from '../../hooks/useTargetsData.js';
+import useSuppliers from '../../hooks/useSuppliers.js';
+import useShoppingTicks from '../../hooks/useShoppingTicks.js';
 import { listOpenPlans, loadRecommendations } from '../../services/itemsureRestockService.js';
 import { notifyInventoryChanged, onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { findBalance, NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
-import { categoryOptions, categoryPath, categoryTree, inCategory } from '../../utils/itemsureCategories.js';
+import { categoryPath, categoryTree, inCategory } from '../../utils/itemsureCategories.js';
+import { buyGroups, moveRows, NO_SUPPLIER } from '../../utils/itemsureShoppingList.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
-import { sites, SITE } from '../../data/itemsureTerms.js';
+import { SITE } from '../../data/itemsureTerms.js';
 import ItemsureRestockAction from './ItemsureRestockAction.jsx';
-import ItemsureRestockCard from './ItemsureRestockCard.jsx';
 import ItemsureRestockPlans from './ItemsureRestockPlans.jsx';
-import { ErrorNote, Field, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
+import ItemsureShoppingBuy from './ItemsureShoppingBuy.jsx';
+import ItemsureShoppingFilters from './ItemsureShoppingFilters.jsx';
+import ItemsureShoppingMoves from './ItemsureShoppingMoves.jsx';
+import { ErrorNote, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
 
-const GROUPS = {
-  location: { label: SITE, of: (r) => r.location_name },
-  area: { label: 'Spot', of: (r) => `${r.location_name} · ${r.area_name || NO_AREA_LABEL}` },
-  category: { label: 'Category', of: (r, cats) => cats.get(r.category_id) || 'No category' },
-  status: { label: 'Status', of: (r) => TARGET_STATUS[r.status].label },
-};
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 function EmptyState({ data }) {
   const hasPar = data.targets.some((t) => t.par_text !== null);
@@ -48,16 +48,18 @@ function EmptyState({ data }) {
   );
 }
 
-/** Below-par and low shortages with internal transfer suggestions first, then outside purchase. */
+/** What to buy (by supplier), what to move instead, and planned transfers. */
 export default function ItemsureRestock() {
   const { organization, features, can } = useItemsureWorkspace();
   const { data, error: dataError, reload: reloadData } = useTargetsData(organization.id);
+  const suppliers = useSuppliers(organization.id);
   const [recs, setRecs] = useState(null);
   const [plans, setPlans] = useState([]);
   const [error, setError] = useState('');
-  const [filters, setFilters] = useState({ locationId: '', categoryId: '', status: '', group: 'location' });
+  const [filters, setFilters] = useState({ locationId: '', categoryId: '', status: '', group: '' });
   const [action, setAction] = useState(null);
   const canTransfer = can('inventory.transfer');
+  const showMoves = features.transfers;
 
   const load = useCallback(async () => {
     try {
@@ -70,14 +72,16 @@ export default function ItemsureRestock() {
     }
   }, [organization.id]);
 
+  const reloadSuppliers = suppliers.reload;
   useEffect(() => {
     load();
     const stop = onInventoryChanged(() => {
       load();
       reloadData();
+      reloadSuppliers();
     });
     return stop;
-  }, [load, reloadData]);
+  }, [load, reloadData, reloadSuppliers]);
 
   const afterAction = async () => {
     setAction(null);
@@ -87,27 +91,44 @@ export default function ItemsureRestock() {
   const itemsById = useMemo(() => new Map((data?.items || []).map((i) => [i.id, i])), [data]);
   const tree = useMemo(() => categoryTree(data?.categories || []), [data]);
   const categoryNames = useMemo(() => new Map([...tree.byId.keys()].map((id) => [id, categoryPath(tree, id)])), [tree]);
+  const listedIds = useMemo(() => (recs ? new Set(recs.map((r) => r.item_id)) : null), [recs]);
+  const ticks = useShoppingTicks(organization.id, listedIds);
 
-  const shown = useMemo(
-    () =>
-      (recs || []).filter(
-        (r) =>
-          (!filters.locationId || r.location_id === filters.locationId) &&
-          inCategory(tree, r, filters.categoryId) &&
-          (!filters.status || r.status === filters.status),
-      ),
-    [recs, filters, tree],
+  const { available: hasSuppliers, links: supplierLinks, suppliers: supplierList } = suppliers;
+  const groupChoices = useMemo(() => {
+    const names = new Map(supplierList.map((s) => [s.id, s.name]));
+    const choices = {};
+    if (hasSuppliers) choices.supplier = { label: 'Supplier', of: (r) => names.get(supplierLinks.get(r.item_id)) || NO_SUPPLIER, last: NO_SUPPLIER };
+    choices.location = { label: SITE, of: (r) => r.location_name };
+    if (features.spots) choices.area = { label: 'Spot', of: (r) => `${r.location_name} · ${r.area_name || NO_AREA_LABEL}` };
+    choices.category = { label: 'Category', of: (r) => categoryNames.get(r.category_id) || 'No category', last: 'No category' };
+    choices.status = { label: 'Status', of: (r) => TARGET_STATUS[r.status].label };
+    return choices;
+  }, [hasSuppliers, supplierLinks, supplierList, features.spots, categoryNames]);
+  const group = groupChoices[filters.group] ? filters.group : Object.keys(groupChoices)[0];
+
+  const placed = useMemo(
+    () => (recs || []).filter((r) => (!filters.locationId || r.location_id === filters.locationId) && inCategory(tree, r, filters.categoryId)),
+    [recs, filters.locationId, filters.categoryId, tree],
   );
+  const counts = useMemo(() => {
+    const items = (status) => new Set(placed.filter((r) => !status || r.status === status).map((r) => r.item_id)).size;
+    return { all: items(''), low: items('low'), below_par: items('below_par') };
+  }, [placed]);
+  const shown = useMemo(() => placed.filter((r) => !filters.status || r.status === filters.status), [placed, filters.status]);
 
-  const groups = useMemo(() => {
-    const map = new Map();
-    shown.forEach((r) => {
-      const label = GROUPS[filters.group].of(r, categoryNames);
-      if (!map.has(label)) map.set(label, []);
-      map.get(label).push(r);
-    });
-    return [...map.entries()];
-  }, [shown, filters.group, categoryNames]);
+  const toBuy = useMemo(() => {
+    const choice = groupChoices[group];
+    return buyGroups(shown, { showMoves, groupOf: choice.of, lastGroup: choice.last });
+  }, [shown, showMoves, groupChoices, group]);
+  const moves = useMemo(() => moveRows(shown, showMoves), [shown, showMoves]);
+
+  const buyCount = new Set(toBuy.flatMap((g) => g.rows.map((r) => r.itemId))).size;
+  const supplierCount = group === 'supplier' ? toBuy.filter((g) => g.label !== NO_SUPPLIER).length : 0;
+  const summary = [
+    buyCount ? `${plural(buyCount, 'item')} to buy${supplierCount ? ` from ${plural(supplierCount, 'supplier')}` : ''}` : 'Nothing to buy',
+    moves.length ? `${moves.length} can be moved instead` : '',
+  ].filter(Boolean).join(' \u00b7 ');
 
   const openAction = (kind, rec, move) => {
     const item = itemsById.get(rec.item_id);
@@ -132,12 +153,13 @@ export default function ItemsureRestock() {
 
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }));
   const ready = data && recs;
+  const withLocation = (data?.locations.length || 0) > 1;
 
   return (
     <div className="isu-page">
       <PageHead
         title="Shopping list"
-        description={features.transfers
+        description={showMoves
           ? 'What to buy, and what you can move from another place instead. Amounts fill each place back up to its "Fill up to" number.'
           : 'What to buy. Amounts fill each place back up to its "Fill up to" number.'}
       />
@@ -146,50 +168,17 @@ export default function ItemsureRestock() {
       {!ready && !error && !dataError ? <p className="isu-muted">Loading…</p> : null}
 
       {ready && recs.length ? (
-        <div className="isu-filters">
-          <Field label={SITE}>
-            <select value={filters.locationId} onChange={(e) => set({ locationId: e.target.value })}>
-              <option value="">All {sites}</option>
-              {data.locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-            </select>
-          </Field>
-          <Field label="Category">
-            <select value={filters.categoryId} onChange={(e) => set({ categoryId: e.target.value })}>
-              <option value="">All categories</option>
-              {categoryOptions(tree).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </Field>
-          <Field label="Status">
-            <select value={filters.status} onChange={(e) => set({ status: e.target.value })}>
-              <option value="">Running low and needs topping up</option>
-              <option value="low">Running low only</option>
-              <option value="below_par">Needs topping up only</option>
-            </select>
-          </Field>
-          <Field label="Group by">
-            <select value={filters.group} onChange={(e) => set({ group: e.target.value })}>
-              {Object.entries(GROUPS)
-                .filter(([key]) => features.spots || key !== 'area' || filters.group === 'area')
-                .map(([key, g]) => <option key={key} value={key}>{g.label}</option>)}
-            </select>
-          </Field>
-        </div>
+        <>
+          <p className="isu-shop-summary">{summary}</p>
+          <ItemsureShoppingFilters filters={{ ...filters, group }} onChange={set} groups={groupChoices} locations={data.locations} tree={tree} counts={counts} />
+        </>
       ) : null}
 
       {ready && !recs.length ? <EmptyState data={data} /> : null}
       {ready && recs.length > 0 && !shown.length ? <p className="isu-muted">Nothing matches these filters.</p> : null}
 
-      {groups.map(([label, rows]) => (
-        <section key={label} className="isu-restock-group">
-          <h2>{label} <span className="isu-muted isu-small">({rows.length})</span></h2>
-          <ul className="isu-levels-list">
-            {rows.map((r) => (
-              <ItemsureRestockCard key={r.target_id} rec={r} canTransfer={canTransfer} showMoves={features.transfers} onAction={openAction} />
-            ))}
-          </ul>
-        </section>
-      ))}
-
+      {ready ? <ItemsureShoppingBuy groups={toBuy} ticks={ticks} withLocation={withLocation} /> : null}
+      {ready ? <ItemsureShoppingMoves moves={moves} canTransfer={canTransfer} withLocation={withLocation} onAction={openAction} /> : null}
       {data ? <ItemsureRestockPlans plans={plans} data={data} canTransfer={canTransfer} onComplete={openComplete} onChanged={async () => notifyInventoryChanged()} /> : null}
 
       <Modal open={Boolean(action)} title={action ? { transfer: 'Transfer stock', plan: 'Plan a transfer', complete: 'Complete planned transfer' }[action.kind] : ''} onClose={() => setAction(null)}>

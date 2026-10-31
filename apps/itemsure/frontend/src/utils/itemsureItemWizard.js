@@ -64,7 +64,7 @@ export function checkAmounts(entries, precision, unitName) {
     const result = checkQuantity(e.amount, precision, unitName);
     if (result.error) return { key: e.key, error: result.error };
     if (result.empty && e.quantity !== null) {
-      return { key: e.key, error: 'Enter how many are there now (0 if none). Use the item page to remove a place.' };
+      return { key: e.key, error: 'Enter how many are there now (0 if none). To remove a place, open the item from Inventory.' };
     }
   }
   return null;

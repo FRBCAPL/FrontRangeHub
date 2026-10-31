@@ -1,0 +1,120 @@
+/* Category chooser window (Add or Edit item). Rows reuse the .isu-catpanel styles. */
+
+.isu-app .isu-catpick-button {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-raised);
+  color: var(--isu-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.isu-app .isu-catpick-button:hover,
+.isu-app .isu-catpick-button:focus-visible {
+  border-color: var(--isu-pine);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--isu-pine-soft);
+}
+
+.isu-app .isu-catpick-button > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.isu-app .isu-catpick-button.is-empty > span:first-child {
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-catpick-change {
+  flex: 0 0 auto;
+  color: var(--isu-pine);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.isu-app .isu-catpick-note {
+  flex: 0 0 auto;
+  color: var(--isu-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.isu-app .isu-catpanel-row:disabled {
+  opacity: 0.55;
+  cursor: default;
+  background: transparent;
+}
+
+.isu-app .isu-catpanel-list.is-single .isu-catpanel-item {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.isu-app .isu-catpick-add {
+  display: grid;
+  gap: 8px;
+}
+
+.isu-app .isu-catpick-add-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Unit chooser: the short name sits at the right of each row. */
+.isu-app .isu-unitpick-symbol {
+  flex: 0 0 auto;
+  color: var(--isu-muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.isu-app .isu-catpanel-row.is-selected .isu-unitpick-symbol {
+  color: inherit;
+}
+
+/* Section headings ("Your units", "In use"): centred between two lines, in green. */
+.isu-app .isu-unitpick-list .isu-catpanel-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 4px 6px;
+  color: var(--isu-pine);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.isu-app .isu-unitpick-list .isu-catpanel-divider::before,
+.isu-app .isu-unitpick-list .isu-catpanel-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--isu-pine-line);
+}
+
+.isu-app .isu-unitpick-list .isu-catpanel-divider:first-child {
+  padding-top: 4px;
+}
+
+.isu-app .isu-unitpick-more {
+  justify-self: center;
+}
+
+.isu-app .isu-catpanel .isu-unit-add {
+  margin: 0;
+}
+
+.isu-app .isu-extra-category-add {
+  align-self: flex-start;
+}

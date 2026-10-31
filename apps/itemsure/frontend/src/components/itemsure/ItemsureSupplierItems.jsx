@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { listSupplierItems } from '../../services/itemsureSupplierService.js';
 import { ErrorNote } from './ItemsureUi.jsx';
+import { useItemLink } from '../../hooks/useItemModal.js';
 
 const SEARCH_FROM = 9;
 
 /** The items bought from one supplier, each with Edit (back to Suppliers after). */
 export default function ItemsureSupplierItems({ organizationId, supplier, canManageItems }) {
   const navigate = useNavigate();
+  const itemLink = useItemLink();
   const [items, setItems] = useState(null);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
@@ -39,7 +41,7 @@ export default function ItemsureSupplierItems({ organizationId, supplier, canMan
         <ul className="isu-supplier-items">
           {shown.map((i) => (
             <li key={i.id} className={i.is_active ? '' : 'is-archived'}>
-              <Link to={`${ITEMSURE_PATH}/items/${i.id}`}>{i.name}</Link>
+              <Link {...itemLink(i.id)}>{i.name}</Link>
               {!i.is_active ? <span className="isu-badge">Archived</span> : null}
               {canManageItems ? (
                 <button

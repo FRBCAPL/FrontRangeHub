@@ -12,7 +12,9 @@ import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureItemRow from './ItemsureItemRow.jsx';
 import ItemsureCategoryForm from './ItemsureCategoryForm.jsx';
 import ItemsureCategoryChips from './ItemsureCategoryChips.jsx';
-import { categoryTree, extraCategoryNames, foundIn } from '../../utils/itemsureCategories.js';
+import ItemsureItemGroups from './ItemsureItemGroups.jsx';
+import { categoryIcon, categoryTree, extraCategoryNames, foundIn } from '../../utils/itemsureCategories.js';
+import { cardTone, groupByStatus } from '../../utils/itemsureItemLook.js';
 import { detailsLine } from '../../utils/itemsureItemDetails.js';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
@@ -37,6 +39,7 @@ export default function ItemsureItems() {
     }, { replace: true });
   const [modal, setModal] = useState('');
   const [newCategoryParent, setNewCategoryParent] = useState('');
+  const [editingCategory, setEditingCategory] = useState(null);
   const { error, setError } = useItemsureAction();
   const places = useItemPlaces(organization.id);
   const { stock } = useItemStock(organization.id, can('inventory.view'));
@@ -85,7 +88,13 @@ export default function ItemsureItems() {
   const tree = useMemo(() => categoryTree(activeCategories), [activeCategories]);
   const showDetails = Boolean(features.details && catalog?.detailsAvailable);
   const visibleItems = useMemo(() => {
-    if (browsing) return [];
+    if (browsing) {
+      // Before a category is picked, only what needs attention.
+      if (!stock) return [];
+      const summary = (item) => itemSummary(item.id, { ...stock, locations: places.locations });
+      const attention = filteredItems.filter((item) => ['danger', 'warn'].includes(cardTone(summary(item))));
+      return sortByAttention(attention, summary);
+    }
     const matches = filteredItems.filter((item) => {
       if (!foundIn(tree, item, category)) return false;
       if (!needle) return true;
@@ -102,6 +111,7 @@ export default function ItemsureItems() {
     closeModal();
     await refresh();
   };
+  const summaryFor = (itemId) => (stock ? itemSummary(itemId, { ...stock, locations: places.locations }) : null);
   const sourcesFor = (itemId) => ({ ...(stock || {}), places: places.placesFor(itemId) || [], locations: places.locations });
   const whereFor = (itemId) => whereAmounts(visibleSlots(itemId, sourcesFor(itemId)));
 
@@ -123,7 +133,12 @@ export default function ItemsureItems() {
           selected={category}
           onSelect={chooseCategory}
           onAdd={canManageCategories ? (parentId) => {
+            setEditingCategory(null);
             setNewCategoryParent(parentId || '');
+            setModal('category');
+          } : null}
+          onEdit={canManageCategories ? (cat) => {
+            setEditingCategory(cat);
             setModal('category');
           } : null}
         />
@@ -151,9 +166,6 @@ export default function ItemsureItems() {
       </div>
 
       {catalog === null ? <p className="isu-muted">Loading…</p> : null}
-      {catalog && browsing ? (
-        <p className="isu-muted isu-center">Pick a category above to see its items, or search.</p>
-      ) : null}
       {catalog && !browsing && visibleItems.length === 0 ? (
         <div className="isu-card isu-empty">
           <h2>{catalog.items.length ? 'No matching items' : 'No items yet'}</h2>
@@ -161,21 +173,33 @@ export default function ItemsureItems() {
         </div>
       ) : null}
 
-      <ul className="isu-item-list isu-item-grid">
-        {visibleItems.map((item) => (
+      <ItemsureItemGroups
+        groups={groupByStatus(visibleItems, (item) => cardTone(summaryFor(item.id)))}
+        titled={browsing}
+        renderItem={(item, compact) => (
           <ItemsureItemRow
             key={item.id}
             item={item}
-            summary={stock ? itemSummary(item.id, { ...stock, locations: places.locations }) : null}
+            compact={compact}
+            icon={categoryIcon(tree, item.category_id)}
+            summary={summaryFor(item.id)}
             keptAt={stock || places.ready ? whereFor(item.id) : null}
             supplier={suppliers.supplierFor(item.id)}
             alsoIn={extraCategoryNames(tree, item)}
+            showAlsoIn={!tree.byId.has(category)}
+            showSupplier={Boolean(needle) && String(suppliers.supplierFor(item.id)?.name || '').toLowerCase().includes(needle)}
             details={showDetails ? detailsLine(item) : ''}
             onCount={item.is_active && openCounts.sessions.length ? () => setCountItem(item) : null}
             counted={item.is_active && openCounts.sessions.length > 0 && !openCounts.waitingFor(item.id).length}
           />
-        ))}
-      </ul>
+        )}
+      />
+      {catalog && browsing ? (
+        <p className="isu-muted isu-center">
+          {stock && !visibleItems.length ? 'Nothing needs attention right now. ' : ''}
+          {visibleItems.length ? 'Pick a category above to see everything, or search.' : 'Pick a category above to see its items, or search.'}
+        </p>
+      ) : null}
 
       <Modal
         open={Boolean(countItem)}
@@ -208,9 +232,21 @@ export default function ItemsureItems() {
       </Modal>
       <ItemsureUndoBar done={counted} onClose={closeCounted} />
 
-      <Modal open={modal === 'category'} title={newCategoryParent ? 'Add subcategory' : 'Add category'} onClose={closeModal}>
+      <Modal
+        open={modal === 'category'}
+        title={editingCategory ? `Edit ${editingCategory.name}` : newCategoryParent ? 'Add subcategory' : 'Add category'}
+        onClose={closeModal}
+      >
         {modal === 'category' ? (
-          <ItemsureCategoryForm organizationId={organization.id} categories={activeCategories} parentId={newCategoryParent} onSaved={categorySaved} />
+          <ItemsureCategoryForm
+            key={editingCategory?.id || 'new'}
+            organizationId={organization.id}
+            categories={activeCategories}
+            parentId={newCategoryParent}
+            category={editingCategory}
+            iconsAvailable={Boolean(catalog?.iconsAvailable)}
+            onSaved={categorySaved}
+          />
         ) : null}
       </Modal>
     </div>

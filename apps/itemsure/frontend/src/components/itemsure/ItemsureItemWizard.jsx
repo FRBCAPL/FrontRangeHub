@@ -9,6 +9,7 @@ import useItemStock from '../../hooks/useItemStock.js';
 import useItemUsage from '../../hooks/useItemUsage.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { itemAddress } from '../../hooks/useItemModal.js';
 import { SITE } from '../../data/itemsureTerms.js';
 import { visibleSlots } from '../../utils/itemsureItemStock.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
@@ -88,7 +89,7 @@ export default function ItemsureItemWizard() {
   const editing = Boolean(routeItemId);
   // Opened from the Suppliers page: Back, Cancel, and Save return there.
   const fromSuppliers = params.get('from') === 'suppliers';
-  const leaveTo = fromSuppliers ? `${ITEMSURE_PATH}/suppliers` : editing ? `${ITEMSURE_PATH}/items/${routeItemId}` : `${ITEMSURE_PATH}/items`;
+  const leaveTo = fromSuppliers ? `${ITEMSURE_PATH}/suppliers` : editing ? itemAddress(routeItemId) : `${ITEMSURE_PATH}/items`;
 
   // Fill the form and places once everything has loaded; later reloads never overwrite typing.
   useEffect(() => {
@@ -191,13 +192,15 @@ export default function ItemsureItemWizard() {
     setItemId(result.itemId);
     setEntries(result.entries);
     if (!result.problems.length) {
-      navigate(fromSuppliers ? leaveTo : `${ITEMSURE_PATH}/items/${result.itemId}`);
+      navigate(fromSuppliers ? leaveTo : itemAddress(result.itemId));
       return;
     }
     setProblems(result.problems);
     setStep('review');
   };
 
+  const typedName = form.name.trim();
+  const title = editing ? `Edit ${typedName || item.name}` : typedName ? `Add item: ${typedName}` : 'Add item';
   const shared = { form, setForm, entries, setEntries, labelFor, unitInfo, allowed, features, variantLabel: variantLabelFor(organization) };
 
   return (
@@ -205,7 +208,7 @@ export default function ItemsureItemWizard() {
       <Link to={leaveTo} className="isu-link isu-small">
         {'\u2190'} {fromSuppliers ? 'Suppliers' : editing ? item.name : 'Inventory'}
       </Link>
-      <PageHead title={editing ? `Edit ${item.name}` : 'Add item'} description={`Step ${index + 1} of ${steps.length}: ${STEPS[step]}`} />
+      <PageHead title={title} description={`Step ${index + 1} of ${steps.length}: ${STEPS[step]}`} />
       <ItemsureWizardProgress steps={steps} current={step} reachable={(id) => editing || visited.has(id)} onPick={goTo} />
       <ErrorNote message={stepError} />
 
@@ -220,7 +223,7 @@ export default function ItemsureItemWizard() {
             itemId={itemId}
             nameClash={nameClash}
             renamingArchived={renamingArchived}
-            onRestored={(id) => navigate(`${ITEMSURE_PATH}/items/${id}`)}
+            onRestored={(id) => navigate(itemAddress(id))}
             canManageCategories={can('categories.manage')}
             onCategoryAdded={(row) => {
               setAddedCategories((list) => [...list, row]);
@@ -274,7 +277,7 @@ export default function ItemsureItemWizard() {
         <ItemsureWizardArchive
           organizationId={organization.id}
           item={item}
-          onDone={(active) => navigate(active ? `${ITEMSURE_PATH}/items/${item.id}` : `${ITEMSURE_PATH}/items`)}
+          onDone={(active) => navigate(active ? itemAddress(item.id) : `${ITEMSURE_PATH}/items`)}
         />
       ) : null}
     </div>

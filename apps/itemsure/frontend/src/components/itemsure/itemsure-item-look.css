@@ -1,0 +1,182 @@
+/* Inventory list look: amount pill, stronger name, compact rows, status sections, icon badges. */
+
+/* Amount pill, coloured by status. */
+.isu-app .isu-stockcard-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--isu-badge);
+  white-space: nowrap;
+}
+
+.isu-app .isu-stockcard-pill .isu-stockcard-amount {
+  grid-column: auto;
+  justify-self: auto;
+}
+
+.isu-app .isu-stockcard-pill .isu-stockcard-amount strong {
+  font-size: 1rem;
+}
+
+.isu-app .isu-stockcard-pill--ok {
+  background: var(--isu-pine-soft);
+}
+
+.isu-app .isu-stockcard-pill--ok .isu-stockcard-amount strong {
+  color: var(--isu-pine);
+}
+
+.isu-app .isu-stockcard-pill--warn {
+  background: var(--isu-warn-soft);
+  border-color: var(--isu-warn-line);
+}
+
+.isu-app .isu-stockcard-pill--danger {
+  background: var(--isu-danger-soft);
+  border-color: var(--isu-danger-line);
+}
+
+/* The name is the strongest thing on the card. */
+.isu-app a.isu-stockcard-link,
+.isu-app .isu-item-grid a.isu-stockcard-link {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.005em;
+}
+
+/* Category icon instead of initials. */
+.isu-app .isu-stockcard-badge.is-icon,
+.isu-app .isu-item-grid .isu-stockcard-badge.is-icon {
+  font-size: 1.05rem;
+  letter-spacing: 0;
+}
+
+/* Compact one-line rows for items that are fine. */
+.isu-app .isu-stockcard.is-compact {
+  padding: 4px 10px 4px 12px;
+}
+
+.isu-app .isu-item-grid .isu-stockcard.is-compact .isu-stockcard-badge {
+  width: 26px;
+  height: 26px;
+}
+
+.isu-stockcard-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.isu-stockcard-name {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.isu-app .isu-stockcard.is-compact a.isu-stockcard-link {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.isu-app .isu-stockcard.is-compact .isu-stockcard-pill {
+  padding: 2px 9px;
+}
+
+.isu-app .isu-stockcard.is-compact .isu-stockcard-pill .isu-stockcard-amount strong {
+  font-size: 0.92rem;
+}
+
+.isu-app .isu-item-list.is-compact:has(.isu-stockcard) {
+  gap: 4px;
+}
+
+/* Status sections. */
+.isu-item-groups {
+  display: grid;
+  gap: 16px;
+}
+
+.isu-app .isu-item-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-item-group--attention .isu-item-group-title {
+  color: var(--isu-amber);
+}
+
+.isu-app .isu-item-group--good .isu-item-group-title {
+  color: var(--isu-pine);
+}
+
+.isu-item-group-count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--isu-badge);
+  color: var(--isu-ink);
+  font-size: 0.75rem;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+/* Icon picker (category form). */
+.isu-app .isu-iconpick {
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+}
+
+.isu-app .isu-iconpick legend {
+  margin-bottom: 6px;
+  padding: 0;
+  font-weight: 600;
+}
+
+.isu-iconpick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+  gap: 6px;
+}
+
+.isu-app .isu-iconpick-btn {
+  min-width: 0;
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  background: var(--isu-raised);
+  color: var(--isu-ink);
+  font: inherit;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.isu-app .isu-iconpick-btn.is-none {
+  grid-column: span 2;
+  font-size: 0.85rem;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-iconpick-btn:hover {
+  border-color: var(--isu-pine-line);
+}
+
+.isu-app .isu-iconpick-btn.is-selected {
+  border-color: var(--isu-pine);
+  background: var(--isu-pine-soft);
+  box-shadow: 0 0 0 2px var(--isu-pine-soft);
+}

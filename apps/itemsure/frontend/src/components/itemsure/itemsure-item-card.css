@@ -22,7 +22,7 @@
 }
 
 /* Status stripe down the left edge; problem cards get a faint tint too. */
-.isu-app .isu-stockcard--ok { --stripe: var(--isu-pine); }
+.isu-app .isu-stockcard--ok { --stripe: var(--isu-pine-line); }
 .isu-app .isu-stockcard--muted { --stripe: var(--isu-muted); }
 .isu-app .isu-stockcard--warn {
   --stripe: var(--isu-amber);
@@ -65,13 +65,59 @@
   min-width: 0;
 }
 
-/* Name centered; the amount sits on the right without pushing it off center. */
+/*
+ * Name centered between the amount on the right and an invisible copy of it on the left,
+ * so a long name gets exactly the space between and never runs into the amount.
+ */
 .isu-stockcard-top {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
   line-height: 1.15;
+}
+
+.isu-stockcard-mirror,
+.isu-stockcard-side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.isu-stockcard-mirror {
+  grid-column: 1;
+  grid-row: 1;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.isu-stockcard-side {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
+/* Healthy items: a small check in the amount pill instead of a bar. */
+.isu-stockcard-ok {
+  flex: 0 0 auto;
+  color: var(--isu-pine);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* One grey line under the name: supplier, where it's split, other categories. */
+.isu-app .isu-stockcard-meta {
+  margin: 1px 0 0;
+  text-align: center;
+  color: var(--isu-muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.isu-stockcard-meta > span + span::before {
+  content: ' \00b7  ';
 }
 
 .isu-stockcard-bottom {
@@ -220,15 +266,6 @@
   margin: 2px 0;
 }
 
-.isu-app .isu-stockcard-details {
-  margin: 2px 0;
-  text-align: center;
-}
-
-.isu-stockcard-details span + span::before {
-  content: ' \00b7  ';
-}
-
 .isu-stockcard-qty {
   color: var(--isu-ink);
 }
@@ -374,13 +411,5 @@
   color: var(--isu-ink-soft, var(--isu-muted));
   font-size: 0.85rem;
   font-weight: 500;
-  overflow-wrap: anywhere;
-}
-
-.isu-stockcard-also {
-  flex-basis: 100%;
-  color: var(--isu-muted);
-  font-size: 0.8rem;
-  font-weight: 400;
   overflow-wrap: anywhere;
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { findUnit, mergeUnits, unitCode } from '../src/utils/itemsureUnits.js';
+import { findUnit, mergeUnits, unitCode, unitSections } from '../src/utils/itemsureUnits.js';
 
 const units = [
   { id: '1', code: 'each', name: 'Each', symbol: 'ea' },
@@ -21,6 +21,17 @@ test('findUnit matches name, short name, or code, ignoring case', () => {
   assert.equal(findUnit(units, 'half-keg')?.id, '3');
   assert.equal(findUnit(units, 'Tray'), null);
   assert.equal(findUnit(units, '  '), null);
+});
+
+test('unitSections shows own and in-use units, hiding the rest', () => {
+  const ids = (s) => ({ own: s.own.map((u) => u.id), inUse: s.inUse.map((u) => u.id), more: s.more.map((u) => u.id) });
+  assert.deepEqual(ids(unitSections(units, [{ base_unit_id: '1' }], '')), { own: ['3'], inUse: ['1'], more: ['2'] });
+  // The chosen unit always shows, even if no item uses it yet.
+  assert.deepEqual(ids(unitSections(units, [], '2')), { own: ['3'], inUse: ['2'], more: ['1'] });
+  // Own units alone are enough to hide the standard ones.
+  assert.deepEqual(ids(unitSections(units, [], '')), { own: ['3'], inUse: [], more: ['1', '2'] });
+  // Nothing in use and no own units: show every standard unit.
+  assert.deepEqual(ids(unitSections(units.slice(0, 2), [], '')), { own: [], inUse: ['1', '2'], more: [] });
 });
 
 test('mergeUnits adds new units once', () => {

@@ -51,7 +51,7 @@ export default function ItemsureGettingStarted({ organizationId, counts, progres
     {
       done: Boolean(progress.levels),
       title: 'Choose when to warn you',
-      body: 'On the item page, choose "Set levels". ItemSure then tells you what is running low.',
+      body: 'Tap an item to open it, then choose "Set levels". ItemSure then tells you what is running low.',
       to: `${ITEMSURE_PATH}/items?category=all`,
       action: 'Set levels',
     },

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { countingAreas, NO_AREA } from '../src/utils/itemsureCountAreas.js';
+import { countingAreas, NO_AREA, splitForSpot } from '../src/utils/itemsureCountAreas.js';
 import { countsCoveringSpot, entriesBySpot, planSpotCounts, savedValue, startingSpots } from '../src/utils/itemsureQuickCount.js';
 
 test('countsCoveringSpot finds open counts for a spot and whether it is counted there', () => {
@@ -31,6 +31,19 @@ test('a location count offers active spots, used archived spots, and Loose', () 
   assert.deepEqual(countingAreas({ scope: 'location' }, spots, []).map((a) => a.id), ['bar', 'back', NO_AREA]);
   const used = [{ storage_area_id: 'old' }];
   assert.deepEqual(countingAreas({ scope: 'location' }, spots, used).map((a) => a.id), ['bar', 'old', 'back', NO_AREA]);
+});
+
+test('splitForSpot lists items that belong in the spot first and hides the rest', () => {
+  const items = [{ item_id: 'a' }, { item_id: 'b' }, { item_id: 'c' }];
+  const ids = (s) => [s.here.map((i) => i.item_id), s.others.map((i) => i.item_id)];
+  const inUse = new Set(['a|L1|bar', 'b|L1|', 'c|L2|bar']);
+  assert.deepEqual(ids(splitForSpot(items, inUse, 'L1', 'bar')), [['a'], ['b', 'c']]);
+  assert.deepEqual(ids(splitForSpot(items, inUse, 'L1', NO_AREA)), [['b'], ['a', 'c']]);
+  // Already counted here: stays in the list.
+  assert.deepEqual(ids(splitForSpot(items, inUse, 'L1', 'bar', new Set(['c']))), [['a', 'c'], ['b']]);
+  // Nothing known for the spot, or nothing loaded: show everything.
+  assert.deepEqual(ids(splitForSpot(items, inUse, 'L1', 'back')), [['a', 'b', 'c'], []]);
+  assert.deepEqual(ids(splitForSpot(items, null, 'L1', 'bar')), [['a', 'b', 'c'], []]);
 });
 
 test('quick count opens every spot already counted or kept, else the first spot', () => {

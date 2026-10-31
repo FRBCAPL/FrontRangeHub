@@ -35,6 +35,7 @@ export default function useItemPlaces(organizationId) {
 
   return {
     locations,
+    places,
     ready: places !== null,
     placesFor: (itemId) => (places === null ? null : byItem.get(itemId) || []),
     labelsFor: (itemId) => placeLabels(byItem.get(itemId) || [], locations),

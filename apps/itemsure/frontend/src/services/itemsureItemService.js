@@ -5,13 +5,14 @@ import { categoryPath, categoryTree } from '../utils/itemsureCategories.js';
 import { unitCode } from '../utils/itemsureUnits.js';
 import { listExtraCategories } from './itemsureExtraCategoryService.js';
 import { listItemDetails } from './itemsureItemDetailsService.js';
+import { listCategoryIcons } from './itemsureCategoryIconService.js';
 
 function one(value) {
   return Array.isArray(value) ? value[0] || null : value || null;
 }
 
 export async function listCatalog(organizationId) {
-  const [items, categories, units, extras, details] = await Promise.all([
+  const [items, categories, units, extras, details, icons] = await Promise.all([
     itemsure
       .from('inventory_items')
       .select('id, name, description, sku, barcode, is_active, category_id, base_unit_id, inventory_categories(name), units_of_measure(name, symbol)')
@@ -30,9 +31,10 @@ export async function listCatalog(organizationId) {
       .order('name'),
     listExtraCategories(organizationId),
     listItemDetails(organizationId),
+    listCategoryIcons(organizationId),
   ]);
 
-  const categoryRows = assertOk(categories, 'categories') || [];
+  const categoryRows = (assertOk(categories, 'categories') || []).map((c) => ({ ...c, icon: icons?.get(c.id) || '' }));
   const tree = categoryTree(categoryRows);
   return {
     items: (assertOk(items, 'items') || []).map((item) => ({
@@ -47,6 +49,7 @@ export async function listCatalog(organizationId) {
     units: assertOk(units, 'units') || [],
     extrasAvailable: extras !== null,
     detailsAvailable: details !== null,
+    iconsAvailable: icons !== null,
   };
 }
 
@@ -61,8 +64,24 @@ export async function createCategory(organizationId, name, parentId = null) {
   return assertOk(result, 'create category').id;
 }
 
-/** A unit only this business uses, e.g. "Keg". `decimals` is 0 for whole numbers, 2 to allow parts. */
-export async function createUnit(organizationId, { name, symbol, decimals }) {
+/** Rename a category, or move it: into a main category (`parentId`) or out to be a main one (null). */
+export async function updateCategory(organizationId, categoryId, name, parentId = null) {
+  const clean = requiredText(name, 'category name', 80);
+  const result = await itemsure
+    .from('inventory_categories')
+    .update({ name: clean, parent_category_id: parentId || null })
+    .eq('id', categoryId)
+    .eq('organization_id', organizationId)
+    .select('id')
+    .single();
+  if (result.error?.code === '23505') {
+    throw new Error(parentId ? `There is already a "${clean}" in that category.` : `There is already a category called "${clean}".`);
+  }
+  assertOk(result, 'update category');
+}
+
+/** A unit only this business uses, e.g. "Keg". Allows parts (2 decimals) unless `decimals` is false. */
+export async function createUnit(organizationId, { name, symbol, decimals = true }) {
   const clean = requiredText(name, 'unit name', 80);
   const code = unitCode(clean);
   if (!code) throw new Error('Use at least one letter or number in the unit name.');

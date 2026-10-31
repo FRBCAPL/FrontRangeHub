@@ -72,7 +72,7 @@ export default function ItemsureWizardLevels({ entries, setEntries, labelFor, un
                 <div className="isu-wizard-amount">
                   <span>Fill up to ({unit})</span>
                   <ItemsureStepper label="fill up to" value={e.par} onChange={(v) => update(e.key, { par: v })} aria-label={`Fill up to, ${labelFor(e)}`} />
-                  <span className="isu-muted isu-small">The shopping list tops it back up to this.</span>
+                  <span className="isu-muted isu-small">This sets the par. The shopping list tops it back up to this.</span>
                 </div>
               </div>
             </li>

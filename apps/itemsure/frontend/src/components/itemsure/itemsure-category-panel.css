@@ -1,0 +1,93 @@
+/* "All categories" panel: the window itself scrolls and the column header stays pinned,
+   empty categories go last, long lists use two columns on wide screens, and rows are
+   tighter for mouse users. */
+
+.isu-app .isu-catpanel-heads {
+  position: sticky;
+  top: -20px;
+  z-index: 1;
+  padding-top: 8px;
+  background: var(--isu-paper);
+}
+
+/* The Hub pads every button on phones; these icon buttons size themselves. */
+.isu-app .isu-catpanel-edit,
+.isu-app .isu-catpanel-toggle {
+  padding: 0 10px;
+  font-size: 0.95rem;
+}
+
+.isu-app .isu-catpanel-heads .isu-catpanel-head {
+  position: static;
+  grid-template-columns: minmax(0, 1fr) 52px;
+}
+
+.isu-app .isu-catpanel-heads.is-editable .isu-catpanel-head {
+  grid-template-columns: minmax(0, 1fr) 52px 42px;
+}
+
+.isu-app .isu-catpanel-list.is-flow {
+  display: block;
+  max-height: none;
+  overflow: visible;
+  padding-top: 4px;
+}
+
+.isu-app .isu-catpanel-list.is-flow > li {
+  margin-bottom: 2px;
+  break-inside: avoid;
+}
+
+.isu-app .isu-catpanel-divider {
+  padding: 10px 12px 4px;
+  color: var(--isu-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  break-after: avoid;
+}
+
+.isu-app .isu-catpanel-item.is-empty .isu-catpanel-row:not(.is-selected) {
+  color: var(--isu-muted);
+  font-weight: 500;
+}
+
+.isu-app .isu-catpanel-item.is-empty .isu-chip-count {
+  opacity: 0.6;
+}
+
+@media (min-width: 900px) {
+  .isu-modal.is-wide {
+    max-width: 880px !important;
+  }
+
+  .isu-app .isu-catpanel-scroll.is-two .isu-catpanel-heads {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+  }
+
+  .isu-app .isu-catpanel-scroll.is-two .isu-catpanel-list.is-flow {
+    columns: 2;
+    column-gap: 24px;
+  }
+}
+
+@media (max-width: 899px) {
+  .isu-app .isu-catpanel-scroll.is-two .isu-catpanel-heads > :nth-child(2) {
+    display: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .isu-app .isu-catpanel-row,
+  .isu-app .isu-catpanel-toggle,
+  .isu-app .isu-catpanel-edit {
+    min-height: 34px;
+  }
+
+  .isu-app .isu-catpanel-row {
+    padding-block: 5px;
+  }
+}

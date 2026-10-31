@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
-import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { useItemLink } from '../../hooks/useItemModal.js';
 
 const q = (text, unit) => (text === null || text === undefined ? '—' : `${displayQuantity(text)} ${unit}`);
 
@@ -11,6 +11,7 @@ const q = (text, unit) => (text === null || text === undefined ? '—' : `${disp
 export default function ItemsureNeedRow({ row, onOpen = null }) {
   const status = TARGET_STATUS[row.status];
   const pending = row.status === 'not_set_up';
+  const itemLink = useItemLink();
   return (
     <li className={`isu-card isu-restock-card${row.status === 'low' ? ' is-low' : ''}`}>
       <div className="isu-restock-head">
@@ -32,7 +33,7 @@ export default function ItemsureNeedRow({ row, onOpen = null }) {
             Switch business &amp; open item
           </button>
         ) : (
-          <Link className="isu-btn isu-btn--ghost isu-btn--sm" to={`${ITEMSURE_PATH}/items/${row.item_id}`}>
+          <Link className="isu-btn isu-btn--ghost isu-btn--sm" {...itemLink(row.item_id)}>
             {pending ? 'Set amount' : 'Open item'}
           </Link>
         )}

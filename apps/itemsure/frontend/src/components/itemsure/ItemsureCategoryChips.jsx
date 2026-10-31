@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ALL_ITEMS, categoryTree, foundIn, NO_CATEGORY, rootOf } from '../../utils/itemsureCategories.js';
+import { ALL_ITEMS, categoryTree, foundIn, labelWithIcon, NO_CATEGORY, rootOf } from '../../utils/itemsureCategories.js';
 import ItemsureCategoryPanel from './ItemsureCategoryPanel.jsx';
 
 export { ALL_ITEMS, NO_CATEGORY };
@@ -18,8 +18,9 @@ function Chip({ value, label, count, selected, onSelect, closeTo = '' }) {
  * subcategories too), with "All categories ▾" under it for a searchable list of everything.
  * Choosing a main category opens a second row with its subcategories. Choosing again closes it.
  * `onAdd(parentId)` adds a category; with a parent it adds a subcategory.
+ * `onEdit(category)` renames or moves one, from the "All categories" panel.
  */
-export default function ItemsureCategoryChips({ categories, items, selected, onSelect, onAdd }) {
+export default function ItemsureCategoryChips({ categories, items, selected, onSelect, onAdd, onEdit }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const scroller = useRef(null);
   const tree = categoryTree(categories);
@@ -67,7 +68,7 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
         <div className="isu-chips isu-chips--scroll" role="group" aria-label="Categories" ref={scroller} onScroll={measure}>
           <Chip value={ALL_ITEMS} label="All items" count={items.length} selected={selected} onSelect={onSelect} />
           {tree.roots.map((c) => (
-            <Chip key={c.id} value={c.id} label={c.name} count={count(c.id)} selected={openRoot} onSelect={onSelect} />
+            <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={openRoot} onSelect={onSelect} />
           ))}
           {uncategorized ? <Chip value={NO_CATEGORY} label="No category" count={uncategorized} selected={selected} onSelect={onSelect} /> : null}
         </div>
@@ -88,6 +89,7 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
         selected={selected}
         onSelect={onSelect}
         onAdd={onAdd}
+        onEdit={onEdit}
       />
       {openRoot && (subs.length || onAdd) ? (
         <div className="isu-chips isu-chips--sub" role="group" aria-label={`Subcategories in ${rootName}`}>
@@ -101,7 +103,7 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
             <Chip value={openRoot} label={`All ${rootName}`} count={count(openRoot)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
           ) : null}
           {subs.map((c) => (
-            <Chip key={c.id} value={c.id} label={c.name} count={count(c.id)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
+            <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
           ))}
         </div>
       ) : null}

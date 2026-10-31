@@ -9,7 +9,7 @@ export const GUIDE_STOCK = [
     summary: 'Record deliveries, use, waste, and moves between places.',
     paragraphs: [
       'The quickest way to change one item is its own page: open Inventory, tap the item, then use Set amount, + Add, or \u2212 Use.',
-      'An item at a place starts with a starting amount (set on the item page) or an approved count. After that, you can add, use, or move it.',
+      'An item at a place starts with a starting amount (set from the item window) or an approved count. After that, you can add, use, or move it.',
       'Stock by site (under More) shows everything at one site, and also has Add / Use and Move.',
     ],
     steps: [
@@ -77,7 +77,7 @@ export const GUIDE_STOCK = [
     title: 'History',
     summary: 'Who changed what, and when.',
     paragraphs: [
-      'Each item page shows that item\u2019s recent history.',
+      'Each item\u2019s window shows its recent history, under History.',
       'History (under More) lists every change across your business, newest first: items, sites, counts, stock changes, levels, and settings. It is read-only.',
     ],
   },

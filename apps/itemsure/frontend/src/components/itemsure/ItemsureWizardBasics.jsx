@@ -36,13 +36,14 @@ export default function ItemsureWizardBasics({ form, setForm, organizationId, ca
       <ItemsureUnitPicker
         organizationId={organizationId}
         units={units}
+        items={items.filter((i) => i.is_active && i.id !== itemId)}
         value={form.base_unit_id}
         onChange={(id) => setForm((f) => ({ ...f, base_unit_id: id }))}
         canManage={canManageUnits}
         onAdded={onUnitAdded}
         hint={editing
           ? 'Can only change while the item has no stock history and no warning levels.'
-          : `What you count this item in, for example each, bottle, or kilogram.${canManageUnits ? ' Not listed? Pick "Other" to name your own.' : ''} Case sizes come later, under Extras.`}
+          : `What you count this item in, for example each, bottle, or kilogram.${canManageUnits ? ' Not listed? Name your own in the list.' : ''} Case sizes come later, under Extras.`}
       />
       <ItemsureCategoryPicker
         organizationId={organizationId}

@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { useItemLink } from '../../hooks/useItemModal.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
 
 /** What you can do with one item in one spot: add, use, move, or open the item. */
 export default function ItemsureStockSpotActions({ item, slot, canAdjust, canMove, onPick }) {
+  const itemLink = useItemLink();
   const status = slot.status ? TARGET_STATUS[slot.status] : null;
   const hasAmount = slot.quantity !== null;
   const unit = item.unitSymbol;
@@ -37,10 +38,10 @@ export default function ItemsureStockSpotActions({ item, slot, canAdjust, canMov
           {canMove ? <button type="button" className="isu-btn isu-btn--ghost" onClick={() => onPick('move')}>Move</button> : null}
         </div>
       ) : (
-        <p className="isu-notice">No amount here yet. Count it, or set a starting amount from the item&apos;s page.</p>
+        <p className="isu-notice">No amount here yet. Count it, or open the item to set a starting amount.</p>
       )}
 
-      <Link to={`${ITEMSURE_PATH}/items/${item.id}`} className="isu-link isu-small isu-center">Open {item.name}&apos;s page</Link>
+      <Link {...itemLink(item.id)} className="isu-link isu-small isu-center">Open {item.name}</Link>
     </div>
   );
 }

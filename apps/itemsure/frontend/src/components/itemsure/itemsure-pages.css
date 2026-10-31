@@ -142,15 +142,6 @@
 .isu-app .isu-item-filter { max-width: 220px !important; }
 .isu-app .isu-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .isu-app .isu-chip-rows { display: grid; gap: 10px; }
-.isu-app .isu-category-add {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: -4px 0 14px;
-}
-.isu-app .isu-category-add input { flex: 1 1 180px; min-width: 0; }
-.isu-app .isu-category-add .isu-error { flex-basis: 100%; margin: 0; }
 .isu-app .isu-unit-add {
   display: grid;
   gap: 10px;
@@ -159,9 +150,6 @@
   border-radius: 12px;
   background: var(--isu-pine-soft);
 }
-.isu-app .isu-unit-add-parts { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; }
-.isu-app .isu-unit-add-parts legend { padding: 0; margin-bottom: 4px; font-weight: 600; font-size: 0.9rem; }
-.isu-app .isu-unit-add-parts label { display: flex; align-items: center; gap: 8px; }
 .isu-app .isu-chips--sub {
   padding: 10px 12px;
   border-radius: 12px;
@@ -175,8 +163,7 @@
   align-items: center;
   gap: 8px;
 }
-.isu-app .isu-chips-head .isu-chip--add { justify-self: end; }
-.isu-app .isu-chips-label {
+.isu-app .isu-chips-head .isu-chip--add { justify-self: end; }.isu-app .isu-chips-label {
   grid-column: 2;
   margin: 0;
   text-align: center;

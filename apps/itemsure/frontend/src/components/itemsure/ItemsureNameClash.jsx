@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { useItemLink } from '../../hooks/useItemModal.js';
 import { setItemActive } from '../../services/itemsureItemService.js';
 import { archivedName } from '../../utils/itemsureItemNames.js';
 import { ErrorNote } from './ItemsureUi.jsx';
@@ -13,14 +13,14 @@ import { ErrorNote } from './ItemsureUi.jsx';
 export default function ItemsureNameClash({ clash, items, organizationId, renaming, onRenameChange, onRestored }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const itemLink = useItemLink();
   if (!clash) return null;
   const { item, archived } = clash;
-  const open = `${ITEMSURE_PATH}/items/${item.id}`;
 
   if (!archived) {
     return (
       <div className="isu-name-clash" role="alert">
-        <p>You already have an item called <strong>{item.name}</strong>. Use a different name, or <Link to={open}>open it</Link>.</p>
+        <p>You already have an item called <strong>{item.name}</strong>. Use a different name, or <Link {...itemLink(item.id)}>open it</Link>.</p>
       </div>
     );
   }
