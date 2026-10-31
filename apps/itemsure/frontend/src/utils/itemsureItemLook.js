@@ -43,8 +43,8 @@ export const ITEM_GROUPS = [
 /**
  * Splits items (already in order) into ITEM_GROUPS by how they look: running low or
  * needing topping up, fine, everything else, then archived. Empty groups are left out.
- * `toneFor(item)` is cardTone of the item's summary. Each group has `parts` (lists shown
- * with a gap between): "Needs attention" is running low, then needing topping up.
+ * `toneFor(item)` is cardTone of the item's summary. Each group has `parts` ({ label?, items },
+ * shown with a gap between): "Needs attention" is running low, then "Top Offs".
  */
 export function groupByStatus(items, toneFor) {
   const buckets = { attention: [], good: [], other: [], archived: [] };
@@ -60,7 +60,13 @@ export function groupByStatus(items, toneFor) {
     else buckets.other.push(item);
   }
   return ITEM_GROUPS
-    .map((g) => ({ ...g, items: buckets[g.key], parts: g.key === 'attention' ? [danger, warn].filter((p) => p.length) : [buckets[g.key]] }))
+    .map((g) => ({
+      ...g,
+      items: buckets[g.key],
+      parts: g.key === 'attention'
+        ? [{ items: danger }, { label: 'Top Offs', items: warn }].filter((p) => p.items.length)
+        : [{ items: buckets[g.key] }],
+    }))
     .filter((g) => g.items.length);
 }
 

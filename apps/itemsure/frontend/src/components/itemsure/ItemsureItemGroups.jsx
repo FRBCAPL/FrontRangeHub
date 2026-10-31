@@ -2,17 +2,24 @@ import React from 'react';
 
 function Lists({ group, renderItem }) {
   const compact = group?.key === 'good';
-  const parts = group?.parts || [group?.items || []];
-  return parts.map((items, n) => (
-    <ul key={n} className={`isu-item-list isu-item-grid${compact ? ' is-compact' : ''}${n ? ' isu-item-part' : ''}`}>
-      {items.map((item) => renderItem(item, compact))}
-    </ul>
+  const parts = group?.parts || [{ items: group?.items || [] }];
+  return parts.map((part, n) => (
+    <React.Fragment key={n}>
+      {part.label ? (
+        <h3 className={`isu-item-part-title${n ? ' is-later' : ''}`}>
+          {part.label} <span className="isu-item-group-count">{part.items.length}</span>
+        </h3>
+      ) : null}
+      <ul className={`isu-item-list isu-item-grid${compact ? ' is-compact' : ''}`}>
+        {part.items.map((item) => renderItem(item, compact))}
+      </ul>
+    </React.Fragment>
   ));
 }
 
 /**
- * The Inventory list in sections: "Needs attention" first (running low, a gap, then needing
- * topping up), then "All good" as compact one-line rows, then the rest. With only one
+ * The Inventory list in sections: "Needs attention" first (running low, then "Top Offs":
+ * needing topping up), then "All good" as compact one-line rows, then the rest. With only one
  * section there is no heading, unless `titled`.
  * `groups` comes from groupByStatus; `renderItem(item, compact)` draws one row.
  */

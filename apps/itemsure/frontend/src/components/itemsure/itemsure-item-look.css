@@ -98,9 +98,21 @@
   gap: 4px;
 }
 
-/* Gap between running low and needing topping up inside "Needs attention". */
-.isu-app .isu-item-list.isu-item-part {
-  margin-top: 14px !important;
+/* "Top Offs" label inside "Needs attention", with space above it after the running-low cards. */
+.isu-app .isu-item-part-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--isu-amber);
+}
+
+.isu-app .isu-item-part-title.is-later {
+  margin-top: 22px;
 }
 
 /* Needs topping up: a slim card, name and amount over supplier and the status bar. */
