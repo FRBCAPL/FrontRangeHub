@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
-import useTodayData from '../../hooks/useTodayData.js';
 import { buildTodayTasks } from '../../utils/itemsureToday.js';
 
 const PATHS = {
@@ -11,11 +10,10 @@ const PATHS = {
   review: (id) => `${ITEMSURE_PATH}/counts/${id}/review`,
 };
 
-/** "Today": what needs doing now, most urgent first, one button each. */
-export default function ItemsureToday({ organizationId, can, features }) {
+/** "Today": what needs doing now, most urgent first, one button each. `data` is from useTodayData. */
+export default function ItemsureToday({ data, can, features }) {
   const canStock = can('inventory.view');
   const canCounts = can('counts.view');
-  const data = useTodayData(organizationId, { stock: canStock, counts: canCounts });
   if (!canStock && !canCounts) return null;
 
   const tasks = data.loaded

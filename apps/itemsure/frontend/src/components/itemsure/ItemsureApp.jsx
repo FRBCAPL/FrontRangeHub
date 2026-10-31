@@ -19,6 +19,7 @@ import './itemsure-levels-help.css';
 import './itemsure-help.css';
 import './itemsure-item-detail.css';
 import './itemsure-home.css';
+import './itemsure-home-tiles.css';
 import './itemsure-wizard.css';
 import './itemsure-item-card.css';
 import './itemsure-item-grid.css';

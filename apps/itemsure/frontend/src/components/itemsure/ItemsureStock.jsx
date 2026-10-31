@@ -59,6 +59,16 @@ export default function ItemsureStock() {
     setModal(kind === 'move' ? 'transfer' : 'adjust');
   };
 
+  // Home quick actions: ?do=add or ?do=use opens Add / Use with that direction chosen, once.
+  const wanted = params.get('do');
+  const [opened, setOpened] = useState(false);
+  useEffect(() => {
+    if (opened || !data || !canAdjust || (wanted !== 'add' && wanted !== 'use')) return;
+    setOpened(true);
+    setPreset({ direction: wanted === 'use' ? 'remove' : 'add' });
+    setModal('adjust');
+  }, [opened, data, canAdjust, wanted]);
+
   const location = locations.find((l) => l.id === locationId) || null;
   const actions = (
     <div className="isu-stock-actions">

@@ -1,0 +1,126 @@
+/* Home, phone first: quick actions and stock health tiles. */
+
+/* Quick actions: 2 x 2 on phones, one row on tablets and up. */
+.isu-app .isu-home-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .isu-app .isu-home-actions {
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+  }
+}
+
+.isu-app .isu-home-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 88px;
+  padding: 12px 8px;
+  border-radius: var(--isu-radius);
+  border: 1px solid var(--isu-pine-line);
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  touch-action: manipulation;
+}
+
+.isu-app .isu-home-action:hover,
+.isu-app .isu-home-action:focus-visible {
+  border-color: var(--isu-pine);
+  background: var(--isu-pine-soft);
+}
+
+.isu-home-action-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+/* Stock health */
+.isu-health {
+  display: grid;
+  gap: 10px;
+}
+
+.isu-health h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.isu-app .isu-health-setup {
+  justify-self: start;
+}
+
+.isu-health-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.isu-app .isu-health-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 76px;
+  padding: 10px 6px;
+  border-radius: 14px;
+  border: 1px solid var(--isu-line);
+  border-top-width: 4px;
+  color: var(--isu-ink);
+  text-align: center;
+  text-decoration: none;
+}
+
+.isu-app .isu-health-tile.is-danger { border-top-color: var(--isu-danger); }
+.isu-app .isu-health-tile.is-warn { border-top-color: var(--isu-amber); }
+.isu-app .isu-health-tile.is-ok { border-top-color: var(--isu-pine); }
+.isu-app .isu-health-tile:hover { background: var(--isu-raised); }
+
+.isu-health-value {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.7rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.isu-health-tile.is-danger .isu-health-value { color: var(--isu-danger); }
+.isu-health-tile.is-warn .isu-health-value { color: var(--isu-amber); }
+.isu-health-tile.is-ok .isu-health-value { color: var(--isu-pine); }
+
+.isu-health-label {
+  font-size: 0.8rem;
+  color: var(--isu-muted);
+}
+
+.isu-health-note {
+  text-align: center;
+}
+
+.isu-app .isu-health-shopping {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  color: var(--isu-ink);
+  text-decoration: none;
+}
+
+.isu-app .isu-health-shopping {
+  border: 1px solid var(--isu-line);
+}
+
+.isu-app .isu-health-shopping:hover {
+  background: var(--isu-raised);
+}

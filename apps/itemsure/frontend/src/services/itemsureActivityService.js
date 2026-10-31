@@ -1,5 +1,6 @@
 import itemsure from './itemsureClient.js';
 import { describeAudit } from '../utils/itemsureText.js';
+import { loadPeopleNames } from './itemsureCountService.js';
 
 async function countActive(table, organizationId) {
   const { count, error } = await itemsure
@@ -46,7 +47,7 @@ export function hasAnyLevels(organizationId) {
 export async function listRecentActivity(organizationId, limit = 8, offset = 0, entities = null) {
   let query = itemsure
     .from('audit_events')
-    .select('id, action, metadata, created_at')
+    .select('id, action, metadata, created_at, actor_user_id')
     .eq('organization_id', organizationId);
   if (entities?.length) query = query.or(entities.map((e) => `action.like.${e}.*`).join(','));
   const { data, error } = await query
@@ -54,9 +55,12 @@ export async function listRecentActivity(organizationId, limit = 8, offset = 0, 
     .order('id', { ascending: false })
     .range(offset, offset + limit - 1);
   if (error) return [];
-  return (data || []).map((row) => ({
+  const rows = data || [];
+  const names = await loadPeopleNames(rows.map((row) => row.actor_user_id));
+  return rows.map((row) => ({
     id: row.id,
     label: describeAudit(row.action, typeof row.metadata?.name === 'string' ? row.metadata.name : null),
+    by: names[row.actor_user_id] || null,
     createdAt: row.created_at,
   }));
 }

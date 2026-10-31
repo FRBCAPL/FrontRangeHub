@@ -30,7 +30,10 @@ export default function ItemsureHistoryEntries({ entries }) {
           <ul className="isu-activity">
             {day.entries.map((a) => (
               <li key={a.id}>
-                <span>{a.label}</span>
+                <span>
+                  {a.label}
+                  {a.by ? <span className="isu-muted isu-small"> {'\u00b7'} by {a.by}</span> : null}
+                </span>
                 <time dateTime={a.createdAt}>{timeOf(a.createdAt)}</time>
               </li>
             ))}

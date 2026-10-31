@@ -26,7 +26,9 @@ export const GUIDE_BASICS = [
     paragraphs: [
       'ItemSure keeps track of what you have, where it is, and when you are running low. Every change is recorded, so you can always see who changed what and why.',
       'Home shows a getting-started checklist until these steps are done.',
+      'At the top of Home are big buttons for everyday jobs: Start a count, Add a delivery, Use stock, and Find an item. You only see the ones your role can do.',
       'Home also has a "Today" list: items running low (with how many to move or buy), items that need topping up, planned moves to finish, and counts to continue or approve. Each line has one button that takes you straight there.',
+      'Below that, Stock health shows how many items are Running low, Need topping up, or are Stocked; tap one to see them. It also shows a one-line peek at the shopping list.',
     ],
     steps: [
       'Set up your business. You become its owner.',

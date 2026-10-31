@@ -32,8 +32,20 @@ async function countStatus(organizationId, status) {
     .from('inventory_target_status')
     .select('target_id', { count: 'exact', head: true })
     .eq('organization_id', organizationId)
-    .eq('status', status);
+    .in('status', Array.isArray(status) ? status : [status]);
   return error ? null : count ?? 0;
+}
+
+const STOCKED = ['at_target', 'above_target', 'above_minimum'];
+
+/** Item-and-place counts for the Home "Stock health" tiles; null parts couldn't load. */
+export async function loadStockHealth(organizationId) {
+  const [low, belowPar, stocked] = await Promise.all([
+    countStatus(organizationId, 'low'),
+    countStatus(organizationId, 'below_par'),
+    countStatus(organizationId, STOCKED),
+  ]);
+  return { low, belowPar, stocked };
 }
 
 /** Low-stock and below-par slot counts the caller can see. */

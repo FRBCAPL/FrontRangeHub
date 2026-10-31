@@ -135,6 +135,7 @@ export default function ItemsureItems() {
           className="isu-search"
           placeholder={showDetails ? 'Search name, brand, SKU, barcode, category, or supplier' : 'Search name, SKU, barcode, category, or supplier'}
           aria-label="Search items"
+          autoFocus={params.get('find') === '1'}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
