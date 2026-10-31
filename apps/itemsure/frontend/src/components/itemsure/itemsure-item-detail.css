@@ -153,29 +153,41 @@
   align-self: start;
 }
 
+/* Centered on the card: an empty column on the right balances the badge on the left. */
+.isu-app .isu-stockcard.isu-item-summary {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+}
+
 .isu-item-summary-body {
   gap: 6px;
+  text-align: center;
 }
 
 .isu-item-summary-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
+  gap: 2px 8px;
 }
 
 .isu-app .isu-item-summary-amount strong {
   font-size: 1.6rem;
 }
 
+.isu-app .isu-item-summary .isu-stockcard-status {
+  justify-content: center;
+}
+
 .isu-app .isu-item-summary .isu-item-usage {
-  text-align: left;
+  text-align: center;
   font-size: 0.85rem;
 }
 
 .isu-item-summary-actions {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
 }
 

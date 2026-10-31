@@ -4,9 +4,7 @@ import { sendReset } from '../../services/itemsureAuthService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { Card, ErrorNote, Field } from './ItemsureUi.jsx';
-import ItemsureDisplaySettings from './ItemsureDisplaySettings.jsx';
-
-/** Settings → Your profile: name, sign-in email, password reset, and display on this device. */
+/** Settings → Your profile: name, sign-in email, and password reset. */
 export default function ItemsureSettingsProfile() {
   const { user, workspace, reload } = useItemsureWorkspace();
   const [name, setName] = useState(workspace?.fullName || '');
@@ -50,7 +48,6 @@ export default function ItemsureSettingsProfile() {
           </div>
         </form>
       </Card>
-      <ItemsureDisplaySettings />
     </div>
   );
 }

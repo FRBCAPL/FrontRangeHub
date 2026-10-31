@@ -10,7 +10,6 @@ import ItemsureMemberAccess from './ItemsureMemberAccess.jsx';
 import ItemsureFeatureSwitches from './ItemsureFeatureSwitches.jsx';
 import ItemsureInvitePeople from './ItemsureInvitePeople.jsx';
 import ItemsureRoleSettings from './ItemsureRoleSettings.jsx';
-
 const SETTINGS_PATH = `${ITEMSURE_PATH}/settings`;
 
 function PeoplePage() {

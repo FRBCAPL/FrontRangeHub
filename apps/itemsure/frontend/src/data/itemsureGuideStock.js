@@ -67,6 +67,7 @@ export const GUIDE_STOCK = [
     summary: 'Who you buy from and how to reach them.',
     paragraphs: [
       'Suppliers (under More) keeps the companies you order from: a contact person, phone, email, website, your account number with them, and ordering notes such as delivery days or minimum orders.',
+      'Link items to the supplier you buy them from with "Buy from" in Add or Edit item. The supplier then shows on the item, and you can search Inventory by supplier name. On each supplier card, "+ Add item" starts a new item with that supplier already chosen, and "View/edit items" lists everything you buy from them.',
       'Tap a phone number to call, or an email address to write. Everyone in your business can see suppliers; owners, administrators, and managers can add and edit them.',
       'Suppliers are archived, not deleted. Tick "Show archived" to see them again and choose Restore.',
     ],

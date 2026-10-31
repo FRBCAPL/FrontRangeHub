@@ -1,4 +1,4 @@
-/* Inventory category row: one swipeable line plus "All categories ▾" and its searchable panel. */
+/* Inventory category row: one swipeable line, "All categories ▾" under it, and its searchable panel. */
 
 .isu-app .isu-chipbar {
   display: flex;
@@ -70,8 +70,9 @@
   cursor: default;
 }
 
+/* Sits centered under the swipe row so the row gets the full width on phones. */
 .isu-app .isu-chip--more {
-  flex: 0 0 auto;
+  justify-self: center;
   min-height: 40px;
   white-space: nowrap;
   cursor: pointer;

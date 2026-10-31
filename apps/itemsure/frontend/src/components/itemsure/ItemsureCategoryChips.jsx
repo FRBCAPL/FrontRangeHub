@@ -15,7 +15,7 @@ function Chip({ value, label, count, selected, onSelect, closeTo = '' }) {
 
 /**
  * A one-line swipe row of main categories with item counts (a main category counts its
- * subcategories too), plus "All categories ▾" for a searchable list of everything.
+ * subcategories too), with "All categories ▾" under it for a searchable list of everything.
  * Choosing a main category opens a second row with its subcategories. Choosing again closes it.
  * `onAdd(parentId)` adds a category; with a parent it adds a subcategory.
  */
@@ -74,10 +74,10 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
         <button type="button" className="isu-chip-arrow" aria-label="Scroll categories right" disabled={!canScroll.right} onClick={() => nudge(1)}>
           {'\u203A'}
         </button>
-        <button type="button" className="isu-chip isu-chip--more" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">
-          All categories {'\u25BE'}
-        </button>
       </div>
+      <button type="button" className="isu-chip isu-chip--more" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">
+        All categories {'\u25BE'}
+      </button>
       <ItemsureCategoryPanel
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
