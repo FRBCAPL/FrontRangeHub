@@ -80,11 +80,19 @@ export function buyLabel(row) {
   return `${row.upTo ? 'Up to ' : ''}${row.total} ${row.unit}`;
 }
 
+/** The "Got it" tick key for a row: the item id, or its own key for a hand-added line. */
+export const tickOf = (row) => row.tick || row.itemId;
+
+const textLine = (r) => {
+  if (!r.extra) return `- ${r.name}: ${buyLabel(r)}`;
+  return r.amount ? `- ${r.name}: ${r.amount}` : `- ${r.name}`;
+};
+
 /** Plain text to paste into a message: one block per group, ticked rows left out. */
 export function shoppingText(groups, ticked = new Set()) {
   return groups
     .map((g) => {
-      const lines = g.rows.filter((r) => !ticked.has(r.itemId)).map((r) => `- ${r.name}: ${buyLabel(r)}`);
+      const lines = g.rows.filter((r) => !ticked.has(tickOf(r))).map(textLine);
       return lines.length ? `${g.label}\n${lines.join('\n')}` : '';
     })
     .filter(Boolean)

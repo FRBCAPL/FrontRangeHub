@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import { saveItemWizard } from '../../services/itemsureItemWizardSave.js';
+import { addShoppingExtra } from '../../services/itemsureShoppingExtrasService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { variantLabelFor } from '../../utils/itemsureItemDetails.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
@@ -87,9 +88,11 @@ export default function ItemsureItemWizard() {
 
   const item = catalog?.items.find((i) => i.id === routeItemId) || null;
   const editing = Boolean(routeItemId);
-  // Opened from the Suppliers page: Back, Cancel, and Save return there.
+  // Opened from the Suppliers page or the Shopping list: Back, Cancel, and Save return there.
+  // From the Shopping list, the new item is also put on the list (with ?amount= if given).
   const fromSuppliers = params.get('from') === 'suppliers';
-  const leaveTo = fromSuppliers ? `${ITEMSURE_PATH}/suppliers` : editing ? itemAddress(routeItemId) : `${ITEMSURE_PATH}/items`;
+  const fromShopping = params.get('from') === 'shopping' && !editing;
+  const leaveTo = fromSuppliers ? `${ITEMSURE_PATH}/suppliers` : fromShopping ? `${ITEMSURE_PATH}/restock` : editing ? itemAddress(routeItemId) : `${ITEMSURE_PATH}/items`;
 
   // Fill the form and places once everything has loaded; later reloads never overwrite typing.
   useEffect(() => {
@@ -194,7 +197,10 @@ export default function ItemsureItemWizard() {
     setItemId(result.itemId);
     setEntries(result.entries);
     if (!result.problems.length) {
-      navigate(fromSuppliers ? leaveTo : itemAddress(result.itemId));
+      if (fromShopping) {
+        await addShoppingExtra(organization.id, { itemId: result.itemId, supplierId: form.supplier_id, name: form.name, amount: params.get('amount') || '' }).catch(() => {});
+      }
+      navigate(fromSuppliers || fromShopping ? leaveTo : itemAddress(result.itemId));
       return;
     }
     setProblems(result.problems);
@@ -208,7 +214,7 @@ export default function ItemsureItemWizard() {
   return (
     <div className="isu-page isu-wizard">
       <Link to={leaveTo} className="isu-link isu-small">
-        {'\u2190'} {fromSuppliers ? 'Suppliers' : editing ? item.name : 'Inventory'}
+        {'\u2190'} {fromSuppliers ? 'Suppliers' : fromShopping ? 'Shopping list' : editing ? item.name : 'Inventory'}
       </Link>
       <PageHead title={title} description={`Step ${index + 1} of ${steps.length}: ${STEPS[step]}`} />
       <ItemsureWizardProgress steps={steps} current={step} reachable={(id) => editing || visited.has(id)} onPick={goTo} />

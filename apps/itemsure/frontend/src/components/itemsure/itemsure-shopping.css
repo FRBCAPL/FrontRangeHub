@@ -124,6 +124,72 @@
 
 .isu-app .isu-shop-move-actions { justify-content: flex-end; margin: 4px 0 2px; }
 
+/* Hand-added lines and the "+ Add item" window. */
+.isu-app .isu-shop-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.isu-app .isu-shop-group-add {
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  color: var(--isu-pine);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.isu-app .isu-shop-row.is-extra {
+  --stripe: var(--isu-pine-line);
+  background: var(--isu-paper);
+}
+.isu-app .isu-shop-row-main--extra { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+.isu-app .isu-shop-name-link { color: inherit; text-decoration: none; }
+.isu-app .isu-shop-remove {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 9px;
+  border: 1px solid var(--isu-line);
+  background: transparent;
+  color: var(--isu-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.isu-app .isu-shop-remove:hover { color: var(--isu-danger); border-color: var(--isu-danger-line); }
+
+.isu-app .isu-shopadd-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  max-height: 38vh !important;
+  overflow-y: auto;
+}
+.isu-app .isu-shopadd-pick {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.isu-app .isu-shopadd-pick.is-picked {
+  border-color: var(--isu-pine-btn);
+  box-shadow: inset 0 0 0 1px var(--isu-pine-btn);
+  background: var(--isu-pine-soft, var(--isu-paper));
+}
+.isu-app .isu-shopadd-other { margin: 2px 0 12px; }
+
 .isu-app .isu-shop-copy {
   width: 100%;
   font: inherit;

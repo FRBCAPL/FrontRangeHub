@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useTargetsData from '../../hooks/useTargetsData.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import useShoppingTicks from '../../hooks/useShoppingTicks.js';
+import useShoppingExtras from '../../hooks/useShoppingExtras.js';
+import { EXTRA_GROUP, extraTick, mergeExtras } from '../../utils/itemsureShoppingExtras.js';
 import { listOpenPlans, loadRecommendations } from '../../services/itemsureRestockService.js';
 import { notifyInventoryChanged, onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { findBalance, NO_AREA_LABEL } from '../../utils/itemsureStock.js';
@@ -14,6 +16,7 @@ import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { SITE } from '../../data/itemsureTerms.js';
 import ItemsureRestockAction from './ItemsureRestockAction.jsx';
 import ItemsureRestockPlans from './ItemsureRestockPlans.jsx';
+import ItemsureShoppingAdd from './ItemsureShoppingAdd.jsx';
 import ItemsureShoppingBuy from './ItemsureShoppingBuy.jsx';
 import ItemsureShoppingFilters from './ItemsureShoppingFilters.jsx';
 import ItemsureShoppingMoves from './ItemsureShoppingMoves.jsx';
@@ -56,6 +59,9 @@ export default function ItemsureRestock() {
   const { organization, features, can } = useItemsureWorkspace();
   const { data, error: dataError, reload: reloadData } = useTargetsData(organization.id);
   const suppliers = useSuppliers(organization.id);
+  const extras = useShoppingExtras(organization.id);
+  const navigate = useNavigate();
+  const [adding, setAdding] = useState(null);
   const [recs, setRecs] = useState(null);
   const [plans, setPlans] = useState([]);
   const [error, setError] = useState('');
@@ -77,15 +83,17 @@ export default function ItemsureRestock() {
   }, [organization.id]);
 
   const reloadSuppliers = suppliers.reload;
+  const reloadExtras = extras.reload;
   useEffect(() => {
     load();
     const stop = onInventoryChanged(() => {
       load();
       reloadData();
       reloadSuppliers();
+      reloadExtras();
     });
     return stop;
-  }, [load, reloadData, reloadSuppliers]);
+  }, [load, reloadData, reloadSuppliers, reloadExtras]);
 
   const afterAction = async () => {
     setAction(null);
@@ -95,7 +103,10 @@ export default function ItemsureRestock() {
   const itemsById = useMemo(() => new Map((data?.items || []).map((i) => [i.id, i])), [data]);
   const tree = useMemo(() => categoryTree(data?.categories || []), [data]);
   const categoryNames = useMemo(() => new Map([...tree.byId.keys()].map((id) => [id, categoryPath(tree, id)])), [tree]);
-  const listedIds = useMemo(() => (recs ? new Set(recs.map((r) => r.item_id)) : null), [recs]);
+  const listedIds = useMemo(
+    () => (recs && extras.ready ? new Set([...recs.map((r) => r.item_id), ...extras.extras.map((e) => extraTick(e.id))]) : null),
+    [recs, extras.ready, extras.extras],
+  );
   const ticks = useShoppingTicks(organization.id, listedIds);
 
   const { available: hasSuppliers, links: supplierLinks, suppliers: supplierList } = suppliers;
@@ -124,11 +135,23 @@ export default function ItemsureRestock() {
 
   const toBuy = useMemo(() => {
     const choice = groupChoices[group];
-    return buyGroups(shown, { showMoves, groupOf: choice.of, lastGroup: choice.last });
-  }, [shown, showMoves, groupChoices, group]);
+    const worked = buyGroups(shown, { showMoves, groupOf: choice.of, lastGroup: choice.last });
+    if (!extras.available) return worked;
+    const names = new Map(supplierList.map((s) => [s.id, s.name]));
+    const bySupplier = group === 'supplier';
+    return mergeExtras(worked, extras.extras, {
+      groupOf: (e) => (bySupplier ? names.get(supplierLinks.get(e.item_id) || e.supplier_id) || NO_SUPPLIER : EXTRA_GROUP),
+      lastGroup: bySupplier ? NO_SUPPLIER : EXTRA_GROUP,
+      itemsById,
+    });
+  }, [shown, showMoves, groupChoices, group, extras.available, extras.extras, supplierList, supplierLinks, itemsById]);
   const moves = useMemo(() => moveRows(shown, showMoves), [shown, showMoves]);
+  const onList = useMemo(
+    () => new Set([...toBuy.flatMap((g) => g.rows.map((r) => r.itemId)), ...extras.extras.map((e) => e.item_id)].filter(Boolean)),
+    [toBuy, extras.extras],
+  );
 
-  const buyCount = new Set(toBuy.flatMap((g) => g.rows.map((r) => r.itemId))).size;
+  const buyCount = new Set(toBuy.flatMap((g) => g.rows.map((r) => r.itemId || r.key))).size;
   const supplierCount = group === 'supplier' ? toBuy.filter((g) => g.label !== NO_SUPPLIER).length : 0;
   const summary = [
     buyCount ? `${plural(buyCount, 'item')} to buy${supplierCount ? ` from ${plural(supplierCount, 'supplier')}` : ''}` : 'Nothing to buy',
@@ -156,6 +179,14 @@ export default function ItemsureRestock() {
       quantity: plan.quantity_text,
     });
 
+  const startAdd = (label) => setAdding({ supplierId: (label && supplierList.find((s) => s.name === label)?.id) || '' });
+  const createItem = ({ name, supplierId, amount }) => {
+    const query = new URLSearchParams({ name, from: 'shopping' });
+    if (supplierId) query.set('supplier', supplierId);
+    if (amount.trim()) query.set('amount', amount.trim());
+    navigate(`${ITEMSURE_PATH}/items/new?${query}`);
+  };
+
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }));
   const ready = data && recs;
   const withLocation = (data?.locations.length || 0) > 1;
@@ -182,12 +213,35 @@ export default function ItemsureRestock() {
       {ready && !recs.length ? <EmptyState data={data} /> : null}
       {ready && recs.length > 0 && !shown.length ? <p className="isu-muted">Nothing matches these filters.</p> : null}
 
-      {ready ? <ItemsureShoppingBuy groups={toBuy} ticks={ticks} withLocation={withLocation} iconFor={group === 'supplier' ? (label) => supplierIcons.get(label) || '' : null} /> : null}
+      {ready ? (
+        <ItemsureShoppingBuy
+          groups={toBuy}
+          ticks={ticks}
+          withLocation={withLocation}
+          iconFor={group === 'supplier' ? (label) => supplierIcons.get(label) || '' : null}
+          onAdd={extras.available ? startAdd : null}
+          onRemove={extras.remove}
+        />
+      ) : null}
       {ready ? <ItemsureShoppingMoves moves={moves} canTransfer={canTransfer} withLocation={withLocation} onAction={openAction} /> : null}
       {data ? <ItemsureRestockPlans plans={plans} data={data} canTransfer={canTransfer} onComplete={openComplete} onChanged={async () => notifyInventoryChanged()} /> : null}
 
       <Modal open={Boolean(action)} title={action ? { transfer: 'Transfer stock', plan: 'Plan a transfer', complete: 'Complete planned transfer' }[action.kind] : ''} onClose={() => setAction(null)}>
         {action ? <ItemsureRestockAction action={action} locations={data.locations} onDone={afterAction} /> : null}
+      </Modal>
+      <Modal open={Boolean(adding && data)} title="Add to the shopping list" onClose={() => setAdding(null)}>
+        {adding && data ? (
+          <ItemsureShoppingAdd
+            startSupplierId={adding.supplierId}
+            suppliers={hasSuppliers ? supplierList.filter((s) => s.is_active) : []}
+            items={data.items}
+            supplierOf={suppliers.supplierIdFor}
+            listed={onList}
+            onAdd={extras.add}
+            onCreate={can('items.manage') ? createItem : null}
+            onDone={() => setAdding(null)}
+          />
+        ) : null}
       </Modal>
     </div>
   );

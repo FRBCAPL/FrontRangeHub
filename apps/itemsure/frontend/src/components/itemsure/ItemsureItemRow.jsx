@@ -42,6 +42,7 @@ function CountButton({ item, counted, onCount }) {
  * `showSupplier`), where it is kept when split across spots, and "Also in" when `showAlsoIn`.
  * `compact` is a single line (name and amount) for items that are fine, or whose topping up can wait.
  * Needing topping up is a slim card: name and amount, then supplier and the status bar.
+ * Running low keeps it brief too: name, amount, supplier, and the bar (the item window has the rest).
  * `icon` is the category's icon, shown instead of the initials.
  * `onCount` (only while a count is open) shows "Add to count", or a "✓ Counted" button that reopens it once counted.
  */
@@ -51,6 +52,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
   const nameRef = useFitText(item.name);
   const itemLink = useItemLink();
   const attention = tone === 'danger' || tone === 'warn';
+  const brief = tone === 'danger' && item.is_active;
   const status = summary?.status ? TARGET_STATUS[summary.status] : null;
   const link = <Link ref={nameRef} {...itemLink(item.id)} className="isu-stockcard-link">{item.name}</Link>;
 
@@ -106,7 +108,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
           <div className="isu-stockcard-title">
             {link}
             {!item.is_active ? <span className="isu-badge">Archived</span> : null}
-            {details ? <span className="isu-stockcard-brand">{details}</span> : null}
+            {details && !brief ? <span className="isu-stockcard-brand">{details}</span> : null}
           </div>
           <div className="isu-stockcard-side">
             <Pill summary={summary} unitName={item.unitName} tone={tone} />
@@ -115,8 +117,8 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
 
         <ItemsureItemMeta
           supplier={supplier && (attention || showSupplier) ? supplier : null}
-          keptAt={spotCount(keptAt) > 1 ? keptAt : null}
-          alsoIn={showAlsoIn ? alsoIn || [] : []}
+          keptAt={!brief && spotCount(keptAt) > 1 ? keptAt : null}
+          alsoIn={showAlsoIn && !brief ? alsoIn || [] : []}
         />
 
         {attention || tone === 'muted' || onCount ? (
