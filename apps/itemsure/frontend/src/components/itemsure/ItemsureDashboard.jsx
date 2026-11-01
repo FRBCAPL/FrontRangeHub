@@ -28,7 +28,7 @@ const setupDone = (counts, progress) =>
  * Site / spot / item totals only show while the business is still being set up.
  */
 export default function ItemsureDashboard() {
-  const { organization, features, can } = useItemsureWorkspace();
+  const { organization, workspace, features, can } = useItemsureWorkspace();
   const [counts, setCounts] = useState(null);
   const [progress, setProgress] = useState(null);
   const canSetUp = can('items.manage');
@@ -52,6 +52,8 @@ export default function ItemsureDashboard() {
   }, [organization, canSetUp]);
 
   const settingUp = canSetUp && progress !== null && !setupDone(counts, progress);
+  const ownedBusinesses = (workspace?.memberships || []).filter((m) => m.roleCode === 'owner').length;
+  const showAllNeeds = organization.roleCode === 'owner' && canStock && ((counts?.locations || 0) > 1 || ownedBusinesses > 1);
 
   return (
     <div className="isu-page isu-home">
@@ -59,7 +61,7 @@ export default function ItemsureDashboard() {
 
       <ItemsureHomeActions can={can} />
 
-      {organization.roleCode === 'owner' && canStock ? (
+      {showAllNeeds ? (
         <Link to={`${ITEMSURE_PATH}/all-needs`} className="isu-btn isu-btn--ghost isu-all-needs-btn">
           See needs for all {sites}
         </Link>
