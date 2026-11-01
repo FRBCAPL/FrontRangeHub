@@ -70,6 +70,38 @@
   cursor: default;
 }
 
+/* Subcategories of the chosen main category: one slim swipe row of smaller chips, tucked under the main row. */
+.isu-app .isu-subbar {
+  margin-top: -4px;
+  padding: 3px 0;
+  border-radius: 999px;
+  background: var(--isu-pine-soft);
+  border: 1px solid var(--isu-pine-line);
+  min-width: 0;
+}
+
+.isu-app .isu-chips--subs {
+  gap: 6px;
+  padding-block: 0;
+  padding-inline: 8px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 10px), transparent);
+}
+
+.isu-app .isu-chips--subs > .isu-chip {
+  min-height: 30px !important;
+  padding: 3px 10px !important;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.isu-app .isu-chips--subs > .isu-chip--add {
+  border-style: dashed;
+  border-color: var(--isu-pine-line);
+  background: transparent;
+  font-weight: 600;
+}
+
 /* "All items" and "Browse/Edit Categories" sit centered under the swipe row so the row gets the full width on phones. */
 .isu-app .isu-chips-actions {
   display: flex;

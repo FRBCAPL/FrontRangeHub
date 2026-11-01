@@ -16,7 +16,8 @@ function Chip({ value, label, count, selected, onSelect, closeTo = '' }) {
 /**
  * A one-line swipe row of main categories with item counts (a main category counts its
  * subcategories too). Under it, "All items" and "Browse/Edit Categories ▾" (a searchable list of everything).
- * Choosing a main category opens a second row with its subcategories. Choosing again closes it.
+ * Choosing a main category opens a slim swipe row of its subcategories right under it (with
+ * "+ Sub" at the end). Choosing it again closes the row.
  * `onAdd(parentId)` adds a category; with a parent it adds a subcategory.
  * `onEdit(category)` edits one, from the "All categories" panel. `onReorder(parentId)` opens the
  * order window ('' for main categories); `onShowArchived` lists the `archivedCount` archived ones.
@@ -24,6 +25,7 @@ function Chip({ value, label, count, selected, onSelect, closeTo = '' }) {
 export default function ItemsureCategoryChips({ categories, items, selected, onSelect, onAdd, onEdit, onReorder = null, archivedCount = 0, onShowArchived }) {
   const [panelOpen, setPanelOpen] = useState(false);
   const scroller = useRef(null);
+  const subScroller = useRef(null);
   const tree = categoryTree(categories);
   const count = (key) => items.filter((item) => foundIn(tree, item, key)).length;
   const uncategorized = count(NO_CATEGORY);
@@ -33,9 +35,10 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
 
   const [canScroll, setCanScroll] = useState({ left: false, right: false });
 
-  // Keep the chosen category in view in the swipe row.
+  // Keep the chosen category (and subcategory) in view in the swipe rows.
   useEffect(() => {
     scroller.current?.querySelector('.is-selected')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    subScroller.current?.querySelector('.is-selected')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }, [selected]);
 
   // Show each arrow only when there is more to see that way.
@@ -76,6 +79,23 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
           {'\u203A'}
         </button>
       </div>
+      {openRoot && (subs.length || onAdd) ? (
+        <div className="isu-subbar">
+          <div className="isu-chips isu-chips--scroll isu-chips--subs" role="group" aria-label={`Subcategories in ${rootName}`} ref={subScroller}>
+            {subs.length ? (
+              <Chip value={openRoot} label={`All ${rootName}`} count={count(openRoot)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
+            ) : null}
+            {subs.map((c) => (
+              <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
+            ))}
+            {onAdd ? (
+              <button type="button" className="isu-chip isu-chip--add" onClick={() => onAdd(openRoot)} title={`Add a subcategory in ${rootName}`}>
+                {subs.length ? '+ Sub' : `+ Add a subcategory in ${rootName}`}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <div className="isu-chips-actions">
         <Chip value={ALL_ITEMS} label="All items" count={items.length} selected={selected} onSelect={onSelect} />
         <button type="button" className="isu-chip isu-chip--more" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">
@@ -97,22 +117,6 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
         archivedCount={archivedCount}
         onShowArchived={onShowArchived}
       />
-      {openRoot && (subs.length || onAdd) ? (
-        <div className="isu-chips isu-chips--sub" role="group" aria-label={`Subcategories in ${rootName}`}>
-          <div className="isu-chips-head">
-            <p className="isu-chips-label">Subcategories in {rootName}</p>
-            {onAdd ? (
-              <button type="button" className="isu-chip isu-chip--add" onClick={() => onAdd(openRoot)}>+ Add a sub</button>
-            ) : null}
-          </div>
-          {subs.length ? (
-            <Chip value={openRoot} label={`All ${rootName}`} count={count(openRoot)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
-          ) : null}
-          {subs.map((c) => (
-            <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
