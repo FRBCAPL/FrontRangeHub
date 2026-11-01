@@ -169,6 +169,7 @@
   display: grid;
   gap: 4px;
   max-height: 38vh !important;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 .isu-app .isu-shopadd-pick {

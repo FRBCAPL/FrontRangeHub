@@ -179,7 +179,10 @@ export default function ItemsureRestock() {
       quantity: plan.quantity_text,
     });
 
-  const startAdd = (label) => setAdding({ supplierId: (label && supplierList.find((s) => s.name === label)?.id) || '' });
+  const startAdd = (label) => {
+    const supplier = label ? supplierList.find((s) => s.name === label) : null;
+    setAdding({ supplierId: supplier?.id || '', title: supplier ? `Add to ${supplier.name}` : 'Add to the shopping list' });
+  };
   const createItem = ({ name, supplierId, amount }) => {
     const query = new URLSearchParams({ name, from: 'shopping' });
     if (supplierId) query.set('supplier', supplierId);
@@ -229,7 +232,7 @@ export default function ItemsureRestock() {
       <Modal open={Boolean(action)} title={action ? { transfer: 'Transfer stock', plan: 'Plan a transfer', complete: 'Complete planned transfer' }[action.kind] : ''} onClose={() => setAction(null)}>
         {action ? <ItemsureRestockAction action={action} locations={data.locations} onDone={afterAction} /> : null}
       </Modal>
-      <Modal open={Boolean(adding && data)} title="Add to the shopping list" onClose={() => setAdding(null)}>
+      <Modal open={Boolean(adding && data)} title={adding?.title || ''} onClose={() => setAdding(null)}>
         {adding && data ? (
           <ItemsureShoppingAdd
             startSupplierId={adding.supplierId}

@@ -9,8 +9,9 @@ const ticksLast = (rows, ticked) => [...rows.filter((r) => !ticked.has(tickOf(r)
 
 /**
  * "To buy": one block per group, a "Got it" tick per item, and a plain-text copy of what's left.
- * With `onAdd` (hand-added lines are set up), each group gets "+ Add item" (`onAdd(label)`),
- * the heading gets one for any supplier (`onAdd('')`), and `onRemove(ids)` removes added lines.
+ * With `onAdd` (hand-added lines are set up), each supplier group gets "+ Add item" (`onAdd(label)`)
+ * that starts on that supplier. The heading gets one for any supplier (`onAdd('')`) only when there
+ * are no supplier groups, so it is never mistaken for the first group's. `onRemove(ids)` removes added lines.
  */
 export default function ItemsureShoppingBuy({ groups, ticks, withLocation, iconFor = null, onAdd = null, onRemove = null }) {
   const { ticked, toggle, clear } = ticks;
@@ -46,7 +47,7 @@ export default function ItemsureShoppingBuy({ groups, ticks, withLocation, iconF
       <div className="isu-shop-section-head">
         <h2 className="isu-shop-heading">To buy</h2>
         <div className="isu-shop-tools">
-          {onAdd ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAdd('')}>+ Add item</button> : null}
+          {onAdd && !(iconFor && groups.length) ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAdd('')}>+ Add item</button> : null}
           {tickedHere ? (
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={clearTicked} disabled={busy}>
               {tickedExtras.length ? 'Clear ticked' : 'Clear ticks'}
