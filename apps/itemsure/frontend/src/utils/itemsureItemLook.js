@@ -1,5 +1,6 @@
 // How an item card looks: its initials badge, the badge colour, and the status tone.
 import { TARGET_STATUS } from './itemsureTargets.js';
+import { topOffCanWait } from './itemsureTopOff.js';
 
 /** "Well Rum" → "WR", "Vodka" → "VO", "" → "?". */
 export function itemInitials(name) {
@@ -87,17 +88,16 @@ export function cardTone(summary) {
 }
 
 /**
- * True when an item needs topping up but is still more than halfway from "warn me at"
- * (or 0 without one) up to par, e.g. 26–39 for warn at 10, par 40. Display only.
+ * True when an item is under par but still above its top-off line: its own "Top off at"
+ * percent of par, or by default halfway from "warn me at" (or 0) up to par, e.g. 26–39
+ * for warn at 10, par 40. Display only.
  */
-export function topUpCanWait(summary) {
-  if (summary?.status !== 'below_par' || summary.par == null || summary.total == null) return false;
-  const par = Number(summary.par);
-  const minimum = summary.minimum == null ? 0 : Number(summary.minimum);
-  return Number(summary.total) > minimum + (par - minimum) / 2;
+export function topUpCanWait(summary, percent = null) {
+  if (!summary) return false;
+  return topOffCanWait({ status: summary.status, onHand: summary.total, minimum: summary.minimum, par: summary.par }, percent);
 }
 
 /** Tone for sorting the Inventory list into sections: topping up that can wait counts as fine. */
-export function listTone(summary) {
-  return topUpCanWait(summary) ? 'ok' : cardTone(summary);
+export function listTone(summary, percent = null) {
+  return topUpCanWait(summary, percent) ? 'ok' : cardTone(summary);
 }

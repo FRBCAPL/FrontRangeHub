@@ -1,6 +1,8 @@
 import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
 import { validStockQuantity } from './itemsureInventoryService.js';
+import { listTopOffPercents } from './itemsureTopOffService.js';
+import { dropWaitingRecs } from '../utils/itemsureTopOff.js';
 
 const PLAN_COLUMNS =
   'id, item_id, from_location_id, from_storage_area_id, to_location_id, to_storage_area_id, ' +
@@ -9,6 +11,12 @@ const PLAN_COLUMNS =
 /** Shortages for the caller's locations with transfer suggestions. Read-only; reserves nothing. */
 export async function loadRecommendations(organizationId) {
   return assertOk(await itemsure.rpc('restock_recommendations', { p_organization_id: organizationId }), 'restock recommendations') || [];
+}
+
+/** Recommendations without top-offs that can wait (above each item's "Top off at" line). */
+export async function loadNeededRecommendations(organizationId) {
+  const [recs, percents] = await Promise.all([loadRecommendations(organizationId), listTopOffPercents(organizationId)]);
+  return dropWaitingRecs(recs, percents);
 }
 
 export async function listOpenPlans(organizationId) {

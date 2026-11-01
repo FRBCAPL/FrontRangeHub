@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
-import { listTargetStatus } from '../../services/itemsureTargetService.js';
+import { listNeededStatus } from '../../services/itemsureTargetService.js';
 import { onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
@@ -25,10 +25,10 @@ const MODES = {
   topoff: {
     status: 'below_par',
     title: 'Need topping up',
-    description: 'Items above their "Warn me at" number but under "Fill up to", in the places you can see.',
+    description: 'Items above their "Warn me at" number that have dropped to their "Top off at" level, in the places you can see.',
     badge: { label: 'Needs topping up', className: 'isu-status--warn' },
     emptyTitle: 'Nothing needs topping up',
-    emptyText: 'Everything that isn\u2019t running low is at or above its \u201cFill up to\u201d number.',
+    emptyText: 'Nothing that isn\u2019t running low has dropped to its \u201cTop off at\u201d level yet.',
   },
 };
 
@@ -88,7 +88,7 @@ export default function ItemsureLowStock() {
 
   const load = useCallback(async () => {
     try {
-      setRows(await listTargetStatus(organization.id, ['low', 'below_par', 'not_set_up']));
+      setRows(await listNeededStatus(organization.id, ['low', 'below_par', 'not_set_up']));
       setError('');
     } catch (e) {
       setError(e.message);

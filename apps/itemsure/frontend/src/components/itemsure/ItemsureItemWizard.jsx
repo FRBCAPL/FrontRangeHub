@@ -17,6 +17,7 @@ import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { checkAmounts, checkLevels, entriesFromGroups, STEPS, wizardSteps } from '../../utils/itemsureItemWizard.js';
 import { mergeUnits } from '../../utils/itemsureUnits.js';
 import { findNameClash } from '../../utils/itemsureItemNames.js';
+import { checkTopOffPercent } from '../../utils/itemsureTopOff.js';
 import { ErrorNote, LoadFailed, PageHead } from './ItemsureUi.jsx';
 import ItemsureWizardProgress from './ItemsureWizardProgress.jsx';
 import ItemsureWizardBasics from './ItemsureWizardBasics.jsx';
@@ -30,7 +31,7 @@ import ItemsureWizardArchive from './ItemsureWizardArchive.jsx';
 const startingSupplier = (suppliers, wanted) =>
   (wanted && suppliers.suppliers.some((s) => s.id === wanted && s.is_active) ? wanted : '');
 
-const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, detailsOn) => ({
+const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, detailsOn, topOffAvailable) => ({
   name: item?.name || '',
   description: item?.description || '',
   sku: item?.sku || '',
@@ -44,6 +45,7 @@ const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, deta
   ...(extrasAvailable ? { extra_category_ids: item?.extraCategoryIds || [] } : {}),
   // Only when brand and details are set up and switched on, so a hidden value is never cleared.
   ...(detailsOn ? { brand: item?.brand || '', variant: item?.variant || '' } : {}),
+  ...(topOffAvailable ? { topoff_percent: item?.topoffPercent ? String(item.topoffPercent) : '' } : {}),
 });
 
 /** Guided Add item (/items/new) and Edit item (/items/:itemId/edit, ?step=levels to jump). */
@@ -98,7 +100,7 @@ export default function ItemsureItemWizard() {
   useEffect(() => {
     if (started.current || !catalog || (editing && !item) || !places.ready || !suppliers.ready || (canView && !stock)) return;
     started.current = true;
-    const fresh = emptyForm(item, catalog.units, suppliers, catalog.extrasAvailable, params.get('supplier'), catalog.detailsAvailable && features.details);
+    const fresh = emptyForm(item, catalog.units, suppliers, catalog.extrasAvailable, params.get('supplier'), catalog.detailsAvailable && features.details, catalog.topOffAvailable);
     const typedName = editing ? '' : (params.get('name') || '').trim();
     setForm(typedName ? { ...fresh, name: typedName } : fresh);
     const sources = { places: places.placesFor(routeItemId) || [], balances: stock?.balances || [], targets: stock?.targets || [], locations: places.locations };
@@ -146,6 +148,10 @@ export default function ItemsureItemWizard() {
     if (id === 'levels') {
       const p = checkLevels(entries, unitInfo.precision, unitInfo.unitName);
       if (p) return `${labelFor(entries.find((e) => e.key === p.key))}: ${p.error}`;
+      if ('topoff_percent' in form) {
+        const topOff = checkTopOffPercent(form.topoff_percent);
+        if (topOff.error) return topOff.error;
+      }
     }
     return '';
   };

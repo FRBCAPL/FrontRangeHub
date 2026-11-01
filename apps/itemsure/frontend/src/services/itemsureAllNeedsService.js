@@ -1,5 +1,5 @@
 import { listLocations } from './itemsureLocationService.js';
-import { listTargetStatus } from './itemsureTargetService.js';
+import { listNeededStatus } from './itemsureTargetService.js';
 import { groupAllNeeds } from '../utils/itemsureAllNeeds.js';
 
 /**
@@ -13,7 +13,7 @@ export async function loadAllNeeds(memberships) {
       try {
         const [locations, rows] = await Promise.all([
           listLocations(m.organizationId),
-          listTargetStatus(m.organizationId, ['low', 'below_par', 'not_set_up']),
+          listNeededStatus(m.organizationId, ['low', 'below_par', 'not_set_up']),
         ]);
         return { id: m.organizationId, name: m.organizationName, needs: groupAllNeeds(locations, rows), error: '' };
       } catch (e) {

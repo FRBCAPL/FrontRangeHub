@@ -360,3 +360,18 @@
 .isu-app .isu-extra-category-remove:focus-visible {
   background: color-mix(in srgb, currentColor 12%, transparent);
 }
+
+/* "Top off at" percent on the Warn & restock step. */
+.isu-app .isu-topoff {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-paper);
+}
+.isu-app .isu-topoff-row { display: flex; align-items: center; gap: 8px; }
+.isu-app .isu-topoff-input { width: 4.5em; text-align: center; font-weight: 700; }
+.isu-app .isu-topoff-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.isu-app .isu-topoff p { margin: 0; }

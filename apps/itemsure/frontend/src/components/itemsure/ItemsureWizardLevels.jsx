@@ -4,11 +4,12 @@ import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { FILL_DAYS, suggestLevels, WARN_DAYS } from '../../utils/itemsureUsage.js';
 import ItemsureStepper from './ItemsureStepper.jsx';
 import ItemsureWizardIntro from './ItemsureWizardIntro.jsx';
+import ItemsureTopOffField from './ItemsureTopOffField.jsx';
 
 const blank = (text) => String(text ?? '').trim() === '';
 
 /** Step 3: "Warn me at" and "Fill up to" for each place, with suggestions from past use. */
-export default function ItemsureWizardLevels({ entries, setEntries, labelFor, unitInfo, usage }) {
+export default function ItemsureWizardLevels({ form, setForm, entries, setEntries, labelFor, unitInfo, usage }) {
   const [same, setSame] = useState(false);
   const active = entries.filter((e) => !e.remove);
   const shown = same ? active.slice(0, 1) : active;
@@ -79,6 +80,14 @@ export default function ItemsureWizardLevels({ entries, setEntries, labelFor, un
           );
         })}
       </ul>
+      {form && 'topoff_percent' in form ? (
+        <ItemsureTopOffField
+          value={form.topoff_percent}
+          onChange={(v) => setForm((f) => ({ ...f, topoff_percent: v }))}
+          example={active.find((e) => !blank(e.par)) || null}
+          unit={unit}
+        />
+      ) : null}
     </div>
   );
 }

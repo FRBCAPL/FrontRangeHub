@@ -9,6 +9,8 @@ import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { SITE } from '../../data/itemsureTerms.js';
 import { addQuantity, itemSummary, visibleSlots } from '../../utils/itemsureItemStock.js';
 import { canonicalQuantity, displayQuantity } from '../../utils/itemsureQuantity.js';
+import { topUpCanWait } from '../../utils/itemsureItemLook.js';
+import { settleSlot } from '../../utils/itemsureTopOff.js';
 import { removeEmptyPlace, restorePlace } from '../../services/itemsurePlaceCleanup.js';
 import { findBalance, NO_AREA_LABEL, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
 import { ErrorNote, LoadFailed, Modal } from './ItemsureUi.jsx';
@@ -87,7 +89,8 @@ export default function ItemsureItemModal({ itemId, onClose }) {
 
   const sources = { places: places.placesFor(itemId) || [], balances: stock?.balances || [], targets: stock?.targets || [], locations: places.locations };
   const groups = visibleSlots(itemId, sources);
-  const summary = itemSummary(itemId, sources);
+  const fullSummary = itemSummary(itemId, sources);
+  const summary = topUpCanWait(fullSummary, raw?.topoffPercent) ? { ...fullSummary, status: 'above_minimum' } : fullSummary;
   const slotCount = groups.reduce((n, g) => n + g.slots.length, 0);
   const shown = new Set(groups.flatMap((g) => g.slots.map((s) => slotKey(s.locationId, s.storageAreaId))));
   const otherPlaces = slotOptions(places.locations, { spots: features.spots }).filter((o) => !shown.has(o.key));
@@ -209,7 +212,7 @@ export default function ItemsureItemModal({ itemId, onClose }) {
                     <ItemsureItemPlaceRow
                       key={slot.key}
                       item={item}
-                      slot={slot}
+                      slot={settleSlot(slot, raw.topoffPercent)}
                       label={rowLabel(slot, g)}
                       can={allowed}
                       perDay={usage ? usage.forSlot(slot.locationId, slot.storageAreaId) : null}

@@ -49,7 +49,7 @@ export function buildTodayTasks({ recs = null, plans = null, sessions = null, re
       key: 'topup',
       tone: 'warn',
       title: `${plural(topUp.length, 'item needs', 'items need')} topping up`,
-      detail: 'Below their "Fill up to" number, but not low yet.',
+      detail: 'Down to their "Top off at" level, but not low yet.',
       to: paths.shopping,
       button: 'Shopping list',
     });

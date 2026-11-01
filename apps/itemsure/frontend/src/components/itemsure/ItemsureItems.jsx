@@ -90,7 +90,7 @@ export default function ItemsureItems() {
       // Before a category is picked, only what needs attention.
       if (!stock) return [];
       const summary = (item) => itemSummary(item.id, { ...stock, locations: places.locations });
-      const attention = filteredItems.filter((item) => ['danger', 'warn'].includes(listTone(summary(item))));
+      const attention = filteredItems.filter((item) => ['danger', 'warn'].includes(listTone(summary(item), item.topoffPercent)));
       return sortByAttention(attention, summary);
     }
     const matches = filteredItems.filter((item) => {
@@ -172,7 +172,7 @@ export default function ItemsureItems() {
       ) : null}
 
       <ItemsureItemGroups
-        groups={groupByStatus(visibleItems, (item) => listTone(summaryFor(item.id)))}
+        groups={groupByStatus(visibleItems, (item) => listTone(summaryFor(item.id), item.topoffPercent))}
         titled={browsing}
         renderItem={(item, compact) => (
           <ItemsureItemRow

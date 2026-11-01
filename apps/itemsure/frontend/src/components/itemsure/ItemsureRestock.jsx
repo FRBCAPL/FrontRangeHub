@@ -6,7 +6,7 @@ import useSuppliers from '../../hooks/useSuppliers.js';
 import useShoppingTicks from '../../hooks/useShoppingTicks.js';
 import useShoppingExtras from '../../hooks/useShoppingExtras.js';
 import { EXTRA_GROUP, extraTick, mergeExtras } from '../../utils/itemsureShoppingExtras.js';
-import { listOpenPlans, loadRecommendations } from '../../services/itemsureRestockService.js';
+import { listOpenPlans, loadNeededRecommendations } from '../../services/itemsureRestockService.js';
 import { notifyInventoryChanged, onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { findBalance, NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
@@ -73,7 +73,7 @@ export default function ItemsureRestock() {
 
   const load = useCallback(async () => {
     try {
-      const [nextRecs, nextPlans] = await Promise.all([loadRecommendations(organization.id), listOpenPlans(organization.id)]);
+      const [nextRecs, nextPlans] = await Promise.all([loadNeededRecommendations(organization.id), listOpenPlans(organization.id)]);
       setRecs(nextRecs);
       setPlans(nextPlans);
       setError('');

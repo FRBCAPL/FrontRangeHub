@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { listOpenPlans, loadRecommendations } from '../services/itemsureRestockService.js';
+import { listOpenPlans, loadNeededRecommendations } from '../services/itemsureRestockService.js';
 import { listSessions } from '../services/itemsureCountService.js';
 import { listReviews } from '../services/itemsureCountReviewService.js';
 import { hasAnyLevels } from '../services/itemsureActivityService.js';
@@ -21,7 +21,7 @@ export default function useTodayData(organizationId, { stock, counts }) {
     let alive = true;
     const load = async () => {
       const [recs, plans, sessions, reviews, hasLevels] = await Promise.all([
-        stock ? quietly(loadRecommendations(organizationId)) : null,
+        stock ? quietly(loadNeededRecommendations(organizationId)) : null,
         stock ? quietly(listOpenPlans(organizationId)) : null,
         counts ? quietly(listSessions(organizationId)) : null,
         counts ? quietly(listReviews(organizationId)) : null,

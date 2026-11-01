@@ -3,16 +3,18 @@ import { assertOk } from '../utils/itemsureErrors.js';
 import { optionalText, requiredText } from '../utils/itemsureText.js';
 import { categoryPath, categoryTree } from '../utils/itemsureCategories.js';
 import { unitCode } from '../utils/itemsureUnits.js';
+import { checkTopOffPercent } from '../utils/itemsureTopOff.js';
 import { listExtraCategories } from './itemsureExtraCategoryService.js';
 import { listItemDetails } from './itemsureItemDetailsService.js';
 import { listCategoryIcons } from './itemsureCategoryIconService.js';
+import { listTopOffPercents } from './itemsureTopOffService.js';
 
 function one(value) {
   return Array.isArray(value) ? value[0] || null : value || null;
 }
 
 export async function listCatalog(organizationId) {
-  const [items, categories, units, extras, details, icons] = await Promise.all([
+  const [items, categories, units, extras, details, icons, topOffs] = await Promise.all([
     itemsure
       .from('inventory_items')
       .select('id, name, description, sku, barcode, is_active, category_id, base_unit_id, inventory_categories(name), units_of_measure(name, symbol)')
@@ -33,6 +35,7 @@ export async function listCatalog(organizationId) {
     listExtraCategories(organizationId),
     listItemDetails(organizationId),
     listCategoryIcons(organizationId),
+    listTopOffPercents(organizationId),
   ]);
 
   const categoryRows = (assertOk(categories, 'categories') || []).map((c) => ({ ...c, icon: icons?.get(c.id) || '' }));
@@ -45,12 +48,14 @@ export async function listCatalog(organizationId) {
       extraCategoryIds: extras?.get(item.id) || [],
       brand: details?.get(item.id)?.brand || '',
       variant: details?.get(item.id)?.variant || '',
+      topoffPercent: topOffs?.get(item.id) ?? null,
     })),
     categories: categoryRows,
     units: assertOk(units, 'units') || [],
     extrasAvailable: extras !== null,
     detailsAvailable: details !== null,
     iconsAvailable: icons !== null,
+    topOffAvailable: topOffs !== null,
   };
 }
 
@@ -121,6 +126,12 @@ function itemFields(form) {
   // Only present once brand and details are set up and switched on.
   if ('brand' in form) fields.brand = optionalText(form.brand, 'brand', 80);
   if ('variant' in form) fields.variant = optionalText(form.variant, 'detail', 80);
+  // Only present once the "Top off at" database update is applied.
+  if ('topoff_percent' in form) {
+    const checked = checkTopOffPercent(form.topoff_percent);
+    if (checked.error) throw new Error(checked.error);
+    fields.topoff_percent = checked.value;
+  }
   return fields;
 }
 
