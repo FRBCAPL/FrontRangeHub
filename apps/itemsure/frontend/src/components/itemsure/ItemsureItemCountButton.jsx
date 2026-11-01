@@ -24,7 +24,7 @@ export default function ItemsureItemCountButton({ organizationId, item, counts, 
         onClick={() => setOpen(true)}
         title={counted ? 'Edit the count' : undefined}
       >
-        {counted ? '\u2713 Counted' : 'Add to count'}
+        {counted ? '\u2713 Counted' : 'Add this item to the current count'}
       </button>
       <Modal open={open} title={counted ? 'Edit count' : 'Add to count'} onClose={() => setOpen(false)}>
         {open ? (

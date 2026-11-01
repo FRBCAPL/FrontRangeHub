@@ -149,7 +149,10 @@ export default function ItemsureItemModal({ itemId, onClose }) {
     }
   };
 
-  const title = action ? ACTION_TITLES[action.kind] : raw?.name || 'Item';
+  const title = action ? ACTION_TITLES[action.kind] : 'Item Details';
+  const keptAt = groups
+    .map((g) => (g.slots.length > 1 ? `${g.location.name} \u00b7 ${g.slots.map((s) => s.areaName || NO_AREA_LABEL).join(', ')}` : labelFor(g.slots[0])))
+    .join('; ');
   let body;
   if (loadError) body = <LoadFailed message={loadError} onRetry={load} />;
   else if (!catalog) body = <p className="isu-muted">Loading…</p>;
@@ -173,10 +176,14 @@ export default function ItemsureItemModal({ itemId, onClose }) {
     const description = [showDetails && detailsLine(raw), raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ');
     body = (
       <div className="isu-stack isu-item-modal">
-        {description || editItem ? (
+        <div className="isu-item-modal-name">
+          <h3>{raw.name}</h3>
+          {description ? <p className="isu-muted isu-small">{description}</p> : null}
+          {canView && stock ? <p className="isu-muted isu-small">{keptAt || 'Not kept anywhere yet'}</p> : null}
+        </div>
+        {editItem ? (
           <div className="isu-item-modal-head">
-            <p className="isu-muted isu-small">{description}</p>
-            {editItem ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit item</button> : null}
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit item</button>
           </div>
         ) : null}
 

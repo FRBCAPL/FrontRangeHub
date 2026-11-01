@@ -25,6 +25,7 @@ export default function ItemsureQuickCount({ organizationId, item, sessions, sta
   const [conflicts, setConflicts] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [pickingSpot, setPickingSpot] = useState(false);
   const startedFor = useRef('');
   const anchors = useRef({});
 
@@ -181,10 +182,23 @@ export default function ItemsureQuickCount({ organizationId, item, sessions, sta
             ))}
           </ul>
 
-          {otherAreas.length ? (
+          {otherAreas.length && !pickingSpot ? (
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm isu-quickcount-add-btn" onClick={() => setPickingSpot(true)}>
+              + Count in another spot
+            </button>
+          ) : null}
+          {otherAreas.length && pickingSpot ? (
             <label className="isu-quickcount-add">
-              <span>+ Count in another spot</span>
-              <select value="" onChange={(e) => e.target.value !== '-' && setSpot(e.target.value, '')}>
+              <span>Count in another spot</span>
+              <select
+                value=""
+                autoFocus
+                onChange={(e) => {
+                  if (e.target.value === '-') return;
+                  setSpot(e.target.value, '');
+                  setPickingSpot(false);
+                }}
+              >
                 <option value="-">Choose a spot…</option>
                 {otherAreas.map((a) => <option key={a.id || 'loose'} value={a.id}>{a.name}</option>)}
               </select>

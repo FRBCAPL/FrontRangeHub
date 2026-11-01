@@ -28,13 +28,31 @@
   justify-self: end;
 }
 
+.isu-item-modal-name {
+  margin-top: -8px;
+  text-align: center;
+}
+
+.isu-app .isu-item-modal-name h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.isu-item-modal-name p {
+  margin: 2px 0 0;
+}
+
 .isu-item-modal-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
-  margin-top: -8px;
+}
+
+.isu-app .isu-item-modal-head .isu-btn {
+  min-width: 10rem;
 }
 
 .isu-item-modal-head p {

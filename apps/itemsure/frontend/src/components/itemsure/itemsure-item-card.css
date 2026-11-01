@@ -396,6 +396,11 @@
   color: var(--isu-pine);
 }
 
+.isu-app .isu-quickcount-add-btn {
+  justify-self: start;
+  color: var(--isu-pine);
+}
+
 .isu-quickcount-item {
   margin: 0;
   font-size: 1.05rem;
