@@ -148,7 +148,7 @@
   font-size: 0.9rem;
 }
 
-.isu-levels-list {
+.isu-levels .isu-levels-list {
   display: grid;
   gap: 6px;
   margin: 10px 0 6px;
@@ -156,7 +156,7 @@
   list-style: none;
 }
 
-.isu-levels-list li {
+.isu-levels .isu-levels-list li {
   display: flex;
   gap: 8px;
   align-items: flex-start;
@@ -164,10 +164,10 @@
   border-radius: 8px;
 }
 
-.isu-levels-list li:nth-child(2) { margin-left: 14px; }
-.isu-levels-list li:nth-child(3) { margin-left: 28px; }
+.isu-levels .isu-levels-list li:nth-child(2) { margin-left: 14px; }
+.isu-levels .isu-levels-list li:nth-child(3) { margin-left: 28px; }
 
-.isu-levels-list li.is-focus {
+.isu-levels .isu-levels-list li.is-focus {
   background: var(--isu-pine-soft);
 }
 

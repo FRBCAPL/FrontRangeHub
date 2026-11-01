@@ -241,6 +241,7 @@
 }
 .isu-error { background: var(--isu-danger-soft); color: var(--isu-danger); border: 1px solid var(--isu-danger-line); }
 .isu-notice { background: var(--isu-pine-soft); color: var(--isu-pine); border: 1px solid var(--isu-pine-line); }
+.isu-app .isu-notice a { color: var(--isu-ink); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
 /* Cards */
 .isu-card {
