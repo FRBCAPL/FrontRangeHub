@@ -72,7 +72,7 @@
   height: 34px;
   padding: 0;
   border-radius: 9px;
-  border: 2px solid var(--isu-line);
+  border: 2px solid var(--isu-muted);
   background: transparent;
   color: #fff;
   font-size: 1.1rem;

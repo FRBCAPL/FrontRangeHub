@@ -1,4 +1,5 @@
 // Hand-added shopping list lines, merged into the worked-out "To buy" groups.
+import { byName } from './itemsureShoppingList.js';
 
 /** Group for hand-added lines when the list isn't grouped by supplier. */
 export const EXTRA_GROUP = 'Added by hand';
@@ -10,7 +11,7 @@ const nameOrder = (a, b) => a.label.localeCompare(b.label);
 /**
  * Adds hand-added lines to `groups` (from buyGroups). Each line becomes a row
  * { key, tick, extra: true, extraId, itemId, name, amount } in the group `groupOf(extra)`
- * names, after that group's worked-out rows. An item already on the list from its
+ * names, in name order with that group's worked-out rows. An item already on the list from its
  * warning levels isn't shown twice. Groups stay in name order with `lastGroup` last.
  */
 export function mergeExtras(groups, extras, { groupOf, lastGroup, itemsById = new Map() }) {
@@ -30,7 +31,9 @@ export function mergeExtras(groups, extras, { groupOf, lastGroup, itemsById = ne
       amount: extra.amount || '',
     });
   }
-  return [...byLabel.values()].sort((a, b) => (a.label === lastGroup) - (b.label === lastGroup) || nameOrder(a, b));
+  return [...byLabel.values()]
+    .map((g) => ({ ...g, rows: [...g.rows].sort(byName) }))
+    .sort((a, b) => (a.label === lastGroup) - (b.label === lastGroup) || nameOrder(a, b));
 }
 
 /**

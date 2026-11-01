@@ -6,15 +6,15 @@ import { shoppingText, tickOf } from '../src/utils/itemsureShoppingList.js';
 const workedRow = (itemId, name) => ({ key: `g|${itemId}`, itemId, name, unit: 'btl', status: 'low', total: '2', upTo: false, spots: [] });
 const extra = (over) => ({ id: 'e1', item_id: null, supplier_id: null, name: 'Candles', amount: '', ...over });
 
-test('mergeExtras puts hand-added lines in their group after the worked-out rows', () => {
+test('mergeExtras puts hand-added lines in their group, in A to Z order with the worked-out rows', () => {
   const groups = [{ label: 'Sysco', rows: [workedRow('i1', 'Limes')] }];
-  const merged = mergeExtras(groups, [extra({ supplier_id: 's1', amount: '2 bags' })], {
+  const merged = mergeExtras(groups, [extra({ supplier_id: 's1', amount: '2 bags' }), extra({ id: 'e2', supplier_id: 's1', name: 'Napkins' })], {
     groupOf: (e) => (e.supplier_id === 's1' ? 'Sysco' : 'No supplier'),
     lastGroup: 'No supplier',
   });
   assert.equal(merged.length, 1);
-  assert.deepEqual(merged[0].rows.map((r) => r.name), ['Limes', 'Candles']);
-  const added = merged[0].rows[1];
+  assert.deepEqual(merged[0].rows.map((r) => r.name), ['Candles', 'Limes', 'Napkins']);
+  const added = merged[0].rows[0];
   assert.equal(added.extra, true);
   assert.equal(added.tick, extraTick('e1'));
   assert.equal(added.amount, '2 bags');
@@ -60,6 +60,7 @@ test('shoppingText includes hand-added lines and leaves ticked ones out', () => 
     groupOf: () => 'Sysco',
     lastGroup: 'No supplier',
   });
-  assert.equal(tickOf(groups[0].rows[0]), 'i1');
-  assert.equal(shoppingText(groups, new Set([extraTick('e2')])), 'Sysco\n- Limes: 2 btl\n- Candles: 1 box');
+  assert.deepEqual(groups[0].rows.map((r) => r.name), ['Candles', 'Ice', 'Limes']);
+  assert.equal(tickOf(groups[0].rows[2]), 'i1');
+  assert.equal(shoppingText(groups, new Set([extraTick('e2')])), 'Sysco\n- Candles: 1 box\n- Limes: 2 btl');
 });

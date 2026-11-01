@@ -8,6 +8,9 @@ export const NO_SUPPLIER = 'No supplier';
 const STATUS_RANK = { low: 0, below_par: 1 };
 const isZero = (text) => displayQuantity(text) === '0';
 
+/** Rows in A to Z order, so ticking or a status change never moves a row. */
+export const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+
 /**
  * What one place still needs from outside: { amount, upTo } or null when nothing is to
  * be bought. `amount` null means no "Fill up to" number, so no suggested amount.
@@ -27,7 +30,7 @@ export const spotLabel = (rec, withLocation) =>
 /**
  * Buy rows grouped by `groupOf(rec)` (supplier by default). Within a group, one row per
  * item adds up its places: { key, itemId, name, unit, status, total, upTo, missingPar, spots }.
- * `total` is rounded up to whole units. Groups and rows are most urgent first, then by name;
+ * `total` is rounded up to whole units. Groups and rows are in name order;
  * the "No supplier" group (or whatever `lastGroup` names) goes last.
  */
 export function buyGroups(recs, { showMoves = true, groupOf, lastGroup = NO_SUPPLIER } = {}) {
@@ -57,11 +60,10 @@ export function buyGroups(recs, { showMoves = true, groupOf, lastGroup = NO_SUPP
     rows.set(rec.item_id, row);
   }
 
-  const byUrgency = (a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9) || a.name.localeCompare(b.name);
   return [...groups.entries()]
     .map(([label, rows]) => ({
       label,
-      rows: [...rows.values()].map(({ exact, ...row }) => ({ ...row, total: exact === null ? null : wholeToBuy(exact) })).sort(byUrgency),
+      rows: [...rows.values()].map(({ exact, ...row }) => ({ ...row, total: exact === null ? null : wholeToBuy(exact) })).sort(byName),
     }))
     .sort((a, b) => (a.label === lastGroup) - (b.label === lastGroup) || a.label.localeCompare(b.label));
 }

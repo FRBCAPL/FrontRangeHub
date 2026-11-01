@@ -32,12 +32,16 @@ test('buyGroups adds an item up across places and rounds the total up', () => {
   assert.equal(buyLabel(lime), '3 btl');
 });
 
-test('buyGroups puts running low first and flags a missing "Fill up to"', () => {
-  const recs = [rec({ item_id: 'b', item_name: 'B' }), rec({ item_id: 'a', item_name: 'A', status: 'low', need: null })];
+test('buyGroups lists rows A to Z, not by status, and flags a missing "Fill up to"', () => {
+  const recs = [
+    rec({ item_id: 'c', item_name: 'cups' }),
+    rec({ item_id: 'b', item_name: 'Bitters', status: 'low', need: null }),
+    rec({ item_id: 'a', item_name: 'Apples' }),
+  ];
   const [group] = buyGroups(recs, { groupOf: () => 'Shop' });
-  assert.deepEqual(group.rows.map((r) => r.name), ['A', 'B']);
-  assert.equal(group.rows[0].total, null);
-  assert.equal(buyLabel(group.rows[0]), 'Amount not set');
+  assert.deepEqual(group.rows.map((r) => r.name), ['Apples', 'Bitters', 'cups']);
+  assert.equal(group.rows[1].total, null);
+  assert.equal(buyLabel(group.rows[1]), 'Amount not set');
 });
 
 test('moveRows lists visible transfers, or none with moving off', () => {

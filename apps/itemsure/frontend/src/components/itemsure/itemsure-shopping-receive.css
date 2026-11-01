@@ -1,0 +1,96 @@
+/* Shopping list: "how many are you getting", who bought it, and the receive window. */
+
+.isu-app .isu-shop-got {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+  padding: 4px 6px;
+  margin: 0;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  font-size: 1.08rem;
+  cursor: pointer;
+}
+.isu-app .isu-shop-got:hover,
+.isu-app .isu-shop-got:focus-visible { border-color: var(--isu-line); }
+.isu-app .isu-shop-got-edit { font-size: 0.72rem; font-weight: 600; color: var(--isu-muted); }
+.isu-app .isu-shop-got-now { color: var(--isu-pine); }
+.isu-app .isu-shop-got-was { font-size: 0.78rem; font-weight: 600; color: var(--isu-muted); text-decoration: line-through; }
+.isu-app .isu-shop-row.is-ticked .isu-shop-got.is-changed { text-decoration: none; }
+.isu-app .isu-shop-row.is-ticked:has(.is-changed) { opacity: 0.85; }
+
+.isu-app .isu-shop-by { font-size: 0.78rem; color: var(--isu-pine); font-weight: 600; }
+
+.isu-app .isu-shop-gotedit {
+  margin: 6px 0 4px 44px;
+  display: grid;
+  gap: 6px;
+}
+.isu-app .isu-shop-gotedit-row { display: flex; align-items: center; gap: 6px; }
+.isu-app .isu-shop-gotedit-row .isu-btn { min-width: 40px; padding: 6px 10px; font-size: 1.1rem; }
+.isu-app .isu-shop-gotedit-input {
+  flex: 0 0 auto;
+  width: 6.5em !important;
+  padding: 8px 10px;
+  border: 1px solid var(--isu-line);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 1.05rem;
+  text-align: center;
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+}
+.isu-app .isu-shop-gotedit p { margin: 0; }
+.isu-app .isu-shop-gotedit-error { color: var(--isu-danger); font-weight: 600; }
+.isu-app .isu-shop-gotedit-actions { display: flex; gap: 6px; }
+.isu-app .isu-shop-gotedit-actions .isu-btn { padding: 6px 12px; }
+
+.isu-app .isu-shop-receive { width: 100%; margin: 4px 0 10px; padding: 12px 16px; font-size: 1rem; }
+
+.isu-app .isu-receive { display: grid; gap: 10px; }
+.isu-app .isu-receive p { margin: 0; }
+.isu-app .isu-receive-warn {
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--isu-warn-soft);
+  font-weight: 600;
+}
+.isu-app .isu-receive-group .isu-shop-group-title { margin-bottom: 4px; }
+.isu-app .isu-receive-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.isu-app .isu-receive-entry {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  background: var(--isu-paper);
+}
+.isu-app .isu-receive-entry.is-skipped { opacity: 0.55; }
+.isu-app .isu-receive-take { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.isu-app .isu-receive-take input { width: 20px; height: 20px; }
+.isu-app .isu-receive-name { font-weight: 700; }
+.isu-app .isu-receive-differs { color: var(--isu-pine); font-weight: 700; }
+.isu-app .isu-receive-places { display: grid; gap: 4px; padding-left: 28px; }
+.isu-app .isu-receive-place {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.5em auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+.isu-app .isu-receive-place select { min-width: 0; }
+.isu-app .isu-receive-place input {
+  width: 100% !important;
+  padding: 6px 8px;
+  border: 1px solid var(--isu-line);
+  border-radius: 8px;
+  font: inherit;
+  text-align: center;
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+}

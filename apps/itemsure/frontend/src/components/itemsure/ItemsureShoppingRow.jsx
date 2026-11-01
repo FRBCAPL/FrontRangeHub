@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useItemLink } from '../../hooks/useItemModal.js';
 import { displayQuantity, wholeToBuy } from '../../utils/itemsureQuantity.js';
-import { buyLabel, spotLabel } from '../../utils/itemsureShoppingList.js';
+import { spotLabel } from '../../utils/itemsureShoppingList.js';
+import ItemsureShoppingGotEditor, { boughtBy, GotAmount } from './ItemsureShoppingGot.jsx';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site } from '../../data/itemsureTerms.js';
@@ -26,12 +27,18 @@ function SpotDetail({ spot, unit, withLocation }) {
   );
 }
 
-/** One item to buy: a tick box, the name, the total to buy, and where it's needed. Tap for the figures. */
-export default function ItemsureShoppingRow({ row, ticked, onTick, withLocation }) {
+/**
+ * One item to buy: a tick box, the name, the total to buy, and where it's needed. Tap for the
+ * figures. `tick` ({ amount, by, at }) when ticked; tapping the amount sets what the shopper got.
+ */
+export default function ItemsureShoppingRow({ row, tick, names, item, onTick, onSetAmount, withLocation }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const itemLink = useItemLink();
+  const ticked = Boolean(tick);
   const tone = row.status === 'low' ? 'is-low' : 'is-topup';
   const where = row.spots.map(({ rec }) => `${spotLabel(rec, withLocation)} ${q(rec.on_hand)} of ${q(rec.par)}`).join(' \u00b7 ');
+  const by = boughtBy(tick, names);
 
   return (
     <li className={`isu-shop-row ${tone}${ticked ? ' is-ticked' : ''}`}>
@@ -48,9 +55,11 @@ export default function ItemsureShoppingRow({ row, ticked, onTick, withLocation 
         <button type="button" className="isu-shop-row-body" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           <span className="isu-shop-name">{row.name}</span>
           <span className="isu-shop-where">{TARGET_STATUS[row.status]?.label} · {where}</span>
+          {by ? <span className="isu-shop-by">{by}</span> : null}
         </button>
-        <span className={`isu-shop-amount${row.total === null ? ' is-unset' : ''}`}>{buyLabel(row)}</span>
+        <GotAmount row={row} tick={tick} onEdit={() => setEditing((e) => !e)} />
       </div>
+      {editing ? <ItemsureShoppingGotEditor row={row} tick={tick} item={item} onSave={onSetAmount} onClose={() => setEditing(false)} /> : null}
       {open ? (
         <div className="isu-shop-detail">
           <ul>

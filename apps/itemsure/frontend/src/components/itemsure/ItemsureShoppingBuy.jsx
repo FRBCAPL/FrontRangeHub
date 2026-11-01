@@ -5,21 +5,30 @@ import ItemsureShoppingExtraRow from './ItemsureShoppingExtraRow.jsx';
 import ItemsureShoppingRow from './ItemsureShoppingRow.jsx';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 
-const ticksLast = (rows, ticked) => [...rows.filter((r) => !ticked.has(tickOf(r))), ...rows.filter((r) => ticked.has(tickOf(r)))];
+function note({ shared, canReceive, hasExtras }) {
+  if (shared) {
+    return `Tick items as you get them, and tap an amount if you're getting a different number. Everyone sees the ticks.${canReceive ? ' When the shopping is back, tap Receive bought items to add it to stock.' : ''}`;
+  }
+  return hasExtras
+    ? 'Tick items as you get them. Ticks don\u2019t change stock. Clear ticked takes things you added by hand off the list for everyone.'
+    : 'Tick items as you get them. Ticks are just for you on this device and don\u2019t change stock.';
+}
 
 /**
- * "To buy": one block per group, a "Got it" tick per item, and a plain-text copy of what's left.
- * With `onAdd` (hand-added lines are set up), each supplier group gets "+ Add item" (`onAdd(label)`)
- * that starts on that supplier. The heading gets one for any supplier (`onAdd('')`) only when there
- * are no supplier groups, so it is never mistaken for the first group's. `onRemove(ids)` removes added lines.
+ * "To buy": one block per group in A to Z order, a "Got it" tick per item (rows never move when
+ * ticked), the amount the shopper is getting, and a plain-text copy of what's left.
+ * `ticks` comes from useShoppingTicks. With `onAdd` (hand-added lines are set up), each supplier group
+ * gets "+ Add item" (`onAdd(label)`); the heading gets one (`onAdd('')`) only when there are no supplier
+ * groups, so it is never mistaken for the first group's. `onRemove(ids)` removes added lines.
+ * `onReceive` (shared ticks and permission to add stock) opens the receive window.
  */
-export default function ItemsureShoppingBuy({ groups, ticks, withLocation, iconFor = null, onAdd = null, onRemove = null }) {
-  const { ticked, toggle, clear } = ticks;
+export default function ItemsureShoppingBuy({ groups, ticks, itemsById, withLocation, iconFor = null, onAdd = null, onRemove = null, onReceive = null }) {
+  const { ticked, names, toggle, setAmount, clear } = ticks;
   const [copied, setCopied] = useState('');
   const [copyText, setCopyText] = useState('');
   const { busy, error, run } = useItemsureAction();
   const rows = groups.flatMap((g) => g.rows);
-  const tickedHere = rows.some((r) => ticked.has(tickOf(r)));
+  const tickedKeys = rows.map(tickOf).filter((k) => ticked.has(k));
   const tickedExtras = rows.filter((r) => r.extra && ticked.has(r.tick)).map((r) => r.extraId);
   if (!groups.length && !onAdd) return null;
 
@@ -38,7 +47,7 @@ export default function ItemsureShoppingBuy({ groups, ticks, withLocation, iconF
   };
   const clearTicked = async () => {
     if (tickedExtras.length && !(await run(() => onRemove(tickedExtras)))) return;
-    clear();
+    clear(tickedKeys);
   };
   const remove = (row) => run(() => onRemove([row.extraId]));
 
@@ -48,7 +57,7 @@ export default function ItemsureShoppingBuy({ groups, ticks, withLocation, iconF
         <h2 className="isu-shop-heading">To buy</h2>
         <div className="isu-shop-tools">
           {onAdd && !(iconFor && groups.length) ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAdd('')}>+ Add item</button> : null}
-          {tickedHere ? (
+          {tickedKeys.length ? (
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={clearTicked} disabled={busy}>
               {tickedExtras.length ? 'Clear ticked' : 'Clear ticks'}
             </button>
@@ -56,11 +65,14 @@ export default function ItemsureShoppingBuy({ groups, ticks, withLocation, iconF
           {groups.length ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={copy}>Copy list</button> : null}
         </div>
       </div>
-      <ErrorNote message={error} />
+      {onReceive && tickedKeys.length ? (
+        <button type="button" className="isu-btn isu-btn--primary isu-shop-receive" onClick={onReceive}>
+          Receive bought items
+        </button>
+      ) : null}
+      <ErrorNote message={error || ticks.error} />
       <p className="isu-muted isu-small isu-shop-note" role="status">
-        {copied || (onAdd
-          ? 'Tick items as you get them. Ticks don\u2019t change stock. Clear ticked takes things you added by hand off the list for everyone.'
-          : 'Tick items as you get them. Ticks are just for you on this device and don\u2019t change stock.')}
+        {copied || note({ shared: ticks.shared, canReceive: Boolean(onReceive), hasExtras: Boolean(onAdd) })}
       </p>
       {groups.map((g) => (
         <div key={g.label} className="isu-shop-group">
@@ -73,11 +85,15 @@ export default function ItemsureShoppingBuy({ groups, ticks, withLocation, iconF
             ) : null}
           </div>
           <ul className="isu-shop-list">
-            {ticksLast(g.rows, ticked).map((row) => (row.extra ? (
-              <ItemsureShoppingExtraRow key={row.key} row={row} ticked={ticked.has(row.tick)} onTick={() => toggle(row.tick)} onRemove={() => remove(row)} busy={busy} />
-            ) : (
-              <ItemsureShoppingRow key={row.key} row={row} ticked={ticked.has(row.itemId)} onTick={() => toggle(row.itemId)} withLocation={withLocation} />
-            )))}
+            {g.rows.map((row) => {
+              const key = tickOf(row);
+              const shared = { tick: ticked.get(key), names, onTick: () => toggle(key), onSetAmount: (amount) => setAmount(key, amount) };
+              return row.extra ? (
+                <ItemsureShoppingExtraRow key={row.key} row={row} {...shared} onRemove={() => remove(row)} busy={busy} />
+              ) : (
+                <ItemsureShoppingRow key={row.key} row={row} {...shared} item={itemsById?.get(row.itemId)} withLocation={withLocation} />
+              );
+            })}
           </ul>
         </div>
       ))}

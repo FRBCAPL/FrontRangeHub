@@ -20,6 +20,9 @@ import ItemsureShoppingAdd from './ItemsureShoppingAdd.jsx';
 import ItemsureShoppingBuy from './ItemsureShoppingBuy.jsx';
 import ItemsureShoppingFilters from './ItemsureShoppingFilters.jsx';
 import ItemsureShoppingMoves from './ItemsureShoppingMoves.jsx';
+import ItemsureShoppingReceive from './ItemsureShoppingReceive.jsx';
+import { receiveShopping } from '../../services/itemsureShoppingTicksService.js';
+import { stockPlaces } from '../../utils/itemsureShoppingReceive.js';
 import { ErrorNote, LoadFailed, Modal, PageHead } from './ItemsureUi.jsx';
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -62,6 +65,8 @@ export default function ItemsureRestock() {
   const extras = useShoppingExtras(organization.id);
   const navigate = useNavigate();
   const [adding, setAdding] = useState(null);
+  const [receiving, setReceiving] = useState(false);
+  const [received, setReceived] = useState('');
   const [recs, setRecs] = useState(null);
   const [plans, setPlans] = useState([]);
   const [error, setError] = useState('');
@@ -133,18 +138,22 @@ export default function ItemsureRestock() {
   }, [placed]);
   const shown = useMemo(() => placed.filter((r) => !filters.status || r.status === filters.status), [placed, filters.status]);
 
-  const toBuy = useMemo(() => {
-    const choice = groupChoices[group];
-    const worked = buyGroups(shown, { showMoves, groupOf: choice.of, lastGroup: choice.last });
-    if (!extras.available) return worked;
-    const names = new Map(supplierList.map((s) => [s.id, s.name]));
-    const bySupplier = group === 'supplier';
-    return mergeExtras(worked, extras.extras, {
-      groupOf: (e) => (bySupplier ? names.get(supplierLinks.get(e.item_id) || e.supplier_id) || NO_SUPPLIER : EXTRA_GROUP),
-      lastGroup: bySupplier ? NO_SUPPLIER : EXTRA_GROUP,
-      itemsById,
-    });
-  }, [shown, showMoves, groupChoices, group, extras.available, extras.extras, supplierList, supplierLinks, itemsById]);
+  const groupsFor = useCallback(
+    (list) => {
+      const choice = groupChoices[group];
+      const worked = buyGroups(list, { showMoves, groupOf: choice.of, lastGroup: choice.last });
+      if (!extras.available) return worked;
+      const names = new Map(supplierList.map((s) => [s.id, s.name]));
+      const bySupplier = group === 'supplier';
+      return mergeExtras(worked, extras.extras, {
+        groupOf: (e) => (bySupplier ? names.get(supplierLinks.get(e.item_id) || e.supplier_id) || NO_SUPPLIER : EXTRA_GROUP),
+        lastGroup: bySupplier ? NO_SUPPLIER : EXTRA_GROUP,
+        itemsById,
+      });
+    },
+    [showMoves, groupChoices, group, extras.available, extras.extras, supplierList, supplierLinks, itemsById],
+  );
+  const toBuy = useMemo(() => groupsFor(shown), [groupsFor, shown]);
   const moves = useMemo(() => moveRows(shown, showMoves), [shown, showMoves]);
   const onList = useMemo(
     () => new Set([...toBuy.flatMap((g) => g.rows.map((r) => r.itemId)), ...extras.extras.map((e) => e.item_id)].filter(Boolean)),
@@ -190,6 +199,15 @@ export default function ItemsureRestock() {
     navigate(`${ITEMSURE_PATH}/items/new?${query}`);
   };
 
+  const supplierNameOf = (itemId) => supplierList.find((s) => s.id === supplierLinks.get(itemId))?.name || '';
+  const receive = (payload) => receiveShopping(organization.id, payload);
+  const afterReceive = (count) => {
+    setReceiving(false);
+    setReceived(count ? `Received. Stock added in ${plural(count, 'place')}.` : 'Done. Those lines are off the list.');
+    ticks.reload();
+    notifyInventoryChanged();
+  };
+
   const set = (patch) => setFilters((f) => ({ ...f, ...patch }));
   const ready = data && recs;
   const withLocation = (data?.locations.length || 0) > 1;
@@ -216,14 +234,17 @@ export default function ItemsureRestock() {
       {ready && !recs.length ? <EmptyState data={data} /> : null}
       {ready && recs.length > 0 && !shown.length ? <p className="isu-muted">Nothing matches these filters.</p> : null}
 
+      {received ? <p className="isu-notice" role="status">{received}</p> : null}
       {ready ? (
         <ItemsureShoppingBuy
           groups={toBuy}
           ticks={ticks}
+          itemsById={itemsById}
           withLocation={withLocation}
           iconFor={group === 'supplier' ? (label) => supplierIcons.get(label) || '' : null}
           onAdd={extras.available ? startAdd : null}
           onRemove={extras.remove}
+          onReceive={ticks.shared && can('inventory.adjust') ? () => { setReceived(''); setReceiving(true); } : null}
         />
       ) : null}
       {ready ? <ItemsureShoppingMoves moves={moves} canTransfer={canTransfer} withLocation={withLocation} onAction={openAction} /> : null}
@@ -231,6 +252,21 @@ export default function ItemsureRestock() {
 
       <Modal open={Boolean(action)} title={action ? { transfer: 'Transfer stock', plan: 'Plan a transfer', complete: 'Complete planned transfer' }[action.kind] : ''} onClose={() => setAction(null)}>
         {action ? <ItemsureRestockAction action={action} locations={data.locations} onDone={afterAction} /> : null}
+      </Modal>
+      <Modal open={Boolean(receiving && data)} title="Receive bought items" onClose={() => setReceiving(false)}>
+        {receiving && data ? (
+          <ItemsureShoppingReceive
+            groups={groupsFor(recs || [])}
+            ticked={ticks.ticked}
+            itemsById={itemsById}
+            placesFor={(itemId) => stockPlaces(data.balances, data.locations, itemId, withLocation)}
+            supplierNameOf={supplierNameOf}
+            withLocation={withLocation}
+            onReceive={receive}
+            onDone={afterReceive}
+            onCancel={() => setReceiving(false)}
+          />
+        ) : null}
       </Modal>
       <Modal open={Boolean(adding && data)} title={adding?.title || ''} onClose={() => setAdding(null)}>
         {adding && data ? (
