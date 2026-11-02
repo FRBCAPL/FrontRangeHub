@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { suggestLevels } from '../../utils/itemsureUsage.js';
+import { focusFirstField } from '../../utils/itemsureFocus.js';
 import ItemsureCountNotice from './ItemsureCountNotice.jsx';
 import ItemsureSetAmountForm from './ItemsureSetAmountForm.jsx';
 import ItemsureQuickChangeForm from './ItemsureQuickChangeForm.jsx';
@@ -11,7 +12,7 @@ export const ACTION_TITLES = { set: 'Set amount', add: 'Add stock', remove: 'Use
 export default function ItemsureItemAction({ action, item, itemName, placeName, organizationId, openCounts, usage, onDone, onBack }) {
   const ref = useRef(null);
   useEffect(() => {
-    ref.current?.querySelector('input, select, textarea')?.focus();
+    focusFirstField(ref.current);
   }, [action]);
 
   const { slot, kind } = action;

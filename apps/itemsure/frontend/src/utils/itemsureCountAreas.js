@@ -2,6 +2,31 @@
 import { NO_AREA_LABEL } from './itemsureStock.js';
 
 export const NO_AREA = '';
+export const ALL_SPOTS = '*';
+
+/**
+ * The "All spots" view: for each spot (in `areas` order), the items that belong there — kept,
+ * levelled, stocked (`inUse`), or already counted there (`countedKeys`: Set of 'itemId|areaId').
+ * Items that belong nowhere go under Loose so nothing is hidden. Spots with no items are left out.
+ * Returns [{ area: { id, name }, items }].
+ */
+export function groupBySpot(items, inUse, locationId, areas, countedKeys = new Set()) {
+  const placed = new Set();
+  const groups = areas.map((area) => {
+    const id = area.id || '';
+    const list = items.filter(
+      (i) => inUse.has(`${i.item_id}|${locationId}|${id}`) || countedKeys.has(`${i.item_id}|${id}`),
+    );
+    list.forEach((i) => placed.add(i.item_id));
+    return { area, items: list };
+  });
+  const homeless = items.filter((i) => !placed.has(i.item_id));
+  if (homeless.length) {
+    const loose = groups.find((g) => (g.area.id || '') === NO_AREA);
+    if (loose) loose.items = [...loose.items, ...homeless];
+  }
+  return groups.filter((g) => g.items.length);
+}
 
 /**
  * The session's own spot, or the location's active spots plus "Loose".

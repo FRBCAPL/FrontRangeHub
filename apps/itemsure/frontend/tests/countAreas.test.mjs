@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { countingAreas, NO_AREA, splitForSpot } from '../src/utils/itemsureCountAreas.js';
+import { countingAreas, groupBySpot, NO_AREA, splitForSpot } from '../src/utils/itemsureCountAreas.js';
 import { countsCoveringSpot, entriesBySpot, planSpotCounts, savedValue, startingSpots } from '../src/utils/itemsureQuickCount.js';
 
 test('countsCoveringSpot finds open counts for a spot and whether it is counted there', () => {
@@ -44,6 +44,25 @@ test('splitForSpot lists items that belong in the spot first and hides the rest'
   // Nothing known for the spot, or nothing loaded: show everything.
   assert.deepEqual(ids(splitForSpot(items, inUse, 'L1', 'back')), [['a', 'b', 'c'], []]);
   assert.deepEqual(ids(splitForSpot(items, null, 'L1', 'bar')), [['a', 'b', 'c'], []]);
+});
+
+test('groupBySpot lists each item under every spot it belongs to, with homeless items under Loose', () => {
+  const items = [{ item_id: 'a' }, { item_id: 'b' }, { item_id: 'c' }, { item_id: 'd' }];
+  const areas = [{ id: 'bar', name: 'Bar' }, { id: 'back', name: 'Back' }, { id: NO_AREA, name: 'Loose' }];
+  const inUse = new Set(['a|L1|bar', 'a|L1|back', 'b|L1|back', 'c|L2|bar']);
+  const view = (groups) => groups.map((g) => [g.area.id, g.items.map((i) => i.item_id)]);
+  assert.deepEqual(view(groupBySpot(items, inUse, 'L1', areas)), [
+    ['bar', ['a']],
+    ['back', ['a', 'b']],
+    [NO_AREA, ['c', 'd']],
+  ]);
+  // Counted in a spot: listed there, and no longer homeless.
+  assert.deepEqual(view(groupBySpot(items, inUse, 'L1', areas, new Set(['c|bar', 'd|']))), [
+    ['bar', ['a', 'c']],
+    ['back', ['a', 'b']],
+    [NO_AREA, ['d']],
+  ]);
+  assert.deepEqual(groupBySpot([], inUse, 'L1', areas), []);
 });
 
 test('quick count opens every spot already counted or kept, else the first spot', () => {

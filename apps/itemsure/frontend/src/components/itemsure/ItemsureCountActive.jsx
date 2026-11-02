@@ -12,7 +12,13 @@ import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsureCountRow from './ItemsureCountRow.jsx';
 import ItemsureCountSaveBar from './ItemsureCountSaveBar.jsx';
 import ItemsureCountAddItems from './ItemsureCountAddItems.jsx';
-import { countingAreas, NO_AREA, splitForSpot } from '../../utils/itemsureCountAreas.js';
+import ItemsureChipScroller from './ItemsureChipScroller.jsx';
+import ItemsureCountCategoryFilter, { countItemInCategory } from './ItemsureCountCategoryFilter.jsx';
+import useCountCategories from '../../hooks/useCountCategories.js';
+import ItemsureCountSupplierFilter, { countItemFromSupplier } from './ItemsureCountSupplierFilter.jsx';
+import useSuppliers from '../../hooks/useSuppliers.js';
+import { ALL_SPOTS, countingAreas, groupBySpot, NO_AREA, splitForSpot } from '../../utils/itemsureCountAreas.js';
+import ItemsureCountAllSpots from './ItemsureCountAllSpots.jsx';
 import { slotsInUse } from '../../utils/itemsureItemStock.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
@@ -30,6 +36,10 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
   const [showOthers, setShowOthers] = useState(false);
+  const [categoryId, setCategoryId] = useState('');
+  const categories = useCountCategories(organization.id);
+  const [supplierId, setSupplierId] = useState('');
+  const suppliers = useSuppliers(organization.id);
   const places = useItemPlaces(organization.id);
   const { stock } = useItemStock(organization.id, can('inventory.view'));
   const { busy, error, run } = useItemsureAction();
@@ -42,7 +52,8 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
     return ids;
   }, [entries, drafts]);
 
-  const selectedAreaId = areaId || null;
+  const allSpots = areaId === ALL_SPOTS;
+  const selectedAreaId = allSpots ? null : areaId || null;
   // Items kept, levelled, or stocked in this spot come first; the rest wait behind a button.
   const inUse = useMemo(
     () => (places.places ? slotsInUse({ places: places.places, balances: stock?.balances || [], targets: stock?.targets || [] }) : null),
@@ -59,9 +70,19 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
   );
 
   const needle = query.trim().toLowerCase();
-  const matches = (i) => !needle || [i.item_name, i.sku, i.barcode, i.category_name].some((v) => String(v || '').toLowerCase().includes(needle));
+  const matches = (i) =>
+    countItemInCategory(categories, i, categoryId) &&
+    countItemFromSupplier(suppliers, i, supplierId) &&
+    (!needle || [i.item_name, i.sku, i.barcode, i.category_name].some((v) => String(v || '').toLowerCase().includes(needle)));
   const visible = here.filter(matches);
-  const othersShown = showOthers || Boolean(needle) ? others.filter(matches) : [];
+  const othersMatching = others.filter(matches);
+  const othersShown = showOthers || Boolean(needle) ? othersMatching : [];
+  // Spots each item was counted in when the screen loaded, so rows don't jump while typing.
+  const countedKeys = useMemo(
+    () => new Set(Object.values(data.entries || {}).map((e) => `${e.item_id}|${e.storage_area_id || ''}`)),
+    [data.entries],
+  );
+  const spotGroups = allSpots && inUse ? groupBySpot(items.filter(matches), inUse, session.location_id, areas, countedKeys) : null;
 
   const refresh = () =>
     run(async () => {
@@ -83,14 +104,14 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
   };
 
   const areaName = (id) => areas.find((a) => (a.id || null) === (id || null))?.name || 'Loose (no specific spot)';
-  const row = (item) => (
+  const row = (item, rowAreaId = areaId) => (
     <ItemsureCountRow
-      key={`${item.item_id}:${areaId}`}
+      key={`${item.item_id}:${rowAreaId}`}
       item={item}
-      storageAreaId={selectedAreaId}
+      storageAreaId={rowAreaId || null}
       autosave={autosave}
       otherAreaNames={Object.values(entries)
-        .filter((e) => e.item_id === item.item_id && (e.storage_area_id || null) !== selectedAreaId)
+        .filter((e) => e.item_id === item.item_id && (e.storage_area_id || null) !== (rowAreaId || null))
         .map((e) => areaName(e.storage_area_id))}
       packages={features.packaging && packaging.ready ? usablePackages(packaging.packagesFor(item.item_id)) : []}
     />
@@ -112,25 +133,22 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
       <ErrorNote message={error} />
 
       {areas.length > 1 ? (
-        <div className="isu-chips" role="group" aria-label="Spot being counted">
-          {areas.map((a) => (
-            <button
-              key={a.id || 'none'}
-              type="button"
-              className={`isu-chip isu-chip--choice${(a.id || NO_AREA) === areaId ? ' is-selected' : ''}`}
-              aria-pressed={(a.id || NO_AREA) === areaId}
-              onClick={() => {
-                setAreaId(a.id || NO_AREA);
-                setShowOthers(false);
-              }}
-            >
-              {a.name}
-            </button>
-          ))}
-        </div>
+        <ItemsureChipScroller
+          label="Spot being counted"
+          options={[{ value: ALL_SPOTS, label: 'All spots' }, ...areas.map((a) => ({ value: a.id || NO_AREA, label: a.name }))]}
+          selected={areaId}
+          onSelect={(id) => {
+            setAreaId(id);
+            setShowOthers(false);
+          }}
+        />
       ) : (
         <p className="isu-muted isu-small">Counting: {areas[0]?.name}</p>
       )}
+
+      <ItemsureCountCategoryFilter categories={categories} items={items} selected={categoryId} onSelect={setCategoryId} />
+
+      <ItemsureCountSupplierFilter suppliers={suppliers} items={items} selected={supplierId} onSelect={setSupplierId} />
 
       <input
         type="search"
@@ -141,24 +159,33 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      {others.length ? (
-        <p className="isu-muted isu-small isu-center">
-          Showing the {here.length} item{here.length === 1 ? '' : 's'} kept in {areaName(selectedAreaId)}.
-        </p>
-      ) : null}
-      <ul className="isu-count-rows">{visible.map(row)}</ul>
-      {othersShown.length ? (
+      {allSpots ? (
+        <ItemsureCountAllSpots groups={spotGroups} row={row} needle={needle} />
+      ) : (
         <>
-          <h2 className="isu-count-others-title">Not usually kept here ({othersShown.length})</h2>
-          <ul className="isu-count-rows">{othersShown.map(row)}</ul>
+          {others.length ? (
+            <p className="isu-muted isu-small isu-center">
+              Showing the {visible.length} item{visible.length === 1 ? '' : 's'} kept in {areaName(selectedAreaId)}
+              {categoryId || supplierId ? ' that match your filters' : ''}.
+            </p>
+          ) : null}
+          <ul className="isu-count-rows">{visible.map((item) => row(item))}</ul>
+          {othersShown.length ? (
+            <>
+              <h2 className="isu-count-others-title">Not usually kept here ({othersShown.length})</h2>
+              <ul className="isu-count-rows">{othersShown.map((item) => row(item))}</ul>
+            </>
+          ) : null}
+          {!visible.length && !othersShown.length ? (
+            <p className="isu-muted">{needle ? 'No items match that search.' : 'No items here match your filters.'}</p>
+          ) : null}
+          {othersMatching.length && !needle ? (
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm isu-count-others-toggle" onClick={() => setShowOthers((v) => !v)}>
+              {showOthers ? 'Hide items not kept here' : `Show ${othersMatching.length} more item${othersMatching.length === 1 ? '' : 's'} not kept here`}
+            </button>
+          ) : null}
         </>
-      ) : null}
-      {!visible.length && !othersShown.length ? <p className="isu-muted">No items match that search.</p> : null}
-      {others.length && !needle ? (
-        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm isu-count-others-toggle" onClick={() => setShowOthers((v) => !v)}>
-          {showOthers ? 'Hide items not kept here' : `Show ${others.length} more item${others.length === 1 ? '' : 's'} not kept here`}
-        </button>
-      ) : null}
+      )}
 
       <div className="isu-count-footer">
         <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={refresh}>

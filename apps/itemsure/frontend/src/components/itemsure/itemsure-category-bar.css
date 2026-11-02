@@ -35,7 +35,7 @@
   scroll-snap-align: center;
 }
 
-/* Arrows for mouse users; touch screens just swipe. Hidden when everything fits. */
+/* Arrows on every screen, so it's clear the row scrolls (swiping still works). Hidden when everything fits. */
 .isu-app .isu-chip-arrow {
   display: none;
   flex: 0 0 auto;
@@ -53,11 +53,9 @@
   cursor: pointer;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .isu-app .isu-chipbar:has(.isu-chip-arrow:not(:disabled)) .isu-chip-arrow {
-    display: grid;
-    place-items: center;
-  }
+.isu-app .isu-chipbar:has(.isu-chip-arrow:not(:disabled)) .isu-chip-arrow {
+  display: grid;
+  place-items: center;
 }
 
 .isu-app .isu-chip-arrow:hover:not(:disabled) {
@@ -78,6 +76,15 @@
   background: var(--isu-pine-soft);
   border: 1px solid var(--isu-pine-line);
   min-width: 0;
+  gap: 4px;
+  padding-inline: 4px;
+}
+
+.isu-app .isu-subbar .isu-chip-arrow,
+.isu-app .isu-chipbar--subs .isu-chip-arrow {
+  width: 26px;
+  height: 26px;
+  font-size: 1.1rem;
 }
 
 .isu-app .isu-chips--subs {
@@ -89,6 +96,26 @@
 }
 
 .isu-app .isu-chips--subs > .isu-chip {
+  min-height: 30px !important;
+  padding: 3px 10px !important;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+/* Count page: category bar with a slim subcategory bar (with arrows) under it. */
+.isu-app .isu-count-categories {
+  display: grid;
+  gap: 6px;
+}
+
+.isu-app .isu-chipbar--subs {
+  padding: 2px 4px;
+  border-radius: 999px;
+  background: var(--isu-pine-soft);
+  border: 1px solid var(--isu-pine-line);
+}
+
+.isu-app .isu-chipbar--subs .isu-chips--scroll > .isu-chip {
   min-height: 30px !important;
   padding: 3px 10px !important;
   font-size: 0.8rem;

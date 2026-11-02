@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useRef } from 'react';
+import { focusFirstField } from '../../utils/itemsureFocus.js';
 
 export function Field({ label, hint, children }) {
   const id = useId();
@@ -59,7 +60,7 @@ export function Modal({ open, title, onClose, wide = false, className = '', chil
   const panelRef = useRef(null);
 
   useEffect(() => {
-    if (open) panelRef.current?.querySelector('input, select, textarea')?.focus();
+    if (open) focusFirstField(panelRef.current);
   }, [open]);
 
   useEffect(() => {

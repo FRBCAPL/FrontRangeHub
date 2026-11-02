@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { isTouchScreen } from '../../utils/itemsureFocus.js';
 import { loadSession } from '../../services/itemsureCountService.js';
 import { listLocations } from '../../services/itemsureLocationService.js';
 import { ensureItemInSession, saveSpotCount } from '../../services/itemsureQuickCountService.js';
@@ -177,7 +178,7 @@ export default function ItemsureQuickCount({ organizationId, item, sessions, sta
                 problem={problems[id]}
                 conflict={conflicts[id]}
                 precision={precision}
-                autoFocus={n === 0}
+                autoFocus={n === 0 && !isTouchScreen()}
               />
             ))}
           </ul>
