@@ -11,7 +11,7 @@ export default function ItemsureItemDetailsFields({ form, setForm, items, varian
   return (
     <div className="isu-details-pair">
       <Field label="Brand (optional)">
-        <input value={form.brand} onChange={set('brand')} onBlur={tidyBrand} maxLength={80} list="isu-known-brands" placeholder="For example: Bacardi" autoComplete="off" />
+        <input value={form.brand} onChange={set('brand')} onBlur={tidyBrand} maxLength={80} list="isu-known-brands" placeholder="e.g. Bacardi" autoComplete="off" />
       </Field>
       <datalist id="isu-known-brands">
         {brands.map((b) => <option key={b} value={b} />)}

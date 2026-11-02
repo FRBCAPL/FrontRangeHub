@@ -23,7 +23,7 @@ export default function ItemsureExtraCategoryPicker({ organizationId, categories
   return (
     <div className="isu-extra-categories isu-field">
       <span>Also find it under (optional)</span>
-      <p className="isu-hint">Extra categories it shows up in when browsing. Counts and warning levels use the main category.</p>
+      <p className="isu-hint">More places it shows up when browsing.</p>
       {chosen.some((id) => suggested.includes(id)) ? (
         <p className="isu-hint isu-extra-category-note">Suggested from the category name and your other items. Tap {'\u00d7'} to remove any you don&apos;t want.</p>
       ) : null}

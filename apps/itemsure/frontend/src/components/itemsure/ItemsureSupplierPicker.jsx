@@ -47,7 +47,7 @@ export default function ItemsureSupplierPicker({ organizationId, suppliers, valu
   }
   return (
     <>
-      <Field label="Buy from (supplier)" hint="Optional. The company you usually order this item from.">
+      <Field label="Buy from (optional)" hint="Who you usually order it from.">
         <select
           value={value || ''}
           onChange={(e) => (e.target.value === ADD_NEW ? setAdding(true) : onChange(e.target.value))}

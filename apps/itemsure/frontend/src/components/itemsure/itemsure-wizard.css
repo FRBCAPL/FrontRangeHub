@@ -273,6 +273,36 @@
   flex-wrap: wrap;
 }
 
+/* Tighter spacing so more of each step fits on screen. */
+.isu-app .isu-wizard {
+  gap: 12px;
+}
+
+.isu-app .isu-wizard .isu-page-head {
+  gap: 2px;
+}
+
+.isu-app .isu-wizard .isu-page-head h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.isu-app .isu-wizard .isu-page-head .isu-muted {
+  margin-top: 0;
+}
+
+.isu-app .isu-wizard-body {
+  padding: 14px 16px;
+}
+
+.isu-app .isu-wizard-body .isu-stack {
+  gap: 12px;
+}
+
+.isu-wizard-intro {
+  padding-bottom: 8px;
+}
+
 .isu-wizard-nav > :last-child {
   margin-left: auto;
 }
@@ -317,10 +347,47 @@
   margin: 0;
 }
 
+/* Brand and Style are short, so they share a row even on phones. */
 .isu-app .isu-details-pair {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+/* Name, then Brand and Style: one row on wide screens. */
+.isu-app .isu-wizard-name-row {
+  display: grid;
   gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 760px) {
+  .isu-app .isu-wizard-name-row:has(.isu-details-pair) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+  }
+}
+
+/* Two fields side by side once there's room; stacked on phones. */
+.isu-app .isu-wizard-pair {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+.isu-app .isu-wizard-pair:empty {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .isu-app .isu-wizard-pair {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .isu-app .isu-wizard-pair > :only-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .isu-app .isu-name-clash-actions {

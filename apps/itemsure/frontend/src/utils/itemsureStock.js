@@ -35,6 +35,17 @@ export function slotLabel(locations, locationId, storageAreaId) {
   return [location?.name || SITE, storageAreaId ? area?.name || 'Spot' : NO_AREA_LABEL].join(' \u00b7 ');
 }
 
+/**
+ * Splits `items` (each with `id`) into those at one slot and the rest, keeping their order.
+ * An item is here when it has a balance there (even 0), is ticked "kept at" there, or has levels there.
+ * `places` may be null (not loaded); balances and levels still count.
+ */
+export function itemsAtSlot(items, { balances = [], places = [], targets = [] }, locationId, storageAreaId) {
+  const at = (row) => row.location_id === locationId && (row.storage_area_id || null) === (storageAreaId || null);
+  const ids = new Set([...balances, ...(places || []), ...targets].filter(at).map((row) => row.item_id));
+  return { here: items.filter((i) => ids.has(i.id)), others: items.filter((i) => !ids.has(i.id)) };
+}
+
 /** The established balance for one item in one slot, or null when none exists yet. */
 export function findBalance(balances, itemId, locationId, storageAreaId) {
   return (

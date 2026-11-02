@@ -13,7 +13,8 @@ import ItemsurePackageQuantity from './ItemsurePackageQuantity.jsx';
 import ItemsureSpotCountNotice from './ItemsureSpotCountNotice.jsx';
 
 /**
- * Moves stock between two established balances in one step: both sides post or neither does.
+ * Moves stock in one step: both sides post or neither does. The source needs an amount;
+ * an empty destination is started at 0 by the move (database 20261030003400).
  * `preset` ({ itemId, locationId, storageAreaId }) fills in the item and "From" when opened from a spot.
  */
 export default function ItemsureStockTransferForm({ data, defaultLocationId, preset = null, onDone }) {
@@ -109,9 +110,14 @@ export default function ItemsureStockTransferForm({ data, defaultLocationId, pre
           spots={[{ ...from, label: 'Moving from here' }, { ...to, label: 'Moving to here' }]}
         />
       )}
-      {!sameSlot && item && (!fromBalance || !toBalance) ? (
+      {!sameSlot && item && !fromBalance ? (
         <p className="isu-notice isu-notice--warn">
-          Both places need a starting balance for {item.name}. Count and approve the place that isn&apos;t set up first.
+          There is no {item.name} recorded at the place you&apos;re moving from. Set its amount (or count it) first.
+        </p>
+      ) : null}
+      {!sameSlot && item && fromBalance && !toBalance ? (
+        <p className="isu-muted isu-small">
+          Nothing is recorded for {item.name} where it&apos;s going yet. The move starts it at 0, then adds what you move.
         </p>
       ) : null}
 
@@ -135,7 +141,7 @@ export default function ItemsureStockTransferForm({ data, defaultLocationId, pre
       {warning ? (
         <ItemsureTransferWarning warning={warning} busy={busy} onCancel={clear} onConfirm={() => run(async () => confirm({ item, from, quantity: baseQuantity() }, transfer))} />
       ) : (
-        <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy || sameSlot || !fromBalance || !toBalance || !amount.ready}>
+        <button type="submit" className="isu-btn isu-btn--primary isu-btn--block" disabled={busy || sameSlot || !fromBalance || !amount.ready}>
           {busy ? 'Checking…' : 'Transfer'}
         </button>
       )}

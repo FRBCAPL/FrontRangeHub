@@ -162,10 +162,18 @@ export async function adjustStock({ locationId, storageAreaId, item, direction, 
   );
 }
 
+/** Before 20261030003400 the database refuses a move into a place with no amount yet. */
+function explainOldTransferRule(response) {
+  if (/destination has no starting balance/i.test(response?.error?.message || '')) {
+    throw new Error('Moving into a place with nothing recorded needs the latest database update (20261030003400). Until then, set an amount there first.');
+  }
+  return response;
+}
+
 export async function transferStock({ item, from, to, quantity, note, pkg = null }) {
   if (pkg) {
     return assertOk(
-      await itemsure.rpc('transfer_inventory_package', {
+      explainOldTransferRule(await itemsure.rpc('transfer_inventory_package', {
         p_item_id: item.id,
         p_from_location_id: from.locationId,
         p_from_storage_area_id: from.storageAreaId || null,
@@ -174,13 +182,13 @@ export async function transferStock({ item, from, to, quantity, note, pkg = null
         p_package_id: pkg.id,
         p_package_quantity: packageQuantity(quantity, pkg, item),
         p_note: String(note || '').trim(),
-      }),
+      })),
       'transfer inventory',
     );
   }
   const value = validStockQuantity(quantity, item);
   return assertOk(
-    await itemsure.rpc('transfer_inventory', {
+    explainOldTransferRule(await itemsure.rpc('transfer_inventory', {
       p_item_id: item.id,
       p_from_location_id: from.locationId,
       p_from_storage_area_id: from.storageAreaId || null,
@@ -188,7 +196,7 @@ export async function transferStock({ item, from, to, quantity, note, pkg = null
       p_to_storage_area_id: to.storageAreaId || null,
       p_quantity: value,
       p_note: String(note || '').trim(),
-    }),
+    })),
     'transfer inventory',
   );
 }
