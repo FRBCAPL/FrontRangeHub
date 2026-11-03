@@ -7,7 +7,7 @@ import { useItemLink } from '../../hooks/useItemModal.js';
 
 const SEARCH_FROM = 9;
 
-/** The items bought from one supplier, each with Edit (back to Suppliers after). */
+/** The items bought from one supplier (main first, then ones it also sells), each with Edit (back to Suppliers after). */
 export default function ItemsureSupplierItems({ organizationId, supplier, canManageItems }) {
   const navigate = useNavigate();
   const itemLink = useItemLink();
@@ -42,6 +42,7 @@ export default function ItemsureSupplierItems({ organizationId, supplier, canMan
           {shown.map((i) => (
             <li key={i.id} className={i.is_active ? '' : 'is-archived'}>
               <Link {...itemLink(i.id)}>{i.name}</Link>
+              {i.also ? <span className="isu-badge" title={`${supplier.name} isn't the main supplier for this item`}>Also sells</span> : null}
               {!i.is_active ? <span className="isu-badge">Archived</span> : null}
               {canManageItems ? (
                 <button

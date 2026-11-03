@@ -122,6 +122,12 @@
 .isu-app .isu-shop-detail a { color: var(--isu-pine); font-weight: 600; justify-self: start; }
 .isu-app .isu-shop-detail ul { margin: 0; padding-left: 16px; display: grid; gap: 3px; }
 
+/* "Buy from this trip" for items with more than one supplier. */
+.isu-app .isu-shop-trip { font-size: 0.78rem; color: var(--isu-info); font-weight: 600; }
+.isu-app .isu-shop-trip-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.isu-app .isu-shop-trip-pick label { font-weight: 600; }
+.isu-app .isu-shop-trip-pick select { min-height: 40px; max-width: 100%; }
+
 .isu-app .isu-shop-move-actions { justify-content: flex-end; margin: 4px 0 2px; }
 
 /* Hand-added lines and the "+ Add item" window. */

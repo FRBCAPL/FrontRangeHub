@@ -17,6 +17,7 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
   const [packages, setPackages] = useState(null);
   const suppliers = useSuppliers(organizationId);
   const supplier = suppliers.supplierFor(item.id);
+  const others = suppliers.otherIdsFor(item.id).map((id) => suppliers.suppliers.find((s) => s.id === id)).filter(Boolean);
 
   useEffect(() => {
     if (!showPackaging) return undefined;
@@ -49,6 +50,11 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
                 {supplier.email ? <> · <a href={`mailto:${supplier.email}`}>{supplier.email}</a></> : null}
               </>
             ) : null}
+          </Row>
+        ) : null}
+        {others.length ? (
+          <Row label="Also from">
+            {others.map((s) => `${s.icon ? `${s.icon} ` : ''}${s.name}${s.is_active ? '' : ' (archived)'}`).join(', ')}
           </Row>
         ) : null}
         <Row label="SKU">{item.sku}</Row>

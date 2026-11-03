@@ -4,6 +4,7 @@ import { useItemLink } from '../../hooks/useItemModal.js';
 import { displayQuantity, wholeToBuy } from '../../utils/itemsureQuantity.js';
 import { spotLabel } from '../../utils/itemsureShoppingList.js';
 import ItemsureShoppingGotEditor, { boughtBy, GotAmount } from './ItemsureShoppingGot.jsx';
+import ItemsureShoppingTripSupplier from './ItemsureShoppingTripSupplier.jsx';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site } from '../../data/itemsureTerms.js';
@@ -30,8 +31,9 @@ function SpotDetail({ spot, unit, withLocation }) {
 /**
  * One item to buy: a tick box, the name, the total to buy, and where it's needed. Tap for the
  * figures. `tick` ({ amount, by, at }) when ticked; tapping the amount sets what the shopper got.
+ * `supplierChoice` (items with more than one supplier) adds "Buy from this trip" to the figures.
  */
-export default function ItemsureShoppingRow({ row, tick, names, item, onTick, onSetAmount, withLocation }) {
+export default function ItemsureShoppingRow({ row, tick, names, item, onTick, onSetAmount, withLocation, supplierChoice = null }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const itemLink = useItemLink();
@@ -56,6 +58,7 @@ export default function ItemsureShoppingRow({ row, tick, names, item, onTick, on
           <span className="isu-shop-name">{row.name}</span>
           <span className="isu-shop-where">{TARGET_STATUS[row.status]?.label} · {where}</span>
           {by ? <span className="isu-shop-by">{by}</span> : null}
+          {supplierChoice?.changed ? <span className="isu-shop-trip">This trip only · usually {supplierChoice.options[0].name}</span> : null}
         </button>
         <GotAmount row={row} tick={tick} onEdit={() => setEditing((e) => !e)} />
       </div>
@@ -67,6 +70,7 @@ export default function ItemsureShoppingRow({ row, tick, names, item, onTick, on
               <SpotDetail key={spot.rec.target_id} spot={spot} unit={row.unit} withLocation={withLocation} />
             ))}
           </ul>
+          {supplierChoice ? <ItemsureShoppingTripSupplier choice={supplierChoice} /> : null}
           <Link {...itemLink(row.itemId)}>Open {row.name}</Link>
         </div>
       ) : null}

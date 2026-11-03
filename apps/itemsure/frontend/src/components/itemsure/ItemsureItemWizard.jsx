@@ -42,6 +42,7 @@ const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, deta
   ...(suppliers.available
     ? { supplier_id: item ? suppliers.supplierIdFor(item.id) || '' : startingSupplier(suppliers, wantedSupplier) }
     : {}),
+  ...(suppliers.othersAvailable ? { other_supplier_ids: item ? suppliers.otherIdsFor(item.id) : [] } : {}),
   ...(extrasAvailable ? { extra_category_ids: item?.extraCategoryIds || [] } : {}),
   // Only when brand and details are set up and switched on, so a hidden value is never cleared.
   ...(detailsOn ? { brand: item?.brand || '', variant: item?.variant || '' } : {}),

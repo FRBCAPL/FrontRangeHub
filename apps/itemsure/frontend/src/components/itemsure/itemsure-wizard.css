@@ -379,6 +379,10 @@
   display: none;
 }
 
+.isu-app .isu-wizard-suppliers {
+  gap: 8px;
+}
+
 @media (min-width: 600px) {
   .isu-app .isu-wizard-pair {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

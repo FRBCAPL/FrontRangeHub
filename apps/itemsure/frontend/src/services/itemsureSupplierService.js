@@ -51,12 +51,24 @@ export async function listItemSuppliers(organizationId) {
   return new Map((result.data || []).map((row) => [row.id, row.supplier_id || null]));
 }
 
-/** Items whose main supplier is this one, archived included, by name. */
+/**
+ * Items whose main supplier is this one, then items it also sells (`also: true`), archived
+ * included, each by name. The "also" part is skipped until that database update is applied.
+ */
 export async function listSupplierItems(organizationId, supplierId) {
-  return assertOk(
+  const main = assertOk(
     await itemsure.from('inventory_items').select('id, name, is_active').eq('organization_id', organizationId).eq('supplier_id', supplierId).order('name'),
     'supplier items',
   ) || [];
+  const links = await itemsure.from('item_suppliers').select('item_id').eq('organization_id', organizationId).eq('supplier_id', supplierId);
+  const mainIds = new Set(main.map((i) => i.id));
+  const otherIds = (links.error ? [] : links.data || []).map((r) => r.item_id).filter((id) => !mainIds.has(id));
+  if (!otherIds.length) return main;
+  const others = assertOk(
+    await itemsure.from('inventory_items').select('id, name, is_active').eq('organization_id', organizationId).in('id', otherIds).order('name'),
+    'supplier items',
+  ) || [];
+  return [...main, ...others.map((i) => ({ ...i, also: true }))];
 }
 
 function supplierFields(form) {

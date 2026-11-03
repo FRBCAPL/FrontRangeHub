@@ -26,6 +26,10 @@ export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo
   const tree = categoryTree(categories);
   const category = categoryPath(tree, form.category_id) || 'No category';
   const alsoIn = extraCategoryNames(tree, { category_id: form.category_id, extraCategoryIds: form.extra_category_ids });
+  const otherNames = (form.other_supplier_ids || [])
+    .filter((id) => id !== form.supplier_id)
+    .map((id) => suppliers.find((s) => s.id === id)?.name)
+    .filter(Boolean);
   const section = { steps, onEdit };
 
   return (
@@ -61,6 +65,12 @@ export default function ItemsureWizardReview({ form, entries, labelFor, unitInfo
             <>
               <dt>Buy from</dt>
               <dd>{suppliers.find((s) => s.id === form.supplier_id)?.name || 'No supplier'}</dd>
+            </>
+          ) : null}
+          {otherNames.length ? (
+            <>
+              <dt>Also from</dt>
+              <dd>{otherNames.join(', ')}</dd>
             </>
           ) : null}
         </dl>

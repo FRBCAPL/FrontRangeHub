@@ -5,6 +5,8 @@ import useTargetsData from '../../hooks/useTargetsData.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import useShoppingTicks from '../../hooks/useShoppingTicks.js';
 import useShoppingExtras from '../../hooks/useShoppingExtras.js';
+import useTripSuppliers from '../../hooks/useTripSuppliers.js';
+import { itemIdsOfTicks } from '../../utils/itemsureTripSupplier.js';
 import { EXTRA_GROUP, extraTick, mergeExtras } from '../../utils/itemsureShoppingExtras.js';
 import { listOpenPlans, loadNeededRecommendations } from '../../services/itemsureRestockService.js';
 import { notifyInventoryChanged, onInventoryChanged } from '../../utils/itemsureChanges.js';
@@ -62,6 +64,7 @@ export default function ItemsureRestock() {
   const { organization, features, can } = useItemsureWorkspace();
   const { data, error: dataError, reload: reloadData } = useTargetsData(organization.id);
   const suppliers = useSuppliers(organization.id);
+  const trip = useTripSuppliers(organization.id, suppliers);
   const extras = useShoppingExtras(organization.id);
   const navigate = useNavigate();
   const [adding, setAdding] = useState(null);
@@ -89,6 +92,7 @@ export default function ItemsureRestock() {
 
   const reloadSuppliers = suppliers.reload;
   const reloadExtras = extras.reload;
+  const reloadTrip = trip.reload;
   useEffect(() => {
     load();
     const stop = onInventoryChanged(() => {
@@ -96,9 +100,10 @@ export default function ItemsureRestock() {
       reloadData();
       reloadSuppliers();
       reloadExtras();
+      reloadTrip();
     });
     return stop;
-  }, [load, reloadData, reloadSuppliers, reloadExtras]);
+  }, [load, reloadData, reloadSuppliers, reloadExtras, reloadTrip]);
 
   const afterAction = async () => {
     setAction(null);
@@ -114,17 +119,18 @@ export default function ItemsureRestock() {
   );
   const ticks = useShoppingTicks(organization.id, listedIds);
 
-  const { available: hasSuppliers, links: supplierLinks, suppliers: supplierList } = suppliers;
+  const { available: hasSuppliers, suppliers: supplierList } = suppliers;
+  const supplierOfItem = trip.supplierIdFor;
   const groupChoices = useMemo(() => {
     const names = new Map(supplierList.map((s) => [s.id, s.name]));
     const choices = {};
-    if (hasSuppliers) choices.supplier = { label: 'Supplier', of: (r) => names.get(supplierLinks.get(r.item_id)) || NO_SUPPLIER, last: NO_SUPPLIER };
+    if (hasSuppliers) choices.supplier = { label: 'Supplier', of: (r) => names.get(supplierOfItem(r.item_id)) || NO_SUPPLIER, last: NO_SUPPLIER };
     choices.location = { label: SITE, of: (r) => r.location_name };
     if (features.spots) choices.area = { label: 'Spot', of: (r) => `${r.location_name} · ${r.area_name || NO_AREA_LABEL}` };
     choices.category = { label: 'Category', of: (r) => categoryNames.get(r.category_id) || 'No category', last: 'No category' };
     choices.status = { label: 'Status', of: (r) => TARGET_STATUS[r.status].label };
     return choices;
-  }, [hasSuppliers, supplierLinks, supplierList, features.spots, categoryNames]);
+  }, [hasSuppliers, supplierOfItem, supplierList, features.spots, categoryNames]);
   const group = groupChoices[filters.group] ? filters.group : Object.keys(groupChoices)[0];
   const supplierIcons = useMemo(() => new Map(supplierList.map((s) => [s.name, s.icon])), [supplierList]);
 
@@ -146,12 +152,12 @@ export default function ItemsureRestock() {
       const names = new Map(supplierList.map((s) => [s.id, s.name]));
       const bySupplier = group === 'supplier';
       return mergeExtras(worked, extras.extras, {
-        groupOf: (e) => (bySupplier ? names.get(supplierLinks.get(e.item_id) || e.supplier_id) || NO_SUPPLIER : EXTRA_GROUP),
+        groupOf: (e) => (bySupplier ? names.get((e.item_id && supplierOfItem(e.item_id)) || e.supplier_id) || NO_SUPPLIER : EXTRA_GROUP),
         lastGroup: bySupplier ? NO_SUPPLIER : EXTRA_GROUP,
         itemsById,
       });
     },
-    [showMoves, groupChoices, group, extras.available, extras.extras, supplierList, supplierLinks, itemsById],
+    [showMoves, groupChoices, group, extras.available, extras.extras, supplierList, supplierOfItem, itemsById],
   );
   const toBuy = useMemo(() => groupsFor(shown), [groupsFor, shown]);
   const moves = useMemo(() => moveRows(shown, showMoves), [shown, showMoves]);
@@ -199,8 +205,12 @@ export default function ItemsureRestock() {
     navigate(`${ITEMSURE_PATH}/items/new?${query}`);
   };
 
-  const supplierNameOf = (itemId) => supplierList.find((s) => s.id === supplierLinks.get(itemId))?.name || '';
-  const receive = (payload) => receiveShopping(organization.id, payload);
+  const supplierNameOf = (itemId) => supplierList.find((s) => s.id === supplierOfItem(itemId))?.name || '';
+  const receive = async (payload) => {
+    const result = await receiveShopping(organization.id, payload);
+    await trip.clear(itemIdsOfTicks(payload.tickKeys));
+    return result;
+  };
   const afterReceive = (count) => {
     setReceiving(false);
     setReceived(count ? `Received. Stock added in ${plural(count, 'place')}.` : 'Done. Those lines are off the list.');
@@ -239,6 +249,8 @@ export default function ItemsureRestock() {
         <ItemsureShoppingBuy
           groups={toBuy}
           ticks={ticks}
+          trip={trip.available ? trip : null}
+          onTicksCleared={(keys) => trip.clear(itemIdsOfTicks(keys))}
           itemsById={itemsById}
           withLocation={withLocation}
           iconFor={group === 'supplier' ? (label) => supplierIcons.get(label) || '' : null}

@@ -21,8 +21,10 @@ function note({ shared, canReceive, hasExtras }) {
  * gets "+ Add item" (`onAdd(label)`); the heading gets one (`onAdd('')`) only when there are no supplier
  * groups, so it is never mistaken for the first group's. `onRemove(ids)` removes added lines.
  * `onReceive` (shared ticks and permission to add stock) opens the receive window.
+ * `trip` (useTripSuppliers, once set up) lets a row with more than one supplier be bought
+ * from another this trip; `onTicksCleared(keys)` resets those choices with the ticks.
  */
-export default function ItemsureShoppingBuy({ groups, ticks, itemsById, withLocation, iconFor = null, onAdd = null, onRemove = null, onReceive = null }) {
+export default function ItemsureShoppingBuy({ groups, ticks, trip = null, onTicksCleared = null, itemsById, withLocation, iconFor = null, onAdd = null, onRemove = null, onReceive = null }) {
   const { ticked, names, toggle, setAmount, clear } = ticks;
   const [copied, setCopied] = useState('');
   const [copyText, setCopyText] = useState('');
@@ -47,7 +49,18 @@ export default function ItemsureShoppingBuy({ groups, ticks, itemsById, withLoca
   };
   const clearTicked = async () => {
     if (tickedExtras.length && !(await run(() => onRemove(tickedExtras)))) return;
-    clear(tickedKeys);
+    await clear(tickedKeys);
+    onTicksCleared?.(tickedKeys);
+  };
+  const supplierChoice = (row) => {
+    const options = trip?.optionsFor(row.itemId) || [];
+    if (!options.length) return null;
+    return {
+      options,
+      current: trip.supplierIdFor(row.itemId),
+      changed: trip.changed(row.itemId),
+      onChoose: (supplierId) => trip.choose(row.itemId, supplierId),
+    };
   };
   const remove = (row) => run(() => onRemove([row.extraId]));
 
@@ -70,7 +83,7 @@ export default function ItemsureShoppingBuy({ groups, ticks, itemsById, withLoca
           Receive bought items
         </button>
       ) : null}
-      <ErrorNote message={error || ticks.error} />
+      <ErrorNote message={error || ticks.error || trip?.error} />
       <p className="isu-muted isu-small isu-shop-note" role="status">
         {copied || note({ shared: ticks.shared, canReceive: Boolean(onReceive), hasExtras: Boolean(onAdd) })}
       </p>
@@ -91,7 +104,7 @@ export default function ItemsureShoppingBuy({ groups, ticks, itemsById, withLoca
               return row.extra ? (
                 <ItemsureShoppingExtraRow key={row.key} row={row} {...shared} onRemove={() => remove(row)} busy={busy} />
               ) : (
-                <ItemsureShoppingRow key={row.key} row={row} {...shared} item={itemsById?.get(row.itemId)} withLocation={withLocation} />
+                <ItemsureShoppingRow key={row.key} row={row} {...shared} item={itemsById?.get(row.itemId)} withLocation={withLocation} supplierChoice={supplierChoice(row)} />
               );
             })}
           </ul>

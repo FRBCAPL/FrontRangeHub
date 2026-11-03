@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { listItemSuppliers, listSuppliers, setSupplierActive } from '../../services/itemsureSupplierService.js';
+import { listOtherSuppliers } from '../../services/itemsureOtherSupplierService.js';
 import ItemsureSupplierItems from './ItemsureSupplierItems.jsx';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
@@ -29,11 +30,17 @@ export default function ItemsureSuppliers() {
 
   const refresh = useCallback(async () => {
     try {
-      const [list, links] = await Promise.all([listSuppliers(organization.id), listItemSuppliers(organization.id)]);
+      const [list, links, others] = await Promise.all([
+        listSuppliers(organization.id),
+        listItemSuppliers(organization.id),
+        listOtherSuppliers(organization.id),
+      ]);
       setData(list);
       if (links) {
         const counts = new Map();
-        for (const supplierId of links.values()) if (supplierId) counts.set(supplierId, (counts.get(supplierId) || 0) + 1);
+        const add = (supplierId) => counts.set(supplierId, (counts.get(supplierId) || 0) + 1);
+        for (const supplierId of links.values()) if (supplierId) add(supplierId);
+        for (const [itemId, ids] of others || []) for (const supplierId of ids) if (supplierId !== links.get(itemId)) add(supplierId);
         setItemCounts(counts);
       } else {
         setItemCounts(null);

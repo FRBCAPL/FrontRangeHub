@@ -7,6 +7,7 @@ import ItemsureNameClash from './ItemsureNameClash.jsx';
 import ItemsureExtraCategoryPicker from './ItemsureExtraCategoryPicker.jsx';
 import ItemsureUnitPicker from './ItemsureUnitPicker.jsx';
 import ItemsureSupplierPicker from './ItemsureSupplierPicker.jsx';
+import ItemsureOtherSuppliersPicker from './ItemsureOtherSuppliersPicker.jsx';
 import ItemsureItemDetailsFields from './ItemsureItemDetailsFields.jsx';
 
 /** Step 1: name, what it's counted in, category, and supplier (once suppliers are set up). */
@@ -69,14 +70,24 @@ export default function ItemsureWizardBasics({ form, setForm, organizationId, ca
           />
         ) : null}
         {'supplier_id' in form ? (
-          <ItemsureSupplierPicker
-            organizationId={organizationId}
-            suppliers={suppliers}
-            value={form.supplier_id}
-            onChange={(id) => setForm((f) => ({ ...f, supplier_id: id }))}
-            canAdd={canAddSupplier}
-            onAdded={onSupplierAdded}
-          />
+          <div className="isu-stack isu-wizard-suppliers">
+            <ItemsureSupplierPicker
+              organizationId={organizationId}
+              suppliers={suppliers}
+              value={form.supplier_id}
+              onChange={(id) => setForm((f) => ({ ...f, supplier_id: id }))}
+              canAdd={canAddSupplier}
+              onAdded={onSupplierAdded}
+            />
+            {'other_supplier_ids' in form ? (
+              <ItemsureOtherSuppliersPicker
+                suppliers={suppliers}
+                mainId={form.supplier_id}
+                value={form.other_supplier_ids}
+                onChange={(ids) => setForm((f) => ({ ...f, other_supplier_ids: ids }))}
+              />
+            ) : null}
+          </div>
         ) : null}
       </div>
     </div>

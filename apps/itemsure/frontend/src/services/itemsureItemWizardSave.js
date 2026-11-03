@@ -5,6 +5,7 @@ import { hasSavedStock, savePlan } from '../utils/itemsureItemWizard.js';
 import { removeEmptyPlace } from './itemsurePlaceCleanup.js';
 import { createItem, renameArchivedItem, updateItem } from './itemsureItemService.js';
 import { saveExtraCategories } from './itemsureExtraCategoryService.js';
+import { saveOtherSuppliers } from './itemsureOtherSupplierService.js';
 import { setStockAmount } from './itemsureInventoryService.js';
 import { saveTargets } from './itemsureTargetService.js';
 
@@ -32,6 +33,13 @@ export async function saveItemWizard({ organizationId, item, itemId, form, entri
       await saveExtraCategories(organizationId, id, form.extra_category_ids.filter((c) => c !== form.category_id));
     } catch (err) {
       problems.push({ key: null, message: `"Also find it under" not saved. ${err.message}` });
+    }
+  }
+  if ('other_supplier_ids' in form) {
+    try {
+      await saveOtherSuppliers(organizationId, id, form.other_supplier_ids.filter((s) => s && s !== form.supplier_id));
+    } catch (err) {
+      problems.push({ key: null, message: `"Also from" not saved. ${err.message}` });
     }
   }
 

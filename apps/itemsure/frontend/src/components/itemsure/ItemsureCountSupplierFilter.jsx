@@ -3,11 +3,16 @@ import ItemsureChipScroller from './ItemsureChipScroller.jsx';
 
 export const NO_SUPPLIER_ID = 'none';
 
-/** True when the count item comes from `selected` ('' = any supplier, NO_SUPPLIER_ID = none set). */
+/**
+ * True when the count item can come from `selected` ('' = any supplier, NO_SUPPLIER_ID = none set):
+ * its main supplier or one of its other suppliers.
+ */
 export function countItemFromSupplier(suppliers, item, selected) {
   if (!selected || !suppliers?.available) return true;
-  const id = suppliers.links.get(item.item_id) || null;
-  return selected === NO_SUPPLIER_ID ? !id : id === selected;
+  const main = suppliers.links.get(item.item_id) || null;
+  const others = suppliers.others?.get(item.item_id) || [];
+  if (selected === NO_SUPPLIER_ID) return !main && !others.length;
+  return main === selected || others.includes(selected);
 }
 
 /**
