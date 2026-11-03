@@ -9,6 +9,8 @@ import ItemsureUnitPicker from './ItemsureUnitPicker.jsx';
 import ItemsureSupplierPicker from './ItemsureSupplierPicker.jsx';
 import ItemsureOtherSuppliersPicker from './ItemsureOtherSuppliersPicker.jsx';
 import ItemsureItemDetailsFields from './ItemsureItemDetailsFields.jsx';
+import ItemsureItemContentField from './ItemsureItemContentField.jsx';
+import { asksContent } from '../../utils/itemsureItemContent.js';
 
 /** Step 1: name, what it's counted in, category, and supplier (once suppliers are set up). */
 export default function ItemsureWizardBasics({ form, setForm, organizationId, categories, units, items = [], itemId, nameClash, renamingArchived, onRestored, canManageCategories, onCategoryAdded, canManageUnits, onUnitAdded, editing, suppliers, canAddSupplier, onSupplierAdded, variantLabel }) {
@@ -56,6 +58,9 @@ export default function ItemsureWizardBasics({ form, setForm, organizationId, ca
           onAdded={onCategoryAdded}
         />
       </div>
+      {'content_size' in form && asksContent(units.find((u) => u.id === form.base_unit_id)?.code) ? (
+        <ItemsureItemContentField form={form} setForm={setForm} unitName={units.find((u) => u.id === form.base_unit_id)?.name} />
+      ) : null}
       <div className="isu-wizard-pair">
         {extras ? (
           <ItemsureExtraCategoryPicker

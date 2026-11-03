@@ -10,6 +10,7 @@ import ItemsureMemberAccess from './ItemsureMemberAccess.jsx';
 import ItemsureFeatureSwitches from './ItemsureFeatureSwitches.jsx';
 import ItemsureInvitePeople from './ItemsureInvitePeople.jsx';
 import ItemsureRoleSettings from './ItemsureRoleSettings.jsx';
+import ItemsureSettingsPos from './ItemsureSettingsPos.jsx';
 const SETTINGS_PATH = `${ITEMSURE_PATH}/settings`;
 
 function PeoplePage() {
@@ -66,6 +67,14 @@ const SECTIONS = [
     summary: () => 'Choose what Managers and Staff are allowed to do',
     show: ({ can }) => can('organization.update'),
     Page: ItemsureRoleSettings,
+  },
+  {
+    id: 'pos',
+    icon: '\u{1F9FE}',
+    title: 'Point of sale (Clover)',
+    summary: () => 'Connect Clover and match its items to yours',
+    show: ({ can }) => can('pos.manage'),
+    Page: ItemsureSettingsPos,
   },
   {
     id: 'features',

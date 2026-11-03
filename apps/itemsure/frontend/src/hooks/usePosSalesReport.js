@@ -1,0 +1,120 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { listCatalog } from '../services/itemsureItemService.js';
+import { listLocations } from '../services/itemsureLocationService.js';
+import {
+  getPosConnection, listItemContents, listPosItems, listPosLinks, listPosPours, syncCloverSales,
+} from '../services/itemsurePosService.js';
+import { listApprovedCounts, listSalesSyncs, salesHours, siteUsage } from '../services/itemsurePosSalesService.js';
+import { countRounds, expectedUse, salesCovered, salesHourRange, salesIndex, usageRows } from '../utils/itemsurePosUsage.js';
+
+const MAX_SYNC_MS = 44 * 24 * 3600 * 1000;
+
+/**
+ * Data for "Sales vs counts": the Clover connection, approved counts by site grouped into
+ * daily rounds, and, for the chosen pair of rounds, what sales and counts each say was used
+ * (each item over its own count times). Sales are brought in from Clover automatically the
+ * first time a pair is opened (and on request).
+ */
+export default function usePosSalesReport(organizationId) {
+  const [base, setBase] = useState(null);
+  const [siteId, setSiteId] = useState('');
+  const [pair, setPair] = useState({ from: '', to: '' });
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const autoSynced = useRef(new Set());
+
+  useEffect(() => {
+    let live = true;
+    (async () => {
+      try {
+        const { connection, salesReady } = await getPosConnection(organizationId);
+        if (!connection || !salesReady) {
+          if (live) setBase({ connection, salesReady, counts: [] });
+          return;
+        }
+        const [counts, links, pours, contents, catalog, locations, posItems] = await Promise.all([
+          listApprovedCounts(organizationId), listPosLinks(organizationId), listPosPours(organizationId),
+          listItemContents(organizationId), listCatalog(organizationId), listLocations(organizationId), listPosItems(organizationId),
+        ]);
+        if (!live) return;
+        const codes = new Map(catalog.units.map((u) => [u.id, u.code]));
+        setBase({
+          connection, salesReady, counts, links, pours, contents, locations,
+          itemsById: new Map(catalog.items.map((i) => [i.id, i])),
+          unitCodes: new Map(catalog.items.map((i) => [i.id, codes.get(i.base_unit_id) || ''])),
+          posNames: new Map(posItems.map((p) => [p.external_id, p.name])),
+        });
+        const first = connection.location_id && counts.some((c) => c.locationId === connection.location_id)
+          ? connection.location_id : counts[0]?.locationId || '';
+        setSiteId(first);
+      } catch (e) {
+        if (live) {
+          setError(e.message);
+          setBase((b) => b || { connection: null, salesReady: false, counts: [] });
+        }
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [organizationId]);
+
+  const rounds = useMemo(() => countRounds((base?.counts || []).filter((c) => c.locationId === siteId)), [base, siteId]);
+  useEffect(() => {
+    setPair({ from: rounds[1]?.key || '', to: rounds[0]?.key || '' });
+  }, [rounds]);
+
+  const compare = useCallback(async ({ forceSync = false } = {}) => {
+    const start = rounds.find((r) => r.key === pair.from);
+    const end = rounds.find((r) => r.key === pair.to);
+    if (!base?.links || !start || !end || start === end) {
+      setResult(null);
+      return;
+    }
+    setError('');
+    setResult((r) => (r ? { ...r, loading: true } : { loading: true }));
+    try {
+      if (Date.parse(end.endAt) <= Date.parse(start.endAt)) throw new Error('Pick a "To" count that is later than the "From" count.');
+      const usage = await siteUsage(siteId, start.endAt, end.endAt);
+      if (usage.missing) throw new Error('This report needs one more database update (20261030003800_pos_site_usage.sql).');
+      const times = (key) => usage.rows.map((u) => Date.parse(u[key]));
+      const fromAt = usage.rows.length ? new Date(Math.min(...times('from_at'))).toISOString() : start.endAt;
+      const toAt = usage.rows.length ? new Date(Math.max(...times('to_at'))).toISOString() : end.endAt;
+      const key = `${siteId}|${pair.from}|${pair.to}`;
+      let syncNote = '';
+      const syncFrom = new Date(Math.max(Date.parse(fromAt), Date.parse(toAt) - MAX_SYNC_MS)).toISOString();
+      const needSync = forceSync || (!autoSynced.current.has(key) && !salesCovered(await listSalesSyncs(organizationId), syncFrom, toAt));
+      if (needSync) {
+        autoSynced.current.add(key);
+        setSyncing(true);
+        try {
+          const got = await syncCloverSales(organizationId, syncFrom, toAt);
+          syncNote = `Brought in ${got?.lines ?? 0} sales from ${got?.orders ?? 0} Clover orders.`;
+        } catch (e) {
+          syncNote = `Could not bring in new sales: ${e.message} Showing what was brought in before.`;
+        } finally {
+          setSyncing(false);
+        }
+      }
+      const range = salesHourRange(fromAt, toAt);
+      const soldIn = salesIndex(await salesHours(organizationId, range.after, range.upTo));
+      const windows = new Map(usage.rows.map((u) => [u.item_id, [u.from_at, u.to_at]]));
+      const sold = (cloverId, itemId) => {
+        const [from, to] = windows.get(itemId) || [fromAt, toAt];
+        return soldIn(cloverId, from, to);
+      };
+      const expected = expectedUse({ links: base.links, sold, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents });
+      setResult({ loading: false, fromAt, toAt, syncNote, rows: usageRows(usage.rows, expected, base.itemsById) });
+    } catch (e) {
+      setError(e.message);
+      setResult(null);
+    }
+  }, [base, pair, rounds, siteId, organizationId]);
+
+  useEffect(() => {
+    compare();
+  }, [compare]);
+
+  return { base, siteId, setSiteId, rounds, pair, setPair, result, error, syncing, bringInSales: () => compare({ forceSync: true }) };
+}

@@ -1,0 +1,37 @@
+import React from 'react';
+import { shortQty } from '../../utils/itemsurePosUsage.js';
+
+const CLOSE = 0.05;
+
+function DifferenceCell({ row }) {
+  if (row.notCounted) return <span className="isu-muted isu-small">Not in both counts</span>;
+  if (row.sold === 0) return <span className="isu-muted isu-small">No Clover sales</span>;
+  if (row.missingPour.length || row.missingContent) return <span className="isu-muted isu-small">Can&apos;t tell yet</span>;
+  const d = row.difference;
+  const near = Math.abs(d) <= Math.max(CLOSE, Math.abs(row.expected) * 0.05);
+  if (near) return <span className="isu-pos-diff is-ok">About right</span>;
+  return d > 0
+    ? <span className="isu-pos-diff is-more">{shortQty(d)} {row.unit} more used than sold</span>
+    : <span className="isu-pos-diff is-less">{shortQty(-d)} {row.unit} less used than sold</span>;
+}
+
+/** One line per item: what sales say was used, what counts say, and the gap. */
+export default function ItemsurePosSalesTable({ rows, posNames }) {
+  if (!rows.length) return <p className="isu-muted">Nothing to compare: no spot was counted in both, and nothing matched to Clover sold.</p>;
+  return (
+    <ul className="isu-pos-report" aria-label="Sales compared with counts">
+      {rows.map((row) => (
+        <li key={row.itemId} className="isu-pos-report-row">
+          <strong className="isu-pos-report-name">{row.name}</strong>
+          <span><span className="isu-muted isu-small">Sales say </span>{row.sold ? `${shortQty(row.expected)} ${row.unit}` : '—'}</span>
+          <span><span className="isu-muted isu-small">Counts say </span>{row.counted == null ? '—' : `${shortQty(row.counted)} ${row.unit}`}</span>
+          <DifferenceCell row={row} />
+          {row.missingPour.length ? (
+            <span className="isu-badge">Set the amount for {row.missingPour.map((id) => posNames.get(id) || 'a Clover item').join(', ')}</span>
+          ) : null}
+          {row.missingContent ? <span className="isu-badge">Bottle size needed</span> : null}
+        </li>
+      ))}
+    </ul>
+  );
+}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { listPackages } from '../../services/itemsurePackageService.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import { contentLabel } from '../../utils/itemsureItemContent.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 
 function Row({ label, children }) {
@@ -41,6 +42,7 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
         ) : null}
         <Row label="Category">{item.categoryName}</Row>
         <Row label="Counted in">{unitName}</Row>
+        {item.contentMl ? <Row label={`One ${(unitName || 'unit').toLowerCase()} holds`}>{contentLabel(item.contentMl)}</Row> : null}
         {suppliers.available ? (
           <Row label="Buy from">
             {supplier ? (

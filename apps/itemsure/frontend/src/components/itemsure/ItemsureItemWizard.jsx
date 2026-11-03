@@ -18,6 +18,7 @@ import { checkAmounts, checkLevels, entriesFromGroups, STEPS, wizardSteps } from
 import { mergeUnits } from '../../utils/itemsureUnits.js';
 import { findNameClash } from '../../utils/itemsureItemNames.js';
 import { checkTopOffPercent } from '../../utils/itemsureTopOff.js';
+import { asksContent, checkContent, contentForm } from '../../utils/itemsureItemContent.js';
 import { ErrorNote, LoadFailed, PageHead } from './ItemsureUi.jsx';
 import ItemsureWizardProgress from './ItemsureWizardProgress.jsx';
 import ItemsureWizardBasics from './ItemsureWizardBasics.jsx';
@@ -31,7 +32,7 @@ import ItemsureWizardArchive from './ItemsureWizardArchive.jsx';
 const startingSupplier = (suppliers, wanted) =>
   (wanted && suppliers.suppliers.some((s) => s.id === wanted && s.is_active) ? wanted : '');
 
-const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, detailsOn, topOffAvailable) => ({
+const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, detailsOn, topOffAvailable, contentsAvailable) => ({
   name: item?.name || '',
   description: item?.description || '',
   sku: item?.sku || '',
@@ -47,6 +48,7 @@ const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, deta
   // Only when brand and details are set up and switched on, so a hidden value is never cleared.
   ...(detailsOn ? { brand: item?.brand || '', variant: item?.variant || '' } : {}),
   ...(topOffAvailable ? { topoff_percent: item?.topoffPercent ? String(item.topoffPercent) : '' } : {}),
+  ...(contentsAvailable ? contentForm(item?.contentMl) : {}),
 });
 
 /** Guided Add item (/items/new) and Edit item (/items/:itemId/edit, ?step=levels to jump). */
@@ -101,7 +103,7 @@ export default function ItemsureItemWizard() {
   useEffect(() => {
     if (started.current || !catalog || (editing && !item) || !places.ready || !suppliers.ready || (canView && !stock)) return;
     started.current = true;
-    const fresh = emptyForm(item, catalog.units, suppliers, catalog.extrasAvailable, params.get('supplier'), catalog.detailsAvailable && features.details, catalog.topOffAvailable);
+    const fresh = emptyForm(item, catalog.units, suppliers, catalog.extrasAvailable, params.get('supplier'), catalog.detailsAvailable && features.details, catalog.topOffAvailable, catalog.contentsAvailable);
     const typedName = editing ? '' : (params.get('name') || '').trim();
     setForm(typedName ? { ...fresh, name: typedName } : fresh);
     const sources = { places: places.placesFor(routeItemId) || [], balances: stock?.balances || [], targets: stock?.targets || [], locations: places.locations };
@@ -141,6 +143,10 @@ export default function ItemsureItemWizard() {
       if (nameClash && !nameClash.archived) return `You already have an item called "${nameClash.item.name}". Use a different name.`;
       if (nameClash && !renamingArchived) return `You have an archived item called "${nameClash.item.name}". Restore it, or choose "Create a new one".`;
       if (!form.base_unit_id) return 'Choose what it is counted in.';
+      if ('content_size' in form && asksContent(unit?.code)) {
+        const size = checkContent(form.content_size, form.content_unit);
+        if (size.error) return size.error;
+      }
     }
     if (id === 'where' && allowed.amounts) {
       const p = checkAmounts(entries, unitInfo.precision, unitInfo.unitName);

@@ -446,3 +446,8 @@
 .isu-app .isu-topoff-input { width: 4.5em; text-align: center; font-weight: 700; }
 .isu-app .isu-topoff-quick { display: flex; flex-wrap: wrap; gap: 6px; }
 .isu-app .isu-topoff p { margin: 0; }
+
+/* How much one counted unit holds (item_contents). */
+.isu-app .isu-item-content-inputs { display: flex; gap: 8px; max-width: 320px; }
+.isu-app .isu-item-content-inputs input { flex: 1 1 auto; min-width: 0; }
+

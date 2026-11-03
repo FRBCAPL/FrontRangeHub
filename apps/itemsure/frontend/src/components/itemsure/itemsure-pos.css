@@ -1,0 +1,119 @@
+/* Settings → Point of sale (Clover): connect, bring in items, match them. */
+.isu-app .isu-pos-help { font-size: 0.88rem; }
+.isu-app .isu-pos-help summary { cursor: pointer; color: var(--isu-pine); font-weight: 600; }
+.isu-app .isu-pos-help ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+
+.isu-app .isu-pos-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.isu-app .isu-pos-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.isu-app .isu-pos-filters .isu-chip { cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--isu-ink); min-height: 36px; }
+.isu-app .isu-pos-filters .isu-chip.is-active { border-color: var(--isu-pine); color: var(--isu-pine); font-weight: 700; }
+
+.isu-app .isu-pos-group { border: 1px solid var(--isu-line); border-radius: 10px; background: var(--isu-paper); }
+.isu-app .isu-pos-group[open] { padding-bottom: 8px; }
+.isu-app .isu-pos-group > .isu-pos-list { padding: 0 8px; }
+.isu-app .isu-pos-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.isu-app .isu-pos-group-title::-webkit-details-marker { display: none; }
+.isu-app .isu-pos-group-title::before { content: '\25B8'; color: var(--isu-muted); transition: transform 0.15s; }
+.isu-app .isu-pos-group[open] > .isu-pos-group-title::before { transform: rotate(90deg); }
+
+.isu-app .isu-pos-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.isu-app .isu-pos-row {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--isu-line);
+  border-left: 4px solid var(--isu-amber);
+  border-radius: 10px;
+  background: var(--isu-raised);
+}
+.isu-app .isu-pos-row.is-matched { border-left-color: var(--isu-pine); }
+.isu-app .isu-pos-row-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.isu-app .isu-pos-row .isu-search-pick-open { justify-self: start; }
+
+/* Type-to-find item picker. */
+.isu-app .isu-search-pick { display: grid; gap: 6px; width: 100%; }
+.isu-app .isu-search-pick-bar { display: flex; gap: 8px; align-items: center; }
+.isu-app .isu-search-pick-bar input { flex: 1 1 auto; min-width: 0; min-height: 40px; }
+.isu-app .isu-search-pick-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.isu-app .isu-search-pick-list button {
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 10px;
+  text-align: left;
+  font: inherit;
+  color: var(--isu-ink);
+  background: var(--isu-paper);
+  border: 1px solid var(--isu-line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.isu-app .isu-search-pick-list button:hover,
+.isu-app .isu-search-pick-list button:focus-visible { border-color: var(--isu-pine); }
+.isu-app .isu-pos-review { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 55vh; overflow-y: auto; }
+.isu-app .isu-pos-review li { padding: 6px 8px; border: 1px solid var(--isu-line); border-radius: 8px; }
+.isu-app .isu-pos-review .isu-check { align-items: flex-start; }
+.isu-app .isu-pos-review-arrow { color: var(--isu-pine); font-weight: 700; }
+
+.isu-app .isu-pos-ask {
+  display: grid;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--isu-pine-soft);
+  font-size: 0.9rem;
+}
+.isu-app .isu-pos-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.isu-app .isu-pos-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; }
+
+/* How much one sale uses, and the site Clover sells from. */
+.isu-app .isu-pos-pours { display: grid; gap: 4px; }
+.isu-app .isu-pos-pour { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; }
+.isu-app .isu-pos-pour-form {
+  display: grid;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--isu-pine-soft);
+  font-size: 0.9rem;
+}
+.isu-app .isu-pos-pour-field { display: grid; gap: 4px; }
+.isu-app .isu-pos-pour-inputs { display: flex; gap: 8px; }
+.isu-app .isu-pos-pour-inputs input { width: 7rem; min-height: 40px; }
+.isu-app .isu-pos-pour-inputs select { min-height: 40px; }
+.isu-app .isu-pos-site label { display: grid; gap: 4px; max-width: 320px; font-size: 0.9rem; }
+.isu-app .isu-pos-site select { min-height: 40px; }
+
+/* Sales vs counts report. */
+.isu-app .isu-pos-report-pick { display: flex; flex-wrap: wrap; gap: 10px; }
+.isu-app .isu-pos-report-pick label { display: grid; gap: 4px; flex: 1 1 200px; font-size: 0.9rem; }
+.isu-app .isu-pos-report-pick select { min-height: 40px; }
+.isu-app .isu-pos-report { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.isu-app .isu-pos-report-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--isu-line);
+  border-radius: 10px;
+  background: var(--isu-raised);
+}
+.isu-app .isu-pos-report-row .isu-badge { grid-column: 1 / -1; justify-self: start; }
+.isu-app .isu-pos-diff { font-weight: 700; font-size: 0.9rem; }
+.isu-app .isu-pos-diff.is-ok { color: var(--isu-pine); }
+.isu-app .isu-pos-diff.is-more { color: var(--isu-danger); }
+.isu-app .isu-pos-diff.is-less { color: var(--isu-amber); }
+@media (max-width: 640px) {
+  .isu-app .isu-pos-report-row { grid-template-columns: 1fr 1fr; }
+  .isu-app .isu-pos-report-name { grid-column: 1 / -1; }
+}

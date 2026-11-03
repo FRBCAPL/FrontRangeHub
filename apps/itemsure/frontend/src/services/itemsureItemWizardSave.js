@@ -8,6 +8,8 @@ import { saveExtraCategories } from './itemsureExtraCategoryService.js';
 import { saveOtherSuppliers } from './itemsureOtherSupplierService.js';
 import { setStockAmount } from './itemsureInventoryService.js';
 import { saveTargets } from './itemsureTargetService.js';
+import { removeItemContent, saveItemContent } from './itemsureItemContentService.js';
+import { asksContent, checkContent } from '../utils/itemsureItemContent.js';
 
 const needsAmountUpdate = (message) => /set_inventory_quantity|could not find the function|schema cache/i.test(message || '');
 
@@ -40,6 +42,17 @@ export async function saveItemWizard({ organizationId, item, itemId, form, entri
       await saveOtherSuppliers(organizationId, id, form.other_supplier_ids.filter((s) => s && s !== form.supplier_id));
     } catch (err) {
       problems.push({ key: null, message: `"Also from" not saved. ${err.message}` });
+    }
+  }
+  if ('content_size' in form) {
+    try {
+      const size = asksContent(unit?.code) ? checkContent(form.content_size, form.content_unit) : { ml: null };
+      if (size.error) throw new Error(size.error);
+      const had = item?.contentMl ?? null;
+      if (size.ml != null && size.ml !== had) await saveItemContent(organizationId, id, size.ml);
+      else if (size.ml == null && had != null) await removeItemContent(organizationId, id);
+    } catch (err) {
+      problems.push({ key: null, message: `Size not saved. ${err.message}` });
     }
   }
 

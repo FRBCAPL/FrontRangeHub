@@ -20,6 +20,7 @@ const MORE = [
   { to: `${ITEMSURE_PATH}/locations`, label: SITES, icon: '\u25A6' },
   { to: `${ITEMSURE_PATH}/suppliers`, label: 'Suppliers', icon: '\u26DF' },
   { to: `${ITEMSURE_PATH}/activity`, label: 'History', icon: '\u25F7', permission: 'audit.read' },
+  { to: `${ITEMSURE_PATH}/sales-vs-counts`, label: 'Sales vs counts', icon: '\u2696', permission: 'inventory.activity' },
   { to: `${ITEMSURE_PATH}/settings`, label: 'Settings', icon: '\u2699' },
   { to: `${ITEMSURE_PATH}/help`, label: 'Help', icon: '?' },
   { to: `${ITEMSURE_PATH}/coming-next`, label: 'Coming next', icon: '\u2605' },
