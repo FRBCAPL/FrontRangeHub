@@ -1,5 +1,6 @@
 import React from 'react';
 import { shortQty } from '../../utils/itemsurePosUsage.js';
+import { modifierNotes } from '../../utils/itemsurePosModifiers.js';
 
 const usedText = (row) => {
   if (row.complete) return `About ${shortQty(row.used)} ${row.unit} of stock`;
@@ -15,7 +16,11 @@ export default function ItemsureCloverSalesList({ rows, onFix }) {
         <li key={row.itemId} className="isu-sales-row">
           <div className="isu-sales-row-top">
             <strong>{row.name}</strong>
-            <span className="isu-sales-sold"><strong>{shortQty(row.sold)}</strong> sold</span>
+            {row.sold > 0 ? (
+              <span className="isu-sales-sold"><strong>{shortQty(row.sold)}</strong> sold</span>
+            ) : (
+              <span className="isu-sales-sold isu-muted isu-small">Only in modifiers</span>
+            )}
           </div>
           <span className={row.complete ? 'isu-small' : 'isu-small isu-sales-unset'}>{usedText(row)}</span>
           {row.buttons.length > 1 || (row.buttons[0] && row.buttons[0].name !== row.name) ? (
@@ -23,7 +28,10 @@ export default function ItemsureCloverSalesList({ rows, onFix }) {
               From Clover: {row.buttons.map((b) => `${b.name} (${shortQty(b.sold)})`).join(', ')}
             </span>
           ) : null}
-          {onFix && !row.complete ? (
+          {row.modifiers?.length ? (
+            <span className="isu-muted isu-small">Includes modifiers: {modifierNotes(row.modifiers)}</span>
+          ) : null}
+          {onFix && !row.complete && row.buttons.length ? (
             <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => onFix(row)}>Fix it</button>
           ) : null}
         </li>

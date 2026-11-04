@@ -9,6 +9,8 @@ import { listCategoryDefaults } from '../services/itemsureCategoryDefaultService
 import { listItemPieces } from '../services/itemsureItemContentService.js';
 import { withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
 import { countRounds, expectedUse, salesCovered, salesHourRange, salesIndex, usageRows } from '../utils/itemsurePosUsage.js';
+import { listModifiers, modifierHours } from '../services/itemsurePosModifierService.js';
+import { addModifierUse, asSalesRows, modifierSetup, modifierUse } from '../utils/itemsurePosModifiers.js';
 
 const MAX_SYNC_MS = 44 * 24 * 3600 * 1000;
 
@@ -36,10 +38,10 @@ export default function usePosSalesReport(organizationId) {
           if (live) setBase({ connection, salesReady, counts: [] });
           return;
         }
-        const [counts, links, ownPours, ownContents, catalog, locations, posItems, ownPieces] = await Promise.all([
+        const [counts, links, ownPours, ownContents, catalog, locations, posItems, ownPieces, modifiers] = await Promise.all([
           listApprovedCounts(organizationId), listPosLinks(organizationId), listPosPours(organizationId),
           listItemContents(organizationId), listCatalog(organizationId), listLocations(organizationId), listPosItems(organizationId),
-          listItemPieces(organizationId),
+          listItemPieces(organizationId), listModifiers(organizationId).catch(() => null),
         ]);
         if (!live) return;
         const codes = new Map(catalog.units.map((u) => [u.id, u.code]));
@@ -51,6 +53,7 @@ export default function usePosSalesReport(organizationId) {
           itemsById: new Map(catalog.items.map((i) => [i.id, i])),
           unitCodes: new Map(catalog.items.map((i) => [i.id, codes.get(i.base_unit_id) || ''])),
           posNames: new Map(posItems.map((p) => [p.external_id, p.name])),
+          modifiers: modifierSetup(modifiers),
         });
         const first = connection.location_id && counts.some((c) => c.locationId === connection.location_id)
           ? connection.location_id : counts[0]?.locationId || '';
@@ -130,6 +133,20 @@ export default function usePosSalesReport(organizationId) {
         return soldIn(cloverId, from, to);
       };
       const expected = expectedUse({ links: base.links, sold, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents, pieces: base.pieces });
+      if (base.modifiers.rules.size) {
+        const modRows = asSalesRows(await modifierHours(organizationId, range.after, range.upTo).catch(() => null));
+        const modIn = salesIndex(modRows);
+        addModifierUse(expected, modifierUse({
+          keys: [...new Set(modRows.map((h) => h.external_id))],
+          qtyFor: (cloverId, modifierId, itemId) => {
+            const [from, to] = windows.get(itemId) || [fromAt, toAt];
+            return modIn(`${cloverId}|${modifierId}`, from, to);
+          },
+          rules: base.modifiers.rules,
+          names: base.modifiers.names,
+          links: base.links, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents, pieces: base.pieces,
+        }));
+      }
       setResult({ loading: false, fromAt, toAt, syncNote, rows: usageRows(usage.rows, expected, base.itemsById) });
     } catch (e) {
       setError(e.message);

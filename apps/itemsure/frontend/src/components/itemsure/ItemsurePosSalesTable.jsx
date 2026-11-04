@@ -1,11 +1,12 @@
 import React from 'react';
 import { shortQty } from '../../utils/itemsurePosUsage.js';
+import { modifierNotes } from '../../utils/itemsurePosModifiers.js';
 
 const CLOSE = 0.05;
 
 function DifferenceCell({ row }) {
   if (row.notCounted) return <span className="isu-muted isu-small">Not counted both times</span>;
-  if (row.sold === 0) return <span className="isu-muted isu-small">No Clover sales</span>;
+  if (row.sold === 0 && !row.modifiers?.length) return <span className="isu-muted isu-small">No Clover sales</span>;
   if (row.missingPour.length || row.missingContent) return <span className="isu-muted isu-small">Can&apos;t compare yet</span>;
   const d = row.difference;
   const near = Math.abs(d) <= Math.max(CLOSE, Math.abs(row.expected) * 0.05);
@@ -16,7 +17,7 @@ function DifferenceCell({ row }) {
 }
 
 function SalesUsed({ row }) {
-  if (!row.sold) return '—';
+  if (!row.sold && !row.modifiers?.length) return '—';
   const unset = row.missingPour.length || row.missingContent;
   if (!unset) return `${shortQty(row.expected)} ${row.unit}`;
   if (row.expected > 0) return `${shortQty(row.expected)}+ ${row.unit}`;
@@ -35,6 +36,9 @@ export default function ItemsurePosSalesTable({ rows, posNames, onFix }) {
           <span><span className="isu-muted isu-small">Sales used </span><SalesUsed row={row} /></span>
           <span><span className="isu-muted isu-small">Counts used </span>{row.counted == null ? '—' : `${shortQty(row.counted)} ${row.unit}`}</span>
           <DifferenceCell row={row} />
+          {row.modifiers?.length ? (
+            <span className="isu-muted isu-small isu-pos-report-note">Includes modifiers: {modifierNotes(row.modifiers)}</span>
+          ) : null}
           {row.missingPour.length ? (
             <span className="isu-badge">Set the amount for {row.missingPour.map((id) => posNames.get(id) || 'a Clover item').join(', ')}</span>
           ) : null}

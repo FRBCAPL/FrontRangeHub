@@ -72,6 +72,7 @@ export function usageRows(countRows, expected, itemsById) {
       difference: e ? counted - e.expected : null,
       missingPour: e ? e.missingPour : [],
       missingContent: e ? e.missingContent : false,
+      modifiers: e?.modifiers || [],
       notCounted: false,
     };
   });
@@ -89,6 +90,7 @@ export function usageRows(countRows, expected, itemsById) {
       difference: null,
       missingPour: e.missingPour,
       missingContent: e.missingContent,
+      modifiers: e.modifiers || [],
       notCounted: true,
     });
   }

@@ -43,6 +43,25 @@ test('rows per item: how many sold, how much stock that is, and which Clover but
   assert.deepEqual(fries.missingPour, ['fries']);
 });
 
+test('modifiers add to an item, and an item used only by modifiers gets its own row', () => {
+  const rows = itemSalesRows({
+    totals: new Map([['shot', 10]]),
+    links: new Map([['shot', ['rum']]]),
+    pours: new Map([['shot|rum', { amount: 1, unit: 'base' }]]),
+    unitCodes: new Map([['rum', 'bottle'], ['rb', 'case']]),
+    contents: new Map(),
+    pieces: new Map([['rb', 24]]),
+    itemsById: new Map([['rum', { name: 'Rum', unitName: 'Bottle' }], ['rb', { name: 'Red Bull', unitName: 'Case' }]]),
+    posNames: new Map([['shot', 'Rum']]),
+    mods: new Map([
+      ['rum', { extra: 4, notes: [{ name: 'Double', qty: 4 }], incomplete: false }],
+      ['rb', { extra: 0.5, notes: [{ name: 'Add Red Bull', qty: 12 }], incomplete: false }],
+    ]),
+  });
+  assert.deepEqual(rows.map((r) => [r.name, r.sold, r.used, r.complete]), [['Rum', 10, 14, true], ['Red Bull', 0, 0.5, true]]);
+  assert.deepEqual(rows[0].modifiers, [{ name: 'Double', qty: 4 }]);
+});
+
 test('lists Clover items that sold but are not matched', () => {
   const links = new Map([['shot', ['rum']]]);
   const totals = new Map([['shot', 3], ['beer', 9], ['wings', 2], ['zero', 0]]);

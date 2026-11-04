@@ -8,6 +8,8 @@ import { listItemPieces } from '../services/itemsureItemContentService.js';
 import { withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
 import { salesCovered } from '../utils/itemsurePosUsage.js';
 import { itemSalesRows, periodRange, salesTotals, unmatchedRows } from '../utils/itemsureCloverSales.js';
+import { listModifiers, modifierHours } from '../services/itemsurePosModifierService.js';
+import { modifierSetup, modifierTotals, modifierUse } from '../utils/itemsurePosModifiers.js';
 
 const MAX_SYNC_MS = 44 * 24 * 3600 * 1000;
 
@@ -35,9 +37,10 @@ export default function useCloverSales(organizationId) {
           if (live) setBase({ connection, salesReady });
           return;
         }
-        const [links, ownPours, ownContents, catalog, posItems, ownPieces] = await Promise.all([
+        const [links, ownPours, ownContents, catalog, posItems, ownPieces, modifiers] = await Promise.all([
           listPosLinks(organizationId), listPosPours(organizationId), listItemContents(organizationId),
           listCatalog(organizationId), listPosItems(organizationId), listItemPieces(organizationId),
+          listModifiers(organizationId).catch(() => null),
         ]);
         if (!live) return;
         const codes = new Map(catalog.units.map((u) => [u.id, u.code]));
@@ -49,6 +52,7 @@ export default function useCloverSales(organizationId) {
           itemsById: new Map(catalog.items.map((i) => [i.id, i])),
           unitCodes: new Map(catalog.items.map((i) => [i.id, codes.get(i.base_unit_id) || ''])),
           posNames: new Map(posItems.map((p) => [p.external_id, p.name])),
+          modifiers: modifierSetup(modifiers),
         });
       } catch (e) {
         if (live) {
@@ -90,9 +94,22 @@ export default function useCloverSales(organizationId) {
           setSyncing(false);
         }
       }
-      const hours = await salesHours(organizationId, new Date(range.from.getTime() - 1).toISOString(), new Date(range.to.getTime() - 1).toISOString());
+      const after = new Date(range.from.getTime() - 1).toISOString();
+      const upTo = new Date(range.to.getTime() - 1).toISOString();
+      const [hours, modHours] = await Promise.all([
+        salesHours(organizationId, after, upTo),
+        base.modifiers.rules.size ? modifierHours(organizationId, after, upTo).catch(() => null) : null,
+      ]);
       const totals = salesTotals(hours);
-      const rows = itemSalesRows({ totals, ...base });
+      const modTotals = modifierTotals(modHours);
+      const mods = modifierUse({
+        keys: [...modTotals.keys()],
+        qtyFor: (cloverId, modifierId) => modTotals.get(`${cloverId}|${modifierId}`) || 0,
+        rules: base.modifiers.rules,
+        names: base.modifiers.names,
+        links: base.links, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents, pieces: base.pieces,
+      });
+      const rows = itemSalesRows({ totals, ...base, mods });
       setResult({
         loading: false,
         syncNote,

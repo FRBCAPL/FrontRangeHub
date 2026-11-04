@@ -38,9 +38,13 @@ export function salesTotals(hours) {
  * One row per ItemSure item with sales: { itemId, name, unit, sold, used, complete, missingPour,
  * missingContent, buttons: [{ externalId, name, sold }] }, most sold first. `used` is in the item's
  * counted unit; `complete` is false when some sales have no amount (or size) set yet.
+ * `mods` (from modifierUse) adds what modifiers used, with `modifiers` notes like "6 Double".
  */
-export function itemSalesRows({ totals, links, pours, unitCodes, contents, pieces, itemsById, posNames }) {
+export function itemSalesRows({ totals, links, pours, unitCodes, contents, pieces, itemsById, posNames, mods = new Map() }) {
   const use = expectedUse({ links, sold: totals, pours, unitCodes, contents, pieces });
+  for (const itemId of mods.keys()) {
+    if (!use.has(itemId)) use.set(itemId, { expected: 0, sold: 0, missingPour: [], missingContent: false });
+  }
   const buttons = new Map();
   for (const [externalId, itemIds] of links) {
     const qty = totals.get(externalId) || 0;
@@ -52,19 +56,21 @@ export function itemSalesRows({ totals, links, pours, unitCodes, contents, piece
   const rows = [];
   for (const [itemId, e] of use) {
     const item = itemsById.get(itemId);
+    const m = mods.get(itemId);
     rows.push({
       itemId,
       name: item?.name || 'Item',
       unit: item?.unitName || '',
       sold: e.sold,
-      used: e.expected,
-      complete: !e.missingPour.length && !e.missingContent,
+      used: e.expected + (m?.extra || 0),
+      complete: !e.missingPour.length && !e.missingContent && !m?.incomplete,
+      modifiers: m?.notes || [],
       missingPour: e.missingPour,
       missingContent: e.missingContent,
       buttons: (buttons.get(itemId) || []).sort((a, b) => b.sold - a.sold || a.name.localeCompare(b.name)),
     });
   }
-  return rows.sort((a, b) => b.sold - a.sold || a.name.localeCompare(b.name));
+  return rows.sort((a, b) => b.sold - a.sold || b.used - a.used || a.name.localeCompare(b.name));
 }
 
 /** Clover items that sold but aren't matched to any ItemSure item: [{ externalId, name, sold }], most sold first. */

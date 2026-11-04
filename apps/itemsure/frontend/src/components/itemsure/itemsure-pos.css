@@ -96,6 +96,20 @@
 .isu-app .isu-item-clover-suggest .isu-pos-suggest { justify-content: space-between; padding: 6px 10px; border: 1px solid var(--isu-line); border-radius: 10px; }
 .isu-app .isu-item-clover > .isu-search-pick-open { justify-self: start; }
 
+/* Settings → Clover modifiers. */
+.isu-app .isu-pos-mod-list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
+.isu-app .isu-pos-mod-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; border: 1px solid var(--isu-line); border-radius: 10px;
+}
+.isu-app .isu-pos-mod-text { min-width: 0; flex: 1 1 220px; }
+.isu-app .isu-pos-mod-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.isu-app .isu-pos-mod-form { display: grid; gap: 10px; }
+.isu-app .isu-pos-mod-form > p { margin: 0; }
+.isu-app .isu-pos-mod-choice { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.isu-app .isu-pos-mod-choice input { margin-top: 4px; }
+.isu-app .isu-pos-report-note { grid-column: 1 / -1; }
+
 /* How much one sale uses, and the site Clover sells from. */
 .isu-app .isu-pos-pours { display: grid; gap: 4px; }
 .isu-app .isu-pos-pour { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; }

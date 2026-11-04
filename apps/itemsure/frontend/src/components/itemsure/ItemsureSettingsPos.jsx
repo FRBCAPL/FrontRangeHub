@@ -11,6 +11,7 @@ import ItemsurePosSitePick from './ItemsurePosSitePick.jsx';
 import ItemsurePosSetup from './ItemsurePosSetup.jsx';
 import ItemsurePosStockCard from './ItemsurePosStockCard.jsx';
 import ItemsurePosAutoSync from './ItemsurePosAutoSync.jsx';
+import ItemsurePosModifiers from './ItemsurePosModifiers.jsx';
 
 const when = (iso) => (iso ? new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '');
 
@@ -98,6 +99,9 @@ export default function ItemsureSettingsPos() {
       ) : null}
       {state.salesReady && c.location_id ? (
         <ItemsurePosStockCard organizationId={organization.id} locationId={c.location_id} can={can} />
+      ) : null}
+      {state.salesReady && (can('inventory.activity') || can('items.manage')) ? (
+        <ItemsurePosModifiers organizationId={organization.id} canEdit={can('items.manage')} />
       ) : null}
       <ItemsurePosSetup
         organizationId={organization.id}
