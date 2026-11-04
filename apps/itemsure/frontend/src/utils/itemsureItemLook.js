@@ -27,6 +27,15 @@ export function pluralUnit(name) {
   return `${text}s`;
 }
 
+/** "Kegs" → "Keg", "Boxes" → "Box", "Bottles" → "Bottle"; "Each" and "Glass" stay. */
+export function singularUnit(name) {
+  const text = String(name || '').trim();
+  if (/(ss|us|is)$/i.test(text) || !/s$/i.test(text)) return text;
+  if (/[^aeiou]ies$/i.test(text)) return `${text.slice(0, -3)}y`;
+  if (/(x|z|ch|sh)es$/i.test(text)) return text.slice(0, -2);
+  return text.slice(0, -1);
+}
+
 /** How full a stock bar is, 0–100. Display only, so plain numbers are fine here. */
 export function fillPercent(total, par) {
   const goal = Number(par);

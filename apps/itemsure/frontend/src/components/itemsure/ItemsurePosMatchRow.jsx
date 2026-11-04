@@ -39,7 +39,7 @@ export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choice
         </ul>
       ) : null}
 
-      {pourInfo && matched.length && !asking ? (
+      {pourInfo && matched.length ? (
         <div className="isu-pos-pours">
           {matched.map((item) => (
             <ItemsurePosPourEdit

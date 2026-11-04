@@ -14,9 +14,9 @@ const SHOW_AT_ONCE = 60;
 /**
  * Match Clover items to ItemSure items: "Not matched" first, with suggestions by name and a
  * "Match all suggestions" shortcut. Matching never changes stock. `reloadKey` changes after
- * Clover items are brought in again.
+ * Clover items are brought in again; `onChanged` runs after anything here is saved.
  */
-export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey }) {
+export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, onChanged }) {
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('todo');
   const [search, setSearch] = useState('');
@@ -41,6 +41,10 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey }
   useEffect(() => {
     load();
   }, [load, reloadKey]);
+  const refresh = async () => {
+    await load();
+    onChanged?.();
+  };
 
   const itemsById = useMemo(() => new Map((data?.items || []).map((i) => [i.id, i])), [data]);
   const choices = useMemo(() => (data?.items || []).filter((i) => i.is_active), [data]);
@@ -80,16 +84,16 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey }
     const first = !(data.links.get(externalId) || []).length;
     await addPosLink(organizationId, externalId, itemId);
     if (first) setAsk(externalId, true);
-    await load();
+    await refresh();
   });
   const remove = (externalId, itemId) => run(async () => {
     await removePosLink(organizationId, externalId, itemId);
-    await load();
+    await refresh();
   });
   const savePour = (externalId, itemId, amount, unit, contentMl) => run(async () => {
     if (contentMl !== undefined) await saveItemContent(organizationId, itemId, contentMl);
     await setPosPour(organizationId, externalId, itemId, amount, unit);
-    await load();
+    await refresh();
   });
   const grouped = filter === 'done';
   const row = (p) => (
@@ -112,13 +116,13 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey }
   );
   const matchAll = () => run(async () => {
     for (const [externalId, item] of suggestions) await addPosLink(organizationId, externalId, item.id);
-    await load();
+    await refresh();
   });
   const matchSome = async (list) => {
     const ok = await run(async () => {
       for (const { pos, item } of list) await addPosLink(organizationId, pos.external_id, item.id);
     });
-    await load();
+    await refresh();
     if (ok) setReviewing(false);
   };
 

@@ -112,7 +112,7 @@ export const GUIDE_BASICS = [
     ],
     steps: [
       'Open Inventory, then Edit on the item.',
-      'Under Packaging sizes, choose Add package.',
+      'On the first step, under Size and packaging, choose Add package.',
       'Enter the package name (like "Case") and how many units it holds.',
       'Optionally choose Make default so it is picked first.',
     ],

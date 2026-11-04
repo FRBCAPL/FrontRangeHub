@@ -60,7 +60,20 @@ export default function usePosSalesReport(organizationId) {
     };
   }, [organizationId]);
 
-  const rounds = useMemo(() => countRounds((base?.counts || []).filter((c) => c.locationId === siteId)), [base, siteId]);
+  const counts = base?.counts;
+  const rounds = useMemo(() => countRounds((counts || []).filter((c) => c.locationId === siteId)), [counts, siteId]);
+
+  /** After a "Fix it": reload amounts and sizes only, keeping the chosen counts. */
+  const refreshSetup = useCallback(async () => {
+    try {
+      const [links, pours, contents] = await Promise.all([
+        listPosLinks(organizationId), listPosPours(organizationId), listItemContents(organizationId),
+      ]);
+      setBase((b) => (b ? { ...b, links, pours, contents } : b));
+    } catch (e) {
+      setError(e.message);
+    }
+  }, [organizationId]);
   useEffect(() => {
     setPair({ from: rounds[1]?.key || '', to: rounds[0]?.key || '' });
   }, [rounds]);
@@ -116,5 +129,5 @@ export default function usePosSalesReport(organizationId) {
     compare();
   }, [compare]);
 
-  return { base, siteId, setSiteId, rounds, pair, setPair, result, error, syncing, bringInSales: () => compare({ forceSync: true }) };
+  return { base, siteId, setSiteId, rounds, pair, setPair, result, error, syncing, bringInSales: () => compare({ forceSync: true }), refreshSetup };
 }

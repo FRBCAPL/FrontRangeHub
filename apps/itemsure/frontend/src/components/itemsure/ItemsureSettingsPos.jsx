@@ -8,6 +8,7 @@ import { Card, ErrorNote } from './ItemsureUi.jsx';
 import ItemsurePosConnectForm from './ItemsurePosConnectForm.jsx';
 import ItemsurePosMatch from './ItemsurePosMatch.jsx';
 import ItemsurePosSitePick from './ItemsurePosSitePick.jsx';
+import ItemsurePosSetup from './ItemsurePosSetup.jsx';
 
 const when = (iso) => (iso ? new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '');
 
@@ -17,6 +18,8 @@ export default function ItemsureSettingsPos() {
   const [state, setState] = useState(null);
   const [notice, setNotice] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [setupKey, setSetupKey] = useState(0);
+  const [matchKey, setMatchKey] = useState(0);
   const { busy, error, run } = useItemsureAction();
 
   const load = useCallback(async () => setState(await getPosConnection(organization.id)), [organization.id]);
@@ -88,9 +91,22 @@ export default function ItemsureSettingsPos() {
           </>
         ) : null}
       </Card>
-      <Card title="Match Clover items">
-        <ItemsurePosMatch organizationId={organization.id} canMatch={can('items.manage')} reloadKey={reloadKey} />
-      </Card>
+      <ItemsurePosSetup
+        organizationId={organization.id}
+        canEdit={can('items.manage')}
+        reloadKey={`${reloadKey}-${setupKey}`}
+        onChanged={() => setMatchKey((k) => k + 1)}
+      />
+      <div id="isu-pos-match">
+        <Card title="Match Clover items">
+          <ItemsurePosMatch
+            organizationId={organization.id}
+            canMatch={can('items.manage')}
+            reloadKey={`${reloadKey}-${matchKey}`}
+            onChanged={() => setSetupKey((k) => k + 1)}
+          />
+        </Card>
+      </div>
     </div>
   );
 }

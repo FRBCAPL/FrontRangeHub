@@ -16,7 +16,7 @@ function DifferenceCell({ row }) {
 }
 
 /** One line per item: what sales say was used, what counts say, and the gap. */
-export default function ItemsurePosSalesTable({ rows, posNames }) {
+export default function ItemsurePosSalesTable({ rows, posNames, onFix }) {
   if (!rows.length) return <p className="isu-muted">Nothing to compare: no spot was counted in both, and nothing matched to Clover sold.</p>;
   return (
     <ul className="isu-pos-report" aria-label="Sales compared with counts">
@@ -29,7 +29,10 @@ export default function ItemsurePosSalesTable({ rows, posNames }) {
           {row.missingPour.length ? (
             <span className="isu-badge">Set the amount for {row.missingPour.map((id) => posNames.get(id) || 'a Clover item').join(', ')}</span>
           ) : null}
-          {row.missingContent ? <span className="isu-badge">Bottle size needed</span> : null}
+          {row.missingContent ? <span className="isu-badge">Size needed</span> : null}
+          {onFix && (row.missingPour.length || row.missingContent) ? (
+            <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => onFix(row)}>Fix it</button>
+          ) : null}
         </li>
       ))}
     </ul>

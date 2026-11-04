@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import usePosSalesReport from '../../hooks/usePosSalesReport.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, SITE } from '../../data/itemsureTerms.js';
-import { Card, ErrorNote, PageHead } from './ItemsureUi.jsx';
+import { Card, ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsurePosSalesTable from './ItemsurePosSalesTable.jsx';
+import ItemsurePosFixItem from './ItemsurePosFixItem.jsx';
 
 const when = (iso) => (iso ? new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '');
 const POS_SETTINGS = `${ITEMSURE_PATH}/settings/pos`;
@@ -18,6 +19,7 @@ const roundLabel = (round) => {
 export default function ItemsurePosSalesReport() {
   const { organization, can } = useItemsureWorkspace();
   const r = usePosSalesReport(organization.id);
+  const [fixing, setFixing] = useState(null);
   const head = <PageHead title="Sales vs counts" description="Compare what Clover says sold with what your counts say was used. This report never changes stock." />;
 
   if (!r.base) return <div className="isu-page">{head}<p className="isu-muted">Loading…</p></div>;
@@ -84,7 +86,7 @@ export default function ItemsurePosSalesReport() {
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={r.syncing || r.result?.loading || !r.pair.from || !r.pair.to} onClick={r.bringInSales}>
             {r.syncing ? 'Bringing in sales…' : 'Bring in sales'}
           </button>
-          {settingsLink && can('items.manage') ? <Link to={POS_SETTINGS} className="isu-link isu-small">Set amounts each sale uses</Link> : null}
+          {settingsLink && can('items.manage') ? <Link to={POS_SETTINGS} className="isu-link isu-small">Sales tracking setup</Link> : null}
         </div>
         {r.result?.syncNote ? <p className="isu-notice" role="status">{r.result.syncNote}</p> : null}
         <ErrorNote message={r.error} />
@@ -93,9 +95,14 @@ export default function ItemsurePosSalesReport() {
       {r.result?.rows ? (
         <Card title="By item">
           <p className="isu-muted isu-small">&ldquo;More used than sold&rdquo; can mean spills, free drinks, big pours, or missing sales. Recorded removals (like waste) count as used.</p>
-          <ItemsurePosSalesTable rows={r.result.rows} posNames={r.base.posNames} />
+          <ItemsurePosSalesTable rows={r.result.rows} posNames={r.base.posNames} onFix={can('items.manage') ? setFixing : null} />
         </Card>
       ) : null}
+      <Modal open={Boolean(fixing)} title={fixing ? `Fix ${fixing.name}` : ''} onClose={() => setFixing(null)} wide>
+        {fixing ? (
+          <ItemsurePosFixItem organizationId={organization.id} itemId={fixing.itemId} onChanged={r.refreshSetup} onClose={() => setFixing(null)} />
+        ) : null}
+      </Modal>
     </div>
   );
 }

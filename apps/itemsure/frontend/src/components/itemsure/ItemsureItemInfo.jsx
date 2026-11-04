@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { listPackages } from '../../services/itemsurePackageService.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { contentLabel } from '../../utils/itemsureItemContent.js';
+import { singularUnit } from '../../utils/itemsureItemLook.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 
 function Row({ label, children }) {
@@ -42,7 +43,14 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
         ) : null}
         <Row label="Category">{item.categoryName}</Row>
         <Row label="Counted in">{unitName}</Row>
-        {item.contentMl ? <Row label={`One ${(unitName || 'unit').toLowerCase()} holds`}>{contentLabel(item.contentMl)}</Row> : null}
+        {item.contentMl ? <Row label={`One ${singularUnit(unitName || 'unit').toLowerCase()} holds`}>{contentLabel(item.contentMl)}</Row> : null}
+        {showPackaging ? (
+          <Row label="Packaging">
+            {packages === null ? <span className="isu-muted">Loading…</span> : packages.length
+              ? packages.map((p) => `${p.name} (${displayQuantity(p.size)} ${unitName})`).join(', ')
+              : null}
+          </Row>
+        ) : null}
         {suppliers.available ? (
           <Row label="Buy from">
             {supplier ? (
@@ -62,13 +70,6 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
         <Row label="SKU">{item.sku}</Row>
         <Row label="Barcode">{item.barcode}</Row>
         <Row label="Description">{item.description}</Row>
-        {showPackaging ? (
-          <Row label="Packaging">
-            {packages === null ? <span className="isu-muted">Loading…</span> : packages.length
-              ? packages.map((p) => `${p.name} (${displayQuantity(p.size)} ${unitName})`).join(', ')
-              : null}
-          </Row>
-        ) : null}
         <Row label="Status">{item.is_active ? 'Active' : 'Archived'}</Row>
       </dl>
       {onEdit ? (

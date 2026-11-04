@@ -93,6 +93,43 @@
 .isu-app .isu-pos-site label { display: grid; gap: 4px; max-width: 320px; font-size: 0.9rem; }
 .isu-app .isu-pos-site select { min-height: 40px; }
 
+/* Sales tracking setup checklist and its review windows. */
+.isu-app .isu-pos-steps { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
+.isu-app .isu-pos-step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--isu-warn-line);
+  border-radius: 10px;
+  background: var(--isu-warn-soft);
+}
+.isu-app .isu-pos-step.is-done { border-color: var(--isu-line); background: var(--isu-raised); }
+.isu-app .isu-pos-step-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--isu-sand);
+  background: var(--isu-amber);
+}
+.isu-app .isu-pos-step.is-done .isu-pos-step-mark { background: var(--isu-pine); }
+.isu-app .isu-pos-step-text { flex: 1 1 200px; min-width: 0; }
+.isu-app .isu-pos-amounts li,
+.isu-app .isu-pos-sizes li { display: grid; gap: 6px; padding: 8px 10px; }
+.isu-app .isu-pos-amount-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.isu-app .isu-pos-amount-line input[type='number'] { width: 6.5rem; flex: 0 0 auto; min-height: 40px; }
+.isu-app .isu-pos-amount-line select { width: auto; flex: 0 1 auto; max-width: 11rem; min-height: 40px; }
+.isu-app .isu-standard-amounts li { padding: 6px 8px; }
+.isu-app .isu-standard-amounts input:not([type='number']) { flex: 1 1 140px; min-width: 0; min-height: 40px; }
+.isu-app .isu-size-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.isu-app .isu-size-presets .isu-chip { cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--isu-ink); min-height: 36px; }
+.isu-app .isu-size-presets .isu-chip.is-active { border-color: var(--isu-pine); color: var(--isu-pine); font-weight: 700; }
+
 /* Sales vs counts report. */
 .isu-app .isu-pos-report-pick { display: flex; flex-wrap: wrap; gap: 10px; }
 .isu-app .isu-pos-report-pick label { display: grid; gap: 4px; flex: 1 1 200px; font-size: 0.9rem; }
@@ -109,6 +146,7 @@
   background: var(--isu-raised);
 }
 .isu-app .isu-pos-report-row .isu-badge { grid-column: 1 / -1; justify-self: start; }
+.isu-app .isu-pos-report-row > .isu-btn { grid-column: 1 / -1; justify-self: start; min-width: 7rem; }
 .isu-app .isu-pos-diff { font-weight: 700; font-size: 0.9rem; }
 .isu-app .isu-pos-diff.is-ok { color: var(--isu-pine); }
 .isu-app .isu-pos-diff.is-more { color: var(--isu-danger); }

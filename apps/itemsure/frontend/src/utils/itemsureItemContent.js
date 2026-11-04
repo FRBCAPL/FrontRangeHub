@@ -1,8 +1,14 @@
 // "One bottle holds ..." on the item form: typed amount + unit <-> ml stored in item_contents.
 
 import { FL_OZ_ML, VOLUME_ML } from './itemsurePosUsage.js';
+import { presetForMl } from './itemsureSizePresets.js';
 
-export const CONTENT_UNITS = { ml: { label: 'ml', ml: 1 }, l: { label: 'liters', ml: 1000 }, fl_oz: { label: 'oz', ml: FL_OZ_ML } };
+export const CONTENT_UNITS = {
+  ml: { label: 'ml', ml: 1 },
+  l: { label: 'liters', ml: 1000 },
+  fl_oz: { label: 'oz', ml: FL_OZ_ML },
+  gal: { label: 'gallons', ml: 3785.41 },
+};
 const MAX_ML = 1000000;
 
 /** Asking makes no sense when the item is already counted in a volume (ml, liters, gallons). */
@@ -20,17 +26,38 @@ export function checkContent(text, unit) {
   return { ml };
 }
 
-/** Starting text for the form: whole liters as liters, else ml. */
+/** n when it is a multiple of `step` (sizes are stored to 0.001 ml), else null. */
+const roundTo = (n, step) => {
+  const r = Math.round(n / step) * step;
+  return r > 0 && Math.abs(n - r) < 0.0005 ? Number(r.toFixed(3)) : null;
+};
+
+/**
+ * Starting text for the form, in the unit it was most likely typed in: a common size (preset),
+ * whole liters, whole or half oz, quarter gallons, else ml.
+ */
 export function contentForm(ml) {
   if (!(ml > 0)) return { content_size: '', content_unit: 'ml' };
+  const preset = presetForMl(ml);
+  if (preset) return { ...preset.input };
   if (ml >= 1000 && ml % 1000 === 0) return { content_size: String(ml / 1000), content_unit: 'l' };
+  if (ml % 1 !== 0) {
+    const oz = roundTo(ml / FL_OZ_ML, 0.5);
+    if (oz && oz < 256) return { content_size: String(oz), content_unit: 'fl_oz' };
+    const gal = roundTo(ml / CONTENT_UNITS.gal.ml, 0.25);
+    if (gal) return { content_size: String(gal), content_unit: 'gal' };
+  }
   return { content_size: String(Math.round(ml * 1000) / 1000), content_unit: 'ml' };
 }
 
-/** "750 ml" / "1 liter" for showing a saved size. */
+/** "Half barrel (15.5 gal)" / "750 ml" / "1 liter" / "12 oz" for showing a saved size. */
 export function contentLabel(ml) {
   if (!(ml > 0)) return '';
+  const preset = presetForMl(ml);
+  if (preset) return preset.label;
   const f = contentForm(ml);
   if (f.content_unit === 'l') return `${f.content_size} ${f.content_size === '1' ? 'liter' : 'liters'}`;
+  if (f.content_unit === 'fl_oz') return `${f.content_size} oz`;
+  if (f.content_unit === 'gal') return `${f.content_size} gal`;
   return `${f.content_size} ml`;
 }

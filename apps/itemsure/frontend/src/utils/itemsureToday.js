@@ -23,7 +23,7 @@ function fixFor(rec, showMoves) {
  * Builds the list. Each task: { key, tone ('danger'|'warn'|'info'), title, detail, to, button }.
  * `paths` holds the page links so this stays free of routing. Missing data (null) is skipped.
  */
-export function buildTodayTasks({ recs = null, plans = null, sessions = null, reviews = {}, canApprove = false, showMoves = true, paths }) {
+export function buildTodayTasks({ recs = null, plans = null, sessions = null, reviews = {}, canApprove = false, showMoves = true, posSetup = null, paths }) {
   const tasks = [];
 
   const low = (recs || []).filter((r) => r.status === 'low');
@@ -72,6 +72,25 @@ export function buildTodayTasks({ recs = null, plans = null, sessions = null, re
     } else if (canApprove && s.status === 'submitted' && !reviews[s.id]) {
       tasks.push({ key: `review:${s.id}`, tone: 'warn', title: `Count waiting for approval: ${s.name}`, detail: 'Check the differences, then approve or reject.', to: paths.review(s.id), button: 'Review' });
     }
+  }
+
+  // posSetup: { amounts, guessed, sizes } from the Clover sales tracking setup, when it's connected.
+  const toCheck = (posSetup?.amounts || 0) + (posSetup?.sizes || 0);
+  if (toCheck && paths.posSetup) {
+    const parts = [
+      posSetup.amounts ? plural(posSetup.amounts, 'amount', 'amounts') : '',
+      posSetup.sizes ? plural(posSetup.sizes, 'size', 'sizes') : '',
+    ].filter(Boolean).join(' and ');
+    tasks.push({
+      key: 'pos-setup',
+      tone: 'info',
+      title: `Sales tracking: ${parts} to check`,
+      detail: posSetup.guessed
+        ? `ItemSure already guessed ${posSetup.guessed}. Check them so sales vs counts is right.`
+        : 'Needed so sales vs counts can tell what each Clover sale used.',
+      to: paths.posSetup,
+      button: 'Check',
+    });
   }
 
   return tasks;

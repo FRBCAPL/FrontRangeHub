@@ -9,11 +9,10 @@ import ItemsureUnitPicker from './ItemsureUnitPicker.jsx';
 import ItemsureSupplierPicker from './ItemsureSupplierPicker.jsx';
 import ItemsureOtherSuppliersPicker from './ItemsureOtherSuppliersPicker.jsx';
 import ItemsureItemDetailsFields from './ItemsureItemDetailsFields.jsx';
-import ItemsureItemContentField from './ItemsureItemContentField.jsx';
-import { asksContent } from '../../utils/itemsureItemContent.js';
+import ItemsureItemSizePackaging from './ItemsureItemSizePackaging.jsx';
 
-/** Step 1: name, what it's counted in, category, and supplier (once suppliers are set up). */
-export default function ItemsureWizardBasics({ form, setForm, organizationId, categories, units, items = [], itemId, nameClash, renamingArchived, onRestored, canManageCategories, onCategoryAdded, canManageUnits, onUnitAdded, editing, suppliers, canAddSupplier, onSupplierAdded, variantLabel }) {
+/** Step 1: name, what it's counted in (with size and packaging), category, and supplier. */
+export default function ItemsureWizardBasics({ form, setForm, unitInfo, features, organizationId, categories, units, items = [], itemId, nameClash, renamingArchived, onRestored, canManageCategories, onCategoryAdded, canManageUnits, onUnitAdded, editing, suppliers, canAddSupplier, onSupplierAdded, variantLabel }) {
   const set = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }));
   const extras = 'extra_category_ids' in form;
   const chooseMain = (id) => setForm((f) => {
@@ -47,7 +46,7 @@ export default function ItemsureWizardBasics({ form, setForm, organizationId, ca
           onAdded={onUnitAdded}
           hint={editing
             ? 'Can only change while the item has no stock history and no warning levels.'
-            : 'Like each, bottle, or kg. Case sizes go under Extras.'}
+            : 'Like each, bottle, or keg. Sizes and case packs go just below.'}
         />
         <ItemsureCategoryPicker
           organizationId={organizationId}
@@ -58,9 +57,14 @@ export default function ItemsureWizardBasics({ form, setForm, organizationId, ca
           onAdded={onCategoryAdded}
         />
       </div>
-      {'content_size' in form && asksContent(units.find((u) => u.id === form.base_unit_id)?.code) ? (
-        <ItemsureItemContentField form={form} setForm={setForm} unitName={units.find((u) => u.id === form.base_unit_id)?.name} />
-      ) : null}
+      <ItemsureItemSizePackaging
+        form={form}
+        setForm={setForm}
+        unit={units.find((u) => u.id === form.base_unit_id)}
+        unitInfo={unitInfo}
+        features={features}
+        itemId={itemId}
+      />
       <div className="isu-wizard-pair">
         {extras ? (
           <ItemsureExtraCategoryPicker

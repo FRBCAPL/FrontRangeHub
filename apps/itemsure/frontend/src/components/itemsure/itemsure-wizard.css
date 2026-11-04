@@ -447,6 +447,19 @@
 .isu-app .isu-topoff-quick { display: flex; flex-wrap: wrap; gap: 6px; }
 .isu-app .isu-topoff p { margin: 0; }
 
+/* Size and packaging, together under "counted in". */
+.isu-app .isu-size-packaging {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-raised);
+}
+.isu-app .isu-size-packaging > h3 { margin: 0; font-size: 1rem; }
+.isu-app .isu-size-packaging .isu-packaging { margin: 0; }
+.isu-app .isu-size-packaging .isu-packaging h3 { font-size: 0.95rem; }
+
 /* How much one counted unit holds (item_contents). */
 .isu-app .isu-item-content-inputs { display: flex; gap: 8px; max-width: 320px; }
 .isu-app .isu-item-content-inputs input { flex: 1 1 auto; min-width: 0; }

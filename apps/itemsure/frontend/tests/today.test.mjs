@@ -65,6 +65,16 @@ test('topping up, planned moves, and counts each get one line', () => {
   assert.equal(tasks[3].to, '/review/c2');
 });
 
+test('unfinished Clover sales tracking setup shows one task, only with a link to fix it', () => {
+  const posSetup = { amounts: 45, guessed: 40, sizes: 1 };
+  const [task] = buildTodayTasks({ posSetup, paths: { ...paths, posSetup: '/pos' } });
+  assert.equal(task.title, 'Sales tracking: 45 amounts and 1 size to check');
+  assert.equal(task.detail, 'ItemSure already guessed 40. Check them so sales vs counts is right.');
+  assert.equal(task.to, '/pos');
+  assert.deepEqual(buildTodayTasks({ posSetup, paths }), []);
+  assert.deepEqual(buildTodayTasks({ posSetup: { amounts: 0, guessed: 0, sizes: 0 }, paths: { ...paths, posSetup: '/pos' } }), []);
+});
+
 test('only approvers see counts waiting for approval; no moves line when moving is off', () => {
   const tasks = buildTodayTasks({ plans: [{ id: 'p1' }], sessions: [{ id: 'c2', name: 'Thursday', status: 'submitted' }], showMoves: false, paths });
   assert.deepEqual(tasks, []);
