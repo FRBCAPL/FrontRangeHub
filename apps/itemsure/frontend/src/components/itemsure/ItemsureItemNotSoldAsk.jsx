@@ -12,13 +12,16 @@ export default function ItemsureItemNotSoldAsk({ itemName, open, busy, error, on
         <>
           <ErrorNote message={error} />
           <p>
-            <strong>{itemName || 'This item'}</strong> isn&apos;t a Clover button? We&apos;ll stop asking you to match it.
-            Kitchen and supply items often work this way.
+            Is <strong>{itemName || 'this item'}</strong> something you never ring up in Clover, like kitchen or cleaning supplies?
+            ItemSure will stop asking you to match it and won&apos;t suggest it for Clover buttons.
           </p>
-          <p className="isu-muted isu-small">You can undo this later on Sold in Clover. Nothing in Clover or stock is changed.</p>
+          <p>You still count it and track its stock the same way.</p>
+          <p className="isu-muted isu-small">
+            To undo, open this item → Sold in Clover. Nothing in Clover or your counts is changed.
+          </p>
           <div className="isu-pos-ask-actions">
             <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={onConfirm}>
-              {busy ? 'Saving…' : 'Not sold in Clover'}
+              {busy ? 'Saving…' : 'Yes, not sold in Clover'}
             </button>
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={onClose}>Cancel</button>
           </div>

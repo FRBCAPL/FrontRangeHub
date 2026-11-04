@@ -30,10 +30,10 @@ export default function ItemsureItemCloverNote({
   if (notSoldInPos) {
     return (
       <div className="isu-item-clover-note is-quiet" role="status">
-        <p>{itemName} is not sold in Clover, so it is not matched.</p>
+        <p>Marked as not sold in Clover, so ItemSure won&apos;t ask you to match {itemName}.</p>
         {canEdit ? (
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={undo}>
-            {busy ? 'Saving…' : 'Undo'}
+            {busy ? 'Saving…' : 'Undo: it is sold in Clover'}
           </button>
         ) : null}
       </div>
@@ -42,7 +42,7 @@ export default function ItemsureItemCloverNote({
 
   return (
     <div className="isu-item-clover-note" role="status">
-      <p>Not matched to Clover yet, so sales of {itemName} aren&apos;t counted.</p>
+      <p>No Clover button is matched to {itemName} yet, so its sales aren&apos;t counted.</p>
       {canEdit ? (
         <span className="isu-pos-mod-actions">
           <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={onMatch}>Match to Clover</button>

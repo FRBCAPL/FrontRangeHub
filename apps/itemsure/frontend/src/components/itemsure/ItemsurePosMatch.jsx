@@ -162,7 +162,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   return (
     <div className="isu-stack isu-pos-match">
       <p className="isu-muted isu-small">
-        Tell ItemSure which of your items each Clover item uses, and how much each one sold uses (like 1.5 oz of rum; 2 sold = 3 oz). A drink can use more than one item. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Not tracked in ItemSure. This never changes stock.
+        Tell ItemSure which of your items each Clover item uses, and how much each one sold uses (like 1.5 oz of rum; 2 sold = 3 oz). A drink can use more than one item. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Stop tracking button. They move to the Not tracked tab. This never changes stock or Clover.
       </p>
       <div className="isu-pos-filters" role="group" aria-label="Show">
         {Object.entries(MATCH_FILTERS).map(([key, label]) => (

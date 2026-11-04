@@ -75,7 +75,9 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
     <section className="isu-stack isu-item-clover" aria-label="Sold in Clover">
       <p className="isu-muted isu-small">
         Each Clover button that uses {item.name} can take off a different amount, like a shot, a double, or a mixed drink.
-        Set how much one tap of each button uses. If Clover sells 2, that is counted twice. Generic buttons (like a $10 pitcher) can be marked Not tracked in ItemSure. This never changes anything in Clover.
+        Set how much one tap of each button uses. If Clover sells 2, that is counted twice.
+        Stop tracking a Clover button when it&apos;s too generic to tie to stock, like a $10 pitcher.
+        Mark this item Not sold in Clover when it never has a Clover button, like kitchen supplies. This never changes anything in Clover.
       </p>
       {data.pours === null ? <p className="isu-notice">Amounts per sale need a database update first.</p> : null}
       <ErrorNote message={error} />
@@ -93,7 +95,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
                   {canEdit ? (
                     <span className="isu-pos-mod-actions">
                       <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => unlink(p)}>Unlink</button>
-                      <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => skip(p)}>Not tracked in ItemSure</button>
+                      <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => skip(p)}>Stop tracking button</button>
                     </span>
                   ) : null}
                 </div>
@@ -122,12 +124,12 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
         </ul>
       ) : item.notSoldInPos ? (
         <p className="isu-muted">
-          {item.name} is not sold in Clover.
+          {item.name} is marked as not sold in Clover, so ItemSure won&apos;t ask you to match it.
           {canEdit ? (
             <>
               {' '}
               <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={undoNotSold}>
-                {busy ? 'Saving…' : 'Undo'}
+                {busy ? 'Saving…' : 'Undo: it is sold in Clover'}
               </button>
             </>
           ) : null}
@@ -155,7 +157,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
                 <span>{p.name}{posPrice(p) ? <span className="isu-muted isu-small"> · {posPrice(p)}</span> : null}</span>
                 <span className="isu-pos-mod-actions">
                   <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={() => link(p.external_id)}>Link</button>
-                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => skip(p)}>Not tracked in ItemSure</button>
+                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => skip(p)}>Stop tracking button</button>
                 </span>
               </li>
             ))}
@@ -170,7 +172,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
         {skippable.length ? (
           <ItemsureItemSearchPick
             items={skippable}
-            label="+ Not tracked in ItemSure"
+            label="+ Stop tracking a Clover button"
             placeholder="Type to find a Clover item"
             disabled={busy}
             onPick={(id) => {

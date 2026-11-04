@@ -91,7 +91,7 @@ export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choice
         pos.not_tracked && !matched.length ? (
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(false)}>Track this again</button>
         ) : !matched.length ? (
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(true)}>Not tracked in ItemSure</button>
+          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(true)}>Stop tracking button</button>
         ) : null
       ) : null}
     </li>
