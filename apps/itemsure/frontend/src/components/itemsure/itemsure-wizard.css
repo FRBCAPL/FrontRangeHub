@@ -459,6 +459,7 @@
 .isu-app .isu-size-packaging > h3 { margin: 0; font-size: 1rem; }
 .isu-app .isu-size-packaging .isu-packaging { margin: 0; }
 .isu-app .isu-size-packaging .isu-packaging h3 { font-size: 0.95rem; }
+.isu-app .isu-size-packaging-more { justify-self: start; }
 
 /* How much one counted unit holds (item_contents). */
 .isu-app .isu-item-content-inputs { display: flex; gap: 8px; max-width: 320px; }

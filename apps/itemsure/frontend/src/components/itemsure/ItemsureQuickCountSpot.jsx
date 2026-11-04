@@ -1,12 +1,17 @@
 import React, { useId } from 'react';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import { looseText } from '../../utils/itemsureLoose.js';
 import ItemsureStepper from './ItemsureStepper.jsx';
+import ItemsureLooseInput from './ItemsureLooseInput.jsx';
 
-const shown = (entry) => `${displayQuantity(entry.quantity_text)} ${entry.unit_symbol || entry.unit_name || ''}`.trim();
-
-/** One spot in the quick count window: its name, what's already counted there, and a number box. */
-export default function ItemsureQuickCountSpot({ name, entry, value, onChange, onRemove, problem, conflict, precision, autoFocus }) {
+/**
+ * One spot in the quick count window: its name, what's already counted there, and a number box
+ * (or "cases + loose" boxes when `pieces` is set).
+ */
+export default function ItemsureQuickCountSpot({ name, entry, value, onChange, onRemove, problem, conflict, precision, autoFocus, pieces = 0, unitName = '' }) {
   const id = useId();
+  const shown = (e) => (pieces && looseText(e.quantity_text, pieces, unitName || e.unit_name))
+    || `${displayQuantity(e.quantity_text)} ${e.unit_symbol || e.unit_name || ''}`.trim();
   return (
     <li className={`isu-quickcount-spot${problem || conflict ? ' has-problem' : ''}`}>
       <div className="isu-quickcount-spot-head">
@@ -15,15 +20,19 @@ export default function ItemsureQuickCountSpot({ name, entry, value, onChange, o
           <button type="button" className="isu-link" onClick={onRemove} aria-label={`Remove ${name}`}>Remove</button>
         ) : null}
       </div>
-      <ItemsureStepper
-        id={id}
-        value={value}
-        onChange={onChange}
-        label={`${name} count`}
-        inputMode={precision > 0 ? 'decimal' : 'numeric'}
-        placeholder="—"
-        autoFocus={autoFocus}
-      />
+      {pieces ? (
+        <ItemsureLooseInput id={id} value={value} onChange={onChange} pieces={pieces} precision={precision} unitName={unitName} label={`${name} count`} />
+      ) : (
+        <ItemsureStepper
+          id={id}
+          value={value}
+          onChange={onChange}
+          label={`${name} count`}
+          inputMode={precision > 0 ? 'decimal' : 'numeric'}
+          placeholder="—"
+          autoFocus={autoFocus}
+        />
+      )}
       <p className="isu-muted isu-small isu-quickcount-hint">
         {entry
           ? `Already counted: ${shown(entry)}. Change it only to fix a mistake; if stock changed here since it was counted, changing it means a recount.`

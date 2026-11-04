@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ErrorNote } from './ItemsureUi.jsx';
+import { isGroupUnit } from '../../utils/itemsureCategoryKind.js';
 
 const SHOW_AT_ONCE = 50;
 const SHORT_LIST = 5;
@@ -10,11 +11,17 @@ const trim = (n) => (n == null ? '' : String(Math.round(n * 1000) / 1000));
  * "How much does each sale use?" for every matched Clover item without an amount, filled in
  * with guesses. Guessed rows start ticked; typing an amount ticks a row. onSave([{ row, amount, unit }]).
  */
-export default function ItemsurePosAmountReview({ rows, busy, error = '', onSave, onCancel }) {
+export default function ItemsurePosAmountReview({ rows, piecesReady = false, busy, error = '', onSave, onCancel }) {
+  const singles = (r) => piecesReady && isGroupUnit(r.unit);
+  const startUnit = (r) => {
+    if (r.suggestion?.unit) return r.suggestion.unit === 'base' && singles(r) ? 'piece' : r.suggestion.unit;
+    if (singles(r)) return 'piece';
+    return r.unit?.code === 'each' ? 'base' : 'fl_oz';
+  };
   const [edits, setEdits] = useState(() => Object.fromEntries(rows.map((r) => [r.key, {
     ticked: Boolean(r.suggestion),
-    amount: trim(r.suggestion?.amount ?? null),
-    unit: r.suggestion?.unit || (r.unit?.code === 'each' ? 'base' : 'fl_oz'),
+    amount: trim(r.suggestion?.amount ?? (singles(r) ? 1 : null)),
+    unit: startUnit(r),
   }])));
   const short = rows.length <= SHORT_LIST;
   const [filter, setFilter] = useState(() => (short ? 'all' : rows.some((r) => r.suggestion) ? 'guessed' : 'needs'));
@@ -69,6 +76,7 @@ export default function ItemsurePosAmountReview({ rows, busy, error = '', onSave
                   <option value="fl_oz">oz</option>
                   <option value="ml">ml</option>
                   <option value="base">{unitName}</option>
+                  {singles(r) ? <option value="piece">single from the {unitName}</option> : null}
                 </select>
                 <span>of <strong>{r.item.name}</strong></span>
               </span>

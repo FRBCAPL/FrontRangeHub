@@ -4,6 +4,8 @@ import { listCatalog } from '../../services/itemsureItemService.js';
 import {
   addPosLink, listItemContents, listPosItems, listPosLinks, listPosPours, removePosLink, saveItemContent, setPosPour,
 } from '../../services/itemsurePosService.js';
+import { withCategoryDefaults } from '../../utils/itemsureCategoryDefaults.js';
+import { listItemPieces, saveItemPieces } from '../../services/itemsureItemContentService.js';
 import { groupByMainMatch, MATCH_FILTERS, posRows, suggestMatch } from '../../utils/itemsurePosMatch.js';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsurePosMatchRow from './ItemsurePosMatchRow.jsx';
@@ -27,11 +29,14 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
 
   const load = useCallback(async () => {
     try {
-      const [posItems, links, catalog, pours, contents] = await Promise.all([
+      const [posItems, links, catalog, ownPours, ownContents, ownPieces] = await Promise.all([
         listPosItems(organizationId), listPosLinks(organizationId), listCatalog(organizationId),
-        listPosPours(organizationId), listItemContents(organizationId),
+        listPosPours(organizationId), listItemContents(organizationId), listItemPieces(organizationId),
       ]);
-      setData({ posItems, links, items: catalog.items, units: catalog.units, pours, contents });
+      const filled = withCategoryDefaults({
+        links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults,
+      });
+      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null });
     } catch (e) {
       setError(e.message);
       setData((d) => d || { posItems: [], links: new Map(), items: [], units: [], pours: null, contents: null });
@@ -51,7 +56,15 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   const pourInfo = useMemo(() => {
     if (!data?.pours) return null;
     const codes = new Map((data.units || []).map((u) => [u.id, u.code]));
-    return { pours: data.pours, contents: data.contents, unitCodeFor: (itemId) => codes.get(itemsById.get(itemId)?.base_unit_id) || '' };
+    return {
+      pours: data.pours,
+      contents: data.contents,
+      contentFrom: data.contentFrom,
+      pieces: data.pieces,
+      piecesFrom: data.piecesFrom,
+      piecesReady: data.piecesReady,
+      unitFor: (itemId) => (data.units || []).find((u) => u.id === itemsById.get(itemId)?.base_unit_id) || null,
+      unitCodeFor: (itemId) => codes.get(itemsById.get(itemId)?.base_unit_id) || '' };
   }, [data, itemsById]);
   const rows = useMemo(() => (data ? posRows(data.posItems, data.links, { filter, search, keep: asking }) : []), [data, filter, search, asking]);
   const suggestions = useMemo(() => {
@@ -90,8 +103,9 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     await removePosLink(organizationId, externalId, itemId);
     await refresh();
   });
-  const savePour = (externalId, itemId, amount, unit, contentMl) => run(async () => {
+  const savePour = (externalId, itemId, amount, unit, contentMl, pieces) => run(async () => {
     if (contentMl !== undefined) await saveItemContent(organizationId, itemId, contentMl);
+    if (pieces !== undefined) await saveItemPieces(organizationId, itemId, pieces);
     await setPosPour(organizationId, externalId, itemId, amount, unit);
     await refresh();
   });
@@ -111,7 +125,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       onAdd={(itemId) => add(p.external_id, itemId)}
       onRemove={(itemId) => remove(p.external_id, itemId)}
       pourInfo={pourInfo}
-      onSavePour={(itemId, amount, unit, contentMl) => savePour(p.external_id, itemId, amount, unit, contentMl)}
+      onSavePour={(itemId, amount, unit, contentMl, pieces) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces)}
     />
   );
   const matchAll = () => run(async () => {

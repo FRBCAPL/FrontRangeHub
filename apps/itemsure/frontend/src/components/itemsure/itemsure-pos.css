@@ -130,6 +130,16 @@
 .isu-app .isu-size-presets .isu-chip { cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--isu-ink); min-height: 36px; }
 .isu-app .isu-size-presets .isu-chip.is-active { border-color: var(--isu-pine); color: var(--isu-pine); font-weight: 700; }
 
+/* "One case has 24 bottles" */
+.isu-app .isu-pieces { display: grid; gap: 8px; }
+.isu-app .isu-pieces-sentence { margin: 0; font-size: 1.05rem; }
+.isu-app .isu-pieces-sentence strong { font-size: 1.25rem; color: var(--isu-pine); font-variant-numeric: tabular-nums; }
+.isu-app .isu-pieces-sentence strong.is-blank { color: var(--isu-muted); }
+.isu-app .isu-pieces-other { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.isu-app .isu-pieces-other input { width: 110px; min-height: 40px; }
+.isu-app .isu-pieces-example { margin: 0; color: var(--isu-muted); font-size: 0.9rem; }
+.isu-app .isu-pieces .isu-hint { margin: 0; }
+
 /* Sales vs counts report. */
 .isu-app .isu-pos-report-pick { display: flex; flex-wrap: wrap; gap: 10px; }
 .isu-app .isu-pos-report-pick label { display: grid; gap: 4px; flex: 1 1 200px; font-size: 0.9rem; }
@@ -155,3 +165,41 @@
   .isu-app .isu-pos-report-row { grid-template-columns: 1fr 1fr; }
   .isu-app .isu-pos-report-name { grid-column: 1 / -1; }
 }
+
+/* Amounts by category. */
+.isu-app .isu-cat-amount-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.isu-app .isu-cat-amount {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; border: 1px solid var(--isu-line); border-radius: 10px; background: var(--isu-raised);
+}
+.isu-app .isu-cat-amount.is-sub { margin-left: 18px; }
+.isu-app .isu-cat-amount > form { flex-basis: 100%; }
+.isu-app .isu-cat-amount-text { display: grid; gap: 2px; min-width: 0; }
+.isu-app .isu-cat-amounts > .isu-btn { justify-self: start; }
+
+/* Taking sales off stock: on/off, spot order, result, home shortcut. */
+.isu-app .isu-pos-stock-state { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+
+/* Automatic sales imports */
+.isu-app .isu-pos-auto-form { display: grid; gap: 10px; margin: 8px 0; }
+.isu-app .isu-pos-auto-often { justify-self: start; }
+.isu-app .isu-pos-auto-when { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.isu-app .isu-pos-auto-when label { display: grid; gap: 4px; font-size: 0.88rem; font-weight: 600; }
+.isu-app .isu-pos-auto-when select,
+.isu-app .isu-pos-auto-when input { min-height: 44px; min-width: 150px; }
+.isu-app .isu-pos-auto-form p,
+.isu-app .isu-pos-auto-status p { margin: 0; }
+.isu-app .isu-pos-auto-status { display: grid; gap: 6px; margin-top: 8px; }
+.isu-app .isu-pos-spots { margin-top: 14px; display: grid; gap: 6px; }
+.isu-app .isu-pos-spots p { margin: 0; }
+.isu-app .isu-pos-spots > .isu-btn { justify-self: start; }
+.isu-app .isu-pos-spot-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-width: 420px; }
+.isu-app .isu-pos-spot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 6px 10px; border: 1px solid var(--isu-line); border-radius: 10px; background: var(--isu-raised);
+}
+.isu-app .isu-pos-spot-moves { display: flex; gap: 4px; }
+.isu-app .isu-pos-spot-moves .isu-btn { min-width: 40px; min-height: 40px; }
+.isu-app .isu-pos-take-list { margin: 6px 0; padding-left: 18px; display: grid; gap: 2px; font-size: 0.92rem; }
+.isu-app .isu-home-sales { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.isu-app .isu-home-sales p { margin: 2px 0 0; }

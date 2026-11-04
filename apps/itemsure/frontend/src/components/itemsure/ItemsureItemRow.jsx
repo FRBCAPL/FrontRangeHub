@@ -9,13 +9,13 @@ import useFitText from '../../hooks/useFitText.js';
 import { isLetterIcon } from '../../utils/itemsureIcons.js';
 
 /** On hand vs par in a pill coloured by status, with a check when it's fine. */
-function Pill({ summary, unitName, tone, hidden = false }) {
+function Pill({ summary, unitName, pieces, tone, hidden = false }) {
   if (!summary) return null;
   const status = summary.status ? TARGET_STATUS[summary.status] : null;
   return (
     <div className={`isu-stockcard-pill isu-stockcard-pill--${tone}${hidden ? ' isu-stockcard-mirror' : ''}`} aria-hidden={hidden || undefined}>
       {tone === 'ok' ? <span className="isu-stockcard-ok" title={status?.label} aria-label={hidden ? undefined : status?.label}>{'\u2713'}</span> : null}
-      <Amount summary={summary} unitName={unitName} />
+      <Amount summary={summary} unitName={unitName} pieces={pieces} />
     </div>
   );
 }
@@ -46,7 +46,7 @@ function CountButton({ item, counted, onCount }) {
  * `icon` is the category's icon, shown instead of the initials.
  * `onCount` (only while a count is open) shows "Add to count", or a "✓ Counted" button that reopens it once counted.
  */
-export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoIn, details, icon = '', compact = false, onCount, counted, showSupplier = false, showAlsoIn = true }) {
+export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoIn, details, icon = '', compact = false, onCount, counted, showSupplier = false, showAlsoIn = true, pieces = 0 }) {
   const tone = cardTone(summary);
   const hue = categoryHue(item.category_id);
   const nameRef = useFitText(item.name);
@@ -73,7 +73,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
         {badge}
         <div className="isu-stockcard-line">
           <div className="isu-stockcard-name">{link}</div>
-          <Pill summary={summary} unitName={item.unitName} tone={tone} />
+          <Pill summary={summary} unitName={item.unitName} pieces={pieces} tone={tone} />
           <CountButton item={item} counted={counted} onCount={onCount} />
         </div>
       </li>
@@ -87,7 +87,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
         <div className="isu-stockcard-body">
           <div className="isu-stockcard-line">
             <div className="isu-stockcard-name">{link}</div>
-            <Pill summary={summary} unitName={item.unitName} tone={tone} />
+            <Pill summary={summary} unitName={item.unitName} pieces={pieces} tone={tone} />
           </div>
           <div className="isu-stockcard-slim-sub">
             <ItemsureItemMeta supplier={supplier} />
@@ -104,14 +104,14 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
       {badge}
       <div className="isu-stockcard-body">
         <div className="isu-stockcard-top">
-          <Pill summary={summary} unitName={item.unitName} tone={tone} hidden />
+          <Pill summary={summary} unitName={item.unitName} pieces={pieces} tone={tone} hidden />
           <div className="isu-stockcard-title">
             {link}
             {!item.is_active ? <span className="isu-badge">Archived</span> : null}
             {details && !brief ? <span className="isu-stockcard-brand">{details}</span> : null}
           </div>
           <div className="isu-stockcard-side">
-            <Pill summary={summary} unitName={item.unitName} tone={tone} />
+            <Pill summary={summary} unitName={item.unitName} pieces={pieces} tone={tone} />
           </div>
         </div>
 

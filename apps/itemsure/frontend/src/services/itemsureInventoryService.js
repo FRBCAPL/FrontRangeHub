@@ -16,6 +16,7 @@ export const MOVEMENT_LABELS = {
   transfer_in: 'Transfer in',
   transfer_out: 'Transfer out',
   count_adjustment: 'Count adjustment',
+  pos_sale: 'Sold (Clover)',
 };
 
 function one(value) {

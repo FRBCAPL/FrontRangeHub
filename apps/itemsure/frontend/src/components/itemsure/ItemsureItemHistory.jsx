@@ -4,6 +4,7 @@ import { loadPeopleNames } from '../../services/itemsureCountService.js';
 import { onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { displayQuantity, displaySigned } from '../../utils/itemsureQuantity.js';
 import { slotLabel } from '../../utils/itemsureStock.js';
+import { looseText } from '../../utils/itemsureLoose.js';
 import { formatWhen } from '../../utils/itemsureText.js';
 
 const LIMIT = 15;
@@ -14,10 +15,17 @@ const LABELS = {
   transfer_in: 'Moved in',
   transfer_out: 'Moved out',
   count_adjustment: 'Count correction',
+  pos_sale: 'Sold (Clover)',
 };
 
-/** The latest changes for one item, newest first. Read only. */
-export default function ItemsureItemHistory({ organizationId, itemId, locations }) {
+/** The latest changes for one item, newest first. Read only. With `pieces`, amounts read "2 cases + 7 loose". */
+export default function ItemsureItemHistory({ organizationId, itemId, locations, pieces = 0, unitName = '' }) {
+  const change = (m) => {
+    const opening = m.movement_type === 'opening_balance';
+    const loose = pieces ? looseText(m.quantity_text, pieces, unitName || m.unit_name) : null;
+    if (loose) return opening || loose.startsWith('−') ? loose : `+${loose}`;
+    return `${opening ? displayQuantity(m.quantity_text) : displaySigned(m.quantity_text)} ${m.unit_symbol || m.unit_name}`;
+  };
   const [rows, setRows] = useState(null);
   const [names, setNames] = useState({});
   const [error, setError] = useState('');
@@ -56,13 +64,13 @@ export default function ItemsureItemHistory({ organizationId, itemId, locations 
         <li key={m.id} className="isu-history-row">
           <div>
             <strong>{LABELS[m.movement_type] || m.movement_type}</strong>{' '}
-            <span>{m.movement_type === 'opening_balance' ? displayQuantity(m.quantity_text) : displaySigned(m.quantity_text)} {m.unit_symbol || m.unit_name}</span>
+            <span>{change(m)}</span>
             <p className="isu-muted isu-small">
               {slotLabel(locations, m.location_id, m.storage_area_id)} {'\u00b7'} {formatWhen(m.posted_at)} by {names[m.created_by] || 'a member'}
               {m.reason ? ` \u00b7 ${m.reason}` : ''}
             </p>
           </div>
-          <span className="isu-muted isu-small">Then {displayQuantity(m.balance_after_text)}</span>
+          <span className="isu-muted isu-small">Then {(pieces && looseText(m.balance_after_text, pieces, unitName || m.unit_name)) || displayQuantity(m.balance_after_text)}</span>
         </li>
       ))}
     </ul>

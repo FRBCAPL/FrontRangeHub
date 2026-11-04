@@ -3,6 +3,7 @@ import { locationCounts, locationRows, matchesFilter, otherItemCount, spotSectio
 import ItemsureStockSummary from './ItemsureStockSummary.jsx';
 import ItemsureStockItemCard from './ItemsureStockItemCard.jsx';
 import ItemsureStockSpotView from './ItemsureStockSpotView.jsx';
+import useLoosePieces from '../../hooks/useLoosePieces.js';
 
 /**
  * Everything at one location, as item cards or spot by spot. Items show when they are
@@ -13,6 +14,7 @@ export default function ItemsureStockBalances({ location, data, onSpot }) {
   const [filter, setFilter] = useState('all');
   const [view, setView] = useState('items');
   const [showAll, setShowAll] = useState(false);
+  const piecesFor = useLoosePieces();
 
   const rows = useMemo(() => locationRows(data.items, data, location, { showAll }), [data, location, showAll]);
   const counts = locationCounts(rows);
@@ -49,7 +51,7 @@ export default function ItemsureStockBalances({ location, data, onSpot }) {
 
       {view === 'items' ? (
         <ul className="isu-item-list">
-          {visible.map((row) => <ItemsureStockItemCard key={row.item.id} row={row} onSpot={onSpot} />)}
+          {visible.map((row) => <ItemsureStockItemCard key={row.item.id} row={row} onSpot={onSpot} pieces={piecesFor(row.item.id)} />)}
         </ul>
       ) : (
         <ItemsureStockSpotView sections={sections} onSpot={onSpot} />

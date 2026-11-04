@@ -5,6 +5,9 @@ import {
   getPosConnection, listItemContents, listPosItems, listPosLinks, listPosPours, syncCloverSales,
 } from '../services/itemsurePosService.js';
 import { listApprovedCounts, listSalesSyncs, salesHours, siteUsage } from '../services/itemsurePosSalesService.js';
+import { listCategoryDefaults } from '../services/itemsureCategoryDefaultService.js';
+import { listItemPieces } from '../services/itemsureItemContentService.js';
+import { withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
 import { countRounds, expectedUse, salesCovered, salesHourRange, salesIndex, usageRows } from '../utils/itemsurePosUsage.js';
 
 const MAX_SYNC_MS = 44 * 24 * 3600 * 1000;
@@ -33,14 +36,18 @@ export default function usePosSalesReport(organizationId) {
           if (live) setBase({ connection, salesReady, counts: [] });
           return;
         }
-        const [counts, links, pours, contents, catalog, locations, posItems] = await Promise.all([
+        const [counts, links, ownPours, ownContents, catalog, locations, posItems, ownPieces] = await Promise.all([
           listApprovedCounts(organizationId), listPosLinks(organizationId), listPosPours(organizationId),
           listItemContents(organizationId), listCatalog(organizationId), listLocations(organizationId), listPosItems(organizationId),
+          listItemPieces(organizationId),
         ]);
         if (!live) return;
         const codes = new Map(catalog.units.map((u) => [u.id, u.code]));
+        const { pours, contents, pieces } = withCategoryDefaults({
+          links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults,
+        });
         setBase({
-          connection, salesReady, counts, links, pours, contents, locations,
+          connection, salesReady, counts, links, pours, contents, pieces, locations, items: catalog.items, categories: catalog.categories,
           itemsById: new Map(catalog.items.map((i) => [i.id, i])),
           unitCodes: new Map(catalog.items.map((i) => [i.id, codes.get(i.base_unit_id) || ''])),
           posNames: new Map(posItems.map((p) => [p.external_id, p.name])),
@@ -66,10 +73,15 @@ export default function usePosSalesReport(organizationId) {
   /** After a "Fix it": reload amounts and sizes only, keeping the chosen counts. */
   const refreshSetup = useCallback(async () => {
     try {
-      const [links, pours, contents] = await Promise.all([
-        listPosLinks(organizationId), listPosPours(organizationId), listItemContents(organizationId),
+      const [links, ownPours, ownContents, defaults, ownPieces] = await Promise.all([
+        listPosLinks(organizationId), listPosPours(organizationId), listItemContents(organizationId), listCategoryDefaults(organizationId),
+        listItemPieces(organizationId),
       ]);
-      setBase((b) => (b ? { ...b, links, pours, contents } : b));
+      setBase((b) => (b ? {
+        ...b,
+        links,
+        ...withCategoryDefaults({ links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: b.items, categories: b.categories, defaults }),
+      } : b));
     } catch (e) {
       setError(e.message);
     }
@@ -117,7 +129,7 @@ export default function usePosSalesReport(organizationId) {
         const [from, to] = windows.get(itemId) || [fromAt, toAt];
         return soldIn(cloverId, from, to);
       };
-      const expected = expectedUse({ links: base.links, sold, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents });
+      const expected = expectedUse({ links: base.links, sold, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents, pieces: base.pieces });
       setResult({ loading: false, fromAt, toAt, syncNote, rows: usageRows(usage.rows, expected, base.itemsById) });
     } catch (e) {
       setError(e.message);

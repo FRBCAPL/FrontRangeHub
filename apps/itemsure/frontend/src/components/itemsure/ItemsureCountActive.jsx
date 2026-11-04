@@ -5,6 +5,7 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useCountAutosave from '../../hooks/useCountAutosave.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import useItemPackages from '../../hooks/useItemPackages.js';
+import useLoosePieces from '../../hooks/useLoosePieces.js';
 import { usablePackages } from '../../utils/itemsurePackages.js';
 import { COUNT_STATUS_LABELS, ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { SITE } from '../../data/itemsureTerms.js';
@@ -27,6 +28,7 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
   const { session, items, location, storageAreas } = data;
   const { organization, features, can } = useItemsureWorkspace();
   const packaging = useItemPackages(organization.id);
+  const piecesFor = useLoosePieces();
   const navigate = useNavigate();
   const itemsById = useMemo(() => Object.fromEntries(items.map((i) => [i.item_id, i])), [items]);
   const autosave = useCountAutosave({ sessionId: session.id, userId, initialEntries: data.entries, itemsById });
@@ -114,6 +116,7 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
         .filter((e) => e.item_id === item.item_id && (e.storage_area_id || null) !== (rowAreaId || null))
         .map((e) => areaName(e.storage_area_id))}
       packages={features.packaging && packaging.ready ? usablePackages(packaging.packagesFor(item.item_id)) : []}
+      pieces={piecesFor(item.item_id)}
     />
   );
 

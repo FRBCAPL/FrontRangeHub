@@ -4,7 +4,7 @@ import { StockAmount, StockBar, SupplierLine } from './ItemsureStockBits.jsx';
 import ItemsureItemUsage from './ItemsureItemUsage.jsx';
 
 /** Top of the item page: badge, on hand vs par, status bar, usage, where it's kept, and its supplier. `children` are extra buttons. */
-export default function ItemsureItemSummary({ item, summary, usage, unitSymbol, placeCount, supplier, children }) {
+export default function ItemsureItemSummary({ item, summary, pieces = 0, usage, unitSymbol, placeCount, supplier, children }) {
   const tone = cardTone(summary);
   const hue = categoryHue(item.category_id);
   return (
@@ -19,7 +19,7 @@ export default function ItemsureItemSummary({ item, summary, usage, unitSymbol, 
       </span>
       <div className="isu-stockcard-body isu-item-summary-body">
         <div className="isu-item-summary-top">
-          <StockAmount summary={summary} unitName={item.unitName} className="isu-item-summary-amount" />
+          <StockAmount summary={summary} unitName={item.unitName} pieces={pieces} className="isu-item-summary-amount" />
           <span className="isu-muted isu-small">
             {placeCount ? `in ${placeCount} place${placeCount === 1 ? '' : 's'}` : 'Not kept anywhere yet'}
           </span>

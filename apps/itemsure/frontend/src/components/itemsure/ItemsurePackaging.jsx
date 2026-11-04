@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { savePackage, setPackageActive } from '../../services/itemsurePackageService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { describePackage } from '../../utils/itemsurePackages.js';
+import { pluralUnit, singularUnit } from '../../utils/itemsureItemLook.js';
 import { ErrorNote } from './ItemsureUi.jsx';
 import ItemsurePackageForm from './ItemsurePackageForm.jsx';
 
@@ -9,7 +10,10 @@ import ItemsurePackageForm from './ItemsurePackageForm.jsx';
 export default function ItemsurePackaging({ item, packages, onChanged }) {
   const [editing, setEditing] = useState(null);
   const { busy, error, run } = useItemsureAction();
-  const sorted = [...packages].sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.name.localeCompare(b.name));
+  const unit = singularUnit(item.unitName || '').toLowerCase();
+  // "1 case = 1 Case" says nothing; it stays saved, just not listed.
+  const sameAsUnit = (pkg) => Number(pkg.size) === 1 && singularUnit(pkg.name || '').toLowerCase() === unit;
+  const sorted = packages.filter((pkg) => !sameAsUnit(pkg)).sort((a, b) => Number(b.is_active) - Number(a.is_active) || a.name.localeCompare(b.name));
 
   const saved = async () => {
     setEditing(null);
@@ -29,19 +33,19 @@ export default function ItemsurePackaging({ item, packages, onChanged }) {
   return (
     <section className="isu-packaging" aria-label="Packaging sizes">
       <div className="isu-card-head">
-        <h3>Packaging sizes</h3>
+        <h3>Bigger packs</h3>
         {editing === null ? (
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setEditing('new')}>Add package</button>
+          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setEditing('new')}>Add a pack</button>
         ) : null}
       </div>
       <p className="isu-muted isu-small">
-        Stock is always kept in {item.unitName}. Packages let people enter amounts like &ldquo;2 cases&rdquo; and see the {item.unitName} total.
+        Bigger packs you buy it in, and how many {pluralUnit(unit)} are in each. Stock is still counted in {pluralUnit(unit)}.
       </p>
       <ErrorNote message={error} />
 
       {editing === 'new' ? <ItemsurePackageForm item={item} pkg={null} onSaved={saved} onCancel={() => setEditing(null)} /> : null}
 
-      {sorted.length === 0 && editing === null ? <p className="isu-muted isu-small">No packaging sizes yet.</p> : null}
+      {sorted.length === 0 && editing === null ? <p className="isu-muted isu-small">None yet.</p> : null}
       <ul className="isu-package-list">
         {sorted.map((pkg) =>
           editing?.id === pkg.id ? (

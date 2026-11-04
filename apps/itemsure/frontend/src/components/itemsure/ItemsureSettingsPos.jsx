@@ -9,6 +9,8 @@ import ItemsurePosConnectForm from './ItemsurePosConnectForm.jsx';
 import ItemsurePosMatch from './ItemsurePosMatch.jsx';
 import ItemsurePosSitePick from './ItemsurePosSitePick.jsx';
 import ItemsurePosSetup from './ItemsurePosSetup.jsx';
+import ItemsurePosStockCard from './ItemsurePosStockCard.jsx';
+import ItemsurePosAutoSync from './ItemsurePosAutoSync.jsx';
 
 const when = (iso) => (iso ? new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '');
 
@@ -91,6 +93,12 @@ export default function ItemsureSettingsPos() {
           </>
         ) : null}
       </Card>
+      {state.salesReady ? (
+        <ItemsurePosAutoSync organizationId={organization.id} canManage={can('pos.manage')} siteKey={c.location_id || ''} />
+      ) : null}
+      {state.salesReady && c.location_id ? (
+        <ItemsurePosStockCard organizationId={organization.id} locationId={c.location_id} can={can} />
+      ) : null}
       <ItemsurePosSetup
         organizationId={organization.id}
         canEdit={can('items.manage')}

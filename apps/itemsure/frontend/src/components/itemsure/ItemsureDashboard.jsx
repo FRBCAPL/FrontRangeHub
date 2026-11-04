@@ -10,6 +10,7 @@ import { PageHead } from './ItemsureUi.jsx';
 import ItemsureGettingStarted from './ItemsureGettingStarted.jsx';
 import ItemsureHomeActions from './ItemsureHomeActions.jsx';
 import ItemsureToday from './ItemsureToday.jsx';
+import ItemsureHomeSalesStock from './ItemsureHomeSalesStock.jsx';
 import ItemsureStockHealth from './ItemsureStockHealth.jsx';
 function Stat({ label, value, to }) {
   return (
@@ -70,6 +71,8 @@ export default function ItemsureDashboard() {
       {canSetUp ? <ItemsureGettingStarted organizationId={organization.id} counts={counts} progress={progress} /> : null}
 
       <ItemsureToday data={today} can={can} features={features} />
+
+      <ItemsureHomeSalesStock organizationId={organization.id} can={can} />
 
       {canStock ? (
         <ItemsureStockHealth

@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import usePosSetup from '../../hooks/usePosSetup.js';
-import { saveItemContent, setPosPour } from '../../services/itemsurePosService.js';
+import { setPosPour } from '../../services/itemsurePosService.js';
+import { saveSizeAnswers } from '../../services/itemsureItemContentService.js';
 import { saveStandardAmounts } from '../../services/itemsureStandardAmountService.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { Card, ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsurePosAmountReview from './ItemsurePosAmountReview.jsx';
 import ItemsurePosSizeReview from './ItemsurePosSizeReview.jsx';
 import ItemsureStandardAmounts from './ItemsureStandardAmounts.jsx';
+import ItemsureCategoryAmounts from './ItemsureCategoryAmounts.jsx';
+import { saveCategoryDefault } from '../../services/itemsureCategoryDefaultService.js';
 
 const UNIT_WORD = { fl_oz: 'oz', ml: 'ml', base: 'whole' };
 
@@ -68,9 +71,17 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
   };
   const saveSizes = async (list) => {
     const ok = await run(async () => {
-      for (const { item, ml } of list) await saveItemContent(organizationId, item.id, Math.round(ml * 1000) / 1000);
+      await saveSizeAnswers(organizationId, list);
     });
     await finish(ok, false);
+  };
+  const saveCategory = async (categoryId, value) => {
+    const ok = await run(() => saveCategoryDefault(organizationId, categoryId, value));
+    if (ok) {
+      await reload();
+      onChanged?.();
+    }
+    return ok;
   };
   const saveStandards = async (rows) => {
     const ok = await run(() => saveStandardAmounts(organizationId, summary.standardsSaved || [], rows));
@@ -80,6 +91,12 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
   const guessed = summary.amounts.filter((a) => a.suggestion).length;
   const houseList = summary.standards.map((s) => `${s.keyword} ${s.unit === 'base' ? '= 1' : `${s.amount} ${UNIT_WORD[s.unit]}`}`).join(' · ');
   const allSet = !summary.amounts.length && !summary.sizes.length;
+  const categorySet = Boolean(summary.defaults?.size);
+  const { amounts: byCatAmounts, sizes: byCatSizes } = summary.byCategory;
+  const coveredText = [
+    `${byCatAmounts} amount${byCatAmounts === 1 ? '' : 's'}`,
+    byCatSizes ? `${byCatSizes} size${byCatSizes === 1 ? '' : 's'}` : '',
+  ].filter(Boolean).join(' and ');
 
   return (
     <Card title="Set up sales tracking">
@@ -96,6 +113,20 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
           <strong>{summary.matched} Clover items matched</strong>
           <span className="isu-muted isu-small"> · {summary.unmatched} not matched (fine to leave things you don&apos;t stock)</span>
         </Step>
+        {summary.categoryReady ? (
+          <Step
+            done={categorySet}
+            action={canEdit ? (
+              <button type="button" className={`isu-btn isu-btn--${categorySet ? 'ghost' : 'primary'} isu-btn--sm`} onClick={() => setOpen('categories')}>
+                {categorySet ? 'Change' : 'Set by category'}
+              </button>
+            ) : null}
+          >
+            {categorySet
+              ? <><strong>Category amounts</strong><span className="isu-muted isu-small"> · cover {coveredText}</span></>
+              : <><strong>Set amounts by category</strong><span className="isu-muted isu-small"> · quickest: Liquor 1.5 oz a sale, 750 ml bottles</span></>}
+          </Step>
+        ) : null}
         <Step
           done={!summary.amounts.length}
           action={summary.amounts.length && canEdit ? (
@@ -113,7 +144,7 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
           ) : null}
         >
           {summary.sizes.length
-            ? <><strong>{summary.sizes.length} item{summary.sizes.length === 1 ? ' needs' : 's need'} a size</strong><span className="isu-muted isu-small"> · like how big a keg or bottle is</span></>
+            ? <><strong>{summary.sizes.length} item{summary.sizes.length === 1 ? ' needs' : 's need'} a size</strong><span className="isu-muted isu-small"> · like how big a keg or bottle is, or how many come in a case</span></>
             : <strong>Every poured item has a size</strong>}
         </Step>
         <Step done action={canEdit ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setOpen('standards')}>Change</button> : null}>
@@ -123,10 +154,15 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
       {allSet ? <Link to={`${ITEMSURE_PATH}/sales-vs-counts`} className="isu-link">All set. See sales vs counts {'\u203A'}</Link> : null}
 
       <Modal open={open === 'amounts'} title="How much does each sale use?" onClose={close} wide>
-        {open === 'amounts' ? <ItemsurePosAmountReview rows={summary.amounts} busy={busy} error={error} onSave={saveAmounts} onCancel={close} /> : null}
+        {open === 'amounts' ? <ItemsurePosAmountReview rows={summary.amounts} piecesReady={summary.piecesReady} busy={busy} error={error} onSave={saveAmounts} onCancel={close} /> : null}
       </Modal>
-      <Modal open={open === 'sizes'} title="How much does one hold?" onClose={close} wide>
+      <Modal open={open === 'sizes'} title="Sizes and case counts" onClose={close} wide>
         {open === 'sizes' ? <ItemsurePosSizeReview rows={summary.sizes} busy={busy} error={error} onSave={saveSizes} onCancel={close} /> : null}
+      </Modal>
+      <Modal open={open === 'categories'} title="Amounts by category" onClose={close} wide>
+        {open === 'categories' ? (
+          <ItemsureCategoryAmounts summary={summary} canEdit={canEdit} busy={busy} error={error} onSave={saveCategory} onClose={close} />
+        ) : null}
       </Modal>
       <Modal open={open === 'standards'} title="House amounts" onClose={close}>
         {open === 'standards' ? (

@@ -5,6 +5,7 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
+import useLoosePieces from '../../hooks/useLoosePieces.js';
 import { itemSummary, sortByAttention, visibleSlots, whereAmounts } from '../../utils/itemsureItemStock.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, sites, SITE } from '../../data/itemsureTerms.js';
@@ -23,6 +24,7 @@ import ItemsureUndoBar from './ItemsureUndoBar.jsx';
 
 export default function ItemsureItems() {
   const { organization, can, features } = useItemsureWorkspace();
+  const piecesFor = useLoosePieces();
   const [catalog, setCatalog] = useState(null);
   const [query, setQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
@@ -181,6 +183,7 @@ export default function ItemsureItems() {
             compact={compact}
             icon={categoryIcon(tree, item.category_id)}
             summary={summaryFor(item.id)}
+            pieces={piecesFor(item.id)}
             keptAt={stock || places.ready ? whereFor(item.id) : null}
             supplier={suppliers.supplierFor(item.id)}
             alsoIn={extraCategoryNames(tree, item)}

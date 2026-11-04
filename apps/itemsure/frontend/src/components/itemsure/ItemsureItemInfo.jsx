@@ -44,6 +44,18 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
         <Row label="Category">{item.categoryName}</Row>
         <Row label="Counted in">{unitName}</Row>
         {item.contentMl ? <Row label={`One ${singularUnit(unitName || 'unit').toLowerCase()} holds`}>{contentLabel(item.contentMl)}</Row> : null}
+        {!item.contentMl && item.categorySize ? (
+          <Row label={`One ${singularUnit(unitName || 'unit').toLowerCase()} holds`}>
+            {contentLabel(item.categorySize.ml)} <span className="isu-muted isu-small">(uses {item.categorySize.fromCategory})</span>
+          </Row>
+        ) : null}
+        {item.pieces != null || item.categoryPieces ? (
+          <Row label={`Sold out of one ${singularUnit(unitName || 'unit').toLowerCase()}`}>
+            {item.pieces != null ? String(item.pieces) : (
+              <>{String(item.categoryPieces.pieces)} <span className="isu-muted isu-small">(uses {item.categoryPieces.fromCategory})</span></>
+            )}
+          </Row>
+        ) : null}
         {showPackaging ? (
           <Row label="Packaging">
             {packages === null ? <span className="isu-muted">Loading…</span> : packages.length

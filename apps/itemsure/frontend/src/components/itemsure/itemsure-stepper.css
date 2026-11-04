@@ -49,6 +49,21 @@
   }
 }
 
+/* "[2] cases + [7] loose": two steppers side by side, stacked on phones */
+.isu-app .isu-loose { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; min-width: 0; }
+.isu-app .isu-loose-part { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.isu-app .isu-loose-part .isu-stepper input { width: 64px; text-align: center; }
+.isu-app .isu-loose-plus { color: var(--isu-muted); font-weight: 700; }
+.isu-app .isu-loose-problem { flex-basis: 100%; }
+@media (max-width: 520px) {
+  .isu-app .isu-count-input .isu-loose { width: 100%; }
+  .isu-app .isu-loose-part { flex: 1 1 100%; }
+  .isu-app .isu-loose-part .isu-stepper { flex: 1 1 auto; }
+  .isu-app .isu-loose-part .isu-stepper input { width: auto; }
+  .isu-app .isu-loose-part .isu-count-unit { min-width: 52px; }
+  .isu-app .isu-loose-plus { display: none; }
+}
+
 /* Count package helper */
 .isu-app .isu-count-packs .isu-stepper { flex: 0 1 190px; }
 .isu-app .isu-count-packs .isu-stepper input { flex: 1 1 auto; }

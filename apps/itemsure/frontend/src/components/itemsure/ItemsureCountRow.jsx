@@ -3,6 +3,8 @@ import { entryKey } from '../../services/itemsureCountService.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import ItemsureCountPackHelper from './ItemsureCountPackHelper.jsx';
 import ItemsureStepper from './ItemsureStepper.jsx';
+import ItemsureLooseInput from './ItemsureLooseInput.jsx';
+import { looseText } from '../../utils/itemsureLoose.js';
 
 const STATUS_TEXT = {
   pending: 'Not saved yet',
@@ -22,7 +24,7 @@ function RowStatus({ draft, saved }) {
 }
 
 /** One item in the selected storage area. Blank means not counted; 0 means counted, none on hand. */
-export default function ItemsureCountRow({ item, storageAreaId, autosave, otherAreaNames, packages = [] }) {
+export default function ItemsureCountRow({ item, storageAreaId, autosave, otherAreaNames, packages = [], pieces = 0 }) {
   const inputId = useId();
   const [packing, setPacking] = useState(false);
   const key = entryKey(item.item_id, storageAreaId);
@@ -33,6 +35,7 @@ export default function ItemsureCountRow({ item, storageAreaId, autosave, otherA
   const decimals = item.base_precision_scale;
 
   const setValue = (text) => autosave.setValue(item.item_id, storageAreaId, text);
+  const show = (text) => (pieces && looseText(text, pieces, item.base_unit_name)) || `${displayQuantity(text)} ${unit}`;
 
   return (
     <li className={`isu-card isu-count-row${draft?.status === 'conflict' ? ' has-conflict' : ''}`}>
@@ -44,23 +47,41 @@ export default function ItemsureCountRow({ item, storageAreaId, autosave, otherA
           </span>
         </label>
         <div className="isu-count-input">
-          <ItemsureStepper
-            id={inputId}
-            label={item.item_name}
-            inputMode={decimals > 0 ? 'decimal' : 'numeric'}
-            placeholder="—"
-            value={value}
-            aria-describedby={`${inputId}-hint`}
-            onChange={setValue}
-            onBlur={() => autosave.flush(item.item_id, storageAreaId)}
-          />
-          <span className="isu-count-unit">{unit}</span>
+          {pieces ? (
+            <ItemsureLooseInput
+              id={inputId}
+              label={item.item_name}
+              value={value}
+              pieces={pieces}
+              precision={decimals}
+              unitName={item.base_unit_name}
+              describedBy={`${inputId}-hint`}
+              onChange={setValue}
+              onBlur={() => autosave.flush(item.item_id, storageAreaId)}
+            />
+          ) : (
+            <>
+              <ItemsureStepper
+                id={inputId}
+                label={item.item_name}
+                inputMode={decimals > 0 ? 'decimal' : 'numeric'}
+                placeholder="—"
+                value={value}
+                aria-describedby={`${inputId}-hint`}
+                onChange={setValue}
+                onBlur={() => autosave.flush(item.item_id, storageAreaId)}
+              />
+              <span className="isu-count-unit">{unit}</span>
+            </>
+          )}
         </div>
       </div>
 
       <div className="isu-count-row-foot">
         <span id={`${inputId}-hint`} className="isu-muted isu-small">
-          {decimals > 0 ? `Up to ${decimals} decimal place${decimals === 1 ? '' : 's'}` : 'Whole numbers'}
+          {pieces
+            ? `Full ones, plus loose (${pieces} in one)`
+            : decimals > 0 ? `Up to ${decimals} decimal place${decimals === 1 ? '' : 's'}` : 'Whole numbers'}
           {otherAreaNames.length ? ` · Also counted in ${otherAreaNames.join(', ')}` : ''}
         </span>
         <RowStatus draft={draft} saved={saved} />
@@ -88,8 +109,8 @@ export default function ItemsureCountRow({ item, storageAreaId, autosave, otherA
         <div className="isu-count-conflict" role="alert">
           <p>
             Someone else changed this while you were counting. Saved value:{' '}
-            <strong>{saved ? `${displayQuantity(saved.quantity_text)} ${unit}` : 'not counted'}</strong>. Yours:{' '}
-            <strong>{draft.text.trim() === '' ? 'not counted' : `${draft.text} ${unit}`}</strong>.
+            <strong>{saved ? show(saved.quantity_text) : 'not counted'}</strong>. Yours:{' '}
+            <strong>{draft.text.trim() === '' ? 'not counted' : show(draft.text)}</strong>.
           </p>
           <div className="isu-card-actions">
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => autosave.resolveConflict(item.item_id, storageAreaId, 'theirs')}>

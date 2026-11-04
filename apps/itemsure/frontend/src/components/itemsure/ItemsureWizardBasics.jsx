@@ -1,6 +1,7 @@
 import React from 'react';
 import { Field } from './ItemsureUi.jsx';
 import { categoryTree } from '../../utils/itemsureCategories.js';
+import { categoryPieces, categorySize } from '../../utils/itemsureCategoryDefaults.js';
 import { applySuggestions, suggestExtras, trackExtraEdits } from '../../utils/itemsureCategorySuggest.js';
 import ItemsureCategoryPicker from './ItemsureCategoryPicker.jsx';
 import ItemsureNameClash from './ItemsureNameClash.jsx';
@@ -12,9 +13,12 @@ import ItemsureItemDetailsFields from './ItemsureItemDetailsFields.jsx';
 import ItemsureItemSizePackaging from './ItemsureItemSizePackaging.jsx';
 
 /** Step 1: name, what it's counted in (with size and packaging), category, and supplier. */
-export default function ItemsureWizardBasics({ form, setForm, unitInfo, features, organizationId, categories, units, items = [], itemId, nameClash, renamingArchived, onRestored, canManageCategories, onCategoryAdded, canManageUnits, onUnitAdded, editing, suppliers, canAddSupplier, onSupplierAdded, variantLabel }) {
+export default function ItemsureWizardBasics({ form, setForm, unitInfo, features, organizationId, categories, categoryDefaults = null, units, items = [], itemId, nameClash, renamingArchived, onRestored, canManageCategories, onCategoryAdded, canManageUnits, onUnitAdded, editing, suppliers, canAddSupplier, onSupplierAdded, variantLabel }) {
   const set = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }));
   const extras = 'extra_category_ids' in form;
+  const byId = new Map(categories.map((c) => [c.id, c]));
+  const cat = byId.get(form.category_id);
+  const sizeHint = [form.name, cat?.name, byId.get(cat?.parent_category_id)?.name].filter(Boolean).join(' ');
   const chooseMain = (id) => setForm((f) => {
     if (!extras || id === f.category_id) return { ...f, category_id: id };
     return { ...f, category_id: id, ...applySuggestions(f, suggestExtras(categoryTree(categories), items, id, itemId)) };
@@ -64,6 +68,9 @@ export default function ItemsureWizardBasics({ form, setForm, unitInfo, features
         unitInfo={unitInfo}
         features={features}
         itemId={itemId}
+        categorySize={categorySize(form, byId, categoryDefaults)}
+        categoryPieces={categoryPieces(form, byId, categoryDefaults)}
+        sizeHint={sizeHint}
       />
       <div className="isu-wizard-pair">
         {extras ? (

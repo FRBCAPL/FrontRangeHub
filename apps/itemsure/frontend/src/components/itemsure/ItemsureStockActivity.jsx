@@ -76,6 +76,9 @@ export default function ItemsureStockActivity({ organizationId, location, locati
               {m.effective_at !== m.posted_at && m.source_type === 'count_session' ? (
                 <p className="isu-muted isu-small">As of the count, {formatWhen(m.effective_at)}</p>
               ) : null}
+              {m.movement_type === 'pos_sale' ? (
+                <p className="isu-muted isu-small">Sales for the hour ending {formatWhen(m.effective_at)}</p>
+              ) : null}
               {pack ? (
                 <p className="isu-muted isu-small">
                   Entered as {displayQuantity(pack.package_quantity_text)} {'\u00d7'} {pack.package_name} {'\u00b7'} 1 {pack.package_name} = {displayQuantity(pack.base_per_package_text)} {m.unit_symbol || m.unit_name}

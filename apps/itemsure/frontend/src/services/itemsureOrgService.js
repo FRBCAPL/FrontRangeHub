@@ -92,8 +92,9 @@ export async function loadWorkspace(user) {
   let featuresSaved = false;
   let variantLabel = '';
   let detailsAvailable = false;
+  let looseAvailable = false;
   if (active) {
-    const [grants, choices, industry, featureRow, labelRow] = await Promise.all([
+    const [grants, choices, industry, featureRow, labelRow, featureKeys] = await Promise.all([
       itemsure.from('role_permissions').select('permission_code').eq('role_code', active.roleCode),
       // This business's role settings; missing on older databases, which means defaults.
       itemsure
@@ -106,7 +107,10 @@ export async function loadWorkspace(user) {
       itemsure.from('organizations').select('features').eq('id', active.organizationId).maybeSingle(),
       // Brand and details: missing until that database update is applied.
       itemsure.from('organizations').select('variant_label').eq('id', active.organizationId).maybeSingle(),
+      // Which switches the database accepts; missing on databases before the loose-counts update.
+      itemsure.rpc('feature_keys'),
     ]);
+    looseAvailable = !featureKeys.error && Array.isArray(featureKeys.data) && featureKeys.data.includes('loose');
     if (!labelRow.error && labelRow.data) {
       detailsAvailable = true;
       variantLabel = labelRow.data.variant_label || '';
@@ -130,7 +134,7 @@ export async function loadWorkspace(user) {
     archived,
     archiveAvailable,
     organization: active
-      ? { ...active, id: active.organizationId, name: active.organizationName, industryName, features, featuresSaved, variantLabel, detailsAvailable }
+      ? { ...active, id: active.organizationId, name: active.organizationName, industryName, features, featuresSaved, variantLabel, detailsAvailable, looseAvailable }
       : null,
     permissions,
   };

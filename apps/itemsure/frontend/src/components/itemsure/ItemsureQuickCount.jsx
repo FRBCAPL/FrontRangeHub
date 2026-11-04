@@ -6,6 +6,8 @@ import { ensureItemInSession, saveSpotCount } from '../../services/itemsureQuick
 import { countingAreas } from '../../utils/itemsureCountAreas.js';
 import { entriesBySpot, planSpotCounts, savedValue, startingSpots } from '../../utils/itemsureQuickCount.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import { looseText } from '../../utils/itemsureLoose.js';
+import useLoosePieces from '../../hooks/useLoosePieces.js';
 import { anchorForDraft } from '../../utils/itemsureServerTimes.js';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 import ItemsureQuickCountSpot from './ItemsureQuickCountSpot.jsx';
@@ -33,6 +35,7 @@ export default function ItemsureQuickCount({ organizationId, item, sessions, sta
   const session = sessions.find((s) => s.id === sessionId);
   const location = (locations || []).find((l) => l.id === session?.location_id);
   const unit = item.unitName || 'units';
+  const pieces = useLoosePieces()(item.id);
 
   useEffect(() => {
     let alive = true;
@@ -120,7 +123,8 @@ export default function ItemsureQuickCount({ organizationId, item, sessions, sta
     }
 
     if (!Object.keys(failed).length && !Object.keys(clashed).length && done.length === changes.length) {
-      const total = done.length === 1 ? `${displayQuantity(done[0].typed)} ${unit} in ${done[0].name}` : `${done.length} spots`;
+      const amount = (text) => (pieces && looseText(text, pieces, unit)) || `${displayQuantity(text)} ${unit}`;
+      const total = done.length === 1 ? `${amount(done[0].typed)} in ${done[0].name}` : `${done.length} spots`;
       onSaved({
         sessionId,
         areaIds: done.map((d) => d.storageAreaId),
@@ -178,6 +182,8 @@ export default function ItemsureQuickCount({ organizationId, item, sessions, sta
                 problem={problems[id]}
                 conflict={conflicts[id]}
                 precision={precision}
+                pieces={pieces}
+                unitName={unit}
                 autoFocus={n === 0 && !isTouchScreen()}
               />
             ))}

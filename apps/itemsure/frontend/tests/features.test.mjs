@@ -1,11 +1,11 @@
-// Feature switches: missing keys mean "on"; only an explicit false switches something off.
+// Feature switches: missing keys mean "on" (except "loose", which starts off); only an explicit false switches something off.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ALL_FEATURES_ON, FEATURES, availableFeatures, readFeatures } from '../src/utils/itemsureFeatures.js';
 
-const ALL_ON = { spots: true, packaging: true, transfers: true, approvals: true, details: true };
+const ALL_ON = { spots: true, packaging: true, transfers: true, approvals: true, details: true, loose: false };
 
-test('no saved switches (older business or no database change) means everything on', () => {
+test('no saved switches (older business or no database change) means everything on, loose counting off', () => {
   for (const raw of [null, undefined, {}, [], 'spots', 3]) {
     assert.deepEqual(readFeatures(raw), ALL_ON);
   }
@@ -15,22 +15,29 @@ test('no saved switches (older business or no database change) means everything 
 test('a new business starts simple', () => {
   assert.deepEqual(
     readFeatures({ spots: false, packaging: false, transfers: false, approvals: false }),
-    { spots: false, packaging: false, transfers: false, approvals: false, details: true },
+    { spots: false, packaging: false, transfers: false, approvals: false, details: true, loose: false },
   );
 });
 
 test('only an explicit false switches a feature off; unknown keys are ignored', () => {
   assert.deepEqual(readFeatures({ spots: false, transfers: 'no', colour: false, details: false }), {
-    spots: false, packaging: true, transfers: true, approvals: true, details: false,
+    spots: false, packaging: true, transfers: true, approvals: true, details: false, loose: false,
   });
 });
 
+test('loose counting is only on when switched on', () => {
+  assert.equal(readFeatures({ loose: true }).loose, true);
+  assert.equal(readFeatures({ loose: 'yes' }).loose, false);
+  assert.equal(readFeatures({ loose: false }).loose, false);
+});
+
 test('every switch has a label and a hint', () => {
-  assert.deepEqual(FEATURES.map((f) => f.key), ['spots', 'packaging', 'transfers', 'approvals', 'details']);
+  assert.deepEqual(FEATURES.map((f) => f.key), ['spots', 'packaging', 'transfers', 'approvals', 'details', 'loose']);
   FEATURES.forEach((f) => assert.ok(f.label && f.hint));
 });
 
-test('brand and details is only offered once its database update is applied', () => {
+test('brand and details, and loose counting, are only offered once their database updates are applied', () => {
   assert.deepEqual(availableFeatures({}).map((f) => f.key), ['spots', 'packaging', 'transfers', 'approvals']);
   assert.deepEqual(availableFeatures({ detailsAvailable: true }).map((f) => f.key), ['spots', 'packaging', 'transfers', 'approvals', 'details']);
+  assert.deepEqual(availableFeatures({ looseAvailable: true }).map((f) => f.key), ['spots', 'packaging', 'transfers', 'approvals', 'loose']);
 });

@@ -20,7 +20,7 @@ export function SpotChip({ slot, onClick }) {
 }
 
 /** One item at this location: totals vs par, status bar, and its spots. Tap a spot to add, use, or move. */
-export default function ItemsureStockItemCard({ row, onSpot }) {
+export default function ItemsureStockItemCard({ row, onSpot, pieces = 0 }) {
   const { item, slots, summary } = row;
   const itemLink = useItemLink();
   return (
@@ -28,7 +28,7 @@ export default function ItemsureStockItemCard({ row, onSpot }) {
       <div className="isu-stockcard-body">
         <div className="isu-stockloc-top">
           <Link {...itemLink(item.id)} className="isu-stockloc-name">{item.name}</Link>
-          <StockAmount summary={summary} unitName={item.unitName} />
+          <StockAmount summary={summary} unitName={item.unitName} pieces={pieces} />
         </div>
         <StockBar summary={summary} />
         {slots.length ? (

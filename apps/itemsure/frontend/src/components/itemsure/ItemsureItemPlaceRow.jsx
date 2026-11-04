@@ -1,6 +1,7 @@
 import React, { useId } from 'react';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { isEmptySlot } from '../../utils/itemsureItemStock.js';
+import { looseText } from '../../utils/itemsureLoose.js';
 import { fillPercent } from '../../utils/itemsureItemLook.js';
 import { daysLeft, describeDays, describeRate } from '../../utils/itemsureUsage.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
@@ -32,11 +33,18 @@ export default function ItemsureItemPlaceRow({ item, slot, label, can, perDay = 
     <li className={`isu-card isu-place-row isu-place-row--${tone}${open ? ' is-open' : ''}`}>
       <button type="button" className="isu-place-row-toggle" onClick={onToggle} aria-expanded={open} aria-controls={bodyId}>
         <span className="isu-place-row-name">{label}</span>
-        <span className="isu-place-row-amount">
-          <strong>{hasAmount ? displayQuantity(slot.quantity) : '\u2013'}</strong>
-          {par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(par)}</span> : null}
-          <span className="isu-stockcard-unit"> {item.unitSymbol}</span>
-        </span>
+        {hasAmount && item.loose ? (
+          <span className="isu-place-row-amount">
+            <strong>{looseText(slot.quantity, item.loose, item.unitName)}</strong>
+            {par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(par)} {item.unitSymbol}</span> : null}
+          </span>
+        ) : (
+          <span className="isu-place-row-amount">
+            <strong>{hasAmount ? displayQuantity(slot.quantity) : '\u2013'}</strong>
+            {par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(par)}</span> : null}
+            <span className="isu-stockcard-unit"> {item.unitSymbol}</span>
+          </span>
+        )}
         <span className="isu-place-row-status">
           {par !== null ? (
             <span className="isu-stockbar" aria-hidden="true">

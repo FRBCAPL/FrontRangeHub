@@ -4,7 +4,7 @@
 export const FL_OZ_ML = 29.5735;
 /** ml in one of each volume unit ItemSure ships with. */
 export const VOLUME_ML = { milliliter: 1, liter: 1000, gallon: 3785.41 };
-export const POUR_UNITS = { fl_oz: 'oz', ml: 'ml', base: '' };
+export const POUR_UNITS = { fl_oz: 'oz', ml: 'ml', base: '', piece: '' };
 
 const HOUR = 3600 * 1000;
 const HALF_HOUR = HOUR / 2;
@@ -12,13 +12,20 @@ const floorHour = (ms) => Math.floor(ms / HOUR) * HOUR;
 
 /** True when turning this pour into the item's unit needs "how much one holds" (e.g. oz from a bottle). */
 export function needsContent(pour, unitCode) {
-  return Boolean(pour) && pour.unit !== 'base' && !VOLUME_ML[unitCode];
+  return Boolean(pour) && pour.unit !== 'base' && pour.unit !== 'piece' && !VOLUME_ML[unitCode];
 }
 
-/** How much of the item's counted unit one sale uses, or null when the bottle size is missing. */
-export function pourInBase(pour, unitCode, contentMl) {
+/** True when the pour is singles out of a case (or pack), so "how many in one" is needed. */
+export const needsPieces = (pour) => pour?.unit === 'piece';
+
+/**
+ * How much of the item's counted unit one sale uses, or null when the bottle size (oz/ml) or
+ * the count in one case (singles) is missing.
+ */
+export function pourInBase(pour, unitCode, contentMl, pieces) {
   if (!pour || !(pour.amount > 0)) return null;
   if (pour.unit === 'base') return pour.amount;
+  if (pour.unit === 'piece') return pieces > 0 ? pour.amount / pieces : null;
   const ml = pour.unit === 'fl_oz' ? pour.amount * FL_OZ_ML : pour.amount;
   if (VOLUME_ML[unitCode]) return ml / VOLUME_ML[unitCode];
   return contentMl > 0 ? ml / contentMl : null;
@@ -26,10 +33,11 @@ export function pourInBase(pour, unitCode, contentMl) {
 
 /**
  * Expected use per item. links: Map cloverId -> [itemId]; sold: Map cloverId -> quantity;
- * pours: Map "cloverId|itemId" -> { amount, unit }; unitCodes / contents: Map itemId -> code / ml.
+ * pours: Map "cloverId|itemId" -> { amount, unit }; unitCodes / contents / pieces: Map itemId ->
+ * code / ml / singles in one.
  * Returns Map itemId -> { expected, sold, missingPour: [cloverId], missingContent }.
  */
-export function expectedUse({ links, sold, pours, unitCodes, contents }) {
+export function expectedUse({ links, sold, pours, unitCodes, contents, pieces }) {
   const out = new Map();
   const soldFor = typeof sold === 'function' ? sold : (cloverId) => sold.get(cloverId) || 0;
   for (const [cloverId, itemIds] of links) {
@@ -39,7 +47,7 @@ export function expectedUse({ links, sold, pours, unitCodes, contents }) {
       const row = out.get(itemId) || { expected: 0, sold: 0, missingPour: [], missingContent: false };
       row.sold += qty;
       const pour = pours?.get(`${cloverId}|${itemId}`);
-      const per = pour ? pourInBase(pour, unitCodes.get(itemId), contents?.get(itemId)) : null;
+      const per = pour ? pourInBase(pour, unitCodes.get(itemId), contents?.get(itemId), pieces?.get(itemId)) : null;
       if (!pour) row.missingPour.push(cloverId);
       else if (per == null) row.missingContent = true;
       else row.expected += qty * per;

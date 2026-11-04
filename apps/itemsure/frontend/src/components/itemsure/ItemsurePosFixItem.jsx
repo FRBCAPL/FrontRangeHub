@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import usePosSetup from '../../hooks/usePosSetup.js';
-import { saveItemContent, setPosPour } from '../../services/itemsurePosService.js';
+import { setPosPour } from '../../services/itemsurePosService.js';
+import { saveSizeAnswers } from '../../services/itemsureItemContentService.js';
 import { ErrorNote } from './ItemsureUi.jsx';
 import ItemsurePosAmountReview from './ItemsurePosAmountReview.jsx';
 import ItemsurePosSizeReview from './ItemsurePosSizeReview.jsx';
@@ -29,11 +30,11 @@ export default function ItemsurePosFixItem({ organizationId, itemId, onChanged, 
     for (const { row, amount, unit } of list) await setPosPour(organizationId, row.pos.external_id, row.item.id, amount, unit);
   }));
   const saveSizes = async (list) => saved(await run(async () => {
-    for (const { item, ml } of list) await saveItemContent(organizationId, item.id, Math.round(ml * 1000) / 1000);
+    await saveSizeAnswers(organizationId, list);
   }));
 
   if (amounts.length) {
-    return <ItemsurePosAmountReview key={`a-${key}`} rows={amounts} busy={busy} error={error} onSave={saveAmounts} onCancel={onClose} />;
+    return <ItemsurePosAmountReview key={`a-${key}`} rows={amounts} piecesReady={summary.piecesReady} busy={busy} error={error} onSave={saveAmounts} onCancel={onClose} />;
   }
   if (sizes.length) {
     return <ItemsurePosSizeReview key={`s-${key}`} rows={sizes} busy={busy} error={error} onSave={saveSizes} onCancel={onClose} />;

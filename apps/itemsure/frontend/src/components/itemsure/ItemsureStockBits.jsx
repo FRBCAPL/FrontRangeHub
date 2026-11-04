@@ -2,14 +2,19 @@ import React from 'react';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
 import { fillPercent, pluralUnit } from '../../utils/itemsureItemLook.js';
+import { fullCases } from '../../utils/itemsureLoose.js';
 
-/** "6 / 12 Bottles" on one line: on hand, par, unit. `summary` is { total, par }. */
-export function StockAmount({ summary, unitName, className = '' }) {
+/**
+ * "6 / 12 Bottles" on one line: on hand, par, unit. `summary` is { total, par }. With `pieces`
+ * (counting loose ones too), on hand is full cases only; loose ones show on the item page.
+ */
+export function StockAmount({ summary, unitName, className = '', pieces = 0 }) {
   if (!summary) return null;
-  const label = `${summary.total === null ? 'No amount yet' : `${displayQuantity(summary.total)} on hand`}${summary.par !== null ? `, par ${displayQuantity(summary.par)}` : ''}`;
+  const total = summary.total === null ? null : (pieces && fullCases(summary.total, pieces)) || displayQuantity(summary.total);
+  const label = `${total === null ? 'No amount yet' : `${total} on hand`}${summary.par !== null ? `, par ${displayQuantity(summary.par)}` : ''}`;
   return (
     <div className={`isu-stockcard-amount${className ? ` ${className}` : ''}`} aria-label={label} title={summary.par !== null ? 'On hand / par' : 'On hand'}>
-      <strong>{summary.total === null ? '\u2013' : displayQuantity(summary.total)}</strong>
+      <strong>{total === null ? '\u2013' : total}</strong>
       {summary.par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(summary.par)}</span> : null}
       <span className="isu-stockcard-unit"> {pluralUnit(unitName)}</span>
     </div>

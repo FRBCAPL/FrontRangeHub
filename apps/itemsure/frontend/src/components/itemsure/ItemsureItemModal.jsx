@@ -25,6 +25,8 @@ import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import ItemsurePlacePicker from './ItemsurePlacePicker.jsx';
 import useItemUsage from '../../hooks/useItemUsage.js';
+import useLoosePieces from '../../hooks/useLoosePieces.js';
+import { looseText } from '../../utils/itemsureLoose.js';
 import ItemsureItemAction, { ACTION_TITLES } from './ItemsureItemAction.jsx';
 
 /**
@@ -34,6 +36,7 @@ import ItemsureItemAction, { ACTION_TITLES } from './ItemsureItemAction.jsx';
 export default function ItemsureItemModal({ itemId, onClose }) {
   const navigate = useNavigate();
   const { organization, features, can } = useItemsureWorkspace();
+  const piecesFor = useLoosePieces();
   const [catalog, setCatalog] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [action, setAction] = useState(null);
@@ -84,8 +87,16 @@ export default function ItemsureItemModal({ itemId, onClose }) {
   const item = useMemo(() => {
     if (!raw) return null;
     const unit = catalog.units.find((u) => u.id === raw.base_unit_id);
-    return { id: raw.id, name: raw.name, unitName: unit?.name || raw.unitName, unitSymbol: unit?.symbol || unit?.name || raw.unitName, precision: unit?.precision_scale ?? 0 };
-  }, [raw, catalog]);
+    return {
+      id: raw.id,
+      name: raw.name,
+      unitName: unit?.name || raw.unitName,
+      unitSymbol: unit?.symbol || unit?.name || raw.unitName,
+      precision: unit?.precision_scale ?? 0,
+      loose: piecesFor(raw.id),
+    };
+  }, [raw, catalog, piecesFor]);
+  const amountText = (text) => (item?.loose && looseText(text, item.loose, item.unitName)) || null;
 
   const sources = { places: places.placesFor(itemId) || [], balances: stock?.balances || [], targets: stock?.targets || [], locations: places.locations };
   const groups = visibleSlots(itemId, sources);
@@ -188,7 +199,7 @@ export default function ItemsureItemModal({ itemId, onClose }) {
         ) : null}
 
         {canView ? (
-          <ItemsureItemSummary item={raw} summary={summary} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null} supplier={suppliers.supplierFor(raw.id)}>
+          <ItemsureItemSummary item={raw} summary={summary} pieces={item.loose} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null} supplier={suppliers.supplierFor(raw.id)}>
             <ItemsureItemCountButton organizationId={organization.id} item={raw} counts={openCounts} keptAt={groups} precision={item.precision} can={can} />
           </ItemsureItemSummary>
         ) : (
@@ -212,7 +223,11 @@ export default function ItemsureItemModal({ itemId, onClose }) {
                   {g.slots.length > 1 ? (
                     <li className="isu-place-location-total">
                       <strong>{g.location.name}</strong>
-                      <span>{groupTotal(g) === null ? 'no amounts yet' : <><strong>{displayQuantity(groupTotal(g))}</strong> {item.unitSymbol} in {g.slots.length} spots</>}</span>
+                      <span>
+                        {groupTotal(g) === null ? 'no amounts yet' : amountText(groupTotal(g))
+                          ? <><strong>{amountText(groupTotal(g))}</strong> in {g.slots.length} spots</>
+                          : <><strong>{displayQuantity(groupTotal(g))}</strong> {item.unitSymbol} in {g.slots.length} spots</>}
+                      </span>
                     </li>
                   ) : null}
                   {g.slots.map((slot) => (
@@ -239,7 +254,7 @@ export default function ItemsureItemModal({ itemId, onClose }) {
 
         {tab === 'history' ? (
           <section className="isu-stack" aria-label="History">
-            <ItemsureItemHistory organizationId={organization.id} itemId={raw.id} locations={places.locations} />
+            <ItemsureItemHistory organizationId={organization.id} itemId={raw.id} locations={places.locations} pieces={item.loose} unitName={item.unitName} />
           </section>
         ) : null}
 

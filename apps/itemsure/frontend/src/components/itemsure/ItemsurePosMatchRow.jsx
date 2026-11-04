@@ -48,9 +48,14 @@ export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choice
               unitCode={pourInfo.unitCodeFor(item.id)}
               pour={pourInfo.pours.get(`${pos.external_id}|${item.id}`) || null}
               contentMl={pourInfo.contents?.get(item.id)}
+              sizeFrom={pourInfo.contentFrom?.get(item.id) || ''}
+              unit={pourInfo.unitFor(item.id)}
+              pieces={pourInfo.pieces?.get(item.id)}
+              piecesFrom={pourInfo.piecesFrom?.get(item.id) || ''}
+              piecesReady={pourInfo.piecesReady}
               canEdit={canMatch}
               busy={busy}
-              onSave={(amount, unit, contentMl) => onSavePour(item.id, amount, unit, contentMl)}
+              onSave={(amount, unit, contentMl, pieces) => onSavePour(item.id, amount, unit, contentMl, pieces)}
             />
           ))}
         </div>

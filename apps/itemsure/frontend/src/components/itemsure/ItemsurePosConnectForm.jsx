@@ -23,7 +23,7 @@ export default function ItemsurePosConnectForm({ organizationId, onConnected }) 
   return (
     <form className="isu-stack" onSubmit={submit} noValidate>
       <p className="isu-muted isu-small">
-        ItemSure reads your Clover items (and later your sales) to help with stock. It never changes prices or takes payments.
+        ItemSure only reads from Clover (your items and sales) to help with stock. It never changes anything in Clover. Read-only token permissions are recommended.
       </p>
       <details className="isu-pos-help">
         <summary>Where do I find these?</summary>

@@ -8,14 +8,17 @@ import { listExtraCategories } from './itemsureExtraCategoryService.js';
 import { listItemDetails } from './itemsureItemDetailsService.js';
 import { listCategoryIcons } from './itemsureCategoryIconService.js';
 import { listTopOffPercents } from './itemsureTopOffService.js';
-import { listItemContents } from './itemsureItemContentService.js';
+import { listItemContents, listItemPieces } from './itemsureItemContentService.js';
+import { listCategoryDefaults } from './itemsureCategoryDefaultService.js';
+import { categoryPieces, categorySize } from '../utils/itemsureCategoryDefaults.js';
+import { unitAsks } from '../utils/itemsureItemContent.js';
 
 function one(value) {
   return Array.isArray(value) ? value[0] || null : value || null;
 }
 
 export async function listCatalog(organizationId) {
-  const [items, categories, units, extras, details, icons, topOffs, contents] = await Promise.all([
+  const [items, categories, units, extras, details, icons, topOffs, contents, categoryDefaults, pieces] = await Promise.all([
     itemsure
       .from('inventory_items')
       .select('id, name, description, sku, barcode, is_active, category_id, base_unit_id, inventory_categories(name), units_of_measure(name, symbol)')
@@ -38,10 +41,16 @@ export async function listCatalog(organizationId) {
     listCategoryIcons(organizationId),
     listTopOffPercents(organizationId),
     listItemContents(organizationId),
+    listCategoryDefaults(organizationId),
+    listItemPieces(organizationId),
   ]);
 
   const categoryRows = (assertOk(categories, 'categories') || []).map((c) => ({ ...c, icon: icons?.get(c.id) || '' }));
   const tree = categoryTree(categoryRows);
+  const categoriesById = new Map(categoryRows.map((c) => [c.id, c]));
+  const unitRows = assertOk(units, 'units') || [];
+  const unitsById = new Map(unitRows.map((u) => [u.id, u]));
+  const asks = (item) => unitAsks(unitsById.get(item.base_unit_id));
   return {
     items: (assertOk(items, 'items') || []).map((item) => ({
       ...item,
@@ -52,14 +61,19 @@ export async function listCatalog(organizationId) {
       variant: details?.get(item.id)?.variant || '',
       topoffPercent: topOffs?.get(item.id) ?? null,
       contentMl: contents?.get(item.id) ?? null,
+      categorySize: asks(item) === 'size' ? categorySize(item, categoriesById, categoryDefaults) : null,
+      pieces: pieces?.get(item.id) ?? null,
+      categoryPieces: asks(item) === 'pieces' ? categoryPieces(item, categoriesById, categoryDefaults) : null,
     })),
     categories: categoryRows,
-    units: assertOk(units, 'units') || [],
+    categoryDefaults,
+    units: unitRows,
     extrasAvailable: extras !== null,
     detailsAvailable: details !== null,
     iconsAvailable: icons !== null,
     topOffAvailable: topOffs !== null,
     contentsAvailable: contents !== null,
+    piecesAvailable: pieces !== null,
   };
 }
 

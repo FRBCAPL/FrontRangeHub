@@ -8,8 +8,8 @@ import { saveExtraCategories } from './itemsureExtraCategoryService.js';
 import { saveOtherSuppliers } from './itemsureOtherSupplierService.js';
 import { setStockAmount } from './itemsureInventoryService.js';
 import { saveTargets } from './itemsureTargetService.js';
-import { removeItemContent, saveItemContent } from './itemsureItemContentService.js';
-import { asksContent, checkContent } from '../utils/itemsureItemContent.js';
+import { removeItemContent, removeItemPieces, saveItemContent, saveItemPieces } from './itemsureItemContentService.js';
+import { asksContent, checkContent, checkPieces, unitAsks } from '../utils/itemsureItemContent.js';
 
 const needsAmountUpdate = (message) => /set_inventory_quantity|could not find the function|schema cache/i.test(message || '');
 
@@ -44,15 +44,29 @@ export async function saveItemWizard({ organizationId, item, itemId, form, entri
       problems.push({ key: null, message: `"Also from" not saved. ${err.message}` });
     }
   }
-  if ('content_size' in form) {
+  const asks = unitAsks(unit);
+  // Only touch the size when the form asked for it (or the unit is itself a volume), so a size
+  // saved earlier is never wiped just because the question isn't shown for this unit.
+  if ('content_size' in form && (asks === 'size' || (unit && !asksContent(unit.code)))) {
     try {
-      const size = asksContent(unit?.code) ? checkContent(form.content_size, form.content_unit) : { ml: null };
+      const size = asks === 'size' ? checkContent(form.content_size, form.content_unit) : { ml: null };
       if (size.error) throw new Error(size.error);
       const had = item?.contentMl ?? null;
       if (size.ml != null && size.ml !== had) await saveItemContent(organizationId, id, size.ml);
       else if (size.ml == null && had != null) await removeItemContent(organizationId, id);
     } catch (err) {
       problems.push({ key: null, message: `Size not saved. ${err.message}` });
+    }
+  }
+  if ('pieces' in form && asks === 'pieces') {
+    try {
+      const count = checkPieces(form.pieces);
+      if (count.error) throw new Error(count.error);
+      const had = item?.pieces ?? null;
+      if (count.pieces != null && count.pieces !== had) await saveItemPieces(organizationId, id, count.pieces);
+      else if (count.pieces == null && had != null) await removeItemPieces(organizationId, id);
+    } catch (err) {
+      problems.push({ key: null, message: `"How many in one" not saved. ${err.message}` });
     }
   }
 

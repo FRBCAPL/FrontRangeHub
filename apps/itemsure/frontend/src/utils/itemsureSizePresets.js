@@ -1,7 +1,13 @@
 // Common container sizes, so people pick "Half barrel" or "750 ml" instead of doing math.
 // Stored sizes are ml; a saved size that matches a preset is shown with the preset's name.
 
+import { kindOf } from './itemsureCategoryKind.js';
+
 const GAL = 3785.41;
+const OZ = 29.5735;
+const oz = (n) => ({ key: `${n}oz`, label: `${n} oz`, ml: Math.round(n * OZ * 1000) / 1000, input: { content_size: String(n), content_unit: 'fl_oz' } });
+const ml = (n, label = `${n} ml`) => ({ key: `${n}ml`, label, ml: n, input: { content_size: String(n), content_unit: 'ml' } });
+const liters = (n) => ({ key: `${n}l`, label: `${n} ${n === 1 ? 'liter' : 'liters'}`, ml: n * 1000, input: { content_size: String(n), content_unit: 'l' } });
 
 const PRESETS = {
   keg: [
@@ -9,24 +15,26 @@ const PRESETS = {
     { key: 'quarter-barrel', label: 'Quarter barrel (7.75 gal)', ml: 7.75 * GAL, input: { content_size: '7.75', content_unit: 'gal' } },
     { key: 'sixtel', label: 'Sixtel (5.16 gal)', ml: (15.5 / 3) * GAL, input: { content_size: '5.16', content_unit: 'gal' } },
   ],
-  bottle: [
-    { key: '750ml', label: '750 ml', ml: 750, input: { content_size: '750', content_unit: 'ml' } },
-    { key: '1l', label: '1 liter', ml: 1000, input: { content_size: '1', content_unit: 'l' } },
-    { key: '1.75l', label: '1.75 liters', ml: 1750, input: { content_size: '1.75', content_unit: 'l' } },
-    { key: '375ml', label: '375 ml', ml: 375, input: { content_size: '375', content_unit: 'ml' } },
-    { key: '12oz', label: '12 oz', ml: 354.882, input: { content_size: '12', content_unit: 'fl_oz' } },
-    { key: '16oz', label: '16 oz', ml: 473.176, input: { content_size: '16', content_unit: 'fl_oz' } },
-  ],
+  liquor: [ml(750), liters(1), liters(1.75), ml(375), ml(50)],
+  wine: [ml(750), liters(1.5), liters(3), ml(187)],
+  packaged: [oz(12), oz(16), oz(19.2), oz(22), oz(24), oz(25)],
+  bottle: [ml(750), liters(1), liters(1.75), ml(375), oz(12), oz(16)],
 };
-const ALL = [...PRESETS.keg, ...PRESETS.bottle];
+const ALL = [...PRESETS.keg, ...PRESETS.bottle, ...PRESETS.liquor, ...PRESETS.wine, ...PRESETS.packaged];
 
-/** Presets that fit what the item is counted in: kegs for a keg, bottles and cans otherwise. */
-export function presetsFor(unit) {
-  return /keg|barrel/i.test(`${unit?.code || ''} ${unit?.name || ''}`) ? PRESETS.keg : PRESETS.bottle;
+/**
+ * Presets that fit the item: kegs for a keg, then by what the name says (`hint`: item or
+ * category names) liquor, wine, or beer/soda bottles and cans. Otherwise common bottles.
+ */
+export function presetsFor(unit, hint = '') {
+  if (/keg|barrel/i.test(`${unit?.code || ''} ${unit?.name || ''}`)) return PRESETS.keg;
+  const kind = kindOf(hint, unit);
+  if (kind === 'draft') return PRESETS.keg;
+  return PRESETS[kind] || PRESETS.bottle;
 }
 
 /** The preset a saved size matches (within 0.5%), or null. */
-export function presetForMl(ml) {
-  if (!(ml > 0)) return null;
-  return ALL.find((p) => Math.abs(p.ml - ml) / p.ml < 0.005) || null;
+export function presetForMl(value) {
+  if (!(value > 0)) return null;
+  return ALL.find((p) => Math.abs(p.ml - value) / p.ml < 0.005) || null;
 }

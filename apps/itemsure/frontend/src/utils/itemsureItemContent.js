@@ -2,6 +2,7 @@
 
 import { FL_OZ_ML, VOLUME_ML } from './itemsurePosUsage.js';
 import { presetForMl } from './itemsureSizePresets.js';
+import { isGroupUnit } from './itemsureCategoryKind.js';
 
 export const CONTENT_UNITS = {
   ml: { label: 'ml', ml: 1 },
@@ -13,6 +14,27 @@ const MAX_ML = 1000000;
 
 /** Asking makes no sense when the item is already counted in a volume (ml, liters, gallons). */
 export const asksContent = (unitCode) => !VOLUME_ML[unitCode];
+
+const CONTAINER_UNIT = /\b(bottles?|btls?|kegs?|barrels?|cans?|jugs?|carafes?|growlers?|jars?|pitchers?|fifths?|handles?|tanks?|tins?)\b/i;
+
+/**
+ * What the item form asks, from what it's counted in: 'size' for containers ("One bottle holds
+ * 750 ml"), 'pieces' for cases, packs and boxes ("One case has 24"), else null (each, pounds, liters…).
+ */
+export function unitAsks(unit) {
+  if (!unit || VOLUME_ML[unit.code]) return null;
+  if (isGroupUnit(unit)) return 'pieces';
+  return CONTAINER_UNIT.test(`${unit.code || ''} ${unit.name || ''}`.replace(/[-_]/g, ' ')) ? 'size' : null;
+}
+
+/** { pieces } for a typed "One case has" ('' -> null), or { error }. */
+export function checkPieces(text) {
+  const raw = String(text ?? '').trim();
+  if (!raw) return { pieces: null };
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0 || n > 100000) return { error: 'How many are in one should be a number above 0.' };
+  return { pieces: n };
+}
 
 /** { ml } for a typed size ('' -> null), or { error }. */
 export function checkContent(text, unit) {

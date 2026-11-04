@@ -97,7 +97,7 @@ export async function listPosPours(organizationId) {
   return map;
 }
 
-/** Saves (or clears, with a null amount) how much one sale uses. unit: 'fl_oz' | 'ml' | 'base'. */
+/** Saves (or clears, with a null amount) how much one sale uses. unit: 'fl_oz' | 'ml' | 'base' | 'piece'. */
 export async function setPosPour(organizationId, externalId, itemId, amount, unit) {
   const clear = amount == null;
   assertOk(
