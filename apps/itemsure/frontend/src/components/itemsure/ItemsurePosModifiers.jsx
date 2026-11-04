@@ -34,7 +34,13 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
 
   const describe = (rule) => ruleText(rule, itemsById.get(rule?.itemId)?.name, unitLabel(rule, itemsById.get(rule?.itemId)));
   const suggested = state.rows.filter((r) => !r.rule && r.guess);
+  const unset = state.rows.filter((r) => !r.rule).length;
   const shown = showAll ? state.rows : state.rows.slice(0, SHOWN);
+  const headline = !state.rows.length
+    ? 'None yet'
+    : unset
+      ? `${state.rows.length} · ${unset} not set yet`
+      : `${state.rows.length}`;
   const useAll = async () => {
     setBulk(true);
     for (const r of suggested) if (!(await save(r.id, r.guess))) break;
@@ -42,7 +48,12 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
   };
 
   return (
-    <Card title="Clover modifiers">
+    <details className="isu-card isu-pos-mod-fold">
+      <summary className="isu-pos-mod-summary">
+        <h2>Clover modifiers</h2>
+        <span className="isu-muted isu-small">{headline}</span>
+      </summary>
+      <div className="isu-pos-mod-body">
       <p className="isu-muted isu-small">
         Modifiers are the extras staff tap in Clover, like Double or Add Red Bull. Say what each one uses and the{' '}
         <Link to={`${ITEMSURE_PATH}/clover-sales`} className="isu-link">Clover sales</Link> and Sales vs counts pages count it too.
@@ -85,11 +96,12 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
         </button>
       ) : null}
       <p className="isu-muted isu-small">Modifiers count in the reports only. Taking sales off stock doesn&rsquo;t use them yet.</p>
+      </div>
       <Modal open={Boolean(editing)} title={editing ? `${editing.name || 'Modifier'}` : ''} onClose={() => setEditing(null)}>
         {editing ? (
           <ItemsurePosModifierForm modifier={editing} items={state.items} onSave={(rule) => save(editing.id, rule)} onCancel={() => setEditing(null)} />
         ) : null}
       </Modal>
-    </Card>
+    </details>
   );
 }

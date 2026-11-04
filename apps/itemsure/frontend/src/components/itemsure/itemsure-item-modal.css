@@ -55,6 +55,27 @@
   min-width: 10rem;
 }
 
+.isu-item-clover-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--isu-amber, #d89b2b) 16%, var(--isu-paper));
+  border: 1px solid color-mix(in srgb, var(--isu-amber, #d89b2b) 45%, var(--isu-line));
+}
+.isu-item-clover-note p {
+  margin: 0;
+  flex: 1 1 12rem;
+  font-size: 0.92rem;
+}
+.isu-item-clover-note.is-quiet {
+  background: var(--isu-paper);
+  border-color: var(--isu-line);
+}
+
 .isu-item-modal-head p {
   margin: 0;
 }

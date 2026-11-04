@@ -91,12 +91,33 @@
 
 /* Item window → Sold in Clover. */
 .isu-app .isu-item-clover > p { margin: 0; }
-.isu-app .isu-item-clover-head > .isu-btn { margin-left: auto; }
+.isu-app .isu-item-clover-head > .isu-pos-mod-actions { margin-left: auto; }
 .isu-app .isu-item-clover-suggest p { margin: 0; }
 .isu-app .isu-item-clover-suggest .isu-pos-suggest { justify-content: space-between; padding: 6px 10px; border: 1px solid var(--isu-line); border-radius: 10px; }
 .isu-app .isu-item-clover > .isu-search-pick-open { justify-self: start; }
 
-/* Settings → Clover modifiers. */
+/* Settings → Clover modifiers. Collapsed until opened so the POS page stays short.
+   Do not set display:flex/grid on details — browsers then fail to hide the body. */
+.isu-app .isu-pos-mod-body { display: grid; gap: 8px; }
+.isu-app .isu-pos-mod-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+}
+.isu-app .isu-pos-mod-summary::-webkit-details-marker { display: none; }
+.isu-app .isu-pos-mod-summary::before {
+  content: '\25B8';
+  color: var(--isu-muted);
+  transition: transform 0.15s;
+}
+.isu-app .isu-pos-mod-fold[open] > .isu-pos-mod-summary::before { transform: rotate(90deg); }
+.isu-app .isu-pos-mod-summary h2 { margin: 0; font-size: 1.05rem; }
+.isu-app .isu-pos-mod-fold[open] > .isu-pos-mod-summary { margin-bottom: 4px; }
+
 .isu-app .isu-pos-mod-list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; }
 .isu-app .isu-pos-mod-row {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
@@ -180,11 +201,34 @@
 .isu-app .isu-pos-report-pick label { display: grid; gap: 4px; flex: 1 1 200px; font-size: 0.9rem; }
 .isu-app .isu-pos-report-pick select { min-height: 40px; }
 .isu-app .isu-pos-report { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.isu-app .isu-pos-report-head,
 .isu-app .isu-pos-report-row {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 0.7fr) repeat(3, minmax(0, 1fr));
   align-items: center;
   gap: 4px 12px;
+}
+.isu-app .isu-pos-report-head { margin: 8px 0 4px; }
+.isu-app .isu-pos-report-sort {
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--isu-muted);
+  text-align: left;
+  cursor: pointer;
+}
+.isu-app .isu-pos-report-sort.is-on,
+.isu-app .isu-pos-report-sort:hover,
+.isu-app .isu-pos-report-sort:focus-visible {
+  color: var(--isu-pine);
+  border-color: var(--isu-line);
+}
+.isu-app .isu-pos-report-row {
   padding: 10px 12px;
   border: 1px solid var(--isu-line);
   border-radius: 10px;
@@ -197,7 +241,9 @@
 .isu-app .isu-pos-diff.is-more { color: var(--isu-danger); }
 .isu-app .isu-pos-diff.is-less { color: var(--isu-amber); }
 @media (max-width: 640px) {
+  .isu-app .isu-pos-report-head,
   .isu-app .isu-pos-report-row { grid-template-columns: 1fr 1fr; }
+  .isu-app .isu-pos-report-head > :first-child,
   .isu-app .isu-pos-report-name { grid-column: 1 / -1; }
 }
 

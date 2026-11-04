@@ -73,11 +73,11 @@ export function itemSalesRows({ totals, links, pours, unitCodes, contents, piece
   return rows.sort((a, b) => b.sold - a.sold || b.used - a.used || a.name.localeCompare(b.name));
 }
 
-/** Clover items that sold but aren't matched to any ItemSure item: [{ externalId, name, sold }], most sold first. */
-export function unmatchedRows(totals, links, posNames) {
+/** Clover items that sold but aren't matched to any ItemSure item: [{ externalId, name, sold }], most sold first. Skips items marked not tracked. */
+export function unmatchedRows(totals, links, posNames, skipped = new Set()) {
   const rows = [];
   for (const [externalId, sold] of totals) {
-    if (!(sold > 0) || (links.get(externalId) || []).length) continue;
+    if (!(sold > 0) || skipped.has(externalId) || (links.get(externalId) || []).length) continue;
     rows.push({ externalId, name: posNames.get(externalId) || 'Clover item', sold });
   }
   return rows.sort((a, b) => b.sold - a.sold || a.name.localeCompare(b.name));

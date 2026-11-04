@@ -35,7 +35,7 @@ export default function usePosSetup(organizationId, reloadKey, { enabled = true,
       ]);
       const defaults = catalog.categoryDefaults;
       const { pours, contents, pieces } = withCategoryDefaults({
-        links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults,
+        links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults, units: catalog.units,
       });
       setData({
         posItems, links, pours, contents, pieces, ownPours, ownContents, ownPieces, defaults, saved,
@@ -91,7 +91,7 @@ export default function usePosSetup(organizationId, reloadKey, { enabled = true,
       standardsSaved: data.saved,
       standards,
       matched,
-      unmatched: data.posItems.filter((p) => !p.is_deleted && !(data.links.get(p.external_id) || []).length).length,
+      unmatched: data.posItems.filter((p) => !p.is_deleted && !p.not_tracked && !(data.links.get(p.external_id) || []).length).length,
       amounts,
       byCategory: { amounts: byCategory.amounts, sizes: byCategory.sizes.size },
       categoryReady: data.defaults !== null,

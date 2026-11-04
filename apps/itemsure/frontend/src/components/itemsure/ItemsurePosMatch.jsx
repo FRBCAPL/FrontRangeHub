@@ -2,13 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import {
-  addPosLink, listItemContents, listPosItems, listPosLinks, listPosPours, removePosLink, saveItemContent, setPosPour,
+  addPosLink, listItemContents, listPosItems, listPosLinks, listPosPours, removePosLink, saveItemContent, setPosNotTracked, setPosPour,
 } from '../../services/itemsurePosService.js';
 import { withCategoryDefaults } from '../../utils/itemsureCategoryDefaults.js';
 import { listItemPieces, saveItemPieces } from '../../services/itemsureItemContentService.js';
-import { groupByMainMatch, MATCH_FILTERS, posRows, suggestMatch } from '../../utils/itemsurePosMatch.js';
+import { groupByMainMatch, MATCH_FILTERS, matchableItems, posRows, suggestMatch } from '../../utils/itemsurePosMatch.js';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsurePosMatchRow from './ItemsurePosMatchRow.jsx';
+import ItemsurePosNotTrackedAsk from './ItemsurePosNotTrackedAsk.jsx';
 import ItemsurePosSuggestReview from './ItemsurePosSuggestReview.jsx';
 
 const SHOW_AT_ONCE = 60;
@@ -25,6 +26,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   const [limit, setLimit] = useState(SHOW_AT_ONCE);
   const [asking, setAsking] = useState(() => new Set()); // just matched: "Anything else?" until Done
   const [reviewing, setReviewing] = useState(false);
+  const [skipping, setSkipping] = useState(null);
   const { busy, error, setError, run } = useItemsureAction();
 
   const load = useCallback(async () => {
@@ -34,7 +36,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
         listPosPours(organizationId), listItemContents(organizationId), listItemPieces(organizationId),
       ]);
       const filled = withCategoryDefaults({
-        links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults,
+        links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
       });
       setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null });
     } catch (e) {
@@ -52,7 +54,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   };
 
   const itemsById = useMemo(() => new Map((data?.items || []).map((i) => [i.id, i])), [data]);
-  const choices = useMemo(() => (data?.items || []).filter((i) => i.is_active), [data]);
+  const choices = useMemo(() => matchableItems(data?.items), [data]);
   const pourInfo = useMemo(() => {
     if (!data?.pours) return null;
     const codes = new Map((data.units || []).map((u) => [u.id, u.code]));
@@ -103,6 +105,22 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     await removePosLink(organizationId, externalId, itemId);
     await refresh();
   });
+  const skipItem = (pos, skip) => {
+    if (skip) {
+      setSkipping(pos);
+      return;
+    }
+    return run(async () => {
+      await setPosNotTracked(organizationId, pos.external_id, false);
+      await refresh();
+    });
+  };
+  const confirmSkip = () => run(async () => {
+    if (!skipping) return;
+    await setPosNotTracked(organizationId, skipping.external_id, true);
+    await refresh();
+    setSkipping(null);
+  });
   const savePour = (externalId, itemId, amount, unit, contentMl, pieces) => run(async () => {
     if (contentMl !== undefined) await saveItemContent(organizationId, itemId, contentMl);
     if (pieces !== undefined) await saveItemPieces(organizationId, itemId, pieces);
@@ -126,6 +144,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       onRemove={(itemId) => remove(p.external_id, itemId)}
       pourInfo={pourInfo}
       onSavePour={(itemId, amount, unit, contentMl, pieces) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces)}
+      onSkip={(skip) => skipItem(p, skip)}
     />
   );
   const matchAll = () => run(async () => {
@@ -143,7 +162,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   return (
     <div className="isu-stack isu-pos-match">
       <p className="isu-muted isu-small">
-        Tell ItemSure which of your items each Clover item uses, and how much each sale uses (like 1.5 oz of rum). A drink can use more than one item. This never changes stock.
+        Tell ItemSure which of your items each Clover item uses, and how much each one sold uses (like 1.5 oz of rum; 2 sold = 3 oz). A drink can use more than one item. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Not tracked in ItemSure. This never changes stock.
       </p>
       <div className="isu-pos-filters" role="group" aria-label="Show">
         {Object.entries(MATCH_FILTERS).map(([key, label]) => (
@@ -165,6 +184,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
           ) : null}
         </div>
       ) : null}
+      <ItemsurePosNotTrackedAsk pos={skipping} busy={busy} error={error} onConfirm={confirmSkip} onClose={() => setSkipping(null)} />
       <Modal open={reviewing} title="Review suggested matches" onClose={() => setReviewing(false)}>
         {reviewing ? (
           <ItemsurePosSuggestReview
@@ -177,7 +197,13 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
         ) : null}
       </Modal>
       <ErrorNote message={error} />
-      {!rows.length ? <p className="isu-muted">{filter === 'todo' && !search ? 'Everything is matched.' : 'Nothing matches.'}</p> : null}
+      {!rows.length ? (
+        <p className="isu-muted">
+          {filter === 'todo' && !search ? 'Everything else is matched or marked as not tracked.'
+            : filter === 'skip' && !search ? 'Nothing is marked as not tracked.'
+              : 'Nothing matches.'}
+        </p>
+      ) : null}
       {grouped ? (
         groupByMainMatch(rows, data.links, itemsById).map((g) => (
           <details key={g.key || 'other'} className="isu-pos-group" open={Boolean(search.trim())}>

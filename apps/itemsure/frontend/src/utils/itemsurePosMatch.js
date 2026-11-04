@@ -28,19 +28,29 @@ export function suggestMatch(posName, items) {
   return best && !tie ? best : null;
 }
 
-export const MATCH_FILTERS = { todo: 'Not matched', done: 'Matched', all: 'All' };
+export const MATCH_FILTERS = { todo: 'Not matched', done: 'Matched', skip: 'Not tracked', all: 'All' };
+
+export const isNotTracked = (p) => Boolean(p?.not_tracked);
+
+/** Active ItemSure items that can be matched to Clover (not kitchen/supply skips). */
+export function matchableItems(items) {
+  return (items || []).filter((item) => item.is_active && !item.notSoldInPos);
+}
 
 /**
  * Clover items to show: removed ones only while still matched; `filter` is a MATCH_FILTERS key.
  * `keep` (Clover item ids) stay under "Not matched" after their first match, until the person is done.
+ * Items marked "not tracked" (generic buttons you don't stock) sit under that tab, not "Not matched".
  */
 export function posRows(posItems, links, { filter = 'todo', search = '', keep = null } = {}) {
   const needle = search.trim().toLowerCase();
   return posItems.filter((p) => {
     const matched = (links.get(p.external_id) || []).length > 0;
+    const skipped = isNotTracked(p) && !matched;
     if (p.is_deleted && !matched) return false;
-    if (filter === 'todo' && matched && !keep?.has(p.external_id)) return false;
+    if (filter === 'todo' && (matched || skipped) && !keep?.has(p.external_id)) return false;
     if (filter === 'done' && !matched) return false;
+    if (filter === 'skip' && !skipped) return false;
     return !needle || `${p.name} ${p.category_name} ${p.sku}`.toLowerCase().includes(needle);
   });
 }

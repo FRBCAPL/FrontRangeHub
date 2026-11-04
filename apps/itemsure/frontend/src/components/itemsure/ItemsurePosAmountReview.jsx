@@ -80,7 +80,7 @@ export default function ItemsurePosAmountReview({ rows, piecesReady = false, bus
                 </select>
                 <span>of <strong>{r.item.name}</strong></span>
               </span>
-              <span className="isu-muted isu-small">{r.suggestion ? r.suggestion.reason : 'No guess: type how much one sale uses'}</span>
+              <span className="isu-muted isu-small">{r.suggestion ? r.suggestion.reason : 'No guess: type how much each one sold uses'}</span>
             </li>
           );
         })}

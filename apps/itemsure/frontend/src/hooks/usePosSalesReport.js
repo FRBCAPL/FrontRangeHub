@@ -46,10 +46,10 @@ export default function usePosSalesReport(organizationId) {
         if (!live) return;
         const codes = new Map(catalog.units.map((u) => [u.id, u.code]));
         const { pours, contents, pieces } = withCategoryDefaults({
-          links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults,
+          links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
         });
         setBase({
-          connection, salesReady, counts, links, pours, contents, pieces, locations, items: catalog.items, categories: catalog.categories,
+          connection, salesReady, counts, links, pours, contents, pieces, locations, items: catalog.items, categories: catalog.categories, units: catalog.units,
           itemsById: new Map(catalog.items.map((i) => [i.id, i])),
           unitCodes: new Map(catalog.items.map((i) => [i.id, codes.get(i.base_unit_id) || ''])),
           posNames: new Map(posItems.map((p) => [p.external_id, p.name])),
@@ -83,7 +83,7 @@ export default function usePosSalesReport(organizationId) {
       setBase((b) => (b ? {
         ...b,
         links,
-        ...withCategoryDefaults({ links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: b.items, categories: b.categories, defaults }),
+        ...withCategoryDefaults({ links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: b.items, categories: b.categories, defaults, units: b.units }),
       } : b));
     } catch (e) {
       setError(e.message);

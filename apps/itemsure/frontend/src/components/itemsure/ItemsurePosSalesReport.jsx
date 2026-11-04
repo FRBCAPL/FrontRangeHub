@@ -20,7 +20,7 @@ export default function ItemsurePosSalesReport() {
   const { organization, can } = useItemsureWorkspace();
   const r = usePosSalesReport(organization.id);
   const [fixing, setFixing] = useState(null);
-  const head = <PageHead title="Sales vs counts" description="Compare what Clover says sold with what your counts say was used. This report never changes stock." />;
+  const head = <PageHead title="Sales vs counts" description="Pick a starting count and an ending count. The difference between them (plus deliveries) is what was used, then ItemSure compares that to Clover. This never changes stock." />;
 
   if (!r.base) return <div className="isu-page">{head}<p className="isu-muted">Loading…</p></div>;
   const { connection, salesReady } = r.base;
@@ -31,7 +31,7 @@ export default function ItemsurePosSalesReport() {
         {head}
         <Card>
           <p className="isu-muted">
-            {!salesReady && connection ? 'This report needs a database update first. Nothing else is affected.' : 'Connect Clover first, then match its items to yours and set how much each sale uses.'}
+            {!salesReady && connection ? 'This report needs a database update first. Nothing else is affected.' : 'Connect Clover first, then match its items to yours and set how much each one sold uses.'}
           </p>
           {settingsLink}
           <ErrorNote message={r.error} />
@@ -59,24 +59,24 @@ export default function ItemsurePosSalesReport() {
             </label>
           ) : null}
           <label>
-            <span>From counts on</span>
+            <span>Starting count</span>
             <select value={r.pair.from} onChange={pick('from')}>
               <option value="">Choose…</option>
               {r.rounds.map((c) => <option key={c.key} value={c.key}>{roundLabel(c)}</option>)}
             </select>
           </label>
           <label>
-            <span>To counts on</span>
+            <span>Ending count</span>
             <select value={r.pair.to} onChange={pick('to')}>
               <option value="">Choose…</option>
               {r.rounds.map((c) => <option key={c.key} value={c.key}>{roundLabel(c)}</option>)}
             </select>
           </label>
         </div>
-        <p className="isu-muted isu-small">Each spot is compared with its own earlier count, so spots can be counted at different times.</p>
+        <p className="isu-muted isu-small">Like a till: start + deliveries − end = what was used. Each spot uses its own start and end, so they can be counted at different times.</p>
         {r.rounds.length < 2 ? (
           <p className="isu-muted">
-            This report needs approved counts on two different days at the same {site}. To just see what sold, use{' '}
+            This page compares two count days at the same {site}. To only see what Clover sold, open{' '}
             <Link to={`${ITEMSURE_PATH}/clover-sales`} className="isu-link">Clover sales</Link>.
           </p>
         ) : null}
@@ -100,10 +100,10 @@ export default function ItemsurePosSalesReport() {
       {r.result?.rows ? (
         <Card title="By item">
           <p className="isu-muted isu-small">
-            <strong>Sold</strong> is how many times Clover rang it up. <strong>Sales used</strong> is how much stock those sales should have used.{' '}
-            <strong>Counts used</strong> is how much your two counts say was actually used (it needs the item counted both times).
+            <strong>Clover sold</strong> is how many times the register rang it up. <strong>Clover used</strong> is that times the amount for each one sold.{' '}
+            <strong>Between counts</strong> is the difference between those two counts (start + deliveries − end).
           </p>
-          <p className="isu-muted isu-small">&ldquo;More used than sold&rdquo; can mean spills, free drinks, big pours, or missing sales. Recorded removals (like waste) count as used.</p>
+          <p className="isu-muted isu-small">&ldquo;More between counts than Clover&rdquo; can mean spills, free drinks, big pours, or missing sales. Recorded removals (like waste) count as used.</p>
           <Link to={`${ITEMSURE_PATH}/clover-sales`} className="isu-link isu-small">Just want to see what sold? Clover sales {'\u203A'}</Link>
           <ItemsurePosSalesTable rows={r.result.rows} posNames={r.base.posNames} onFix={can('items.manage') ? setFixing : null} />
         </Card>

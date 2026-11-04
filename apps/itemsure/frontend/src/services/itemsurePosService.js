@@ -49,17 +49,37 @@ export const syncCloverSales = (organizationId, from, to) => callClover(organiza
 /** The site Clover's sales come out of (null clears it). */
 export const setCloverLocation = (organizationId, locationId) => callClover(organizationId, 'set_location', { locationId: locationId || null });
 
+const POS_ITEM_COLS = 'external_id, name, sku, code, price_cents, price_type, category_name, is_hidden, is_deleted, not_tracked';
+const POS_ITEM_COLS_OLD = 'external_id, name, sku, code, price_cents, price_type, category_name, is_hidden, is_deleted';
+const missingColumn = (error) => error && (error.code === '42703' || error.code === 'PGRST204'
+  || /column|could not find/i.test(error.message || ''));
+
 /** Clover items, by name, removed ones included (they may still be matched). */
 export async function listPosItems(organizationId) {
-  return assertOk(
-    await itemsure
-      .from('pos_items')
-      .select('external_id, name, sku, code, price_cents, price_type, category_name, is_hidden, is_deleted')
-      .eq('organization_id', organizationId)
-      .eq('provider', PROVIDER)
-      .order('name'),
-    'Clover items',
-  ) || [];
+  const query = (cols) => itemsure.from('pos_items').select(cols)
+    .eq('organization_id', organizationId).eq('provider', PROVIDER).order('name');
+  const { data, error } = await query(POS_ITEM_COLS);
+  if (!error) return data || [];
+  if (missingColumn(error)) return (assertOk(await query(POS_ITEM_COLS_OLD), 'Clover items') || []).map((p) => ({ ...p, not_tracked: false }));
+  return assertOk({ data, error }, 'Clover items') || [];
+}
+
+/**
+ * Marks a Clover item as not tracked (generic buttons you don't stock) or tracked again.
+ * When marking not tracked, any matches are removed first. Reports skip not-tracked items.
+ */
+export async function setPosNotTracked(organizationId, externalId, notTracked) {
+  if (notTracked) {
+    assertOk(
+      await itemsure.from('pos_item_links').delete()
+        .eq('organization_id', organizationId).eq('provider', PROVIDER).eq('external_id', externalId),
+      'clear matches',
+    );
+  }
+  const { data, error } = await itemsure.from('pos_items').update({ not_tracked: notTracked })
+    .eq('organization_id', organizationId).eq('provider', PROVIDER).eq('external_id', externalId).select('external_id');
+  if (missingColumn(error)) throw new Error('Marking Clover items as not tracked needs a database update first. Nothing else is affected.');
+  assertOk({ data, error }, notTracked ? 'mark as not tracked' : 'track this Clover item');
 }
 
 /** Map of Clover item id -> [ItemSure item id], first matched first (that one is the main match). */
@@ -80,6 +100,10 @@ export async function addPosLink(organizationId, externalId, itemId) {
     .from('pos_item_links')
     .insert({ organization_id: organizationId, provider: PROVIDER, external_id: externalId, item_id: itemId });
   if (error && error.code !== '23505') assertOk({ error }, 'match the item');
+  await itemsure.from('pos_items').update({ not_tracked: false })
+    .eq('organization_id', organizationId).eq('provider', PROVIDER).eq('external_id', externalId);
+  await itemsure.from('inventory_items').update({ not_sold_in_pos: false })
+    .eq('organization_id', organizationId).eq('id', itemId);
 }
 
 /**

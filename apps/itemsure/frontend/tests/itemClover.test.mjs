@@ -11,12 +11,18 @@ const pos = [
   { external_id: 'p3', name: 'Bacardi' },
   { external_id: 'p4', name: 'Bacardi Old', is_deleted: true },
   { external_id: 'p5', name: 'Titos Soda' },
+  { external_id: 'p6', name: '$10 Draft Pitcher', not_tracked: true },
 ];
 const links = new Map([['p1', ['rum', 'mint']], ['p2', ['rum']], ['p4', ['rum']]]);
 
 test('lists the Clover items that use an item, removed ones included, by name', () => {
   assert.deepEqual(cloverUsesFor('rum', pos, links).map((p) => p.external_id), ['p2', 'p4', 'p1']);
   assert.deepEqual(cloverUsesFor('vodka', pos, links), []);
+});
+
+test('does not offer not-tracked Clover items to match', () => {
+  assert.equal(cloverLinkable('rum', pos, links).some((p) => p.id === 'p6'), false);
+  assert.equal(cloverSuggestionsFor('rum', pos, links, [rum]).some((p) => p.external_id === 'p6'), false);
 });
 
 test('offers only live Clover items not already matched to the item', () => {
@@ -29,6 +35,11 @@ test('suggests unmatched Clover items whose best guess is the item', () => {
   assert.deepEqual(cloverSuggestionsFor('rum', pos, links, items).map((p) => p.external_id), ['p3']);
   assert.deepEqual(cloverSuggestionsFor('vodka', pos, links, items).map((p) => p.external_id), ['p5']);
   assert.deepEqual(cloverSuggestionsFor('vodka', pos, links, [rum, mint, { ...vodka, is_active: false }]), []);
+});
+
+test('does not suggest ItemSure items marked as not sold in Clover', () => {
+  const items = [rum, mint, { ...vodka, notSoldInPos: true }];
+  assert.deepEqual(cloverSuggestionsFor('vodka', pos, links, items), []);
 });
 
 test('names the other items a Clover item uses', () => {

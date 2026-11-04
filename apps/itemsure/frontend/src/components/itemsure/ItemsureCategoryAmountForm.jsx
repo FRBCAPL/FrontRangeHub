@@ -56,9 +56,9 @@ export default function ItemsureCategoryAmountForm({ row, parentName, piecesRead
         <p className="isu-notice isu-small">These look like they&apos;re counted by the {unitName} but sold one at a time. Selling singles from a {unitName} needs a database update first. Ask whoever manages ItemSure to apply it.</p>
       ) : null}
       <label className="isu-pos-pour-field">
-        <span>Each sale uses</span>
+        <span>Each one sold uses</span>
         <span className="isu-pos-pour-inputs">
-          <input type="number" inputMode="decimal" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Amount each sale" placeholder="1.5" autoFocus />
+          <input type="number" inputMode="decimal" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Amount for each one sold" placeholder="1.5" autoFocus />
           <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unit">
             <option value="fl_oz">{POUR_UNITS.fl_oz}</option>
             <option value="ml">{POUR_UNITS.ml}</option>
@@ -81,7 +81,7 @@ export default function ItemsureCategoryAmountForm({ row, parentName, piecesRead
       ) : null}
       {showPieces ? <ItemsurePiecesField unitName={unitName} value={pieces} onChange={setPieces} disabled={busy} about={hint} /> : null}
       <p className="isu-hint">
-        Items in {row.category.name} use these unless they have their own.{fallback}
+        This is for each one Clover sells, so two of the same drink counts twice. Items in {row.category.name} use these unless they have their own.{fallback}
       </p>
       {sized.error ? <p className="isu-error isu-small">{sized.error}</p> : null}
       <div className="isu-pos-ask-actions">

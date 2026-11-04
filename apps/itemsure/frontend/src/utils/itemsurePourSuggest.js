@@ -1,8 +1,10 @@
 // Suggests how much of an item one point-of-sale item uses, so people confirm instead of type.
-// Order: a size in the name ("16oz") > a house standard word ("pitcher") > liquor means a shot >
-// sold whole (only when counted one at a time) > a house word in the category. Otherwise no guess.
+// Order: a size in the name ("16oz") > a house standard word ("pitcher") > draft/wine/liquor
+// from the Clover name and category > sold whole (only when counted one at a time) >
+// a house word in the category. Otherwise no guess.
 // A drink that uses several items only gets a guess for its liquor; the rest need a person.
 
+import { kindOf } from './itemsureCategoryKind.js';
 import { VOLUME_ML } from './itemsurePosUsage.js';
 
 /** Starting house standards for a business that hasn't set its own. */
@@ -48,7 +50,17 @@ export function suggestAmount(pos, unit, standards = DEFAULT_STANDARDS, options 
   if (inName) return { amount: inName.amount, unit: inName.unit, reason: `House amount: ${inName.keyword}` };
 
   const text = `${name} ${category}`;
-  if (!container && LIQUOR.test(text)) return asShot;
+  // Names and Clover category only: a keg unit must not turn bottled beer into a pint.
+  const kind = kindOf(text);
+  if (kind === 'draft') {
+    const pint = sorted.find((s) => s.keyword === 'pint');
+    return pint ? { amount: pint.amount, unit: pint.unit, reason: 'Draft: a pint' } : null;
+  }
+  if (kind === 'wine') {
+    const wine = sorted.find((s) => s.keyword === 'wine');
+    return wine ? { amount: wine.amount, unit: wine.unit, reason: 'Wine: a glass' } : null;
+  }
+  if (!container && kind === 'liquor') return asShot;
 
   const bulk = Boolean(VOLUME_ML[unit?.code]) || /keg|barrel/i.test(`${unit?.code || ''} ${unit?.name || ''}`);
   if (!bulk && !POURED.test(name) && countedOneAtATime(unit) && WHOLE.test(text)) {

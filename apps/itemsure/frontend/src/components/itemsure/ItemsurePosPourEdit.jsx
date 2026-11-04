@@ -55,7 +55,7 @@ export default function ItemsurePosPourEdit({
 
   const fromCategory = pour?.fromCategory || '';
   if (!open) {
-    const summary = pour ? `${trimNum(pour.amount)} ${label(pour.unit, pour.amount)} each sale` : 'Amount not set';
+    const summary = pour ? `${trimNum(pour.amount)} ${label(pour.unit, pour.amount)} for each one sold` : 'Amount not set';
     return (
       <div className="isu-pos-pour">
         <span className={pour ? '' : 'isu-muted'}>{item.name}: {summary}</span>
@@ -78,11 +78,11 @@ export default function ItemsurePosPourEdit({
   }
 
   return (
-    <form className="isu-pos-pour-form" onSubmit={save} aria-label={`Amount of ${item.name} each sale`}>
+    <form className="isu-pos-pour-form" onSubmit={save} aria-label={`Amount of ${item.name} for each one sold`}>
       <label className="isu-pos-pour-field">
-        <span>{item.name} used each sale</span>
+        <span>{item.name} for each one sold</span>
         <span className="isu-pos-pour-inputs">
-          <input type="number" inputMode="decimal" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Amount" autoFocus />
+          <input type="number" inputMode="decimal" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Amount for each one sold" autoFocus />
           <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unit">
             <option value="fl_oz">oz</option>
             <option value="ml">ml</option>
@@ -90,6 +90,7 @@ export default function ItemsurePosPourEdit({
             {offerSingles ? <option value="piece">single from the {unitName}</option> : null}
           </select>
         </span>
+        <span className="isu-muted isu-small">If Clover sells 2, this is counted twice.</span>
       </label>
       {askSize ? (
         <div className="isu-pos-pour-field">

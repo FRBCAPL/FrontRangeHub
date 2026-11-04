@@ -72,7 +72,7 @@ export default function ItemsureCloverSales() {
       {r?.rows ? (
         <Card title="By item">
           <p className="isu-muted isu-small">
-            About {Math.round(r.total).toLocaleString()} Clover sales in this period. &ldquo;Sold&rdquo; is how many sales used the item; a drink with two items counts for both.
+            About {Math.round(r.total).toLocaleString()} Clover sales in this period. &ldquo;Sold&rdquo; is how many times Clover rang it up. Stock is that number times the amount for each one sold. A drink with two items counts for both.
           </p>
           {r.rows.length > 8 ? (
             <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an item" aria-label="Find an item" />
@@ -88,7 +88,7 @@ export default function ItemsureCloverSales() {
       {r?.unmatched?.length ? (
         <Card title="Sold, but not linked to an item">
           <p className="isu-muted isu-small">
-            These Clover items sold but aren&apos;t linked to anything you stock, so they don&apos;t count above. Fine to leave things you don&apos;t stock.
+            These Clover items sold but aren&apos;t linked to anything you stock, so they don&apos;t count above. For generic buttons (like a $10 pitcher), mark them as Not tracked in Point of sale settings.
           </p>
           <ul className="isu-sales-unmatched">
             {r.unmatched.slice(0, UNMATCHED_SHOWN).map((u) => (

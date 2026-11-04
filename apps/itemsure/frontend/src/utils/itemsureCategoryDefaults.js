@@ -1,5 +1,8 @@
 // Category sizes and amounts per sale: an item's own value wins, then its subcategory's, then
-// its main category's. Matches itemsure.pos_sale_uses in the database.
+// its main category's — only when that category is the same kind of thing (draft, wine, liquor,
+// bottled). Liquor amounts do not fill in draft beer. Matches itemsure.pos_sale_uses.
+
+import { kindForNames, kindOf } from './itemsureCategoryKind.js';
 
 /** The item's category, then the ones above it (nearest first). Stops on a loop. */
 export function categoryChain(categoryId, categoriesById) {
@@ -12,31 +15,45 @@ export function categoryChain(categoryId, categoriesById) {
   return chain;
 }
 
-/** { amount, unit, fromCategory } from the nearest category with an amount, else null. */
-export function categoryPour(item, categoriesById, defaults) {
-  for (const c of categoryChain(item?.category_id, categoriesById)) {
-    const d = defaults?.get(c.id);
-    if (d?.amount != null) return { amount: d.amount, unit: d.unit, fromCategory: c.name };
+/** Counted unit from the catalog item, used so kegs stay draft. */
+const unitOf = (item, unitsById) => {
+  if (item?.base_unit_id && unitsById?.get(item.base_unit_id)) return unitsById.get(item.base_unit_id);
+  if (item?.unitName || item?.unitCode) return { code: item.unitCode || '', name: item.unitName || '' };
+  return null;
+};
+
+/** Nearest category of the same kind that has a value, else null. `pick(default)` returns the field. */
+function sameKindValue(item, categoriesById, defaults, pick, unit) {
+  const chain = categoryChain(item?.category_id, categoriesById);
+  const names = chain.map((c) => c.name);
+  const itemKind = kindForNames(item?.name, names, unit || unitOf(item));
+  for (let i = 0; i < chain.length; i += 1) {
+    const c = chain[i];
+    const value = pick(defaults?.get(c.id));
+    if (value == null) continue;
+    // Include parents so "Bottled" under Beer is packaged, not leftover "other".
+    if (kindOf(names.slice(i).join(' ')) !== itemKind) continue;
+    return { value, name: c.name };
   }
   return null;
 }
 
-/** { ml, fromCategory } from the nearest category with a size, else null. */
-export function categorySize(item, categoriesById, defaults) {
-  for (const c of categoryChain(item?.category_id, categoriesById)) {
-    const d = defaults?.get(c.id);
-    if (d?.contentMl != null) return { ml: d.contentMl, fromCategory: c.name };
-  }
-  return null;
+/** { amount, unit, fromCategory } from the nearest same-kind category with an amount, else null. */
+export function categoryPour(item, categoriesById, defaults, unit) {
+  const hit = sameKindValue(item, categoriesById, defaults, (d) => (d?.amount != null ? d : null), unit);
+  return hit ? { amount: hit.value.amount, unit: hit.value.unit, fromCategory: hit.name } : null;
 }
 
-/** { pieces, fromCategory } from the nearest category with "how many in one", else null. */
-export function categoryPieces(item, categoriesById, defaults) {
-  for (const c of categoryChain(item?.category_id, categoriesById)) {
-    const d = defaults?.get(c.id);
-    if (d?.pieces != null) return { pieces: d.pieces, fromCategory: c.name };
-  }
-  return null;
+/** { ml, fromCategory } from the nearest same-kind category with a size, else null. */
+export function categorySize(item, categoriesById, defaults, unit) {
+  const hit = sameKindValue(item, categoriesById, defaults, (d) => (d?.contentMl != null ? d.contentMl : null), unit);
+  return hit ? { ml: hit.value, fromCategory: hit.name } : null;
+}
+
+/** { pieces, fromCategory } from the nearest same-kind category with "how many in one", else null. */
+export function categoryPieces(item, categoriesById, defaults, unit) {
+  const hit = sameKindValue(item, categoriesById, defaults, (d) => (d?.pieces != null ? d.pieces : null), unit);
+  return hit ? { pieces: hit.value, fromCategory: hit.name } : null;
 }
 
 /**
@@ -87,10 +104,11 @@ export function categoryAmountRows({ categories, items, matchedItemIds, defaults
  * pieces / piecesFrom: the same for "how many singles in one" (a case of 24).
  * pours, contents or pieces stay null when their own list is null (database update not applied).
  */
-export function withCategoryDefaults({ links, pours, contents, pieces = null, items, categories, defaults }) {
+export function withCategoryDefaults({ links, pours, contents, pieces = null, items, categories, defaults, units }) {
   if (!defaults?.size) return { pours, contents, contentFrom: new Map(), pieces, piecesFrom: new Map() };
   const itemsById = new Map(items.map((i) => [i.id, i]));
   const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  const unitsById = new Map((units || []).map((u) => [u.id, u]));
   const outPours = pours ? new Map(pours) : null;
   const outContents = contents ? new Map(contents) : null;
   const contentFrom = new Map();
@@ -99,7 +117,8 @@ export function withCategoryDefaults({ links, pours, contents, pieces = null, it
       for (const itemId of itemIds) {
         const key = `${externalId}|${itemId}`;
         if (outPours.has(key)) continue;
-        const pour = categoryPour(itemsById.get(itemId), categoriesById, defaults);
+        const item = itemsById.get(itemId);
+        const pour = categoryPour(item, categoriesById, defaults, unitOf(item, unitsById));
         if (pour) outPours.set(key, pour);
       }
     }
@@ -107,7 +126,7 @@ export function withCategoryDefaults({ links, pours, contents, pieces = null, it
   if (outContents) {
     for (const item of items) {
       if (outContents.has(item.id)) continue;
-      const size = categorySize(item, categoriesById, defaults);
+      const size = categorySize(item, categoriesById, defaults, unitOf(item, unitsById));
       if (size) {
         outContents.set(item.id, size.ml);
         contentFrom.set(item.id, size.fromCategory);
@@ -119,7 +138,7 @@ export function withCategoryDefaults({ links, pours, contents, pieces = null, it
   if (outPieces) {
     for (const item of items) {
       if (outPieces.has(item.id)) continue;
-      const count = categoryPieces(item, categoriesById, defaults);
+      const count = categoryPieces(item, categoriesById, defaults, unitOf(item, unitsById));
       if (count) {
         outPieces.set(item.id, count.pieces);
         piecesFrom.set(item.id, count.fromCategory);

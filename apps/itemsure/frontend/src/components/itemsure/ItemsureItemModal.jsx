@@ -29,7 +29,9 @@ import useLoosePieces from '../../hooks/useLoosePieces.js';
 import { looseText } from '../../utils/itemsureLoose.js';
 import ItemsureItemAction, { ACTION_TITLES } from './ItemsureItemAction.jsx';
 import ItemsureItemClover from './ItemsureItemClover.jsx';
+import ItemsureItemCloverNote from './ItemsureItemCloverNote.jsx';
 import usePosConnected from '../../hooks/usePosConnected.js';
+import useItemCloverUses from '../../hooks/useItemCloverUses.js';
 
 /**
  * Everything about one item in a window: a summary, then tabs for its places, history, and
@@ -55,6 +57,7 @@ export default function ItemsureItemModal({ itemId, onClose }) {
   const openCounts = useOpenCounts(organization.id, can('counts.view') || can('counts.edit'));
   const suppliers = useSuppliers(organization.id);
   const cloverConnected = usePosConnected(organization.id);
+  const clover = useItemCloverUses(cloverConnected ? organization.id : null);
   const allowed = {
     set: can('inventory.adjust') && can('counts.approve'),
     adjust: can('inventory.adjust'),
@@ -201,6 +204,19 @@ export default function ItemsureItemModal({ itemId, onClose }) {
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit item</button>
           </div>
         ) : null}
+        {cloverConnected ? (
+          <ItemsureItemCloverNote
+            organizationId={organization.id}
+            itemId={raw.id}
+            itemName={raw.name}
+            notSoldInPos={raw.notSoldInPos}
+            data={clover.data}
+            hidden={tab === 'clover'}
+            canEdit={can('items.manage')}
+            onMatch={() => setChosenTab('clover')}
+            onChanged={async () => { await load(); await clover.reload(); }}
+          />
+        ) : null}
 
         {canView ? (
           <ItemsureItemSummary item={raw} summary={summary} pieces={item.loose} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null} supplier={suppliers.supplierFor(raw.id)}>
@@ -266,7 +282,16 @@ export default function ItemsureItemModal({ itemId, onClose }) {
           <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} variantLabel={showDetails ? variantLabelFor(organization) : ''} onEdit={editItem} />
         ) : null}
 
-        {tab === 'clover' ? <ItemsureItemClover organizationId={organization.id} itemId={raw.id} canEdit={can('items.manage')} /> : null}
+        {tab === 'clover' ? (
+          <ItemsureItemClover
+            organizationId={organization.id}
+            itemId={raw.id}
+            canEdit={can('items.manage')}
+            data={clover.data}
+            loadError={clover.error}
+            reload={async () => { await load(); await clover.reload(); }}
+          />
+        ) : null}
       </div>
     );
   }

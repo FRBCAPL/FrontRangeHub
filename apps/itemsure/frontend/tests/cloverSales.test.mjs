@@ -70,4 +70,7 @@ test('lists Clover items that sold but are not matched', () => {
     { externalId: 'beer', name: 'Bud Light', sold: 9 },
     { externalId: 'wings', name: 'Wings', sold: 2 },
   ]);
+  assert.deepEqual(unmatchedRows(totals, links, names, new Set(['beer'])), [
+    { externalId: 'wings', name: 'Wings', sold: 2 },
+  ]);
 });

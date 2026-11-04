@@ -9,7 +9,7 @@ import ItemsurePosPourEdit from './ItemsurePosPourEdit.jsx';
  * matched) asks whether it uses anything else until `onDone`. `pourInfo` ({ pours, contents,
  * unitCodeFor }) shows how much each sale uses; null hides it.
  */
-export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choices, suggestion, canMatch, busy, asking = false, pourInfo = null, onDone, onAdd, onRemove, onSavePour }) {
+export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choices, suggestion, canMatch, busy, asking = false, pourInfo = null, onDone, onAdd, onRemove, onSavePour, onSkip }) {
   const matched = matchedIds.map((id) => itemsById.get(id)).filter(Boolean);
   const left = choices.filter((i) => !matchedIds.includes(i.id));
   const facts = [posPrice(pos), pos.category_name].filter(Boolean).join(' · ');
@@ -20,6 +20,7 @@ export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choice
         <strong>{pos.name || 'Unnamed Clover item'}</strong>
         {pos.is_deleted ? <span className="isu-badge">Removed in Clover</span> : null}
         {pos.is_hidden && !pos.is_deleted ? <span className="isu-badge">Hidden in Clover</span> : null}
+        {pos.not_tracked && !matched.length ? <span className="isu-badge">Not tracked in ItemSure</span> : null}
       </div>
       {facts ? <span className="isu-muted isu-small">{facts}</span> : null}
 
@@ -61,7 +62,11 @@ export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choice
         </div>
       ) : null}
 
-      {canMatch && !matched.length && suggestion ? (
+      {canMatch && pos.not_tracked && !matched.length ? (
+        <p className="isu-muted isu-small">This Clover item is skipped in the sales reports. Track it again if you later know which item it uses.</p>
+      ) : null}
+
+      {canMatch && !matched.length && !pos.not_tracked && suggestion ? (
         <div className="isu-pos-suggest">
           <span>Looks like <strong>{suggestion.name}</strong></span>
           <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={() => onAdd(suggestion.id)}>Match</button>
@@ -78,8 +83,16 @@ export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choice
         </div>
       ) : null}
 
-      {canMatch && !asking && left.length ? (
+      {canMatch && !asking && !pos.not_tracked && left.length ? (
         <ItemsureItemSearchPick items={left} label={matched.length ? '+ Also uses…' : 'Match to an item…'} disabled={busy} onPick={onAdd} />
+      ) : null}
+
+      {canMatch && onSkip && !asking ? (
+        pos.not_tracked && !matched.length ? (
+          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(false)}>Track this again</button>
+        ) : !matched.length ? (
+          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(true)}>Not tracked in ItemSure</button>
+        ) : null
       ) : null}
     </li>
   );

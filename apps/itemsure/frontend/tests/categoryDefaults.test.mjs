@@ -5,6 +5,7 @@ import { categoryAmountRows, categoryPour, categorySize, withCategoryDefaults } 
 const categories = [
   { id: 'liq', name: 'Liquor', parent_category_id: null },
   { id: 'well', name: 'Well', parent_category_id: 'liq' },
+  { id: 'draft', name: 'Draft Beer', parent_category_id: 'liq' },
   { id: 'beer', name: 'Beer', parent_category_id: null },
   { id: 'btl', name: 'Bottled', parent_category_id: 'beer' },
   { id: 'old', name: 'Old', parent_category_id: null, is_active: false },
@@ -16,11 +17,13 @@ const defaults = new Map([
   ['beer', { contentMl: null, amount: 16, unit: 'fl_oz' }],
   ['btl', { contentMl: null, amount: 1, unit: 'base' }],
 ]);
+const keg = { code: 'keg', name: 'Keg' };
 const items = [
-  { id: 'rum', category_id: 'well', base_unit_id: 'bottle' },
-  { id: 'gin', category_id: 'liq', base_unit_id: 'bottle' },
-  { id: 'bud', category_id: 'btl', base_unit_id: 'each' },
-  { id: 'nap', category_id: null, base_unit_id: 'each' },
+  { id: 'rum', name: 'Well Rum', category_id: 'well', base_unit_id: 'bottle' },
+  { id: 'gin', name: 'Well Gin', category_id: 'liq', base_unit_id: 'bottle' },
+  { id: 'bud', name: 'Bud Light', category_id: 'btl', base_unit_id: 'each' },
+  { id: 'nap', name: 'Napkins', category_id: null, base_unit_id: 'each' },
+  { id: 'coors', name: 'Coors Light', category_id: 'draft', base_unit_id: 'keg', unitName: 'Keg', unitCode: 'keg' },
 ];
 
 test('nearest category wins: subcategory, then main category', () => {
@@ -30,6 +33,17 @@ test('nearest category wins: subcategory, then main category', () => {
   assert.deepEqual(categoryPour(items[2], byId, defaults), { amount: 1, unit: 'base', fromCategory: 'Bottled' });
   assert.equal(categoryPour(items[3], byId, defaults), null);
   assert.equal(categorySize(items[2], byId, defaults), null);
+});
+
+test('draft beer does not use liquor amounts, even under Liquor', () => {
+  assert.equal(categoryPour(items[4], byId, defaults, keg), null);
+  assert.equal(categorySize(items[4], byId, defaults, keg), null);
+  const filled = withCategoryDefaults({
+    links: new Map([['D', ['coors']]]), pours: new Map(), contents: new Map(), items, categories, defaults,
+    units: [{ id: 'keg', code: 'keg', name: 'Keg' }],
+  });
+  assert.equal(filled.pours.has('D|coors'), false);
+  assert.equal(filled.contents.has('coors'), false);
 });
 
 test('own values win; category values fill the gaps', () => {
@@ -59,7 +73,7 @@ test('category rows: main then subcategories, matched counts roll up, inactive l
     units: [{ id: 'bottle', code: 'bottle', name: 'Bottle' }, { id: 'each', code: 'each', name: 'Each' }],
   });
   assert.deepEqual(rows.map((r) => [r.category.id, r.depth, r.matched]), [
-    ['beer', 0, 0], ['btl', 1, 0], ['liq', 0, 2], ['well', 1, 1],
+    ['beer', 0, 0], ['btl', 1, 0], ['liq', 0, 2], ['draft', 1, 0], ['well', 1, 1],
   ]);
   assert.equal(rows.find((r) => r.category.id === 'liq').unit.name, 'Bottle');
   assert.equal(rows.find((r) => r.category.id === 'btl').value.amount, 1);

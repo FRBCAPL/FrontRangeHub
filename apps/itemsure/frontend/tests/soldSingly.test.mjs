@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULT_PIECES, isGroupUnit, kindOf, starterFor } from '../src/utils/itemsureCategoryKind.js';
+import { DEFAULT_PIECES, isGroupUnit, kindForNames, kindOf, starterFor } from '../src/utils/itemsureCategoryKind.js';
 import { presetForMl, presetsFor } from '../src/utils/itemsureSizePresets.js';
 import { expectedUse, needsContent, needsPieces, pourInBase } from '../src/utils/itemsurePosUsage.js';
 import { categoryPieces, withCategoryDefaults } from '../src/utils/itemsureCategoryDefaults.js';
@@ -17,6 +17,13 @@ test('kindOf reads names', () => {
   assert.equal(kindOf('Draft Beer', keg), 'draft');
   assert.equal(kindOf('Anything', keg), 'draft');
   assert.equal(kindOf('Napkins', null), 'other');
+});
+
+test('kindForNames: kegs stay draft under Liquor; well still liquor', () => {
+  assert.equal(kindForNames('Coors Light', ['Draft Beer', 'Liquor'], keg), 'draft');
+  assert.equal(kindForNames('Coors Light', ['Liquor'], keg), 'draft');
+  assert.equal(kindForNames('Well Rum', ['Well', 'Liquor'], bottle), 'liquor');
+  assert.equal(kindForNames("Tito's", ['Call', 'Liquor'], bottle), 'liquor');
 });
 
 test('isGroupUnit spots cases and packs', () => {

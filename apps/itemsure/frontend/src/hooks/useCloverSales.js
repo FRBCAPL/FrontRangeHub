@@ -45,13 +45,14 @@ export default function useCloverSales(organizationId) {
         if (!live) return;
         const codes = new Map(catalog.units.map((u) => [u.id, u.code]));
         const { pours, contents, pieces } = withCategoryDefaults({
-          links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults,
+          links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
         });
         setBase({
           connection, salesReady, links, pours, contents, pieces,
           itemsById: new Map(catalog.items.map((i) => [i.id, i])),
           unitCodes: new Map(catalog.items.map((i) => [i.id, codes.get(i.base_unit_id) || ''])),
           posNames: new Map(posItems.map((p) => [p.external_id, p.name])),
+          skipped: new Set(posItems.filter((p) => p.not_tracked).map((p) => p.external_id)),
           modifiers: modifierSetup(modifiers),
         });
       } catch (e) {
@@ -116,7 +117,7 @@ export default function useCloverSales(organizationId) {
         through: latestThrough(syncs),
         total: [...totals.values()].reduce((sum, q) => sum + q, 0),
         rows,
-        unmatched: unmatchedRows(totals, base.links, base.posNames),
+        unmatched: unmatchedRows(totals, base.links, base.posNames, base.skipped),
       });
     } catch (e) {
       setError(e.message);

@@ -1,5 +1,5 @@
 // One ItemSure item's Clover side: which Clover items use it, which could, and which look like it.
-import { suggestMatch } from './itemsurePosMatch.js';
+import { matchableItems, suggestMatch } from './itemsurePosMatch.js';
 
 const linkedTo = (links, externalId) => links.get(externalId) || [];
 
@@ -13,17 +13,17 @@ export function cloverUsesFor(itemId, posItems, links) {
 /** Clover items that could be matched to this item, shaped for the search picker ({ id, name }). */
 export function cloverLinkable(itemId, posItems, links) {
   return posItems
-    .filter((p) => !p.is_deleted && !linkedTo(links, p.external_id).includes(itemId))
+    .filter((p) => !p.is_deleted && !p.not_tracked && !linkedTo(links, p.external_id).includes(itemId))
     .map((p) => ({ id: p.external_id, name: p.name || 'Unnamed Clover item' }));
 }
 
 /** Unmatched Clover items whose best name match is this item (same guess as the Match list), up to `max`. */
 export function cloverSuggestionsFor(itemId, posItems, links, items, max = 5) {
-  const active = items.filter((i) => i.is_active);
+  const active = matchableItems(items);
   const found = [];
   for (const p of posItems) {
     if (found.length >= max) break;
-    if (p.is_deleted || linkedTo(links, p.external_id).length) continue;
+    if (p.is_deleted || p.not_tracked || linkedTo(links, p.external_id).length) continue;
     if (suggestMatch(p.name, active)?.id === itemId) found.push(p);
   }
   return found;

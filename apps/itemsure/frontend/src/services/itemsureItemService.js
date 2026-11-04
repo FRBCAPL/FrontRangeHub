@@ -9,6 +9,7 @@ import { listItemDetails } from './itemsureItemDetailsService.js';
 import { listCategoryIcons } from './itemsureCategoryIconService.js';
 import { listTopOffPercents } from './itemsureTopOffService.js';
 import { listItemContents, listItemPieces } from './itemsureItemContentService.js';
+import { listNotSoldInPos } from './itemsureItemPosSkipService.js';
 import { listCategoryDefaults } from './itemsureCategoryDefaultService.js';
 import { categoryPieces, categorySize } from '../utils/itemsureCategoryDefaults.js';
 import { unitAsks } from '../utils/itemsureItemContent.js';
@@ -18,7 +19,7 @@ function one(value) {
 }
 
 export async function listCatalog(organizationId) {
-  const [items, categories, units, extras, details, icons, topOffs, contents, categoryDefaults, pieces] = await Promise.all([
+  const [items, categories, units, extras, details, icons, topOffs, contents, categoryDefaults, pieces, notSold] = await Promise.all([
     itemsure
       .from('inventory_items')
       .select('id, name, description, sku, barcode, is_active, category_id, base_unit_id, inventory_categories(name), units_of_measure(name, symbol)')
@@ -43,6 +44,7 @@ export async function listCatalog(organizationId) {
     listItemContents(organizationId),
     listCategoryDefaults(organizationId),
     listItemPieces(organizationId),
+    listNotSoldInPos(organizationId),
   ]);
 
   const categoryRows = (assertOk(categories, 'categories') || []).map((c) => ({ ...c, icon: icons?.get(c.id) || '' }));
@@ -61,9 +63,10 @@ export async function listCatalog(organizationId) {
       variant: details?.get(item.id)?.variant || '',
       topoffPercent: topOffs?.get(item.id) ?? null,
       contentMl: contents?.get(item.id) ?? null,
-      categorySize: asks(item) === 'size' ? categorySize(item, categoriesById, categoryDefaults) : null,
+      categorySize: asks(item) === 'size' ? categorySize(item, categoriesById, categoryDefaults, unitsById.get(item.base_unit_id)) : null,
       pieces: pieces?.get(item.id) ?? null,
-      categoryPieces: asks(item) === 'pieces' ? categoryPieces(item, categoriesById, categoryDefaults) : null,
+      categoryPieces: asks(item) === 'pieces' ? categoryPieces(item, categoriesById, categoryDefaults, unitsById.get(item.base_unit_id)) : null,
+      notSoldInPos: Boolean(notSold?.has(item.id)),
     })),
     categories: categoryRows,
     categoryDefaults,

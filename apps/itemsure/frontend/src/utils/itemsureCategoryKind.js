@@ -18,6 +18,17 @@ export function kindOf(text, unit) {
   return 'other';
 }
 
+/**
+ * Kind of an item from its name, its own category, then parents if still unclear.
+ * A keg stays draft even when it sits under Liquor. categoryNames is nearest-first.
+ */
+export function kindForNames(itemName, categoryNames, unit) {
+  const names = categoryNames || [];
+  const first = kindOf(`${itemName || ''} ${names[0] || ''}`, unit);
+  if (first !== 'other') return first;
+  return kindOf(`${itemName || ''} ${names.join(' ')}`, unit);
+}
+
 /** True for units that hold several singles: case, pack, box, sleeve… */
 export const isGroupUnit = (unit) => GROUP_UNIT.test((unit?.code || '').trim()) || GROUP_UNIT.test((unit?.name || '').trim());
 

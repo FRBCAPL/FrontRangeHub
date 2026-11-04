@@ -124,7 +124,7 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
           >
             {categorySet
               ? <><strong>Category amounts</strong><span className="isu-muted isu-small"> · cover {coveredText}</span></>
-              : <><strong>Set amounts by category</strong><span className="isu-muted isu-small"> · quickest: Liquor 1.5 oz a sale, 750 ml bottles</span></>}
+              : <><strong>Set amounts by category</strong><span className="isu-muted isu-small"> · quickest: Liquor 1.5 oz for each one sold, 750 ml bottles</span></>}
           </Step>
         ) : null}
         <Step
@@ -153,7 +153,7 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
       </ol>
       {allSet ? <Link to={`${ITEMSURE_PATH}/sales-vs-counts`} className="isu-link">All set. See sales vs counts {'\u203A'}</Link> : null}
 
-      <Modal open={open === 'amounts'} title="How much does each sale use?" onClose={close} wide>
+      <Modal open={open === 'amounts'} title="How much does each one sold use?" onClose={close} wide>
         {open === 'amounts' ? <ItemsurePosAmountReview rows={summary.amounts} piecesReady={summary.piecesReady} busy={busy} error={error} onSave={saveAmounts} onCancel={close} /> : null}
       </Modal>
       <Modal open={open === 'sizes'} title="Sizes and case counts" onClose={close} wide>

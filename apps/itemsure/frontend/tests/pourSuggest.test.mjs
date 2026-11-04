@@ -27,8 +27,10 @@ test('bottles, cans, food and retail sell whole, but never from a keg', () => {
   assert.equal(suggestAmount({ name: 'Bud Light', category_name: 'Bottle Beer' }, keg), null);
 });
 
-test('liquor categories mean a shot; anything else is left for people', () => {
+test('liquor categories mean a shot; draft uses a pint; anything else is left for people', () => {
   assert.deepEqual(suggestAmount({ name: 'Bacardi', category_name: 'Rum' }, bottle), { amount: 1.5, unit: 'fl_oz', reason: 'Liquor: a shot' });
+  assert.deepEqual(suggestAmount({ name: '1554', category_name: 'Draft Beer' }, keg), { amount: 16, unit: 'fl_oz', reason: 'Draft: a pint' });
+  assert.equal(suggestAmount({ name: 'Whiskey Barrel Stout', category_name: 'Draft Beer' }, keg).amount, 16);
   assert.equal(suggestAmount({ name: 'Alabama Slammer', category_name: 'Cocktails' }, bottle), null);
   assert.equal(suggestAmount({ name: 'House Merlot', category_name: 'Wine' }, bottle).amount, 6);
 });

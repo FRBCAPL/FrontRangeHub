@@ -19,7 +19,7 @@ export default function useItemCloverUses(organizationId) {
         listPosPours(organizationId), listItemContents(organizationId), listItemPieces(organizationId),
       ]);
       const filled = withCategoryDefaults({
-        links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults,
+        links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
       });
       setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null });
       setError('');
@@ -29,8 +29,13 @@ export default function useItemCloverUses(organizationId) {
   }, [organizationId]);
 
   useEffect(() => {
+    if (!organizationId) {
+      setData(null);
+      setError('');
+      return;
+    }
     load();
-  }, [load]);
+  }, [load, organizationId]);
 
   return { data, error, reload: load };
 }

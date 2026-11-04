@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByMainMatch, posPrice, posRows, suggestMatch } from '../src/utils/itemsurePosMatch.js';
+import { groupByMainMatch, matchableItems, posPrice, posRows, suggestMatch } from '../src/utils/itemsurePosMatch.js';
 
 const items = [
   { id: 'rum', name: 'Superior', brand: 'Bacardi' },
@@ -21,6 +21,15 @@ test('suggestMatch leaves ties for a person', () => {
   assert.equal(suggestMatch('Lime Coke', items), null);
 });
 
+test('matchableItems skips archived items and items not sold in Clover', () => {
+  const list = [
+    { id: 'a', is_active: true },
+    { id: 'b', is_active: false },
+    { id: 'c', is_active: true, notSoldInPos: true },
+  ];
+  assert.deepEqual(matchableItems(list).map((i) => i.id), ['a']);
+});
+
 test('posRows filters by matched state and search, hiding removed items unless matched', () => {
   const pos = [
     { external_id: 'a', name: 'Mojito', category_name: 'Cocktails', sku: '' },
@@ -35,6 +44,20 @@ test('posRows filters by matched state and search, hiding removed items unless m
   assert.deepEqual(ids(posRows(pos, links, { filter: 'all', search: 'shot' })), ['b']);
   assert.deepEqual(ids(posRows(pos, links, { filter: 'all', search: 'cocktail' })), ['a']);
   assert.deepEqual(ids(posRows(pos, links, { keep: new Set(['b']) })), ['a', 'b']);
+});
+
+test('not-tracked Clover items sit on their own tab, not under Not matched', () => {
+  const pos = [
+    { external_id: 'a', name: 'Mojito' },
+    { external_id: 'p', name: '$10 Draft Pitcher', not_tracked: true },
+    { external_id: 'b', name: 'Rum shot' },
+  ];
+  const links = new Map([['b', ['rum']]]);
+  const ids = (rows) => rows.map((r) => r.external_id);
+  assert.deepEqual(ids(posRows(pos, links)), ['a']);
+  assert.deepEqual(ids(posRows(pos, links, { filter: 'skip' })), ['p']);
+  assert.deepEqual(ids(posRows(pos, links, { filter: 'done' })), ['b']);
+  assert.deepEqual(ids(posRows(pos, links, { filter: 'all' })), ['a', 'p', 'b']);
 });
 
 test('groupByMainMatch groups by the first matched item, A to Z, unknown last', () => {
