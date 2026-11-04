@@ -74,7 +74,12 @@ export default function ItemsurePosSalesReport() {
           </label>
         </div>
         <p className="isu-muted isu-small">Each spot is compared with its own earlier count, so spots can be counted at different times.</p>
-        {r.rounds.length < 2 ? <p className="isu-muted">This report needs approved counts on two different days at the same {site}.</p> : null}
+        {r.rounds.length < 2 ? (
+          <p className="isu-muted">
+            This report needs approved counts on two different days at the same {site}. To just see what sold, use{' '}
+            <Link to={`${ITEMSURE_PATH}/clover-sales`} className="isu-link">Clover sales</Link>.
+          </p>
+        ) : null}
         {otherSite ? <p className="isu-notice">Clover is set to sell from {siteName(connection.location_id)}, not this {site}. Change it in {settingsLink || 'point of sale settings'}.</p> : null}
         {!connection.location_id && r.base.locations.length > 1 && can('pos.manage') ? (
           <p className="isu-notice">Choose which {site} Clover sells from in {settingsLink}.</p>
@@ -94,7 +99,12 @@ export default function ItemsurePosSalesReport() {
       {r.result?.loading && !r.result.rows ? <p className="isu-muted">Comparing…</p> : null}
       {r.result?.rows ? (
         <Card title="By item">
+          <p className="isu-muted isu-small">
+            <strong>Sold</strong> is how many times Clover rang it up. <strong>Sales used</strong> is how much stock those sales should have used.{' '}
+            <strong>Counts used</strong> is how much your two counts say was actually used (it needs the item counted both times).
+          </p>
           <p className="isu-muted isu-small">&ldquo;More used than sold&rdquo; can mean spills, free drinks, big pours, or missing sales. Recorded removals (like waste) count as used.</p>
+          <Link to={`${ITEMSURE_PATH}/clover-sales`} className="isu-link isu-small">Just want to see what sold? Clover sales {'\u203A'}</Link>
           <ItemsurePosSalesTable rows={r.result.rows} posNames={r.base.posNames} onFix={can('items.manage') ? setFixing : null} />
         </Card>
       ) : null}

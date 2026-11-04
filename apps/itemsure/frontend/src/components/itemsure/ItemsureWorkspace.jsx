@@ -23,6 +23,7 @@ import ItemsureHelp from './ItemsureHelp.jsx';
 import ItemsureComingNext from './ItemsureComingNext.jsx';
 import ItemsureSuppliers from './ItemsureSuppliers.jsx';
 import ItemsurePosSalesReport from './ItemsurePosSalesReport.jsx';
+import ItemsureCloverSales from './ItemsureCloverSales.jsx';
 import ItemsureBusinessBar from './ItemsureBusinessBar.jsx';
 import ItemsureInviteBanner from './ItemsureInviteBanner.jsx';
 import useStockAlerts from '../../hooks/useStockAlerts.js';
@@ -75,6 +76,7 @@ export default function ItemsureWorkspace() {
           <Route path="all-needs" element={needsOwner(<ItemsureAllNeeds />)} />
           <Route path="activity" element={needsAudit(<ItemsureActivity />)} />
           <Route path="sales-vs-counts" element={needsActivity(<ItemsurePosSalesReport />)} />
+          <Route path="clover-sales" element={needsActivity(<ItemsureCloverSales />)} />
           <Route path="settings/*" element={needsOrg(<ItemsureSettings />)} />
           <Route path="setup" element={<ItemsureSetup />} />
           <Route path="help" element={<ItemsureHelp />} />

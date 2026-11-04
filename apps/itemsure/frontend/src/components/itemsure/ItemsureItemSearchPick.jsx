@@ -7,7 +7,7 @@ const SHOW = 8;
  * items below it. Tapping one calls `onPick(id)` and closes. Escape or Cancel closes.
  * `items` are { id, name, brand? }.
  */
-export default function ItemsureItemSearchPick({ items, label, onPick, disabled = false }) {
+export default function ItemsureItemSearchPick({ items, label, onPick, disabled = false, placeholder = 'Type to find an item' }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const input = useRef(null);
@@ -50,7 +50,7 @@ export default function ItemsureItemSearchPick({ items, label, onPick, disabled 
               close();
             }
           }}
-          placeholder="Type to find an item"
+          placeholder={placeholder}
           aria-label={label}
         />
         <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={close}>Cancel</button>

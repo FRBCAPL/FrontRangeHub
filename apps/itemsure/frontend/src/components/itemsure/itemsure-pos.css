@@ -75,6 +75,27 @@
 .isu-app .isu-pos-ask-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .isu-app .isu-pos-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; }
 
+/* Clover sales page. */
+.isu-app .isu-sales-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.isu-app .isu-sales-row {
+  display: grid; gap: 4px; padding: 10px 12px;
+  border: 1px solid var(--isu-line); border-radius: 12px; background: var(--isu-raised);
+}
+.isu-app .isu-sales-row-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.isu-app .isu-sales-sold { white-space: nowrap; }
+.isu-app .isu-sales-sold strong { font-size: 1.15rem; }
+.isu-app .isu-sales-row > .isu-btn { justify-self: start; }
+.isu-app .isu-sales-unset { color: var(--isu-amber); }
+.isu-app .isu-sales-unmatched { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-width: 520px; }
+.isu-app .isu-sales-unmatched li { display: flex; justify-content: space-between; gap: 10px; font-size: 0.92rem; }
+
+/* Item window → Sold in Clover. */
+.isu-app .isu-item-clover > p { margin: 0; }
+.isu-app .isu-item-clover-head > .isu-btn { margin-left: auto; }
+.isu-app .isu-item-clover-suggest p { margin: 0; }
+.isu-app .isu-item-clover-suggest .isu-pos-suggest { justify-content: space-between; padding: 6px 10px; border: 1px solid var(--isu-line); border-radius: 10px; }
+.isu-app .isu-item-clover > .isu-search-pick-open { justify-self: start; }
+
 /* How much one sale uses, and the site Clover sells from. */
 .isu-app .isu-pos-pours { display: grid; gap: 4px; }
 .isu-app .isu-pos-pour { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 0.9rem; }
@@ -147,7 +168,7 @@
 .isu-app .isu-pos-report { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .isu-app .isu-pos-report-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 2fr) minmax(0, 0.7fr) repeat(3, minmax(0, 1fr));
   align-items: center;
   gap: 4px 12px;
   padding: 10px 12px;

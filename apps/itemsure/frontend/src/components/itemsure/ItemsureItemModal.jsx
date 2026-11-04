@@ -28,6 +28,8 @@ import useItemUsage from '../../hooks/useItemUsage.js';
 import useLoosePieces from '../../hooks/useLoosePieces.js';
 import { looseText } from '../../utils/itemsureLoose.js';
 import ItemsureItemAction, { ACTION_TITLES } from './ItemsureItemAction.jsx';
+import ItemsureItemClover from './ItemsureItemClover.jsx';
+import usePosConnected from '../../hooks/usePosConnected.js';
 
 /**
  * Everything about one item in a window: a summary, then tabs for its places, history, and
@@ -52,6 +54,7 @@ export default function ItemsureItemModal({ itemId, onClose }) {
   const usage = useItemUsage(organization.id, itemId, canView && canHistory);
   const openCounts = useOpenCounts(organization.id, can('counts.view') || can('counts.edit'));
   const suppliers = useSuppliers(organization.id);
+  const cloverConnected = usePosConnected(organization.id);
   const allowed = {
     set: can('inventory.adjust') && can('counts.approve'),
     adjust: can('inventory.adjust'),
@@ -63,6 +66,7 @@ export default function ItemsureItemModal({ itemId, onClose }) {
     canView && { id: 'stock', label: 'Stock' },
     canHistory && { id: 'history', label: 'History' },
     { id: 'details', label: 'Details' },
+    cloverConnected && { id: 'clover', label: 'Sold in Clover' },
   ].filter(Boolean);
   const tab = tabs.some((t) => t.id === chosenTab) ? chosenTab : tabs[0].id;
 
@@ -261,6 +265,8 @@ export default function ItemsureItemModal({ itemId, onClose }) {
         {tab === 'details' ? (
           <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} variantLabel={showDetails ? variantLabelFor(organization) : ''} onEdit={editItem} />
         ) : null}
+
+        {tab === 'clover' ? <ItemsureItemClover organizationId={organization.id} itemId={raw.id} canEdit={can('items.manage')} /> : null}
       </div>
     );
   }
