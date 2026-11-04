@@ -32,6 +32,14 @@ test('expectedUse adds up every Clover item that uses an item and flags gaps', (
   assert.equal(noSize.get('rum').missingContent, true);
 });
 
+test('usageRows gap is Between counts minus Clover used (take-off must not shrink counted)', () => {
+  const expected = new Map([['rum', { expected: 3, sold: 3, missingPour: [], missingContent: false }]]);
+  const rows = usageRows([{ item_id: 'rum', item_name: 'Rum', unit_symbol: 'btl', used: '4' }], expected, new Map());
+  assert.equal(rows[0].counted, 4);
+  assert.equal(rows[0].expected, 3);
+  assert.equal(rows[0].difference, 1);
+});
+
 test('usageRows lists counted items first, then sold-but-not-counted ones', () => {
   const expected = new Map([['rum', { expected: 1, sold: 14, missingPour: [], missingContent: false }], ['gin', { expected: 0.5, sold: 3, missingPour: [], missingContent: false }]]);
   const rows = usageRows([{ item_id: 'rum', item_name: 'Rum', unit_symbol: 'btl', used: '1.25' }], expected, new Map([['gin', { name: 'Gin', unitName: 'Bottle' }]]));
