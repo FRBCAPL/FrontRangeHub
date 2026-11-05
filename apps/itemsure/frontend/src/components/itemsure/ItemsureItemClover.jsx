@@ -26,7 +26,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
   const item = itemsById.get(itemId);
   if (!item) return null;
   if (!data.posItems.length) {
-    return <p className="isu-muted">No Clover items yet. Bring them in from Settings → Point of sale.</p>;
+    return <p className="isu-muted">No Clover buttons yet. Get them from Settings → Point of sale → Connection.</p>;
   }
 
   const unit = (data.units || []).find((u) => u.id === item.base_unit_id) || null;
@@ -183,7 +183,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
         ) : null}
       </div>
       <p className="isu-muted isu-small">
-        Tip: to set one amount for a whole category (like 1.5 oz for all liquor), use Settings → Point of sale → Category amounts.
+        Tip: to set one amount for a whole category (like 1.5 oz for all liquor), use Settings → Point of sale → Pour sizes → Pours by category.
       </p>
       <ItemsurePosNotTrackedAsk pos={skipping} busy={busy} error={error} onConfirm={confirmSkip} onClose={() => setSkipping(null)} />
       <ItemsureItemNotSoldAsk

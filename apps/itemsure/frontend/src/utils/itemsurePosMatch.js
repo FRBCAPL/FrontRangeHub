@@ -28,7 +28,7 @@ export function suggestMatch(posName, items) {
   return best && !tie ? best : null;
 }
 
-export const MATCH_FILTERS = { todo: 'Not matched', done: 'Matched', skip: 'Not tracked', all: 'All' };
+export const MATCH_FILTERS = { todo: 'Not linked', done: 'Linked', skip: 'Not tracked', all: 'All' };
 
 export const isNotTracked = (p) => Boolean(p?.not_tracked);
 

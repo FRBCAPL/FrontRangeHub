@@ -1,29 +1,27 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
-import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
-import useItemsureAction from '../../hooks/useItemsureAction.js';
-import { checkClover, disconnectClover, getPosConnection, syncCloverItems } from '../../services/itemsurePosService.js';
-import { Card, ErrorNote } from './ItemsureUi.jsx';
+import { getPosConnection } from '../../services/itemsurePosService.js';
+import { pickPosTab, POS_TABS } from '../../utils/itemsurePosTabs.js';
+import { Card } from './ItemsureUi.jsx';
 import ItemsurePosConnectForm from './ItemsurePosConnectForm.jsx';
+import ItemsurePosConnection from './ItemsurePosConnection.jsx';
+import ItemsurePosLeft from './ItemsurePosLeft.jsx';
 import ItemsurePosMatch from './ItemsurePosMatch.jsx';
-import ItemsurePosSitePick from './ItemsurePosSitePick.jsx';
 import ItemsurePosSetup from './ItemsurePosSetup.jsx';
 import ItemsurePosStockCard from './ItemsurePosStockCard.jsx';
 import ItemsurePosAutoSync from './ItemsurePosAutoSync.jsx';
 import ItemsurePosModifiers from './ItemsurePosModifiers.jsx';
 
-const when = (iso) => (iso ? new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '');
-
-/** Settings → Point of sale: connect Clover, bring in its items, and match them to ItemSure items. */
+/**
+ * Settings → Point of sale, in tabs in the order people set things up: what's left, Clover
+ * buttons, pour sizes, add-ons, stock, connection. ?tab= picks one (see itemsurePosTabs.js).
+ */
 export default function ItemsureSettingsPos() {
   const { organization, can } = useItemsureWorkspace();
   const [state, setState] = useState(null);
-  const [notice, setNotice] = useState('');
-  const [reloadKey, setReloadKey] = useState(0);
-  const [setupKey, setSetupKey] = useState(0);
-  const [matchKey, setMatchKey] = useState(0);
-  const { busy, error, run } = useItemsureAction();
+  const [menuKey, setMenuKey] = useState(0);
+  const [params, setParams] = useSearchParams();
 
   const load = useCallback(async () => setState(await getPosConnection(organization.id)), [organization.id]);
   useEffect(() => {
@@ -41,21 +39,6 @@ export default function ItemsureSettingsPos() {
   }
 
   const c = state.connection;
-  const act = (action, message) => async () => {
-    setNotice('');
-    if (await run(action)) setNotice(typeof message === 'function' ? message() : message);
-    await load();
-  };
-  let synced = null;
-  const bringIn = act(async () => {
-    synced = await syncCloverItems(organization.id);
-    setReloadKey((k) => k + 1);
-  }, () => `Brought in ${synced?.count ?? 0} Clover items${synced?.removed ? `; ${synced.removed} no longer in Clover` : ''}.`);
-  const disconnect = async () => {
-    if (!window.confirm('Disconnect Clover? Your matches are kept, and you can connect again any time.')) return;
-    await act(() => disconnectClover(organization.id), 'Clover is disconnected.')();
-  };
-
   if (!c) {
     return (
       <Card title="Connect Clover">
@@ -64,61 +47,57 @@ export default function ItemsureSettingsPos() {
     );
   }
 
+  const sales = state.salesReady;
+  const offered = POS_TABS.filter((t) => {
+    if (t.key === 'addons') return sales && (can('inventory.activity') || can('items.manage'));
+    if (t.key === 'stock') return sales;
+    return true;
+  });
+  const tab = pickPosTab(params.get('tab'), offered.map((t) => t.key));
+  const go = (key) => {
+    setParams({ tab: key }, { replace: true });
+    window.scrollTo({ top: 0 });
+  };
+
   return (
     <div className="isu-stack">
-      <Card title="Clover">
-        <p>
-          <strong>{c.merchant_name || 'Clover'}</strong>
-          <span className="isu-muted"> · {c.environment === 'sandbox' ? 'Sandbox' : 'Live'} · Merchant {c.merchant_id}</span>
-        </p>
-        {c.status === 'error' ? (
-          <p className="isu-error" role="alert">{c.last_error || 'Clover stopped answering.'} If the token was deleted, disconnect and connect again with a new one.</p>
-        ) : (
-          <p className="isu-muted isu-small">Connected. {c.items_synced_at ? `Items last brought in ${when(c.items_synced_at)}.` : 'Items not brought in yet.'}</p>
-        )}
-        {notice ? <p className="isu-notice" role="status">{notice}</p> : null}
-        <ErrorNote message={error} />
-        <div className="isu-pos-actions">
-          <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={bringIn}>
-            {busy ? 'Working…' : c.items_synced_at ? 'Bring in Clover items again' : 'Bring in Clover items'}
+      <div className="isu-pos-tabs" role="tablist" aria-label="Point of sale">
+        {offered.map((t) => (
+          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={`isu-chip${tab === t.key ? ' is-active' : ''}`} onClick={() => go(t.key)}>
+            {t.label}
           </button>
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={act(() => checkClover(organization.id), 'Clover is answering.')}>Test connection</button>
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={disconnect}>Disconnect</button>
-        </div>
-        {state.salesReady ? (
-          <>
-            <ItemsurePosSitePick organizationId={organization.id} locationId={c.location_id} canEdit={can('pos.manage')} onSaved={load} />
-            {can('inventory.activity') ? (
-              <Link to={`${ITEMSURE_PATH}/sales-vs-counts`} className="isu-link isu-small">See sales vs counts {'\u203A'}</Link>
-            ) : null}
-          </>
-        ) : null}
-      </Card>
-      {state.salesReady ? (
-        <ItemsurePosAutoSync organizationId={organization.id} canManage={can('pos.manage')} siteKey={c.location_id || ''} />
-      ) : null}
-      {state.salesReady && c.location_id ? (
-        <ItemsurePosStockCard organizationId={organization.id} locationId={c.location_id} can={can} />
-      ) : null}
-      {state.salesReady && (can('inventory.activity') || can('items.manage')) ? (
-        <ItemsurePosModifiers organizationId={organization.id} canEdit={can('items.manage')} />
-      ) : null}
-      <ItemsurePosSetup
-        organizationId={organization.id}
-        canEdit={can('items.manage')}
-        reloadKey={`${reloadKey}-${setupKey}`}
-        onChanged={() => setMatchKey((k) => k + 1)}
-      />
-      <div id="isu-pos-match">
-        <Card title="Match Clover items">
-          <ItemsurePosMatch
-            organizationId={organization.id}
-            canMatch={can('items.manage')}
-            reloadKey={`${reloadKey}-${matchKey}`}
-            onChanged={() => setSetupKey((k) => k + 1)}
-          />
-        </Card>
+        ))}
       </div>
+      {tab === 'left' ? <ItemsurePosLeft organizationId={organization.id} can={can} salesReady={sales} onGo={go} /> : null}
+      {tab === 'buttons' ? (
+        <Card title="Clover buttons">
+          <ItemsurePosMatch organizationId={organization.id} canMatch={can('items.manage')} reloadKey={menuKey} />
+        </Card>
+      ) : null}
+      {tab === 'pours' ? <ItemsurePosSetup organizationId={organization.id} canEdit={can('items.manage')} reloadKey={menuKey} /> : null}
+      {tab === 'addons' ? <ItemsurePosModifiers organizationId={organization.id} canEdit={can('items.manage')} /> : null}
+      {tab === 'stock' ? (
+        <>
+          {c.location_id ? (
+            <ItemsurePosStockCard organizationId={organization.id} locationId={c.location_id} can={can} />
+          ) : (
+            <Card title="Take sales off stock">
+              <p className="isu-muted">First pick which site Clover sells from on the Connection tab.</p>
+            </Card>
+          )}
+          <ItemsurePosAutoSync organizationId={organization.id} canManage={can('pos.manage')} siteKey={c.location_id || ''} />
+        </>
+      ) : null}
+      {tab === 'connection' ? (
+        <ItemsurePosConnection
+          organizationId={organization.id}
+          connection={c}
+          salesReady={sales}
+          canPickSite={can('pos.manage')}
+          onChanged={load}
+          onMenu={() => setMenuKey((k) => k + 1)}
+        />
+      ) : null}
     </div>
   );
 }

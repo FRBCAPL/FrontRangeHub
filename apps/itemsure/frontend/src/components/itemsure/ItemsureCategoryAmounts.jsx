@@ -15,8 +15,7 @@ function describe(value, unit) {
   const unitWord = { base: `whole ${unitName}`, piece: value.amount === 1 ? 'single' : 'singles' }[value.unit] || POUR_UNITS[value.unit];
   if (value.amount != null) parts.push(`${trimNum(value.amount)} ${unitWord} a sale`);
   if (value.contentMl != null) parts.push(`${unitName} holds ${contentLabel(value.contentMl)}`);
-  if (value.pieces != null) parts.push(`${trimNum(value.pieces)} in a ${unitName}`);
-  return parts.join(' · ');
+  if (value.pieces != null) parts.push(`${trimNum(value.pieces)} in a ${unitName}`);  return parts.join(' · ');
 }
 
 /**
@@ -43,8 +42,7 @@ export default function ItemsureCategoryAmounts({ summary, canEdit, busy, error,
   return (
     <div className="isu-stack isu-cat-amounts">
       <p className="isu-muted isu-small">
-        Set it once for a whole category, like Liquor: 1.5 oz a sale from 750 ml bottles, or Bottled beer: 1 single a sale, 24 in a case. Items follow it unless you give them their own.
-      </p>
+        Set it once for a whole category, like Liquor: 1.5 oz a sale from 750 ml bottles, or Bottled beer: 1 single a sale, 24 in a case. Items follow it unless you give them their own.      </p>
       <ErrorNote message={error} />
       {!shown.length ? <p className="isu-muted">None of your categories have matched Clover items yet.</p> : null}
       <ul className="isu-cat-amount-list">

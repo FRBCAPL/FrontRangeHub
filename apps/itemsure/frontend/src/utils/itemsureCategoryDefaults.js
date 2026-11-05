@@ -56,6 +56,31 @@ export function categoryPieces(item, categoriesById, defaults, unit) {
   return hit ? { pieces: hit.value, fromCategory: hit.name } : null;
 }
 
+/** Whether a Double pours more of this item: its nearest category with a yes/no answer, else null. */
+export function categoryDoubles(item, categoriesById, defaults) {
+  for (const c of categoryChain(item?.category_id, categoriesById)) {
+    const value = defaults?.get(c.id)?.doubles;
+    if (value != null) return value;
+  }
+  return null;
+}
+
+/**
+ * Map Clover item id -> Set of its matched items whose category says a Double pours more of
+ * them. Clover items with none are left out, so a Double there pours its first matched item.
+ */
+export function doublesByCategory({ links, items, categories, defaults }) {
+  const out = new Map();
+  if (!defaults?.size || !links) return out;
+  const itemsById = new Map(items.map((i) => [i.id, i]));
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+  for (const [externalId, itemIds] of links) {
+    const yes = itemIds.filter((id) => categoryDoubles(itemsById.get(id), categoriesById, defaults) === true);
+    if (yes.length) out.set(externalId, new Set(yes));
+  }
+  return out;
+}
+
 /**
  * Rows for the "Category amounts" list: each main category, then its subcategories.
  * matched: Clover-matched items in it (a main category counts its subcategories' too).

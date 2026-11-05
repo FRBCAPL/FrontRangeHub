@@ -6,6 +6,7 @@ import { ruleText } from '../../utils/itemsurePosModifiers.js';
 import { singularUnit } from '../../utils/itemsureItemLook.js';
 import { Card, ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsurePosModifierForm from './ItemsurePosModifierForm.jsx';
+import ItemsurePosDoublesLine from './ItemsurePosDoublesLine.jsx';
 
 const SHOWN = 8;
 
@@ -14,7 +15,7 @@ const unitLabel = (line, item) => {
   return { fl_oz: 'oz', ml: 'ml', base: line.amount === 1 ? name : `${name}s`, piece: line.amount === 1 ? 'single' : 'singles' }[line.unit] || '';
 };
 
-/** Settings → Clover modifiers ("Double", "Add Red Bull"): what each one uses, for the sales reports. */
+/** Point of sale → Add-ons (Clover modifiers: "Double", "Add Red Bull"): what each one uses, for the sales reports. */
 export default function ItemsurePosModifiers({ organizationId, canEdit }) {
   const { state, error, save } = usePosModifiers(organizationId);
   const [editing, setEditing] = useState(null);
@@ -25,8 +26,8 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
   if (!state) return null;
   if (state.missing) {
     return (
-      <Card title="Clover modifiers">
-        <p className="isu-muted isu-small">Counting modifiers like Double or Add Red Bull needs a database update first. Nothing else is affected.</p>
+      <Card title="Add-ons">
+        <p className="isu-muted isu-small">Counting add-ons like Double or Add Red Bull needs a database update first. Nothing else is affected.</p>
       </Card>
     );
   }
@@ -39,10 +40,8 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
   const unset = state.rows.filter((r) => !r.rule).length;
   const shown = showAll ? state.rows : state.rows.slice(0, SHOWN);
   const headline = !state.rows.length
-    ? 'None yet'
-    : unset
-      ? `${state.rows.length} · ${unset} not set yet`
-      : `${state.rows.length}`;
+    ? ''
+    : `${state.rows.length} add-on${state.rows.length === 1 ? '' : 's'}${unset ? ` · ${unset} not set yet` : ' · all set'}`;
   const useAll = async () => {
     setBulk(true);
     for (const r of suggested) if (!(await save(r.id, r.guess))) break;
@@ -50,17 +49,15 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
   };
 
   return (
-    <details className="isu-card isu-pos-mod-fold">
-      <summary className="isu-pos-mod-summary">
-        <h2>Clover modifiers</h2>
-        <span className="isu-muted isu-small">{headline}</span>
-      </summary>
+    <Card title="Add-ons">
       <div className="isu-pos-mod-body">
+      {headline ? <p className="isu-small"><strong>{headline}</strong></p> : null}
       <p className="isu-muted isu-small">
-        Modifiers are the extras staff tap in Clover, like Double or Add Red Bull. Say what each one uses and the{' '}
+        Extras staff tap in Clover, like Double, Add Red Bull or Ranch (Clover calls them modifiers). Say what each one uses and the{' '}
         <Link to={`${ITEMSURE_PATH}/clover-sales`} className="isu-link">Clover sales</Link> and Sales vs counts pages count it too.
         This doesn&rsquo;t change stock or anything in Clover.
       </p>
+      <ItemsurePosDoublesLine organizationId={organizationId} canEdit={canEdit} />
       <ErrorNote message={error} />
       {!state.rows.length ? (
         <p className="isu-muted isu-small">
@@ -97,13 +94,13 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
           {showAll ? 'Show fewer' : `Show all ${state.rows.length}`}
         </button>
       ) : null}
-      <p className="isu-muted isu-small">Modifiers count in the reports only. Taking sales off stock doesn&rsquo;t use them yet.</p>
+      <p className="isu-muted isu-small">Add-ons count in the reports only. Taking sales off stock doesn&rsquo;t use them yet.</p>
       </div>
-      <Modal open={Boolean(editing)} title={editing ? `${editing.name || 'Modifier'}` : ''} onClose={() => setEditing(null)}>
+      <Modal open={Boolean(editing)} title={editing ? `${editing.name || 'Add-on'}` : ''} onClose={() => setEditing(null)}>
         {editing ? (
-          <ItemsurePosModifierForm modifier={editing} items={state.items} multiReady={state.multiReady} onSave={(rule) => save(editing.id, rule)} onCancel={() => setEditing(null)} />
+          <ItemsurePosModifierForm modifier={editing} items={state.items} onSave={(rule) => save(editing.id, rule)} onCancel={() => setEditing(null)} />
         ) : null}
       </Modal>
-    </details>
+    </Card>
   );
 }

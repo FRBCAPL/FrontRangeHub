@@ -4,7 +4,8 @@ import ItemsureItemSearchPick from './ItemsureItemSearchPick.jsx';
 
 /**
  * The items a modifier uses, each with its own amount (Margarita: 3 oz mix + 0.5 oz triple sec).
- * lines: [{ itemId, amount (text), unit }]. Without `multiReady` only one item can be picked.
+ * lines: [{ itemId, amount (text), unit }]. Without `multiReady` only one item can be picked, and
+ * a modifier saved earlier with several can only have items removed.
  */
 export default function ItemsurePosModifierLines({ lines, items, multiReady, busy, onChange }) {
   const byId = new Map(items.map((i) => [i.id, i]));
@@ -41,8 +42,8 @@ export default function ItemsurePosModifierLines({ lines, items, multiReady, bus
       {canAdd && left.length ? (
         <ItemsureItemSearchPick items={left} label={lines.length ? '+ Also uses…' : 'Pick the item'} onPick={add} disabled={busy} />
       ) : null}
-      {!multiReady && lines.length ? (
-        <span className="isu-muted isu-small">Using more than one item needs a database update first.</span>
+      {!multiReady && lines.length > 1 ? (
+        <span className="isu-notice isu-small">This one was saved with several items, and it still counts them. To change it, remove items until one is left. Several items per modifier will come back with recipes.</span>
       ) : null}
       {lines.length ? (
         <span className="isu-muted isu-small">Oz or ml need the item&apos;s size, and singles need how many come in one. Set those on the item or its category.</span>

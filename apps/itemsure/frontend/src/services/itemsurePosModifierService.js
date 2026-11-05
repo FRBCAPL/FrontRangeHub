@@ -72,21 +72,3 @@ export async function modifierHours(organizationId, after, upTo) {
     if (rows.length < PAGE) return all;
   }
 }
-
-/** Map Clover item id -> Set of item ids a Double pours more of (only buttons with a choice). null before the update. */
-export async function listPosDoubles(organizationId) {
-  const { data, error } = await itemsure.from('pos_item_links').select('external_id, item_id')
-    .eq('organization_id', organizationId).eq('provider', PROVIDER).eq('counts_for_doubles', true);
-  if (error) return null;
-  const map = new Map();
-  for (const r of data || []) map.set(r.external_id, new Set([...(map.get(r.external_id) || []), r.item_id]));
-  return map;
-}
-
-/** Which matched items a Double pours more of on one Clover item; [] = back to the first matched item. */
-export async function setPosDoubles(organizationId, externalId, itemIds) {
-  assertOk(
-    await itemsure.rpc('set_pos_doubles', { p_organization: organizationId, p_external_id: externalId, p_item_ids: itemIds }),
-    'save what a Double pours',
-  );
-}

@@ -26,8 +26,8 @@ function Step({ done, children, action }) {
 }
 
 /**
- * Sales tracking setup: a short to-do list (match, amounts, sizes) with ItemSure's guesses
- * filled in, so people confirm instead of typing. `onChanged` tells the match list to reload.
+ * Point of sale → Pour sizes: a short to-do list (by category, amounts, sizes, usual pours) with
+ * ItemSure's guesses filled in, so people confirm instead of typing. `onChanged` runs after saves.
  */
 export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, onChanged }) {
   const { summary, error: loadError, reload } = usePosSetup(organizationId, reloadKey);
@@ -41,12 +41,12 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
     if (summary.sizes.length) setOpen('sizes');
   }, [sizesNext, summary]);
 
-  if (loadError) return <Card title="Set up sales tracking"><ErrorNote message={loadError} /></Card>;
+  if (loadError) return <Card title="Pour sizes"><ErrorNote message={loadError} /></Card>;
   if (!summary) return null;
   if (!summary.ready) {
     return (
-      <Card title="Set up sales tracking">
-        <p className="isu-muted">Sales tracking needs a database update first. Nothing else is affected.</p>
+      <Card title="Pour sizes">
+        <p className="isu-muted">Pour sizes need a database update first. Nothing else is affected.</p>
       </Card>
     );
   }
@@ -99,20 +99,9 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
   ].filter(Boolean).join(' and ');
 
   return (
-    <Card title="Set up sales tracking">
-      <p className="isu-muted isu-small">ItemSure fills in its best guesses. You just check them.</p>
+    <Card title="Pour sizes">
+      <p className="isu-muted isu-small">How much each Clover sale uses. Set it once for a whole category; single drinks only need their own when they&apos;re different. ItemSure fills in its best guesses, so you mostly just check them.</p>
       <ol className="isu-pos-steps">
-        <Step
-          done={summary.matched > 0}
-          action={(
-            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => document.getElementById('isu-pos-match')?.scrollIntoView({ behavior: 'smooth' })}>
-              Match more
-            </button>
-          )}
-        >
-          <strong>{summary.matched} Clover items matched</strong>
-          <span className="isu-muted isu-small"> · {summary.unmatched} not matched (fine to leave things you don&apos;t stock)</span>
-        </Step>
         {summary.categoryReady ? (
           <Step
             done={categorySet}
@@ -123,19 +112,19 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
             ) : null}
           >
             {categorySet
-              ? <><strong>Category amounts</strong><span className="isu-muted isu-small"> · cover {coveredText}</span></>
-              : <><strong>Set amounts by category</strong><span className="isu-muted isu-small"> · quickest: Liquor 1.5 oz for each one sold, 750 ml bottles</span></>}
+              ? <><strong>Pours by category</strong><span className="isu-muted isu-small"> · cover {coveredText}</span></>
+              : <><strong>Set pours by category</strong><span className="isu-muted isu-small"> · quickest: Liquor 1.5 oz a drink, 750 ml bottles</span></>}
           </Step>
         ) : null}
         <Step
           done={!summary.amounts.length}
           action={summary.amounts.length && canEdit ? (
-            <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => setOpen('amounts')}>Review amounts</button>
+            <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => setOpen('amounts')}>Check them</button>
           ) : null}
         >
           {summary.amounts.length
-            ? <><strong>{summary.amounts.length} amounts to check</strong><span className="isu-muted isu-small"> · {guessed} already guessed for you</span></>
-            : <strong>Every matched item has an amount</strong>}
+            ? <><strong>{summary.amounts.length} pour size{summary.amounts.length === 1 ? '' : 's'} to check</strong><span className="isu-muted isu-small"> · {guessed} already guessed for you</span></>
+            : <strong>Every linked drink has a pour size</strong>}
         </Step>
         <Step
           done={!summary.sizes.length}
@@ -148,7 +137,7 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
             : <strong>Every poured item has a size</strong>}
         </Step>
         <Step done action={canEdit ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setOpen('standards')}>Change</button> : null}>
-          <strong>House amounts</strong><span className="isu-muted isu-small"> · {houseList}</span>
+          <strong>Usual pour sizes</strong><span className="isu-muted isu-small"> · used for guesses: {houseList}</span>
         </Step>
       </ol>
       {allSet ? <Link to={`${ITEMSURE_PATH}/sales-vs-counts`} className="isu-link">All set. See sales vs counts {'\u203A'}</Link> : null}
@@ -159,12 +148,12 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
       <Modal open={open === 'sizes'} title="Sizes and case counts" onClose={close} wide>
         {open === 'sizes' ? <ItemsurePosSizeReview rows={summary.sizes} busy={busy} error={error} onSave={saveSizes} onCancel={close} /> : null}
       </Modal>
-      <Modal open={open === 'categories'} title="Amounts by category" onClose={close} wide>
+      <Modal open={open === 'categories'} title="Pours by category" onClose={close} wide>
         {open === 'categories' ? (
           <ItemsureCategoryAmounts summary={summary} canEdit={canEdit} busy={busy} error={error} onSave={saveCategory} onClose={close} />
         ) : null}
       </Modal>
-      <Modal open={open === 'standards'} title="House amounts" onClose={close}>
+      <Modal open={open === 'standards'} title="Usual pour sizes" onClose={close}>
         {open === 'standards' ? (
           <ItemsureStandardAmounts standards={summary.standards} canSave={summary.standardsSaved !== null} busy={busy} error={error} onSave={saveStandards} onCancel={close} />
         ) : null}

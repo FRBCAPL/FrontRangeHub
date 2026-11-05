@@ -91,7 +91,7 @@ export default function ItemsurePosSalesReport() {
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={r.syncing || r.result?.loading || !r.pair.from || !r.pair.to} onClick={r.bringInSales}>
             {r.syncing ? 'Bringing in sales…' : 'Bring in sales'}
           </button>
-          {settingsLink && can('items.manage') ? <Link to={POS_SETTINGS} className="isu-link isu-small">Sales tracking setup</Link> : null}
+          {settingsLink && can('items.manage') ? <Link to={`${POS_SETTINGS}?tab=pours`} className="isu-link isu-small">Pour sizes setup</Link> : null}
         </div>
         {r.result?.syncNote ? <p className="isu-notice" role="status">{r.result.syncNote}</p> : null}
         <ErrorNote message={r.error} />

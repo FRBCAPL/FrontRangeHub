@@ -25,8 +25,7 @@ export default function ItemsureCategoryAmountForm({ row, parentName, piecesRead
   const [unit, setUnit] = useState(start.unit || (group ? (piecesReady ? 'piece' : 'base') : 'fl_oz'));
   const [size, setSize] = useState(first.content_size);
   const [sizeUnit, setSizeUnit] = useState(first.content_unit);
-  const [pieces, setPieces] = useState(trimNum(start.pieces));
-  const unitName = singularUnit(row.unit?.name || 'unit').toLowerCase();
+  const [pieces, setPieces] = useState(trimNum(start.pieces));  const unitName = singularUnit(row.unit?.name || 'unit').toLowerCase();
   const offerSingles = piecesReady && (group || unit === 'piece');
   const showSize = (!row.unit || asksContent(row.unit.code)) && (unit === 'fl_oz' || unit === 'ml');
   const showPieces = unit === 'piece' && piecesReady;
@@ -45,8 +44,7 @@ export default function ItemsureCategoryAmountForm({ row, parentName, piecesRead
       contentMl: showSize ? sized.ml : null,
       amount: hasAmount ? Number(amount) : null,
       unit: hasAmount ? unit : null,
-      ...(piecesReady ? { pieces: showPieces && pieces.trim() ? count : null } : {}),
-    });
+      ...(piecesReady ? { pieces: showPieces && pieces.trim() ? count : null } : {}),    });
   };
 
   return (
@@ -79,8 +77,7 @@ export default function ItemsureCategoryAmountForm({ row, parentName, piecesRead
           </span>
         </div>
       ) : null}
-      {showPieces ? <ItemsurePiecesField unitName={unitName} value={pieces} onChange={setPieces} disabled={busy} about={hint} /> : null}
-      <p className="isu-hint">
+      {showPieces ? <ItemsurePiecesField unitName={unitName} value={pieces} onChange={setPieces} disabled={busy} about={hint} /> : null}      <p className="isu-hint">
         This is for each one Clover sells, so two of the same drink counts twice. Items in {row.category.name} use these unless they have their own.{fallback}
       </p>
       {sized.error ? <p className="isu-error isu-small">{sized.error}</p> : null}

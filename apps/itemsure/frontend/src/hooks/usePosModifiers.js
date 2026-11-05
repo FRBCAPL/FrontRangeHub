@@ -7,9 +7,7 @@ const RECENT_MS = 30 * 24 * 3600 * 1000;
 
 /**
  * Settings → Clover modifiers: every modifier seen in sales with its rule, a suggestion from its
- * name, and how often it was used in the last 30 days (most used first). Reports only.
- * multiReady: the database can save modifiers that use several items.
- */
+ * name, and how often it was used in the last 30 days (most used first). Reports only. */
 export default function usePosModifiers(organizationId) {
   const [state, setState] = useState(null);
   const [error, setError] = useState('');
@@ -30,7 +28,7 @@ export default function usePosModifiers(organizationId) {
       for (const h of hours || []) used.set(h.modifier_id, (used.get(h.modifier_id) || 0) + Number(h.quantity || 0));
       const rows = list.rows.map((r) => ({ ...r, rule: ruleOf(r), guess: guessModifier(r.name), recent: used.get(r.modifier_id) || 0 }))
         .sort((a, b) => b.recent - a.recent || a.name.localeCompare(b.name));
-      setState({ missing: false, rows, items: catalog.items, multiReady: list.multiReady });
+      setState({ missing: false, rows, items: catalog.items });
     } catch (e) {
       setError(e.message);
       setState((s) => s || { missing: false, rows: [], items: [] });

@@ -4,6 +4,7 @@ import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { formatWhen } from '../../utils/itemsureText.js';
 import { shortByItem } from '../../utils/itemsurePosStock.js';
+import { posTabPath } from '../../utils/itemsurePosTabs.js';
 
 const amount = (n) => displayQuantity(String(Math.round(n * 100) / 100));
 
@@ -43,7 +44,7 @@ export default function ItemsurePosTakeResult({ result, canFix, onClose }) {
           <ul className="isu-pos-take-list">
             {result.missing.map((m) => <li key={`${m.external_id}|${m.item_id}`}>{m.pos_name || 'Clover item'} {'\u2192'} {m.item_name}</li>)}
           </ul>
-          {canFix ? <Link to={`${ITEMSURE_PATH}/settings/pos`} className="isu-link isu-small" onClick={onClose}>Set them up {'\u203A'}</Link> : null}
+          {canFix ? <Link to={posTabPath(ITEMSURE_PATH, 'pours')} className="isu-link isu-small" onClick={onClose}>Set them up {'\u203A'}</Link> : null}
         </div>
       ) : null}
       <button type="button" className="isu-btn isu-btn--primary" onClick={onClose}>Done</button>

@@ -3,8 +3,9 @@ import { ruleLines } from '../../utils/itemsurePosModifiers.js';
 import ItemsurePosModifierLines from './ItemsurePosModifierLines.jsx';
 
 /**
- * What one Clover modifier does for stock: nothing, more of the same drink, or some of other
- * items. onSave(rule) returns true when saved. One item saves as 'item', several as 'items'.
+ * What one Clover modifier does for stock: nothing, more of the same drink, or some of another
+ * item. onSave(rule) returns true when saved. One item saves as 'item', several (only with
+ * `multiReady`) as 'items'.
  */
 export default function ItemsurePosModifierForm({ modifier, items, multiReady = false, onSave, onCancel }) {
   const start = modifier.rule || modifier.guess || { action: 'none' };
@@ -49,14 +50,14 @@ export default function ItemsurePosModifierForm({ modifier, items, multiReady = 
     <form className="isu-pos-mod-form" onSubmit={save} aria-label={`What ${modifier.name} uses`}>
       <p className="isu-muted isu-small">When staff add &ldquo;{modifier.name}&rdquo; to a drink in Clover, what does it use?</p>
       {choice('none', 'Nothing extra', 'Like Rocks, Neat, or a lime.')}
-      {choice('extra', 'More of the same drink', 'Like Double: one more pour of the liquor, not the mixer.')}
+      {choice('extra', 'More of the same drink', 'Like Double: one more pour of the liquor, not the mixer. Which categories count is set at the top of Add-ons.')}
       {action === 'extra' ? (
         <label className="isu-pos-pour-field">
           <span>Extra pours (Double = 1, Triple = 2)</span>
           <input type="number" inputMode="decimal" min="0" step="any" value={pours} onChange={(e) => setPours(e.target.value)} aria-label="Extra pours" />
         </label>
       ) : null}
-      {choice('item', 'Uses other items', 'Like Add Red Bull (one can), Margarita (mix + triple sec), or a side of ranch.')}
+      {choice('item', 'Uses another item', 'Like Add Red Bull (one can) or a side of ranch.')}
       {action === 'item' ? (
         <ItemsurePosModifierLines lines={lines} items={items} multiReady={multiReady} busy={busy} onChange={setLines} />
       ) : null}

@@ -96,7 +96,7 @@ export default function ItemsureCloverSales() {
             ))}
           </ul>
           {r.unmatched.length > UNMATCHED_SHOWN ? <p className="isu-muted isu-small">And {r.unmatched.length - UNMATCHED_SHOWN} more.</p> : null}
-          {can('items.manage') ? <Link to={POS_SETTINGS} className="isu-link isu-small">Link them in Point of sale settings {'\u203A'}</Link> : null}
+          {can('items.manage') ? <Link to={`${POS_SETTINGS}?tab=buttons`} className="isu-link isu-small">Link them in Point of sale settings {'\u203A'}</Link> : null}
         </Card>
       ) : null}
 

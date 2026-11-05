@@ -20,7 +20,7 @@ export default function ItemsurePosNotTrackedAsk({ pos, busy, error, onConfirm, 
             If the button is matched to any items, those matches are removed.
           </p>
           <p className="isu-muted isu-small">
-            To undo, go to Point of sale → Not tracked and tap Track this again. Nothing in Clover or your counts is changed.
+            To undo, go to Point of sale → Clover buttons → Not tracked and tap Track this again. Nothing in Clover or your counts is changed.
           </p>
           <div className="isu-pos-ask-actions">
             <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={onConfirm}>

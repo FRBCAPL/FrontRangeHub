@@ -96,7 +96,7 @@
 .isu-app .isu-item-clover-suggest .isu-pos-suggest { justify-content: space-between; padding: 6px 10px; border: 1px solid var(--isu-line); border-radius: 10px; }
 .isu-app .isu-item-clover > .isu-search-pick-open { justify-self: start; }
 
-/* Settings → Clover modifiers. Collapsed until opened so the POS page stays short.
+/* Point of sale → Add-ons (Clover modifiers).
    Do not set display:flex/grid on details — browsers then fail to hide the body. */
 .isu-app .isu-pos-mod-body { display: grid; gap: 8px; }
 .isu-app .isu-pos-mod-summary {
@@ -129,10 +129,14 @@
 .isu-app .isu-pos-mod-form > p { margin: 0; }
 .isu-app .isu-pos-mod-choice { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .isu-app .isu-pos-mod-choice input { margin-top: 4px; }
-.isu-app .isu-pos-mod-line { display: grid; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--isu-border, #e5e7eb); }
-.isu-app .isu-pos-doubles { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 0.85rem; }
-.isu-app .isu-pos-doubles label { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; }
-.isu-app .isu-pos-report-note { grid-column: 1 / -1; }
+.isu-app .isu-pos-doubles { display: grid; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--isu-border, #e5e7eb); }
+.isu-app .isu-pos-doubles-list { display: grid; gap: 2px; margin: 0; padding: 6px 0 0; border: 0; }
+.isu-app .isu-pos-doubles-list label { display: flex; align-items: center; gap: 8px; min-height: 36px; }
+.isu-app .isu-pos-doubles-list label.is-sub { padding-left: 24px; }
+.isu-app .isu-pos-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.isu-app .isu-pos-tabs .isu-chip { cursor: pointer; font: inherit; font-size: 0.9rem; color: var(--isu-ink); min-height: 40px; }
+.isu-app .isu-pos-tabs .isu-chip.is-active { border-color: var(--isu-pine); color: var(--isu-pine); font-weight: 700; }
+.isu-app .isu-pos-mod-line { display: grid; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--isu-border, #e5e7eb); }.isu-app .isu-pos-report-note { grid-column: 1 / -1; }
 
 /* How much one sale uses, and the site Clover sells from. */
 .isu-app .isu-pos-pours { display: grid; gap: 4px; }

@@ -27,9 +27,10 @@ export function buildCloverTasks(clover, paths, now = Date.now()) {
   if (!clover) return [];
   const tasks = [];
   const fix = paths.posSetup;
+  const fixAt = (tab) => `${fix}?tab=${tab}`;
 
   if (clover.problem && fix) {
-    tasks.push({ key: 'clover-problem', tone: 'danger', title: 'Clover needs attention', detail: clover.problem, to: fix, button: 'Fix' });
+    tasks.push({ key: 'clover-problem', tone: 'danger', title: 'Clover needs attention', detail: clover.problem, to: fixAt('connection'), button: 'Fix' });
   }
 
   const days = clover.takeOn ? daysSince(clover.stockThrough, now) : null;
@@ -48,27 +49,27 @@ export function buildCloverTasks(clover, paths, now = Date.now()) {
     tasks.push({
       key: 'clover-buttons',
       tone: 'info',
-      title: `${plural(clover.unmatchedButtons, 'Clover button', 'Clover buttons')} not matched yet`,
-      detail: 'Match each one to what it uses, or stop tracking generic buttons.',
-      to: fix,
-      button: 'Match',
+      title: `${plural(clover.unmatchedButtons, 'Clover button', 'Clover buttons')} not linked yet`,
+      detail: 'Link each one to what it uses from your stock, or stop tracking generic buttons.',
+      to: fixAt('buttons'),
+      button: 'Link',
     });
   }
 
   const toCheck = (clover.amounts || 0) + (clover.sizes || 0);
   if (toCheck && fix) {
     const parts = [
-      clover.amounts ? plural(clover.amounts, 'amount', 'amounts') : '',
-      clover.sizes ? plural(clover.sizes, 'size', 'sizes') : '',
+      clover.amounts ? plural(clover.amounts, 'pour size', 'pour sizes') : '',
+      clover.sizes ? plural(clover.sizes, 'bottle or case size', 'bottle or case sizes') : '',
     ].filter(Boolean).join(' and ');
     tasks.push({
       key: 'pos-setup',
       tone: 'info',
-      title: `Sales tracking: ${parts} to check`,
+      title: `Clover: ${parts} to check`,
       detail: clover.guessed
         ? `ItemSure already guessed ${clover.guessed}. Check them so sales vs counts is right.`
         : 'Needed so sales vs counts can tell what each Clover sale used.',
-      to: fix,
+      to: fixAt('pours'),
       button: 'Check',
     });
   }

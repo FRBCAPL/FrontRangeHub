@@ -6,7 +6,6 @@ import {
 } from '../../services/itemsurePosService.js';
 import { withCategoryDefaults } from '../../utils/itemsureCategoryDefaults.js';
 import { listItemPieces, saveItemPieces } from '../../services/itemsureItemContentService.js';
-import { listPosDoubles, setPosDoubles } from '../../services/itemsurePosModifierService.js';
 import { groupByMainMatch, MATCH_FILTERS, matchableItems, posRows, suggestMatch } from '../../utils/itemsurePosMatch.js';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsurePosMatchRow from './ItemsurePosMatchRow.jsx';
@@ -32,15 +31,14 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
 
   const load = useCallback(async () => {
     try {
-      const [posItems, links, catalog, ownPours, ownContents, ownPieces, doubles] = await Promise.all([
+      const [posItems, links, catalog, ownPours, ownContents, ownPieces] = await Promise.all([
         listPosItems(organizationId), listPosLinks(organizationId), listCatalog(organizationId),
         listPosPours(organizationId), listItemContents(organizationId), listItemPieces(organizationId),
-        listPosDoubles(organizationId),
       ]);
       const filled = withCategoryDefaults({
         links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
       });
-      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null, doubles });
+      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null });
     } catch (e) {
       setError(e.message);
       setData((d) => d || { posItems: [], links: new Map(), items: [], units: [], pours: null, contents: null });
@@ -88,7 +86,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
 
   if (!data) return <p className="isu-muted">Loading Clover items…</p>;
   if (!data.posItems.length) {
-    return <p className="isu-muted">No Clover items yet. Tap &ldquo;Bring in Clover items&rdquo; above.</p>;
+    return <p className="isu-muted">No Clover buttons yet. On the Connection tab, tap &ldquo;Get menu from Clover&rdquo;.</p>;
   }
 
   const setAsk = (externalId, on) => setAsking((s) => {
@@ -129,10 +127,6 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     await setPosPour(organizationId, externalId, itemId, amount, unit);
     await refresh();
   });
-  const saveDoubles = (externalId, itemIds) => run(async () => {
-    await setPosDoubles(organizationId, externalId, itemIds);
-    await refresh();
-  });
   const grouped = filter === 'done';
   const row = (p) => (
     <ItemsurePosMatchRow
@@ -149,10 +143,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       onAdd={(itemId) => add(p.external_id, itemId)}
       onRemove={(itemId) => remove(p.external_id, itemId)}
       pourInfo={pourInfo}
-      onSavePour={(itemId, amount, unit, contentMl, pieces) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces)}
-      doubles={data.doubles ? { chosen: data.doubles.get(p.external_id) || null } : null}
-      onSaveDoubles={(itemIds) => saveDoubles(p.external_id, itemIds)}
-      onSkip={(skip) => skipItem(p, skip)}
+      onSavePour={(itemId, amount, unit, contentMl, pieces) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces)}      onSkip={(skip) => skipItem(p, skip)}
     />
   );
   const matchAll = () => run(async () => {
@@ -170,7 +161,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   return (
     <div className="isu-stack isu-pos-match">
       <p className="isu-muted isu-small">
-        Tell ItemSure which of your items each Clover item uses, and how much each one sold uses (like 1.5 oz of rum; 2 sold = 3 oz). A drink can use more than one item. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Stop tracking button. They move to the Not tracked tab. This never changes stock or Clover.
+        Every button on your Clover menu. Link each one to what it uses from your stock, and how much (like 1.5 oz of rum; 2 sold = 3 oz). A drink can use more than one item. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Stop tracking button. They move to Not tracked. This never changes stock or Clover.
       </p>
       <div className="isu-pos-filters" role="group" aria-label="Show">
         {Object.entries(MATCH_FILTERS).map(([key, label]) => (

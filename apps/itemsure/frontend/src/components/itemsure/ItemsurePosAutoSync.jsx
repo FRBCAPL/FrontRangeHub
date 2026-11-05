@@ -34,7 +34,7 @@ export default function ItemsurePosAutoSync({ organizationId, canManage, siteKey
   if (!status || status.failed || (!status.missing && !status.connected)) return null;
   if (status.missing) {
     return (
-      <Card title="Bring in sales automatically">
+      <Card title="Get new sales from Clover automatically">
         <p className="isu-muted">This needs a database update first. Nothing else is affected.</p>
       </Card>
     );
@@ -49,7 +49,7 @@ export default function ItemsurePosAutoSync({ organizationId, canManage, siteKey
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   return (
-    <Card title="Bring in sales automatically">
+    <Card title="Get new sales from Clover automatically">
       <p className="isu-muted isu-small">
         ItemSure brings in your Clover sales on a schedule, so they&apos;re ready without pressing a button. It only reads from Clover and doesn&apos;t change stock.
       </p>

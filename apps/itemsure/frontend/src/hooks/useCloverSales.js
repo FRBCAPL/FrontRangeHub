@@ -5,10 +5,10 @@ import {
 } from '../services/itemsurePosService.js';
 import { listSalesSyncs, salesHours } from '../services/itemsurePosSalesService.js';
 import { listItemPieces } from '../services/itemsureItemContentService.js';
-import { withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
+import { doublesByCategory, withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
 import { salesCovered } from '../utils/itemsurePosUsage.js';
 import { itemSalesRows, periodRange, salesTotals, unmatchedRows } from '../utils/itemsureCloverSales.js';
-import { listModifiers, listPosDoubles, modifierHours } from '../services/itemsurePosModifierService.js';
+import { listModifiers, modifierHours } from '../services/itemsurePosModifierService.js';
 import { modifierSetup, modifierTotals, modifierUse } from '../utils/itemsurePosModifiers.js';
 
 const MAX_SYNC_MS = 44 * 24 * 3600 * 1000;
@@ -37,10 +37,10 @@ export default function useCloverSales(organizationId) {
           if (live) setBase({ connection, salesReady });
           return;
         }
-        const [links, ownPours, ownContents, catalog, posItems, ownPieces, modifiers, doubles] = await Promise.all([
+        const [links, ownPours, ownContents, catalog, posItems, ownPieces, modifiers] = await Promise.all([
           listPosLinks(organizationId), listPosPours(organizationId), listItemContents(organizationId),
           listCatalog(organizationId), listPosItems(organizationId), listItemPieces(organizationId),
-          listModifiers(organizationId).catch(() => null), listPosDoubles(organizationId),
+          listModifiers(organizationId).catch(() => null),
         ]);
         if (!live) return;
         const codes = new Map(catalog.units.map((u) => [u.id, u.code]));
@@ -54,7 +54,7 @@ export default function useCloverSales(organizationId) {
           posNames: new Map(posItems.map((p) => [p.external_id, p.name])),
           skipped: new Set(posItems.filter((p) => p.not_tracked).map((p) => p.external_id)),
           modifiers: modifierSetup(modifiers),
-          doubles,
+          doubles: doublesByCategory({ links, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults }),
         });
       } catch (e) {
         if (live) {

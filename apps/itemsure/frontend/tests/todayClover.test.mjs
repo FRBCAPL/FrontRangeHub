@@ -31,10 +31,13 @@ test('every Clover line, in order: problem, take-off, buttons, amounts, items', 
   }, fixPaths, NOW);
   assert.deepEqual(keys(tasks), ['clover-problem', 'clover-take', 'clover-buttons', 'pos-setup', 'clover-items']);
   assert.equal(tasks[0].tone, 'danger');
-  assert.equal(tasks[0].to, '/pos');
+  assert.equal(tasks[0].to, '/pos?tab=connection');
   assert.equal(tasks[1].title, 'Clover sales not taken off stock in 10 days');
   assert.equal(tasks[1].to, null);
-  assert.equal(tasks[2].title, '12 Clover buttons not matched yet');
+  assert.equal(tasks[2].title, '12 Clover buttons not linked yet');
+  assert.equal(tasks[2].to, '/pos?tab=buttons');
+  assert.equal(tasks[3].title, 'Clover: 3 pour sizes to check');
+  assert.equal(tasks[3].to, '/pos?tab=pours');
   assert.equal(tasks[4].title, '9 items not matched to Clover');
   assert.equal(tasks[4].to, '/items?clover=unmatched');
 });
@@ -54,7 +57,7 @@ test('people who cannot fix Clover settings only see the take-off reminder', () 
 
 test('one button and one item use singular words; zero shows nothing', () => {
   const tasks = buildCloverTasks({ unmatchedButtons: 1, unmatchedItems: 1 }, fixPaths, NOW);
-  assert.equal(tasks[0].title, '1 Clover button not matched yet');
+  assert.equal(tasks[0].title, '1 Clover button not linked yet');
   assert.equal(tasks[1].title, '1 item not matched to Clover');
   assert.deepEqual(buildCloverTasks({ unmatchedButtons: 0, unmatchedItems: 0 }, fixPaths, NOW), []);
   assert.deepEqual(buildCloverTasks(null, fixPaths, NOW), []);
