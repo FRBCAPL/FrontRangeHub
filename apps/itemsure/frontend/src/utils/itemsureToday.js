@@ -1,5 +1,6 @@
 // The home page "Today" list: what needs doing, most urgent first, one action each.
 import { displayQuantity, wholeToBuy } from './itemsureQuantity.js';
+import { buildCloverTasks } from './itemsureTodayClover.js';
 
 export const MAX_LOW_SHOWN = 5;
 const OPEN_COUNT = ['draft', 'in_progress'];
@@ -20,10 +21,11 @@ function fixFor(rec, showMoves) {
 }
 
 /**
- * Builds the list. Each task: { key, tone ('danger'|'warn'|'info'), title, detail, to, button }.
+ * Builds the list. Each task: { key, tone ('danger'|'warn'|'info'), title, detail, to, button };
+ * `to` is null when the fix is on the same page.
  * `paths` holds the page links so this stays free of routing. Missing data (null) is skipped.
  */
-export function buildTodayTasks({ recs = null, plans = null, sessions = null, reviews = {}, canApprove = false, showMoves = true, posSetup = null, paths }) {
+export function buildTodayTasks({ recs = null, plans = null, sessions = null, reviews = {}, canApprove = false, showMoves = true, clover = null, paths, now = Date.now() }) {
   const tasks = [];
 
   const low = (recs || []).filter((r) => r.status === 'low');
@@ -74,24 +76,8 @@ export function buildTodayTasks({ recs = null, plans = null, sessions = null, re
     }
   }
 
-  // posSetup: { amounts, guessed, sizes } from the Clover sales tracking setup, when it's connected.
-  const toCheck = (posSetup?.amounts || 0) + (posSetup?.sizes || 0);
-  if (toCheck && paths.posSetup) {
-    const parts = [
-      posSetup.amounts ? plural(posSetup.amounts, 'amount', 'amounts') : '',
-      posSetup.sizes ? plural(posSetup.sizes, 'size', 'sizes') : '',
-    ].filter(Boolean).join(' and ');
-    tasks.push({
-      key: 'pos-setup',
-      tone: 'info',
-      title: `Sales tracking: ${parts} to check`,
-      detail: posSetup.guessed
-        ? `ItemSure already guessed ${posSetup.guessed}. Check them so sales vs counts is right.`
-        : 'Needed so sales vs counts can tell what each Clover sale used.',
-      to: paths.posSetup,
-      button: 'Check',
-    });
-  }
+  // Clover lines come after stock and counts (see itemsureTodayClover.js).
+  tasks.push(...buildCloverTasks(clover, paths, now));
 
   return tasks;
 }

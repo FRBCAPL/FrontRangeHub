@@ -9,10 +9,9 @@ import ItemsurePosModifierForm from './ItemsurePosModifierForm.jsx';
 
 const SHOWN = 8;
 
-const unitLabel = (rule, item) => {
-  if (rule?.action !== 'item') return '';
+const unitLabel = (line, item) => {
   const name = singularUnit(item?.unitName || 'unit').toLowerCase();
-  return { fl_oz: 'oz', ml: 'ml', base: rule.amount === 1 ? name : `${name}s`, piece: rule.amount === 1 ? 'single' : 'singles' }[rule.unit] || '';
+  return { fl_oz: 'oz', ml: 'ml', base: line.amount === 1 ? name : `${name}s`, piece: line.amount === 1 ? 'single' : 'singles' }[line.unit] || '';
 };
 
 /** Settings → Clover modifiers ("Double", "Add Red Bull"): what each one uses, for the sales reports. */
@@ -32,7 +31,10 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
     );
   }
 
-  const describe = (rule) => ruleText(rule, itemsById.get(rule?.itemId)?.name, unitLabel(rule, itemsById.get(rule?.itemId)));
+  const describe = (rule) => ruleText(rule, (line) => {
+    const item = itemsById.get(line.itemId);
+    return { name: item?.name, unit: unitLabel(line, item) };
+  });
   const suggested = state.rows.filter((r) => !r.rule && r.guess);
   const unset = state.rows.filter((r) => !r.rule).length;
   const shown = showAll ? state.rows : state.rows.slice(0, SHOWN);
@@ -99,7 +101,7 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
       </div>
       <Modal open={Boolean(editing)} title={editing ? `${editing.name || 'Modifier'}` : ''} onClose={() => setEditing(null)}>
         {editing ? (
-          <ItemsurePosModifierForm modifier={editing} items={state.items} onSave={(rule) => save(editing.id, rule)} onCancel={() => setEditing(null)} />
+          <ItemsurePosModifierForm modifier={editing} items={state.items} multiReady={state.multiReady} onSave={(rule) => save(editing.id, rule)} onCancel={() => setEditing(null)} />
         ) : null}
       </Modal>
     </details>

@@ -11,23 +11,50 @@ const RULE = 'id, modifier_id, name, seen_at, action, extra_pours, item_id, uses
 const missingTable = (error) => error && (error.code === '42P01' || error.code === 'PGRST205'
   || /could not find the table|does not exist/i.test(error.message || ''));
 
-/** { missing } until the database update is applied, else { rows } (every modifier seen in sales). */
+/** Map modifier_id -> [{ item_id, uses_amount, uses_unit }], or null until the multi-item update is applied. */
+async function listModifierLines(organizationId) {
+  const { data, error } = await itemsure.from('pos_modifier_items').select('modifier_id, item_id, uses_amount, uses_unit')
+    .eq('organization_id', organizationId).eq('provider', PROVIDER).order('created_at');
+  if (missingTable(error)) return null;
+  const byModifier = new Map();
+  for (const r of assertOk({ data, error }, 'Clover modifier items') || []) {
+    byModifier.set(r.modifier_id, [...(byModifier.get(r.modifier_id) || []), r]);
+  }
+  return byModifier;
+}
+
+/**
+ * { missing } until the database update is applied, else { rows, multiReady } (every modifier seen
+ * in sales, each with its `lines` when it uses several items). multiReady: several items can be saved.
+ */
 export async function listModifiers(organizationId) {
-  const { data, error } = await itemsure.from('pos_modifiers').select(RULE)
-    .eq('organization_id', organizationId).eq('provider', PROVIDER).order('name');
-  if (missingTable(error)) return { missing: true, rows: [] };
-  return { missing: false, rows: assertOk({ data, error }, 'Clover modifiers') || [] };
+  const [{ data, error }, lines] = await Promise.all([
+    itemsure.from('pos_modifiers').select(RULE).eq('organization_id', organizationId).eq('provider', PROVIDER).order('name'),
+    listModifierLines(organizationId),
+  ]);
+  if (missingTable(error)) return { missing: true, rows: [], multiReady: false };
+  const rows = (assertOk({ data, error }, 'Clover modifiers') || []).map((r) => ({ ...r, lines: lines?.get(r.modifier_id) || [] }));
+  return { missing: false, rows, multiReady: lines !== null };
 }
 
 /**
  * Saves what a modifier does: { action: 'none' } | { action: 'extra', extraPours }
- * | { action: 'item', itemId, amount, unit }.
+ * | { action: 'item', itemId, amount, unit } | { action: 'items', lines: [{ itemId, amount, unit }] }.
+ * Several items are saved in one step (all or nothing).
  */
 export async function saveModifier(id, rule) {
+  if (rule.action === 'items') {
+    const lines = rule.lines.map((l) => ({ item_id: l.itemId, amount: l.amount, unit: l.unit }));
+    assertOk(await itemsure.rpc('set_pos_modifier_items', { p_modifier: id, p_lines: lines }), 'save the modifier');
+    const row = assertOk(await itemsure.from('pos_modifiers').select(RULE).eq('id', id).single(), 'save the modifier');
+    const saved = assertOk(await itemsure.from('pos_modifier_items').select('modifier_id, item_id, uses_amount, uses_unit')
+      .eq('organization_id', rule.organizationId).eq('provider', PROVIDER).eq('modifier_id', row.modifier_id).order('created_at'), 'save the modifier');
+    return { ...row, lines: saved || [] };
+  }
   const row = { action: rule.action, extra_pours: null, item_id: null, uses_amount: null, uses_unit: null, updated_at: new Date().toISOString() };
   if (rule.action === 'extra') row.extra_pours = rule.extraPours;
   if (rule.action === 'item') Object.assign(row, { item_id: rule.itemId, uses_amount: rule.amount, uses_unit: rule.unit });
-  return assertOk(await itemsure.from('pos_modifiers').update(row).eq('id', id).select(RULE).single(), 'save the modifier');
+  return { ...assertOk(await itemsure.from('pos_modifiers').update(row).eq('id', id).select(RULE).single(), 'save the modifier'), lines: [] };
 }
 
 /** Hourly modifier use [{ external_id, modifier_id, hour_start, quantity }], or null until the update is applied. */
@@ -44,4 +71,22 @@ export async function modifierHours(organizationId, after, upTo) {
     all.push(...rows);
     if (rows.length < PAGE) return all;
   }
+}
+
+/** Map Clover item id -> Set of item ids a Double pours more of (only buttons with a choice). null before the update. */
+export async function listPosDoubles(organizationId) {
+  const { data, error } = await itemsure.from('pos_item_links').select('external_id, item_id')
+    .eq('organization_id', organizationId).eq('provider', PROVIDER).eq('counts_for_doubles', true);
+  if (error) return null;
+  const map = new Map();
+  for (const r of data || []) map.set(r.external_id, new Set([...(map.get(r.external_id) || []), r.item_id]));
+  return map;
+}
+
+/** Which matched items a Double pours more of on one Clover item; [] = back to the first matched item. */
+export async function setPosDoubles(organizationId, externalId, itemIds) {
+  assertOk(
+    await itemsure.rpc('set_pos_doubles', { p_organization: organizationId, p_external_id: externalId, p_item_ids: itemIds }),
+    'save what a Double pours',
+  );
 }

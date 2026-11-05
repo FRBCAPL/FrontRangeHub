@@ -129,6 +129,9 @@
 .isu-app .isu-pos-mod-form > p { margin: 0; }
 .isu-app .isu-pos-mod-choice { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .isu-app .isu-pos-mod-choice input { margin-top: 4px; }
+.isu-app .isu-pos-mod-line { display: grid; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--isu-border, #e5e7eb); }
+.isu-app .isu-pos-doubles { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 0.85rem; }
+.isu-app .isu-pos-doubles label { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; }
 .isu-app .isu-pos-report-note { grid-column: 1 / -1; }
 
 /* How much one sale uses, and the site Clover sells from. */

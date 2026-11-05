@@ -6,6 +6,7 @@ import {
 } from '../../services/itemsurePosService.js';
 import { withCategoryDefaults } from '../../utils/itemsureCategoryDefaults.js';
 import { listItemPieces, saveItemPieces } from '../../services/itemsureItemContentService.js';
+import { listPosDoubles, setPosDoubles } from '../../services/itemsurePosModifierService.js';
 import { groupByMainMatch, MATCH_FILTERS, matchableItems, posRows, suggestMatch } from '../../utils/itemsurePosMatch.js';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsurePosMatchRow from './ItemsurePosMatchRow.jsx';
@@ -31,14 +32,15 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
 
   const load = useCallback(async () => {
     try {
-      const [posItems, links, catalog, ownPours, ownContents, ownPieces] = await Promise.all([
+      const [posItems, links, catalog, ownPours, ownContents, ownPieces, doubles] = await Promise.all([
         listPosItems(organizationId), listPosLinks(organizationId), listCatalog(organizationId),
         listPosPours(organizationId), listItemContents(organizationId), listItemPieces(organizationId),
+        listPosDoubles(organizationId),
       ]);
       const filled = withCategoryDefaults({
         links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
       });
-      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null });
+      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null, doubles });
     } catch (e) {
       setError(e.message);
       setData((d) => d || { posItems: [], links: new Map(), items: [], units: [], pours: null, contents: null });
@@ -127,6 +129,10 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     await setPosPour(organizationId, externalId, itemId, amount, unit);
     await refresh();
   });
+  const saveDoubles = (externalId, itemIds) => run(async () => {
+    await setPosDoubles(organizationId, externalId, itemIds);
+    await refresh();
+  });
   const grouped = filter === 'done';
   const row = (p) => (
     <ItemsurePosMatchRow
@@ -144,6 +150,8 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       onRemove={(itemId) => remove(p.external_id, itemId)}
       pourInfo={pourInfo}
       onSavePour={(itemId, amount, unit, contentMl, pieces) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces)}
+      doubles={data.doubles ? { chosen: data.doubles.get(p.external_id) || null } : null}
+      onSaveDoubles={(itemIds) => saveDoubles(p.external_id, itemIds)}
       onSkip={(skip) => skipItem(p, skip)}
     />
   );

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  addModifierUse, asSalesRows, guessModifier, modifierNotes, modifierSetup, modifierTotals, modifierUse, ruleOf, ruleText,
+  addModifierUse, asSalesRows, doubledItems, guessModifier, modifierNotes, modifierSetup, modifierTotals, modifierUse, ruleLines, ruleOf, ruleText,
 } from '../src/utils/itemsurePosModifiers.js';
 
 test('guesses common bar modifiers from their names', () => {
@@ -25,7 +25,71 @@ test('reads saved rules and says them plainly', () => {
   assert.equal(ruleText({ action: 'none' }), 'Nothing extra');
   assert.equal(ruleText({ action: 'extra', extraPours: 1 }), '1 more pour of the drink');
   assert.equal(ruleText({ action: 'extra', extraPours: 2 }), '2 more pours of the drink');
-  assert.equal(ruleText({ action: 'item', amount: 1 }, 'Red Bull', 'single'), 'Uses 1 single of Red Bull');
+  assert.equal(ruleText({ action: 'item', amount: 1 }, () => ({ name: 'Red Bull', unit: 'single' })), 'Uses 1 single of Red Bull');
+});
+
+test('reads and says modifiers that use several items', () => {
+  const row = { action: 'items', lines: [
+    { item_id: 'mix', uses_amount: '3.000000', uses_unit: 'fl_oz' },
+    { item_id: 'sec', uses_amount: '0.5', uses_unit: 'fl_oz' },
+  ] };
+  const rule = ruleOf(row);
+  assert.deepEqual(rule, { action: 'items', lines: [{ itemId: 'mix', amount: 3, unit: 'fl_oz' }, { itemId: 'sec', amount: 0.5, unit: 'fl_oz' }] });
+  const names = { mix: 'Margarita Mix', sec: 'Triple Sec' };
+  assert.equal(ruleText(rule, (l) => ({ name: names[l.itemId], unit: 'oz' })), 'Uses 3 oz of Margarita Mix + 0.5 oz of Triple Sec');
+  assert.deepEqual(ruleLines({ action: 'item', itemId: 'rb', amount: 1, unit: 'piece' }), [{ itemId: 'rb', amount: 1, unit: 'piece' }]);
+  assert.deepEqual(ruleLines({ action: 'extra', extraPours: 1 }), []);
+  assert.equal(modifierSetup({ rows: [{ modifier_id: 'M', name: 'Margarita', ...row }] }).rules.get('M').lines.length, 2);
+});
+
+test('a Double pours the chosen items, or the first matched one', () => {
+  assert.deepEqual(doubledItems(['vodka', 'soda'], null), ['vodka']);
+  assert.deepEqual(doubledItems(['rum', 'coke', 'vodka'], new Set(['vodka', 'rum'])), ['rum', 'vodka']);
+  assert.deepEqual(doubledItems(['rum', 'coke'], new Set(['gone'])), ['rum']);
+  assert.deepEqual(doubledItems(undefined, null), []);
+});
+
+const oz = 29.5735;
+const setupFor = (overrides) => ({
+  keys: [],
+  qtyFor: (cloverId, modifierId) => ({ 'VSODA|DBL': 2, 'LIT|DBL': 1, 'VSODA|MARG': 3 })[`${cloverId}|${modifierId}`] || 0,
+  rules: new Map([['DBL', { action: 'extra', extraPours: 1 }]]),
+  names: new Map([['DBL', 'Double'], ['MARG', 'Margarita']]),
+  links: new Map([['VSODA', ['vodka', 'soda']], ['LIT', ['vodka', 'gin', 'rum', 'coke']]]),
+  pours: new Map([
+    ['VSODA|vodka', { amount: 2, unit: 'fl_oz' }], ['VSODA|soda', { amount: 4, unit: 'fl_oz' }],
+    ['LIT|vodka', { amount: 0.5, unit: 'fl_oz' }], ['LIT|gin', { amount: 0.5, unit: 'fl_oz' }],
+    ['LIT|rum', { amount: 0.5, unit: 'fl_oz' }], ['LIT|coke', { amount: 3, unit: 'fl_oz' }],
+  ]),
+  unitCodes: new Map(['vodka', 'soda', 'gin', 'rum', 'coke', 'mix', 'sec'].map((id) => [id, 'milliliter'])),
+  contents: new Map(),
+  pieces: new Map(),
+  ...overrides,
+});
+
+test('a Double on a 2 oz drink adds one more 2 oz pour and never doubles the mixer', () => {
+  const use = modifierUse(setupFor({ keys: ['VSODA|DBL'] }));
+  assert.ok(Math.abs(use.get('vodka').extra - 2 * 2 * oz) < 1e-9);
+  assert.equal(use.has('soda'), false);
+});
+
+test('a Double pours each chosen liquor at its own amount', () => {
+  const use = modifierUse(setupFor({ keys: ['LIT|DBL'], doubles: new Map([['LIT', new Set(['vodka', 'gin', 'rum'])]]) }));
+  for (const liquor of ['vodka', 'gin', 'rum']) assert.ok(Math.abs(use.get(liquor).extra - 0.5 * oz) < 1e-9);
+  assert.equal(use.has('coke'), false);
+});
+
+test('a modifier using several items adds each one, and one item still works as before', () => {
+  const rules = new Map([
+    ['MARG', { action: 'items', lines: [{ itemId: 'mix', amount: 3, unit: 'fl_oz' }, { itemId: 'sec', amount: 0.5, unit: 'fl_oz' }] }],
+  ]);
+  const use = modifierUse(setupFor({ keys: ['VSODA|MARG'], rules }));
+  assert.ok(Math.abs(use.get('mix').extra - 3 * 3 * oz) < 1e-9);
+  assert.ok(Math.abs(use.get('sec').extra - 3 * 0.5 * oz) < 1e-9);
+  assert.deepEqual(use.get('mix').notes, [{ name: 'Margarita', qty: 3 }]);
+  const single = modifierUse(setupFor({ keys: ['VSODA|MARG'], rules: new Map([['MARG', { action: 'item', itemId: 'mix', amount: 3, unit: 'fl_oz' }]]) }));
+  assert.ok(Math.abs(single.get('mix').extra - 3 * 3 * oz) < 1e-9);
+  assert.equal(single.has('sec'), false);
 });
 
 test('adds what modifiers used to the right items', () => {

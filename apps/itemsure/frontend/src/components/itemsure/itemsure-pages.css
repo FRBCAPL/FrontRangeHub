@@ -140,6 +140,8 @@
 .isu-app .isu-places-group { border: 1px solid var(--isu-line); border-radius: 10px; margin: 0; padding: 6px 10px 8px; display: flex; flex-direction: column; }
 .isu-app .isu-places-group legend { font-weight: 600; font-size: 0.9rem; padding: 0 4px; }
 .isu-app .isu-item-filter { max-width: 220px !important; }
+.isu-app .isu-items-clover-filter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.isu-app .isu-items-clover-filter p { margin: 0; }
 .isu-app .isu-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .isu-app .isu-chip-rows { display: grid; gap: 10px; }
 .isu-app .isu-unit-add {

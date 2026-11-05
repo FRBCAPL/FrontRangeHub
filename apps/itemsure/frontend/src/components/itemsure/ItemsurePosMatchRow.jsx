@@ -2,14 +2,16 @@ import React from 'react';
 import { posPrice } from '../../utils/itemsurePosMatch.js';
 import ItemsureItemSearchPick from './ItemsureItemSearchPick.jsx';
 import ItemsurePosPourEdit from './ItemsurePosPourEdit.jsx';
+import ItemsurePosDoubles from './ItemsurePosDoubles.jsx';
 
 /**
  * One Clover item: what it is, the ItemSure items it uses (tap × to remove), a suggested
  * match, and "Match to…" for any active item. Read-only without `canMatch`. `asking` (just
  * matched) asks whether it uses anything else until `onDone`. `pourInfo` ({ pours, contents,
- * unitCodeFor }) shows how much each sale uses; null hides it.
+ * unitCodeFor }) shows how much each sale uses; null hides it. `doubles` ({ chosen: Set | null })
+ * shows what a Double pours more of when several items are matched; null hides it.
  */
-export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choices, suggestion, canMatch, busy, asking = false, pourInfo = null, onDone, onAdd, onRemove, onSavePour, onSkip }) {
+export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choices, suggestion, canMatch, busy, asking = false, pourInfo = null, doubles = null, onDone, onAdd, onRemove, onSavePour, onSaveDoubles, onSkip }) {
   const matched = matchedIds.map((id) => itemsById.get(id)).filter(Boolean);
   const left = choices.filter((i) => !matchedIds.includes(i.id));
   const facts = [posPrice(pos), pos.category_name].filter(Boolean).join(' · ');
@@ -60,6 +62,10 @@ export default function ItemsurePosMatchRow({ pos, matchedIds, itemsById, choice
             />
           ))}
         </div>
+      ) : null}
+
+      {doubles && matched.length > 1 ? (
+        <ItemsurePosDoubles posName={pos.name} matched={matched} chosen={doubles.chosen} canEdit={canMatch && !!onSaveDoubles} busy={busy} onSave={onSaveDoubles} />
       ) : null}
 
       {canMatch && pos.not_tracked && !matched.length ? (

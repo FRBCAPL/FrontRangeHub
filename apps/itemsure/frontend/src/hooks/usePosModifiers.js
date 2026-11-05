@@ -8,6 +8,7 @@ const RECENT_MS = 30 * 24 * 3600 * 1000;
 /**
  * Settings → Clover modifiers: every modifier seen in sales with its rule, a suggestion from its
  * name, and how often it was used in the last 30 days (most used first). Reports only.
+ * multiReady: the database can save modifiers that use several items.
  */
 export default function usePosModifiers(organizationId) {
   const [state, setState] = useState(null);
@@ -29,7 +30,7 @@ export default function usePosModifiers(organizationId) {
       for (const h of hours || []) used.set(h.modifier_id, (used.get(h.modifier_id) || 0) + Number(h.quantity || 0));
       const rows = list.rows.map((r) => ({ ...r, rule: ruleOf(r), guess: guessModifier(r.name), recent: used.get(r.modifier_id) || 0 }))
         .sort((a, b) => b.recent - a.recent || a.name.localeCompare(b.name));
-      setState({ missing: false, rows, items: catalog.items });
+      setState({ missing: false, rows, items: catalog.items, multiReady: list.multiReady });
     } catch (e) {
       setError(e.message);
       setState((s) => s || { missing: false, rows: [], items: [] });
@@ -43,14 +44,14 @@ export default function usePosModifiers(organizationId) {
   const save = useCallback(async (id, rule) => {
     setError('');
     try {
-      const saved = await saveModifier(id, rule);
+      const saved = await saveModifier(id, { ...rule, organizationId });
       setState((s) => ({ ...s, rows: s.rows.map((r) => (r.id === id ? { ...r, ...saved, rule: ruleOf(saved) } : r)) }));
       return true;
     } catch (e) {
       setError(e.message);
       return false;
     }
-  }, []);
+  }, [organizationId]);
 
   return { state, error, save, reload: load };
 }

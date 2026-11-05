@@ -21,6 +21,8 @@ import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import ItemsureQuickCount from './ItemsureQuickCount.jsx';
 import ItemsureUndoBar from './ItemsureUndoBar.jsx';
+import ItemsureItemsCloverFilter from './ItemsureItemsCloverFilter.jsx';
+import useCloverItemFilter from '../../hooks/useCloverItemFilter.js';
 
 export default function ItemsureItems() {
   const { organization, can, features } = useItemsureWorkspace();
@@ -39,6 +41,13 @@ export default function ItemsureItems() {
       else next.delete('category');
       return next;
     }, { replace: true });
+  const cloverOnly = params.get('clover') === 'unmatched';
+  const clover = useCloverItemFilter(organization.id, cloverOnly);
+  const clearClover = () => setParams((prev) => {
+    const next = new URLSearchParams(prev);
+    next.delete('clover');
+    return next;
+  }, { replace: true });
   const [categoryRequest, setCategoryRequest] = useState(null);
   const { error, setError } = useItemsureAction();
   const places = useItemPlaces(organization.id);
@@ -76,14 +85,15 @@ export default function ItemsureItems() {
   /** Items after the archived and location filters; the category buttons count these. */
   const filteredItems = useMemo(() => (catalog?.items || []).filter((item) => {
     if (!showArchived && !item.is_active) return false;
+    if (clover.keep && !clover.keep(item)) return false;
     if (!locationFilter) return true;
     const sources = { ...(stock || {}), places: places.placesFor(item.id) || [], locations: places.locations };
     return visibleSlots(item.id, sources).some((g) => g.location.id === locationFilter);
-  }), [catalog, showArchived, locationFilter, places, stock]);
+  }), [catalog, showArchived, locationFilter, places, stock, clover.keep]);
 
   const needle = query.trim().toLowerCase();
   // With categories set up, the list waits until a category, search, or location is chosen.
-  const browsing = !category && !needle && !locationFilter && activeCategories.length > 0;
+  const browsing = !category && !needle && !locationFilter && !cloverOnly && activeCategories.length > 0;
 
   const tree = useMemo(() => categoryTree(activeCategories), [activeCategories]);
   const showDetails = Boolean(features.details && catalog?.detailsAvailable);
@@ -119,6 +129,9 @@ export default function ItemsureItems() {
         description="Everything you stock. Tap an item to see how many you have and change it."
       />
       <ErrorNote message={error} />
+      {cloverOnly ? (
+        <ItemsureItemsCloverFilter count={filteredItems.length} ready={clover.ready && Boolean(catalog)} error={clover.error} onClear={clearClover} />
+      ) : null}
 
       {catalog ? (
         <ItemsureCategoryChips

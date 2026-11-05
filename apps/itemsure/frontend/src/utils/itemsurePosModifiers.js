@@ -19,18 +19,45 @@ export function ruleOf(row) {
   if (row?.action === 'none') return { action: 'none' };
   if (row?.action === 'extra') return { action: 'extra', extraPours: Number(row.extra_pours) };
   if (row?.action === 'item') return { action: 'item', itemId: row.item_id, amount: Number(row.uses_amount), unit: row.uses_unit };
+  if (row?.action === 'items') {
+    return { action: 'items', lines: (row.lines || []).map((l) => ({ itemId: l.item_id, amount: Number(l.uses_amount), unit: l.uses_unit })) };
+  }
   return null;
+}
+
+/** The items a rule uses, as lines: one for 'item', several for 'items', none otherwise. */
+export function ruleLines(rule) {
+  if (rule?.action === 'item') return [{ itemId: rule.itemId, amount: rule.amount, unit: rule.unit }];
+  if (rule?.action === 'items') return rule.lines;
+  return [];
 }
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-/** Plain words for a rule, e.g. "1 more pour of the drink", "Uses 1 single of Red Bull". */
-export function ruleText(rule, itemName = 'an item', unitLabel = '') {
+/**
+ * Plain words for a rule, e.g. "1 more pour of the drink", "Uses 1 single of Red Bull",
+ * "Uses 3 oz of Margarita Mix + 0.5 oz of Triple Sec". describeLine(line) -> { name, unit }.
+ */
+export function ruleText(rule, describeLine = () => ({ name: 'an item', unit: '' })) {
   if (!rule) return 'Not set yet (counts as nothing)';
   if (rule.action === 'none') return 'Nothing extra';
   if (rule.action === 'extra') return `${plural(rule.extraPours, 'more pour', 'more pours')} of the drink`;
-  const amount = `${rule.amount}${unitLabel ? ` ${unitLabel}` : ''}`;
-  return `Uses ${amount} of ${itemName}`;
+  const lines = ruleLines(rule);
+  if (!lines.length) return 'Uses nothing yet';
+  return `Uses ${lines.map((l) => {
+    const { name, unit } = describeLine(l);
+    return `${l.amount}${unit ? ` ${unit}` : ''} of ${name || 'an item'}`;
+  }).join(' + ')}`;
+}
+
+/**
+ * The items a Double pours more of on one Clover item: the chosen ones still matched to it,
+ * or else its first matched item. `linked`: [item ids], first matched first; `chosen`: Set or null.
+ */
+export function doubledItems(linked, chosen) {
+  const ids = linked || [];
+  const picked = chosen ? ids.filter((id) => chosen.has(id)) : [];
+  return picked.length ? picked : ids.slice(0, 1);
 }
 
 /** { rules, names } from listModifiers: rules holds only modifiers that use stock. */
@@ -60,10 +87,12 @@ export function modifierTotals(hours) {
  * keys: ["cloverId|modifierId"]; qtyFor(cloverId, modifierId, itemId) -> how many (itemId is the
  * item the stock comes from, so reports can use that item's own dates); rules: Map modifierId -> rule;
  * names: Map modifierId -> name; links / pours / unitCodes / contents / pieces as in expectedUse.
- * "More of the drink" adds to the drink's first linked item at its own amount per sale.
+ * "More of the drink" adds to the items a Double pours on that Clover item (`doubles`: Map
+ * cloverId -> Set of item ids), or its first linked item when none are chosen, each at its own
+ * amount per sale; mixers stay as they are. "Uses items" adds each item at its own amount.
  * Returns Map itemId -> { extra, notes: [{ name, qty }], incomplete }.
  */
-export function modifierUse({ keys, qtyFor, rules, names, links, pours, unitCodes, contents, pieces }) {
+export function modifierUse({ keys, qtyFor, rules, names, links, pours, unitCodes, contents, pieces, doubles = null }) {
   const out = new Map();
   const add = (itemId, modifierId, qty, per) => {
     const row = out.get(itemId) || { extra: 0, notes: new Map(), incomplete: false };
@@ -80,18 +109,21 @@ export function modifierUse({ keys, qtyFor, rules, names, links, pours, unitCode
     const rule = rules.get(modifierId);
     if (!rule || rule.action === 'none') continue;
     if (rule.action === 'extra') {
-      const main = (links.get(cloverId) || [])[0];
-      if (!main) continue;
-      const qty = qtyFor(cloverId, modifierId, main);
-      if (!(qty > 0)) continue;
-      const pour = pours?.get(`${cloverId}|${main}`);
-      const one = pour ? pourInBase(pour, unitCodes.get(main), contents?.get(main), pieces?.get(main)) : null;
-      add(main, modifierId, qty, one == null ? null : one * rule.extraPours);
-    } else if (rule.action === 'item' && rule.itemId) {
-      const qty = qtyFor(cloverId, modifierId, rule.itemId);
-      if (!(qty > 0)) continue;
-      const t = rule.itemId;
-      add(t, modifierId, qty, pourInBase({ amount: rule.amount, unit: rule.unit }, unitCodes.get(t), contents?.get(t), pieces?.get(t)));
+      for (const target of doubledItems(links.get(cloverId), doubles?.get(cloverId))) {
+        const qty = qtyFor(cloverId, modifierId, target);
+        if (!(qty > 0)) continue;
+        const pour = pours?.get(`${cloverId}|${target}`);
+        const one = pour ? pourInBase(pour, unitCodes.get(target), contents?.get(target), pieces?.get(target)) : null;
+        add(target, modifierId, qty, one == null ? null : one * rule.extraPours);
+      }
+    } else {
+      for (const line of ruleLines(rule)) {
+        const t = line.itemId;
+        if (!t) continue;
+        const qty = qtyFor(cloverId, modifierId, t);
+        if (!(qty > 0)) continue;
+        add(t, modifierId, qty, pourInBase({ amount: line.amount, unit: line.unit }, unitCodes.get(t), contents?.get(t), pieces?.get(t)));
+      }
     }
   }
   for (const row of out.values()) {

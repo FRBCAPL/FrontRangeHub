@@ -37,6 +37,14 @@ export function matchableItems(items) {
   return (items || []).filter((item) => item.is_active && !item.notSoldInPos);
 }
 
+/** Item ids any Clover button uses. `links`: Map of Clover id -> [item ids]. */
+export const matchedItemIds = (links) => new Set([...(links?.values() || [])].flat());
+
+/** Matchable items no Clover button uses yet. `matched`: Set of item ids (see matchedItemIds). */
+export function itemsNotOnClover(items, matched) {
+  return matchableItems(items).filter((item) => !matched?.has(item.id));
+}
+
 /**
  * Clover items to show: removed ones only while still matched; `filter` is a MATCH_FILTERS key.
  * `keep` (Clover item ids) stay under "Not matched" after their first match, until the person is done.
