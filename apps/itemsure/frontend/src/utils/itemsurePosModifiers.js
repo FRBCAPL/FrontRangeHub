@@ -22,13 +22,19 @@ export function ruleOf(row) {
   if (row?.action === 'items') {
     return { action: 'items', lines: (row.lines || []).map((l) => ({ itemId: l.item_id, amount: Number(l.uses_amount), unit: l.uses_unit })) };
   }
+  if (row?.action === 'recipe') {
+    return { action: 'recipe', recipeId: row.recipe_id, recipeName: row.recipe?.name || '', lines: row.recipe?.lines || [] };
+  }
   return null;
 }
 
-/** The items a rule uses, as lines: one for 'item', several for 'items', none otherwise. */
+/**
+ * The items a rule uses, as lines: one for 'item', several for 'items' or 'recipe', none
+ * otherwise. A recipe line's amount may be null (the category's usual pour).
+ */
 export function ruleLines(rule) {
   if (rule?.action === 'item') return [{ itemId: rule.itemId, amount: rule.amount, unit: rule.unit }];
-  if (rule?.action === 'items') return rule.lines;
+  if (rule?.action === 'items' || rule?.action === 'recipe') return rule.lines || [];
   return [];
 }
 
@@ -42,6 +48,7 @@ export function ruleText(rule, describeLine = () => ({ name: 'an item', unit: ''
   if (!rule) return 'Not set yet (counts as nothing)';
   if (rule.action === 'none') return 'Nothing extra';
   if (rule.action === 'extra') return `${plural(rule.extraPours, 'more pour', 'more pours')} of the drink`;
+  if (rule.action === 'recipe') return rule.recipeName ? `Uses the ${rule.recipeName} recipe` : 'Uses a recipe that was deleted';
   const lines = ruleLines(rule);
   if (!lines.length) return 'Uses nothing yet';
   return `Uses ${lines.map((l) => {
@@ -89,10 +96,11 @@ export function modifierTotals(hours) {
  * names: Map modifierId -> name; links / pours / unitCodes / contents / pieces as in expectedUse.
  * "More of the drink" adds to the items a Double pours on that Clover item (`doubles`: Map
  * cloverId -> Set of item ids), or its first linked item when none are chosen, each at its own
- * amount per sale; mixers stay as they are. "Uses items" adds each item at its own amount.
+ * amount per sale; mixers stay as they are. "Uses items" and "uses a recipe" add each item at its
+ * own amount; a recipe ingredient with no amount uses `usual(itemId)` ({ amount, unit } or null).
  * Returns Map itemId -> { extra, notes: [{ name, qty }], incomplete }.
  */
-export function modifierUse({ keys, qtyFor, rules, names, links, pours, unitCodes, contents, pieces, doubles = null }) {
+export function modifierUse({ keys, qtyFor, rules, names, links, pours, unitCodes, contents, pieces, doubles = null, usual = null }) {
   const out = new Map();
   const add = (itemId, modifierId, qty, per) => {
     const row = out.get(itemId) || { extra: 0, notes: new Map(), incomplete: false };
@@ -122,7 +130,8 @@ export function modifierUse({ keys, qtyFor, rules, names, links, pours, unitCode
         if (!t) continue;
         const qty = qtyFor(cloverId, modifierId, t);
         if (!(qty > 0)) continue;
-        add(t, modifierId, qty, pourInBase({ amount: line.amount, unit: line.unit }, unitCodes.get(t), contents?.get(t), pieces?.get(t)));
+        const pour = line.amount == null ? usual?.(t) || null : { amount: line.amount, unit: line.unit };
+        add(t, modifierId, qty, pourInBase(pour, unitCodes.get(t), contents?.get(t), pieces?.get(t)));
       }
     }
   }

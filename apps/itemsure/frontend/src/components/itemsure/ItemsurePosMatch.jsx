@@ -1,18 +1,22 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import usePosRecipeUses from '../../hooks/usePosRecipeUses.js';
+import { setButtonPour } from '../../services/itemsureRecipeService.js';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import {
-  addPosLink, listItemContents, listPosItems, listPosLinks, listPosPours, removePosLink, saveItemContent, setPosNotTracked, setPosPour,
+  addPosLink, listItemContents, listPosItems, listPosLinks, listPosPours, removePosLink, saveItemContent, setPosNotTracked,
 } from '../../services/itemsurePosService.js';
 import { withCategoryDefaults } from '../../utils/itemsureCategoryDefaults.js';
 import { listItemPieces, saveItemPieces } from '../../services/itemsureItemContentService.js';
-import { groupByMainMatch, MATCH_FILTERS, matchableItems, posRows, suggestMatch } from '../../utils/itemsurePosMatch.js';
+import {
+  groupByCategory, groupByMainMatch, MATCH_FILTERS, matchableItems, posRows, sortByCategory, suggestMatch,
+} from '../../utils/itemsurePosMatch.js';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
 import ItemsurePosMatchRow from './ItemsurePosMatchRow.jsx';
+import ItemsurePosNewRecipe from './ItemsurePosNewRecipe.jsx';
 import ItemsurePosNotTrackedAsk from './ItemsurePosNotTrackedAsk.jsx';
+import { recipeFromButton } from '../../utils/itemsureRecipes.js';
 import ItemsurePosSuggestReview from './ItemsurePosSuggestReview.jsx';
-
-const SHOW_AT_ONCE = 60;
 
 /**
  * Match Clover items to ItemSure items: "Not matched" first, with suggestions by name and a
@@ -23,11 +27,13 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('todo');
   const [search, setSearch] = useState('');
-  const [limit, setLimit] = useState(SHOW_AT_ONCE);
   const [asking, setAsking] = useState(() => new Set()); // just matched: "Anything else?" until Done
   const [reviewing, setReviewing] = useState(false);
   const [skipping, setSkipping] = useState(null);
+  const [newRecipeFor, setNewRecipeFor] = useState(null);
   const { busy, error, setError, run } = useItemsureAction();
+  const recipeUses = usePosRecipeUses(organizationId);
+  const recipesById = useMemo(() => new Map(recipeUses.recipes.map((r) => [r.id, r])), [recipeUses.recipes]);
 
   const load = useCallback(async () => {
     try {
@@ -38,7 +44,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       const filled = withCategoryDefaults({
         links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
       });
-      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null });
+      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, ownPours, piecesReady: ownPieces !== null });
     } catch (e) {
       setError(e.message);
       setData((d) => d || { posItems: [], links: new Map(), items: [], units: [], pours: null, contents: null });
@@ -49,7 +55,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     load();
   }, [load, reloadKey]);
   const refresh = async () => {
-    await load();
+    await Promise.all([load(), recipeUses.reload()]);
     onChanged?.();
   };
 
@@ -68,7 +74,10 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       unitFor: (itemId) => (data.units || []).find((u) => u.id === itemsById.get(itemId)?.base_unit_id) || null,
       unitCodeFor: (itemId) => codes.get(itemsById.get(itemId)?.base_unit_id) || '' };
   }, [data, itemsById]);
-  const rows = useMemo(() => (data ? posRows(data.posItems, data.links, { filter, search, keep: asking }) : []), [data, filter, search, asking]);
+  const rows = useMemo(
+    () => (data ? sortByCategory(posRows(data.posItems, data.links, { filter, search, keep: asking })) : []),
+    [data, filter, search, asking],
+  );
   const suggestions = useMemo(() => {
     const map = new Map();
     if (!data || !canMatch) return map;
@@ -124,7 +133,23 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   const savePour = (externalId, itemId, amount, unit, contentMl, pieces) => run(async () => {
     if (contentMl !== undefined) await saveItemContent(organizationId, itemId, contentMl);
     if (pieces !== undefined) await saveItemPieces(organizationId, itemId, pieces);
-    await setPosPour(organizationId, externalId, itemId, amount, unit);
+    await setButtonPour(organizationId, externalId, itemId, amount, unit);
+    await refresh();
+  });
+  const applyRecipe = (externalId, recipeId) => run(async () => {
+    await recipeUses.apply(externalId, recipeId);
+    await refresh();
+  });
+  const stopRecipe = (externalId) => run(async () => {
+    await recipeUses.stop(externalId);
+    await refresh();
+  });
+  const openNewRecipe = (p) => {
+    setError('');
+    setNewRecipeFor(p);
+  };
+  const createRecipe = (name, lines) => run(async () => {
+    await recipeUses.create(newRecipeFor.external_id, name, lines);
     await refresh();
   });
   const grouped = filter === 'done';
@@ -143,7 +168,13 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       onAdd={(itemId) => add(p.external_id, itemId)}
       onRemove={(itemId) => remove(p.external_id, itemId)}
       pourInfo={pourInfo}
-      onSavePour={(itemId, amount, unit, contentMl, pieces) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces)}      onSkip={(skip) => skipItem(p, skip)}
+      onSavePour={(itemId, amount, unit, contentMl, pieces) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces)}
+      onSkip={(skip) => skipItem(p, skip)}
+      recipe={recipesById.get(recipeUses.uses.get(p.external_id)) || null}
+      recipes={recipeUses.recipes}
+      onUseRecipe={(recipeId) => applyRecipe(p.external_id, recipeId)}
+      onStopRecipe={() => stopRecipe(p.external_id)}
+      onNewRecipe={recipeUses.ready ? () => openNewRecipe(p) : null}
     />
   );
   const matchAll = () => run(async () => {
@@ -161,16 +192,16 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   return (
     <div className="isu-stack isu-pos-match">
       <p className="isu-muted isu-small">
-        Every button on your Clover menu. Link each one to what it uses from your stock, and how much (like 1.5 oz of rum; 2 sold = 3 oz). A drink can use more than one item. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Stop tracking button. They move to Not tracked. This never changes stock or Clover.
+        Every button on your Clover menu. Link each one to what it uses from your stock, and how much (like 1.5 oz of rum; 2 sold = 3 oz). A drink can use more than one item, or a recipe from Inventory → Recipes. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Stop tracking button. They move to Not tracked. This never changes stock or Clover.
       </p>
       <div className="isu-pos-filters" role="group" aria-label="Show">
         {Object.entries(MATCH_FILTERS).map(([key, label]) => (
-          <button key={key} type="button" className={`isu-chip${filter === key ? ' is-active' : ''}`} aria-pressed={filter === key} onClick={() => { setFilter(key); setLimit(SHOW_AT_ONCE); }}>
+          <button key={key} type="button" className={`isu-chip${filter === key ? ' is-active' : ''}`} aria-pressed={filter === key} onClick={() => setFilter(key)}>
             {label} ({counts[key] || 0})
           </button>
         ))}
       </div>
-      <input type="search" value={search} onChange={(e) => { setSearch(e.target.value); setLimit(SHOW_AT_ONCE); }} placeholder="Find a Clover item" aria-label="Find a Clover item" />
+      <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a Clover item" aria-label="Find a Clover item" />
       {canMatch && suggestions.size ? (
         <div className="isu-pos-actions">
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => setReviewing(true)}>
@@ -183,6 +214,14 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
           ) : null}
         </div>
       ) : null}
+      <ItemsurePosNewRecipe
+        pos={newRecipeFor}
+        start={newRecipeFor ? recipeFromButton(newRecipeFor, data.links.get(newRecipeFor.external_id), data.ownPours) : null}
+        items={data.items}
+        error={error}
+        onSave={createRecipe}
+        onClose={() => setNewRecipeFor(null)}
+      />
       <ItemsurePosNotTrackedAsk pos={skipping} busy={busy} error={error} onConfirm={confirmSkip} onClose={() => setSkipping(null)} />
       <Modal open={reviewing} title="Review suggested matches" onClose={() => setReviewing(false)}>
         {reviewing ? (
@@ -195,7 +234,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
           />
         ) : null}
       </Modal>
-      <ErrorNote message={error} />
+      <ErrorNote message={newRecipeFor ? '' : error} />
       {!rows.length ? (
         <p className="isu-muted">
           {filter === 'todo' && !search ? 'Everything else is matched or marked as not tracked.'
@@ -203,21 +242,15 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
               : 'Nothing matches.'}
         </p>
       ) : null}
-      {grouped ? (
-        groupByMainMatch(rows, data.links, itemsById).map((g) => (
-          <details key={g.key || 'other'} className="isu-pos-group" open={Boolean(search.trim())}>
-            <summary className="isu-pos-group-title">{g.label} <span className="isu-muted isu-small">({g.rows.length})</span></summary>
-            <ul className="isu-pos-list">{g.rows.map(row)}</ul>
-          </details>
-        ))
-      ) : (
-        <ul className="isu-pos-list">{rows.slice(0, limit).map(row)}</ul>
-      )}
-      {!grouped && rows.length > limit ? (
-        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setLimit((n) => n + SHOW_AT_ONCE)}>
-          Show more ({rows.length - limit} left)
-        </button>
-      ) : null}
+      {(grouped
+        ? groupByMainMatch(rows, data.links, itemsById, (id) => recipesById.get(recipeUses.uses.get(id)) || null)
+        : groupByCategory(rows)
+      ).map((g) => (
+        <details key={`${filter}:${g.key || 'other'}`} className="isu-pos-group" open={Boolean(search.trim())}>
+          <summary className="isu-pos-group-title">{g.label} <span className="isu-muted isu-small">({g.rows.length})</span></summary>
+          <ul className="isu-pos-list">{g.rows.map(row)}</ul>
+        </details>
+      ))}
     </div>
   );
 }

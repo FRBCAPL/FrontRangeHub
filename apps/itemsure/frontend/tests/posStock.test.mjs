@@ -30,7 +30,12 @@ test('mergeTakeResults adds up and lists missing setups once', () => {
     { nothing: true },
     { taken: 3, counted: 0, not_set_up: 2, short: [], missing: [miss], to: 't2' },
   ]);
-  assert.deepEqual({ ...merged, short: merged.short.length }, { taken: 5, counted: 1, notSetUp: 3, short: 1, missing: [miss], to: 't2' });
+  assert.deepEqual({ ...merged, short: merged.short.length }, { taken: 5, counted: 1, notSetUp: 3, short: 1, missing: [miss], to: 't2', addOns: false });
+});
+
+test('mergeTakeResults says add-ons were included when any window counted them', () => {
+  assert.equal(mergeTakeResults([{ taken: 1, add_ons: false }, { taken: 1, add_ons: true }]).addOns, true);
+  assert.equal(mergeTakeResults([{ taken: 1 }, { nothing: true, add_ons: true }]).addOns, false);
 });
 
 test('shortByItem totals per item, biggest first', () => {

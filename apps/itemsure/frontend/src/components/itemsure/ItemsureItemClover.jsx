@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { setNotSoldInPos } from '../../services/itemsureItemPosSkipService.js';
-import { addPosLink, removePosLink, saveItemContent, setPosNotTracked, setPosPour } from '../../services/itemsurePosService.js';
+import { addPosLink, leaveRecipe, removePosLink, saveItemContent, setPosNotTracked } from '../../services/itemsurePosService.js';
+import { setButtonPour } from '../../services/itemsureRecipeService.js';
 import { saveItemPieces } from '../../services/itemsureItemContentService.js';
 import { alsoUses, cloverLinkable, cloverSuggestionsFor, cloverUsesFor } from '../../utils/itemsureItemClover.js';
 import { posPrice } from '../../utils/itemsurePosMatch.js';
@@ -38,12 +39,14 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
     : [];
 
   const link = (externalId) => run(async () => {
+    await leaveRecipe(organizationId, externalId);
     await addPosLink(organizationId, externalId, itemId);
     await reload();
   });
   const unlink = (p) => {
-    if (!window.confirm(`Stop taking ${item.name} off stock when "${p.name}" is sold?`)) return;
+    if (!window.confirm(`Stop taking ${item.name} off stock when "${p.name}" is sold? If that button uses a recipe, it stops using it and keeps its other items.`)) return;
     run(async () => {
+      await leaveRecipe(organizationId, p.external_id);
       await removePosLink(organizationId, p.external_id, itemId);
       await reload();
     });
@@ -67,7 +70,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
   const savePour = (externalId, amount, pourUnit, contentMl, pieces) => run(async () => {
     if (contentMl !== undefined) await saveItemContent(organizationId, itemId, contentMl);
     if (pieces !== undefined) await saveItemPieces(organizationId, itemId, pieces);
-    await setPosPour(organizationId, externalId, itemId, amount, pourUnit);
+    await setButtonPour(organizationId, externalId, itemId, amount, pourUnit);
     await reload();
   });
 

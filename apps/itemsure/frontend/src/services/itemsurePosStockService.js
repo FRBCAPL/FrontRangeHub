@@ -19,6 +19,11 @@ export async function setPosStock(organizationId, on) {
   return assertOk(await itemsure.rpc('set_pos_stock', { p_organization: organizationId, p_on: on }), 'change sales to stock');
 }
 
+/** Count add-ons (Doubles, Add Red Bull) when taking sales off, from the next full hour. */
+export async function setPosAddOns(organizationId, on) {
+  return assertOk(await itemsure.rpc('set_pos_add_ons', { p_organization: organizationId, p_on: on }), 'change add-ons');
+}
+
 /** Spot ids in the order sales are taken from (first = where drinks are served from). */
 export async function listSalesSpots(locationId) {
   const rows = assertOk(

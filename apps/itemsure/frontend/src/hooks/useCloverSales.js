@@ -5,7 +5,7 @@ import {
 } from '../services/itemsurePosService.js';
 import { listSalesSyncs, salesHours } from '../services/itemsurePosSalesService.js';
 import { listItemPieces } from '../services/itemsureItemContentService.js';
-import { doublesByCategory, withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
+import { doublesByCategory, usualPourFor, withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
 import { salesCovered } from '../utils/itemsurePosUsage.js';
 import { itemSalesRows, periodRange, salesTotals, unmatchedRows } from '../utils/itemsureCloverSales.js';
 import { listModifiers, modifierHours } from '../services/itemsurePosModifierService.js';
@@ -55,6 +55,7 @@ export default function useCloverSales(organizationId) {
           skipped: new Set(posItems.filter((p) => p.not_tracked).map((p) => p.external_id)),
           modifiers: modifierSetup(modifiers),
           doubles: doublesByCategory({ links, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults }),
+          usual: usualPourFor({ items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units }),
         });
       } catch (e) {
         if (live) {
@@ -109,7 +110,7 @@ export default function useCloverSales(organizationId) {
         qtyFor: (cloverId, modifierId) => modTotals.get(`${cloverId}|${modifierId}`) || 0,
         rules: base.modifiers.rules,
         names: base.modifiers.names,
-        links: base.links, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents, pieces: base.pieces, doubles: base.doubles,
+        links: base.links, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents, pieces: base.pieces, doubles: base.doubles, usual: base.usual,
       });
       const rows = itemSalesRows({ totals, ...base, mods });
       setResult({

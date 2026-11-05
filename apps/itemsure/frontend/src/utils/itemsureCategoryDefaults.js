@@ -81,6 +81,18 @@ export function doublesByCategory({ links, items, categories, defaults }) {
   return out;
 }
 
+/** (itemId) -> its category's usual pour { amount, unit } or null; for recipe ingredients with no amount. */
+export function usualPourFor({ items, categories, defaults, units }) {
+  const itemsById = new Map((items || []).map((i) => [i.id, i]));
+  const categoriesById = new Map((categories || []).map((c) => [c.id, c]));
+  const unitsById = new Map((units || []).map((u) => [u.id, u]));
+  return (itemId) => {
+    if (!defaults?.size) return null;
+    const item = itemsById.get(itemId);
+    return item ? categoryPour(item, categoriesById, defaults, unitOf(item, unitsById)) : null;
+  };
+}
+
 /**
  * Rows for the "Category amounts" list: each main category, then its subcategories.
  * matched: Clover-matched items in it (a main category counts its subcategories' too).

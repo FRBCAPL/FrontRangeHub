@@ -65,17 +65,43 @@ export function posRows(posItems, links, { filter = 'todo', search = '', keep = 
 
 /**
  * Matched Clover items grouped by their main match (the first ItemSure item matched), A to Z:
- * [{ key, label, rows }]. Rows whose main item can't be seen go last under "Other items".
+ * [{ key, label, rows }]. Buttons using a recipe (`recipeFor(cloverId)` -> { id, name } or null)
+ * are grouped by recipe instead, ahead of the rest. Rows whose main item can't be seen go last
+ * under "Other items".
  */
-export function groupByMainMatch(rows, links, itemsById) {
+export function groupByMainMatch(rows, links, itemsById, recipeFor = null) {
   const groups = new Map();
   for (const p of rows) {
-    const main = itemsById.get((links.get(p.external_id) || [])[0]);
-    const key = main ? main.id : '';
-    if (!groups.has(key)) groups.set(key, { key, label: main ? main.name : 'Other items', rows: [] });
+    const recipe = recipeFor?.(p.external_id);
+    const main = recipe ? null : itemsById.get((links.get(p.external_id) || [])[0]);
+    const key = recipe ? `recipe:${recipe.id}` : main ? main.id : '';
+    const label = recipe ? `Recipe: ${recipe.name}` : main ? main.name : 'Other items';
+    if (!groups.has(key)) groups.set(key, { key, label, isRecipe: Boolean(recipe), rows: [] });
     groups.get(key).rows.push(p);
   }
-  return [...groups.values()].sort((a, b) => (!a.key) - (!b.key) || a.label.localeCompare(b.label));
+  return [...groups.values()].sort((a, b) => (b.isRecipe - a.isRecipe) || (!a.key) - (!b.key) || a.label.localeCompare(b.label));
+}
+
+const categoryOf = (p) => (p.category_name || '').trim();
+
+/** Rows sorted by Clover category A to Z (no category last), keeping their order inside a category. */
+export function sortByCategory(rows) {
+  return rows
+    .map((p, i) => ({ p, i, c: categoryOf(p) }))
+    .sort((a, b) => (!a.c) - (!b.c) || a.c.localeCompare(b.c) || a.i - b.i)
+    .map((x) => x.p);
+}
+
+/** Consecutive rows (see sortByCategory) split by Clover category: [{ key, label, rows }]. */
+export function groupByCategory(rows) {
+  const groups = [];
+  for (const p of rows) {
+    const c = categoryOf(p);
+    const last = groups[groups.length - 1];
+    if (last && last.key === c) last.rows.push(p);
+    else groups.push({ key: c, label: c || 'No Clover category', rows: [p] });
+  }
+  return groups;
 }
 
 /** "$9.00", "$9.00 / unit", "Price varies", or "" when Clover has no price. */

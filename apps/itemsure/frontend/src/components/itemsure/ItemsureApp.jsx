@@ -15,6 +15,7 @@ import './itemsure-stock.css';
 import './itemsure-restock.css';
 import './itemsure-shopping.css';
 import './itemsure-pos.css';
+import './itemsure-recipes.css';
 import './itemsure-shopping-receive.css';
 import './itemsure-category-manage.css';
 import './itemsure-packaging.css';

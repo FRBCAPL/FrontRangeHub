@@ -1,0 +1,11 @@
+/* Inventory → Recipes, and recipe badges on Clover buttons. */
+.isu-app .isu-recipe-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.isu-app .isu-recipe { display: grid; gap: 6px; }
+.isu-app .isu-recipe p { margin: 0; }
+.isu-app .isu-recipe-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.isu-app .isu-recipe-buttons { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 50vh; overflow-y: auto; }
+.isu-app .isu-recipe-buttons li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 4px; border-bottom: 1px solid var(--isu-line, rgba(127, 127, 127, 0.2)); }
+.isu-app .isu-recipe-buttons li.is-mine { background: var(--isu-pine-soft); }
+.isu-app .isu-recipe-buttons .isu-check { align-items: flex-start; min-height: 40px; }
+.isu-app .isu-pos-recipe { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.isu-app .isu-pos-recipe .isu-search-pick { flex: 1 1 100%; }

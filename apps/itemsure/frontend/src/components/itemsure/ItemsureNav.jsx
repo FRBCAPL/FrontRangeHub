@@ -14,6 +14,7 @@ const MAIN = [
 
 /** Everything else, under "More". */
 const MORE = [
+  { to: `${ITEMSURE_PATH}/items/recipes`, label: 'Recipes', icon: '\u2615' },
   { to: `${ITEMSURE_PATH}/low-stock`, label: 'Running low', icon: '\u26A0', permission: 'inventory.view' },
   { to: `${ITEMSURE_PATH}/levels`, label: 'Warning levels', icon: '\u2195', permission: 'inventory.view' },
   { to: `${ITEMSURE_PATH}/stock`, label: `Stock by ${site}`, icon: '\u25A4', permission: 'inventory.view' },

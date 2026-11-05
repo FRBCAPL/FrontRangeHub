@@ -15,10 +15,11 @@ export function takeWindows(throughIso, now = Date.now()) {
 
 /** One result from several take_pos_sales calls. Missing setups are listed once each. */
 export function mergeTakeResults(results) {
-  const out = { taken: 0, counted: 0, notSetUp: 0, short: [], missing: [], to: null };
+  const out = { taken: 0, counted: 0, notSetUp: 0, short: [], missing: [], to: null, addOns: false };
   const seen = new Set();
   for (const r of results) {
     if (!r || r.nothing) continue;
+    out.addOns = out.addOns || r.add_ons === true;
     out.taken += r.taken || 0;
     out.counted += r.counted || 0;
     out.notSetUp += r.not_set_up || 0;

@@ -1,5 +1,6 @@
 import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
+import { listRecipes } from './itemsureRecipeService.js';
 
 // Clover modifiers ("Double", "Add Red Bull") and what each does for stock. Reports only:
 // nothing here changes stock, and nothing is ever sent to Clover.
@@ -23,23 +24,40 @@ async function listModifierLines(organizationId) {
   return byModifier;
 }
 
+const missingColumn = (error) => error && (error.code === '42703' || /column .* does not exist/i.test(error.message || ''));
+
+/** Modifier rows, with recipe_id when the add-on recipes update is applied. */
+async function listRules(organizationId) {
+  const query = (cols) => itemsure.from('pos_modifiers').select(cols).eq('organization_id', organizationId).eq('provider', PROVIDER).order('name');
+  const withRecipe = await query(`${RULE}, recipe_id`);
+  if (!missingColumn(withRecipe.error)) return { ...withRecipe, recipeReady: !withRecipe.error };
+  return { ...(await query(RULE)), recipeReady: false };
+}
+
 /**
- * { missing } until the database update is applied, else { rows, multiReady } (every modifier seen
- * in sales, each with its `lines` when it uses several items). multiReady: several items can be saved.
+ * { missing } until the database update is applied, else { rows, multiReady, recipeReady, recipes }:
+ * every modifier seen in sales, each with its `lines` when it uses several items and its `recipe`
+ * ({ id, name, lines }) when it uses one. recipes: every recipe, for choosing one.
  */
 export async function listModifiers(organizationId) {
-  const [{ data, error }, lines] = await Promise.all([
-    itemsure.from('pos_modifiers').select(RULE).eq('organization_id', organizationId).eq('provider', PROVIDER).order('name'),
+  const [{ data, error, recipeReady }, lines, recipeList] = await Promise.all([
+    listRules(organizationId),
     listModifierLines(organizationId),
+    listRecipes(organizationId).catch(() => ({ missing: true, recipes: [] })),
   ]);
-  if (missingTable(error)) return { missing: true, rows: [], multiReady: false };
-  const rows = (assertOk({ data, error }, 'Clover modifiers') || []).map((r) => ({ ...r, lines: lines?.get(r.modifier_id) || [] }));
-  return { missing: false, rows, multiReady: lines !== null };
+  if (missingTable(error)) return { missing: true, rows: [], multiReady: false, recipeReady: false, recipes: [] };
+  const recipes = recipeList.missing ? [] : recipeList.recipes;
+  const byId = new Map(recipes.map((r) => [r.id, r]));
+  const rows = (assertOk({ data, error }, 'Clover modifiers') || []).map((r) => ({
+    ...r, lines: lines?.get(r.modifier_id) || [], recipe: r.recipe_id ? byId.get(r.recipe_id) || null : null,
+  }));
+  return { missing: false, rows, multiReady: lines !== null, recipeReady: recipeReady && !recipeList.missing, recipes };
 }
 
 /**
  * Saves what a modifier does: { action: 'none' } | { action: 'extra', extraPours }
- * | { action: 'item', itemId, amount, unit } | { action: 'items', lines: [{ itemId, amount, unit }] }.
+ * | { action: 'item', itemId, amount, unit } | { action: 'items', lines: [{ itemId, amount, unit }] }
+ * | { action: 'recipe', recipeId }. With `recipeReady`, any saved recipe is cleared first.
  * Several items are saved in one step (all or nothing).
  */
 export async function saveModifier(id, rule) {
@@ -52,9 +70,12 @@ export async function saveModifier(id, rule) {
     return { ...row, lines: saved || [] };
   }
   const row = { action: rule.action, extra_pours: null, item_id: null, uses_amount: null, uses_unit: null, updated_at: new Date().toISOString() };
+  if (rule.recipeReady) row.recipe_id = null;
   if (rule.action === 'extra') row.extra_pours = rule.extraPours;
   if (rule.action === 'item') Object.assign(row, { item_id: rule.itemId, uses_amount: rule.amount, uses_unit: rule.unit });
-  return { ...assertOk(await itemsure.from('pos_modifiers').update(row).eq('id', id).select(RULE).single(), 'save the modifier'), lines: [] };
+  if (rule.action === 'recipe') row.recipe_id = rule.recipeId;
+  const cols = rule.recipeReady ? `${RULE}, recipe_id` : RULE;
+  return { ...assertOk(await itemsure.from('pos_modifiers').update(row).eq('id', id).select(cols).single(), 'save the modifier'), lines: [] };
 }
 
 /** Hourly modifier use [{ external_id, modifier_id, hour_start, quantity }], or null until the update is applied. */

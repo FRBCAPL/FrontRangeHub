@@ -65,11 +65,23 @@ export async function listPosItems(organizationId) {
 }
 
 /**
+ * Before changing one button's links by hand: it stops using its recipe (if any), keeping its
+ * links, so a later recipe change can't undo the hand change. Fine before recipes exist.
+ */
+export async function leaveRecipe(organizationId, externalId) {
+  const { error } = await itemsure.rpc('stop_pos_recipe', { p_organization: organizationId, p_external_ids: [externalId] });
+  if (error && !(error.code === 'PGRST202' || error.code === '42883' || /could not find the function/i.test(error.message || ''))) {
+    assertOk({ error }, 'stop using the recipe');
+  }
+}
+
+/**
  * Marks a Clover item as not tracked (generic buttons you don't stock) or tracked again.
  * When marking not tracked, any matches are removed first. Reports skip not-tracked items.
  */
 export async function setPosNotTracked(organizationId, externalId, notTracked) {
   if (notTracked) {
+    await leaveRecipe(organizationId, externalId);
     assertOk(
       await itemsure.from('pos_item_links').delete()
         .eq('organization_id', organizationId).eq('provider', PROVIDER).eq('external_id', externalId),

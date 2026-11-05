@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import usePosSetup from '../../hooks/usePosSetup.js';
-import { setPosPour } from '../../services/itemsurePosService.js';
+import { setButtonPour } from '../../services/itemsureRecipeService.js';
 import { saveSizeAnswers } from '../../services/itemsureItemContentService.js';
 import { saveStandardAmounts } from '../../services/itemsureStandardAmountService.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
@@ -65,7 +65,7 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
   };
   const saveAmounts = async (list) => {
     const ok = await run(async () => {
-      for (const { row, amount, unit } of list) await setPosPour(organizationId, row.pos.external_id, row.item.id, amount, unit);
+      for (const { row, amount, unit } of list) await setButtonPour(organizationId, row.pos.external_id, row.item.id, amount, unit);
     });
     await finish(ok, true);
   };

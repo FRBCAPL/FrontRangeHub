@@ -3,6 +3,7 @@ import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { getPosStockStatus, setPosStock } from '../../services/itemsurePosStockService.js';
 import { formatWhen } from '../../utils/itemsureText.js';
 import { Card, ErrorNote } from './ItemsureUi.jsx';
+import ItemsurePosAddOnsSwitch from './ItemsurePosAddOnsSwitch.jsx';
 import ItemsurePosSpotOrder from './ItemsurePosSpotOrder.jsx';
 import ItemsurePosTakeSales from './ItemsurePosTakeSales.jsx';
 
@@ -55,6 +56,7 @@ export default function ItemsurePosStockCard({ organizationId, locationId, can }
             {last ? `Sales taken off up to ${formatWhen(status.stock_through)}.` : `Starts with sales after ${formatWhen(status.stock_through)}.`}
             {last ? <span className="isu-muted"> Last tapped {formatWhen(last.ran_at)}.</span> : null}
           </p>
+          <ItemsurePosAddOnsSwitch organizationId={organizationId} status={status} canManage={canManage} onChanged={load} />
           {can('inventory.adjust') ? <ItemsurePosTakeSales organizationId={organizationId} canFix={can('items.manage')} onDone={load} /> : null}
           <ItemsurePosSpotOrder organizationId={organizationId} locationId={status.location_id} canEdit={canManage} />
         </>

@@ -1,6 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByMainMatch, matchableItems, posPrice, posRows, suggestMatch } from '../src/utils/itemsurePosMatch.js';
+import {
+  groupByCategory, groupByMainMatch, matchableItems, posPrice, posRows, sortByCategory, suggestMatch,
+} from '../src/utils/itemsurePosMatch.js';
+
+test('sortByCategory and groupByCategory arrange buttons by Clover category, A to Z, none last', () => {
+  const rows = [
+    { external_id: 'a', name: 'Adios', category_name: 'Cocktails' },
+    { external_id: 'b', name: 'Bud', category_name: 'Beer' },
+    { external_id: 'c', name: 'Chips', category_name: '' },
+    { external_id: 'd', name: 'Coors', category_name: 'Beer' },
+    { external_id: 'e', name: 'Mojito', category_name: 'Cocktails' },
+  ];
+  const sorted = sortByCategory(rows);
+  assert.deepEqual(sorted.map((p) => p.external_id), ['b', 'd', 'a', 'e', 'c']);
+  assert.deepEqual(groupByCategory(sorted).map((g) => [g.label, g.rows.length]), [['Beer', 2], ['Cocktails', 2], ['No Clover category', 1]]);
+});
 
 const items = [
   { id: 'rum', name: 'Superior', brand: 'Bacardi' },
@@ -69,6 +84,19 @@ test('groupByMainMatch groups by the first matched item, A to Z, unknown last', 
     ['Coke', ['coke']],
     ['Superior', ['shot', 'mojito']],
     ['Other items', ['odd']],
+  ]);
+});
+
+test('groupByMainMatch puts recipe buttons under their recipe, first', () => {
+  const pos = [{ external_id: 'shot' }, { external_id: 'adios' }, { external_id: 'adios2' }, { external_id: 'coke' }];
+  const links = new Map([['shot', ['rum']], ['adios', ['rum', 'lime']], ['adios2', ['rum', 'lime']], ['coke', ['coke']]]);
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const recipes = new Map([['adios', { id: 'r1', name: 'Adios' }], ['adios2', { id: 'r1', name: 'Adios' }]]);
+  const groups = groupByMainMatch(pos, links, byId, (id) => recipes.get(id) || null);
+  assert.deepEqual(groups.map((g) => [g.label, g.rows.map((r) => r.external_id)]), [
+    ['Recipe: Adios', ['adios', 'adios2']],
+    ['Coke', ['coke']],
+    ['Superior', ['shot']],
   ]);
 });
 

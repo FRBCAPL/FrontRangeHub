@@ -3,15 +3,16 @@ import { ruleLines } from '../../utils/itemsurePosModifiers.js';
 import ItemsurePosModifierLines from './ItemsurePosModifierLines.jsx';
 
 /**
- * What one Clover modifier does for stock: nothing, more of the same drink, or some of another
- * item. onSave(rule) returns true when saved. One item saves as 'item', several (only with
- * `multiReady`) as 'items'.
+ * What one Clover modifier does for stock: nothing, more of the same drink, some of another
+ * item, or a recipe (offered when `recipes` is a list). onSave(rule) returns true when saved.
+ * One item saves as 'item', several (only with `multiReady`) as 'items'.
  */
-export default function ItemsurePosModifierForm({ modifier, items, multiReady = false, onSave, onCancel }) {
+export default function ItemsurePosModifierForm({ modifier, items, recipes = null, multiReady = false, onSave, onCancel }) {
   const start = modifier.rule || modifier.guess || { action: 'none' };
   const [action, setAction] = useState(start.action === 'items' ? 'item' : start.action);
+  const [recipeId, setRecipeId] = useState(start.action === 'recipe' ? start.recipeId : '');
   const [pours, setPours] = useState(String(start.extraPours ?? 1));
-  const [lines, setLines] = useState(() => ruleLines(start).filter((l) => l.itemId)
+  const [lines, setLines] = useState(() => (start.action === 'recipe' ? [] : ruleLines(start)).filter((l) => l.itemId)
     .map((l) => ({ itemId: l.itemId, amount: String(l.amount ?? 1), unit: l.unit || 'fl_oz' })));
   const [busy, setBusy] = useState(false);
   const known = new Set(items.map((i) => i.id));
@@ -21,10 +22,12 @@ export default function ItemsurePosModifierForm({ modifier, items, multiReady = 
     && lines.every((l) => known.has(l.itemId) && Number(l.amount) > 0 && Number(l.amount) <= 100000);
   const valid = action === 'none'
     || (action === 'extra' && p > 0 && p <= 100)
-    || (action === 'item' && linesOk);
+    || (action === 'item' && linesOk)
+    || (action === 'recipe' && (recipes || []).some((r) => r.id === recipeId));
 
   const toRule = () => {
     if (action === 'extra') return { action, extraPours: p };
+    if (action === 'recipe') return { action, recipeId };
     if (action !== 'item') return { action };
     const out = lines.map((l) => ({ itemId: l.itemId, amount: Number(l.amount), unit: l.unit }));
     return out.length === 1 ? { action: 'item', ...out[0] } : { action: 'items', lines: out };
@@ -60,6 +63,20 @@ export default function ItemsurePosModifierForm({ modifier, items, multiReady = 
       {choice('item', 'Uses another item', 'Like Add Red Bull (one can) or a side of ranch.')}
       {action === 'item' ? (
         <ItemsurePosModifierLines lines={lines} items={items} multiReady={multiReady} busy={busy} onChange={setLines} />
+      ) : null}
+      {recipes ? choice('recipe', 'Uses a recipe', 'Like Make it a Margarita: everything in that recipe. Changing the recipe changes this too.') : null}
+      {recipes && action === 'recipe' ? (
+        recipes.length ? (
+          <label className="isu-pos-pour-field">
+            <span>Recipe</span>
+            <select value={recipeId} disabled={busy} onChange={(e) => setRecipeId(e.target.value)} aria-label="Recipe">
+              <option value="">Pick a recipe…</option>
+              {recipes.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </label>
+        ) : (
+          <p className="isu-muted isu-small">No recipes yet. Add them under Inventory → Recipes, then come back.</p>
+        )
       ) : null}
       <div className="isu-pos-ask-actions">
         <button type="submit" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy || !valid}>{busy ? 'Saving…' : 'Save'}</button>

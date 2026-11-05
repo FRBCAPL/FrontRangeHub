@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
@@ -127,6 +127,7 @@ export default function ItemsureItems() {
       <PageHead
         title="Inventory"
         description="Everything you stock. Tap an item to see how many you have and change it."
+        action={<Link to={`${ITEMSURE_PATH}/items/recipes`} className="isu-btn isu-btn--ghost">Recipes</Link>}
       />
       <ErrorNote message={error} />
       {cloverOnly ? (

@@ -7,7 +7,7 @@ import {
 import { listApprovedCounts, listSalesSyncs, salesHours, siteUsage } from '../services/itemsurePosSalesService.js';
 import { listCategoryDefaults } from '../services/itemsureCategoryDefaultService.js';
 import { listItemPieces } from '../services/itemsureItemContentService.js';
-import { doublesByCategory, withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
+import { doublesByCategory, usualPourFor, withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
 import { countRounds, expectedUse, salesCovered, salesHourRange, salesIndex, usageRows } from '../utils/itemsurePosUsage.js';
 import { listModifiers, modifierHours } from '../services/itemsurePosModifierService.js';
 import { addModifierUse, asSalesRows, modifierSetup, modifierUse } from '../utils/itemsurePosModifiers.js';
@@ -55,6 +55,7 @@ export default function usePosSalesReport(organizationId) {
           posNames: new Map(posItems.map((p) => [p.external_id, p.name])),
           modifiers: modifierSetup(modifiers),
           doubles: doublesByCategory({ links, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults }),
+          usual: usualPourFor({ items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units }),
         });
         const first = connection.location_id && counts.some((c) => c.locationId === connection.location_id)
           ? connection.location_id : counts[0]?.locationId || '';
@@ -86,6 +87,7 @@ export default function usePosSalesReport(organizationId) {
         links,
         ...withCategoryDefaults({ links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: b.items, categories: b.categories, defaults, units: b.units }),
         doubles: doublesByCategory({ links, items: b.items, categories: b.categories, defaults }),
+        usual: usualPourFor({ items: b.items, categories: b.categories, defaults, units: b.units }),
       } : b));
     } catch (e) {
       setError(e.message);
@@ -146,7 +148,7 @@ export default function usePosSalesReport(organizationId) {
           },
           rules: base.modifiers.rules,
           names: base.modifiers.names,
-          links: base.links, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents, pieces: base.pieces, doubles: base.doubles,
+          links: base.links, pours: base.pours, unitCodes: base.unitCodes, contents: base.contents, pieces: base.pieces, doubles: base.doubles, usual: base.usual,
         }));
       }
       setResult({ loading: false, fromAt, toAt, syncNote, rows: usageRows(usage.rows, expected, base.itemsById) });

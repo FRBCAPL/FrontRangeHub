@@ -25,6 +25,7 @@ export default function ItemsurePosTakeResult({ result, canFix, onClose }) {
         <strong>Sales are taken off stock{result.to ? ` up to ${formatWhen(result.to)}` : ''}.</strong>
         {!result.taken ? <span className="isu-muted isu-small"> No matched items sold in that time.</span> : null}
       </p>
+      {result.addOns ? <p className="isu-muted isu-small">Add-ons like Doubles and &ldquo;Add Red Bull&rdquo; were included.</p> : null}
       {result.counted ? (
         <p className="isu-muted isu-small">Some sales were skipped because a count after them already set the amount.</p>
       ) : null}

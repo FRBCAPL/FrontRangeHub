@@ -94,11 +94,17 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
           {showAll ? 'Show fewer' : `Show all ${state.rows.length}`}
         </button>
       ) : null}
-      <p className="isu-muted isu-small">Add-ons count in the reports only. Taking sales off stock doesn&rsquo;t use them yet.</p>
+      <p className="isu-muted isu-small">Add-ons count in the sales reports. They come off stock only if &ldquo;Count add-ons&rdquo; is turned on under Take sales off stock.</p>
       </div>
       <Modal open={Boolean(editing)} title={editing ? `${editing.name || 'Add-on'}` : ''} onClose={() => setEditing(null)}>
         {editing ? (
-          <ItemsurePosModifierForm modifier={editing} items={state.items} onSave={(rule) => save(editing.id, rule)} onCancel={() => setEditing(null)} />
+          <ItemsurePosModifierForm
+            modifier={editing}
+            items={state.items}
+            recipes={state.recipeReady ? state.recipes : null}
+            onSave={(rule) => save(editing.id, rule)}
+            onCancel={() => setEditing(null)}
+          />
         ) : null}
       </Modal>
     </Card>

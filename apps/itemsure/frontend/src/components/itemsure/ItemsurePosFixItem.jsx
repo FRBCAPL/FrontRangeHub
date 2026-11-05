@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import usePosSetup from '../../hooks/usePosSetup.js';
-import { setPosPour } from '../../services/itemsurePosService.js';
+import { setButtonPour } from '../../services/itemsureRecipeService.js';
 import { saveSizeAnswers } from '../../services/itemsureItemContentService.js';
 import { ErrorNote } from './ItemsureUi.jsx';
 import ItemsurePosAmountReview from './ItemsurePosAmountReview.jsx';
@@ -27,7 +27,7 @@ export default function ItemsurePosFixItem({ organizationId, itemId, onChanged, 
     onChanged?.();
   };
   const saveAmounts = async (list) => saved(await run(async () => {
-    for (const { row, amount, unit } of list) await setPosPour(organizationId, row.pos.external_id, row.item.id, amount, unit);
+    for (const { row, amount, unit } of list) await setButtonPour(organizationId, row.pos.external_id, row.item.id, amount, unit);
   }));
   const saveSizes = async (list) => saved(await run(async () => {
     await saveSizeAnswers(organizationId, list);
