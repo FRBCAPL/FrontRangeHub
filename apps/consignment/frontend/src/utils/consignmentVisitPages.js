@@ -5,6 +5,7 @@ const PAGE_LABELS = [
   { test: (p) => p === `${CONSIGNMENT_PATH}/home`, label: 'Home' },
   { test: (p) => p.startsWith(`${CONSIGNMENT_PATH}/sell`), label: 'Sell an item' },
   { test: (p) => p.startsWith(`${CONSIGNMENT_PATH}/my-items`), label: 'My items' },
+  { test: (p) => p.startsWith(`${CONSIGNMENT_PATH}/my-offers`), label: 'My offers' },
 ];
 
 function basePath(path) {

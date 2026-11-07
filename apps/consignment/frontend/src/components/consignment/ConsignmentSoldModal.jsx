@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
+import { loadAcceptedOffer } from '../../services/consignmentOffersService.js';
+import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { shelfSaleSplit, usesShelfCommission } from '../../utils/consignmentFeePolicy.js';
 import { feesTotal, formatDollars, priceWithTaxLabel } from '../../utils/consignmentMoney.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
@@ -10,7 +12,19 @@ export default function ConsignmentSoldModal({ item, onClose, onSave }) {
   const [txnFee, setTxnFee] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [offer, setOffer] = useState(null);
+  const edited = useRef(false);
   const commissionModel = usesShelfCommission(item);
+
+  useEffect(() => {
+    let alive = true;
+    loadAcceptedOffer(item.id).then((row) => {
+      if (!alive || !row) return;
+      setOffer(row);
+      if (!edited.current) setActual(row.amount);
+    });
+    return () => { alive = false; };
+  }, [item.id]);
   const split = shelfSaleSplit(item, Number(actual) || 0);
   const fees = feesTotal(item.fees);
   const gross = Math.round((split.frplFromSale + fees) * 100) / 100;
@@ -46,9 +60,23 @@ export default function ConsignmentSoldModal({ item, onClose, onSave }) {
             ? `Agreed price ${formatDollars(item.seller_payout)} · FRPL commission ${Number(item.commission_pct)}%.`
             : `Seller Payout stays ${formatDollars(item.seller_payout)}.`}
         </p>
+        {offer ? (
+          <p className="cs-hint">
+            Accepted offer: <strong>{formatDollars(offer.amount)}</strong>
+            {offer.hold_until ? ` (held until ${formatDateTime(offer.hold_until)})` : ''}. Sell to that buyer at this price.
+          </p>
+        ) : null}
         <div className="cs-field">
           <label htmlFor="cs-sold-f1">Sale price before tax ($)</label>
-          <input id="cs-sold-f1" type="number" step="0.01" min="0" value={actual} onChange={(e) => setActual(e.target.value)} required />
+          <input
+            id="cs-sold-f1"
+            type="number"
+            step="0.01"
+            min="0"
+            value={actual}
+            onChange={(e) => { edited.current = true; setActual(e.target.value); }}
+            required
+          />
         </div>
         <div className="cs-field">
           <label htmlFor="cs-sold-f2">Payment method</label>

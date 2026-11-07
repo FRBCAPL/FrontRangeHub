@@ -15,6 +15,7 @@ export default function ConsignmentNav({ canAdmin = false }) {
       <NavLink to={CONSIGNMENT_PATH} end>Shop</NavLink>
       <NavLink to={`${CONSIGNMENT_PATH}/sell`}>Sell an item</NavLink>
       <NavLink to={`${CONSIGNMENT_PATH}/my-items`}>My items</NavLink>
+      <NavLink to={`${CONSIGNMENT_PATH}/my-offers`}>My offers</NavLink>
       <ConsignmentContactButton className="cs-nav-link">Contact us</ConsignmentContactButton>
       {canAdmin ? <NavLink to={`${CONSIGNMENT_PATH}/admin`}>Admin</NavLink> : null}
       <button type="button" className="cs-nav-how" onClick={() => setShowHow(true)}>

@@ -35,6 +35,7 @@ import ConsignmentSoldModal from './ConsignmentSoldModal.jsx';
 import ConsignmentAuctionAdmin from './ConsignmentAuctionAdmin.jsx';
 import ConsignmentAuctionStartModal from './ConsignmentAuctionStartModal.jsx';
 import ConsignmentMessagesPanel from './ConsignmentMessagesPanel.jsx';
+import ConsignmentOffersPanel from './ConsignmentOffersPanel.jsx';
 import ConsignmentVisitsPanel from './ConsignmentVisitsPanel.jsx';
 
 /** Confirmation text for one-tap status buttons that take an item out of the shop, or null for none. */
@@ -50,6 +51,7 @@ function statusChangeQuestion(item, next) {
 const TABS = [
   { id: 'items', label: 'Items' },
   { id: 'auctions', label: 'Auctions' },
+  { id: 'offers', label: 'Offers' },
   { id: 'sellers', label: 'Sellers' },
   { id: 'bidders', label: 'Bidders' },
   { id: 'messages', label: 'Messages' },
@@ -180,6 +182,7 @@ export default function ConsignmentAdmin() {
       </div>
       {tab === 'sellers' ? <ConsignmentSellersPanel onViewItems={viewSellerItems} /> : null}
       {tab === 'bidders' ? <ConsignmentBiddersPanel /> : null}
+      {tab === 'offers' ? <ConsignmentOffersPanel /> : null}
       {tab === 'messages' ? <ConsignmentMessagesPanel /> : null}
       {tab === 'visitors' ? <ConsignmentVisitsPanel /> : null}
       {tab === 'settings' ? (

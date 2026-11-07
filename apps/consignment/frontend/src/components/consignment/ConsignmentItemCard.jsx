@@ -67,7 +67,7 @@ function ExampleAuctionLine({ sample }) {
   );
 }
 
-export default function ConsignmentItemCard({ item, auction, watching = false, onWatch = null, signedIn = false }) {
+export default function ConsignmentItemCard({ item, auction, watching = false, onWatch = null, signedIn = false, onHold = false }) {
   const photo = item.photo_urls?.[0];
   const isAuction = item.sale_method === 'auction';
   const isSold = item.status === 'sold';
@@ -76,7 +76,7 @@ export default function ConsignmentItemCard({ item, auction, watching = false, o
     example: { icon: '👀', label: isAuction ? 'Example auction' : 'Example' },
     sold: { icon: '✔', label: 'Sold' },
     auction: { icon: '🔨', label: 'On the table · Auction' },
-    shelf: { icon: '🏪', label: 'In the case' },
+    shelf: onHold ? { icon: '⏳', label: 'On hold · offer accepted' } : { icon: '🏪', label: 'In the case' },
   }[kind];
   let priceLine = <Price amount={item.selling_price} />;
   if (isAuction) priceLine = item.is_example ? <ExampleAuctionLine sample={item.example_auction} /> : <AuctionLine auction={auction} />;
@@ -93,7 +93,7 @@ export default function ConsignmentItemCard({ item, auction, watching = false, o
 
   const card = (
     <Link className={`cs-card cs-card-${kind}`} to={consignmentItemPath(item.item_number)}>
-      <div className="cs-card-ribbon">
+      <div className={`cs-card-ribbon${kind === 'shelf' && onHold ? ' cs-ribbon-hold' : ''}`}>
         <span aria-hidden="true">{ribbon.icon}</span> {ribbon.label}
       </div>
       <div className="cs-card-photo" style={photo ? { '--cs-photo': `url("${photo}")` } : undefined}>

@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CATEGORIES, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadCatalog } from '../../services/consignmentService.js';
 import { loadAuctionsForItems } from '../../services/consignmentAuctionService.js';
+import { loadHeldItemIds } from '../../services/consignmentOffersService.js';
 import { syncServerClock } from '../../services/consignmentServerClock.js';
 import ConsignmentItemCard from './ConsignmentItemCard.jsx';
 import ConsignmentShopBadges from './ConsignmentShopBadges.jsx';
@@ -34,6 +35,7 @@ export default function ConsignmentStorefront() {
   const setCategory = useCallback((v) => setFilter('cat', v, 'all'), [setFilter]);
   const [rows, setRows] = useState([]);
   const [auctions, setAuctions] = useState({});
+  const [held, setHeld] = useState(() => new Set());
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [hasRealAuctions, setHasRealAuctions] = useState(false);
@@ -60,8 +62,9 @@ export default function ConsignmentStorefront() {
       .then(async (all) => {
         const list = all.filter((r) => !r.is_example);
         const auctionIds = list.filter((r) => r.sale_method === 'auction').map((r) => r.id);
-        const byItem = await loadAuctionsForItems(auctionIds);
+        const [byItem, heldIds] = await Promise.all([loadAuctionsForItems(auctionIds), loadHeldItemIds()]);
         if (!alive) return;
+        setHeld(heldIds);
         if (category === 'all' && catalogStatus === 'available') {
           setHasRealAuctions(list.some((r) => r.sale_method === 'auction'
             && (!byItem[r.id] || byItem[r.id].status === 'live')));
@@ -168,6 +171,7 @@ export default function ConsignmentStorefront() {
               watching={watch.watched.has(item.id)}
               onWatch={watch.toggle}
               signedIn={Boolean(watch.userId)}
+              onHold={held.has(item.id)}
             />
           ))}
       </div>

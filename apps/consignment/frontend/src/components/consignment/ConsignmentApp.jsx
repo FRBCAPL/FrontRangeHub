@@ -6,6 +6,7 @@ import ConsignmentHome from './ConsignmentHome.jsx';
 import ConsignmentItemPage from './ConsignmentItemPage.jsx';
 import ConsignmentSubmit from './ConsignmentSubmit.jsx';
 import ConsignmentMyItems from './ConsignmentMyItems.jsx';
+import ConsignmentMyOffers from './ConsignmentMyOffers.jsx';
 import ConsignmentAdmin from './ConsignmentAdmin.jsx';
 import ConsignmentBetaBanner from './ConsignmentBetaBanner.jsx';
 import { CONSIGNMENT_BETA, CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
@@ -21,6 +22,7 @@ import './consignment-seller.css';
 import './consignment-sell-wizard.css';
 import './consignment-messages.css';
 import './consignment-examples.css';
+import './consignment-offers.css';
 
 function scrollConsignmentToTop() {
   window.scrollTo(0, 0);
@@ -55,6 +57,7 @@ export default function ConsignmentApp({ canAdmin = false }) {
         <Route path="item/:itemNumber" element={<ConsignmentItemPage />} />
         <Route path="sell" element={<ConsignmentSubmit />} />
         <Route path="my-items" element={<ConsignmentMyItems />} />
+        <Route path="my-offers" element={<ConsignmentMyOffers />} />
         <Route
           path="admin"
           element={canAdmin ? <ConsignmentAdmin /> : <Navigate to="/consignment" replace />}

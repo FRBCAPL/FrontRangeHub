@@ -1,0 +1,149 @@
+/* Make an offer: item page button, offer cards (My offers, My items, admin Offers tab). */
+
+.cs-offer-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 8px 0 12px;
+}
+
+.cs-offer-note {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--cs-line);
+  border-radius: 10px;
+  color: var(--cs-ink);
+}
+
+.cs-offer-good {
+  color: #86efac;
+}
+
+.cs-offer-note.cs-offer-good {
+  border-color: rgba(134, 239, 172, 0.4);
+}
+
+.cs-offer-rules {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+}
+
+.cs-offer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.cs-offer-list > .cs-offer-card {
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: var(--cs-card);
+}
+
+.cs-offer-card.cs-offer-yours {
+  border-color: var(--cs-accent);
+}
+
+.cs-offer-card p {
+  margin: 0 0 4px;
+}
+
+.cs-offer-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.cs-offer-head img,
+.cs-offer-ph {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: grid;
+  place-items: center;
+  background: rgba(148, 163, 184, 0.12);
+}
+
+.cs-offer-title a {
+  color: var(--cs-ink);
+  font-weight: 700;
+}
+
+.cs-offer-amount strong {
+  font-size: 1.15rem;
+}
+
+.cs-offer-status {
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+}
+
+.cs-offer-status-turn {
+  color: #fcd34d;
+  font-weight: 700;
+}
+
+.cs-offer-message {
+  color: var(--cs-muted);
+  font-style: italic;
+}
+
+.cs-offer-history {
+  margin: 6px 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+}
+
+.cs-offer-history li {
+  display: list-item;
+  margin: 0 0 2px;
+}
+
+.cs-offer-actions {
+  margin-top: 8px;
+}
+
+.cs-offer-counter {
+  display: grid;
+  gap: 6px;
+  max-width: 360px;
+  margin-top: 10px;
+}
+
+.cs-offer-counter input {
+  min-height: 44px;
+}
+
+.cs-offer-card .cs-btn-link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cs-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cs-offer-section {
+  margin: 0 0 24px;
+}
+
+.cs-offer-scope {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.cs-card-shelf .cs-card-ribbon.cs-ribbon-hold {
+  background: #b45309;
+  color: #fffbeb;
+}

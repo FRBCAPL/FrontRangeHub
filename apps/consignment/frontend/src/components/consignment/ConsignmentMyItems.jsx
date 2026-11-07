@@ -6,6 +6,7 @@ import { currentUserEmail, loadMyItems } from '../../services/consignmentSellerS
 import { loadPublicSettings } from '../../services/consignmentSellerAccessService.js';
 import ConsignmentMyItemCard from './ConsignmentMyItemCard.jsx';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
+import ConsignmentSellerOffers from './ConsignmentSellerOffers.jsx';
 
 export default function ConsignmentMyItems() {
   const [userId, setUserId] = useState(undefined);
@@ -63,6 +64,7 @@ export default function ConsignmentMyItems() {
             Items submitted while logged in, or with the email <strong>{email || 'on your account'}</strong>.
           </p>
           {error ? <p className="cs-error" role="alert">{error}</p> : null}
+          <ConsignmentSellerOffers userId={userId} onChanged={() => load(userId)} />
           {loading && !items.length ? <p className="cs-meta">Loading your items…</p> : null}
           {!loading && !error && !items.length ? (
             <div className="cs-mine-empty">

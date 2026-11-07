@@ -23,6 +23,8 @@ export const ATTENTION_GROUPS = [
       { key: 'consignment_seller_requests', label: 'Seller access requests', to: '/consignment/admin?tab=sellers' },
       { key: 'consignment_messages', label: 'New messages from buyers and sellers', to: '/consignment/admin?tab=messages' },
       { key: 'consignment_pending', label: 'New items submitted for review', to: '/consignment/admin?status=pending' },
+      { key: 'consignment_offers', label: 'Offers waiting on the seller (you can answer for them)', to: '/consignment/admin?tab=offers' },
+      { key: 'consignment_offer_holds', label: 'Accepted offers: item on hold until the buyer pays', to: '/consignment/admin?tab=offers' },
       { key: 'consignment_expired', label: 'Expired items (renew or return)', to: '/consignment/admin?status=expired' },
       { key: 'consignment_seller_unpaid', label: 'Sold items: seller not paid yet', to: '/consignment/admin?status=seller_unpaid' },
       { key: 'auction_no_bids', label: 'Auctions ended with no bids (relist, switch or return)', to: '/consignment/admin?tab=auctions&status=ended_no_bids' },

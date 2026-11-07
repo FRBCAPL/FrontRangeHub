@@ -10,6 +10,7 @@ import ConsignmentPhotoZoom from './ConsignmentPhotoZoom.jsx';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 import ConsignmentItemDetails from './ConsignmentItemDetails.jsx';
 import ConsignmentItemWatch from './ConsignmentItemWatch.jsx';
+import ConsignmentOfferButton from './ConsignmentOfferButton.jsx';
 
 export default function ConsignmentItemPage() {
   const { itemNumber } = useParams();
@@ -18,7 +19,11 @@ export default function ConsignmentItemPage() {
   const [zooming, setZooming] = useState(false);
   const [error, setError] = useState('');
   const [auctionAtLegends, setAuctionAtLegends] = useState(false);
-  const onAuction = useCallback((a) => setAuctionAtLegends(Boolean(a?.delivered_at)), []);
+  const [auctionKey, setAuctionKey] = useState('');
+  const onAuction = useCallback((a) => {
+    setAuctionAtLegends(Boolean(a?.delivered_at));
+    setAuctionKey(a ? `${a.status}:${a.bid_count}` : '');
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -107,6 +112,9 @@ export default function ConsignmentItemPage() {
         />
       ) : null}
       {isAuction ? auctionPanel : <p className="cs-price">{itemPriceLabel(item)}</p>}
+      {isExample || item.status !== 'available' ? null : (
+        <ConsignmentOfferButton itemId={item.id} itemName={item.name} refreshKey={auctionKey} />
+      )}
       <ConsignmentItemDetails item={item} />
       {isAuction || item.status === 'sold' ? null : (
         <p className="cs-inspect">
