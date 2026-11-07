@@ -49,7 +49,15 @@ export default function ConsignmentOfferButton({ itemId, itemName, refreshKey = 
       </p>
     );
   }
-  if (terms.reason || terms.is_seller) return null;
+  if (terms.reason) return null;
+  if (terms.is_seller) {
+    return (
+      <p className="cs-offer-note">
+        Your item: buyers can make offers from {formatDollars(terms.minimum)}. You’ll answer them on{' '}
+        <Link to={`${CONSIGNMENT_PATH}/my-items`}>My items</Link>.
+      </p>
+    );
+  }
 
   const start = () => (terms.signed_in ? setOpen(true) : openHubLogin());
   return (
