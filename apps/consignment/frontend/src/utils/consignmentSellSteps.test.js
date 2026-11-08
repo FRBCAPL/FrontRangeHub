@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { sellStepError } from './consignmentSellSteps.js';
+import { sellPretaxPrice, sellStepError, taxIncludedOn } from './consignmentSellSteps.js';
 
 const base = {
   seller_name: 'Pat', seller_phone: '', seller_email: 'pat@example.com',
@@ -26,5 +26,21 @@ describe('sellStepError', () => {
   it('enforces the description limit', () => {
     assert.match(sellStepError('details', { ...base, description: 'x'.repeat(2001) }), /2,000/);
     assert.equal(sellStepError('details', base), '');
+  });
+});
+
+describe('sellPretaxPrice', () => {
+  it('keeps a before-tax price as typed', () => {
+    assert.equal(sellPretaxPrice({ ...base, seller_payout: '300' }, 0.0825), 300);
+  });
+
+  it('turns a tax-included case price into the before-tax price', () => {
+    assert.equal(sellPretaxPrice({ ...base, seller_payout: '300', price_tax_included: true }, 0.0825), 277.14);
+  });
+
+  it('ignores the box for auctions', () => {
+    const form = { ...base, sale_method: 'auction', seller_payout: '300', price_tax_included: true };
+    assert.equal(taxIncludedOn(form), false);
+    assert.equal(sellPretaxPrice(form, 0.0825), 300);
   });
 });

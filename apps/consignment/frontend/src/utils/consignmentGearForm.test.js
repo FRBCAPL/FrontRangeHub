@@ -1,6 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { blankRow, fromEditorRows, gearFormError, toEditorRows } from './consignmentGearForm.js';
+import {
+  blankRow, fromEditorRows, gearFormError, pretaxGearPrices, toEditorRows, toTaxIncludedEditor,
+} from './consignmentGearForm.js';
+
+test('tax-included products show totals and save before-tax prices', () => {
+  const shown = toTaxIncludedEditor({ name: 'X', price: '277.14' }, [row([], { price: '' }), row([], { price: '92.38' })], 0.0825);
+  assert.equal(shown.form.price, '300');
+  assert.equal(shown.rows[0].price, '');
+  assert.equal(shown.rows[1].price, '100');
+  const saved = pretaxGearPrices(300, [{ price: null }, { price: 100 }], 0.0825);
+  assert.equal(saved.price, 277.14);
+  assert.deepEqual(saved.variants, [{ price: null }, { price: 92.38 }]);
+});
 
 const form = { name: 'Sneaky Pete', price: '199' };
 const row = (values, extra = {}) => ({ ...blankRow(values.length), values, ...extra });

@@ -8,6 +8,9 @@ import {
   PAYMENT_METHODS,
 } from '../../data/consignmentConstants.js';
 import { approveItem } from '../../services/consignmentFeesService.js';
+import { updateItem } from '../../services/consignmentService.js';
+import { pretaxFromTotal, withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { DEFAULT_FEE_POLICY, listingFee, saleSplit } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { numOrNull } from '../../utils/consignmentFormValues.js';
@@ -48,8 +51,15 @@ export default function ConsignmentApproveModal({
   onClose,
 }) {
   const commissionPct = Number(item.commission_pct ?? policy.shelfCommissionPct);
+  const rate = useTaxRate();
+  const [taxIncluded, setTaxIncluded] = useState(Boolean(item.price_tax_included));
   const [agreed, setAgreed] = useState(item.seller_payout ?? '');
-  const [shop, setShop] = useState(item.selling_price ?? item.seller_payout ?? '');
+  const basePrice = item.selling_price ?? item.seller_payout;
+  const [shownIncluded] = useState(() => (basePrice == null || basePrice === '' ? '' : String(withTax(basePrice, rate))));
+  const [shop, setShop] = useState(() => {
+    if (basePrice == null || basePrice === '') return '';
+    return item.price_tax_included ? shownIncluded : basePrice;
+  });
   const [manualFee, setManualFee] = useState(null);
   const [feePaid, setFeePaid] = useState(true);
   const [method, setMethod] = useState(PAYMENT_METHODS[0]);
@@ -59,7 +69,11 @@ export default function ConsignmentApproveModal({
   const [error, setError] = useState('');
 
   const agreedNum = numOrNull(agreed);
-  const shopNum = numOrNull(shop);
+  const typedShop = numOrNull(shop);
+  const untouched = item.price_tax_included && taxIncluded && String(shop) === shownIncluded;
+  let shopNum = typedShop;
+  if (untouched) shopNum = Number(basePrice);
+  else if (typedShop != null && taxIncluded) shopNum = pretaxFromTotal(typedShop, rate);
   const fee = manualFee ?? listingFee(shopNum ?? agreedNum, 'fixed', policy);
   const feeNum = Number(fee) || 0;
   const split = shopNum ? saleSplit(shopNum, commissionPct, feeNum) : null;
@@ -73,6 +87,7 @@ export default function ConsignmentApproveModal({
     setBusy(true);
     setError('');
     try {
+      if (taxIncluded !== Boolean(item.price_tax_included)) await updateItem(item.id, { price_tax_included: taxIncluded });
       await approveItem(item.id, {
         sellerPayout: agreedNum,
         sellingPrice: shopNum,
@@ -102,14 +117,23 @@ export default function ConsignmentApproveModal({
 
         <div className="cs-row">
           <div className="cs-field">
-            <label htmlFor="cs-approve-agreed">Agreed price ($)</label>
+            <label htmlFor="cs-approve-agreed">Agreed price ($, before tax)</label>
             <input id="cs-approve-agreed" type="number" min="1" step="0.01" value={agreed} onChange={(e) => setAgreed(e.target.value)} required />
           </div>
           <div className="cs-field">
-            <label htmlFor="cs-approve-shop">Shop price ($)</label>
+            <label htmlFor="cs-approve-shop">{taxIncluded ? 'Shop price, tax included ($)' : 'Shop price ($, before tax)'}</label>
             <input id="cs-approve-shop" type="number" min="1" step="0.01" value={shop} onChange={(e) => setShop(e.target.value)} required />
           </div>
         </div>
+        <label className="cs-check">
+          <input type="checkbox" checked={taxIncluded} onChange={(e) => setTaxIncluded(e.target.checked)} />
+          Shop price includes sales tax (buyers see “tax included”)
+        </label>
+        {taxIncluded && shopNum ? (
+          <p className="cs-hint">
+            Buyers see <strong>{formatDollars(withTax(shopNum, rate))} tax included</strong>. Saved as {formatDollars(shopNum)} before tax.
+          </p>
+        ) : null}
         {split ? (
           <p className="cs-hint">
             At {formatDollars(split.price)}: seller is paid <strong>{formatDollars(split.sellerFromSale)}</strong>, FRPL keeps{' '}

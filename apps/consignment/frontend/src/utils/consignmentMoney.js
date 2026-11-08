@@ -39,7 +39,12 @@ export function priceWithTaxLabel(n, rate) {
   return `${formatDollars(withTax(n, rate))} with tax`;
 }
 
+/** "$300 tax included" for a price the seller or admin set with tax in. */
+export function taxIncludedLabel(n, rate) {
+  return `${formatDollars(withTax(n, rate))} tax included`;
+}
+
 export function itemPriceLabel(item, rate) {
   if (item?.sale_method === 'auction') return 'Online auction';
-  return priceWithTaxLabel(item?.selling_price, rate);
+  return item?.price_tax_included ? taxIncludedLabel(item.selling_price, rate) : priceWithTaxLabel(item?.selling_price, rate);
 }

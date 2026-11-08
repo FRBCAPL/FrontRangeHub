@@ -3,7 +3,12 @@ import { createPortal } from 'react-dom';
 import { CATEGORIES, MAX_PHOTOS } from '../../data/consignmentConstants.js';
 import { deleteConsignmentPhotos, uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { saveGearProduct } from '../../services/consignmentGearAdminService.js';
-import { fromEditorRows, gearFormError, toEditorRows } from '../../utils/consignmentGearForm.js';
+import {
+  fromEditorRows, gearFormError, pretaxGearPrices, toEditorRows, toTaxIncludedEditor,
+} from '../../utils/consignmentGearForm.js';
+import { formatDollars } from '../../utils/consignmentMoney.js';
+import { pretaxFromTotal } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
 import ConsignmentPhotoManager from './ConsignmentPhotoManager.jsx';
 import ConsignmentGearVariantsEditor from './ConsignmentGearVariantsEditor.jsx';
@@ -26,15 +31,21 @@ function initialForm(p) {
     lead_time: p?.lead_time || '',
     status: p?.status || 'draft',
     featured: !!p?.featured,
+    price_tax_included: !!p?.price_tax_included,
   };
 }
 
 /** Add / edit a new-gear product: details, photos, options with stock. product = null for a new one. */
 export default function ConsignmentGearProductModal({ product, onClose }) {
-  const [form, setForm] = useState(() => initialForm(product));
+  const rate = useTaxRate();
+  const [start] = useState(() => {
+    const base = { form: initialForm(product), rows: toEditorRows(product) };
+    return product?.price_tax_included ? toTaxIncludedEditor(base.form, base.rows, rate) : base;
+  });
+  const [form, setForm] = useState(start.form);
   const [photos, setPhotos] = useState(product?.photo_urls || []);
   const [optionNames, setOptionNames] = useState(product?.option_names || []);
-  const [rows, setRows] = useState(() => toEditorRows(product));
+  const [rows, setRows] = useState(start.rows);
   const [removedIds, setRemovedIds] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -78,6 +89,8 @@ export default function ConsignmentGearProductModal({ product, onClose }) {
     setBusy(true);
     setError('');
     try {
+      const typed = { price: Number(form.price), variants: fromEditorRows(optionNames, rows) };
+      const prices = form.price_tax_included ? pretaxGearPrices(typed.price, typed.variants, rate) : typed;
       await saveGearProduct({
         id: product?.id,
         name: form.name.trim(),
@@ -85,14 +98,15 @@ export default function ConsignmentGearProductModal({ product, onClose }) {
         category: form.category,
         description: form.description.trim() || null,
         photo_urls: photos,
-        price: Number(form.price),
+        price: prices.price,
         msrp: form.msrp.trim() ? Number(form.msrp) : null,
         option_names: optionNames.map((n) => n.trim()),
         special_order: form.special_order,
         lead_time: form.lead_time.trim() || null,
         status: form.status,
         featured: form.featured,
-      }, fromEditorRows(optionNames, rows), removedIds);
+        ...(form.price_tax_included !== !!product?.price_tax_included ? { price_tax_included: form.price_tax_included } : {}),
+      }, prices.variants, removedIds);
       const unused = [...originalPhotos, ...uploadedRef.current].filter((u) => !photos.includes(u));
       deleteConsignmentPhotos(unused).catch(() => {});
       onClose(true);
@@ -127,14 +141,21 @@ export default function ConsignmentGearProductModal({ product, onClose }) {
           </div>
           <div className="cs-row">
             <div className="cs-field">
-              <label htmlFor="cs-gear-price">Price ($, before tax)</label>
+              <label htmlFor="cs-gear-price">Price ($, {form.price_tax_included ? 'tax included' : 'before tax'})</label>
               <input id="cs-gear-price" type="number" inputMode="decimal" step="0.01" min="0" value={form.price} onChange={set('price')} required />
             </div>
             <div className="cs-field">
               <label htmlFor="cs-gear-msrp">List price / MSRP (optional)</label>
-              <input id="cs-gear-msrp" type="number" inputMode="decimal" step="0.01" min="0" value={form.msrp} onChange={set('msrp')} placeholder="Shown crossed out" />
+              <input id="cs-gear-msrp" type="number" inputMode="decimal" step="0.01" min="0" value={form.msrp} onChange={set('msrp')}               placeholder="Shown crossed out" />
             </div>
           </div>
+          <label className="cs-check">
+            <input type="checkbox" checked={form.price_tax_included} onChange={set('price_tax_included')} />
+            Prices include sales tax (buyers see “tax included”; option prices below too)
+          </label>
+          {form.price_tax_included && Number(form.price) > 0 ? (
+            <p className="cs-hint">Saved as {formatDollars(pretaxFromTotal(form.price, rate))} before tax.</p>
+          ) : null}
           <div className="cs-row">
             <div className="cs-field">
               <label htmlFor="cs-gear-status">Status</label>

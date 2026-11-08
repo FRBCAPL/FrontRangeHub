@@ -114,7 +114,7 @@ export default function ConsignmentItemPage() {
           onClose={() => setZooming(false)}
         />
       ) : null}
-      {isAuction ? auctionPanel : <ConsignmentTaxTotal amount={item.selling_price} />}
+      {isAuction ? auctionPanel : <ConsignmentTaxTotal amount={item.selling_price} included={Boolean(item.price_tax_included)} />}
       {isExample || item.status !== 'available' ? null : (
         <ConsignmentOfferButton itemId={item.id} itemName={item.name} refreshKey={auctionKey} />
       )}

@@ -2,6 +2,9 @@ import React from 'react';
 import { categoryLabel, conditionLabel, FIELD_LIMITS } from '../../data/consignmentConstants.js';
 import { listingFee } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { sellPretaxPrice, taxIncludedOn } from '../../utils/consignmentSellSteps.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import ConsignmentSellPhotos from './ConsignmentSellPhotos.jsx';
 import { SALE_METHODS } from './ConsignmentSubmitPricing.jsx';
 
@@ -34,6 +37,11 @@ function Row({ label, value }) {
 export function StepReview({ form, files, goTo, policy, deliverDays = 3 }) {
   const isAuction = form.sale_method === 'auction';
   const method = SALE_METHODS.find((m) => m.id === form.sale_method)?.label;
+  const rate = useTaxRate();
+  const pretax = sellPretaxPrice(form, rate);
+  const priceText = taxIncludedOn(form)
+    ? `${formatDollars(withTax(pretax, rate))} tax included (${formatDollars(pretax)} before tax)`
+    : formatDollars(form.seller_payout);
   return (
     <>
       <dl className="cs-wiz-review">
@@ -45,13 +53,13 @@ export function StepReview({ form, files, goTo, policy, deliverDays = 3 }) {
         <Row label="Photos" value={<>{files.length ? `${files.length} added` : 'None'} <EditLink onClick={() => goTo('details')} /></>} />
         <Row
           label={isAuction ? 'Reserve' : 'Your price'}
-          value={<>{formatDollars(form.seller_payout)} <EditLink onClick={() => goTo('price')} /></>}
+          value={<>{priceText} <EditLink onClick={() => goTo('price')} /></>}
         />
         {isAuction && form.buy_now_price !== '' ? <Row label="Buy It Now" value={formatDollars(form.buy_now_price)} /> : null}
         {isAuction ? null : <Row label="In-store inspection" value={form.allow_inspection ? 'Allowed (ID held)' : 'Not allowed'} />}
         <Row
           label="Listing fee"
-          value={`${formatDollars(listingFee(form.seller_payout, form.sale_method, policy))} ${isAuction ? 'before it goes live (Cash App, Venmo or at Legends)' : 'at drop-off'}`}
+          value={`${formatDollars(listingFee(pretax, form.sale_method, policy))} ${isAuction ? 'before it goes live (Cash App, Venmo or at Legends)' : 'at drop-off'}`}
         />
         {isAuction ? <Row label="The item" value={`You keep it until it sells, then bring it to Legends within ${deliverDays} days`} /> : null}
       </dl>

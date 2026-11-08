@@ -13,7 +13,7 @@ export async function loadGearProductsAdmin() {
   return (data || []).map(sortVariants);
 }
 
-const PRODUCT_FIELDS = ['name', 'brand', 'category', 'description', 'photo_urls', 'price', 'msrp', 'option_names', 'special_order', 'lead_time', 'status', 'featured', 'sort'];
+const PRODUCT_FIELDS = ['name', 'brand', 'category', 'description', 'photo_urls', 'price', 'msrp', 'option_names', 'special_order', 'lead_time', 'status', 'featured', 'sort', 'price_tax_included'];
 const VARIANT_FIELDS = ['options', 'sku', 'price', 'stock', 'active', 'sort'];
 
 const pick = (row, fields) => Object.fromEntries(fields.filter((f) => row[f] !== undefined).map((f) => [f, row[f]]));

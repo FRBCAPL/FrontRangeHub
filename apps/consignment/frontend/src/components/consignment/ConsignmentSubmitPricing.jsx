@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { commissionPctFor, listingFee, saleSplit } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { sellPretaxPrice } from '../../utils/consignmentSellSteps.js';
+import { taxPercent, withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 
 function Req() {
   return <span className="cs-req" aria-label="required">*</span>;
@@ -57,14 +60,39 @@ function FeePreview({ price, method, policy }) {
   );
 }
 
+function TaxIncludedHint({ form, rate }) {
+  const typed = Number(form.seller_payout) || 0;
+  if (!form.price_tax_included) {
+    return (
+      <p className="cs-hint">
+        The price before tax. Buyers see it with {taxPercent(rate)} sales tax added
+        {typed > 0 ? ` (${formatDollars(withTax(typed, rate))})` : ''}. FRPL may suggest a different price when it reviews your item.
+      </p>
+    );
+  }
+  const pretax = sellPretaxPrice(form, rate);
+  return (
+    <p className="cs-hint">
+      Buyers see {typed > 0 ? <strong>{formatDollars(withTax(pretax, rate))} tax included</strong> : 'your price, tax included'}.
+      {typed > 0 ? ` The sale price before tax is ${formatDollars(pretax)}; fees and your payout are figured on that.` : ''}{' '}
+      FRPL may suggest a different price when it reviews your item.
+    </p>
+  );
+}
+
 export function PriceFields({ method, form, set, policy }) {
+  const rate = useTaxRate();
   if (method !== 'auction') {
     return (
       <div className="cs-field">
-        <label htmlFor="cs-payout">Your price ($) <Req /></label>
+        <label htmlFor="cs-payout">{form.price_tax_included ? 'Your price, tax included ($)' : 'Your price ($)'} <Req /></label>
         <input id="cs-payout" type="number" inputMode="decimal" min="1" step="0.01" required value={form.seller_payout} onChange={set('seller_payout')} />
-        <p className="cs-hint">The price buyers see in the case (plus sales tax). FRPL may suggest a different price when it reviews your item.</p>
-        <FeePreview price={form.seller_payout} method="fixed" policy={policy} />
+        <label className="cs-check">
+          <input type="checkbox" checked={Boolean(form.price_tax_included)} onChange={set('price_tax_included')} />
+          <span>My price includes sales tax (buyers pay exactly this)</span>
+        </label>
+        <TaxIncludedHint form={form} rate={rate} />
+        <FeePreview price={sellPretaxPrice(form, rate)} method="fixed" policy={policy} />
         <label className="cs-check">
           <input type="checkbox" checked={Boolean(form.allow_inspection)} onChange={set('allow_inspection')} />
           <span>

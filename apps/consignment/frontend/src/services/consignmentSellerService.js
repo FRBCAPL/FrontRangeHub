@@ -52,6 +52,18 @@ export async function updateMyListing(itemId, changes) {
   return data || {};
 }
 
+const TAX_INCLUDED_MISSING = 'Run supabase-migrations/consignment-tax-included-2026-11.sql in the Supabase SQL editor, then refresh.';
+
+/** Marks a just-submitted (pending) item's price as tax included. */
+export async function setMyItemTaxIncluded(itemId, included) {
+  const { error } = await supabase.rpc('consignment_seller_set_tax_included', { p_item_id: itemId, p_included: included });
+  if (error) {
+    const msg = error.message || '';
+    if (/consignment_seller_set_tax_included|schema cache|does not exist/i.test(msg)) throw new Error(TAX_INCLUDED_MISSING);
+    throw new Error(msg || 'Could not save the tax-included setting.');
+  }
+}
+
 export async function currentUserEmail() {
   const { data } = await supabase.auth.getSession();
   return data?.session?.user?.email || '';

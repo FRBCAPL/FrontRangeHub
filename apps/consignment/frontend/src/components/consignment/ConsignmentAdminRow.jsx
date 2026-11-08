@@ -2,6 +2,8 @@ import React from 'react';
 import { auctionStatusLabel, brandModelLabel, EXPIRING_SOON_DAYS, itemLabel, statusLabel } from '../../data/consignmentConstants.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars, revenueSummary } from '../../utils/consignmentMoney.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { usesShelfCommission } from '../../utils/consignmentFeePolicy.js';
 import { daysUntil, formatShortDate, pickupDeadline } from '../../utils/consignmentDates.js';
 
@@ -44,7 +46,9 @@ function MoneyInfo({ item }) {
   const r = revenueSummary(item, item.fees);
   const isAuction = item.sale_method === 'auction';
   const commission = usesShelfCommission(item);
-  const shop = item.selling_price != null ? formatDollars(item.selling_price) : 'not set';
+  const rate = useTaxRate();
+  let shop = item.selling_price != null ? formatDollars(item.selling_price) : 'not set';
+  if (item.selling_price != null && item.price_tax_included) shop += ` (${formatDollars(withTax(item.selling_price, rate))} tax incl.)`;
   let firstLabel = 'Payout';
   if (isAuction) firstLabel = 'Reserve';
   else if (commission) firstLabel = 'Agreed';

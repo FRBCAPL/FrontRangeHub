@@ -17,6 +17,25 @@ export const salesTax = (amount, rate) => cents(Math.round(Number(amount || 0) *
 
 export const withTax = (amount, rate) => cents(Number(amount || 0) + salesTax(amount, rate));
 
+/**
+ * Before-tax price whose total with tax is `total` ($300 → $277.14). Tax rounds to the cent, so a few totals
+ * can't be hit exactly; then the closest price is used (ties go to the lower total).
+ */
+export function pretaxFromTotal(total, rate) {
+  const target = cents(total);
+  if (!(target > 0)) return 0;
+  const guess = cents(target / (1 + normalizeTaxRate(rate)));
+  let best = guess;
+  for (let step = -3; step <= 3; step += 1) {
+    const p = cents(guess + step / 100);
+    if (p <= 0) continue;
+    const off = Math.abs(withTax(p, rate) - target);
+    const bestOff = Math.abs(withTax(best, rate) - target);
+    if (off < bestOff - 1e-9 || (Math.abs(off - bestOff) < 1e-9 && p < best)) best = p;
+  }
+  return best;
+}
+
 /** 0.0825 → "8.25%" */
 export function taxPercent(rate) {
   const pct = Math.round(normalizeTaxRate(rate) * 100000) / 1000;

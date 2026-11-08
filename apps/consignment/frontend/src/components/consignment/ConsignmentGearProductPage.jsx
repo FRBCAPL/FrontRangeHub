@@ -97,8 +97,8 @@ export default function ConsignmentGearProductPage() {
       {zooming && photos.length ? (
         <ConsignmentPhotoZoom photos={photos} start={Math.min(photo, photos.length - 1)} alt={product.name} onClose={() => setZooming(false)} />
       ) : null}
-      <ConsignmentTaxTotal amount={price}>
-        {showMsrp ? <> · list <s className="cs-gear-msrp" title="Manufacturer’s list price">{formatDollars(product.msrp)}</s></> : null}
+      <ConsignmentTaxTotal amount={price} included={Boolean(product.price_tax_included)}>
+        {showMsrp ? <>{product.price_tax_included ? '' : ' · '}list <s className="cs-gear-msrp" title="Manufacturer’s list price">{formatDollars(product.msrp)}</s></> : null}
       </ConsignmentTaxTotal>
       {(product.option_names || []).length ? (
         <div className="cs-gear-options">

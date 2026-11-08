@@ -60,7 +60,11 @@ export default function ConsignmentPrintTag({ canAdmin = false }) {
         <p>{brandModelLabel(item) ? `${brandModelLabel(item)} · ` : ''}{conditionLabel(item.condition)}</p>
         {item.specs ? <p>{item.specs}</p> : null}
         <p>
-          <strong>{item.sale_method === 'auction' ? itemPriceLabel(item) : `${formatDollars(item.selling_price)} · ${itemPriceLabel(item, taxRate)}`}</strong>
+          <strong>
+            {item.sale_method === 'auction' || item.price_tax_included
+              ? itemPriceLabel(item, taxRate)
+              : `${formatDollars(item.selling_price)} · ${itemPriceLabel(item, taxRate)}`}
+          </strong>
         </p>
         <p>Available at Legends Brews & Cues</p>
         {item.sale_method === 'auction' ? null : (

@@ -12,6 +12,8 @@ import { DEFAULT_COMMISSION_PCT } from '../../utils/consignmentAuctionMath.js';
 import ConsignmentEditAuctionFields from './ConsignmentEditAuctionFields.jsx';
 import { updateAuctionTerms } from '../../services/consignmentAuctionAdminService.js';
 import { formatDollars, frplRevenue } from '../../utils/consignmentMoney.js';
+import { pretaxFromTotal, withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import {
   DEFAULT_FEE_POLICY,
   originalListingFee,
@@ -47,6 +49,8 @@ export default function ConsignmentAdminEditModal({
     && !(activeAuction && (activeAuction.status === 'awaiting_payment' || activeAuction.bid_count > 0));
   const startReserve = activeAuction ? activeAuction.opening_bid : item.seller_payout;
   const startBuyNow = (activeAuction ? activeAuction.buy_now_price : item.requested_buy_now) ?? '';
+  const taxRate = useTaxRate();
+  const [shownIncluded] = useState(() => (item.selling_price == null ? '' : String(withTax(item.selling_price, taxRate))));
   const [form, setForm] = useState({
     name: item.name || '',
     brand: item.brand || '',
@@ -57,7 +61,8 @@ export default function ConsignmentAdminEditModal({
     specs: item.specs || '',
     seller_payout: isAuction ? startReserve : item.seller_payout,
     requested_buy_now: startBuyNow,
-    selling_price: item.selling_price ?? '',
+    selling_price: item.selling_price == null ? '' : (item.price_tax_included ? shownIncluded : item.selling_price),
+    price_tax_included: Boolean(item.price_tax_included),
     status: item.status,
     photo_urls: item.photo_urls || [],
     ...('allow_inspection' in item ? { allow_inspection: Boolean(item.allow_inspection) } : {}),
@@ -78,7 +83,11 @@ export default function ConsignmentAdminEditModal({
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
-  const retail = numOrNull(form.selling_price);
+  const typedRetail = numOrNull(form.selling_price);
+  const untouched = item.price_tax_included && form.price_tax_included && String(form.selling_price) === shownIncluded;
+  let retail = typedRetail;
+  if (untouched) retail = Number(item.selling_price);
+  else if (typedRetail != null && form.price_tax_included) retail = pretaxFromTotal(typedRetail, taxRate);
   const creditedFee = originalListingFee(item.fees, 'fixed') || Number(item.consignment_fee) || 0;
   const atRetail = commissionModel && retail != null ? saleSplit(retail, commissionPct, creditedFee) : null;
   const margin = retail != null
@@ -127,6 +136,7 @@ export default function ConsignmentAdminEditModal({
       };
       delete patch.requested_buy_now;
       if (payoutLocked || isAuction) delete patch.seller_payout;
+      if (isAuction || form.price_tax_included === Boolean(item.price_tax_included)) delete patch.price_tax_included;
       if (isAuction) {
         delete patch.status;
         delete patch.selling_price;
@@ -245,7 +255,9 @@ export default function ConsignmentAdminEditModal({
             {commissionModel ? <p className="cs-hint">The seller’s price. It can’t sell for less without their OK.</p> : null}
           </div>
           <div className="cs-field">
-            <label htmlFor="cs-admin-edit-f8">{commissionModel ? 'Shop price ($)' : 'FRPL Retail Price ($)'}</label>
+            <label htmlFor="cs-admin-edit-f8">
+              {commissionModel ? 'Shop price' : 'FRPL Retail Price'} ({form.price_tax_included ? 'tax included' : 'before tax'}, $)
+            </label>
             <input id="cs-admin-edit-f8"
               type="number"
               step="0.01"
@@ -256,6 +268,19 @@ export default function ConsignmentAdminEditModal({
             />
           </div>
         </div>
+        <label className="cs-check">
+          <input
+            type="checkbox"
+            checked={form.price_tax_included}
+            onChange={(e) => setForm((prev) => ({ ...prev, price_tax_included: e.target.checked }))}
+          />
+          Shop price includes sales tax (buyers see “tax included”)
+        </label>
+        {form.price_tax_included && retail ? (
+          <p className="cs-hint">
+            Buyers see <strong>{formatDollars(withTax(retail, taxRate))} tax included</strong>. Saved as {formatDollars(retail)} before tax.
+          </p>
+        ) : null}
         <div className="cs-field">
           <label>{commissionModel ? 'If it sells at the shop price' : 'FRPL Sale Margin at retail'}</label>
           <p className={`cs-margin${margin != null && margin < 0 ? ' neg' : ''}`}>

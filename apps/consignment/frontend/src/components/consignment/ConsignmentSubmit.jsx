@@ -4,7 +4,9 @@ import { CONSIGNMENT_DAYS, CONSIGNMENT_PATH, itemLabel, LEGENDS_PLACE } from '..
 import { loadSettings, submitItem } from '../../services/consignmentService.js';
 import { uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { clearSellDraft, loadSellDraft, saveSellDraft } from '../../services/consignmentSellDraft.js';
-import { currentUserEmail } from '../../services/consignmentSellerService.js';
+import { currentUserEmail, setMyItemTaxIncluded } from '../../services/consignmentSellerService.js';
+import { sellPretaxPrice, taxIncludedOn } from '../../utils/consignmentSellSteps.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { DEFAULT_FEE_POLICY, feePolicyFrom } from '../../utils/consignmentFeePolicy.js';
 import { SALE_METHODS } from './ConsignmentSubmitPricing.jsx';
 import ConsignmentSellWizard from './ConsignmentSellWizard.jsx';
@@ -32,6 +34,7 @@ const empty = {
   specs: '',
   sale_method: 'fixed',
   seller_payout: '',
+  price_tax_included: false,
   buy_now_price: '',
   allow_inspection: false,
   agreement: false,
@@ -68,6 +71,7 @@ export default function ConsignmentSubmit() {
   const [done, setDone] = useState(null);
   const [wizardOpen, setWizardOpen] = useState(() => searchParams.has('method'));
   const access = useSellerAccess();
+  const taxRate = useTaxRate();
 
   useEffect(() => {
     if (!access.seller) return;
@@ -142,16 +146,24 @@ export default function ConsignmentSubmit() {
         condition: form.condition,
         description: form.description,
         specs: form.specs,
-        seller_payout: Number(form.seller_payout),
+        seller_payout: sellPretaxPrice(form, taxRate),
         sale_method: form.sale_method,
         buy_now_price: isAuction && form.buy_now_price !== '' ? Number(form.buy_now_price) : null,
         allow_inspection: !isAuction && form.allow_inspection,
         photo_urls,
         agreement_accepted: form.agreement,
       });
+      let taxNote = '';
+      if (taxIncludedOn(form) && data?.id) {
+        try {
+          await setMyItemTaxIncluded(data.id, true);
+        } catch {
+          taxNote = 'Your item was submitted, but we couldn’t mark the price as tax included. Mention it to FRPL and they’ll set it when they review.';
+        }
+      }
       clearSellDraft();
       setWizardOpen(false);
-      setDone(data);
+      setDone({ ...data, taxNote });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -173,6 +185,7 @@ export default function ConsignmentSubmit() {
             ? 'If we accept it, pay the listing fee (Cash App or Venmo from My items, or at Legends) and your auction goes live. Keep the item until it sells.'
             : 'If we accept the item, you’ll bring it to Legends and pay the listing fee then.'}
         </p>
+        {done.taxNote ? <p className="cs-error">{done.taxNote}</p> : null}
         <p className="cs-lede">Check its progress anytime under <strong>My items</strong> (log in with the same email).</p>
         <Link className="cs-btn" to={`${CONSIGNMENT_PATH}/my-items`}>My items</Link>{' '}
         <Link className="cs-btn cs-btn-secondary" to={CONSIGNMENT_PATH}>Back to shop</Link>

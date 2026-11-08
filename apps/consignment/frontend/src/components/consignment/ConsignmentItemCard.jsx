@@ -41,13 +41,13 @@ function LiveAuctionLine({ auction }) {
   );
 }
 
-function Price({ label, amount }) {
+function Price({ label, amount, included = false }) {
   const rate = useTaxRate();
   return (
     <p className="cs-card-price">
       {label ? <span className="cs-card-price-label">{label}</span> : null}
-      <strong>{formatDollars(amount)}</strong>
-      <small className="cs-card-tax">{formatDollars(withTax(amount, rate))} with tax</small>
+      <strong>{formatDollars(included ? withTax(amount, rate) : amount)}</strong>
+      <small className="cs-card-tax">{included ? 'tax included' : `${formatDollars(withTax(amount, rate))} with tax`}</small>
     </p>
   );
 }
@@ -81,7 +81,7 @@ export default function ConsignmentItemCard({ item, auction, watching = false, o
     auction: { icon: '🔨', label: 'On the table · Auction' },
     shelf: onHold ? { icon: '⏳', label: 'On hold · offer accepted' } : { icon: '🏪', label: 'In the case' },
   }[kind];
-  let priceLine = <Price amount={item.selling_price} />;
+  let priceLine = <Price amount={item.selling_price} included={Boolean(item.price_tax_included)} />;
   if (isAuction) priceLine = item.is_example ? <ExampleAuctionLine sample={item.example_auction} /> : <AuctionLine auction={auction} />;
   const brand = (item.brand || '').trim();
   const model = (item.model || '').trim();

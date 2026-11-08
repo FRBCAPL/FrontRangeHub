@@ -215,9 +215,9 @@
   border-radius: 18px;
   border: 2px solid color-mix(in srgb, var(--cs-accent) 60%, transparent);
   background:
-    radial-gradient(ellipse at top left, color-mix(in srgb, var(--cs-accent) 22%, transparent), transparent 70%),
+    radial-gradient(ellipse at top, color-mix(in srgb, var(--cs-accent) 22%, transparent), transparent 70%),
     var(--cs-card);
-  text-align: left;
+  text-align: center;
 }
 
 .cs-home-pitch h2 {
@@ -233,7 +233,8 @@
 
 .cs-home-pitch-points {
   margin: 0 0 16px;
-  padding-left: 20px;
+  padding: 0;
+  list-style-position: inside;
   display: grid;
   gap: 6px;
   color: var(--cs-muted);
@@ -243,6 +244,7 @@
 .cs-home-pitch-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
 }
 

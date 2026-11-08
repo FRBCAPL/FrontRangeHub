@@ -1,4 +1,13 @@
 import { FIELD_LIMITS } from '../data/consignmentConstants.js';
+import { pretaxFromTotal } from './consignmentTax.js';
+
+/** Case items with "my price includes tax" ticked: the typed total turned into the before-tax price that's saved. */
+export const taxIncludedOn = (form) => form.sale_method !== 'auction' && Boolean(form.price_tax_included);
+
+export function sellPretaxPrice(form, rate) {
+  const typed = Number(form.seller_payout) || 0;
+  return taxIncludedOn(form) ? pretaxFromTotal(typed, rate) : typed;
+}
 
 export const SELL_STEPS = [
   { id: 'method', title: 'How do you want to sell?' },

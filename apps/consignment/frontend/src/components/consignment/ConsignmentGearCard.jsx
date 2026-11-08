@@ -16,6 +16,7 @@ export default function ConsignmentGearCard({ product }) {
   const status = availability(product);
   const { min, max } = priceRange(product);
   const showMsrp = product.msrp && Number(product.msrp) > max;
+  const included = Boolean(product.price_tax_included);
   return (
     <Link className={`cs-card cs-card-gear cs-gear-${status}`} to={gearProductPath(product.slug)}>
       <div className="cs-card-ribbon">
@@ -31,9 +32,9 @@ export default function ConsignmentGearCard({ product }) {
         </p>
         <p className="cs-card-price">
           {min !== max ? <span className="cs-card-price-label">From</span> : null}
-          <strong>{formatDollars(min)}</strong>
+          <strong>{formatDollars(included ? withTax(min, rate) : min)}</strong>
           {showMsrp ? <s className="cs-gear-msrp">{formatDollars(product.msrp)}</s> : null}
-          <small className="cs-card-tax">{formatDollars(withTax(min, rate))} with tax</small>
+          <small className="cs-card-tax">{included ? 'tax included' : `${formatDollars(withTax(min, rate))} with tax`}</small>
         </p>
       </div>
     </Link>

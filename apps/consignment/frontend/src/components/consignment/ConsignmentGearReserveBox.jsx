@@ -99,7 +99,7 @@ export default function ConsignmentGearReserveBox({ product, variant, onReserved
             {special
               ? 'FRPL orders it in and emails you when it’s at Legends. You pay when you pick it up.'
               : 'We’ll set it aside at Legends for a few days. You pay when you pick it up.'}
-            {' '}Total {formatDollars(total)} with tax.
+            {' '}Total {formatDollars(total)} {product.price_tax_included ? 'tax included' : 'with tax'}.
           </p>
           <label>
             Note for FRPL (optional)

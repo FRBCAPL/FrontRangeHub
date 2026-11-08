@@ -3,6 +3,8 @@
  * (so renaming "Weight" doesn't lose values), then turned back into { name: value } on save.
  */
 
+import { pretaxFromTotal, withTax } from './consignmentTax.js';
+
 export const MAX_OPTION_NAMES = 3;
 
 export const blankRow = (count, from = null) => ({
@@ -50,6 +52,24 @@ export function gearFormError(form, optionNames, rows) {
     combos.add(key);
   }
   return null;
+}
+
+const shownPrice = (value, rate) => (clean(value) === '' ? '' : String(withTax(Number(value), rate)));
+
+/** Editor values for a tax-included product: stored before-tax prices shown as totals. */
+export function toTaxIncludedEditor(form, rows, rate) {
+  return {
+    form: { ...form, price: shownPrice(form.price, rate) },
+    rows: rows.map((r) => ({ ...r, price: shownPrice(r.price, rate) })),
+  };
+}
+
+/** Typed tax-included totals back to the before-tax prices that are saved. */
+export function pretaxGearPrices(price, variants, rate) {
+  return {
+    price: pretaxFromTotal(price, rate),
+    variants: variants.map((v) => (v.price == null ? v : { ...v, price: pretaxFromTotal(v.price, rate) })),
+  };
 }
 
 /** Variant rows ready for saveGearProduct. */
