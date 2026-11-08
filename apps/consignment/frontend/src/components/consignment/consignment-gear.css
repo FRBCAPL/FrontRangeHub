@@ -127,6 +127,12 @@
 .cs-gear-product-row .cs-gear-order-photo { width: 56px; height: 56px; border-radius: 6px; object-fit: cover; }
 .cs-gear-product-row h3 { margin: 0; font-size: 0.95rem; }
 .cs-gear-product-row p { margin: 2px 0 0; font-size: 0.8rem; color: var(--cs-muted); }
+.cs-gear-option-names { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+.cs-gear-option-name { display: flex; align-items: center; gap: 6px; flex: 1 1 200px; }
+.cs-gear-option-name input { flex: 1; min-width: 0; }
+.cs-gear-option-names .cs-btn-secondary { flex: 0 0 auto; }
+.cs-gear-checks { display: grid; gap: 10px; text-align: left; }
+.cs-gear-checks .cs-check { justify-content: flex-start; }
 .cs-gear-variants { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .cs-gear-variants th,
 .cs-gear-variants td { padding: 4px; text-align: left; vertical-align: middle; }

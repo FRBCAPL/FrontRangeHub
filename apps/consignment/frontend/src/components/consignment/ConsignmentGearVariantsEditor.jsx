@@ -25,9 +25,9 @@ export default function ConsignmentGearVariantsEditor({ optionNames, rows, baseP
         Add options like Weight, Shaft or Tip size, then one row for each combination you sell.
         No options? Just set the stock on the single row. Leave a row’s price blank to use the product price.
       </p>
-      <div className="cs-gear-option-names cs-gear-grid2">
+      <div className="cs-gear-option-names">
         {optionNames.map((name, i) => (
-          <div key={i} className="cs-actions">
+          <div key={i} className="cs-gear-option-name">
             <input type="text" value={name} maxLength={30} placeholder="e.g. Weight" aria-label={`Option ${i + 1} name`}
               onChange={(e) => renameOption(i, e.target.value)} />
             <button type="button" className="cs-btn-secondary" onClick={() => removeOption(i)} aria-label={`Remove option ${name}`}>✕</button>
@@ -44,7 +44,7 @@ export default function ConsignmentGearVariantsEditor({ optionNames, rows, baseP
             <th>SKU</th>
             <th>Price</th>
             <th>Stock</th>
-            <th>Show</th>
+            <th title="Shown in the shop">On</th>
             <th aria-label="Remove" />
           </tr>
         </thead>

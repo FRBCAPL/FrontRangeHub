@@ -148,14 +148,16 @@ export default function ConsignmentGearProductModal({ product, onClose }) {
           <p className="cs-hint">The first photo is the shop picture.</p>
         </div>
         <ConsignmentGearVariantsEditor optionNames={optionNames} rows={rows} basePrice={form.price} onChange={onOptions} disabled={busy} />
-        <div className="cs-gear-grid2">
+        <div className="cs-gear-checks">
           <label className="cs-check">
             <input type="checkbox" checked={form.special_order} onChange={set('special_order')} /> Can be special ordered when out of stock
           </label>
-          <div className="cs-field">
-            <label htmlFor="cs-gear-lead">Special-order lead time</label>
-            <input id="cs-gear-lead" value={form.lead_time} maxLength={60} placeholder="e.g. 1–2 weeks" onChange={set('lead_time')} />
-          </div>
+          {form.special_order ? (
+            <div className="cs-field">
+              <label htmlFor="cs-gear-lead">Special-order lead time</label>
+              <input id="cs-gear-lead" value={form.lead_time} maxLength={60} placeholder="e.g. 1–2 weeks" onChange={set('lead_time')} />
+            </div>
+          ) : null}
           <label className="cs-check">
             <input type="checkbox" checked={form.featured} onChange={set('featured')} /> Featured (shows first)
           </label>
