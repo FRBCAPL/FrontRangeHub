@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { CATEGORIES, CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadGearProducts } from '../../services/consignmentGearService.js';
 import ConsignmentGearCard from './ConsignmentGearCard.jsx';
+import useTaxRate from '../../hooks/useTaxRate.js';
+import { taxPercent } from '../../utils/consignmentTax.js';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 import './consignment-shop.css';
 
@@ -13,6 +15,7 @@ export default function ConsignmentGearShop() {
   const category = CATEGORIES.some((c) => c.id === catParam) ? catParam : 'all';
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const taxRate = useTaxRate();
 
   useEffect(() => {
     let alive = true;
@@ -41,7 +44,7 @@ export default function ConsignmentGearShop() {
             Reserve online, then pay and pick up at <strong>{LEGENDS.name}</strong> in{' '}
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>. <br />
             Out of stock? Most items can be special ordered. <br />
-            Prices + tax, paid at the register.
+            Totals with {taxPercent(taxRate)} sales tax are shown; pay at the register.
           </p>
         </div>
         {usedCategories.length > 1 ? (

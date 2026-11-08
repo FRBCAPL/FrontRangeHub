@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { CONSIGNMENT_PATH, categoryLabel } from '../../data/consignmentConstants.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { AVAILABILITY_LABELS, availability, priceRange } from '../../utils/consignmentGearMath.js';
 
 const RIBBON_ICONS = { in_stock: '✨', special: '📦', sold_out: '⏸' };
@@ -9,6 +11,7 @@ const RIBBON_ICONS = { in_stock: '✨', special: '📦', sold_out: '⏸' };
 export const gearProductPath = (slug) => `${CONSIGNMENT_PATH}/new/${encodeURIComponent(slug)}`;
 
 export default function ConsignmentGearCard({ product }) {
+  const rate = useTaxRate();
   const photo = product.photo_urls?.[0];
   const status = availability(product);
   const { min, max } = priceRange(product);
@@ -30,7 +33,7 @@ export default function ConsignmentGearCard({ product }) {
           {min !== max ? <span className="cs-card-price-label">From</span> : null}
           <strong>{formatDollars(min)}</strong>
           {showMsrp ? <s className="cs-gear-msrp">{formatDollars(product.msrp)}</s> : null}
-          <small>+ tax</small>
+          <small className="cs-card-tax">{formatDollars(withTax(min, rate))} with tax</small>
         </p>
       </div>
     </Link>

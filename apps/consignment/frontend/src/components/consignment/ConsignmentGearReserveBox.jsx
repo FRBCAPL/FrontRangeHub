@@ -6,6 +6,8 @@ import { reserveGear } from '../../services/consignmentGearService.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { GEAR_MAX_QTY, variantPrice } from '../../utils/consignmentGearMath.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 
 /** Quantity + Reserve (in stock) or Special order (out of stock) for the chosen option. */
 export default function ConsignmentGearReserveBox({ product, variant, onReserved }) {
@@ -16,6 +18,7 @@ export default function ConsignmentGearReserveBox({ product, variant, onReserved
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(null);
+  const rate = useTaxRate();
 
   useEffect(() => {
     let alive = true;
@@ -35,6 +38,7 @@ export default function ConsignmentGearReserveBox({ product, variant, onReserved
   }
 
   const each = variantPrice(product, variant);
+  const total = withTax(each * qty, rate);
 
   async function submit() {
     setBusy(true);
@@ -86,7 +90,7 @@ export default function ConsignmentGearReserveBox({ product, variant, onReserved
       ) : null}
       {userId && !confirming ? (
         <button type="button" className="cs-btn" onClick={() => setConfirming(true)}>
-          {special ? 'Special order' : 'Reserve for pickup'} · {formatDollars(each * qty)}
+          {special ? 'Special order' : 'Reserve for pickup'} · {formatDollars(total)}
         </button>
       ) : null}
       {userId && confirming ? (
@@ -95,7 +99,7 @@ export default function ConsignmentGearReserveBox({ product, variant, onReserved
             {special
               ? 'FRPL orders it in and emails you when it’s at Legends. You pay when you pick it up.'
               : 'We’ll set it aside at Legends for a few days. You pay when you pick it up.'}
-            {' '}Total {formatDollars(each * qty)} + tax.
+            {' '}Total {formatDollars(total)} with tax.
           </p>
           <label>
             Note for FRPL (optional)

@@ -4,6 +4,8 @@ import { itemLabel } from '../../data/consignmentConstants.js';
 import { releaseOfferHold, respondToOffer, withdrawOffer } from '../../services/consignmentOffersService.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import {
   canAnswerOffer, counterError, offerHistoryLines, offerMinimum, offerStatusLabel,
 } from '../../utils/consignmentOfferMath.js';
@@ -16,6 +18,8 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const rate = useTaxRate();
+  const taxed = (n) => formatDollars(withTax(n, rate));
   const item = offer.item || {};
   const answer = canAnswerOffer(offer, view);
   const isAuction = item.sale_method === 'auction' || Boolean(offer.auction_id);
@@ -43,7 +47,7 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
   };
 
   const acceptQuestion = view === 'buyer'
-    ? `Accept ${formatDollars(offer.amount)} for ${item.name}? You’re agreeing to buy it at this price (plus tax).`
+    ? `Accept ${formatDollars(offer.amount)} for ${item.name}? You’re agreeing to buy it at this price (${taxed(offer.amount)} with tax).`
     : `Accept ${formatDollars(offer.amount)} for ${item.name}?${offer.payout != null ? ` The seller receives ${formatDollars(offer.payout)}.` : ''} ${
       isAuction ? 'The auction ends and the buyer wins it.' : 'The item is held for the buyer.'}`;
   let acceptText = `Accept ${formatDollars(offer.amount)}`;
@@ -67,6 +71,7 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
           </p>
           <p className="cs-offer-amount">
             <strong>{formatDollars(offer.amount)}</strong>
+            {view === 'buyer' ? <span className="cs-meta"> ({taxed(offer.amount)} with tax)</span> : null}
             <span className="cs-meta"> · {isAuction ? 'opening bid' : 'asking'} {formatDollars(offer.asking_price)}</span>
           </p>
           <p className={`cs-offer-status${answer ? ' cs-offer-status-turn' : ''}`}>
@@ -97,7 +102,7 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
       </ol>
 
       {view === 'buyer' && offer.status === 'accepted' && offer.hold_until ? (
-        <p className="cs-offer-good">Pay {formatDollars(offer.amount)} + tax at Legends by {formatDateTime(offer.hold_until)}. Give staff your name and the item number.</p>
+        <p className="cs-offer-good">Pay {taxed(offer.amount)} with tax at Legends by {formatDateTime(offer.hold_until)}. Give staff your name and the item number.</p>
       ) : null}
 
       {answer ? (

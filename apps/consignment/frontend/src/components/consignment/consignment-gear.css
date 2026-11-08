@@ -110,8 +110,12 @@
 .cs-mine-section { margin-top: 28px; }
 
 /* Admin */
-.cs-modal-card.cs-gear-product-form { width: min(880px, 100%); }
-.cs-gear-admin-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.cs-modal-card.cs-gear-product-form { width: min(760px, 100%); text-align: left; }
+.cs-gear-product-form h2 { margin: 0; }
+.cs-gear-product-form fieldset { margin: 0; padding: 12px; border: 1px solid var(--cs-line); border-radius: 12px; }
+.cs-gear-product-form legend { padding: 0 6px; font-weight: 800; }
+.cs-gear-check-cell { align-self: end; min-height: 44px; }
+.cs-gear-admin-tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
 .cs-gear-products { display: grid; gap: 8px; }
 .cs-gear-product-row {
   display: grid;
@@ -131,19 +135,11 @@
 .cs-gear-option-name { display: flex; align-items: center; gap: 6px; flex: 1 1 200px; }
 .cs-gear-option-name input { flex: 1; min-width: 0; }
 .cs-gear-option-names .cs-btn-secondary { flex: 0 0 auto; }
-.cs-gear-checks { display: grid; gap: 10px; text-align: left; }
-.cs-gear-checks .cs-check { justify-content: flex-start; }
 .cs-gear-variants { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .cs-gear-variants th,
 .cs-gear-variants td { padding: 4px; text-align: left; vertical-align: middle; }
 .cs-gear-variants input[type='text'],
 .cs-gear-variants input[type='number'] { width: 100%; min-width: 60px; }
-.cs-gear-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
-.cs-gear-photos { display: flex; flex-wrap: wrap; gap: 8px; }
-.cs-gear-photos figure { position: relative; margin: 0; }
-.cs-gear-photos img { width: 72px; height: 72px; object-fit: cover; border-radius: 6px; }
-.cs-gear-photos button { position: absolute; top: -6px; right: -6px; padding: 0 6px; border-radius: 999px; }
-
 @media (max-width: 640px) {
   .cs-gear-variants { display: block; overflow-x: auto; }
 }

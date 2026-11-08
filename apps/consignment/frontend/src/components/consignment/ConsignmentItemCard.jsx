@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { brandModelLabel, categoryLabel, conditionLabel } from '../../data/consignmentConstants.js';
 import { consignmentItemPath } from '../../utils/consignmentPaths.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { formatCountdown, formatDateTime, formatShortEnd } from '../../utils/consignmentAuctionDates.js';
 import { serverNow } from '../../services/consignmentServerClock.js';
 import ConsignmentWatchButton from './ConsignmentWatchButton.jsx';
@@ -40,11 +42,12 @@ function LiveAuctionLine({ auction }) {
 }
 
 function Price({ label, amount }) {
+  const rate = useTaxRate();
   return (
     <p className="cs-card-price">
       {label ? <span className="cs-card-price-label">{label}</span> : null}
       <strong>{formatDollars(amount)}</strong>
-      <small>+ tax</small>
+      <small className="cs-card-tax">{formatDollars(withTax(amount, rate))} with tax</small>
     </p>
   );
 }

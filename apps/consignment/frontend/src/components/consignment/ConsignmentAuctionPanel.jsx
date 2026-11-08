@@ -4,16 +4,19 @@ import { loadPublicSettings } from '../../services/consignmentSellerAccessServic
 import { addDays } from '../../utils/consignmentDates.js';
 import { formatCountdown, formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import ConsignmentBidForm from './ConsignmentBidForm.jsx';
 import ConsignmentBidHistory from './ConsignmentBidHistory.jsx';
 
 const DEFAULT_PAY_DAYS = 7;
 
-function EndedMessage({ auction, iWon, payDays }) {
+function EndedMessage({ auction, iWon, payDays, rate }) {
   if (auction.status === 'ended_no_bids') {
     return <p className="cs-lede">This auction ended with no bids.</p>;
   }
-  const sold = `Sold for ${formatDollars(auction.winning_bid)} + tax${auction.won_via === 'buy_now' ? ' (Buy It Now)' : ''}.`;
+  const total = formatDollars(withTax(auction.winning_bid, rate));
+  const sold = `Sold for ${formatDollars(auction.winning_bid)}${auction.won_via === 'buy_now' ? ' (Buy It Now)' : ''}.`;
   if (iWon && auction.status === 'awaiting_payment') {
     if ('delivered_at' in auction && !auction.delivered_at) {
       return (
@@ -22,7 +25,7 @@ function EndedMessage({ auction, iWon, payDays }) {
           <p>
             The seller is bringing it to Legends Brews &amp; Cues
             {auction.delivery_due_at ? ` by ${formatDateTime(auction.delivery_due_at)}` : ''}. FRPL will let you know when it
-            arrives; then you have {payDays} days to look it over and pay at the register (sales tax added). Nothing is
+            arrives; then you have {payDays} days to look it over and pay {total} with tax at the register. Nothing is
             due before it arrives.
           </p>
         </div>
@@ -32,7 +35,7 @@ function EndedMessage({ auction, iWon, payDays }) {
     return (
       <div className="cs-bid-won">
         <strong>You won! {sold}</strong>
-        <p>It's at Legends Brews &amp; Cues. Look it over, pay and pick it up by {formatDateTime(due)}. Sales tax is added at the register.</p>
+        <p>It's at Legends Brews &amp; Cues. Look it over, pay {total} with tax and pick it up by {formatDateTime(due)}.</p>
       </div>
     );
   }
@@ -45,6 +48,7 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
     auction, history, userId, myTopBid, isHighBidder, outbid, remaining, loading, error, stale, refresh,
   } = useConsignmentAuction(itemId);
   const [payDays, setPayDays] = useState(DEFAULT_PAY_DAYS);
+  const rate = useTaxRate();
 
   useEffect(() => {
     onAuction?.(auction || null);
@@ -87,7 +91,7 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
           <div className="cs-auction-price">
             <span>{auction.bid_count ? 'Current bid' : 'Opening bid'}</span>
             <strong>{formatDollars(auction.bid_count ? auction.current_bid : auction.opening_bid)}</strong>
-            <span className="cs-meta">+ tax</span>
+            <span className="cs-meta">{formatDollars(withTax(auction.bid_count ? auction.current_bid : auction.opening_bid, rate))} with tax</span>
             <span className="cs-meta">
               {auction.bid_count} bid{auction.bid_count === 1 ? '' : 's'} · ends {formatDateTime(auction.ends_at)}
             </span>
@@ -103,18 +107,18 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
           {auction.delivered_at ? (
             <p className="cs-hint">
               Bids are binding. A bid in the final minutes extends the clock. <strong>This item is already at Legends</strong>;
-              the winner has {payDays} days from the end of the auction to look it over and pay (sales tax added at the register).
+              the winner has {payDays} days from the end of the auction to look it over and pay (bid plus sales tax) at the register.
             </p>
           ) : (
             <p className="cs-hint">
               Bids are binding. A bid in the final minutes extends the clock. The seller holds the item until it sells, then
-              brings it to Legends; the winner has {payDays} days from its arrival to look it over and pay (sales tax added at
-              the register).
+              brings it to Legends; the winner has {payDays} days from its arrival to look it over and pay (bid plus sales
+              tax) at the register.
             </p>
           )}
         </>
       ) : (
-        <EndedMessage auction={auction} iWon={iWon} payDays={payDays} />
+        <EndedMessage auction={auction} iWon={iWon} payDays={payDays} rate={rate} />
       )}
 
       <ConsignmentBidHistory bids={history} />

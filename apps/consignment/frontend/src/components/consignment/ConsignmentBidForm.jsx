@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { buyNow, isMyItem, openHubLogin, placeBid } from '../../services/consignmentAuctionService.js';
 import { bidError, buyNowAvailable } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { LEGENDS_PLACE } from '../../data/consignmentConstants.js';
 import ConsignmentBidAlertsToggle from './ConsignmentBidAlertsToggle.jsx';
 
@@ -14,6 +16,8 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, outb
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [mine, setMine] = useState(false);
+  const rate = useTaxRate();
+  const taxed = (n) => formatDollars(withTax(n, rate));
 
   useEffect(() => {
     setAmount((prev) => (Number(prev) < minNext ? minNext : prev));
@@ -76,7 +80,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, outb
       bidCount: auction.bid_count,
     });
     if (problem) { setError(problem); return; }
-    if (!window.confirm(`Place a bid of ${formatDollars(amount)} + tax? Bids are binding. ${PICKUP_NOTE} Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
+    if (!window.confirm(`Place a bid of ${formatDollars(amount)}? If you win at this price you’ll pay ${taxed(amount)} with tax. Bids are binding. ${PICKUP_NOTE} Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
     run(() => placeBid(auction.id, amount), (r) => (r?.extended
       ? 'Bid placed. The clock was extended because it was close to the end.'
       : 'Bid placed. You’re the high bidder.'));
@@ -84,7 +88,7 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, outb
 
   const doBuyNow = () => {
     const price = formatDollars(auction.buy_now_price);
-    if (!window.confirm(`Buy it now for ${price} + tax? This ends the auction. The seller brings it to Legends, and you agree to pay there within ${payDays} days of it arriving. ${PICKUP_NOTE} Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
+    if (!window.confirm(`Buy it now for ${price} (${taxed(auction.buy_now_price)} with tax)? This ends the auction. The seller brings it to Legends, and you agree to pay there within ${payDays} days of it arriving. ${PICKUP_NOTE} Items are sold as-is; if it isn't as described, you can decline it at pickup.`)) return;
     run(() => buyNow(auction.id), 'You bought it! FRPL will let you know when it’s at Legends for you to look over and pay.');
   };
 
@@ -108,10 +112,13 @@ export default function ConsignmentBidForm({ auction, userId, isHighBidder, outb
           {busy ? 'Bidding…' : 'Place bid'}
         </button>
       </div>
-      <p className="cs-hint">Minimum bid {formatDollars(minNext)}.</p>
+      <p className="cs-hint">
+        Minimum bid {formatDollars(minNext)}.
+        {Number(amount) > 0 ? ` Win at ${formatDollars(amount)} and you pay ${taxed(amount)} with tax.` : ''}
+      </p>
       {buyNowAvailable({ buyNowPrice: auction.buy_now_price, currentBid: auction.current_bid, bidCount: auction.bid_count }) ? (
         <button type="button" className="cs-btn-secondary cs-buy-now" onClick={doBuyNow} disabled={busy}>
-          Buy It Now · {formatDollars(auction.buy_now_price)} + tax
+          Buy It Now · {formatDollars(auction.buy_now_price)} ({taxed(auction.buy_now_price)} with tax)
         </button>
       ) : null}
       {error ? <p className="cs-error">{error}</p> : null}

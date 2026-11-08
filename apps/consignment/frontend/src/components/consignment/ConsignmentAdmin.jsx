@@ -18,6 +18,7 @@ import {
   updateItemIfStatus,
 } from '../../services/consignmentService.js';
 import ConsignmentAgreementSettings from './ConsignmentAgreementSettings.jsx';
+import ConsignmentTaxSettings from './ConsignmentTaxSettings.jsx';
 import ConsignmentSellersPanel from './ConsignmentSellersPanel.jsx';
 import ConsignmentBiddersPanel from './ConsignmentBiddersPanel.jsx';
 import { sellerMatches } from '../../utils/consignmentSellerItems.js';
@@ -191,6 +192,7 @@ export default function ConsignmentAdmin() {
       {tab === 'settings' ? (
         <>
           {error ? <p className="cs-error">{error}</p> : null}
+          <ConsignmentTaxSettings settings={settings} onError={setError} />
           <ConsignmentAgreementSettings settings={settings} onError={setError} />
         </>
       ) : null}

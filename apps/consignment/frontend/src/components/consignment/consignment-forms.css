@@ -196,12 +196,14 @@
 
 .cs-tabs {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 6px;
   margin: 0 0 14px;
 }
 
 .cs-tabs button {
+  white-space: nowrap;
   min-height: 40px;
   padding: 8px 18px;
   border-radius: 999px;

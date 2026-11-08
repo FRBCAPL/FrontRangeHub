@@ -31,7 +31,7 @@ export const BUYERS_GUIDE_SECTIONS = [
       {
         icon: '💵',
         title: 'Paying',
-        text: 'Pay at the register. Prices don’t include sales tax; tax is added when you pay.',
+        text: 'Pay at the register. Each item shows its total with {taxPct} sales tax, so you know what you’ll pay.',
       },
     ],
   },

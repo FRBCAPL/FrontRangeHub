@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CATEGORIES, MAX_PHOTOS } from '../../data/consignmentConstants.js';
-import { uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
+import { deleteConsignmentPhotos, uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { saveGearProduct } from '../../services/consignmentGearAdminService.js';
 import { fromEditorRows, gearFormError, toEditorRows } from '../../utils/consignmentGearForm.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
+import ConsignmentPhotoManager from './ConsignmentPhotoManager.jsx';
 import ConsignmentGearVariantsEditor from './ConsignmentGearVariantsEditor.jsx';
 
 const STATUS_OPTIONS = [
@@ -35,8 +37,9 @@ export default function ConsignmentGearProductModal({ product, onClose }) {
   const [rows, setRows] = useState(() => toEditorRows(product));
   const [removedIds, setRemovedIds] = useState([]);
   const [busy, setBusy] = useState(false);
-  const [progress, setProgress] = useState('');
   const [error, setError] = useState('');
+  const uploadedRef = useRef([]);
+  const originalPhotos = product?.photo_urls || [];
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 
@@ -46,19 +49,24 @@ export default function ConsignmentGearProductModal({ product, onClose }) {
     if (removedId) setRemovedIds((ids) => [...ids, removedId]);
   };
 
-  async function addPhotos(e) {
-    const files = [...(e.target.files || [])].slice(0, MAX_PHOTOS - photos.length);
-    e.target.value = '';
+  const cancel = () => {
+    deleteConsignmentPhotos(uploadedRef.current.filter((u) => !originalPhotos.includes(u))).catch(() => {});
+    onClose(false);
+  };
+
+  async function addPhotos(files) {
+    const room = MAX_PHOTOS - photos.length;
     if (!files.length) return;
+    if (room <= 0) { setError(`Up to ${MAX_PHOTOS} photos.`); return; }
     setBusy(true);
     setError('');
     try {
-      const urls = await uploadConsignmentPhotos(files, (i, n) => setProgress(i < n ? `Uploading photo ${i + 1} of ${n}…` : ''));
+      const urls = await uploadConsignmentPhotos(files.slice(0, room));
+      uploadedRef.current.push(...urls);
       setPhotos((p) => [...p, ...urls].slice(0, MAX_PHOTOS));
     } catch (err) {
       setError(err.message);
     } finally {
-      setProgress('');
       setBusy(false);
     }
   }
@@ -85,6 +93,8 @@ export default function ConsignmentGearProductModal({ product, onClose }) {
         status: form.status,
         featured: form.featured,
       }, fromEditorRows(optionNames, rows), removedIds);
+      const unused = [...originalPhotos, ...uploadedRef.current].filter((u) => !photos.includes(u));
+      deleteConsignmentPhotos(unused).catch(() => {});
       onClose(true);
     } catch (err) {
       setError(err.message);
@@ -92,82 +102,81 @@ export default function ConsignmentGearProductModal({ product, onClose }) {
     }
   }
 
-  return (
-    <ConsignmentModal titleId="cs-gear-product-title" onClose={() => onClose(false)} busy={busy}>
-      <form className="cs-modal-card cs-form cs-gear-product-form" onSubmit={save} noValidate>
-        <h2 id="cs-gear-product-title">{product ? 'Edit product' : 'Add new gear'}</h2>
-        <div className="cs-gear-grid2">
+  return createPortal(
+    <div className="cs-portal">
+      <ConsignmentModal titleId="cs-gear-product-title" onClose={cancel} busy={busy}>
+        <form className="cs-modal-card cs-form cs-gear-product-form" onSubmit={save} noValidate>
+          <h2 id="cs-gear-product-title">{product ? `Edit ${product.name}` : 'Add new gear'}</h2>
+          <p className="cs-hint">Save as Draft while you set it up. Switch Status to Active when it’s ready for the shop.</p>
+
           <div className="cs-field">
-            <label htmlFor="cs-gear-name">Name</label>
-            <input id="cs-gear-name" value={form.name} maxLength={120} onChange={set('name')} required />
+            <label htmlFor="cs-gear-name">Product name</label>
+            <input id="cs-gear-name" value={form.name} maxLength={120} onChange={set('name')} placeholder="e.g. Sneaky Pete 2-piece" required />
           </div>
-          <div className="cs-field">
-            <label htmlFor="cs-gear-brand">Brand</label>
-            <input id="cs-gear-brand" value={form.brand} maxLength={80} onChange={set('brand')} />
-          </div>
-          <div className="cs-field">
-            <label htmlFor="cs-gear-category">Category</label>
-            <select id="cs-gear-category" value={form.category} onChange={set('category')}>
-              {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </div>
-          <div className="cs-field">
-            <label htmlFor="cs-gear-status">Status</label>
-            <select id="cs-gear-status" value={form.status} onChange={set('status')}>
-              {STATUS_OPTIONS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
-          </div>
-          <div className="cs-field">
-            <label htmlFor="cs-gear-price">Price ($, before tax)</label>
-            <input id="cs-gear-price" type="number" step="0.01" min="0" value={form.price} onChange={set('price')} required />
-          </div>
-          <div className="cs-field">
-            <label htmlFor="cs-gear-msrp">MSRP (optional, shown crossed out)</label>
-            <input id="cs-gear-msrp" type="number" step="0.01" min="0" value={form.msrp} onChange={set('msrp')} />
-          </div>
-        </div>
-        <div className="cs-field">
-          <label htmlFor="cs-gear-desc">Description</label>
-          <textarea id="cs-gear-desc" rows={4} maxLength={4000} value={form.description} onChange={set('description')} />
-        </div>
-        <div className="cs-field">
-          <span>Photos ({photos.length}/{MAX_PHOTOS})</span>
-          <div className="cs-gear-photos">
-            {photos.map((src, i) => (
-              <figure key={src}>
-                <img src={src} alt={`Photo ${i + 1}`} />
-                <button type="button" className="cs-btn-secondary" aria-label={`Remove photo ${i + 1}`} disabled={busy}
-                  onClick={() => setPhotos((p) => p.filter((u) => u !== src))}>✕</button>
-              </figure>
-            ))}
-          </div>
-          {photos.length < MAX_PHOTOS ? (
-            <input type="file" accept="image/*" multiple onChange={addPhotos} disabled={busy} aria-label="Add photos" />
-          ) : null}
-          {progress ? <p className="cs-meta">{progress}</p> : null}
-          <p className="cs-hint">The first photo is the shop picture.</p>
-        </div>
-        <ConsignmentGearVariantsEditor optionNames={optionNames} rows={rows} basePrice={form.price} onChange={onOptions} disabled={busy} />
-        <div className="cs-gear-checks">
-          <label className="cs-check">
-            <input type="checkbox" checked={form.special_order} onChange={set('special_order')} /> Can be special ordered when out of stock
-          </label>
-          {form.special_order ? (
+          <div className="cs-row">
             <div className="cs-field">
-              <label htmlFor="cs-gear-lead">Special-order lead time</label>
-              <input id="cs-gear-lead" value={form.lead_time} maxLength={60} placeholder="e.g. 1–2 weeks" onChange={set('lead_time')} />
+              <label htmlFor="cs-gear-brand">Brand</label>
+              <input id="cs-gear-brand" value={form.brand} maxLength={80} onChange={set('brand')} />
             </div>
-          ) : null}
-          <label className="cs-check">
-            <input type="checkbox" checked={form.featured} onChange={set('featured')} /> Featured (shows first)
-          </label>
-        </div>
-        {error ? <p className="cs-error" role="alert">{error}</p> : null}
-        <div className="cs-actions">
-          <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save product'}</button>
-          <button className="cs-btn-secondary" type="button" onClick={() => onClose(false)} disabled={busy}>Cancel</button>
-        </div>
-      </form>
-    </ConsignmentModal>
+            <div className="cs-field">
+              <label htmlFor="cs-gear-category">Category</label>
+              <select id="cs-gear-category" value={form.category} onChange={set('category')}>
+                {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="cs-row">
+            <div className="cs-field">
+              <label htmlFor="cs-gear-price">Price ($, before tax)</label>
+              <input id="cs-gear-price" type="number" inputMode="decimal" step="0.01" min="0" value={form.price} onChange={set('price')} required />
+            </div>
+            <div className="cs-field">
+              <label htmlFor="cs-gear-msrp">List price / MSRP (optional)</label>
+              <input id="cs-gear-msrp" type="number" inputMode="decimal" step="0.01" min="0" value={form.msrp} onChange={set('msrp')} placeholder="Shown crossed out" />
+            </div>
+          </div>
+          <div className="cs-row">
+            <div className="cs-field">
+              <label htmlFor="cs-gear-status">Status</label>
+              <select id="cs-gear-status" value={form.status} onChange={set('status')}>
+                {STATUS_OPTIONS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+            </div>
+            <label className="cs-check cs-gear-check-cell">
+              <input type="checkbox" checked={form.featured} onChange={set('featured')} /> Featured (shows first)
+            </label>
+          </div>
+          <div className="cs-field">
+            <label htmlFor="cs-gear-desc">Description</label>
+            <textarea id="cs-gear-desc" rows={4} maxLength={4000} value={form.description} onChange={set('description')}
+              placeholder="Specs, what’s included, warranty…" />
+          </div>
+
+          <ConsignmentPhotoManager photos={photos} onChange={setPhotos} onRemove={() => {}} onAddFiles={addPhotos} disabled={busy} />
+          <p className="cs-hint">The first photo is the shop picture. Up to {MAX_PHOTOS}.</p>
+
+          <ConsignmentGearVariantsEditor optionNames={optionNames} rows={rows} basePrice={form.price} onChange={onOptions} disabled={busy} />
+
+          <div className="cs-row">
+            <label className="cs-check cs-gear-check-cell">
+              <input type="checkbox" checked={form.special_order} onChange={set('special_order')} /> Can be special ordered when out of stock
+            </label>
+            {form.special_order ? (
+              <div className="cs-field">
+                <label htmlFor="cs-gear-lead">Usual wait for a special order</label>
+                <input id="cs-gear-lead" value={form.lead_time} maxLength={60} placeholder="e.g. 1–2 weeks" onChange={set('lead_time')} />
+              </div>
+            ) : null}
+          </div>
+
+          {error ? <p className="cs-error" role="alert">{error}</p> : null}
+          <div className="cs-actions">
+            <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save product'}</button>
+            <button className="cs-btn-secondary" type="button" onClick={cancel} disabled={busy}>Cancel</button>
+          </div>
+        </form>
+      </ConsignmentModal>
+    </div>,
+    document.body,
   );
 }

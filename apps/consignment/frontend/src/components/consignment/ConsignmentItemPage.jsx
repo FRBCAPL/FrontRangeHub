@@ -3,7 +3,9 @@ import { Link, useParams } from 'react-router-dom';
 import { itemLabel } from '../../data/consignmentConstants.js';
 import { CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadPublicItem } from '../../services/consignmentService.js';
-import { itemPriceLabel } from '../../utils/consignmentMoney.js';
+import { taxPercent } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
+import ConsignmentTaxTotal from './ConsignmentTaxTotal.jsx';
 import ConsignmentAuctionPanel from './ConsignmentAuctionPanel.jsx';
 import ConsignmentExampleAuctionPanel from './ConsignmentExampleAuctionPanel.jsx';
 import ConsignmentPhotoZoom from './ConsignmentPhotoZoom.jsx';
@@ -20,6 +22,7 @@ export default function ConsignmentItemPage() {
   const [error, setError] = useState('');
   const [auctionAtLegends, setAuctionAtLegends] = useState(false);
   const [auctionKey, setAuctionKey] = useState('');
+  const taxRate = useTaxRate();
   const onAuction = useCallback((a) => {
     setAuctionAtLegends(Boolean(a?.delivered_at));
     setAuctionKey(a ? `${a.status}:${a.bid_count}` : '');
@@ -111,7 +114,7 @@ export default function ConsignmentItemPage() {
           onClose={() => setZooming(false)}
         />
       ) : null}
-      {isAuction ? auctionPanel : <p className="cs-price">{itemPriceLabel(item)}</p>}
+      {isAuction ? auctionPanel : <ConsignmentTaxTotal amount={item.selling_price} />}
       {isExample || item.status !== 'available' ? null : (
         <ConsignmentOfferButton itemId={item.id} itemName={item.name} refreshKey={auctionKey} />
       )}
@@ -133,7 +136,7 @@ export default function ConsignmentItemPage() {
       <p className="cs-hint">
         {isAuction
           ? 'Sold as-is; all sales final. Look it over at Legends before you pay. If it isn’t as described, you can decline it.'
-          : 'Sold as-is; all sales final. Look it over before you pay at Legends. Sales tax is added at checkout; this site does not take payment.'}
+          : `Sold as-is; all sales final. Look it over before you pay at Legends. The total includes ${taxPercent(taxRate)} sales tax; this site does not take payment.`}
       </p>
       <div className="cs-actions">
         <Link className="cs-btn-secondary" to={CONSIGNMENT_PATH}>Back to shop</Link>

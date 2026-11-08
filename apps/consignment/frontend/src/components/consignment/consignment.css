@@ -200,6 +200,11 @@
   color: var(--cs-accent);
 }
 
+.cs-tax-total p { margin: 0; }
+.cs-tax-total-main { font-size: 1.05rem; }
+.cs-tax-total-main strong { font-size: 1.6rem; font-weight: 900; }
+.cs-tax-total-sub { color: var(--cs-muted); font-size: 0.85rem; font-weight: 700; }
+
 .cs-badge {
   align-self: flex-start;
   padding: 2px 8px;

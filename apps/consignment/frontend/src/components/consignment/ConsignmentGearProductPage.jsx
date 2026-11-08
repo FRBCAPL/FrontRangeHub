@@ -9,6 +9,7 @@ import {
 import ConsignmentPhotoZoom from './ConsignmentPhotoZoom.jsx';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 import ConsignmentGearReserveBox from './ConsignmentGearReserveBox.jsx';
+import ConsignmentTaxTotal from './ConsignmentTaxTotal.jsx';
 import './consignment-shop.css';
 
 const GEAR_PATH = `${CONSIGNMENT_PATH}/new`;
@@ -96,10 +97,9 @@ export default function ConsignmentGearProductPage() {
       {zooming && photos.length ? (
         <ConsignmentPhotoZoom photos={photos} start={Math.min(photo, photos.length - 1)} alt={product.name} onClose={() => setZooming(false)} />
       ) : null}
-      <p className="cs-price">
-        {formatDollars(price)} <small>+ tax</small>
-        {showMsrp ? <s className="cs-gear-msrp" title="Manufacturer’s list price">{formatDollars(product.msrp)}</s> : null}
-      </p>
+      <ConsignmentTaxTotal amount={price}>
+        {showMsrp ? <> · list <s className="cs-gear-msrp" title="Manufacturer’s list price">{formatDollars(product.msrp)}</s></> : null}
+      </ConsignmentTaxTotal>
       {(product.option_names || []).length ? (
         <div className="cs-gear-options">
           {product.option_names.map((name) => (
@@ -121,7 +121,7 @@ export default function ConsignmentGearProductPage() {
         </a>
         . Nothing ships.
       </p>
-      <p className="cs-hint">Brand new from FRPL. Reserving is free; this site does not take payment. Sales tax is added at the register.</p>
+      <p className="cs-hint">Brand new from FRPL. Reserving is free; this site does not take payment. Totals include sales tax.</p>
       <div className="cs-actions">
         <Link className="cs-btn-secondary" to={GEAR_PATH}>Back to new gear</Link>
         <ConsignmentContactButton topic="buying">Ask about this product</ConsignmentContactButton>

@@ -1,9 +1,12 @@
 import React from 'react';
 import { buyNowAvailable } from '../../utils/consignmentAuctionMath.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 
 /** A frozen sample of the auction panel for example listings. Nothing here talks to the server. */
 export default function ConsignmentExampleAuctionPanel({ sample }) {
+  const rate = useTaxRate();
   const s = sample || {};
   const bids = Number(s.bid_count) || 0;
   const showBuyNow = buyNowAvailable({ buyNowPrice: s.buy_now_price, currentBid: s.current_bid, bidCount: bids });
@@ -16,7 +19,7 @@ export default function ConsignmentExampleAuctionPanel({ sample }) {
       <div className="cs-auction-price">
         <span>{bids ? 'Current bid' : 'Opening bid'}</span>
         <strong>{formatDollars(s.current_bid)}</strong>
-        <span className="cs-meta">+ tax</span>
+        <span className="cs-meta">{formatDollars(withTax(s.current_bid, rate))} with tax</span>
         <span className="cs-meta">{bids} bid{bids === 1 ? '' : 's'}</span>
       </div>
       <div className="cs-example-bid">

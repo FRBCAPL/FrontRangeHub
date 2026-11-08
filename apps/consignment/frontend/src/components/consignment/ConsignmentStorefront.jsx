@@ -11,6 +11,8 @@ import ConsignmentBuyersGuideModal from './ConsignmentBuyersGuideModal.jsx';
 import ConsignmentExampleListings from './ConsignmentExampleListings.jsx';
 import ConsignmentBidAlertsToggle from './ConsignmentBidAlertsToggle.jsx';
 import useWatchList from '../../hooks/useWatchList.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
+import { taxPercent } from '../../utils/consignmentTax.js';
 import './consignment-shop.css';
 import './consignment-watch.css';
 
@@ -42,6 +44,7 @@ export default function ConsignmentStorefront() {
   const [guideOpen, setGuideOpen] = useState(false);
   const closeGuide = useCallback(() => setGuideOpen(false), []);
   const watch = useWatchList();
+  const taxRate = useTaxRate();
   let catalogStatus = status;
   if (status === 'auctions' || status === 'case') catalogStatus = 'available';
   else if (status === 'watching') catalogStatus = 'all';
@@ -120,7 +123,7 @@ export default function ConsignmentStorefront() {
             online. <br />
             Auction items are delivered to Legends when they sell. <br />
             All pickups are in person; nothing ships. <br />
-            Prices + tax, paid at the register.
+            Totals with {taxPercent(taxRate)} sales tax are shown; pay at the register.
           </p>
         </div>
         <div className="cs-shop-filters">

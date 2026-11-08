@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { makeOffer } from '../../services/consignmentOffersService.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import { taxPercent, withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { offerError } from '../../utils/consignmentOfferMath.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
 
@@ -9,6 +11,7 @@ export default function ConsignmentMakeOfferModal({ itemId, itemName, terms, onC
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const rate = useTaxRate();
   const isAuction = terms.sale_method === 'auction';
   const rules = { minimum: terms.minimum, asking: terms.asking, saleMethod: terms.sale_method };
 
@@ -49,6 +52,7 @@ export default function ConsignmentMakeOfferModal({ itemId, itemName, terms, onC
             onChange={(e) => { setAmount(e.target.value); setError(''); }}
             required
           />
+          {Number(amount) > 0 ? <p className="cs-hint">With tax you’d pay {formatDollars(withTax(amount, rate))}.</p> : null}
         </div>
         <div className="cs-field">
           <label htmlFor="cs-offer-note">Note to the seller (optional)</label>
@@ -58,7 +62,7 @@ export default function ConsignmentMakeOfferModal({ itemId, itemName, terms, onC
           <li>The seller has {terms.offer_days} days to accept, decline or counter. We’ll email you either way.</li>
           {isAuction
             ? <li>If it’s accepted, you’ve won the auction at your price and pay at Legends when the item arrives.</li>
-            : <li>If it’s accepted, the item is held for you for {terms.hold_days} days. Pay at Legends (plus tax) and take it home.</li>}
+            : <li>If it’s accepted, the item is held for you for {terms.hold_days} days. Pay at Legends (your offer plus {taxPercent(rate)} sales tax) and take it home.</li>}
           <li>An accepted offer is a promise to buy, so only offer what you’ll pay.</li>
         </ul>
         {error ? <p className="cs-error" role="alert">{error}</p> : null}

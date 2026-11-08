@@ -3,7 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { brandModelLabel, conditionLabel, CONSIGNMENT_PATH, itemLabel } from '../../data/consignmentConstants.js';
 import { loadAdminItemByNumber, loadPublicItem } from '../../services/consignmentService.js';
-import { itemPriceLabel } from '../../utils/consignmentMoney.js';
+import { formatDollars, itemPriceLabel } from '../../utils/consignmentMoney.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { consignmentItemHref, consignmentTagItemNumber } from '../../utils/consignmentPaths.js';
 import './consignment-print.css';
 
@@ -15,6 +16,7 @@ export default function ConsignmentPrintTag({ canAdmin = false }) {
   const [item, setItem] = useState(null);
   const [error, setError] = useState('');
   const [qr, setQr] = useState('');
+  const taxRate = useTaxRate();
   const href = itemNumber ? consignmentItemHref(itemNumber) : '';
 
   useEffect(() => {
@@ -57,7 +59,9 @@ export default function ConsignmentPrintTag({ canAdmin = false }) {
         <h1>{item.name}</h1>
         <p>{brandModelLabel(item) ? `${brandModelLabel(item)} · ` : ''}{conditionLabel(item.condition)}</p>
         {item.specs ? <p>{item.specs}</p> : null}
-        <p><strong>{itemPriceLabel(item)}</strong></p>
+        <p>
+          <strong>{item.sale_method === 'auction' ? itemPriceLabel(item) : `${formatDollars(item.selling_price)} · ${itemPriceLabel(item, taxRate)}`}</strong>
+        </p>
         <p>Available at Legends Brews & Cues</p>
         {item.sale_method === 'auction' ? null : (
           <p><strong>{item.allow_inspection ? 'Ask to inspect: ID held' : 'Display only'}</strong></p>

@@ -3,7 +3,7 @@ import { itemLabel, PAYMENT_METHODS } from '../../data/consignmentConstants.js';
 import { loadAcceptedOffer } from '../../services/consignmentOffersService.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { shelfSaleSplit, usesShelfCommission } from '../../utils/consignmentFeePolicy.js';
-import { feesTotal, formatDollars, priceWithTaxLabel } from '../../utils/consignmentMoney.js';
+import { feesTotal, formatDollars } from '../../utils/consignmentMoney.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentSoldModal({ item, onClose, onSave }) {
@@ -55,7 +55,7 @@ export default function ConsignmentSoldModal({ item, onClose, onSave }) {
       <form className="cs-modal-card cs-form" onSubmit={save}>
         <h2 id="cs-sold-title">Mark {itemLabel(item)} sold</h2>
         <p className="cs-hint">
-          Shop price {priceWithTaxLabel(item.selling_price)}.{' '}
+          Shop price {formatDollars(item.selling_price)} before tax.{' '}
           {commissionModel
             ? `Agreed price ${formatDollars(item.seller_payout)} · FRPL commission ${Number(item.commission_pct)}%.`
             : `Seller Payout stays ${formatDollars(item.seller_payout)}.`}

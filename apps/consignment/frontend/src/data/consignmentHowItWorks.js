@@ -1,6 +1,6 @@
 /**
  * Text for the public "How it works" window. Edit freely.
- * {placeholders} are filled from the public settings: days, graceDays, payDays, deliverDays, softClose.
+ * {placeholders} are filled from the public settings: days, graceDays, payDays, deliverDays, softClose, taxPct.
  * Fees and commission stay out of this public text; approved sellers see them in the seller agreements.
  */
 
@@ -14,7 +14,7 @@ export const HOW_IT_WORKS_TABS = [
       { group: 'The basics', icon: '📍', title: 'In person only', text: 'Everything is in person at Legends in Colorado Springs, CO: inspection, payment and pickup. Nothing is shipped.' },
       { icon: '🔎', title: 'Browse or scan', text: 'Browse here, or scan the QR tag on any item in the case at Legends.' },
       { icon: '🏃', title: 'First come, first served', text: 'Fixed-price items are bought first come first serve, in person at Legends.' },
-      { icon: '🧾', title: 'Tax at the register', text: 'Prices don’t include sales tax; tax is added at the register. This site does not take payment.' },
+      { icon: '🧾', title: 'Totals with tax', text: 'Prices are shown before tax, with the total including {taxPct} sales tax beside them. You pay at the register; this site does not take payment.' },
       { icon: '🤝', title: 'Make an offer', text: 'Logged in? Make an offer on any item for sale, from half the price. The seller has {offerDays} days to accept, decline or counter. If it’s accepted, the item is held for you for {offerHoldDays} days while you come in and pay.' },
       { icon: '🪪', title: 'Inspect before you buy', text: 'Some items can be inspected at Legends: ask at the bar and staff will hold your ID while you look. You’re responsible for any damage while inspecting.' },
       { icon: '✅', title: 'Sold as-is', text: 'All sales are final and items are sold as-is. Look the item over before you pay; if it isn’t as described, you don’t have to buy it.' },

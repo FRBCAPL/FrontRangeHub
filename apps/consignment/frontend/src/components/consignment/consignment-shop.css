@@ -276,6 +276,9 @@
   font-weight: 700;
 }
 
+.cs-card-price { flex-wrap: wrap; row-gap: 0; }
+.cs-card-price .cs-card-tax { flex-basis: 100%; text-align: center; }
+
 .cs-card-clock {
   padding: 2px 8px;
   border-radius: 999px;

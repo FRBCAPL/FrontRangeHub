@@ -6,6 +6,7 @@ import { loadSettings } from '../services/consignmentService.js';
 import { loadPublicSettings } from '../services/consignmentSellerAccessService.js';
 import { DEFAULT_SOFT_CLOSE_MINUTES } from '../utils/consignmentAuctionMath.js';
 import { feeTextValues } from '../utils/consignmentFeeText.js';
+import { taxPercent } from '../utils/consignmentTax.js';
 
 /** feeRow: the full settings row, which only approved sellers and admins can read (null for everyone else). */
 function valuesFrom(row, feeRow) {
@@ -22,6 +23,7 @@ function valuesFrom(row, feeRow) {
     softClose: row?.auction_soft_close_minutes ?? DEFAULT_SOFT_CLOSE_MINUTES,
     offerDays: row?.offer_days ?? feeRow?.offer_days ?? 3,
     offerHoldDays: row?.offer_hold_days ?? feeRow?.offer_hold_days ?? 3,
+    taxPct: taxPercent(row?.tax_rate ?? feeRow?.tax_rate),
     ...feeText,
   };
 }

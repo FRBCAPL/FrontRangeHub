@@ -3,10 +3,13 @@ import { Link } from 'react-router-dom';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { gearStatusLabel, orderTotal } from '../../utils/consignmentGearMath.js';
+import { withTax } from '../../utils/consignmentTax.js';
+import useTaxRate from '../../hooks/useTaxRate.js';
 import { gearProductPath } from './ConsignmentGearCard.jsx';
 
 /** One reservation / special order. children = action buttons (buyer Cancel, or admin actions). */
 export default function ConsignmentGearOrderCard({ order, children, buyer = null }) {
+  const rate = useTaxRate();
   const name = order.qty > 1 ? `${order.qty} × ${order.product_name}` : order.product_name;
   const waiting = ['held', 'ready'].includes(order.status) && order.hold_until;
   return (
@@ -19,7 +22,7 @@ export default function ConsignmentGearOrderCard({ order, children, buyer = null
         {order.option_label ? <p className="cs-meta">{order.option_label}</p> : null}
         <p>
           <span className={`cs-gear-status cs-gear-status-${order.status}`}>{gearStatusLabel(order.status)}</span>{' '}
-          <strong>{formatDollars(orderTotal(order))}</strong> <small>+ tax</small>
+          <strong>{formatDollars(withTax(orderTotal(order), rate))}</strong> <small>with tax</small>
           {order.kind === 'special' ? <span className="cs-meta"> · special order</span> : null}
         </p>
         {waiting ? <p className="cs-meta">Pick up and pay by {formatDateTime(order.hold_until)}</p> : null}

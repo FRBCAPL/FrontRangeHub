@@ -45,6 +45,14 @@ export async function saveAuctionAgreementText(auction_agreement_text) {
   if (error) throwNice(error, 'Could not save the auction agreement.');
 }
 
+export async function saveTaxRate(tax_rate) {
+  const { error } = await supabase
+    .from('consignment_settings')
+    .update({ tax_rate, updated_at: new Date().toISOString() })
+    .eq('id', 'frpl');
+  if (error) throwNice(error, 'Could not save the tax rate');
+}
+
 export async function loadCatalog({ category = 'all', status = 'available' } = {}) {
   let query = supabase
     .from('consignment_catalog')

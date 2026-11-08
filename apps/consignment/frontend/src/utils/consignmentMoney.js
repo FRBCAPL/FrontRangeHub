@@ -1,3 +1,5 @@
+import { withTax } from './consignmentTax.js';
+
 /** FRPL sale margin: pre-tax sale price minus the protected seller payout. */
 export function frplRevenue(actualSellingPrice, sellerPayout) {
   return Math.round((Number(actualSellingPrice) - Number(sellerPayout)) * 100) / 100;
@@ -32,12 +34,12 @@ export function formatDollars(n) {
   });
 }
 
-/** Register tax is calculated at Legends — never on this site. */
-export function priceWithTaxLabel(n) {
-  return `${formatDollars(n)} + tax`;
+/** "$324.75 with tax" for a before-tax price. This site never takes payment; tax is paid at Legends. */
+export function priceWithTaxLabel(n, rate) {
+  return `${formatDollars(withTax(n, rate))} with tax`;
 }
 
-export function itemPriceLabel(item) {
+export function itemPriceLabel(item, rate) {
   if (item?.sale_method === 'auction') return 'Online auction';
-  return priceWithTaxLabel(item?.selling_price);
+  return priceWithTaxLabel(item?.selling_price, rate);
 }
