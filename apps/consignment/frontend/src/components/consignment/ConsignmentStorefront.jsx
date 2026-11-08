@@ -118,12 +118,9 @@ export default function ConsignmentStorefront() {
         <div className="cs-shop-title">
           <h1>FRPL Consignment</h1>
           <p>
-            Buy in person from the case at <strong>Legends Brews &amp; Cues</strong> in{' '}
-            <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>, or bid
-            online. <br />
-            Auction items are delivered to Legends when they sell. <br />
-            All pickups are in person; nothing ships. <br />
-            Totals with {taxPercent(taxRate)} sales tax are shown; pay at the register.
+            Buy from the case at <strong>Legends Brews &amp; Cues</strong> in{' '}
+            <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>, or bid online.
+            Pickup and payment in person; nothing ships. Totals include {taxPercent(taxRate)} sales tax.
           </p>
         </div>
         <div className="cs-shop-filters">

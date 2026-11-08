@@ -30,13 +30,13 @@ function LiveAuctionLine({ auction }) {
   return (
     <>
       <Price label={bids ? 'Bid' : 'Opening'} amount={bids ? auction.current_bid : auction.opening_bid} />
-      <p className="cs-card-sub">
+      <p className="cs-card-sub" title={`Ends ${formatDateTime(auction.ends_at)}`}>
         <span className={`cs-card-clock${left < ENDING_SOON_MS ? ' soon' : ''}`}>
           {left > 0 ? `⏱ ${formatCountdown(left)}` : 'Closing'}
         </span>
-        <span title={`Ends ${formatDateTime(auction.ends_at)}`}>Ends {formatShortEnd(auction.ends_at)}</span>
         <span>{bids} bid{bids === 1 ? '' : 's'}</span>
       </p>
+      <p className="cs-card-sub cs-card-ends">Ends {formatShortEnd(auction.ends_at)}</p>
     </>
   );
 }
@@ -83,16 +83,10 @@ export default function ConsignmentItemCard({ item, auction, watching = false, o
   }[kind];
   let priceLine = <Price amount={item.selling_price} included={Boolean(item.price_tax_included)} />;
   if (isAuction) priceLine = item.is_example ? <ExampleAuctionLine sample={item.example_auction} /> : <AuctionLine auction={auction} />;
-  const brand = (item.brand || '').trim();
-  const model = (item.model || '').trim();
-  let makeLabel = 'Category';
-  if (brand && model) makeLabel = 'Brand / Model';
-  else if (brand) makeLabel = 'Brand';
-  else if (model) makeLabel = 'Model';
   const details = [
-    [makeLabel, brandModelLabel(item) || categoryLabel(item.category)],
-    ['Condition', item.condition ? conditionLabel(item.condition) : ''],
-  ].filter(([, value]) => value);
+    brandModelLabel(item) || categoryLabel(item.category),
+    item.condition ? conditionLabel(item.condition) : '',
+  ].filter(Boolean).join(' · ');
 
   const card = (
     <Link className={`cs-card cs-card-${kind}`} to={consignmentItemPath(item.item_number)}>
@@ -104,15 +98,7 @@ export default function ConsignmentItemCard({ item, auction, watching = false, o
       </div>
       <div className="cs-card-body">
         <h3>{item.name}</h3>
-        {details.length ? (
-          <p className="cs-card-sub cs-card-details">
-            {details.map(([label, value]) => (
-              <span key={label}>
-                <span className="cs-card-detail-label">{label}:</span> {value}
-              </span>
-            ))}
-          </p>
-        ) : null}
+        {details ? <p className="cs-card-sub cs-card-details" title={details}>{details}</p> : null}
         {priceLine}
       </div>
     </Link>

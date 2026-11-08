@@ -12,8 +12,8 @@
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 14px 24px;
-  padding: 4px 0 16px;
+  gap: 10px 24px;
+  padding: 0 0 12px;
   border-bottom: 1px solid var(--cs-line);
 }
 
@@ -24,16 +24,16 @@
 }
 
 .cs-shop .cs-shop-title h1 {
-  margin: 0 0 6px;
-  font-size: clamp(1.5rem, 3.2vw, 2rem);
+  margin: 0 0 4px;
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
   letter-spacing: -0.01em;
 }
 
 .cs-shop-title p {
   margin: 0;
   color: var(--cs-muted);
-  line-height: 1.5;
-  font-size: 0.95rem;
+  line-height: 1.45;
+  font-size: 0.9rem;
 }
 
 .cs-shop-title a {
@@ -45,16 +45,23 @@
   color: #d8b4fe;
 }
 
+/* Buttons and dropdowns share one wrapping row under the title. */
 .cs-shop-filters {
-  display: grid;
-  grid-template-columns: auto auto;
-  justify-content: end;
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
   gap: 8px;
-  margin-left: auto;
+}
+
+.cs-shop-filters .cs-shop-guide-row,
+.cs-shop-filters .cs-shop-badges {
+  display: contents;
 }
 
 .cs-shop-filters select {
-  min-height: 42px;
+  min-height: 38px;
   padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid var(--cs-line);
@@ -82,8 +89,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
-  padding: 6px 14px;
+  min-height: 38px;
+  padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid transparent;
   font: inherit;
@@ -137,9 +144,9 @@
 
 .cs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
 }
 
 /* ── Card ── */
@@ -168,12 +175,15 @@
 }
 
 .cs-card-ribbon {
-  padding: 6px 10px;
+  padding: 5px 8px;
   text-align: center;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 900;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cs-card-shelf { border-color: rgba(168, 85, 247, 0.55); }
@@ -189,7 +199,7 @@
 
 .cs-card-photo {
   position: relative;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 2;
   overflow: hidden;
   display: grid;
   place-items: center;
@@ -218,8 +228,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px 14px;
+  gap: 3px;
+  padding: 10px 12px 12px;
   text-align: center;
 }
 
@@ -245,8 +255,14 @@
 }
 
 .cs-card-details {
-  flex-direction: column;
-  gap: 2px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-card-ends {
+  font-size: 0.72rem;
 }
 
 .cs-card-detail-label {
@@ -256,7 +272,7 @@
 
 .cs-card-price {
   margin: auto 0 0;
-  padding-top: 8px;
+  padding-top: 6px;
   display: flex;
   justify-content: center;
   align-items: baseline;
@@ -277,7 +293,7 @@
 }
 
 .cs-card-price { flex-wrap: wrap; row-gap: 0; }
-.cs-card-price .cs-card-tax { flex-basis: 100%; text-align: center; }
+.cs-card-price .cs-card-tax { text-align: center; }
 
 .cs-card-clock {
   padding: 2px 8px;
@@ -293,7 +309,7 @@
 }
 
 .cs-card-skeleton {
-  min-height: 300px;
+  min-height: 250px;
   background: linear-gradient(100deg, #0a0a0e 30%, #161622 50%, #0a0a0e 70%) 0 0 / 200% 100%;
   animation: cs-shimmer 1.4s linear infinite;
 }
@@ -307,12 +323,8 @@
     align-items: stretch;
   }
 
-  .cs-shop-filters {
-    width: 100%;
-    grid-template-columns: 1fr 1fr;
-  }
-
   .cs-shop-filters select {
+    flex: 1 1 140px;
     min-width: 0;
   }
 

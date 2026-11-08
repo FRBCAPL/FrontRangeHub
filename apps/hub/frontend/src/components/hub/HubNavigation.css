@@ -909,13 +909,12 @@ html body .hub-navigation.homepage-nav .nav-content {
 }
 
 .main-content-wrapper.cs-shell {
-  padding-top: 120px !important;
+  padding-top: calc(var(--hub-nav-h, 112px) + 6px) !important;
 }
 
-@media (max-width: 768px) {
-  .main-content-wrapper.cs-shell {
-    padding-top: 112px !important;
-  }
+.main-content-wrapper.cs-shell > main.main-app-content {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
 }
 
 /* NUCLEAR OPTION - Force Front Range Pool.com button to be tiny on homepage mobile */
