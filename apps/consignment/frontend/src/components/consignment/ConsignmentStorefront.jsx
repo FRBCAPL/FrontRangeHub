@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { CATEGORIES, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
+import { Link, useSearchParams } from 'react-router-dom';
+import { CATEGORIES, CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadCatalog } from '../../services/consignmentService.js';
 import { loadAuctionsForItems } from '../../services/consignmentAuctionService.js';
 import { loadHeldItemIds } from '../../services/consignmentOffersService.js';
@@ -128,6 +128,9 @@ export default function ConsignmentStorefront() {
             <button type="button" className="cs-shop-badge cs-shop-badge-guide" onClick={() => setGuideOpen(true)}>
               <span aria-hidden="true">📖</span> Buyer’s guide
             </button>
+            <Link className="cs-shop-badge cs-shop-badge-new" to={`${CONSIGNMENT_PATH}/new`}>
+              <span aria-hidden="true">✨</span> Shop new gear
+            </Link>
           </div>
           <ConsignmentShopBadges status={status} counts={badgeCounts} onPick={setStatus} />
           <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Category">

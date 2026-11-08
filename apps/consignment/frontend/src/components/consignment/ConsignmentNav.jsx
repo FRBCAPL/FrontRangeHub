@@ -13,9 +13,10 @@ export default function ConsignmentNav({ canAdmin = false }) {
     <nav className="cs-nav" aria-label="FRPL Consignment">
       <NavLink to={`${CONSIGNMENT_PATH}/home`}>Home</NavLink>
       <NavLink to={CONSIGNMENT_PATH} end>Shop</NavLink>
+      <NavLink to={`${CONSIGNMENT_PATH}/new`}>New gear</NavLink>
       <NavLink to={`${CONSIGNMENT_PATH}/sell`}>Sell an item</NavLink>
       <NavLink to={`${CONSIGNMENT_PATH}/my-items`}>My items</NavLink>
-      <NavLink to={`${CONSIGNMENT_PATH}/my-offers`}>My offers</NavLink>
+      <NavLink to={`${CONSIGNMENT_PATH}/my-offers`}>My offers &amp; orders</NavLink>
       <ConsignmentContactButton className="cs-nav-link">Contact us</ConsignmentContactButton>
       {canAdmin ? <NavLink to={`${CONSIGNMENT_PATH}/admin`}>Admin</NavLink> : null}
       <button type="button" className="cs-nav-how" onClick={() => setShowHow(true)}>

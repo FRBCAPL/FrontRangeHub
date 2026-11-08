@@ -4,8 +4,9 @@ import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import { currentUserId, onAuthChange, openHubLogin } from '../../services/consignmentAuctionService.js';
 import { loadMyOffers } from '../../services/consignmentOffersService.js';
 import ConsignmentOfferList from './ConsignmentOfferList.jsx';
+import ConsignmentMyGearOrders from './ConsignmentMyGearOrders.jsx';
 
-/** Buyer page: offers I've made, counters waiting on me, accepted holds. */
+/** Buyer page: offers I've made, counters waiting on me, accepted holds, and reserved new gear. */
 export default function ConsignmentMyOffers() {
   const [userId, setUserId] = useState(undefined);
   const [offers, setOffers] = useState([]);
@@ -36,10 +37,10 @@ export default function ConsignmentMyOffers() {
   return (
     <div className="cs-page cs-mine">
       <p className="cs-kicker">Buyers</p>
-      <h1>My offers</h1>
+      <h1>My offers &amp; orders</h1>
       {userId === null ? (
         <div className="cs-mine-empty">
-          <p>Log in to see offers you’ve made.</p>
+          <p>Log in to see offers you’ve made and new gear you’ve reserved.</p>
           <button type="button" className="cs-btn" onClick={openHubLogin}>Sign up / Log in</button>
         </div>
       ) : null}
@@ -57,6 +58,7 @@ export default function ConsignmentMyOffers() {
             </div>
           ) : null}
           {offers.length ? <ConsignmentOfferList offers={offers} view="buyer" onChanged={() => load(userId)} /> : null}
+          <ConsignmentMyGearOrders userId={userId} />
         </>
       ) : null}
     </div>

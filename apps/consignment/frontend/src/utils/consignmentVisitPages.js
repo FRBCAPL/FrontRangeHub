@@ -5,7 +5,8 @@ const PAGE_LABELS = [
   { test: (p) => p === `${CONSIGNMENT_PATH}/home`, label: 'Home' },
   { test: (p) => p.startsWith(`${CONSIGNMENT_PATH}/sell`), label: 'Sell an item' },
   { test: (p) => p.startsWith(`${CONSIGNMENT_PATH}/my-items`), label: 'My items' },
-  { test: (p) => p.startsWith(`${CONSIGNMENT_PATH}/my-offers`), label: 'My offers' },
+  { test: (p) => p.startsWith(`${CONSIGNMENT_PATH}/my-offers`), label: 'My offers & orders' },
+  { test: (p) => p === `${CONSIGNMENT_PATH}/new`, label: 'New gear' },
 ];
 
 function basePath(path) {
@@ -30,5 +31,7 @@ export function consignmentVisitPageLabel(path) {
   if (named) return named.label;
   const item = base.match(/\/item\/([^/]+)/);
   if (item) return `Item ${decodeURIComponent(item[1])}`;
+  const gear = base.match(/\/new\/([^/]+)/);
+  if (gear) return `New gear: ${decodeURIComponent(gear[1])}`;
   return base;
 }
