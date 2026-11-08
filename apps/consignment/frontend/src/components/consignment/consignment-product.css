@@ -1,0 +1,199 @@
+/* Item & new-gear product pages: photos left, buy box right on wide screens; stacked on phones. */
+
+.cs-product-page {
+  text-align: left;
+}
+
+.cs-back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin: 0 0 6px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #d8b4fe;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-back-link:hover { color: #f3e8ff; }
+
+/* Phones: name, photos, buy box. Wide screens: photos left; name and buy box right. */
+.cs-product {
+  display: grid;
+  grid-template-areas: "head" "media" "buy";
+  gap: 14px;
+  align-items: start;
+}
+
+.cs-product-head { grid-area: head; display: grid; gap: 6px; }
+.cs-product-media { grid-area: media; min-width: 0; }
+.cs-product-buy { grid-area: buy; }
+
+@media (min-width: 860px) {
+  .cs-product {
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "media head" "media buy";
+    gap: 12px 28px;
+  }
+
+  .cs-product-buy {
+    position: sticky;
+    top: calc(var(--hub-nav-h, 84px) + 12px);
+  }
+}
+
+.cs-product-buy {
+  display: grid;
+  gap: 10px;
+  scroll-margin-top: calc(var(--hub-nav-h, 84px) + 12px);
+}
+
+.cs-product-buy:focus { outline: none; }
+
+.cs-product-head .cs-kicker { margin: 0; }
+
+.cs-product-page .cs-product-head h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 3.4vw, 2rem);
+  line-height: 1.2;
+}
+
+.cs-product-tag {
+  justify-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 85, 247, 0.55);
+  background: rgba(168, 85, 247, 0.12);
+  color: #e9d5ff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.cs-product-tag.sold {
+  border-color: #64748b;
+  background: rgba(100, 116, 139, 0.18);
+  color: #e2e8f0;
+}
+
+.cs-product-buy .cs-price,
+.cs-product-buy .cs-auction-panel,
+.cs-product-buy .cs-offer-cta,
+.cs-product-buy .cs-gear-options,
+.cs-product-buy .cs-gear-box {
+  margin: 0;
+}
+
+.cs-product-buy .cs-tax-total { text-align: left; }
+.cs-product-buy .cs-item-watch { justify-content: flex-start; margin: 0; }
+.cs-product-buy .cs-pickup { margin: 0; }
+
+/* Photo: capped so the price shows on phones; thumbnails scroll sideways instead of wrapping. */
+.cs-gallery { margin: 0; }
+
+.cs-gallery .cs-hero-zoom {
+  background: #020617;
+}
+
+.cs-gallery .cs-hero-zoom img {
+  height: min(520px, 48vh);
+}
+
+.cs-gallery .cs-thumbs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.cs-gallery .cs-thumbs button { flex: 0 0 auto; }
+
+.cs-gallery .cs-thumbs img {
+  width: 56px;
+  height: 56px;
+}
+
+.cs-product-info {
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cs-line);
+}
+
+.cs-product-info h2 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+}
+
+.cs-product-info .cs-gear-desc { white-space: pre-line; }
+
+.cs-buying-info {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+}
+
+.cs-buying-info summary {
+  cursor: pointer;
+  color: var(--cs-ink);
+  font-weight: 800;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.cs-buying-info ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  line-height: 1.45;
+}
+
+.cs-buy-bar { display: none; }
+
+@media (max-width: 859px) {
+  .cs-product-page { padding-bottom: 76px; }
+
+  .cs-buy-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid rgba(168, 85, 247, 0.5);
+    background: rgba(2, 6, 23, 0.96);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+  }
+
+  .cs-buy-bar-price {
+    display: grid;
+    min-width: 0;
+  }
+
+  .cs-buy-bar-price strong {
+    font-size: 1.15rem;
+    color: var(--cs-ink);
+  }
+
+  .cs-buy-bar-price small {
+    color: var(--cs-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .cs-buy-bar .cs-btn {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+}
