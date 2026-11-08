@@ -15,12 +15,14 @@ export const HOW_IT_WORKS_TABS = [
       { icon: '🔎', title: 'Browse or scan', text: 'Browse here, or scan the QR tag on any item in the case at Legends.' },
       { icon: '🏃', title: 'First come, first served', text: 'Fixed-price items are bought first come first serve, in person at Legends.' },
       { icon: '🧾', title: 'Tax at the register', text: 'Prices don’t include sales tax; tax is added at the register. This site does not take payment.' },
+      { icon: '🤝', title: 'Make an offer', text: 'Logged in? Make an offer on any item for sale, from half the price. The seller has {offerDays} days to accept, decline or counter. If it’s accepted, the item is held for you for {offerHoldDays} days while you come in and pay.' },
       { icon: '🪪', title: 'Inspect before you buy', text: 'Some items can be inspected at Legends: ask at the bar and staff will hold your ID while you look. You’re responsible for any damage while inspecting.' },
       { icon: '✅', title: 'Sold as-is', text: 'All sales are final and items are sold as-is. Look the item over before you pay; if it isn’t as described, you don’t have to buy it.' },
       { group: 'On the table: online auctions', icon: '🔐', title: 'Log in to bid', text: 'Online auctions: log in with your FRPL account to bid. No account? Sign up from the Log in button; FRPL approves new accounts before they can bid.' },
       { icon: '📈', title: 'Bid steps', text: 'Bids go up in $5 steps under $500 and $10 steps at $500 and up.' },
       { icon: '⏱️', title: 'No sniping', text: 'A bid in the last {softClose} minutes adds {softClose} more minutes, so nobody can snipe it at the buzzer.' },
       { icon: '⚡', title: 'Buy It Now', text: 'Some auctions have Buy It Now. It disappears once bidding reaches that price.' },
+      { icon: '🤝', title: 'Offers on auctions', text: 'No bids yet, or it ended without any? You can make an offer, from half the opening bid. If the seller accepts, you win the auction at your price.' },
       { icon: '🏆', title: 'Won it?', text: 'Won an auction? The seller brings it to Legends, and FRPL lets you know when it arrives. Then you have {payDays} days to look it over, pay and pick it up. If it isn’t as described, you can decline it. Winners who don’t pay for an item as described may lose bidding privileges.' },
     ],
   },
@@ -35,6 +37,7 @@ export const HOW_IT_WORKS_TABS = [
       { icon: '👀', title: 'FRPL reviews it', text: 'FRPL reviews it and gets in touch. We may accept it, suggest changes, or decline.' },
       { icon: '🏪', title: 'Drop it off at Legends', text: 'Only once it’s accepted: bring it to Legends in Colorado Springs, CO and pay the listing fee. It goes in the case for {days} days.' },
       { icon: '💲', title: 'Your price, your call', text: 'Your price is never lowered without your OK.' },
+      { icon: '🤝', title: 'Offers', text: 'Buyers can make offers (at least half your price). You accept, decline or counter on My items, and you see what you’d receive before you accept.' },
       { icon: '🧾', title: 'What it costs', text: '{consignFees}', home: false },
       { icon: '🪪', title: 'Inspection is your choice', text: 'You choose whether buyers may inspect your item at Legends.' },
       { icon: '💵', title: 'Sold? Get paid', text: 'Sold? Collect your payment at Legends within 7 days of the sale.' },
@@ -51,6 +54,7 @@ export const HOW_IT_WORKS_TABS = [
       { icon: '📍', title: 'Delivered to Legends', text: 'You’ll need to bring the item to Legends in Colorado Springs, CO when it sells.' },
       { icon: '🎯', title: 'Set your reserve', text: 'On the Sell page, choose Online auction and enter your reserve: the lowest price you’ll accept. Bidding starts there.' },
       { icon: '⚡', title: 'Optional Buy It Now', text: 'Add an optional Buy It Now price. It disappears once bidding reaches it.' },
+      { icon: '🤝', title: 'Offers before bidding', text: 'Until someone bids (or if it ends with no bids), buyers can make offers from half your reserve. Accept, decline or counter on My items; accepting ends the auction as a sale.' },
       { icon: '💳', title: 'Pay the listing fee', text: 'If FRPL accepts it, pay the listing fee by Cash App or Venmo from your My items page, or in person at Legends. Your auction goes live once it’s paid.', home: false },
       { icon: '🗓️', title: 'You keep it meanwhile', text: 'You keep the item while it’s up for auction. Every auction runs 7 days from the moment it starts.' },
       { icon: '🚚', title: 'Sold? Deliver it', text: 'Sold? Bring it to Legends within {deliverDays} days. The winner looks it over and pays there. Miss the deadline and the sale is cancelled, the fee isn’t refunded, and you lose selling access.' },
@@ -91,7 +95,20 @@ export const HOW_IT_WORKS_FOOTER = 'Questions? Ask at the bar at Legends, or mes
 export const HOME_HERO = {
   kicker: 'FRPL Consignment & Auctions',
   title: 'Buy and sell pool gear at Legends',
-  lede: 'Cues, cases and gear from local players.\nBid online or Shop the case at Legends Brews & Cues in Colorado Springs. \nAll pickups are in person; nothing ships.',
+  lede: 'Cues, cases and gear from local players.\nBuy from the case at Legends Brews & Cues in Colorado Springs, or bid online.\nPickup in person; nothing ships.',
+};
+
+/** Leads the home page while the shop is still filling up (fewer than SELLER_FIRST_UNDER listings). */
+export const HOME_SELL_PITCH = {
+  title: 'Turn your extra cues into cash',
+  lede: 'The shop just opened, and local players are looking. List your gear in a few minutes; FRPL handles the sale at Legends.',
+  points: [
+    'You set the price, and it’s never lowered without your OK.',
+    'Buyers can make offers. You accept, decline or counter.',
+    'Sell from the case at Legends, or run a 7-day online auction.',
+  ],
+  cta: 'Sell an item',
+  browse: 'Browse the shop',
 };
 
 /** `to` is relative to the consignment path; `tab` picks which steps section it points at. */
@@ -100,7 +117,7 @@ export const HOME_PATHS = [
     tab: 'buying',
     icon: '🛒',
     title: 'Buy',
-    blurb: 'Browse the case online or scan a tag at Legends. Fixed-price items are bought in person; auctions are bid on here.',
+    blurb: 'Browse the case online or scan a tag at Legends. Buy in person, bid on auctions here, or make an offer.',
     cta: 'Shop now',
     to: '',
   },

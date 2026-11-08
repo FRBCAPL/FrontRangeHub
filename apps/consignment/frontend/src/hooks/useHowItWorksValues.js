@@ -20,6 +20,8 @@ function valuesFrom(row, feeRow) {
     payDays: row?.auction_payment_days ?? 7,
     deliverDays: row?.auction_delivery_days ?? 3,
     softClose: row?.auction_soft_close_minutes ?? DEFAULT_SOFT_CLOSE_MINUTES,
+    offerDays: row?.offer_days ?? feeRow?.offer_days ?? 3,
+    offerHoldDays: row?.offer_hold_days ?? feeRow?.offer_hold_days ?? 3,
     ...feeText,
   };
 }

@@ -1,0 +1,33 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
+import { countNewListings, newListingsLabel } from '../../utils/consignmentNewListings.js';
+import { homeRow } from '../../utils/consignmentHomeListings.js';
+import ConsignmentItemCard from './ConsignmentItemCard.jsx';
+import './consignment-shop.css';
+
+/** "New in the shop": newest real listings, topped up with labeled examples while the shop is small. */
+export default function ConsignmentHomeNewItems({ data }) {
+  if (!data) return null;
+  const row = homeRow(data.listings, data.examples);
+  if (!row.length) return null;
+  const realCount = data.listings.length;
+  const badge = newListingsLabel(countNewListings({ items: data.listings, auctions: Object.values(data.auctions) }));
+  let lede = '';
+  if (!realCount) lede = 'The first items are on the way. Here’s what listings look like (examples aren’t for sale).';
+  else if (row.length > realCount) lede = 'Just getting started. Cards marked Example show what a listing looks like.';
+
+  return (
+    <section className="cs-home-section cs-home-new" aria-labelledby="cs-home-new-title">
+      <div className="cs-home-new-head">
+        <h2 id="cs-home-new-title">New in the shop</h2>
+        {badge ? <span className="cs-home-new-badge">{badge}</span> : null}
+        {realCount ? <Link className="cs-home-more" to={CONSIGNMENT_PATH}>See all {realCount} →</Link> : null}
+      </div>
+      {lede ? <p className="cs-hint">{lede}</p> : null}
+      <div className="cs-grid">
+        {row.map((item) => <ConsignmentItemCard key={item.id} item={item} auction={data.auctions[item.id]} />)}
+      </div>
+    </section>
+  );
+}

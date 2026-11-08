@@ -10,8 +10,12 @@ import {
   homeSteps,
   HOW_IT_WORKS_TABS,
 } from '../../data/consignmentHowItWorks.js';
+import useHomeListings from '../../hooks/useHomeListings.js';
 import useHowItWorksValues from '../../hooks/useHowItWorksValues.js';
-import useShopCounts from '../../hooks/useShopCounts.js';
+import { SELLER_FIRST_UNDER } from '../../utils/consignmentHomeListings.js';
+import ConsignmentHomeNewItems from './ConsignmentHomeNewItems.jsx';
+import ConsignmentHomeSellPitch from './ConsignmentHomeSellPitch.jsx';
+import ConsignmentNewListingsSignup from './ConsignmentNewListingsSignup.jsx';
 import './consignment-home.css';
 
 const pathTo = (to) => (to ? `${CONSIGNMENT_PATH}/${to}` : CONSIGNMENT_PATH);
@@ -24,7 +28,7 @@ function PathCount({ tab, counts }) {
     : tab === 'auction'
       ? [counts.auctions, 'auctions', 'on the table now (auction)', 'on the table now (auctions)']
       : [null];
-  if (n == null) return null;
+  if (!n) return null;
   return (
     <Link className="cs-home-count" to={`${CONSIGNMENT_PATH}?show=${show}`}>
       <strong>{n}</strong> {n === 1 ? one : many}
@@ -61,8 +65,16 @@ function openSection(tabId) {
 
 export default function ConsignmentHome() {
   const fill = useHowItWorksValues();
-  const counts = useShopCounts();
+  const listings = useHomeListings();
+  const counts = listings?.counts || null;
+  const sellerFirst = Boolean(counts) && counts.total < SELLER_FIRST_UNDER;
   const ctaFor = (tabId) => HOME_PATHS.find((p) => p.tab === tabId);
+  const newItems = (
+    <>
+      <ConsignmentHomeNewItems data={listings} />
+      <ConsignmentNewListingsSignup />
+    </>
+  );
 
   return (
     <div className="cs-page cs-home">
@@ -72,6 +84,9 @@ export default function ConsignmentHome() {
         <p className="cs-lede">{HOME_HERO.lede}</p>
         <span className="cs-legends">Available at Legends Brews & Cues</span>
       </header>
+
+      {sellerFirst ? <ConsignmentHomeSellPitch /> : null}
+      {sellerFirst ? newItems : null}
 
       <div className="cs-home-paths">
         {HOME_PATHS.map((p) => (
@@ -89,6 +104,8 @@ export default function ConsignmentHome() {
           </article>
         ))}
       </div>
+
+      {sellerFirst ? null : newItems}
 
       <section className="cs-home-section" aria-labelledby="cs-home-compare-title">
         <h2 id="cs-home-compare-title">{HOME_COMPARE_TITLE}</h2>
