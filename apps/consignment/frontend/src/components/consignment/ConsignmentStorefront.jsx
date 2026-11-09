@@ -119,8 +119,8 @@ export default function ConsignmentStorefront() {
           <h1>FRPL Consignment</h1>
           <p>
             Buy from the case at <strong>Legends Brews &amp; Cues</strong> in{' '}
-            <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>, or bid online.
-            Pick up and pay in person; shipping isn’t available at this time. Totals include {taxPercent(taxRate)} sales tax.
+            <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>, or bid online.<br />
+            Pick up and pay in person; shipping isn’t available at this time. Totals include local sales tax.
           </p>
         </div>
         <div className="cs-shop-filters">
