@@ -115,11 +115,11 @@ export default function ConsignmentItemPage() {
           )}
           {isExample || isSold ? null : <ConsignmentItemWatch itemId={item.id} />}
           <p className="cs-meta cs-pickup">
-            📍 Pickup and payment in person at{' '}
+            📍 Pick up and pay in person at{' '}
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">
               {LEGENDS.name}, {LEGENDS.address ? `${LEGENDS.address}, ` : ''}{LEGENDS.city}, {LEGENDS.state}
             </a>
-            . Nothing ships.
+            . Shipping isn’t available at this time.
           </p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function ConsignmentItemPage() {
               : `The total shown includes ${taxPercent(taxRate)} sales tax. Pay at the register.`}
             {' '}This site does not take payment.
           </li>
-          <li>Pickup is in person at {LEGENDS.name}; nothing ships.</li>
+          <li>Pickup is in person at {LEGENDS.name}. Shipping isn’t available at this time.</li>
         </ul>
       </details>
 

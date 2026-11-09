@@ -7,7 +7,7 @@ import useTaxRate from '../../hooks/useTaxRate.js';
 import { LEGENDS_PLACE } from '../../data/consignmentConstants.js';
 import ConsignmentBidAlertsToggle from './ConsignmentBidAlertsToggle.jsx';
 
-const PICKUP_NOTE = `Pickup is in person at ${LEGENDS_PLACE}; nothing ships.`;
+const PICKUP_NOTE = `You’ll pick it up in person at ${LEGENDS_PLACE}. Shipping isn’t available at this time.`;
 
 export default function ConsignmentBidForm({ auction, userId, isHighBidder, outbid, payDays, onBid }) {
   const minNext = Number(auction.min_next_bid);

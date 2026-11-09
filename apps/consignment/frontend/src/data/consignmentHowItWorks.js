@@ -4,27 +4,55 @@
  * Fees and commission stay out of this public text; approved sellers see them in the seller agreements.
  */
 
-export const HOW_IT_WORKS_TABS = [
+/** Sub-tabs inside the Buying tab of the pop-up. The home page shows all their steps as one list. */
+const BUYING_SECTIONS = [
   {
-    id: 'buying',
-    label: 'Buying',
-    icon: '🛒',
-    intro: 'Fixed-price items are in the case at Legends Brews & Cues in Colorado Springs. Auction items stay with the seller until they sell.',
+    id: 'basics',
+    label: 'Basics',
+    icon: '📍',
+    intro: 'Everything happens in person at Legends Brews & Cues in Colorado Springs. Shipping isn’t available at this time.',
     steps: [
-      { group: 'The basics', icon: '📍', title: 'In person only', text: 'Everything is in person at Legends in Colorado Springs, CO: inspection, payment and pickup. Nothing is shipped.' },
+      { icon: '📍', title: 'Local pickup', text: 'Look it over, pay and pick it up at Legends in Colorado Springs, CO. Shipping isn’t available at this time.' },
+      { icon: '🔐', title: 'Log in', text: 'Anyone can browse. To bid or make offers, log in with your FRPL account. No account? Sign up from the Log in button; FRPL approves new accounts before they can bid.' },
+      { icon: '🧾', title: 'Totals with tax', text: 'Each item shows its total with {taxPct} sales tax. Some sellers set a price with tax already included; those say “tax included.” You pay at the register; this site does not take payment.' },
+      { icon: '✅', title: 'Sold as-is', text: 'All sales are final and items are sold as-is. Look the item over before you pay; if it isn’t as described, you don’t have to buy it.' },
+    ],
+  },
+  {
+    id: 'case',
+    label: 'In the case',
+    icon: '🏪',
+    intro: 'Fixed-price items sit in the case at Legends. Buy them in person, first come, first served.',
+    steps: [
       { icon: '🔎', title: 'Browse or scan', text: 'Browse here, or scan the QR tag on any item in the case at Legends.' },
       { icon: '🏃', title: 'First come, first served', text: 'Fixed-price items are bought first come first serve, in person at Legends.' },
-      { icon: '🧾', title: 'Totals with tax', text: 'Prices are shown before tax, with the total including {taxPct} sales tax beside them. You pay at the register; this site does not take payment.' },
       { icon: '🤝', title: 'Make an offer', text: 'Logged in? Make an offer on any item for sale, from half the price. The seller has {offerDays} days to accept, decline or counter. If it’s accepted, the item is held for you for {offerHoldDays} days while you come in and pay.' },
       { icon: '🪪', title: 'Inspect before you buy', text: 'Some items can be inspected at Legends: ask at the bar and staff will hold your ID while you look. You’re responsible for any damage while inspecting.' },
-      { icon: '✅', title: 'Sold as-is', text: 'All sales are final and items are sold as-is. Look the item over before you pay; if it isn’t as described, you don’t have to buy it.' },
-      { group: 'On the table: online auctions', icon: '🔐', title: 'Log in to bid', text: 'Online auctions: log in with your FRPL account to bid. No account? Sign up from the Log in button; FRPL approves new accounts before they can bid.' },
+    ],
+  },
+  {
+    id: 'table',
+    label: 'On the table',
+    icon: '🔨',
+    intro: 'Online auctions. The item stays with the seller until it sells, then comes to Legends for you to look over and pay.',
+    steps: [
       { icon: '📈', title: 'Bid steps', text: 'Bids go up in $5 steps under $500 and $10 steps at $500 and up.' },
       { icon: '⏱️', title: 'No sniping', text: 'A bid in the last {softClose} minutes adds {softClose} more minutes, so nobody can snipe it at the buzzer.' },
       { icon: '⚡', title: 'Buy It Now', text: 'Some auctions have Buy It Now. It disappears once bidding reaches that price.' },
       { icon: '🤝', title: 'Offers on auctions', text: 'No bids yet, or it ended without any? You can make an offer, from half the opening bid. If the seller accepts, you win the auction at your price.' },
       { icon: '🏆', title: 'Won it?', text: 'Won an auction? The seller brings it to Legends, and FRPL lets you know when it arrives. Then you have {payDays} days to look it over, pay and pick it up. If it isn’t as described, you can decline it. Winners who don’t pay for an item as described may lose bidding privileges.' },
     ],
+  },
+];
+
+export const HOW_IT_WORKS_TABS = [
+  {
+    id: 'buying',
+    label: 'Buying',
+    icon: '🛒',
+    intro: 'Fixed-price items are in the case at Legends Brews & Cues in Colorado Springs. Auction items stay with the seller until they sell.',
+    sections: BUYING_SECTIONS,
+    steps: BUYING_SECTIONS.flatMap((s) => s.steps),
   },
   {
     id: 'consign',
@@ -73,11 +101,11 @@ export const HOW_IT_WORKS_TABS = [
 export const FEE_TEXT = {
   consignFees: {
     seller: 'Listing fee: {fee}, paid at drop-off and not refunded. When it sells, FRPL keeps {shelfCommission}% of the price, with your listing fee counted toward it. Renewing costs {repeatShare} the original fee, or is free the first time if you lower your price {freeDrop} or more. Full terms are in the consignment agreement.',
-    public: 'There’s a listing fee, and FRPL keeps a share when it sells. Once you’re an approved seller you’ll see the exact amounts here and before you submit anything.',
+    public: 'There’s a small listing fee, and percentage when it sells. Once you’re an approved seller you’ll see the exact amounts here and before you submit anything.',
   },
   auctionFees: {
     seller: 'Listing fee: {auctionFee}, paid before the auction goes live and not refunded. When it sells, FRPL keeps {commission}% of the winning bid, with your listing fee counted toward it. Relisting is free every time you lower the reserve {freeDrop} or more; otherwise it costs {repeatShare} the original fee. Full terms are in the auction agreement.',
-    public: 'There’s a listing fee, and FRPL keeps a share of the winning bid. Once you’re an approved seller you’ll see the exact amounts here and before you submit anything.',
+    public: 'There’s a small listing fee, and percentage when it sells. Once you’re an approved seller you’ll see the exact amounts here and before you submit anything.',
   },
   consignFeeLine: {
     seller: 'Listing fee {fee}, paid at drop-off. FRPL keeps {shelfCommission}% of the sale, fee credited.',
@@ -95,7 +123,7 @@ export const HOW_IT_WORKS_FOOTER = 'Questions? Ask at the bar at Legends, or mes
 export const HOME_HERO = {
   kicker: 'FRPL Consignment & Auctions',
   title: 'Buy and sell pool gear at Legends',
-  lede: 'Cues, cases and gear from local players.\nBuy from the case at Legends Brews & Cues in Colorado Springs, or bid online.\nPickup in person; nothing ships.',
+  lede: 'Cues, cases and gear from local players.\nBuy from the case at Legends Brews & Cues in Colorado Springs, or bid online.\nLocal pickup at Legends; shipping isn’t available at this time.',
 };
 
 /** Leads the home page while the shop is still filling up (fewer than SELLER_FIRST_UNDER listings). */

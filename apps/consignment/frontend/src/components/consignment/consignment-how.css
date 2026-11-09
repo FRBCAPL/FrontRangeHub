@@ -112,6 +112,39 @@
   box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
 }
 
+/* Topic tabs inside a tab (Buying: Basics / In the case / On the table) */
+.cs-hw-subtabs {
+  display: flex;
+  gap: 6px;
+  margin: -4px 18px 12px;
+  overflow-x: auto;
+}
+
+.cs-hw-subtabs button {
+  flex: 1 0 auto;
+  min-height: 34px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--cs-line, rgba(148, 163, 184, 0.28));
+  background: transparent;
+  color: var(--cs-muted, #94a3b8);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cs-hw-subtabs button:hover {
+  color: var(--cs-ink, #e2e8f0);
+}
+
+.cs-hw-subtabs button.active {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.2);
+  color: #f3e8ff;
+}
+
 /* Scrolling body */
 .cs-hw-body {
   flex: 1 1 auto;

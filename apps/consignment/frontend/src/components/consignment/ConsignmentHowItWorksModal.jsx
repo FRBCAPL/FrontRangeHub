@@ -9,7 +9,12 @@ export default function ConsignmentHowItWorksModal({ initialTab = 'buying', onCl
   const [tab, setTab] = useState(initialTab);
   const bodyRef = useRef(null);
   const fill = useHowItWorksValues();
-  const current = HOW_IT_WORKS_TABS.find((t) => t.id === tab) || HOW_IT_WORKS_TABS[0];
+  const [sectionId, setSectionId] = useState(null);
+  const top = HOW_IT_WORKS_TABS.find((t) => t.id === tab) || HOW_IT_WORKS_TABS[0];
+  const sections = top.sections || null;
+  const current = sections ? sections.find((s) => s.id === sectionId) || sections[0] : top;
+
+  const pickTab = (id) => { setTab(id); setSectionId(null); };
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -19,7 +24,7 @@ export default function ConsignmentHowItWorksModal({ initialTab = 'buying', onCl
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
-  }, [tab]);
+  }, [tab, sectionId]);
 
   let number = 0;
 
@@ -42,12 +47,29 @@ export default function ConsignmentHowItWorksModal({ initialTab = 'buying', onCl
               role="tab"
               aria-selected={t.id === tab}
               className={t.id === tab ? 'active' : ''}
-              onClick={() => setTab(t.id)}
+              onClick={() => pickTab(t.id)}
             >
               <span aria-hidden="true">{t.icon}</span> {t.label}
             </button>
           ))}
         </div>
+
+        {sections ? (
+          <div className="cs-hw-subtabs" role="tablist" aria-label={`${top.label} topics`}>
+            {sections.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                role="tab"
+                aria-selected={s.id === current.id}
+                className={s.id === current.id ? 'active' : ''}
+                onClick={() => setSectionId(s.id)}
+              >
+                <span aria-hidden="true">{s.icon}</span> {s.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className="cs-hw-body" ref={bodyRef} role="tabpanel">
           <p className="cs-hw-intro">{fill(current.intro)}</p>

@@ -8,7 +8,7 @@ import { taxPercent } from '../../utils/consignmentTax.js';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 import './consignment-shop.css';
 
-/** New gear FRPL sells as a dealer: reserve online, pay and pick up at Legends. */
+/** New gear Legends sells in association with FRPL: reserve online, pay and pick up at Legends. */
 export default function ConsignmentGearShop() {
   const [searchParams, setSearchParams] = useSearchParams();
   const catParam = searchParams.get('cat');
@@ -40,7 +40,7 @@ export default function ConsignmentGearShop() {
         <div className="cs-shop-title">
           <h1>New gear</h1>
           <p>
-            Brand-new cues, shafts, cases and accessories from FRPL. <br />
+            Brand-new cues, shafts, cases and accessories from {LEGENDS.name} in association with FRPL. <br />
             Reserve online, then pay and pick up at <strong>{LEGENDS.name}</strong> in{' '}
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>. <br />
             Out of stock? Most items can be special ordered. <br />
@@ -60,7 +60,9 @@ export default function ConsignmentGearShop() {
         <div className="cs-gear-soon">
           <h2>New gear is coming soon</h2>
           <p>
-            FRPL is setting up as a dealer. Looking for something specific now? Ask us and we’ll see if we can order it in.
+            {LEGENDS.name}, in association with FRPL, will be selling new gear. <br />
+            Looking for something specific now? <br />
+            Ask us and we’ll see if we can order it in.
           </p>
           <div className="cs-actions">
             <ConsignmentContactButton topic="buying">Ask about new gear</ConsignmentContactButton>

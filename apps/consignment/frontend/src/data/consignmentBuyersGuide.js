@@ -9,7 +9,7 @@
 export const BUYERS_GUIDE_TITLE = 'Buyer’s guide';
 
 export const BUYERS_GUIDE_INTRO =
-  'Bid on auctions online here. Inspection, payment and pickup all happen in person at Legends Brews & Cues in Colorado Springs, CO. Nothing ships, and this site does not take payment.';
+  'Bid on auctions online here. Inspection, payment and pickup all happen in person at Legends Brews & Cues in Colorado Springs, CO. Shipping isn’t available at this time, and you pay at the register, not on this site.';
 
 export const BUYERS_GUIDE_SECTIONS = [
   {

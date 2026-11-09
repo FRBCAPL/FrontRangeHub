@@ -120,7 +120,7 @@ export default function ConsignmentStorefront() {
           <p>
             Buy from the case at <strong>Legends Brews &amp; Cues</strong> in{' '}
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>, or bid online.
-            Pickup and payment in person; nothing ships. Totals include {taxPercent(taxRate)} sales tax.
+            Pick up and pay in person; shipping isn’t available at this time. Totals include {taxPercent(taxRate)} sales tax.
           </p>
         </div>
         <div className="cs-shop-filters">

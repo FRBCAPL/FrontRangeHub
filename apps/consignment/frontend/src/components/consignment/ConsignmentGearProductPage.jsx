@@ -104,7 +104,7 @@ export default function ConsignmentGearProductPage() {
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">
               {LEGENDS.name}, {LEGENDS.address ? `${LEGENDS.address}, ` : ''}{LEGENDS.city}, {LEGENDS.state}
             </a>
-            . Nothing ships.
+            . Shipping isn’t available at this time.
           </p>
         </div>
       </div>
@@ -120,9 +120,9 @@ export default function ConsignmentGearProductPage() {
       <details className="cs-buying-info">
         <summary>Buying info</summary>
         <ul>
-          <li>Brand new from FRPL. Reserving is free; you pay when you pick it up at Legends.</li>
+          <li>Brand new from {LEGENDS.name} in association with FRPL. Reserving is free; you pay when you pick it up at Legends.</li>
           <li>Totals include {taxPercent(taxRate)} sales tax. This site does not take payment.</li>
-          <li>Pickup is in person at {LEGENDS.name}; nothing ships.</li>
+          <li>Pickup is in person at {LEGENDS.name}. Shipping isn’t available at this time.</li>
         </ul>
       </details>
 

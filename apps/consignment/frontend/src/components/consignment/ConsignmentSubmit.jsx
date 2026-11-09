@@ -226,7 +226,7 @@ export default function ConsignmentSubmit() {
         ))}
       </div>
       <p className="cs-hint">
-        Takes about 3 minutes. Nothing is charged online. You’ll need to bring the item to {LEGENDS_PLACE}; nothing ships.
+        Takes about 3 minutes. Nothing is charged online. When it’s time, you’ll drop the item off at {LEGENDS_PLACE}. No shipping needed.
       </p>
       {error && !wizardOpen ? <p className="cs-error">{error}</p> : null}
 
