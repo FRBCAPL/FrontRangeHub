@@ -38,20 +38,29 @@ export async function recordConsignmentPageVisit({ path, pageLabel }) {
   if (error) throw error;
 }
 
-export async function listConsignmentPageVisits({ sinceIso, limit = 4000 } = {}) {
-  let query = supabase
-    .from(TABLE)
-    .select('id, visitor_id, visitor_email, path, page_label, referrer, created_at')
-    .eq('tenant_id', TENANT_ID)
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  if (sinceIso) query = query.gte('created_at', sinceIso);
-  const { data, error } = await query;
-  if (error) {
-    if (/consignment_page_visits|relation|schema cache/i.test(error.message || '')) {
-      throw new Error('Visitor stats are not set up yet. Run consignment-page-visits-2026-10.sql in Supabase, then refresh.');
+const CHUNK = 1000;
+
+/** Newest first. Reads in chunks because Supabase returns at most 1,000 rows per request. */
+export async function listConsignmentPageVisits({ sinceIso, limit = 20000 } = {}) {
+  const rows = [];
+  while (rows.length < limit) {
+    let query = supabase
+      .from(TABLE)
+      .select('id, visitor_id, visitor_email, path, page_label, referrer, created_at')
+      .eq('tenant_id', TENANT_ID)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(rows.length, Math.min(rows.length + CHUNK, limit) - 1);
+    if (sinceIso) query = query.gte('created_at', sinceIso);
+    const { data, error } = await query;
+    if (error) {
+      if (/consignment_page_visits|relation|schema cache/i.test(error.message || '')) {
+        throw new Error('Visitor stats are not set up yet. Run consignment-page-visits-2026-10.sql in Supabase, then refresh.');
+      }
+      throw error;
     }
-    throw error;
+    rows.push(...(data || []));
+    if (!data || data.length < CHUNK) break;
   }
-  return data || [];
+  return rows;
 }
