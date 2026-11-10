@@ -13,7 +13,7 @@ const NEXT_STEP = {
 };
 
 /** "Shipping to me" section on the My offers & orders page. Hidden when there's nothing to show. */
-export default function ConsignmentMyShipments({ userId }) {
+export default function ConsignmentMyShipments({ userId, onChanged }) {
   const [rows, setRows] = useState([]);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
@@ -38,6 +38,7 @@ export default function ConsignmentMyShipments({ userId }) {
     try {
       await cancelShipping(s.id);
       await load();
+      onChanged?.();
     } catch (err) {
       setError(err.message);
     } finally {

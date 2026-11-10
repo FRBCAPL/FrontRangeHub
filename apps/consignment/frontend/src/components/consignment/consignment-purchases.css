@@ -1,0 +1,18 @@
+/* My offers & orders → My purchases */
+.cs-buy-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(148, 163, 184, 0.2);
+}
+.cs-buy-status-ready,
+.cs-buy-status-held { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
+.cs-buy-status-bring { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+.cs-buy-status-paid { background: rgba(148, 163, 184, 0.2); color: var(--cs-muted); }
+
+.cs-mine-empty-line {
+  margin: 8px 0 0;
+  color: var(--cs-muted);
+}
