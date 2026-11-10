@@ -127,7 +127,7 @@ export const SHIPPING_TEXT = {
     pickupShipping: 'Shipping isn’t available at this time.',
     wonShipping: '',
     sellerShipping: '',
-    heroShipping: 'Local pickup at Legends; shipping isn’t available at this time.',
+    heroShipping: 'Local pickup only',
     guideShipping: 'Shipping isn’t available at this time, and you pay at the register, not on this site.',
   },
   on: {
@@ -135,7 +135,7 @@ export const SHIPPING_TEXT = {
     pickupShipping: 'Outside Colorado (lower 48 states and DC)? Items marked 🚚 Ships can be shipped: FRPL emails a secure Square payment link for the price plus shipping & handling (insured for what you pay), with no Colorado sales tax, and ships from Legends with tracking. Report any problem within {shipDays} days of delivery.',
     wonShipping: ' Outside Colorado? If the item ships, choose “Ship it to me” on the item page instead.',
     sellerShipping: ' If FRPL ships it to an out-of-state buyer, you’re paid once it’s delivered and the buyer’s {shipDays} days to report a problem have passed.',
-    heroShipping: 'Local pickup at Legends; select items ship to buyers outside Colorado.',
+    heroShipping: '🚚 Select items ship outside Colorado',
     guideShipping: 'You pay at the register, not on this site. Outside Colorado? Items marked 🚚 Ships can be shipped to you and paid with a Square payment link.',
   },
 };
@@ -146,20 +146,21 @@ export const HOW_IT_WORKS_FOOTER = 'Questions? Ask at the bar at Legends, or mes
 export const HOME_HERO = {
   kicker: 'FRPL Consignment & Auctions',
   title: 'Buy and sell pool gear at Legends',
-  lede: 'Cues, cases and gear from local players.\nBuy from the case at Legends Brews & Cues in Colorado Springs, or bid online.\n{heroShipping}',
+  lede: 'Cues, cases and gear from local players. Buy from the case or bid online.',
+  place: '📍 Legends Brews & Cues · Colorado Springs',
+  shipping: '{heroShipping}',
 };
 
 /** Leads the home page while the shop is still filling up (fewer than SELLER_FIRST_UNDER listings). */
 export const HOME_SELL_PITCH = {
-  title: 'Turn your extra cues into cash',
-  lede: 'The shop just opened, and local players are looking. List your gear in a few minutes; FRPL handles the sale at Legends.',
+  title: 'Rack up cash with your extra cues and gear',
+  lede: 'The shop just opened and local players are looking. List it in a few minutes; FRPL handles the sale at Legends.',
   points: [
-    'You set the price, and it’s never lowered without your OK.',
-    'Buyers can make offers. You accept, decline or counter.',
-    'Sell from the case at Legends, or run a 7-day online auction.',
+    'You set the price',
+    'Accept, decline or counter offers',
+    'In the case or a 7-day auction',
   ],
   cta: 'Sell an item',
-  browse: 'Browse the shop',
 };
 
 /** `to` is relative to the consignment path; `tab` picks which steps section it points at. */

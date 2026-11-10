@@ -82,7 +82,10 @@ export default function ConsignmentHome() {
         <p className="cs-kicker">{HOME_HERO.kicker}</p>
         <h1>{HOME_HERO.title}</h1>
         <p className="cs-lede">{fill(HOME_HERO.lede)}</p>
-        <span className="cs-legends">Available at Legends Brews & Cues</span>
+        <div className="cs-home-hero-tags">
+          <span className="cs-legends">{HOME_HERO.place}</span>
+          <span className="cs-home-hero-ship">{fill(HOME_HERO.shipping)}</span>
+        </div>
       </header>
 
       {sellerFirst ? <ConsignmentHomeSellPitch /> : null}

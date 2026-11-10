@@ -137,9 +137,9 @@ export default function ConsignmentStorefront() {
     <div className="cs-page cs-shop">
       <header className="cs-shop-head">
         <div className="cs-shop-title">
-          <h1>FRPL Consignment</h1>
+          <h1>Shop the Case</h1>
           <p>
-            Buy from the case at <strong>Legends Brews &amp; Cues</strong> in{' '}
+            At <strong>Legends Brews &amp; Cues</strong> in{' '}
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>, or bid online.<br />
             {shipping.enabled
               ? 'Pick up and pay in person. Outside Colorado? Items marked 🚚 Ships can be shipped to you. '

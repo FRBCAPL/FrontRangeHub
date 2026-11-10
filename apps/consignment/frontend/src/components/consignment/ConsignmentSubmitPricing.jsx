@@ -4,6 +4,7 @@ import { formatDollars } from '../../utils/consignmentMoney.js';
 import { sellPretaxPrice } from '../../utils/consignmentSellSteps.js';
 import { taxPercent, withTax } from '../../utils/consignmentTax.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
+import ConsignmentAgreementModal from './ConsignmentAgreementModal.jsx';
 
 function Req() {
   return <span className="cs-req" aria-label="required">*</span>;
@@ -37,11 +38,11 @@ export function SellTerms({ method, agreementText }) {
     <div className="cs-terms">
       <p className="cs-hint">
         Listing fees apply. Please see the{' '}
-        <button type="button" className="cs-link-btn cs-terms-link" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <button type="button" className="cs-link-btn cs-terms-link" onClick={() => setOpen(true)} aria-haspopup="dialog">
           {agreement}
         </button>.
       </p>
-      {open ? <div className="cs-wiz-agree cs-terms-text">{agreementText}</div> : null}
+      {open ? <ConsignmentAgreementModal method={method} text={agreementText} onClose={() => setOpen(false)} /> : null}
     </div>
   );
 }
