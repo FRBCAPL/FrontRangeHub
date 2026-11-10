@@ -3,16 +3,22 @@ import { saveTaxRate } from '../../services/consignmentService.js';
 import { setTaxRate } from '../../hooks/useTaxRate.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { normalizeTaxRate, withTax } from '../../utils/consignmentTax.js';
+import { ConsignmentSettingsSaveBar } from './ConsignmentSettingsSection.jsx';
 
-const toPercent = (rate) => String(Math.round(normalizeTaxRate(rate) * 100000) / 1000);
+export const taxPercentText = (rate) => String(Math.round(normalizeTaxRate(rate) * 100000) / 1000);
 
 /** Admin → Settings: the sales tax rate shoppers see added to prices (display only). */
-export default function ConsignmentTaxSettings({ settings, onError }) {
-  const [pct, setPct] = useState(() => toPercent(settings?.tax_rate));
+export default function ConsignmentTaxSettings({ settings, onError, onSaved }) {
+  const [baseline, setBaseline] = useState(() => taxPercentText(settings?.tax_rate));
+  const [pct, setPct] = useState(baseline);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => { setPct(toPercent(settings?.tax_rate)); }, [settings?.tax_rate]);
+  useEffect(() => {
+    const next = taxPercentText(settings?.tax_rate);
+    setBaseline(next);
+    setPct(next);
+  }, [settings?.tax_rate]);
 
   const value = Number(pct);
   const valid = pct.trim() !== '' && Number.isFinite(value) && value >= 0 && value < 20;
@@ -25,7 +31,9 @@ export default function ConsignmentTaxSettings({ settings, onError }) {
       const rate = Math.round(value * 1000) / 100000;
       await saveTaxRate(rate);
       setTaxRate(rate);
+      setBaseline(pct);
       setSaved(true);
+      onSaved?.();
     } catch (err) {
       onError(err.message);
     } finally {
@@ -34,30 +42,38 @@ export default function ConsignmentTaxSettings({ settings, onError }) {
   }
 
   return (
-    <details className="cs-sellbox" style={{ marginBottom: 16 }} open>
-      <summary><strong>Sales tax</strong> (added to prices shoppers see)</summary>
-      <div className="cs-field">
-        <label htmlFor="cs-tax-rate">Sales tax rate at Legends (%)</label>
-        <input
-          id="cs-tax-rate"
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          min="0"
-          max="19.99"
-          value={pct}
-          onChange={(e) => { setPct(e.target.value); setSaved(false); }}
-          style={{ maxWidth: 160 }}
-        />
+    <>
+      <div className="cs-set-group">
+        <label className="cs-set-inline" htmlFor="cs-tax-rate">
+          Sales tax rate at Legends:
+          <span className="cs-set-money">
+            <input
+              id="cs-tax-rate"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              max="19.99"
+              value={pct}
+              onChange={(e) => { setPct(e.target.value); setSaved(false); }}
+            />
+            %
+          </span>
+        </label>
+        <p className="cs-set-example">
+          Example: a {formatDollars(100)} item shows as <strong>{valid ? formatDollars(withTax(100, value / 100)) : '…'}</strong> with tax.
+        </p>
         <p className="cs-hint">
-          Shoppers see totals with tax, for example a $100 item shows {valid ? formatDollars(withTax(100, value / 100)) : '…'}.
-          Prices, offers, bids, payouts and commission stay before tax.
+          This only changes the totals shoppers see. Prices, offers, bids, seller payouts and commission are always before tax.
         </p>
       </div>
-      <div className="cs-actions">
-        <button type="button" className="cs-btn-secondary" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
-        {saved ? <span className="cs-hint">Saved.</span> : null}
-      </div>
-    </details>
+      <ConsignmentSettingsSaveBar
+        dirty={pct !== baseline}
+        busy={busy}
+        saved={saved}
+        onSave={save}
+        onReset={() => setPct(baseline)}
+      />
+    </>
   );
 }

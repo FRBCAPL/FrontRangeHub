@@ -1,0 +1,38 @@
+/* Admin → Items status tabs */
+.cs-status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.cs-status-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.cs-status-tab:hover { background: rgba(255, 255, 255, 0.08); }
+.cs-status-tab.active { border-color: var(--cs-accent); background: rgba(229, 62, 62, 0.18); font-weight: 700; }
+
+.cs-status-count {
+  min-width: 1.5em;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+}
+.cs-status-tab.alert .cs-status-count { background: #f59e0b; color: #1a1a1a; }
+
+.cs-status-hint { margin: 0 0 12px; text-align: center; }

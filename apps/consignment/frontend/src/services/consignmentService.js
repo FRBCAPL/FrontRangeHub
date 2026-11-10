@@ -107,16 +107,10 @@ export async function loadAdminItemByNumber(itemNumber) {
 
 /** status: a status id, 'all', or 'expiring' (listed and ending within EXPIRING_SOON_DAYS). */
 export async function loadAdminItems(status = 'all') {
-  let query = supabase.from('consignment_items').select('*');
-  if (status === 'expiring') {
-    const soon = new Date(Date.now() + EXPIRING_SOON_DAYS * 24 * 60 * 60 * 1000).toISOString();
-    query = query.eq('status', 'available').lte('expires_at', soon).order('expires_at', { ascending: true });
-  } else if (status === 'seller_unpaid') {
-    query = query.eq('status', 'sold').is('seller_paid_at', null).order('sold_at', { ascending: true });
-  } else {
-    if (status && status !== 'all') query = query.eq('status', status);
-    query = query.order('created_at', { ascending: false });
-  }
+  let query = filterAdminItems(supabase.from('consignment_items').select('*'), status);
+  if (status === 'expiring') query = query.order('expires_at', { ascending: true });
+  else if (status === 'seller_unpaid') query = query.order('sold_at', { ascending: true });
+  else query = query.order('created_at', { ascending: false });
   const { data, error } = await query;
   if (error) throwNice(error, 'Could not load submissions.');
   const items = data || [];
@@ -135,6 +129,26 @@ export async function loadAdminItems(status = 'all') {
     fees: feesByItem[row.id] || [],
     auction: auctionByItem[row.id] || null,
   }));
+}
+
+function filterAdminItems(query, status) {
+  if (status === 'expiring') {
+    const soon = new Date(Date.now() + EXPIRING_SOON_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    return query.eq('status', 'available').lte('expires_at', soon);
+  }
+  if (status === 'seller_unpaid') return query.eq('status', 'sold').is('seller_paid_at', null);
+  return status && status !== 'all' ? query.eq('status', status) : query;
+}
+
+/** { [status]: count } for the Items tabs, counted in the database with the same filters as loadAdminItems. */
+export async function loadAdminItemCounts(statuses) {
+  const results = await Promise.all(statuses.map((status) => filterAdminItems(
+    supabase.from('consignment_items').select('id', { count: 'exact', head: true }),
+    status,
+  )));
+  const failed = results.find((r) => r.error);
+  if (failed) throwNice(failed.error, 'Could not count items.');
+  return Object.fromEntries(statuses.map((status, i) => [status, results[i].count ?? 0]));
 }
 
 export async function updateItem(id, patch) {

@@ -1,34 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { saveShippingSettings } from '../../services/consignmentShippingAdminService.js';
 import { DEFAULT_COMPLAINT_DAYS } from '../../utils/consignmentShipping.js';
 import { shipRulesFromSettings } from '../../utils/consignmentShipPrice.js';
 import ConsignmentShipRatesFields, { ratesFormToRules, rulesToRatesForm } from './ConsignmentShipRatesFields.jsx';
+import { ConsignmentSettingsSaveBar } from './ConsignmentSettingsSection.jsx';
+
+const formFrom = (settings) => ({
+  enabled: Boolean(settings?.shipping_enabled),
+  days: String(settings?.shipping_complaint_days ?? DEFAULT_COMPLAINT_DAYS),
+  rates: rulesToRatesForm(shipRulesFromSettings(settings)),
+});
 
 /** Admin → Settings: the out-of-state shipping switch, automatic prices, and the buyer's window to report a problem. */
 export default function ConsignmentShippingSettings({ settings, onError, onSaved }) {
   const ready = settings && 'shipping_enabled' in settings;
   const hasRates = Boolean(settings && 'shipping_base_rates' in settings);
-  const [enabled, setEnabled] = useState(Boolean(settings?.shipping_enabled));
-  const [days, setDays] = useState(String(settings?.shipping_complaint_days ?? DEFAULT_COMPLAINT_DAYS));
-  const [rates, setRates] = useState(() => rulesToRatesForm(shipRulesFromSettings(settings)));
+  const baselineKey = JSON.stringify(formFrom(settings));
+  const baseline = useMemo(() => JSON.parse(baselineKey), [baselineKey]);
+  const [form, setForm] = useState(baseline);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    setEnabled(Boolean(settings?.shipping_enabled));
-    setDays(String(settings?.shipping_complaint_days ?? DEFAULT_COMPLAINT_DAYS));
-    setRates(rulesToRatesForm(shipRulesFromSettings(settings)));
-  }, [settings]);
+  useEffect(() => { setForm(baseline); }, [baseline]);
+
+  const update = (patch) => { setForm((f) => ({ ...f, ...patch })); setSaved(false); };
+  const dirty = JSON.stringify(form) !== baselineKey;
 
   async function save() {
-    const n = Number(days);
+    const n = Number(form.days);
     if (!Number.isInteger(n) || n < 1 || n > 14) { onError('The report-a-problem window must be 1 to 14 days.'); return; }
-    const parsed = hasRates ? ratesFormToRules(rates) : { rules: null };
+    const parsed = hasRates ? ratesFormToRules(form.rates) : { rules: null };
     if (parsed.error) { onError(parsed.error); return; }
     setBusy(true);
-    setSaved(false);
     try {
-      await saveShippingSettings({ enabled, complaintDays: n, rules: parsed.rules });
+      await saveShippingSettings({ enabled: form.enabled, complaintDays: n, rules: parsed.rules });
       setSaved(true);
       onSaved?.();
     } catch (err) {
@@ -38,46 +43,57 @@ export default function ConsignmentShippingSettings({ settings, onError, onSaved
     }
   }
 
+  if (!ready) {
+    return <p className="cs-hint">Run supabase-migrations/consignment-shipping-2026-11.sql in the Supabase SQL editor to set this up.</p>;
+  }
+
   return (
-    <details className="cs-sellbox cs-ship-settings" style={{ marginBottom: 16 }} open>
-      <summary><strong>Shipping</strong> (out-of-state buyers)</summary>
-      {!ready ? (
-        <p className="cs-hint">Run supabase-migrations/consignment-shipping-2026-11.sql in the Supabase SQL editor to set this up.</p>
+    <>
+      <label className="cs-set-toggle">
+        <input type="checkbox" checked={form.enabled} onChange={(e) => update({ enabled: e.target.checked })} />
+        <span>
+          <strong>{form.enabled ? 'Shipping is ON' : 'Shipping is OFF'}</strong>
+          <span className="cs-hint">
+            Buyers outside Colorado (lower 48 states and DC) can have items shipped. Only items you mark as shippable
+            (Items tab → 🚚 Shipping button) can ship. Colorado buyers always pick up at Legends.
+          </span>
+        </span>
+      </label>
+
+      {hasRates ? (
+        <ConsignmentShipRatesFields form={form.rates} onChange={(rates) => update({ rates })} />
       ) : (
-        <>
-          <label className="cs-check">
-            <input type="checkbox" checked={enabled} onChange={(e) => { setEnabled(e.target.checked); setSaved(false); }} />
-            <span>
-              Offer shipping to buyers outside Colorado (lower 48 states and DC). Only items you mark as shippable
-              (Items → 🚚 Shipping) can ship. Colorado buyers always pick up at Legends.
-            </span>
-          </label>
-          {hasRates ? (
-            <ConsignmentShipRatesFields form={rates} onChange={(next) => { setRates(next); setSaved(false); }} />
-          ) : (
-            <p className="cs-hint">
-              Run supabase-migrations/consignment-shipping-auto-price-2026-11.sql to turn on automatic shipping prices.
-            </p>
-          )}
-          <div className="cs-field">
-            <label htmlFor="cs-ship-days">Days the buyer has to report a problem after delivery</label>
-            <input
-              id="cs-ship-days"
-              type="number"
-              min="1"
-              max="14"
-              step="1"
-              value={days}
-              onChange={(e) => { setDays(e.target.value); setSaved(false); }}
-            />
-            <p className="cs-hint">The seller can be marked paid once this window ends after delivery.</p>
-          </div>
-          <div className="cs-actions">
-            <button type="button" className="cs-btn-secondary" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
-            {saved ? <span className="cs-hint">Saved.</span> : null}
-          </div>
-        </>
+        <p className="cs-hint">
+          Run supabase-migrations/consignment-shipping-auto-price-2026-11.sql to turn on automatic shipping prices.
+        </p>
       )}
-    </details>
+
+      <div className="cs-set-group">
+        <h3>{hasRates ? '3. ' : ''}Problems after delivery</h3>
+        <p className="cs-set-inline">
+          <label htmlFor="cs-ship-days">The buyer has</label>
+          <input
+            id="cs-ship-days"
+            type="number"
+            min="1"
+            max="14"
+            step="1"
+            value={form.days}
+            onChange={(e) => update({ days: e.target.value })}
+          />
+          days after delivery to report a problem.
+        </p>
+        <p className="cs-hint">You can pay the seller once this window has passed.</p>
+      </div>
+
+      <ConsignmentSettingsSaveBar
+        dirty={dirty}
+        busy={busy}
+        saved={saved && !dirty}
+        onSave={save}
+        onReset={() => setForm(baseline)}
+        label="Save shipping settings"
+      />
+    </>
   );
 }

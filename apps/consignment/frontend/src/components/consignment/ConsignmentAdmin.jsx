@@ -3,22 +3,20 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   CONSIGNMENT_DAYS,
   DEFAULT_CONSIGNMENT_FEE,
-  EXPIRING_SOON_DAYS,
   itemLabel,
   PICKUP_GRACE_DAYS,
-  STATUSES,
 } from '../../data/consignmentConstants.js';
 import {
   changeItemStatus,
   clearItemPhotos,
+  loadAdminItemCounts,
   loadAdminItems,
   loadSettings,
   markSold,
   purgeExpiredSoldPhotos,
   updateItemIfStatus,
 } from '../../services/consignmentService.js';
-import ConsignmentAgreementSettings from './ConsignmentAgreementSettings.jsx';
-import ConsignmentTaxSettings from './ConsignmentTaxSettings.jsx';
+import ConsignmentSettingsPanel from './ConsignmentSettingsPanel.jsx';
 import ConsignmentSellersPanel from './ConsignmentSellersPanel.jsx';
 import ConsignmentBiddersPanel from './ConsignmentBiddersPanel.jsx';
 import { sellerMatches } from '../../utils/consignmentSellerItems.js';
@@ -40,10 +38,11 @@ import ConsignmentOffersPanel from './ConsignmentOffersPanel.jsx';
 import ConsignmentGearPanel from './ConsignmentGearPanel.jsx';
 import ConsignmentVisitsPanel from './ConsignmentVisitsPanel.jsx';
 import ConsignmentShippingPanel from './ConsignmentShippingPanel.jsx';
-import ConsignmentShippingSettings from './ConsignmentShippingSettings.jsx';
 import ConsignmentItemShipModal from './ConsignmentItemShipModal.jsx';
 import { loadShipOptions } from '../../services/consignmentShippingService.js';
 import { shipRulesFromSettings } from '../../utils/consignmentShipPrice.js';
+import { ITEM_STATUS_TABS, ITEM_TAB_IDS } from '../../utils/consignmentAdminItemTabs.js';
+import ConsignmentItemStatusTabs from './ConsignmentItemStatusTabs.jsx';
 
 /** Confirmation text for one-tap status buttons that take an item out of the shop, or null for none. */
 function statusChangeQuestion(item, next) {
@@ -82,6 +81,8 @@ export default function ConsignmentAdmin() {
   const linkedStatus = params.get('status');
   const [status, setStatus] = useState(linkedTab === 'items' && linkedStatus ? linkedStatus : 'pending');
   const [rows, setRows] = useState([]);
+  const [counts, setCounts] = useState({});
+  const [loadedStatus, setLoadedStatus] = useState(null);
   const [error, setError] = useState('');
   const [defaultFee, setDefaultFee] = useState(DEFAULT_CONSIGNMENT_FEE);
   const [consignmentDays, setConsignmentDays] = useState(CONSIGNMENT_DAYS);
@@ -98,7 +99,9 @@ export default function ConsignmentAdmin() {
   const shippingReady = Boolean(settings && 'shipping_enabled' in settings);
   const [tab, setTab] = useState(linkedTab);
   const [sellerFilter, setSellerFilter] = useState(null);
-  const shownRows = sellerFilter ? rows.filter((item) => sellerMatches(item.seller, sellerFilter)) : rows;
+  const itemsLoading = loadedStatus !== status;
+  const listRows = itemsLoading ? [] : rows;
+  const shownRows = sellerFilter ? listRows.filter((item) => sellerMatches(item.seller, sellerFilter)) : listRows;
   const viewSellerItems = (account) => {
     setSellerFilter(account);
     setStatus('all');
@@ -117,9 +120,11 @@ export default function ConsignmentAdmin() {
   const requestRef = useRef(0);
   const refresh = () => {
     const request = ++requestRef.current;
-    return loadAdminItems(statusRef.current)
-      .then((data) => { if (request === requestRef.current) setRows(data); })
-      .catch((err) => { if (request === requestRef.current) setError(err.message); });
+    const asked = statusRef.current;
+    loadAdminItemCounts(ITEM_TAB_IDS).then(setCounts).catch(() => {});
+    return loadAdminItems(asked)
+      .then((data) => { if (request === requestRef.current) { setRows(data); setLoadedStatus(asked); } })
+      .catch((err) => { if (request === requestRef.current) { setError(err.message); setLoadedStatus(asked); } });
   };
 
   useEffect(() => {
@@ -208,12 +213,12 @@ export default function ConsignmentAdmin() {
       {tab === 'messages' ? <ConsignmentMessagesPanel /> : null}
       {tab === 'visitors' ? <ConsignmentVisitsPanel /> : null}
       {tab === 'settings' ? (
-        <>
-          {error ? <p className="cs-error">{error}</p> : null}
-          <ConsignmentTaxSettings settings={settings} onError={setError} />
-          <ConsignmentAgreementSettings settings={settings} onError={setError} />
-          <ConsignmentShippingSettings settings={settings} onError={setError} onSaved={reloadSettings} />
-        </>
+        <ConsignmentSettingsPanel
+          settings={settings}
+          error={error}
+          onError={setError}
+          onSaved={() => { setError(''); reloadSettings(); }}
+        />
       ) : null}
       {tab === 'auctions' ? (
         <ConsignmentAuctionAdmin
@@ -224,21 +229,24 @@ export default function ConsignmentAdmin() {
       ) : null}
       {tab === 'items' ? (
         <>
-          <div className="cs-filters">
-            <select value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Filter status">
-              <option value="all">All statuses</option>
-              <option value="expiring">Expiring soon ({EXPIRING_SOON_DAYS} days)</option>
-              <option value="seller_unpaid">Sold – owed to seller</option>
-              {STATUSES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-            </select>
-            {sellerFilter ? (
+          <ConsignmentItemStatusTabs value={status} counts={counts} onChange={setStatus} />
+          <p className="cs-hint cs-status-hint">
+            {ITEM_STATUS_TABS.find((t) => t.id === status)?.hint || status}
+          </p>
+          {sellerFilter ? (
+            <div className="cs-filters">
               <span className="cs-meta">
                 Seller: <strong>{bidderName(sellerFilter) || 'Unknown'}</strong> ({shownRows.length}){' '}
                 <button type="button" className="cs-btn-secondary" onClick={() => setSellerFilter(null)}>Show all sellers</button>
               </span>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
           {error ? <p className="cs-error">{error}</p> : null}
+          {itemsLoading ? <p className="cs-hint cs-status-hint">Loading…</p> : null}
+          {!itemsLoading && !error && rows.length > 0 && shownRows.length === 0 ? (
+            <p className="cs-hint cs-status-hint">This seller has no items here. Try the All tab.</p>
+          ) : null}
+          {!itemsLoading && !error && rows.length === 0 ? <p className="cs-hint cs-status-hint">Nothing here right now.</p> : null}
           <table className="cs-table">
             <thead>
               <tr>
