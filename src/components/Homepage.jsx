@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import frontRangeLogo from '../assets/logo.png';
 import usaplLogo from '../assets/usapl_logo.png';
+import cuesyncIcon from '../assets/cuesync_icon.png';
 import CuelessCubeLogo from './CuelessCubeLogo';
 import LadderApp from '@apps/ladder/frontend/src/components/ladder/LadderApp';
 import LadderMatchCalendar from '@apps/ladder/frontend/src/components/ladder/LadderMatchCalendar';
@@ -291,7 +292,7 @@ const Homepage = ({ canRunTournament = false }) => {
     },
     {
       id: 'cuesync',
-      icon: '📋',
+      icon: <img src={cuesyncIcon} alt="" className="hal-logo hal-logo--photo" />,
       title: 'CueSync',
       blurb: 'Pool hall table management. Import league nights once; tables assign themselves.',
       accent: '#2dd4bf',
