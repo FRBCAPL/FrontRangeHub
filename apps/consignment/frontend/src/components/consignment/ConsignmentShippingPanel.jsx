@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { markSold } from '../../services/consignmentService.js';
 import {
-  checkSquarePayment, loadAuctionForPayment, loadItemForSale, loadShipmentsAdmin, updateShipment, voidSquareLink,
+  checkSquarePayment, loadAuctionForPayment, loadItemForSale, loadShipmentsAdmin, resolveShipmentProblem, updateShipment,
+  voidSquareLink,
 } from '../../services/consignmentShippingAdminService.js';
 import { needsSaleRecorded } from '../../utils/consignmentShipping.js';
+import { problemOpen } from '../../utils/consignmentShipAcceptance.js';
 import ConsignmentAuctionPaidModal from './ConsignmentAuctionPaidModal.jsx';
 import ConsignmentShipmentActionModal from './ConsignmentShipmentActionModal.jsx';
 import ConsignmentShipmentCard from './ConsignmentShipmentCard.jsx';
@@ -28,8 +30,24 @@ function actionsFor(s) {
   if (needsSaleRecorded(s)) return [['record', 'Record sale']];
   if (s.status === 'paid') return [['shipped', 'Shipped']];
   if (s.status === 'shipped') return [['arrived', 'Delivered']];
+  if (problemOpen(s)) return [['resolve_pay', 'Resolve: pay the seller'], ['resolve_refund', 'Resolve: buyer refunded']];
   return [];
 }
+
+const RESOLVE = {
+  resolve_pay: {
+    resolution: 'pay_seller',
+    title: 'Resolve this problem and allow the seller to be paid?',
+    message: 'Use this when it’s sorted out and the sale stands. The buyer gets an email.',
+    confirmLabel: 'Resolve: pay the seller',
+  },
+  resolve_refund: {
+    resolution: 'refunded',
+    title: 'Mark the buyer refunded?',
+    message: 'Refund them in Square first. The seller won’t be paid for this item, and the buyer gets an email.',
+    confirmLabel: 'Buyer refunded',
+  },
+};
 
 /** Admin → Shipping: out-of-state orders, each with its next step. */
 export default function ConsignmentShippingPanel({ shippingOn }) {
@@ -110,6 +128,13 @@ export default function ConsignmentShippingPanel({ shippingOn }) {
     if (action === 'paid') { markPaid(s); return; }
     if (action === 'record') { openSale(s, false); return; }
     if (action === 'check') { checkPayment(s); return; }
+    if (RESOLVE[action]) {
+      const { resolution, ...dialog } = RESOLVE[action];
+      const note = await prompt({ ...dialog, inputLabel: 'Note for the buyer (optional)' });
+      if (note === null) return;
+      run(s, () => resolveShipmentProblem(s.id, resolution, note));
+      return;
+    }
     if (action === 'arrived') {
       const ok = await confirm({
         title: `Mark ${s.item_name} delivered?`,
@@ -144,7 +169,8 @@ export default function ConsignmentShippingPanel({ shippingOn }) {
       <p className="cs-hint">
         Buyers outside Colorado. Steps: Send Square link → the buyer pays (marked paid automatically) → Record sale
         (Square fee filled in) → pack, photograph and ship from Legends → Shipped with tracking → Delivered. The seller can
-        be paid once the buyer’s window to report a problem ends. These sales skip the Legends register and have no sales tax.
+        be paid once the buyer confirms it’s as described, or when their window to report a problem ends. A reported problem
+        holds the payout until you resolve it. These sales skip the Legends register and have no sales tax.
       </p>
       {!shippingOn ? <p className="cs-meta">Shipping is switched off for shoppers (Settings → Shipping).</p> : null}
       <div className="cs-offer-scope" role="group" aria-label="Which shipping requests">

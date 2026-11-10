@@ -1,16 +1,33 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { cancelShipping, loadMyShipments } from '../../services/consignmentShippingService.js';
 import { canBuyerCancelShipment } from '../../utils/consignmentShipping.js';
+import { buyerShipNote, problemWindowEndsAt } from '../../utils/consignmentShipAcceptance.js';
+import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import ConsignmentShipmentCard from './ConsignmentShipmentCard.jsx';
+import ConsignmentBuyerShipActions from './ConsignmentBuyerShipActions.jsx';
 import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
+import useShippingInfo from '../../hooks/useShippingInfo.js';
 
 const NEXT_STEP = {
   requested: 'FRPL will email you a secure payment link.',
   invoiced: 'Pay with the secure link. FRPL ships after the payment clears.',
   paid: 'Paid. FRPL is packing it and will email you the tracking number.',
-  shipped: 'On its way.',
-  arrived: 'Delivered. Something wrong? Contact FRPL right away.',
 };
+
+function nextStep(s, days) {
+  const note = buyerShipNote(s);
+  if (note) return note;
+  if (s.status === 'shipped') {
+    return `On its way. When it arrives, look it over and tap “Got it” if it’s as described, or report a problem within ${days} days of delivery.`;
+  }
+  if (s.status === 'arrived') {
+    const ends = problemWindowEndsAt(s, days);
+    return ends && ends.getTime() > Date.now()
+      ? `Delivered. Look it over: tap “Got it” if it’s as described, or report a problem by ${formatDateTime(ends)}.`
+      : 'Delivered. Something wrong? Message FRPL with Contact us.';
+  }
+  return NEXT_STEP[s.status] || '';
+}
 
 /** "Shipping to me" section on the My offers & orders page. Hidden when there's nothing to show. */
 export default function ConsignmentMyShipments({ userId, onChanged }) {
@@ -18,6 +35,7 @@ export default function ConsignmentMyShipments({ userId, onChanged }) {
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
   const { confirm } = useConsignmentConfirm();
+  const { complaintDays } = useShippingInfo();
 
   const load = useCallback(async () => {
     setRows(userId ? await loadMyShipments() : []);
@@ -57,8 +75,9 @@ export default function ConsignmentMyShipments({ userId, onChanged }) {
           <ConsignmentShipmentCard
             key={s.id}
             shipment={s}
-            extra={NEXT_STEP[s.status] ? <p className="cs-meta">{NEXT_STEP[s.status]}</p> : null}
+            extra={nextStep(s, complaintDays) ? <p className="cs-meta">{nextStep(s, complaintDays)}</p> : null}
           >
+            <ConsignmentBuyerShipActions shipment={s} complaintDays={complaintDays} onDone={load} onError={setError} />
             {s.status === 'invoiced' && s.payment_link ? (
               <a className="cs-btn" href={s.payment_link} target="_blank" rel="noopener noreferrer">Pay now</a>
             ) : null}

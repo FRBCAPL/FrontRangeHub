@@ -79,6 +79,20 @@ export const cancelShipping = (shipmentId) => call(
   'Could not cancel the shipping request.',
 );
 
+/** The buyer confirms a shipped item arrived as described (lets FRPL pay the seller right away). */
+export const acceptShipment = (shipmentId) => call(
+  'buyer_consignment_shipment',
+  { p_shipment_id: shipmentId, p_action: 'accept', p_note: null },
+  'Could not confirm the order.',
+);
+
+/** The buyer reports a problem with a shipped item (holds the seller payout until FRPL resolves it). */
+export const reportShipmentProblem = (shipmentId, note) => call(
+  'buyer_consignment_shipment',
+  { p_shipment_id: shipmentId, p_action: 'problem', p_note: note },
+  'Could not send your report.',
+);
+
 /** Empty before the migration runs. */
 export async function loadMyShipments() {
   const { data, error } = await supabase.rpc('my_consignment_shipments');

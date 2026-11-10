@@ -3,8 +3,18 @@ import { auctionStatusLabel } from '../../data/consignmentConstants.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { needsSaleRecorded } from '../../utils/consignmentShipping.js';
+import { adminShipFlag, problemOpen } from '../../utils/consignmentShipAcceptance.js';
 
-/** Admin → Shipping: what to watch for on one shipment. */
+function payoutLine(s) {
+  if (problemOpen(s)) return 'The seller payout is on hold. Contact the buyer, then tap a Resolve button below.';
+  if (s.problem_resolution === 'refunded') return 'The buyer was refunded, so the seller isn’t paid for this item. Sort out the return with the seller.';
+  if (s.buyer_accepted_at || s.problem_resolution === 'pay_seller') return 'Pay the seller now (Items → Seller paid).';
+  return s.payout_ready_at && new Date(s.payout_ready_at).getTime() > Date.now()
+    ? `Pay the seller after ${formatDateTime(s.payout_ready_at)}, or sooner if the buyer confirms it’s as described (Items → Seller paid).`
+    : 'The buyer’s window has ended: pay the seller (Items → Seller paid).';
+}
+
+/** Admin → Shipping: what to watch for on one shipment, plus the buyer's confirmation or problem report. */
 export default function ConsignmentShipmentWarnings({ s }) {
   const lines = [];
   if (s.auction_id && !['awaiting_payment', 'paid'].includes(s.auction_status)) {
@@ -24,10 +34,13 @@ export default function ConsignmentShipmentWarnings({ s }) {
     const fee = s.square_fee != null ? ` Square fee ${formatDollars(s.square_fee)}.` : '';
     lines.push(`Paid online ${formatDollars(s.paid_amount ?? Number(s.item_price) + Number(s.shipping_price))}.${fee} Tap Record sale, then ship it.`);
   }
-  if (s.status === 'arrived') {
-    lines.push(s.payout_ready_at && new Date(s.payout_ready_at).getTime() > Date.now()
-      ? `Pay the seller after ${formatDateTime(s.payout_ready_at)} (Items → Seller paid).`
-      : 'The buyer’s window has ended: pay the seller (Items → Seller paid).');
-  }
-  return lines.map((line) => <p key={line} className="cs-meta cs-ship-warn">{line}</p>);
+  if (s.status === 'arrived') lines.push(payoutLine(s));
+  const flag = adminShipFlag(s);
+  return (
+    <>
+      {flag ? <p><span className={`cs-ship-flag cs-ship-flag-${flag.tone}`}>{flag.text}</span></p> : null}
+      {s.problem_note ? <p className="cs-meta">Buyer’s report: “{s.problem_note}”</p> : null}
+      {lines.map((line) => <p key={line} className="cs-meta cs-ship-warn">{line}</p>)}
+    </>
+  );
 }

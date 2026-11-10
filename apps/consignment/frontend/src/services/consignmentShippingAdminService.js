@@ -28,6 +28,13 @@ export const updateShipment = (id, action, { note = '', link = '', carrier = '',
   'Could not update the shipping request.',
 );
 
+/** resolution: pay_seller (the seller can be paid) | refunded (the seller isn't paid). The buyer gets an email. */
+export const resolveShipmentProblem = (id, resolution, note = '') => call(
+  'admin_resolve_consignment_shipment',
+  { p_shipment_id: id, p_resolution: resolution, p_note: note || null },
+  'Could not resolve the problem.',
+);
+
 async function backend(path, body = {}, fallback = 'Could not reach the server.') {
   const { data } = await supabase.auth.getSession();
   const token = data?.session?.access_token;
