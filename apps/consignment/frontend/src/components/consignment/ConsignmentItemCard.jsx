@@ -70,16 +70,22 @@ function ExampleAuctionLine({ sample }) {
   );
 }
 
-export default function ConsignmentItemCard({ item, auction, watching = false, onWatch = null, signedIn = false, onHold = false }) {
+export default function ConsignmentItemCard({
+  item, auction, watching = false, onWatch = null, signedIn = false, onHold = false, shipHold = false, ships = false,
+}) {
   const photo = item.photo_urls?.[0];
   const isAuction = item.sale_method === 'auction';
   const isSold = item.status === 'sold';
   const kind = item.is_example ? 'example' : isSold ? 'sold' : isAuction ? 'auction' : 'shelf';
+  const held = onHold || shipHold;
+  let shelfRibbon = { icon: '🏪', label: 'In the case' };
+  if (onHold) shelfRibbon = { icon: '⏳', label: 'On hold · offer accepted' };
+  else if (shipHold) shelfRibbon = { icon: '⏳', label: 'On hold · sale pending' };
   const ribbon = {
     example: { icon: '👀', label: isAuction ? 'Example auction' : 'Example' },
     sold: { icon: '✔', label: 'Sold' },
     auction: { icon: '🔨', label: 'On the table · Auction' },
-    shelf: onHold ? { icon: '⏳', label: 'On hold · offer accepted' } : { icon: '🏪', label: 'In the case' },
+    shelf: shelfRibbon,
   }[kind];
   let priceLine = <Price amount={item.selling_price} included={Boolean(item.price_tax_included)} />;
   if (isAuction) priceLine = item.is_example ? <ExampleAuctionLine sample={item.example_auction} /> : <AuctionLine auction={auction} />;
@@ -90,11 +96,12 @@ export default function ConsignmentItemCard({ item, auction, watching = false, o
 
   const card = (
     <Link className={`cs-card cs-card-${kind}`} to={consignmentItemPath(item.item_number)}>
-      <div className={`cs-card-ribbon${kind === 'shelf' && onHold ? ' cs-ribbon-hold' : ''}`}>
+      <div className={`cs-card-ribbon${kind === 'shelf' && held ? ' cs-ribbon-hold' : ''}`}>
         <span aria-hidden="true">{ribbon.icon}</span> {ribbon.label}
       </div>
       <div className="cs-card-photo" style={photo ? { '--cs-photo': `url("${photo}")` } : undefined}>
         {photo ? <img src={photo} alt="" loading="lazy" /> : <span aria-hidden="true">🎱</span>}
+        {ships && !isSold && !item.is_example ? <span className="cs-card-ships">🚚 Ships</span> : null}
       </div>
       <div className="cs-card-body">
         <h3>{item.name}</h3>

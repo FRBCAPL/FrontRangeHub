@@ -4,6 +4,8 @@ import { CATEGORIES, CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../da
 import { loadCatalog } from '../../services/consignmentService.js';
 import { loadAuctionsForItems } from '../../services/consignmentAuctionService.js';
 import { loadHeldItemIds } from '../../services/consignmentOffersService.js';
+import { loadShipPrices, loadShippingHeldIds } from '../../services/consignmentShippingService.js';
+import useShippingInfo from '../../hooks/useShippingInfo.js';
 import { syncServerClock } from '../../services/consignmentServerClock.js';
 import ConsignmentItemCard from './ConsignmentItemCard.jsx';
 import ConsignmentShopBadges from './ConsignmentShopBadges.jsx';
@@ -45,6 +47,9 @@ export default function ConsignmentStorefront() {
   const closeGuide = useCallback(() => setGuideOpen(false), []);
   const watch = useWatchList();
   const taxRate = useTaxRate();
+  const shipping = useShippingInfo();
+  const [shipPrices, setShipPrices] = useState({});
+  const [shipHeld, setShipHeld] = useState(() => new Set());
   let catalogStatus = status;
   if (status === 'auctions' || status === 'case') catalogStatus = 'available';
   else if (status === 'watching') catalogStatus = 'all';
@@ -79,6 +84,22 @@ export default function ConsignmentStorefront() {
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
   }, [category, catalogStatus]);
+
+  const rowIds = rows.map((r) => r.id).join(',');
+  useEffect(() => {
+    let alive = true;
+    if (!shipping.enabled || !rowIds) {
+      setShipPrices({});
+      setShipHeld(new Set());
+      return undefined;
+    }
+    Promise.all([loadShipPrices(rowIds.split(',')), loadShippingHeldIds()]).then(([prices, heldIds]) => {
+      if (!alive) return;
+      setShipPrices(prices);
+      setShipHeld(heldIds);
+    });
+    return () => { alive = false; };
+  }, [shipping.enabled, rowIds]);
 
   const liveIds = Object.values(auctions).filter((a) => a.status === 'live').map((a) => a.item_id).join(',');
   useEffect(() => {
@@ -120,7 +141,10 @@ export default function ConsignmentStorefront() {
           <p>
             Buy from the case at <strong>Legends Brews &amp; Cues</strong> in{' '}
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">{LEGENDS.city}, {LEGENDS.state}</a>, or bid online.<br />
-            Pick up and pay in person; shipping isn’t available at this time. Totals include local sales tax.
+            {shipping.enabled
+              ? 'Pick up and pay in person. Outside Colorado? Items marked 🚚 Ships can be shipped to you. '
+              : 'Pick up and pay in person; shipping isn’t available at this time. '}
+            Totals include local sales tax.
           </p>
         </div>
         <div className="cs-shop-filters">
@@ -175,6 +199,8 @@ export default function ConsignmentStorefront() {
               onWatch={watch.toggle}
               signedIn={Boolean(watch.userId)}
               onHold={held.has(item.id)}
+              shipHold={shipHeld.has(item.id)}
+              ships={shipPrices[item.id] != null}
             />
           ))}
       </div>

@@ -10,9 +10,9 @@ const BUYING_SECTIONS = [
     id: 'basics',
     label: 'Basics',
     icon: '📍',
-    intro: 'Everything happens in person at Legends Brews & Cues in Colorado Springs. Shipping isn’t available at this time.',
+    intro: '{basicsIntro}',
     steps: [
-      { icon: '📍', title: 'Local pickup', text: 'Look it over, pay and pick it up at Legends in Colorado Springs, CO. Shipping isn’t available at this time.' },
+      { icon: '📍', title: 'Local pickup', text: 'Look it over, pay and pick it up at Legends in Colorado Springs, CO. {pickupShipping}' },
       { icon: '🔐', title: 'Log in', text: 'Anyone can browse. To bid or make offers, log in with your FRPL account. No account? Sign up from the Log in button; FRPL approves new accounts before they can bid.' },
       { icon: '🧾', title: 'Totals with tax', text: 'Each item shows its total with {taxPct} sales tax. Some sellers set a price with tax already included; those say “tax included.” You pay at the register; this site does not take payment.' },
       { icon: '✅', title: 'Sold as-is', text: 'All sales are final and items are sold as-is. Look the item over before you pay; if it isn’t as described, you don’t have to buy it.' },
@@ -40,7 +40,7 @@ const BUYING_SECTIONS = [
       { icon: '⏱️', title: 'No sniping', text: 'A bid in the last {softClose} minutes adds {softClose} more minutes, so nobody can snipe it at the buzzer.' },
       { icon: '⚡', title: 'Buy It Now', text: 'Some auctions have Buy It Now. It disappears once bidding reaches that price.' },
       { icon: '🤝', title: 'Offers on auctions', text: 'No bids yet, or it ended without any? You can make an offer, from half the opening bid. If the seller accepts, you win the auction at your price.' },
-      { icon: '🏆', title: 'Won it?', text: 'Won an auction? The seller brings it to Legends, and FRPL lets you know when it arrives. Then you have {payDays} days to look it over, pay and pick it up. If it isn’t as described, you can decline it. Winners who don’t pay for an item as described may lose bidding privileges.' },
+      { icon: '🏆', title: 'Won it?', text: 'Won an auction? The seller brings it to Legends, and FRPL lets you know when it arrives. Then you have {payDays} days to look it over, pay and pick it up. If it isn’t as described, you can decline it. Winners who don’t pay for an item as described may lose bidding privileges.{wonShipping}' },
     ],
   },
 ];
@@ -68,7 +68,7 @@ export const HOW_IT_WORKS_TABS = [
       { icon: '🤝', title: 'Offers', text: 'Buyers can make offers (at least half your price). You accept, decline or counter on My items, and you see what you’d receive before you accept.' },
       { icon: '🧾', title: 'What it costs', text: '{consignFees}', home: false },
       { icon: '🪪', title: 'Inspection is your choice', text: 'You choose whether buyers may inspect your item at Legends.' },
-      { icon: '💵', title: 'Sold? Get paid', text: 'Sold? Collect your payment at Legends within 7 days of the sale.' },
+      { icon: '💵', title: 'Sold? Get paid', text: 'Sold? Collect your payment at Legends within 7 days of the sale.{sellerShipping}' },
       { icon: '🔁', title: 'Didn’t sell?', text: 'Not sold after {days} days? Renew it, or pick it up within {graceDays} days. Items left longer become unclaimed property.' },
     ],
   },
@@ -86,7 +86,7 @@ export const HOW_IT_WORKS_TABS = [
       { icon: '💳', title: 'Pay the listing fee', text: 'If FRPL accepts it, pay the listing fee by Cash App or Venmo from your My items page, or in person at Legends. Your auction goes live once it’s paid.', home: false },
       { icon: '🗓️', title: 'You keep it meanwhile', text: 'You keep the item while it’s up for auction. Every auction runs 7 days from the moment it starts.' },
       { icon: '🚚', title: 'Sold? Deliver it', text: 'Sold? Bring it to Legends within {deliverDays} days. The winner looks it over and pays there. Miss the deadline and the sale is cancelled, the fee isn’t refunded, and you lose selling access.' },
-      { icon: '💵', title: 'Get paid', text: 'Collect your payment at Legends within 7 days of the winner paying.' },
+      { icon: '💵', title: 'Get paid', text: 'Collect your payment at Legends within 7 days of the winner paying.{sellerShipping}' },
       { icon: '🔁', title: 'No bids?', text: 'No bids? Choose what’s next on My items: relist it (free every time you lower the reserve 10% or more), switch to a fixed-price consignment, or keep it. If it’s already at Legends, pick it up within {graceDays} days; otherwise there’s nothing to pick up.' },
       { icon: '🧾', title: 'What it costs', text: '{auctionFees}', home: false },
     ],
@@ -117,13 +117,36 @@ export const FEE_TEXT = {
   },
 };
 
+/**
+ * Shipping wording for {basicsIntro} {pickupShipping} {wonShipping} {sellerShipping} {heroShipping} {guideShipping}.
+ * `off` shows until an admin turns shipping on (Admin → Settings → Shipping). {shipDays} = days to report a problem.
+ */
+export const SHIPPING_TEXT = {
+  off: {
+    basicsIntro: 'Everything happens in person at Legends Brews & Cues in Colorado Springs. Shipping isn’t available at this time.',
+    pickupShipping: 'Shipping isn’t available at this time.',
+    wonShipping: '',
+    sellerShipping: '',
+    heroShipping: 'Local pickup at Legends; shipping isn’t available at this time.',
+    guideShipping: 'Shipping isn’t available at this time, and you pay at the register, not on this site.',
+  },
+  on: {
+    basicsIntro: 'Pickup and payment happen in person at Legends Brews & Cues in Colorado Springs. Outside Colorado? Items marked 🚚 Ships can be shipped to you.',
+    pickupShipping: 'Outside Colorado (lower 48 states and DC)? Items marked 🚚 Ships can be shipped: FRPL emails a secure Square payment link for the price plus a flat shipping & handling charge, with no Colorado sales tax, and ships from Legends with tracking. Report any problem within {shipDays} days of delivery.',
+    wonShipping: ' Outside Colorado? If the item ships, choose “Ship it to me” on the item page instead.',
+    sellerShipping: ' If FRPL ships it to an out-of-state buyer, you’re paid once it’s delivered and the buyer’s {shipDays} days to report a problem have passed.',
+    heroShipping: 'Local pickup at Legends; select items ship to buyers outside Colorado.',
+    guideShipping: 'You pay at the register, not on this site. Outside Colorado? Items marked 🚚 Ships can be shipped to you and paid with a Square payment link.',
+  },
+};
+
 export const HOW_IT_WORKS_FOOTER = 'Questions? Ask at the bar at Legends, or message FRPL.';
 
 /** Consignment home page. Steps come from HOW_IT_WORKS_TABS above; same {placeholders}. */
 export const HOME_HERO = {
   kicker: 'FRPL Consignment & Auctions',
   title: 'Buy and sell pool gear at Legends',
-  lede: 'Cues, cases and gear from local players.\nBuy from the case at Legends Brews & Cues in Colorado Springs, or bid online.\nLocal pickup at Legends; shipping isn’t available at this time.',
+  lede: 'Cues, cases and gear from local players.\nBuy from the case at Legends Brews & Cues in Colorado Springs, or bid online.\n{heroShipping}',
 };
 
 /** Leads the home page while the shop is still filling up (fewer than SELLER_FIRST_UNDER listings). */

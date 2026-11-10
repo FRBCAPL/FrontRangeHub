@@ -76,7 +76,7 @@ export function feeKindLabel(id) {
 
 export const PUBLIC_STATUSES = ['available', 'sold'];
 
-export const PAYMENT_METHODS = ['Cash', 'Card', 'Venmo', 'Cash App', 'Check', 'Other'];
+export const PAYMENT_METHODS = ['Cash', 'Card', 'Venmo', 'Cash App', 'Check', 'Square (online)', 'Other'];
 
 export const MESSAGE_TOPICS = [
   { id: 'buying', label: 'Buying or bidding' },

@@ -3,9 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 import { itemLabel } from '../../data/consignmentConstants.js';
 import { CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadPublicItem } from '../../services/consignmentService.js';
+import { loadShipPrice } from '../../services/consignmentShippingService.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { taxPercent, withTax } from '../../utils/consignmentTax.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
+import useShippingInfo from '../../hooks/useShippingInfo.js';
 import ConsignmentTaxTotal from './ConsignmentTaxTotal.jsx';
 import ConsignmentAuctionPanel from './ConsignmentAuctionPanel.jsx';
 import ConsignmentExampleAuctionPanel from './ConsignmentExampleAuctionPanel.jsx';
@@ -16,6 +18,7 @@ import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 import ConsignmentItemDetails from './ConsignmentItemDetails.jsx';
 import ConsignmentItemWatch from './ConsignmentItemWatch.jsx';
 import ConsignmentOfferButton from './ConsignmentOfferButton.jsx';
+import ConsignmentShipBox from './ConsignmentShipBox.jsx';
 import './consignment-product.css';
 
 function buyBarProps(item, auction, rate) {
@@ -44,6 +47,8 @@ export default function ConsignmentItemPage() {
   const [auction, setAuction] = useState(null);
   const buyRef = useRef(null);
   const taxRate = useTaxRate();
+  const shipping = useShippingInfo();
+  const [shipPrice, setShipPrice] = useState(null);
   const onAuction = useCallback((a) => setAuction(a || null), []);
 
   useEffect(() => {
@@ -61,6 +66,14 @@ export default function ConsignmentItemPage() {
     return () => { alive = false; };
   }, [itemNumber]);
 
+  const itemId = item?.id;
+  useEffect(() => {
+    let alive = true;
+    setShipPrice(null);
+    if (itemId && shipping.enabled) loadShipPrice(itemId).then((p) => { if (alive) setShipPrice(p); });
+    return () => { alive = false; };
+  }, [itemId, shipping.enabled]);
+
   if (error) {
     return (
       <div className="cs-page">
@@ -76,12 +89,16 @@ export default function ConsignmentItemPage() {
   const isSold = item.status === 'sold';
   const auctionAtLegends = Boolean(auction?.delivered_at);
   const auctionKey = auction ? `${auction.status}:${auction.bid_count}` : '';
+  const ships = !isExample && shipPrice != null;
   let auctionPanel = null;
   if (isAuction) {
     auctionPanel = isExample
       ? <ConsignmentExampleAuctionPanel sample={item.example_auction} />
-      : <ConsignmentAuctionPanel itemId={item.id} onAuction={onAuction} />;
+      : <ConsignmentAuctionPanel itemId={item.id} onAuction={onAuction} shipPrice={ships ? shipPrice : null} />;
   }
+  let shipLine = 'Shipping isn’t available at this time.';
+  if (ships) shipLine = `Outside Colorado? It can ship for ${formatDollars(shipPrice)}.`;
+  else if (shipping.enabled) shipLine = 'This item doesn’t ship.';
   let tag = isAuction ? '' : '🏪 In the case at Legends';
   if (isExample) tag = 'Example · not for sale';
   else if (isSold) tag = 'Sold';
@@ -113,13 +130,16 @@ export default function ConsignmentItemPage() {
           {isExample || item.status !== 'available' ? null : (
             <ConsignmentOfferButton itemId={item.id} itemName={item.name} refreshKey={auctionKey} />
           )}
+          {ships ? (
+            <ConsignmentShipBox item={item} auction={auction} shipPrice={shipPrice} complaintDays={shipping.complaintDays} />
+          ) : null}
           {isExample || isSold ? null : <ConsignmentItemWatch itemId={item.id} />}
           <p className="cs-meta cs-pickup">
             📍 Pick up and pay in person at{' '}
             <a href={LEGENDS_MAP_URL} target="_blank" rel="noopener noreferrer">
               {LEGENDS.name}, {LEGENDS.address ? `${LEGENDS.address}, ` : ''}{LEGENDS.city}, {LEGENDS.state}
             </a>
-            . Shipping isn’t available at this time.
+            . {shipLine}
           </p>
         </div>
       </div>
@@ -151,7 +171,11 @@ export default function ConsignmentItemPage() {
               : `The total shown includes ${taxPercent(taxRate)} sales tax. Pay at the register.`}
             {' '}This site does not take payment.
           </li>
-          <li>Pickup is in person at {LEGENDS.name}. Shipping isn’t available at this time.</li>
+          <li>
+            {ships
+              ? `Pickup is in person at ${LEGENDS.name}. Buyers outside Colorado (lower 48 states and DC) can have it shipped for ${formatDollars(shipPrice)} shipping & handling, paid online with no Colorado sales tax. Report any problem within ${shipping.complaintDays} days of delivery.`
+              : `Pickup is in person at ${LEGENDS.name}. ${shipLine}`}
+          </li>
         </ul>
       </details>
 

@@ -42,17 +42,21 @@ function EndedMessage({ auction, iWon, payDays, rate }) {
   return <p className="cs-lede">Auction ended. {sold}</p>;
 }
 
-/** onAuction(auction): lets the item page follow the latest auction state (e.g. the "at Legends" badge). */
-export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
+/**
+ * onAuction(auction): lets the item page follow the latest auction state (e.g. the "at Legends" badge), with
+ * iWon set when the signed-in user is the winner. shipPrice: shown in the bid confirmations when the item ships.
+ */
+export default function ConsignmentAuctionPanel({ itemId, onAuction, shipPrice = null }) {
   const {
     auction, history, userId, myTopBid, isHighBidder, outbid, remaining, loading, error, stale, refresh,
   } = useConsignmentAuction(itemId);
   const [payDays, setPayDays] = useState(DEFAULT_PAY_DAYS);
   const rate = useTaxRate();
+  const iWon = Boolean(auction && myTopBid && auction.winning_bid != null && Number(myTopBid.amount) === Number(auction.winning_bid));
 
   useEffect(() => {
-    onAuction?.(auction || null);
-  }, [auction, onAuction]);
+    onAuction?.(auction ? { ...auction, iWon } : null);
+  }, [auction, iWon, onAuction]);
 
   useEffect(() => {
     loadPublicSettings()
@@ -65,7 +69,6 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
   if (!auction) return <div className="cs-auction-panel"><p className="cs-lede">Bidding isn’t open on this item right now. Ask at Legends for details.</p></div>;
 
   const live = auction.status === 'live';
-  const iWon = Boolean(myTopBid && auction.winning_bid != null && Number(myTopBid.amount) === Number(auction.winning_bid));
   const closing = live && remaining < 5 * 60 * 1000;
 
   return (
@@ -102,6 +105,7 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction }) {
             isHighBidder={isHighBidder}
             outbid={outbid}
             payDays={payDays}
+            shipPrice={shipPrice}
             onBid={refresh}
           />
           {auction.delivered_at ? (

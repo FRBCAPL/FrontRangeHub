@@ -39,6 +39,10 @@ import ConsignmentMessagesPanel from './ConsignmentMessagesPanel.jsx';
 import ConsignmentOffersPanel from './ConsignmentOffersPanel.jsx';
 import ConsignmentGearPanel from './ConsignmentGearPanel.jsx';
 import ConsignmentVisitsPanel from './ConsignmentVisitsPanel.jsx';
+import ConsignmentShippingPanel from './ConsignmentShippingPanel.jsx';
+import ConsignmentShippingSettings from './ConsignmentShippingSettings.jsx';
+import ConsignmentItemShipModal from './ConsignmentItemShipModal.jsx';
+import { loadShipPrices } from '../../services/consignmentShippingService.js';
 
 /** Confirmation text for one-tap status buttons that take an item out of the shop, or null for none. */
 function statusChangeQuestion(item, next) {
@@ -55,6 +59,7 @@ const TABS = [
   { id: 'auctions', label: 'Auctions' },
   { id: 'offers', label: 'Offers' },
   { id: 'gear', label: 'New gear' },
+  { id: 'shipping', label: 'Shipping' },
   { id: 'sellers', label: 'Sellers' },
   { id: 'bidders', label: 'Bidders' },
   { id: 'messages', label: 'Messages' },
@@ -87,6 +92,9 @@ export default function ConsignmentAdmin() {
   const [payingSeller, setPayingSeller] = useState(null);
   const [auctioning, setAuctioning] = useState(null);
   const [settings, setSettings] = useState(null);
+  const [shipPrices, setShipPrices] = useState({});
+  const [shipEditing, setShipEditing] = useState(null);
+  const shippingReady = Boolean(settings && 'shipping_enabled' in settings);
   const [tab, setTab] = useState(linkedTab);
   const [sellerFilter, setSellerFilter] = useState(null);
   const shownRows = sellerFilter ? rows.filter((item) => sellerMatches(item.seller, sellerFilter)) : rows;
@@ -118,6 +126,13 @@ export default function ConsignmentAdmin() {
     refresh();
   }, [status]);
 
+  const refreshShipPrices = () => loadShipPrices().then(setShipPrices);
+  useEffect(() => {
+    if (shippingReady) refreshShipPrices();
+  }, [shippingReady]);
+
+  const reloadSettings = () => loadSettings().then(setSettings).catch((err) => setError(err.message));
+
   useEffect(() => {
     loadSettings()
       .then((row) => {
@@ -142,6 +157,7 @@ export default function ConsignmentAdmin() {
     printTag: (item) => navigate(consignmentTagPath(item.item_number)),
     sellerPaid: setPayingSeller,
     auction: setAuctioning,
+    shipping: shippingReady ? setShipEditing : null,
     undoSellerPaid: (item) => {
       if (!window.confirm(`Mark ${itemLabel(item)} as NOT paid to the seller?`)) return;
       clearSellerPaid(item.id).then(refresh).catch((err) => setError(err.message));
@@ -187,6 +203,7 @@ export default function ConsignmentAdmin() {
       {tab === 'bidders' ? <ConsignmentBiddersPanel /> : null}
       {tab === 'offers' ? <ConsignmentOffersPanel /> : null}
       {tab === 'gear' ? <ConsignmentGearPanel /> : null}
+      {tab === 'shipping' ? <ConsignmentShippingPanel shippingOn={Boolean(settings?.shipping_enabled)} /> : null}
       {tab === 'messages' ? <ConsignmentMessagesPanel /> : null}
       {tab === 'visitors' ? <ConsignmentVisitsPanel /> : null}
       {tab === 'settings' ? (
@@ -194,6 +211,7 @@ export default function ConsignmentAdmin() {
           {error ? <p className="cs-error">{error}</p> : null}
           <ConsignmentTaxSettings settings={settings} onError={setError} />
           <ConsignmentAgreementSettings settings={settings} onError={setError} />
+          <ConsignmentShippingSettings settings={settings} onError={setError} onSaved={reloadSettings} />
         </>
       ) : null}
       {tab === 'auctions' ? (
@@ -233,7 +251,7 @@ export default function ConsignmentAdmin() {
             </thead>
             <tbody>
               {shownRows.map((item) => (
-                <ConsignmentAdminRow key={item.id} item={item} graceDays={graceDays} actions={actions} />
+                <ConsignmentAdminRow key={item.id} item={item} graceDays={graceDays} actions={actions} shipPrice={shipPrices[item.id] ?? null} />
               ))}
             </tbody>
           </table>
@@ -275,6 +293,14 @@ export default function ConsignmentAdmin() {
           consignmentDays={consignmentDays}
           policy={policy}
           onClose={() => { setRenewing(null); refresh(); }}
+        />
+      ) : null}
+      {shipEditing ? (
+        <ConsignmentItemShipModal
+          item={shipEditing}
+          price={shipPrices[shipEditing.id] ?? null}
+          shippingOn={Boolean(settings?.shipping_enabled)}
+          onClose={(saved) => { setShipEditing(null); if (saved) refreshShipPrices(); }}
         />
       ) : null}
       {payingSeller ? (

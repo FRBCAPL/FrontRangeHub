@@ -1,17 +1,19 @@
 import { CONSIGNMENT_DAYS, LEGENDS, LEGENDS_PLACE, PICKUP_GRACE_DAYS } from './consignmentConstants.js';
 import { feeTextValues } from '../utils/consignmentFeeText.js';
 import { fillHowItWorks } from './consignmentHowItWorks.js';
+import { DEFAULT_COMPLAINT_DAYS } from '../utils/consignmentShipping.js';
 
 export const SELLER_PAYOUT_DAYS = 7;
 export const UNCLAIMED_SALE_DAYS = 30;
 
-const SHARED_TERMS = `• Everything happens in person at ${LEGENDS_PLACE}: drop-off, inspection, payment and pickup. FRPL does not ship items. You must be able to get to Legends yourself.
-• FRPL pays you within ${SELLER_PAYOUT_DAYS} days of the buyer's payment. Collect your payment at Legends.
+const SHARED_TERMS = `• Drop-off, inspection, payment and pickup happen in person at ${LEGENDS_PLACE}. You must be able to get to Legends yourself.
+• FRPL may ship a sold item to a buyer outside Colorado. FRPL packs and ships it from Legends with tracking, and the buyer pays shipping. For a shipped sale, FRPL pays you once the item is delivered and the buyer's {shipDays} days to report a problem have passed.
+• FRPL pays you within ${SELLER_PAYOUT_DAYS} days of the buyer's payment (for a shipped sale, of the end of that window). Collect your payment at Legends.
 • Your item is left at your own risk. Neither FRPL nor Legends Brews & Cues is responsible for loss, theft or damage while it is on consignment, including during an inspection. Insure valuable items yourself if you want coverage.
 • An item or payment not picked up within {graceDays} days becomes unclaimed property held by Legends Brews & Cues. After ${UNCLAIMED_SALE_DAYS} more days it may be sold, and you give up any claim to the item, the payment, or the money from its sale.`;
 
 /** Placeholders filled from consignment_settings. */
-export const AUCTION_AGREEMENT_PLACEHOLDERS = '{auctionFee}, {commission}, {freeDrop}, {repeatShare}, {payDays}, {deliverDays}, {graceDays}';
+export const AUCTION_AGREEMENT_PLACEHOLDERS = '{auctionFee}, {commission}, {freeDrop}, {repeatShare}, {payDays}, {deliverDays}, {graceDays}, {shipDays}';
 
 export const DEFAULT_AUCTION_AGREEMENT = `By checking the box you confirm that:
 
@@ -29,7 +31,7 @@ export const DEFAULT_AUCTION_AGREEMENT = `By checking the box you confirm that:
 • If the item doesn't sell, or the winner declines or doesn't pay, you choose on your My items page: relist it, switch it to a fixed-price consignment, or keep it (pick it up from Legends within {graceDays} days if you delivered it). Every relist is free if you lower the reserve {freeDrop} or more; otherwise a relist costs {repeatShare} the original listing fee. Relist fees don't count toward FRPL's share.
 ${SHARED_TERMS}`;
 
-export const CONSIGNMENT_AGREEMENT_PLACEHOLDERS = '{fee}, {shelfCommission}, {freeDrop}, {repeatShare}, {days}, {graceDays}';
+export const CONSIGNMENT_AGREEMENT_PLACEHOLDERS = '{fee}, {shelfCommission}, {freeDrop}, {repeatShare}, {days}, {graceDays}, {shipDays}';
 
 export const DEFAULT_CONSIGNMENT_AGREEMENT = `By checking the box you confirm that:
 
@@ -57,6 +59,7 @@ const OUTDATED_PHRASES = [
   'a new listing fee may apply',
   'paid at drop-off before the auction starts',
   'Your first relist is free',
+  'FRPL does not ship items',
 ];
 
 // Every current agreement must cover these; saved text without them predates the liability and unclaimed terms.
@@ -90,11 +93,14 @@ export function consignmentAgreementTemplate(settings) {
   return savedOrDefault(settings?.agreement_text, DEFAULT_CONSIGNMENT_AGREEMENT);
 }
 
+const shipDaysText = (settings) => String(Number(settings?.shipping_complaint_days ?? DEFAULT_COMPLAINT_DAYS));
+
 export function fillConsignmentAgreement(template, settings) {
   return fillHowItWorks(template, {
     ...feeTextValues(settings),
     days: String(Number(settings?.consignment_days || CONSIGNMENT_DAYS)),
     graceDays: String(Number(settings?.pickup_grace_days ?? PICKUP_GRACE_DAYS)),
+    shipDays: shipDaysText(settings),
   });
 }
 
@@ -104,5 +110,6 @@ export function fillAuctionAgreement(template, settings) {
     payDays: String(Number(settings?.auction_payment_days ?? 7)),
     deliverDays: String(Number(settings?.auction_delivery_days ?? 3)),
     graceDays: String(Number(settings?.pickup_grace_days ?? PICKUP_GRACE_DAYS)),
+    shipDays: shipDaysText(settings),
   });
 }

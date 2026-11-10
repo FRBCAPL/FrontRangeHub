@@ -6,9 +6,9 @@ import { originalListingFee, saleSplit } from '../../utils/consignmentFeePolicy.
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
 
-export default function ConsignmentAuctionPaidModal({ auction, onClose }) {
-  const [method, setMethod] = useState(PAYMENT_METHODS[0]);
-  const [txnFee, setTxnFee] = useState('');
+export default function ConsignmentAuctionPaidModal({ auction, onClose, defaultMethod = PAYMENT_METHODS[0], defaultFee = null }) {
+  const [method, setMethod] = useState(defaultMethod);
+  const [txnFee, setTxnFee] = useState(defaultFee != null ? String(defaultFee) : '');
   const [credit, setCredit] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

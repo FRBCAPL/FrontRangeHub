@@ -5,6 +5,7 @@ import { currentUserId, onAuthChange, openHubLogin } from '../../services/consig
 import { loadMyOffers } from '../../services/consignmentOffersService.js';
 import ConsignmentOfferList from './ConsignmentOfferList.jsx';
 import ConsignmentMyGearOrders from './ConsignmentMyGearOrders.jsx';
+import ConsignmentMyShipments from './ConsignmentMyShipments.jsx';
 
 /** Buyer page: offers I've made, counters waiting on me, accepted holds, and reserved new gear. */
 export default function ConsignmentMyOffers() {
@@ -58,6 +59,7 @@ export default function ConsignmentMyOffers() {
             </div>
           ) : null}
           {offers.length ? <ConsignmentOfferList offers={offers} view="buyer" onChanged={() => load(userId)} /> : null}
+          <ConsignmentMyShipments userId={userId} />
           <ConsignmentMyGearOrders userId={userId} />
         </>
       ) : null}

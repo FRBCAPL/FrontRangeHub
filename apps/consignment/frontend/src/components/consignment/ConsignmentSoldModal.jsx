@@ -6,10 +6,10 @@ import { shelfSaleSplit, usesShelfCommission } from '../../utils/consignmentFeeP
 import { feesTotal, formatDollars } from '../../utils/consignmentMoney.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
 
-export default function ConsignmentSoldModal({ item, onClose, onSave }) {
+export default function ConsignmentSoldModal({ item, onClose, onSave, defaultMethod = 'Cash', defaultFee = null }) {
   const [actual, setActual] = useState(item.selling_price);
-  const [method, setMethod] = useState('Cash');
-  const [txnFee, setTxnFee] = useState('');
+  const [method, setMethod] = useState(defaultMethod);
+  const [txnFee, setTxnFee] = useState(defaultFee != null ? String(defaultFee) : '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [offer, setOffer] = useState(null);

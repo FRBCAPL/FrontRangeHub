@@ -1,0 +1,57 @@
+/* Out-of-state shipping: item page box, request form, order cards, admin panel. */
+.cs-ship-box {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.08);
+  font-size: 0.9rem;
+}
+.cs-ship-box p { margin: 0; color: var(--cs-muted); line-height: 1.45; }
+.cs-ship-box .cs-btn-secondary { justify-self: start; }
+.cs-ship-box-mine { border-color: rgba(34, 197, 94, 0.5); background: rgba(34, 197, 94, 0.08); }
+
+.cs-modal-card.cs-ship-form { width: min(560px, 100%); text-align: left; }
+.cs-ship-form h2 { margin: 0 0 4px; }
+.cs-ship-sum {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--cs-line);
+  border-radius: 10px;
+}
+.cs-ship-sum > div { display: flex; justify-content: space-between; gap: 12px; }
+.cs-ship-sum-total { padding-top: 4px; border-top: 1px solid var(--cs-line); font-size: 1.05rem; }
+.cs-ship-sum .cs-hint { margin: 2px 0 0; }
+
+.cs-ship-status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(148, 163, 184, 0.2);
+}
+.cs-ship-status-requested { background: rgba(229, 62, 62, 0.15); color: #f87171; }
+.cs-ship-status-invoiced { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
+.cs-ship-status-paid { background: rgba(56, 189, 248, 0.18); color: #7dd3fc; }
+.cs-ship-status-shipped,
+.cs-ship-status-arrived { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
+
+.cs-ship-address { white-space: pre-line; }
+.cs-ship-warn { color: #fbbf24; font-weight: 700; }
+
+.cs-card-ships {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.78);
+  color: #7dd3fc;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.cs-ship-settings .cs-field input[type='number'] { max-width: 120px; }

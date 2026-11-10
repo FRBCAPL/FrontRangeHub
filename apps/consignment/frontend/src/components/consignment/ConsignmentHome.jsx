@@ -81,7 +81,7 @@ export default function ConsignmentHome() {
       <header className="cs-home-hero">
         <p className="cs-kicker">{HOME_HERO.kicker}</p>
         <h1>{HOME_HERO.title}</h1>
-        <p className="cs-lede">{HOME_HERO.lede}</p>
+        <p className="cs-lede">{fill(HOME_HERO.lede)}</p>
         <span className="cs-legends">Available at Legends Brews & Cues</span>
       </header>
 

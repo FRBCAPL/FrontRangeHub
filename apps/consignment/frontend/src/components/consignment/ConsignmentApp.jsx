@@ -26,6 +26,7 @@ import './consignment-messages.css';
 import './consignment-examples.css';
 import './consignment-offers.css';
 import './consignment-gear.css';
+import './consignment-shipping.css';
 
 function scrollConsignmentToTop() {
   window.scrollTo(0, 0);
