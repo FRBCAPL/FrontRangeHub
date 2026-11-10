@@ -6,6 +6,7 @@ import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { withTax } from '../../utils/consignmentTax.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 import {
   canAnswerOffer, counterError, offerHistoryLines, offerMinimum, offerStatusLabel,
 } from '../../utils/consignmentOfferMath.js';
@@ -19,6 +20,7 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const rate = useTaxRate();
+  const { confirm } = useConsignmentConfirm();
   const taxed = (n) => formatDollars(withTax(n, rate));
   const item = offer.item || {};
   const answer = canAnswerOffer(offer, view);
@@ -32,7 +34,7 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
   };
 
   const run = async (fn, question) => {
-    if (question && !window.confirm(question)) return;
+    if (question && !(await confirm(question))) return;
     setBusy(true);
     setError('');
     try {
@@ -46,10 +48,14 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
     }
   };
 
-  const acceptQuestion = view === 'buyer'
-    ? `Accept ${formatDollars(offer.amount)} for ${item.name}? You’re agreeing to buy it at this price (${taxed(offer.amount)} with tax).`
-    : `Accept ${formatDollars(offer.amount)} for ${item.name}?${offer.payout != null ? ` The seller receives ${formatDollars(offer.payout)}.` : ''} ${
-      isAuction ? 'The auction ends and the buyer wins it.' : 'The item is held for the buyer.'}`;
+  const acceptQuestion = {
+    title: `Accept ${formatDollars(offer.amount)} for ${item.name}?`,
+    message: view === 'buyer'
+      ? `You’re agreeing to buy it at this price (${taxed(offer.amount)} with tax).`
+      : `${offer.payout != null ? `The seller receives ${formatDollars(offer.payout)}. ` : ''}${
+        isAuction ? 'The auction ends and the buyer wins it.' : 'The item is held for the buyer.'}`,
+    confirmLabel: `Accept ${formatDollars(offer.amount)}`,
+  };
   let acceptText = `Accept ${formatDollars(offer.amount)}`;
   if (view === 'seller' && offer.payout != null) acceptText += ` (you’d receive ${formatDollars(offer.payout)})`;
 
@@ -117,7 +123,7 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
             type="button"
             className="cs-btn-secondary"
             disabled={busy}
-            onClick={() => run(() => respondToOffer(offer.id, 'decline'), `Decline the ${formatDollars(offer.amount)} offer?`)}
+            onClick={() => run(() => respondToOffer(offer.id, 'decline'), { title: `Decline the ${formatDollars(offer.amount)} offer?`, confirmLabel: 'Decline' })}
           >
             Decline
           </button>
@@ -150,7 +156,7 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
           type="button"
           className="cs-btn-link"
           disabled={busy}
-          onClick={() => run(() => withdrawOffer(offer.id), 'Withdraw this offer?')}
+          onClick={() => run(() => withdrawOffer(offer.id), { title: 'Withdraw this offer?', confirmLabel: 'Withdraw', cancelLabel: 'Keep it' })}
         >
           Withdraw offer
         </button>
@@ -160,7 +166,11 @@ export default function ConsignmentOfferCard({ offer, view, onChanged }) {
           type="button"
           className="cs-btn-link"
           disabled={busy}
-          onClick={() => run(() => releaseOfferHold(offer.id), 'End the hold? The item goes back on sale at its full price and the buyer is emailed.')}
+          onClick={() => run(() => releaseOfferHold(offer.id), {
+            title: 'End the hold?',
+            message: 'The item goes back on sale at its full price and the buyer is emailed.',
+            confirmLabel: 'End hold',
+          })}
         >
           Buyer backed out: end hold
         </button>

@@ -4,6 +4,7 @@ import { bidderName, defaultAuction } from '../../services/consignmentAuctionAdm
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import ConsignmentModal from './ConsignmentModal.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
   const overdue = Boolean(auction.payment_due_at) && new Date(auction.payment_due_at).getTime() < Date.now();
@@ -11,12 +12,15 @@ export default function ConsignmentAuctionDefaultModal({ auction, onClose }) {
   const [reason, setReason] = useState('Did not pay for a won auction');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const { confirm } = useConsignmentConfirm();
 
   const save = async (e) => {
     e.preventDefault();
-    if (!overdue && !window.confirm(
-      `The pay window is still open until ${formatDateTime(auction.payment_due_at)}. Mark this winner unpaid anyway?`,
-    )) return;
+    if (!overdue && !(await confirm({
+      title: 'Mark this winner unpaid anyway?',
+      message: `The pay window is still open until ${formatDateTime(auction.payment_due_at)}.`,
+      confirmLabel: 'Mark unpaid',
+    }))) return;
     setBusy(true);
     setError('');
     try {

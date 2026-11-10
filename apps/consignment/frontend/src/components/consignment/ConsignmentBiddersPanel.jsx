@@ -4,6 +4,7 @@ import { loadBidderAccounts } from '../../services/consignmentBidderAccountsServ
 import { formatShortDate } from '../../utils/consignmentDates.js';
 import ConsignmentAccountRequestsPanel from './ConsignmentAccountRequestsPanel.jsx';
 import ConsignmentBidderItems from './ConsignmentBidderItems.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 function plural(n, word) {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -57,6 +58,7 @@ export default function ConsignmentBiddersPanel() {
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
+  const { confirm } = useConsignmentConfirm();
 
   const refresh = (q = query) => loadBidderAccounts(q)
     .then((data) => { setRows(data); setError(''); })
@@ -70,10 +72,13 @@ export default function ConsignmentBiddersPanel() {
     refresh(q);
   };
 
-  const toggle = (b) => {
+  const toggle = async (b) => {
     const next = !b.suspended;
     const who = bidderName(b) || 'this bidder';
-    if (!window.confirm(next ? `Suspend ${who} from bidding?` : `Let ${who} bid again?`)) return;
+    const ok = await confirm(next
+      ? { title: `Suspend ${who} from bidding?`, confirmLabel: 'Suspend' }
+      : { title: `Let ${who} bid again?`, confirmLabel: 'Unsuspend' });
+    if (!ok) return;
     setBidderSuspended(b.id, next).then(() => refresh()).catch((err) => setError(err.message));
   };
 

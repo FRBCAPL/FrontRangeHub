@@ -9,6 +9,7 @@ import ConsignmentShipmentActionModal from './ConsignmentShipmentActionModal.jsx
 import ConsignmentShipmentCard from './ConsignmentShipmentCard.jsx';
 import ConsignmentShipmentWarnings from './ConsignmentShipmentWarnings.jsx';
 import ConsignmentSoldModal from './ConsignmentSoldModal.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 export const SHIPPED_PAYMENT_METHOD = 'Square (online)';
 
@@ -40,6 +41,7 @@ export default function ConsignmentShippingPanel({ shippingOn }) {
   const [step, setStep] = useState(null);
   const [sale, setSale] = useState(null);
   const requestRef = useRef(0);
+  const { confirm, prompt } = useConsignmentConfirm();
 
   const load = useCallback(async () => {
     const request = ++requestRef.current;
@@ -82,9 +84,14 @@ export default function ConsignmentShippingPanel({ shippingOn }) {
     });
   }
 
-  function markPaid(s) {
+  async function markPaid(s) {
     if (s.item_status === 'sold') {
-      if (!window.confirm(`The sale is already recorded. Mark the shipment for ${s.item_name} paid?`)) return;
+      const ok = await confirm({
+        title: `Mark the shipment for ${s.item_name} paid?`,
+        message: 'The sale is already recorded.',
+        confirmLabel: 'Mark paid',
+      });
+      if (!ok) return;
       run(s, () => updateShipment(s.id, 'paid'));
       return;
     }
@@ -98,17 +105,30 @@ export default function ConsignmentShippingPanel({ shippingOn }) {
     });
   }
 
-  function act(s, action) {
+  async function act(s, action) {
     if (['invoiced', 'shipped', 'square'].includes(action)) { setStep({ shipment: s, action }); return; }
     if (action === 'paid') { markPaid(s); return; }
     if (action === 'record') { openSale(s, false); return; }
     if (action === 'check') { checkPayment(s); return; }
-    if (action === 'arrived' && !window.confirm(`Mark ${s.item_name} delivered? The buyer’s window to report a problem starts now.`)) return;
+    if (action === 'arrived') {
+      const ok = await confirm({
+        title: `Mark ${s.item_name} delivered?`,
+        message: 'The buyer’s window to report a problem starts now.',
+        confirmLabel: 'Delivered',
+      });
+      if (!ok) return;
+    }
     let note = '';
     if (action === 'cancel') {
-      const answer = window.prompt('Reason for the buyer (optional). They get an email:', '');
+      const answer = await prompt({
+        title: `Cancel the shipping request for ${s.item_name}?`,
+        message: 'The buyer gets an email.',
+        inputLabel: 'Reason for the buyer (optional)',
+        confirmLabel: 'Cancel request',
+        cancelLabel: 'Keep it',
+      });
       if (answer === null) return;
-      note = answer.trim();
+      note = answer;
     }
     run(s, async () => {
       if (action === 'cancel' && s.square_link_id) await voidSquareLink(s.id);

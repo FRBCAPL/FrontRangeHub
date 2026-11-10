@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { cancelShipping, loadMyShipments } from '../../services/consignmentShippingService.js';
 import { canBuyerCancelShipment } from '../../utils/consignmentShipping.js';
 import ConsignmentShipmentCard from './ConsignmentShipmentCard.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 const NEXT_STEP = {
   requested: 'FRPL will email you a secure payment link.',
@@ -16,6 +17,7 @@ export default function ConsignmentMyShipments({ userId }) {
   const [rows, setRows] = useState([]);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
+  const { confirm } = useConsignmentConfirm();
 
   const load = useCallback(async () => {
     setRows(userId ? await loadMyShipments() : []);
@@ -24,8 +26,13 @@ export default function ConsignmentMyShipments({ userId }) {
   useEffect(() => { load(); }, [load]);
 
   async function cancel(s) {
-    const pickup = s.auction_id ? ' You’ll pick it up and pay at Legends instead.' : '';
-    if (!window.confirm(`Cancel the shipping request for ${s.item_name || 'this item'}?${pickup}`)) return;
+    const ok = await confirm({
+      title: `Cancel the shipping request for ${s.item_name || 'this item'}?`,
+      message: s.auction_id ? 'You’ll pick it up and pay at Legends instead.' : '',
+      confirmLabel: 'Cancel request',
+      cancelLabel: 'Keep it',
+    });
+    if (!ok) return;
     setBusyId(s.id);
     setError('');
     try {

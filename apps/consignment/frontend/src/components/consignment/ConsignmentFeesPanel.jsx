@@ -3,6 +3,7 @@ import { FEE_KINDS, PAYMENT_METHODS, feeKindLabel } from '../../data/consignment
 import { deleteFee, recordFee } from '../../services/consignmentFeesService.js';
 import { feesTotal, formatDollars } from '../../utils/consignmentMoney.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 /** Fee history for one item. Changes save immediately (separate from the edit form's Save). */
 export default function ConsignmentFeesPanel({ item, defaultFee }) {
@@ -12,6 +13,7 @@ export default function ConsignmentFeesPanel({ item, defaultFee }) {
   const [method, setMethod] = useState(PAYMENT_METHODS[0]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const { confirm } = useConsignmentConfirm();
 
   const add = async () => {
     setBusy(true);
@@ -27,7 +29,7 @@ export default function ConsignmentFeesPanel({ item, defaultFee }) {
   };
 
   const remove = async (fee) => {
-    if (!window.confirm(`Delete this ${formatDollars(fee.amount)} fee record?`)) return;
+    if (!(await confirm({ title: `Delete this ${formatDollars(fee.amount)} fee record?`, confirmLabel: 'Delete' }))) return;
     setBusy(true);
     setError('');
     try {

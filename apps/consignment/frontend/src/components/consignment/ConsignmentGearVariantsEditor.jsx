@@ -1,18 +1,21 @@
 import React from 'react';
 import { MAX_OPTION_NAMES, blankRow } from '../../utils/consignmentGearForm.js';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 /**
  * Option names (Weight, Tip, …) plus one row per combination with its own stock, SKU and optional price.
  * Controlled: optionNames / rows come from the product modal; onChange(optionNames, rows, removedId?).
  */
 export default function ConsignmentGearVariantsEditor({ optionNames, rows, basePrice, onChange, disabled }) {
+  const { confirm } = useConsignmentConfirm();
   const setNames = (names, nextRows) => onChange(names, nextRows);
   const setRow = (i, patch) => onChange(optionNames, rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
   const addOption = () => setNames([...optionNames, ''], rows.map((r) => ({ ...r, values: [...r.values, ''] })));
   const renameOption = (i, name) => setNames(optionNames.map((n, j) => (j === i ? name : n)), rows);
-  const removeOption = (i) => {
-    if (!window.confirm(`Remove the “${optionNames[i] || 'new'}” option from every row?`)) return;
+  const removeOption = async (i) => {
+    const ok = await confirm({ title: `Remove the “${optionNames[i] || 'new'}” option from every row?`, confirmLabel: 'Remove' });
+    if (!ok) return;
     setNames(optionNames.filter((_, j) => j !== i), rows.map((r) => ({ ...r, values: r.values.filter((_, j) => j !== i) })));
   };
   const addRow = () => onChange(optionNames, [...rows, blankRow(optionNames.length, rows[rows.length - 1])]);

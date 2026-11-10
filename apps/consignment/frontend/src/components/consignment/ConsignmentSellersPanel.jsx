@@ -4,6 +4,7 @@ import { loadSellerAccounts, loadSellerItemRows, setConsignmentSeller } from '..
 import { formatShortDate } from '../../utils/consignmentDates.js';
 import { sellerCountsLabel, sellerItemCounts, sellerMatches } from '../../utils/consignmentSellerItems.js';
 import ConsignmentSellerItems from './ConsignmentSellerItems.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 function AccountRow({ user, busy, onSet, itemRows, onViewItems }) {
   const [open, setOpen] = useState(false);
@@ -58,6 +59,7 @@ export default function ConsignmentSellersPanel({ onViewItems }) {
   const [results, setResults] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
+  const { confirm } = useConsignmentConfirm();
 
   const refresh = () => loadSellerAccounts().then(setRows).catch((err) => setError(err.message));
   useEffect(() => {
@@ -78,10 +80,10 @@ export default function ConsignmentSellersPanel({ onViewItems }) {
 
   const onSet = async (user, allow) => {
     const who = bidderName(user) || 'this account';
-    let ask = `Remove selling for ${who}? Items they already listed stay as they are.`;
-    if (allow) ask = `Let ${who} list items to sell?`;
-    else if (!user.seller) ask = `Decline the seller request from ${who}?`;
-    if (!window.confirm(ask)) return;
+    let ask = { title: `Remove selling for ${who}?`, message: 'Items they already listed stay as they are.', confirmLabel: 'Remove seller' };
+    if (allow) ask = { title: `Let ${who} list items to sell?`, confirmLabel: 'Allow selling' };
+    else if (!user.seller) ask = { title: `Decline the seller request from ${who}?`, confirmLabel: 'Decline' };
+    if (!(await confirm(ask))) return;
     setBusyId(user.id);
     setError('');
     try {

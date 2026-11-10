@@ -16,6 +16,7 @@ import ConsignmentAuctionStartModal from './ConsignmentAuctionStartModal.jsx';
 import ConsignmentAuctionPaidModal from './ConsignmentAuctionPaidModal.jsx';
 import ConsignmentAuctionDefaultModal from './ConsignmentAuctionDefaultModal.jsx';
 import ConsignmentSecondChanceModal from './ConsignmentSecondChanceModal.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 const REFRESH_MS = 30000;
 
@@ -28,6 +29,7 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
   const [unpaid, setUnpaid] = useState(null);
   const [secondChance, setSecondChance] = useState(null);
   const [editingListing, setEditingListing] = useState(null);
+  const { confirm } = useConsignmentConfirm();
 
   const statusRef = useRef(status);
   statusRef.current = status;
@@ -50,17 +52,38 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
     return () => clearInterval(timer);
   }, [status]);
 
-  const run = (fn, confirmText) => (auction) => {
-    if (confirmText && !window.confirm(confirmText(auction))) return;
+  const run = (fn, question) => async (auction) => {
+    if (question && !(await confirm(question(auction)))) return;
     fn(auction).then(refresh).catch((err) => setError(err.message));
   };
 
   const actions = {
-    cancel: run(cancelAuction, (a) => `Cancel the auction for ${itemLabel(a.item)}? The item goes back to Pending.`),
-    toFixed: run(convertToFixedPrice, (a) => `Move ${itemLabel(a.item)} to fixed price? It goes back to Pending so you can set a retail price with Approve.`),
-    returned: run(returnToSeller, (a) => `Mark ${itemLabel(a.item)} as returned to the seller?`),
-    delivered: run(markAuctionDelivered, (a) => `${itemLabel(a.item)} is at Legends? The winner's ${settings?.auction_payment_days ?? 7}-day window to inspect and pay starts now. Let them know it's ready.`),
-    notDelivered: run(auctionNotDelivered, (a) => `The seller didn't deliver ${itemLabel(a.item)}? This cancels the sale (the winner owes nothing), withdraws the item, keeps the listing fee and removes the seller's selling access.`),
+    cancel: run(cancelAuction, (a) => ({
+      title: `Cancel the auction for ${itemLabel(a.item)}?`,
+      message: 'The item goes back to Pending.',
+      confirmLabel: 'Cancel auction',
+      cancelLabel: 'Keep it',
+    })),
+    toFixed: run(convertToFixedPrice, (a) => ({
+      title: `Move ${itemLabel(a.item)} to fixed price?`,
+      message: 'It goes back to Pending so you can set a retail price with Approve.',
+      confirmLabel: 'Move to fixed price',
+    })),
+    returned: run(returnToSeller, (a) => ({ title: `Mark ${itemLabel(a.item)} as returned to the seller?`, confirmLabel: 'Returned' })),
+    delivered: run(markAuctionDelivered, (a) => ({
+      title: `${itemLabel(a.item)} is at Legends?`,
+      message: `The winner’s ${settings?.auction_payment_days ?? 7}-day window to inspect and pay starts now. Let them know it’s ready.`,
+      confirmLabel: 'It’s at Legends',
+    })),
+    notDelivered: run(auctionNotDelivered, (a) => ({
+      title: `The seller didn’t deliver ${itemLabel(a.item)}?`,
+      lines: [
+        'The sale is cancelled; the winner owes nothing.',
+        'The item is withdrawn and the listing fee is kept.',
+        'The seller loses selling access.',
+      ],
+      confirmLabel: 'Not delivered',
+    })),
     relist: setRelisting,
     confirmChoice: (a) => {
       if (a.seller_choice === 'relist') setRelisting({ ...a, sellerReserve: a.seller_choice_reserve });

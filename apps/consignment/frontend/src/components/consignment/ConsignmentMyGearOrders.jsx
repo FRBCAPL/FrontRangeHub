@@ -4,12 +4,14 @@ import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import { cancelGearOrder, loadMyGearOrders } from '../../services/consignmentGearService.js';
 import { canBuyerCancel } from '../../utils/consignmentGearMath.js';
 import ConsignmentGearOrderCard from './ConsignmentGearOrderCard.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 /** "Reserved new gear" section on the My offers & orders page. Hidden when there's nothing to show. */
 export default function ConsignmentMyGearOrders({ userId }) {
   const [orders, setOrders] = useState([]);
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
+  const { confirm } = useConsignmentConfirm();
 
   const load = useCallback(async () => {
     setOrders(userId ? await loadMyGearOrders() : []);
@@ -18,7 +20,12 @@ export default function ConsignmentMyGearOrders({ userId }) {
   useEffect(() => { load(); }, [load]);
 
   async function cancel(order) {
-    if (!window.confirm(`Cancel your ${order.kind === 'special' ? 'special order' : 'reservation'} for ${order.product_name}?`)) return;
+    const ok = await confirm({
+      title: `Cancel your ${order.kind === 'special' ? 'special order' : 'reservation'} for ${order.product_name}?`,
+      confirmLabel: 'Cancel it',
+      cancelLabel: 'Keep it',
+    });
+    if (!ok) return;
     setBusyId(order.id);
     setError('');
     try {

@@ -7,6 +7,7 @@ import { clearSellDraft, loadSellDraft, saveSellDraft } from '../../services/con
 import { currentUserEmail, setMyItemTaxIncluded } from '../../services/consignmentSellerService.js';
 import { sellPretaxPrice, taxIncludedOn } from '../../utils/consignmentSellSteps.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 import { DEFAULT_FEE_POLICY, feePolicyFrom } from '../../utils/consignmentFeePolicy.js';
 import { SALE_METHODS } from './ConsignmentSubmitPricing.jsx';
 import ConsignmentSellWizard from './ConsignmentSellWizard.jsx';
@@ -72,6 +73,7 @@ export default function ConsignmentSubmit() {
   const [wizardOpen, setWizardOpen] = useState(() => searchParams.has('method'));
   const access = useSellerAccess();
   const taxRate = useTaxRate();
+  const { confirm } = useConsignmentConfirm();
 
   useEffect(() => {
     if (!access.seller) return;
@@ -116,8 +118,13 @@ export default function ConsignmentSubmit() {
     if (files.length) setPhotosLost(false);
   }, [files.length]);
 
-  const cancelListing = () => {
-    if (inProgress && !window.confirm('Cancel this listing? Everything you entered will be cleared.')) return;
+  const cancelListing = async () => {
+    if (inProgress && !(await confirm({
+      title: 'Cancel this listing?',
+      message: 'Everything you entered will be cleared.',
+      confirmLabel: 'Cancel listing',
+      cancelLabel: 'Keep editing',
+    }))) return;
     setForm((prev) => ({ ...empty, seller_email: prev.seller_email }));
     setFiles([]);
     setStepIndex(0);

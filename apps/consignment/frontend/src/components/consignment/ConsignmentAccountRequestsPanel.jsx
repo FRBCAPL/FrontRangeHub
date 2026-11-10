@@ -4,6 +4,7 @@ import { bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { setAccountApproval } from '../../services/consignmentAccountsService.js';
 import { setConsignmentSeller } from '../../services/consignmentSellerAccessService.js';
 import { formatShortDate } from '../../utils/consignmentDates.js';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 /**
  * New FRPL accounts waiting for approval. Only approved accounts can sign in and bid.
@@ -13,6 +14,7 @@ export default function ConsignmentAccountRequestsPanel() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState(null);
+  const { confirm } = useConsignmentConfirm();
 
   const refresh = async () => {
     const result = await supabaseDataService.getPendingUsers();
@@ -23,13 +25,13 @@ export default function ConsignmentAccountRequestsPanel() {
 
   const decide = async (user, approve, seller = false) => {
     const who = bidderName(user) || 'this account';
-    let ask = `Decline ${who}? They won't be able to sign in.`;
+    let ask = { title: `Decline ${who}?`, message: 'They won’t be able to sign in.', confirmLabel: 'Decline' };
     if (approve) {
       ask = seller
-        ? `Approve ${who} as a buyer and seller? They can sign in, bid, and list items to sell.`
-        : `Approve ${who}? They can sign in and bid on auctions.`;
+        ? { title: `Approve ${who} as a buyer and seller?`, message: 'They can sign in, bid, and list items to sell.', confirmLabel: 'Approve' }
+        : { title: `Approve ${who}?`, message: 'They can sign in and bid on auctions.', confirmLabel: 'Approve' };
     }
-    if (!window.confirm(ask)) return;
+    if (!(await confirm(ask))) return;
     setBusyId(user.id);
     setError('');
     try {

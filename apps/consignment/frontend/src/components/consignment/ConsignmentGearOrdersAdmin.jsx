@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { loadGearOrdersAdmin, updateGearOrder } from '../../services/consignmentGearAdminService.js';
 import ConsignmentGearOrderCard from './ConsignmentGearOrderCard.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
 const ACTIONS = {
   requested: [['ordered', 'Mark ordered'], ['ready', 'Arrived'], ['cancel', 'Cancel']],
@@ -10,9 +11,20 @@ const ACTIONS = {
 };
 
 const PROMPTS = {
-  ordered: 'Optional note for the customer (e.g. expected date):',
-  ready: 'Optional note for the customer:',
-  cancel: 'Reason for the customer (optional). They get an email:',
+  ordered: (o) => ({
+    title: `Mark ${o.product_name} ordered?`,
+    inputLabel: 'Note for the customer (optional)',
+    placeholder: 'e.g. expected date',
+    confirmLabel: 'Mark ordered',
+  }),
+  ready: (o) => ({ title: `${o.product_name} arrived?`, inputLabel: 'Note for the customer (optional)', confirmLabel: 'Arrived' }),
+  cancel: (o) => ({
+    title: `Cancel the order for ${o.product_name}?`,
+    message: 'The customer gets an email.',
+    inputLabel: 'Reason for the customer (optional)',
+    confirmLabel: 'Cancel order',
+    cancelLabel: 'Keep it',
+  }),
 };
 
 /** Admin: reservations and special orders, with the next step for each. */
@@ -23,6 +35,7 @@ export default function ConsignmentGearOrdersAdmin() {
   const [busyId, setBusyId] = useState(null);
   const [error, setError] = useState('');
   const requestRef = useRef(0);
+  const { confirm, prompt } = useConsignmentConfirm();
 
   const load = useCallback(async () => {
     const request = ++requestRef.current;
@@ -43,11 +56,12 @@ export default function ConsignmentGearOrdersAdmin() {
   async function act(order, action) {
     let note = '';
     if (PROMPTS[action]) {
-      const answer = window.prompt(PROMPTS[action], '');
+      const answer = await prompt(PROMPTS[action](order));
       if (answer === null) return;
       note = answer;
-    } else if (action === 'picked_up' && !window.confirm(`Mark ${order.product_name} picked up and paid?`)) {
-      return;
+    } else if (action === 'picked_up') {
+      const ok = await confirm({ title: `Mark ${order.product_name} picked up and paid?`, confirmLabel: 'Picked up & paid' });
+      if (!ok) return;
     }
     setBusyId(order.id);
     setError('');

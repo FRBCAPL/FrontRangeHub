@@ -1,0 +1,49 @@
+/* useConsignmentConfirm dialog: sits above every other consignment dialog. */
+.cs-confirm-portal .cs-modal {
+  z-index: 10050;
+  align-items: center;
+}
+
+.cs-modal-card.cs-confirm {
+  width: min(460px, 100%);
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+
+.cs-confirm h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.3;
+}
+
+.cs-confirm-message {
+  margin: 0;
+  color: var(--cs-muted);
+  line-height: 1.45;
+}
+
+.cs-confirm-lines {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 6px;
+  color: var(--cs-ink);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.cs-confirm label {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.cs-confirm textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.cs-confirm .cs-actions {
+  margin-top: 4px;
+}

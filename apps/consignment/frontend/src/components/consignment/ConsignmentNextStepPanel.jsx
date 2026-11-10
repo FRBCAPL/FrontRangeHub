@@ -5,6 +5,7 @@ import { AUCTION_DAYS } from '../../utils/consignmentAuctionDates.js';
 import { auctionRelistFee, DEFAULT_FEE_POLICY, listingFee } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import ConsignmentFeePayCodes from './ConsignmentFeePayCodes.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 import './consignment-next-step.css';
 
 function policyFor(item) {
@@ -36,14 +37,17 @@ export default function ConsignmentNextStepPanel({ item, settings, onDone }) {
   const [reserve, setReserve] = useState(a.seller_choice_reserve ?? freeLimit);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const { confirm } = useConsignmentConfirm();
 
   const rule = auctionRelistFee({ originalFee, previousReserve: previous, newReserve: reserve, policy });
 
   const submit = async (e) => {
     e.preventDefault();
-    if (choice === 'relist' && rule.free && !window.confirm(
-      `Start a new ${AUCTION_DAYS}-day auction now with a ${formatDollars(reserve)} reserve? Bidders can see it right away.`,
-    )) return;
+    if (choice === 'relist' && rule.free && !(await confirm({
+      title: `Start a new ${AUCTION_DAYS}-day auction now with a ${formatDollars(reserve)} reserve?`,
+      message: 'Bidders can see it right away.',
+      confirmLabel: 'Start auction',
+    }))) return;
     setBusy(true);
     setError('');
     try {

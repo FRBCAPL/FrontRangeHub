@@ -43,14 +43,15 @@ import { loadShipOptions } from '../../services/consignmentShippingService.js';
 import { shipRulesFromSettings } from '../../utils/consignmentShipPrice.js';
 import { ITEM_STATUS_TABS, ITEM_TAB_IDS } from '../../utils/consignmentAdminItemTabs.js';
 import ConsignmentItemStatusTabs from './ConsignmentItemStatusTabs.jsx';
+import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
 
-/** Confirmation text for one-tap status buttons that take an item out of the shop, or null for none. */
+/** Confirm dialog for one-tap status buttons that take an item out of the shop, or null for none. */
 function statusChangeQuestion(item, next) {
   const label = itemLabel(item);
-  if (next === 'withdrawn' && item.status === 'pending') return `Reject ${label}? It won’t be listed.`;
-  if (next === 'withdrawn') return `Withdraw ${label}? It comes out of the shop right away.`;
-  if (next === 'returned' && item.status === 'expired') return `Mark ${label} picked up by the seller?`;
-  if (next === 'returned') return `Mark ${label} returned to the seller? It comes out of the shop right away.`;
+  if (next === 'withdrawn' && item.status === 'pending') return { title: `Reject ${label}?`, message: 'It won’t be listed.', confirmLabel: 'Reject' };
+  if (next === 'withdrawn') return { title: `Withdraw ${label}?`, message: 'It comes out of the shop right away.', confirmLabel: 'Withdraw' };
+  if (next === 'returned' && item.status === 'expired') return { title: `Mark ${label} picked up by the seller?`, confirmLabel: 'Picked up' };
+  if (next === 'returned') return { title: `Mark ${label} returned to the seller?`, message: 'It comes out of the shop right away.', confirmLabel: 'Returned' };
   return null;
 }
 
@@ -76,6 +77,7 @@ function tabFromParams(params) {
 
 export default function ConsignmentAdmin() {
   const navigate = useNavigate();
+  const { confirm } = useConsignmentConfirm();
   const [params] = useSearchParams();
   const linkedTab = tabFromParams(params);
   const linkedStatus = params.get('status');
@@ -164,15 +166,15 @@ export default function ConsignmentAdmin() {
     sellerPaid: setPayingSeller,
     auction: setAuctioning,
     shipping: shippingReady ? setShipEditing : null,
-    undoSellerPaid: (item) => {
-      if (!window.confirm(`Mark ${itemLabel(item)} as NOT paid to the seller?`)) return;
+    undoSellerPaid: async (item) => {
+      if (!(await confirm({ title: `Mark ${itemLabel(item)} as NOT paid to the seller?`, confirmLabel: 'Undo paid' }))) return;
       clearSellerPaid(item.id).then(refresh).catch((err) => setError(err.message));
     },
   };
 
   const setStatusOf = async (item, next) => {
     const question = item.is_example ? null : statusChangeQuestion(item, next);
-    if (question && !window.confirm(question)) return;
+    if (question && !(await confirm(question))) return;
     try {
       await changeItemStatus(item, next);
     } finally {
@@ -182,7 +184,12 @@ export default function ConsignmentAdmin() {
 
   const deletePhotos = async (item) => {
     const n = item.photo_urls?.length || 0;
-    if (!window.confirm(`Delete ${n} photo${n === 1 ? '' : 's'} for ${itemLabel(item)}? This can't be undone.`)) return;
+    const ok = await confirm({
+      title: `Delete ${n} photo${n === 1 ? '' : 's'} for ${itemLabel(item)}?`,
+      message: 'This can’t be undone.',
+      confirmLabel: 'Delete photos',
+    });
+    if (!ok) return;
     try {
       await clearItemPhotos(item);
       refresh();

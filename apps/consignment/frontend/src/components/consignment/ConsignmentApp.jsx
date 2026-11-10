@@ -11,6 +11,7 @@ import ConsignmentGearShop from './ConsignmentGearShop.jsx';
 import ConsignmentGearProductPage from './ConsignmentGearProductPage.jsx';
 import ConsignmentAdmin from './ConsignmentAdmin.jsx';
 import ConsignmentBetaBanner from './ConsignmentBetaBanner.jsx';
+import ConsignmentConfirmProvider from './ConsignmentConfirmProvider.jsx';
 import { CONSIGNMENT_BETA, CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import useConsignmentPageVisitTracker from '../../hooks/useConsignmentPageVisitTracker.js';
 // Keep this order: the parts were one stylesheet and later rules override earlier ones.
@@ -50,25 +51,27 @@ export default function ConsignmentApp({ canAdmin = false }) {
   }, []);
 
   return (
-    <div className="cs-app">
-      <ConsignmentNav canAdmin={canAdmin} />
-      {CONSIGNMENT_BETA && !location.pathname.startsWith(`${CONSIGNMENT_PATH}/admin`)
-        ? <ConsignmentBetaBanner />
-        : null}
-      <Routes>
-        <Route index element={<ConsignmentStorefront />} />
-        <Route path="home" element={<ConsignmentHome />} />
-        <Route path="item/:itemNumber" element={<ConsignmentItemPage />} />
-        <Route path="new" element={<ConsignmentGearShop />} />
-        <Route path="new/:slug" element={<ConsignmentGearProductPage />} />
-        <Route path="sell" element={<ConsignmentSubmit />} />
-        <Route path="my-items" element={<ConsignmentMyItems />} />
-        <Route path="my-offers" element={<ConsignmentMyOffers />} />
-        <Route
-          path="admin"
-          element={canAdmin ? <ConsignmentAdmin /> : <Navigate to="/consignment" replace />}
-        />
-      </Routes>
-    </div>
+    <ConsignmentConfirmProvider>
+      <div className="cs-app">
+        <ConsignmentNav canAdmin={canAdmin} />
+        {CONSIGNMENT_BETA && !location.pathname.startsWith(`${CONSIGNMENT_PATH}/admin`)
+          ? <ConsignmentBetaBanner />
+          : null}
+        <Routes>
+          <Route index element={<ConsignmentStorefront />} />
+          <Route path="home" element={<ConsignmentHome />} />
+          <Route path="item/:itemNumber" element={<ConsignmentItemPage />} />
+          <Route path="new" element={<ConsignmentGearShop />} />
+          <Route path="new/:slug" element={<ConsignmentGearProductPage />} />
+          <Route path="sell" element={<ConsignmentSubmit />} />
+          <Route path="my-items" element={<ConsignmentMyItems />} />
+          <Route path="my-offers" element={<ConsignmentMyOffers />} />
+          <Route
+            path="admin"
+            element={canAdmin ? <ConsignmentAdmin /> : <Navigate to="/consignment" replace />}
+          />
+        </Routes>
+      </div>
+    </ConsignmentConfirmProvider>
   );
 }
