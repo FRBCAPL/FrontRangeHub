@@ -24,22 +24,41 @@ export function isNetworkError(error) {
   return !error?.code && /fetch|network|load failed|timed? ?out/i.test(error?.message || '');
 }
 
+const missingSupplierColumn = (error) => /supplier_id/.test(error?.message || '');
+
+/** Session columns plus supplier_id, or without it before the count-by-supplier update. */
+async function selectSessions(build) {
+  const result = await build(`${SESSION_COLUMNS}, supplier_id`);
+  return missingSupplierColumn(result.error) ? build(SESSION_COLUMNS) : result;
+}
+
 export async function listSessions(organizationId) {
   return (
     assertOk(
-      await itemsure
+      await selectSessions((cols) => itemsure
         .from('count_sessions')
-        .select(SESSION_COLUMNS)
+        .select(cols)
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
-        .limit(200),
+        .limit(200)),
       'count sessions',
     ) || []
   );
 }
 
-export async function startSession({ locationId, storageAreaId, name }) {
+/** Starts a count; with `supplierId`, only items bought from that supplier are in it. */
+export async function startSession({ locationId, storageAreaId, supplierId = null, name }) {
   const clean = requiredText(name, 'count name', 120);
+  if (supplierId) {
+    const { data, error } = await itemsure.rpc('start_supplier_count_session', {
+      p_location_id: locationId,
+      p_storage_area_id: storageAreaId || null,
+      p_supplier_id: supplierId,
+      p_name: clean,
+    });
+    if (error?.code === 'PGRST202') throw new Error('Counting by supplier needs a database update first.');
+    return assertOk({ data, error }, 'start count');
+  }
   return assertOk(
     await itemsure.rpc('start_count_session', {
       p_location_id: locationId,
@@ -50,9 +69,15 @@ export async function startSession({ locationId, storageAreaId, name }) {
   );
 }
 
+/** Item ids in a count (what it was started with, plus any added). */
+export async function listSessionItemIds(sessionId) {
+  const rows = assertOk(await itemsure.from('count_session_items').select('item_id').eq('session_id', sessionId), 'count items') || [];
+  return new Set(rows.map((r) => r.item_id));
+}
+
 export async function loadSession(sessionId) {
   const session = assertOk(
-    await itemsure.from('count_sessions').select(SESSION_COLUMNS).eq('id', sessionId).maybeSingle(),
+    await selectSessions((cols) => itemsure.from('count_sessions').select(cols).eq('id', sessionId).maybeSingle()),
     'count session',
   );
   if (!session) return null;

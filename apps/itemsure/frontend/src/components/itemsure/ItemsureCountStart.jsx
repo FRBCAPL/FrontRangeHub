@@ -2,24 +2,32 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { startSession } from '../../services/itemsureCountService.js';
 import { listLocations } from '../../services/itemsureLocationService.js';
+import { listSuppliers } from '../../services/itemsureSupplierService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, sites, SITE } from '../../data/itemsureTerms.js';
 import { Card, ErrorNote, Field, PageHead } from './ItemsureUi.jsx';
 
-function defaultName(location, area) {
+function defaultName(location, area, supplier) {
   const day = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  return `${area?.name || location?.name || 'Count'} \u00b7 ${day}`;
+  return `${supplier?.name || area?.name || location?.name || 'Count'} \u00b7 ${day}`;
 }
 
 export default function ItemsureCountStart() {
   const { organization, features, can } = useItemsureWorkspace();
   const navigate = useNavigate();
   const [locations, setLocations] = useState(null);
-  const [form, setForm] = useState({ locationId: '', scope: 'location', storageAreaId: '', name: '' });
+  const [form, setForm] = useState({ locationId: '', scope: 'location', storageAreaId: '', supplierId: '', name: '' });
   const [nameTouched, setNameTouched] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
   const { busy, error, setError, run } = useItemsureAction();
+
+  useEffect(() => {
+    listSuppliers(organization.id)
+      .then((r) => setSuppliers(r.suppliers.filter((s) => s.is_active)))
+      .catch(() => setSuppliers([]));
+  }, [organization.id]);
 
   useEffect(() => {
     listLocations(organization.id)
@@ -37,7 +45,8 @@ export default function ItemsureCountStart() {
   const location = useMemo(() => (locations || []).find((l) => l.id === form.locationId) || null, [locations, form.locationId]);
   const areas = (location?.storageAreas || []).filter((a) => a.is_active);
   const area = form.scope === 'storage_area' ? areas.find((a) => a.id === form.storageAreaId) : null;
-  const name = nameTouched ? form.name : location ? defaultName(location, area) : '';
+  const supplier = form.scope === 'supplier' ? suppliers.find((s) => s.id === form.supplierId) || null : null;
+  const name = nameTouched ? form.name : location ? defaultName(location, area, supplier) : '';
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -46,7 +55,8 @@ export default function ItemsureCountStart() {
     run(async () => {
       if (!location) throw new Error(`Choose a ${site}.`);
       if (form.scope === 'storage_area' && !area) throw new Error('Choose a spot.');
-      const id = await startSession({ locationId: location.id, storageAreaId: area?.id || null, name });
+      if (form.scope === 'supplier' && !supplier) throw new Error('Choose a supplier.');
+      const id = await startSession({ locationId: location.id, storageAreaId: area?.id || null, supplierId: supplier?.id || null, name });
       navigate(`${ITEMSURE_PATH}/counts/${id}`);
     });
   };
@@ -79,24 +89,41 @@ export default function ItemsureCountStart() {
               </select>
             </Field>
 
-            {features.spots ? <fieldset className="isu-fieldset">
+            {features.spots || suppliers.length ? <fieldset className="isu-fieldset">
               <legend>What are you counting?</legend>
               <label className="isu-check">
                 <input type="radio" name="scope" value="location" checked={form.scope === 'location'} onChange={set('scope')} />
                 The whole {site}
               </label>
-              <label className="isu-check">
-                <input
-                  type="radio"
-                  name="scope"
-                  value="storage_area"
-                  checked={form.scope === 'storage_area'}
-                  onChange={set('scope')}
-                  disabled={!areas.length}
-                />
-                One spot{location && !areas.length ? ` (this ${site} has none)` : ''}
-              </label>
+              {features.spots ? (
+                <label className="isu-check">
+                  <input
+                    type="radio"
+                    name="scope"
+                    value="storage_area"
+                    checked={form.scope === 'storage_area'}
+                    onChange={set('scope')}
+                    disabled={!areas.length}
+                  />
+                  One spot{location && !areas.length ? ` (this ${site} has none)` : ''}
+                </label>
+              ) : null}
+              {suppliers.length ? (
+                <label className="isu-check">
+                  <input type="radio" name="scope" value="supplier" checked={form.scope === 'supplier'} onChange={set('scope')} />
+                  One supplier&apos;s items
+                </label>
+              ) : null}
             </fieldset> : null}
+
+            {form.scope === 'supplier' && suppliers.length ? (
+              <Field label="Supplier" hint="Items bought from this supplier (main or also-from), anywhere at this site. You can still add other items while counting.">
+                <select value={form.supplierId} onChange={set('supplierId')} required>
+                  <option value="">Choose a supplier</option>
+                  {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </Field>
+            ) : null}
 
             {form.scope === 'storage_area' && areas.length ? (
               <Field label="Spot">

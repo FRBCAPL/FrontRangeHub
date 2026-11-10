@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { approveCount, previewApproval } from '../../services/itemsureCountReviewService.js';
+import { listSessionItemIds } from '../../services/itemsureCountService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { quantitySign } from '../../utils/itemsureQuantity.js';
@@ -46,7 +47,18 @@ export default function ItemsureCountApproval({ session, areaName, onDecided }) 
     loadPreview();
   }, [loadPreview]);
 
+  const [inCount, setInCount] = useState(null);
+  useEffect(() => {
+    if (!session.supplier_id) return;
+    listSessionItemIds(session.id).then(setInCount).catch(() => setInCount(null));
+  }, [session.id, session.supplier_id]);
+
   const groups = useMemo(() => groupLines(preview?.lines || []), [preview]);
+  // A supplier count only covers its own items, so other items' stock isn't "not counted" here.
+  const untouched = useMemo(
+    () => (preview?.untouched || []).filter((b) => !session.supplier_id || !inCount || inCount.has(b.item_id)),
+    [preview, session.supplier_id, inCount],
+  );
   const closeReject = useCallback(() => setRejecting(false), []);
 
   const approve = async () => {
@@ -83,7 +95,7 @@ export default function ItemsureCountApproval({ session, areaName, onDecided }) 
         <div className="isu-stat"><span className="isu-stat-value">{groups.unchanged.length}</span><span className="isu-stat-label">No change</span></div>
       </div>
 
-      <ItemsureCountApprovalLines groups={groups} untouched={preview.untouched || []} omittedCount={session.omitted_item_count} areaName={areaName} />
+      <ItemsureCountApprovalLines groups={groups} untouched={untouched} omittedCount={session.omitted_item_count} areaName={areaName} />
 
       <ErrorNote message={error} />
       {blocked ? (
