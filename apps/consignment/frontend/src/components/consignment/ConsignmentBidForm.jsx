@@ -7,13 +7,16 @@ import useTaxRate from '../../hooks/useTaxRate.js';
 import { LEGENDS_PLACE } from '../../data/consignmentConstants.js';
 import ConsignmentBidAlertsToggle from './ConsignmentBidAlertsToggle.jsx';
 
-function pickupNote(shipPrice) {
+function pickupNote(shipPrice, estimate) {
   if (shipPrice == null) return `You’ll pick it up in person at ${LEGENDS_PLACE}. Shipping isn’t available at this time.`;
+  if (estimate) {
+    return `You’ll pick it up in person at ${LEGENDS_PLACE}, or, if you’re outside Colorado, have it shipped (about ${formatDollars(shipPrice)} shipping & handling at the current bid; it includes insurance, so it’s set by the winning bid).`;
+  }
   return `You’ll pick it up in person at ${LEGENDS_PLACE}, or, if you’re outside Colorado, have it shipped for ${formatDollars(shipPrice)} shipping & handling.`;
 }
 
-export default function ConsignmentBidForm({ auction, userId, isHighBidder, outbid, payDays, shipPrice = null, onBid }) {
-  const PICKUP_NOTE = pickupNote(shipPrice);
+export default function ConsignmentBidForm({ auction, userId, isHighBidder, outbid, payDays, shipPrice = null, shipEstimate = false, onBid }) {
+  const PICKUP_NOTE = pickupNote(shipPrice, shipEstimate);
   const minNext = Number(auction.min_next_bid);
   const [amount, setAmount] = useState(minNext);
   const [busy, setBusy] = useState(false);

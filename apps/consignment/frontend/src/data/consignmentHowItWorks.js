@@ -132,7 +132,7 @@ export const SHIPPING_TEXT = {
   },
   on: {
     basicsIntro: 'Pickup and payment happen in person at Legends Brews & Cues in Colorado Springs. Outside Colorado? Items marked 🚚 Ships can be shipped to you.',
-    pickupShipping: 'Outside Colorado (lower 48 states and DC)? Items marked 🚚 Ships can be shipped: FRPL emails a secure Square payment link for the price plus a flat shipping & handling charge, with no Colorado sales tax, and ships from Legends with tracking. Report any problem within {shipDays} days of delivery.',
+    pickupShipping: 'Outside Colorado (lower 48 states and DC)? Items marked 🚚 Ships can be shipped: FRPL emails a secure Square payment link for the price plus shipping & handling (insured for what you pay), with no Colorado sales tax, and ships from Legends with tracking. Report any problem within {shipDays} days of delivery.',
     wonShipping: ' Outside Colorado? If the item ships, choose “Ship it to me” on the item page instead.',
     sellerShipping: ' If FRPL ships it to an out-of-state buyer, you’re paid once it’s delivered and the buyer’s {shipDays} days to report a problem have passed.',
     heroShipping: 'Local pickup at Legends; select items ship to buyers outside Colorado.',

@@ -42,7 +42,8 @@ import ConsignmentVisitsPanel from './ConsignmentVisitsPanel.jsx';
 import ConsignmentShippingPanel from './ConsignmentShippingPanel.jsx';
 import ConsignmentShippingSettings from './ConsignmentShippingSettings.jsx';
 import ConsignmentItemShipModal from './ConsignmentItemShipModal.jsx';
-import { loadShipPrices } from '../../services/consignmentShippingService.js';
+import { loadShipOptions } from '../../services/consignmentShippingService.js';
+import { shipRulesFromSettings } from '../../utils/consignmentShipPrice.js';
 
 /** Confirmation text for one-tap status buttons that take an item out of the shop, or null for none. */
 function statusChangeQuestion(item, next) {
@@ -126,7 +127,7 @@ export default function ConsignmentAdmin() {
     refresh();
   }, [status]);
 
-  const refreshShipPrices = () => loadShipPrices().then(setShipPrices);
+  const refreshShipPrices = () => loadShipOptions().then(setShipPrices);
   useEffect(() => {
     if (shippingReady) refreshShipPrices();
   }, [shippingReady]);
@@ -251,7 +252,7 @@ export default function ConsignmentAdmin() {
             </thead>
             <tbody>
               {shownRows.map((item) => (
-                <ConsignmentAdminRow key={item.id} item={item} graceDays={graceDays} actions={actions} shipPrice={shipPrices[item.id] ?? null} />
+                <ConsignmentAdminRow key={item.id} item={item} graceDays={graceDays} actions={actions} shipOption={shipPrices[item.id] ?? null} />
               ))}
             </tbody>
           </table>
@@ -298,7 +299,8 @@ export default function ConsignmentAdmin() {
       {shipEditing ? (
         <ConsignmentItemShipModal
           item={shipEditing}
-          price={shipPrices[shipEditing.id] ?? null}
+          option={shipPrices[shipEditing.id] ?? null}
+          rules={shipRulesFromSettings(settings)}
           shippingOn={Boolean(settings?.shipping_enabled)}
           onClose={(saved) => { setShipEditing(null); if (saved) refreshShipPrices(); }}
         />

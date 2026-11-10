@@ -56,27 +56,34 @@ export const voidSquareLink = (id) => backend(`${id}/void-link`, {}, 'Could not 
 /** Asks Square whether the buyer paid. result: paid | already | fee_updated | unpaid | short | cancelled | no_link */
 export const checkSquarePayment = (id) => backend(`${id}/check-payment`, {}, 'Could not check with Square.');
 
-/** price null/'' turns shipping off for the item. */
-export async function saveItemShipPrice(itemId, price) {
-  if (price === null || price === '' || price === undefined) {
+/** ships false turns shipping off for the item. fixed null = automatic price; a number = this item's own price. */
+export async function saveItemShipping(itemId, { ships, fixed = null }) {
+  if (!ships) {
     const { error } = await supabase.from('consignment_item_shipping').delete().eq('item_id', itemId);
     if (error) throw shippingError(error, 'Could not turn off shipping for this item.');
     return;
   }
   const { error } = await supabase
     .from('consignment_item_shipping')
-    .upsert({ item_id: itemId, shipping_price: Number(price), updated_at: new Date().toISOString() });
+    .upsert({ item_id: itemId, shipping_price: fixed == null ? null : Number(fixed), updated_at: new Date().toISOString() });
   if (error) throw shippingError(error, 'Could not save the shipping price.');
 }
 
-export async function saveShippingSettings({ enabled, complaintDays }) {
+/** rules (optional): { baseRates, insurancePer100, includedCoverage } for automatic prices. */
+export async function saveShippingSettings({ enabled, complaintDays, rules = null }) {
+  const row = {
+    shipping_enabled: Boolean(enabled),
+    shipping_complaint_days: Number(complaintDays),
+    updated_at: new Date().toISOString(),
+  };
+  if (rules) {
+    row.shipping_base_rates = rules.baseRates;
+    row.shipping_insurance_per_100 = Number(rules.insurancePer100);
+    row.shipping_included_coverage = Number(rules.includedCoverage);
+  }
   const { error } = await supabase
     .from('consignment_settings')
-    .update({
-      shipping_enabled: Boolean(enabled),
-      shipping_complaint_days: Number(complaintDays),
-      updated_at: new Date().toISOString(),
-    })
+    .update(row)
     .eq('id', 'frpl');
   if (error) throw shippingError(error, 'Could not save the shipping settings.');
   await loadShippingInfo({ fresh: true });

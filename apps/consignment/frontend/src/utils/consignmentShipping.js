@@ -1,7 +1,7 @@
 /**
  * Out-of-state shipping (supabase-migrations/consignment-shipping-2026-11.sql).
  * Colorado buyers pick up at Legends; buyers in the lower 48 states and DC can have an item shipped for a flat
- * shipping & handling charge set per item. Shipped orders are paid online (Square link) with no Colorado sales tax.
+ * shipping & handling charge (automatic or fixed per item, see consignmentShipPrice.js). Shipped orders are paid online (Square link) with no Colorado sales tax.
  */
 
 /** Lower 48 + DC, not Colorado. Mirrors consignment_ship_state_ok in the SQL. */
@@ -22,11 +22,6 @@ const SHIP_STATE_CODES = new Set(SHIP_STATES.map(([code]) => code));
 
 export const DEFAULT_COMPLAINT_DAYS = 3;
 export const SHIP_CARRIERS = ['USPS', 'UPS', 'FedEx', 'Other'];
-
-/** Starting point for the admin's flat shipping & handling price (box/tube, label, insurance, Square fee). */
-const SHIP_PRICE_SUGGESTIONS = { cues: 35, shafts: 25, break_jump: 35, cases: 40, balls_accessories: 15, other: 25 };
-
-export const suggestedShipPrice = (category) => SHIP_PRICE_SUGGESTIONS[category] ?? 25;
 
 const cents = (n) => Math.round(Number(n || 0) * 100) / 100;
 

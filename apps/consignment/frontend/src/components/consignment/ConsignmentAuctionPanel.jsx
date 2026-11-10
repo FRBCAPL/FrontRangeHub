@@ -44,9 +44,10 @@ function EndedMessage({ auction, iWon, payDays, rate }) {
 
 /**
  * onAuction(auction): lets the item page follow the latest auction state (e.g. the "at Legends" badge), with
- * iWon set when the signed-in user is the winner. shipPrice: shown in the bid confirmations when the item ships.
+ * iWon set when the signed-in user is the winner. shipPrice: shown in the bid confirmations when the item ships
+ * (shipEstimate: it's worked out from the current bid and follows the final price).
  */
-export default function ConsignmentAuctionPanel({ itemId, onAuction, shipPrice = null }) {
+export default function ConsignmentAuctionPanel({ itemId, onAuction, shipPrice = null, shipEstimate = false }) {
   const {
     auction, history, userId, myTopBid, isHighBidder, outbid, remaining, loading, error, stale, refresh,
   } = useConsignmentAuction(itemId);
@@ -106,6 +107,7 @@ export default function ConsignmentAuctionPanel({ itemId, onAuction, shipPrice =
             outbid={outbid}
             payDays={payDays}
             shipPrice={shipPrice}
+            shipEstimate={shipEstimate}
             onBid={refresh}
           />
           {auction.delivered_at ? (

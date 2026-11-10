@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { itemLabel } from '../../data/consignmentConstants.js';
 import { CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../data/consignmentConstants.js';
 import { loadPublicItem } from '../../services/consignmentService.js';
-import { loadShipPrice } from '../../services/consignmentShippingService.js';
+import { loadShipOption } from '../../services/consignmentShippingService.js';
+import { itemShipQuote } from '../../utils/consignmentShipPrice.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { taxPercent, withTax } from '../../utils/consignmentTax.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
@@ -48,7 +49,7 @@ export default function ConsignmentItemPage() {
   const buyRef = useRef(null);
   const taxRate = useTaxRate();
   const shipping = useShippingInfo();
-  const [shipPrice, setShipPrice] = useState(null);
+  const [shipOption, setShipOption] = useState(null);
   const onAuction = useCallback((a) => setAuction(a || null), []);
 
   useEffect(() => {
@@ -69,8 +70,8 @@ export default function ConsignmentItemPage() {
   const itemId = item?.id;
   useEffect(() => {
     let alive = true;
-    setShipPrice(null);
-    if (itemId && shipping.enabled) loadShipPrice(itemId).then((p) => { if (alive) setShipPrice(p); });
+    setShipOption(null);
+    if (itemId && shipping.enabled) loadShipOption(itemId).then((o) => { if (alive) setShipOption(o); });
     return () => { alive = false; };
   }, [itemId, shipping.enabled]);
 
@@ -89,15 +90,19 @@ export default function ConsignmentItemPage() {
   const isSold = item.status === 'sold';
   const auctionAtLegends = Boolean(auction?.delivered_at);
   const auctionKey = auction ? `${auction.status}:${auction.bid_count}` : '';
-  const ships = !isExample && shipPrice != null;
+  const quote = isExample ? null : itemShipQuote(item, auction, shipOption, shipping.rules);
+  const ships = Boolean(quote);
+  const shipPrice = quote?.price ?? null;
+  const shipFor = quote ? `${quote.estimate ? 'about ' : ''}${formatDollars(shipPrice)}` : '';
+  const shipFinal = quote?.estimate ? ' (final shipping depends on the winning bid; it covers insurance)' : '';
   let auctionPanel = null;
   if (isAuction) {
     auctionPanel = isExample
       ? <ConsignmentExampleAuctionPanel sample={item.example_auction} />
-      : <ConsignmentAuctionPanel itemId={item.id} onAuction={onAuction} shipPrice={ships ? shipPrice : null} />;
+      : <ConsignmentAuctionPanel itemId={item.id} onAuction={onAuction} shipPrice={shipPrice} shipEstimate={Boolean(quote?.estimate)} />;
   }
   let shipLine = 'Shipping isn’t available at this time.';
-  if (ships) shipLine = `Outside Colorado? It can ship for ${formatDollars(shipPrice)}.`;
+  if (ships) shipLine = `Outside Colorado? It can ship for ${shipFor}${shipFinal}.`;
   else if (shipping.enabled) shipLine = 'This item doesn’t ship.';
   let tag = isAuction ? '' : '🏪 In the case at Legends';
   if (isExample) tag = 'Example · not for sale';
@@ -131,7 +136,13 @@ export default function ConsignmentItemPage() {
             <ConsignmentOfferButton itemId={item.id} itemName={item.name} refreshKey={auctionKey} />
           )}
           {ships ? (
-            <ConsignmentShipBox item={item} auction={auction} shipPrice={shipPrice} complaintDays={shipping.complaintDays} />
+            <ConsignmentShipBox
+              item={item}
+              auction={auction}
+              shipPrice={shipPrice}
+              shipEstimate={Boolean(quote?.estimate)}
+              complaintDays={shipping.complaintDays}
+            />
           ) : null}
           {isExample || isSold ? null : <ConsignmentItemWatch itemId={item.id} />}
           <p className="cs-meta cs-pickup">
@@ -173,7 +184,7 @@ export default function ConsignmentItemPage() {
           </li>
           <li>
             {ships
-              ? `Pickup is in person at ${LEGENDS.name}. Buyers outside Colorado (lower 48 states and DC) can have it shipped for ${formatDollars(shipPrice)} shipping & handling, paid online with no Colorado sales tax. Report any problem within ${shipping.complaintDays} days of delivery.`
+              ? `Pickup is in person at ${LEGENDS.name}. Buyers outside Colorado (lower 48 states and DC) can have it shipped for ${shipFor} shipping & handling${shipFinal}, paid online with no Colorado sales tax. Report any problem within ${shipping.complaintDays} days of delivery.`
               : `Pickup is in person at ${LEGENDS.name}. ${shipLine}`}
           </li>
         </ul>

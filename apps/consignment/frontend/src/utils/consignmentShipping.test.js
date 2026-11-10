@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   SHIP_STATES, canBuyerCancelShipment, needsSaleRecorded, payoutReadyAt, shipAddressError, shipCityLine, shipStateAllowed,
-  shipTotal, shipmentStatusLabel, shipmentTotal, suggestedShipPrice, trackingUrl, validPaymentLink,
+  shipTotal, shipmentStatusLabel, shipmentTotal, trackingUrl, validPaymentLink,
 } from './consignmentShipping.js';
 
 const good = { name: 'Pat Buyer', line1: '1 Main St', city: 'Austin', state: 'TX', zip: '78701' };
@@ -50,14 +50,12 @@ test('seller payout waits for delivery plus the complaint window', () => {
   assert.equal(payoutReadyAt({ arrived_at: '2026-11-01T12:00:00Z' }, 3).toISOString(), '2026-11-04T12:00:00.000Z');
 });
 
-test('payment links, tracking links, suggestions, city line', () => {
+test('payment links, tracking links, city line', () => {
   assert.equal(validPaymentLink('https://square.link/u/abc'), true);
   assert.equal(validPaymentLink('http://square.link/u/abc'), false);
   assert.equal(validPaymentLink('https://has space'), false);
   assert.equal(trackingUrl('USPS', '9400 1'), 'https://tools.usps.com/go/TrackConfirmAction?tLabels=9400%201');
   assert.match(trackingUrl('ups', '1Z9'), /ups\.com/);
   assert.equal(trackingUrl('Other', '123'), null);
-  assert.equal(suggestedShipPrice('cases'), 40);
-  assert.equal(suggestedShipPrice('unknown'), 25);
   assert.equal(shipCityLine({ ship_city: 'Austin', ship_state: 'TX', ship_zip: '78701' }), 'Austin, TX 78701');
 });

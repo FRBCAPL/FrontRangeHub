@@ -82,7 +82,12 @@ function MoneyInfo({ item }) {
   );
 }
 
-export default function ConsignmentAdminRow({ item, graceDays, actions, shipPrice = null }) {
+function shipLabel(option) {
+  if (!option) return '🚚 Shipping';
+  return option.fixed != null ? `🚚 Ships ${formatDollars(option.fixed)}` : '🚚 Ships (auto)';
+}
+
+export default function ConsignmentAdminRow({ item, graceDays, actions, shipOption = null }) {
   const { edit, approve, sold, renew, setStatus, deletePhotos, printTag, sellerPaid, undoSellerPaid, auction, shipping } = actions;
   const isAuction = item.sale_method === 'auction';
   const canSetShipping = shipping && ['pending', 'available', 'expired'].includes(item.status);
@@ -189,7 +194,7 @@ export default function ConsignmentAdminRow({ item, graceDays, actions, shipPric
         ) : null}
         {canSetShipping ? (
           <button type="button" className="cs-btn-secondary" onClick={() => shipping(item)}>
-            {shipPrice != null ? `🚚 Ships ${formatDollars(shipPrice)}` : '🚚 Shipping'}
+            {shipLabel(shipOption)}
           </button>
         ) : null}
         <button type="button" className="cs-btn-secondary" onClick={() => edit(item)}>Edit</button>

@@ -4,7 +4,7 @@ import { CATEGORIES, CONSIGNMENT_PATH, LEGENDS, LEGENDS_MAP_URL } from '../../da
 import { loadCatalog } from '../../services/consignmentService.js';
 import { loadAuctionsForItems } from '../../services/consignmentAuctionService.js';
 import { loadHeldItemIds } from '../../services/consignmentOffersService.js';
-import { loadShipPrices, loadShippingHeldIds } from '../../services/consignmentShippingService.js';
+import { loadShipOptions, loadShippingHeldIds } from '../../services/consignmentShippingService.js';
 import useShippingInfo from '../../hooks/useShippingInfo.js';
 import { syncServerClock } from '../../services/consignmentServerClock.js';
 import ConsignmentItemCard from './ConsignmentItemCard.jsx';
@@ -93,7 +93,7 @@ export default function ConsignmentStorefront() {
       setShipHeld(new Set());
       return undefined;
     }
-    Promise.all([loadShipPrices(rowIds.split(',')), loadShippingHeldIds()]).then(([prices, heldIds]) => {
+    Promise.all([loadShipOptions(rowIds.split(',')), loadShippingHeldIds()]).then(([prices, heldIds]) => {
       if (!alive) return;
       setShipPrices(prices);
       setShipHeld(heldIds);
@@ -200,7 +200,7 @@ export default function ConsignmentStorefront() {
               signedIn={Boolean(watch.userId)}
               onHold={held.has(item.id)}
               shipHold={shipHeld.has(item.id)}
-              ships={shipPrices[item.id] != null}
+              ships={Boolean(shipPrices[item.id])}
             />
           ))}
       </div>

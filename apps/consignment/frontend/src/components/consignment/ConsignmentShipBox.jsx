@@ -14,7 +14,7 @@ const MY_ORDERS = `${CONSIGNMENT_PATH}/my-offers`;
  * Item page: "Ships to buyers outside Colorado" with the request button. Only shown when shipping is on and the
  * item has a shipping price. auction.iWon comes from ConsignmentAuctionPanel.
  */
-export default function ConsignmentShipBox({ item, auction, shipPrice, complaintDays }) {
+export default function ConsignmentShipBox({ item, auction, shipPrice, shipEstimate = false, complaintDays }) {
   const [userId, setUserId] = useState(undefined);
   const [mine, setMine] = useState(null);
   const [open, setOpen] = useState(false);
@@ -56,7 +56,9 @@ export default function ConsignmentShipBox({ item, auction, shipPrice, complaint
   let lead = `Ships to buyers outside Colorado (lower 48): ${ship} shipping & handling.`;
   if (isAuction) {
     if (auction?.status === 'live') {
-      lead = `Outside Colorado? The winner can have it shipped for ${ship} shipping & handling instead of picking it up.`;
+      lead = shipEstimate
+        ? `Outside Colorado? The winner can have it shipped instead of picking it up: about ${ship} at the current bid.`
+        : `Outside Colorado? The winner can have it shipped for ${ship} shipping & handling instead of picking it up.`;
     } else if (auction?.status === 'awaiting_payment' && auction.iWon) {
       price = Number(auction.winning_bid);
       lead = 'Outside Colorado? Have it shipped instead of picking it up.';
@@ -78,7 +80,10 @@ export default function ConsignmentShipBox({ item, auction, shipPrice, complaint
           {' '}No Colorado sales tax on orders shipped out of state. Pay online with a secure link from FRPL.
         </p>
       ) : (
-        <p>No Colorado sales tax on orders shipped out of state.</p>
+        <p>
+          {shipEstimate ? 'Shipping includes insurance, so it’s set by the winning bid. ' : ''}
+          No Colorado sales tax on orders shipped out of state.
+        </p>
       )}
       {action ? (
         <button type="button" className="cs-btn-secondary" onClick={userId ? () => setOpen(true) : openHubLogin}>
