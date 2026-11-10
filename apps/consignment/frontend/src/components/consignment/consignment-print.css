@@ -5,56 +5,260 @@
   background: #fff;
   color: #111;
   font-family: "Segoe UI", system-ui, sans-serif;
+  text-align: left;
+  page: cs-tags;
+}
+
+@page cs-tags {
+  size: letter;
+  margin: 0.25in;
 }
 
 .cs-print-bar {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
-.cs-print-bar button {
+.cs-print-bar button,
+.cs-print-shapes button {
   min-height: 40px;
   padding: 8px 14px;
+  border: 1px solid #999;
   border-radius: 8px;
+  background: #f4f4f5;
+  color: #111;
   cursor: pointer;
 }
 
+.cs-print-bar button:disabled { opacity: 0.5; cursor: default; }
+
+.cs-print-shapes {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.cs-print-shapes button.active {
+  background: #111;
+  border-color: #111;
+  color: #fff;
+  font-weight: 700;
+}
+
+.cs-print-help {
+  margin: 0 0 12px;
+  max-width: 640px;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.cs-sheet-picker ul {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  max-width: 640px;
+  columns: 2 260px;
+}
+
+.cs-sheet-picker li { padding: 4px 0; break-inside: avoid; }
+.cs-sheet-picker label { display: flex; gap: 6px; align-items: baseline; cursor: pointer; }
+.cs-sheet-muted { color: #777; }
+
+/* ── The tag ── */
 .cs-tag {
-  width: min(360px, 100%);
-  border: 3px solid #111;
-  border-radius: 8px;
-  padding: 16px;
-  text-align: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px dashed #999;
+  background: #fff;
+  color: #111;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  text-align: left;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
-.cs-tag h1 {
-  margin: 4px 0 8px;
-  font-size: 1.35rem;
-}
+.cs-tag * { box-sizing: border-box; margin: 0; }
 
-.cs-tag .cs-tag-id {
-  font-weight: 900;
+.cs-tag-card { width: 3.5in; height: 2in; }
+.cs-tag-hang { width: 2in; height: 3.5in; }
+
+.cs-tag-band {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.06in;
+  padding: 0.04in 0.1in;
+  background: #111;
+  color: #fff;
+  font-size: 6.5pt;
+  font-weight: 800;
   letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.cs-tag img {
-  width: 180px;
-  height: 180px;
-  margin: 8px auto;
-  display: block;
+.cs-tag-id { font-size: 8.5pt; font-weight: 900; letter-spacing: 0.04em; white-space: nowrap; }
+
+.cs-tag-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  gap: 0.1in;
+  padding: 0.08in 0.1in;
+}
+
+.cs-tag-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.03in;
+  flex: 0 0 auto;
+}
+
+.cs-tag-qr img { display: block; width: 1.05in; height: 1.05in; }
+.cs-tag-qr-missing { width: 1.05in; font-size: 6pt; word-break: break-all; }
+
+.cs-tag-scan {
+  font-size: 6.5pt;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cs-tag-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.cs-tag-name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 10.5pt;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.cs-tag-sub {
+  overflow: hidden;
+  margin-top: 0.02in;
+  color: #444;
+  font-size: 7.5pt;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cs-tag-price {
+  margin-top: auto;
+  font-size: 19pt;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.cs-tag-price-auction { font-size: 12pt; text-transform: uppercase; letter-spacing: 0.02em; }
+
+.cs-tag-note { color: #333; font-size: 7.5pt; }
+
+.cs-tag-inspect {
+  align-self: flex-start;
+  margin-top: 0.04in;
+  padding: 1px 5px;
+  border: 1px solid #111;
+  border-radius: 3px;
+  font-size: 6.5pt;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.cs-tag-foot {
+  padding: 0.02in 0.1in 0.03in;
+  border-top: 1px solid #ddd;
+  color: #444;
+  font-size: 6.5pt;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* Hang tag: hole at the top, details above a centered QR code. */
+.cs-tag-hole {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 0.32in;
+  flex: 0 0 auto;
+}
+
+.cs-tag-hole::after {
+  content: "";
+  width: 0.18in;
+  height: 0.18in;
+  border: 1px solid #999;
+  border-radius: 50%;
+}
+
+.cs-tag-hang .cs-tag-band { flex-direction: column; gap: 0; padding: 0.03in 0.08in; text-align: center; }
+.cs-tag-hang .cs-tag-body { flex-direction: column; gap: 0.06in; padding: 0.08in 0.1in; }
+.cs-tag-hang .cs-tag-info { order: 1; flex: 0 0 auto; align-items: center; text-align: center; }
+.cs-tag-hang .cs-tag-qr { order: 2; margin-top: auto; }
+.cs-tag-hang .cs-tag-qr img { width: 1.1in; height: 1.1in; }
+.cs-tag-hang .cs-tag-sub { max-width: 100%; }
+.cs-tag-hang .cs-tag-price { margin-top: 0.05in; }
+.cs-tag-hang .cs-tag-inspect { align-self: center; }
+
+/* ── Letter sheets: 8in × 10.5in inside the 0.25in page margin ── */
+.cs-sheet-page {
+  box-sizing: border-box;
+  display: grid;
+  width: 8in;
+  height: 10.5in;
+  margin: 0 0 0.3in;
+  background: #fff;
+  box-shadow: 0 0 0 1px #ddd, 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.cs-sheet-card {
+  grid-template-columns: repeat(2, 3.5in);
+  grid-template-rows: repeat(5, 2in);
+  padding: 0.25in 0.5in;
+}
+
+.cs-sheet-hang {
+  grid-template-columns: repeat(4, 2in);
+  grid-template-rows: repeat(3, 3.5in);
 }
 
 @media print {
-  .cs-print-bar {
-    display: none;
+  *:has(.cs-print) {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .cs-print-bar,
+  .cs-print-help,
+  .cs-sheet-picker {
+    display: none !important;
   }
 
   .cs-print {
+    min-height: 0;
     padding: 0;
   }
 
-  .cs-tag {
-    border-width: 2px;
+  .cs-sheet-page {
+    margin: 0;
+    box-shadow: none;
+    break-after: page;
   }
+
+  .cs-sheet-page:last-child { break-after: auto; }
 }

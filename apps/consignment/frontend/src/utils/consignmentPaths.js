@@ -5,8 +5,14 @@ export function isConsignmentPath(pathname) {
   return p === CONSIGNMENT_PATH || p.startsWith(`${CONSIGNMENT_PATH}/`);
 }
 
+export const CONSIGNMENT_TAG_SHEET_PATH = `${CONSIGNMENT_PATH}/tags`;
+
+export function isConsignmentTagSheetPath(pathname) {
+  return String(pathname || '').replace(/\/+$/, '') === CONSIGNMENT_TAG_SHEET_PATH;
+}
+
 export function isConsignmentPrintPath(pathname) {
-  return String(pathname || '').includes(`${CONSIGNMENT_PATH}/tag/`);
+  return String(pathname || '').includes(`${CONSIGNMENT_PATH}/tag/`) || isConsignmentTagSheetPath(pathname);
 }
 
 export function consignmentTagItemNumber(pathname) {

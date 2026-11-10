@@ -15,6 +15,7 @@ test('admin and print-tag pages are not counted', () => {
   assert.equal(consignmentVisitIsPublic('/consignment/admin'), false);
   assert.equal(consignmentVisitIsPublic('/consignment/admin?tab=auctions'), false);
   assert.equal(consignmentVisitIsPublic('/consignment/tag/FRPL-0001'), false);
+  assert.equal(consignmentVisitIsPublic('/consignment/tags'), false);
   assert.equal(consignmentVisitIsPublic('/usapl'), false);
   assert.equal(consignmentVisitIsPublic('/consignmentx'), false);
 });

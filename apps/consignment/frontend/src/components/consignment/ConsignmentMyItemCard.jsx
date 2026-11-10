@@ -7,6 +7,7 @@ import { sellerItemStatus } from '../../utils/consignmentSellerStatus.js';
 import ConsignmentFeePayCodes from './ConsignmentFeePayCodes.jsx';
 import ConsignmentNextStepPanel from './ConsignmentNextStepPanel.jsx';
 import ConsignmentMyListingDetails from './ConsignmentMyListingDetails.jsx';
+import ConsignmentMyItemWatchers from './ConsignmentMyItemWatchers.jsx';
 
 const PUBLIC = ['available', 'sold'];
 const UNSOLD = ['ended_no_bids', 'defaulted'];
@@ -45,6 +46,7 @@ export default function ConsignmentMyItemCard({ item, settings, onChanged }) {
           {PUBLIC.includes(item.status) ? <Link to={consignmentItemPath(item.item_number)}>{title}</Link> : title}
         </h3>
         {subtitle ? <p className="cs-meta">{subtitle}</p> : null}
+        {item.status === 'available' ? <ConsignmentMyItemWatchers itemId={item.id} /> : null}
         {status.lines.length ? (
           <ul className="cs-mine-lines">
             {status.lines.map((line) => <li key={line}>{line}</li>)}

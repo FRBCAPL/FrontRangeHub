@@ -98,6 +98,11 @@
 .cs-mine-badge.tone-warn { background: rgba(229, 62, 62, 0.18); color: #fecaca; }
 .cs-mine-badge.tone-muted { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; }
 
+.cs-mine-watchers {
+  margin: 2px 0;
+  font-weight: 700;
+}
+
 .cs-mine-lines {
   margin: 2px 0;
   padding: 0;

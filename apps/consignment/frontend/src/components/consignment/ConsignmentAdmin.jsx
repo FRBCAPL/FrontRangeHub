@@ -24,7 +24,7 @@ import { bidderName } from '../../services/consignmentAuctionAdminService.js';
 import { expireOverdueItems } from '../../services/consignmentFeesService.js';
 import { clearSellerPaid } from '../../services/consignmentPayoutService.js';
 import ConsignmentSellerPaidModal from './ConsignmentSellerPaidModal.jsx';
-import { consignmentTagPath } from '../../utils/consignmentPaths.js';
+import { CONSIGNMENT_TAG_SHEET_PATH, consignmentTagPath } from '../../utils/consignmentPaths.js';
 import { feePolicyFrom } from '../../utils/consignmentFeePolicy.js';
 import ConsignmentAdminEditModal from './ConsignmentAdminEditModal.jsx';
 import ConsignmentApproveModal from './ConsignmentApproveModal.jsx';
@@ -238,7 +238,10 @@ export default function ConsignmentAdmin() {
         <>
           <ConsignmentItemStatusTabs value={status} counts={counts} onChange={setStatus} />
           <p className="cs-hint cs-status-hint">
-            {ITEM_STATUS_TABS.find((t) => t.id === status)?.hint || status}
+            {ITEM_STATUS_TABS.find((t) => t.id === status)?.hint || status}{' '}
+            <button type="button" className="cs-btn-secondary" onClick={() => navigate(CONSIGNMENT_TAG_SHEET_PATH)}>
+              🏷️ Print tags
+            </button>
           </p>
           {sellerFilter ? (
             <div className="cs-filters">

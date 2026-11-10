@@ -1,32 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import QRCode from 'qrcode';
-import { brandModelLabel, conditionLabel, CONSIGNMENT_PATH, itemLabel } from '../../data/consignmentConstants.js';
+import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import { loadAdminItemByNumber, loadPublicItem } from '../../services/consignmentService.js';
-import { formatDollars, itemPriceLabel } from '../../utils/consignmentMoney.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
-import { consignmentItemHref, consignmentTagItemNumber } from '../../utils/consignmentPaths.js';
+import useTagShape from '../../hooks/useTagShape.js';
+import { consignmentTagItemNumber, isConsignmentTagSheetPath } from '../../utils/consignmentPaths.js';
+import ConsignmentTag from './ConsignmentTag.jsx';
+import ConsignmentTagShapeToggle from './ConsignmentTagShapeToggle.jsx';
+import ConsignmentTagSheet from './ConsignmentTagSheet.jsx';
 import './consignment-print.css';
 
-export default function ConsignmentPrintTag({ canAdmin = false }) {
+function SingleTag({ canAdmin }) {
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const itemNumber = params.itemNumber || consignmentTagItemNumber(location.pathname);
   const [item, setItem] = useState(null);
   const [error, setError] = useState('');
-  const [qr, setQr] = useState('');
+  const [shape, setShape] = useTagShape();
   const taxRate = useTaxRate();
-  const href = itemNumber ? consignmentItemHref(itemNumber) : '';
-
-  useEffect(() => {
-    if (!href) return undefined;
-    let alive = true;
-    QRCode.toDataURL(href, { width: 220, margin: 1 })
-      .then((url) => { if (alive) setQr(url); })
-      .catch(() => { if (alive) setQr(''); });
-    return () => { alive = false; };
-  }, [href]);
 
   useEffect(() => {
     if (!itemNumber) {
@@ -53,26 +45,17 @@ export default function ConsignmentPrintTag({ canAdmin = false }) {
       <div className="cs-print-bar">
         <button type="button" onClick={() => window.print()}>Print</button>
         <button type="button" onClick={() => navigate(`${CONSIGNMENT_PATH}/admin`)}>Back to admin</button>
+        <ConsignmentTagShapeToggle value={shape} onChange={setShape} />
       </div>
-      <article className="cs-tag">
-        <div className="cs-tag-id">{itemLabel(item)}</div>
-        <h1>{item.name}</h1>
-        <p>{brandModelLabel(item) ? `${brandModelLabel(item)} · ` : ''}{conditionLabel(item.condition)}</p>
-        {item.specs ? <p>{item.specs}</p> : null}
-        <p>
-          <strong>
-            {item.sale_method === 'auction' || item.price_tax_included
-              ? itemPriceLabel(item, taxRate)
-              : `${formatDollars(item.selling_price)} · ${itemPriceLabel(item, taxRate)}`}
-          </strong>
-        </p>
-        <p>Available at Legends Brews & Cues</p>
-        {item.sale_method === 'auction' ? null : (
-          <p><strong>{item.allow_inspection ? 'Ask to inspect: ID held' : 'Display only'}</strong></p>
-        )}
-        {qr ? <img src={qr} alt={`QR code for ${itemLabel(item)}`} /> : <p>{href}</p>}
-        <p>{item.sale_method === 'auction' ? 'Scan to bid online' : 'Scan for photos & details'}</p>
-      </article>
+      <p className="cs-print-help">Print at 100% scale (not “Fit to page”) so the tag comes out at its real size.</p>
+      <ConsignmentTag item={item} rate={taxRate} shape={shape} />
     </div>
   );
+}
+
+/** Print page for one item's tag, or the multi-tag sheet at /consignment/tags. */
+export default function ConsignmentPrintTag({ canAdmin = false }) {
+  const location = useLocation();
+  if (isConsignmentTagSheetPath(location.pathname)) return <ConsignmentTagSheet canAdmin={canAdmin} />;
+  return <SingleTag canAdmin={canAdmin} />;
 }

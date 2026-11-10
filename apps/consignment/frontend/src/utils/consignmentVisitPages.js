@@ -22,7 +22,9 @@ export function consignmentVisitPath(pathname, search = '') {
 export function consignmentVisitIsPublic(path) {
   const base = basePath(path);
   if (base !== CONSIGNMENT_PATH && !base.startsWith(`${CONSIGNMENT_PATH}/`)) return false;
-  return !base.startsWith(`${CONSIGNMENT_PATH}/admin`) && !base.startsWith(`${CONSIGNMENT_PATH}/tag/`);
+  return !base.startsWith(`${CONSIGNMENT_PATH}/admin`)
+    && !base.startsWith(`${CONSIGNMENT_PATH}/tag/`)
+    && base !== `${CONSIGNMENT_PATH}/tags`;
 }
 
 export function consignmentVisitPageLabel(path) {
