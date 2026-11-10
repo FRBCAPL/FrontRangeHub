@@ -860,7 +860,8 @@ function AppContent() {
         {(() => {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';
-          return !isLadderRoute && !isEmbedPreview && !isEstateInventory && !isUsaplLeague && !isConsignment && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) && <FloatingLogos />;
+          const isAdminHome = ['/admin/inbox', '/admin/ladder-applications', '/admin/payments'].includes(location.pathname);
+          return !isLadderRoute && !isEmbedPreview && !isAdminHome && !isEstateInventory && !isUsaplLeague && !isConsignment && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) && <FloatingLogos />;
         })()}
         {!isEstateInventory && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) ? (
                          <HubNavigation 

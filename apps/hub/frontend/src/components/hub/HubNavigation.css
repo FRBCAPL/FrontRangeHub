@@ -248,7 +248,8 @@ html body .hub-navigation.homepage-nav .nav-content {
 .hub-navigation.tournament-app,
 .hub-navigation.usapl-nav:not(.homepage-nav),
 .hub-navigation.consignment-nav:not(.homepage-nav),
-.hub-navigation.arcade-nav {
+.hub-navigation.arcade-nav,
+.hub-navigation.admin-home-nav {
   padding: 0.55rem 0 0.4rem !important;
   min-height: 5.25rem;
 }
@@ -258,7 +259,8 @@ html body .hub-navigation.homepage-nav .nav-content {
 .hub-navigation.tournament-app .nav-content,
 .hub-navigation.usapl-nav:not(.homepage-nav) .nav-content,
 .hub-navigation.consignment-nav:not(.homepage-nav) .nav-content,
-.hub-navigation.arcade-nav .nav-content {
+.hub-navigation.arcade-nav .nav-content,
+.hub-navigation.admin-home-nav .nav-content {
   max-width: none !important;
   width: 100% !important;
   margin: 0 !important;
@@ -272,7 +274,8 @@ html body .hub-navigation.homepage-nav .nav-content {
   .hub-navigation.tournament-app .nav-left,
   .hub-navigation.usapl-nav:not(.homepage-nav) .nav-left,
   .hub-navigation.consignment-nav:not(.homepage-nav) .nav-left,
-  .hub-navigation.arcade-nav .nav-left {
+  .hub-navigation.arcade-nav .nav-left,
+  .hub-navigation.admin-home-nav .nav-left {
     position: absolute;
     left: 12px;
     top: 50%;
@@ -287,6 +290,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   .hub-navigation.usapl-nav:not(.homepage-nav) .nav-right,
   .hub-navigation.consignment-nav:not(.homepage-nav) .nav-right,
   .hub-navigation.arcade-nav .nav-right,
+  .hub-navigation.admin-home-nav .nav-right,
   .hub-navigation.homepage-nav .nav-right {
     position: absolute;
     right: 12px;
@@ -306,7 +310,8 @@ html body .hub-navigation.homepage-nav .nav-content {
 
   /* Logged-in greeting / Admin / Switch App / Logout sit on the right — keep the title out of them. */
   .hub-navigation.consignment-nav:not(.homepage-nav) .nav-center,
-  .hub-navigation.arcade-nav .nav-center {
+  .hub-navigation.arcade-nav .nav-center,
+  .hub-navigation.admin-home-nav .nav-center {
     width: calc(100vw - 2 * var(--cs-nav-side, 300px)) !important;
     max-width: calc(100vw - 2 * var(--cs-nav-side, 300px)) !important;
     margin: 0 auto;
@@ -316,7 +321,8 @@ html body .hub-navigation.homepage-nav .nav-content {
   }
 
   .hub-navigation.consignment-nav[data-title-cramped]:not(.homepage-nav) .nav-center,
-  .hub-navigation.arcade-nav[data-title-cramped] .nav-center {
+  .hub-navigation.arcade-nav[data-title-cramped] .nav-center,
+  .hub-navigation.admin-home-nav[data-title-cramped] .nav-center {
     visibility: hidden;
   }
 
@@ -330,7 +336,8 @@ html body .hub-navigation.homepage-nav .nav-content {
 .hub-navigation.tournament-app .app-title,
 .hub-navigation.usapl-nav:not(.homepage-nav) .app-title,
 .hub-navigation.consignment-nav:not(.homepage-nav) .app-title,
-.hub-navigation.arcade-nav .app-title {
+.hub-navigation.arcade-nav .app-title,
+.hub-navigation.admin-home-nav .app-title {
   white-space: nowrap !important;
   word-break: normal !important;
 }
@@ -351,6 +358,7 @@ html body .hub-navigation.homepage-nav .nav-content {
   .hub-navigation.usapl-nav:not(.homepage-nav) .app-title,
   .hub-navigation.consignment-nav:not(.homepage-nav) .app-title,
   .hub-navigation.arcade-nav .app-title,
+  .hub-navigation.admin-home-nav .app-title,
   .hub-navigation.tournament-app .app-title {
     white-space: normal !important;
     word-break: break-word !important;

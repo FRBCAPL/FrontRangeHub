@@ -183,7 +183,7 @@
   padding: 0.5rem 1rem;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
+  background: #121215;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
@@ -212,7 +212,7 @@
   padding: 0.5rem 0.9rem;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
+  background: #121215;
   color: #fff;
   font-size: 0.92rem;
   font-weight: 600;
@@ -221,7 +221,7 @@
 
 .ai-tool:hover,
 .ai-tool:focus-visible {
-  background: rgba(255, 255, 255, 0.12);
+  background: #1c1c21;
   border-color: rgba(255, 255, 255, 0.35);
 }
 
@@ -240,8 +240,9 @@
 .ai-card {
   padding: 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(20, 20, 22, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0a0a0c;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
 }
 
 .ai-card.has-alerts {
@@ -308,7 +309,7 @@
   min-width: 26px;
   padding: 1px 8px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
+  background: #1c1c21;
   text-align: center;
   font-size: 0.85rem;
 }
