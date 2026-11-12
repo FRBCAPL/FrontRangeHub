@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import {
@@ -15,6 +15,7 @@ import useHowItWorksValues from '../../hooks/useHowItWorksValues.js';
 import { SELLER_FIRST_UNDER } from '../../utils/consignmentHomeListings.js';
 import ConsignmentHomeNewItems from './ConsignmentHomeNewItems.jsx';
 import ConsignmentHomeSellPitch from './ConsignmentHomeSellPitch.jsx';
+import ConsignmentLegendsMapModal from './ConsignmentLegendsMapModal.jsx';
 import ConsignmentNewListingsSignup from './ConsignmentNewListingsSignup.jsx';
 import './consignment-home.css';
 
@@ -66,6 +67,7 @@ function openSection(tabId) {
 export default function ConsignmentHome() {
   const fill = useHowItWorksValues();
   const listings = useHomeListings();
+  const [mapOpen, setMapOpen] = useState(false);
   const counts = listings?.counts || null;
   const sellerFirst = Boolean(counts) && counts.total < SELLER_FIRST_UNDER;
   const ctaFor = (tabId) => HOME_PATHS.find((p) => p.tab === tabId);
@@ -83,7 +85,15 @@ export default function ConsignmentHome() {
         <h1>{HOME_HERO.title}</h1>
         <p className="cs-lede">{fill(HOME_HERO.lede)}</p>
         <div className="cs-home-hero-tags">
-          <span className="cs-legends">{HOME_HERO.place}</span>
+          <button
+            type="button"
+            className="cs-legends"
+            onClick={() => setMapOpen(true)}
+            aria-haspopup="dialog"
+            title="Show on a map"
+          >
+            {HOME_HERO.place} <span aria-hidden="true">· Map</span>
+          </button>
           <span className="cs-home-hero-ship">{fill(HOME_HERO.shipping)}</span>
         </div>
       </header>
@@ -129,6 +139,7 @@ export default function ConsignmentHome() {
       ))}
 
       <p className="cs-hint cs-home-foot">{fill(HOW_IT_WORKS_FOOTER)}</p>
+      {mapOpen ? <ConsignmentLegendsMapModal onClose={() => setMapOpen(false)} /> : null}
     </div>
   );
 }

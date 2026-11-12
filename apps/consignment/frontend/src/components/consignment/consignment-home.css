@@ -29,6 +29,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-items: center;
   gap: 6px 8px;
 }
 
@@ -36,6 +37,8 @@
   margin: 0;
   padding: 4px 10px;
   font-size: 0.8rem;
+  /* !important: the hub gives every button a 44px minimum height. */
+  min-height: 0 !important;
 }
 
 .cs-home-hero-ship {

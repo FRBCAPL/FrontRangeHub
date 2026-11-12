@@ -1,0 +1,61 @@
+.cs-modal:has(> .cs-map-modal) {
+  align-items: flex-start;
+  padding-top: calc(var(--hub-nav-h, 80px) + 12px);
+}
+
+.cs-modal-card.cs-map-modal {
+  width: min(720px, 100%);
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.cs-map-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cs-map-head h2 {
+  margin: 0 0 2px;
+  font-size: 1.2rem;
+}
+
+.cs-map-head .cs-meta {
+  margin: 0;
+}
+
+.cs-map-frame {
+  display: block;
+  width: 100%;
+  height: min(420px, 55vh);
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: #0b1020;
+}
+
+.cs-map-modal .cs-actions {
+  margin-top: 0;
+}
+
+.cs-map-modal .cs-hint {
+  margin: 0;
+}
+
+button.cs-legends {
+  font-family: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+button.cs-legends:hover {
+  background: rgba(168, 85, 247, 0.24);
+  color: #e9d5ff;
+}
+
+button.cs-legends:focus-visible {
+  outline: 2px solid #c084fc;
+  outline-offset: 2px;
+}

@@ -96,14 +96,21 @@ export const LEGENDS = {
   name: 'Legends Brews & Cues',
   city: 'Colorado Springs',
   state: 'CO',
-  address: '',
+  address: '2790 Hancock Expy',
 };
 
 export const LEGENDS_PLACE = `${LEGENDS.name} in ${LEGENDS.city}, ${LEGENDS.state}`;
 
-export const LEGENDS_MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-  [LEGENDS.name, LEGENDS.address, `${LEGENDS.city}, ${LEGENDS.state}`].filter(Boolean).join(', '),
-)}`;
+export const LEGENDS_FULL_ADDRESS = [LEGENDS.address, `${LEGENDS.city}, ${LEGENDS.state}`].filter(Boolean).join(', ');
+
+const legendsQuery = encodeURIComponent(`${LEGENDS.name}, ${LEGENDS_FULL_ADDRESS}`);
+
+export const LEGENDS_MAP_URL = `https://www.google.com/maps/search/?api=1&query=${legendsQuery}`;
+
+export const LEGENDS_DIRECTIONS_URL = `https://www.google.com/maps/dir/?api=1&destination=${legendsQuery}`;
+
+/** Keyless Google Maps embed for an <iframe>. */
+export const LEGENDS_MAP_EMBED_URL = `https://maps.google.com/maps?q=${legendsQuery}&z=15&output=embed`;
 
 /** Where sellers can pay an auction listing fee online. Sales themselves are paid at Legends, never here. */
 export const LISTING_FEE_PAY = [
