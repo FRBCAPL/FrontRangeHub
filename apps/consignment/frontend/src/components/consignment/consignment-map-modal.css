@@ -44,6 +44,82 @@
   margin: 0;
 }
 
+.cs-ship-info .cs-ship-info-lede {
+  width: auto;
+  margin: 0;
+  text-align: left;
+}
+
+.cs-ship-info-who {
+  margin: 0;
+}
+
+.cs-ship-info-steps {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 1.3em;
+}
+
+.cs-ship-info-sub {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+
+.cs-ship-info .cs-hint {
+  margin: 0;
+}
+
+.cs-ship-info-rates {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cs-ship-info-rates li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--cs-line);
+}
+
+.cs-ship-info-pickup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--cs-line);
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.cs-ship-info-pickup .cs-meta {
+  margin: 2px 0 0;
+}
+
+button.cs-home-hero-ship {
+  font-family: inherit;
+  line-height: inherit;
+  cursor: pointer;
+  /* !important: the hub gives every button a 44px minimum height. */
+  min-height: 0 !important;
+}
+
+button.cs-home-hero-ship:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+button.cs-home-hero-ship:focus-visible {
+  outline: 2px solid #c084fc;
+  outline-offset: 2px;
+}
+
 button.cs-legends {
   font-family: inherit;
   line-height: inherit;

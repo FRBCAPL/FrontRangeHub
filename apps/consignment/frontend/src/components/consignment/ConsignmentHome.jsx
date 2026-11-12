@@ -16,6 +16,7 @@ import { SELLER_FIRST_UNDER } from '../../utils/consignmentHomeListings.js';
 import ConsignmentHomeNewItems from './ConsignmentHomeNewItems.jsx';
 import ConsignmentHomeSellPitch from './ConsignmentHomeSellPitch.jsx';
 import ConsignmentLegendsMapModal from './ConsignmentLegendsMapModal.jsx';
+import ConsignmentShippingInfoModal from './ConsignmentShippingInfoModal.jsx';
 import ConsignmentNewListingsSignup from './ConsignmentNewListingsSignup.jsx';
 import './consignment-home.css';
 
@@ -67,7 +68,7 @@ function openSection(tabId) {
 export default function ConsignmentHome() {
   const fill = useHowItWorksValues();
   const listings = useHomeListings();
-  const [mapOpen, setMapOpen] = useState(false);
+  const [modal, setModal] = useState(null);
   const counts = listings?.counts || null;
   const sellerFirst = Boolean(counts) && counts.total < SELLER_FIRST_UNDER;
   const ctaFor = (tabId) => HOME_PATHS.find((p) => p.tab === tabId);
@@ -88,13 +89,21 @@ export default function ConsignmentHome() {
           <button
             type="button"
             className="cs-legends"
-            onClick={() => setMapOpen(true)}
+            onClick={() => setModal('map')}
             aria-haspopup="dialog"
             title="Show on a map"
           >
             {HOME_HERO.place} <span aria-hidden="true">· Map</span>
           </button>
-          <span className="cs-home-hero-ship">{fill(HOME_HERO.shipping)}</span>
+          <button
+            type="button"
+            className="cs-home-hero-ship"
+            onClick={() => setModal('ship')}
+            aria-haspopup="dialog"
+            title="How shipping works"
+          >
+            {fill(HOME_HERO.shipping)} <span aria-hidden="true">· Info</span>
+          </button>
         </div>
       </header>
 
@@ -139,7 +148,10 @@ export default function ConsignmentHome() {
       ))}
 
       <p className="cs-hint cs-home-foot">{fill(HOW_IT_WORKS_FOOTER)}</p>
-      {mapOpen ? <ConsignmentLegendsMapModal onClose={() => setMapOpen(false)} /> : null}
+      {modal === 'map' ? <ConsignmentLegendsMapModal onClose={() => setModal(null)} /> : null}
+      {modal === 'ship' ? (
+        <ConsignmentShippingInfoModal onClose={() => setModal(null)} onShowMap={() => setModal('map')} />
+      ) : null}
     </div>
   );
 }
