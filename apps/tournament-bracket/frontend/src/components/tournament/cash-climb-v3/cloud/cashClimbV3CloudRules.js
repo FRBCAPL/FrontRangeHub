@@ -7,7 +7,7 @@
 import { stableJson, sameValue } from '../app/cashClimbV3SameValue.js';
 
 export const CCV3_MAX_PAYLOAD_BYTES = 1000000;
-export const CCV3_DENIED_EMAILS = Object.freeze(['guest@guestmail.com']);
+export const CCV3_DENIED_EMAILS = Object.freeze([]);
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const chars = (s) => [...s].length;

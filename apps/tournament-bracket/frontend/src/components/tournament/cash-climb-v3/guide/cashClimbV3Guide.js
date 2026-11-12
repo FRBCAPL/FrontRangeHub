@@ -6,6 +6,9 @@
 import { CASH_CLIMB_V3_LIMITS } from '../cashClimbV3Config.js';
 import { cashClimbV3Shape } from '../cashClimbV3Bracket.js';
 import { championshipSplit } from '../cashClimbV3Championship.js';
+import { cashClimbV3GuideDetails } from './cashClimbV3GuideDetails.js';
+import { cashClimbV3GuideRules } from './cashClimbV3GuideRules.js';
+import { cashClimbV3GuideStory } from './cashClimbV3GuideStory.js';
 
 const EXAMPLE_FIELD = 12;
 
@@ -23,69 +26,95 @@ export function cashClimbV3Guide() {
   const ex = cashClimbV3Shape(EXAMPLE_FIELD);
   return {
     title: 'How Cash Climb works',
-    subtitle: 'Every match pays. Every win climbs.',
-    chips: ['Single elimination', 'Opening matches pay both players', 'Wins pay more every round', `Final split ${split.champion}/${split.runnerUp}`],
+    subtitle: 'Your first match pays you, win or lose. After that, every win pays more.',
+    chips: ['Paid even if you lose your first match', 'Every win pays more', 'Keep everything you win', 'One loss and you\u2019re out'],
     stages: [
-      { label: 'Stage 1', title: 'Opening round', text: 'Both players get paid. \nThe winner takes the bigger share, and the loser earns for every rack they win.', meta: 'Paid by the score' },
-      { label: 'Stage 2', title: 'The climb', text: 'Win and move on. \nEvery win pays a set amount, and it gets bigger every round up to the championship.', meta: 'One loss and you are out' },
+      { label: 'Step 1', title: 'Your first match', text: 'Both players get paid. \nThe winner gets more, and the loser earns for every rack they won.', meta: 'Paid win or lose' },
+      { label: 'Step 2', title: 'Keep winning', text: 'Every win pays more than the last, all the way to the final.', meta: 'One loss and you are out' },
+    ],
+    story: cashClimbV3GuideStory(),
+    details: cashClimbV3GuideDetails({ split }),
+    rules: cashClimbV3GuideRules({ split }),
+    journey: [
+      { detail: 'signup', label: 'Sign up' },
+      { detail: 'opening', label: 'Your first match', money: 2 },
+      { detail: 'climb', label: 'Keep winning', money: 4 },
+      { detail: 'championship', label: 'The final', money: 5 },
+    ],
+    faq: [
+      { q: 'How much does each match pay?', detail: 'pay' },
+      { q: 'Why do some players play an extra match?', detail: 'preliminary' },
+      { q: 'What is the shutout bonus?', detail: 'shutout' },
+      { q: 'What if my opponent does not show?', detail: 'forfeit' },
+      { q: 'Can I lose money I already won?', detail: 'keep' },
+      { q: 'Who enters the scores?', detail: 'scores' },
     ],
     sections: [
       {
-        title: 'What it is',
+        icon: '\u{1F3AF}',
+        title: 'How it works',
         body: [
-          'Cash Climb is a single-elimination cash tournament. Lose a match and you are out.',
-          'The prize pool is every entry fee plus any added money. When the championship is played, all of it goes to players.',
-          'Every match is a race to the same number of racks. The tournament director sets the race, the game and any house rules.',
-          'The bracket is drawn at random.',
+          'Cash Climb is a knockout tournament. Lose one match and you are out.',
+          'Your first match pays you, win or lose. After that, every win pays more than the last.',
+          'All the entry money, plus any added money, goes back to the players.',
+          'Every match is a race to the same number of racks. The tournament director tells you the race and the game before the event starts.',
+          'Your spot in the bracket is drawn at random.',
         ],
-        tv: ['Single elimination: lose once and you are out.', 'Every entry fee plus added money goes to players.'],
+        tv: ['Lose one match and you are out.', 'All the entry money goes back to the players.'],
       },
       {
-        title: 'Preliminary round',
+        icon: '\u{1F4B5}',
+        title: 'Your first match',
         body: [
-          'A full bracket is 8, 16, 32 players and so on. With any other number, some players play a preliminary match first and the rest go straight to the opening round.',
-          `Example: with ${EXAMPLE_FIELD} players, ${ex.preliminaryMatches * 2} play ${ex.preliminaryMatches} preliminary matches and ${ex.preliminaryByes} go straight to the opening round.`,
-          'A preliminary match pays the same way as an opening match, at half the amounts. Skipping the preliminary round pays nothing.',
+          'Both players get paid, win or lose.',
+          'The loser earns money for every rack they won. The winner gets more.',
+          'Win without losing a rack (a shutout) and you get your full entry fee back.',
         ],
-        tv: ['Not a full bracket? Some players play a preliminary match first.', 'It pays like an opening match, at half the amounts.'],
+        tv: ['Both players get paid.', 'The loser earns for every rack won.', 'A shutout gets your entry fee back.'],
       },
       {
-        title: 'Opening round',
+        icon: '\u{1F4C8}',
+        title: 'Keep winning',
         body: [
-          'In the opening round both players get paid, win or lose.',
-          'The loser earns money for every rack they win. The winner earns more.',
-          'Win without losing a rack and you get a shutout bonus: an opening-round shutout pays back your full entry fee (half that in the preliminary round).',
+          'From your second match on, only the winner gets paid.',
+          'Each win pays more than the one before, all the way to the final.',
+          'Lose and you are out, but you keep everything you have already won.',
+          'The amounts are set before the first match and shown on the payout table. They never change during the event.',
         ],
-        tv: ['Both players get paid.', 'The loser earns for every rack won.', 'A shutout pays back your entry fee.'],
+        tv: ['Every win pays more than the last.', 'Lose and you keep what you have won.'],
       },
       {
-        title: 'The climb',
+        icon: '\u{1F3C6}',
+        title: 'The final',
         body: [
-          'After the opening round, every match you win pays a set amount, and it is bigger every round.',
-          'The loser of these matches earns nothing more for that match but keeps everything already won.',
-          'Every amount is locked when the tournament starts and shown on the payout table. It never changes during the event.',
+          `The final pays the most: ${splitText}.`,
+          'Any money left over from earlier in the night is added to the final as a bonus, split the same way.',
         ],
-        tv: ['Every win pays more than the round before.', 'Amounts are locked when the event starts.'],
+        tv: [`Final: ${split.champion}% champion, ${split.runnerUp}% runner-up.`, 'Leftover money is added as a bonus.'],
       },
       {
-        title: 'The championship',
+        icon: '\u{1F39F}\u{FE0F}',
+        title: 'Extra match to get in',
         body: [
-          `The final pays the biggest amount of the night: ${splitText}.`,
-          `Prize money not paid out during the event (an opening match that pays less than its full amount, a forfeit or a withdrawal) is added at the end as a finalist bonus, split the same ${split.champion}/${split.runnerUp}.`,
+          'A full bracket is 8, 16, 32 players and so on. When the number of players does not fit, a few players play one extra match first to get into the bracket.',
+          `Example: with ${EXAMPLE_FIELD} players, ${ex.preliminaryMatches * 2} play ${ex.preliminaryMatches} extra matches and ${ex.preliminaryByes} go straight into the bracket.`,
+          'An extra match pays the same way as a first match, at half the amounts. Win it and your next match pays like everyone else\u2019s first match.',
         ],
-        tv: [`Final: ${split.champion}% champion, ${split.runnerUp}% runner-up.`, 'Unpaid money becomes a finalist bonus.'],
+        tv: ['Bracket not full? A few players play one extra match first.', 'It pays like a first match, at half the amounts.'],
       },
       {
-        title: 'Forfeits and withdrawals',
+        icon: '\u{26A0}\u{FE0F}',
+        title: 'No-shows and quitting',
         body: [
-          'Opponent does not show? You move on and collect half of what that match pays. In the championship that is half the champion\u2019s share, with no runner-up pay.',
-          'A player stops partway through? In the opening round each player keeps the money for racks already won, with no winner\u2019s share or shutout bonus. In later rounds nothing more is paid. The other player moves on.',
-          'Both players forfeit or both withdraw? Nobody moves on, and their next opponent advances with half pay.',
-          'If the championship is not played out, there is no finalist bonus, and money not paid out stays with the tournament director.',
+          'Opponent does not show? You move on and get half of what the match pays. In the final, that is half the champion\u2019s share.',
+          'Opponent quits partway through your first match? You both keep the money for racks already won. Later in the bracket, you just move on.',
+          'If both players are missing, nobody moves on, and their next opponent gets through with half pay.',
+          'If the final is not played, there is no bonus, and leftover money stays with the tournament director.',
         ],
-        tv: ['No-show? You move on with half the match pay.', 'Final not played out? No finalist bonus.'],
+        tv: ['No-show? You move on with half the match pay.', 'Final not played? No bonus.'],
       },
       {
+        icon: '\u{1F4A1}',
         title: 'Good to know',
         body: [
           'Money you win is yours. It is never taken back if you lose later.',

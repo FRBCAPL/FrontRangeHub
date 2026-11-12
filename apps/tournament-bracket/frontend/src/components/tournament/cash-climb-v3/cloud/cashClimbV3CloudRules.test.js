@@ -48,9 +48,15 @@ describe('Cash Climb (V3) cloud permissions (fake cloud)', () => {
     assert.equal((await as(OPERATOR).list()).data[0].payload, undefined, 'the list never carries payloads');
   });
 
-  it('refuses the guest testing account and anonymous sessions even when listed as operators', async () => {
+  it('lets the listed guest testing account save its own tournament', async () => {
     const { as } = cloudWith();
-    for (const user of [GUEST, ANONYMOUS, PLAYER, null]) {
+    assert.equal((await as(GUEST).save(setupRecord('perm-guest'), 0)).code, '');
+    assert.equal((await as(GUEST).load('perm-guest')).code, '');
+  });
+
+  it('refuses anonymous sessions even when listed as operators, and anyone not listed', async () => {
+    const { as } = cloudWith();
+    for (const user of [ANONYMOUS, PLAYER, null]) {
       assert.equal((await as(user).save(setupRecord('perm-2'), 0)).code, 'not-authorized');
       assert.equal((await as(user).load('perm-2')).code, 'not-authorized');
       assert.equal((await as(user).list()).code, 'not-authorized');

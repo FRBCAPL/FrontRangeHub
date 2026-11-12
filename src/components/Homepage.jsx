@@ -29,6 +29,7 @@ import {
   CUELESS_FULL_MATCH_PLAYLIST_URL,
 } from '@shared/utils/utils/cuelessFeaturedMedia.js';
 import { CASH_CLIMB_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbGuideRoute.js';
+import { CASH_CLIMB_V3_GUIDE_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb-v3/guide/cashClimbV3GuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from '@apps/tournament-bracket/frontend/src/components/tournament/cash-climb/cashClimbSubmit.js';
 import { rememberLoginReturn } from '@apps/tournament-bracket/frontend/src/components/tournament/tournamentOperators.js';
 
@@ -419,6 +420,10 @@ const Homepage = ({ canRunTournament = false }) => {
           loading={publicTournamentListLoading}
           onClose={() => setPublicTournamentListOpen(false)}
           onPick={handlePickPublicTournament}
+          emptyAction={{
+            label: '📖 How our tournaments work',
+            onClick: () => { setPublicTournamentListOpen(false); navigate(CASH_CLIMB_V3_GUIDE_HASH); },
+          }}
         />
       ) : null}
 

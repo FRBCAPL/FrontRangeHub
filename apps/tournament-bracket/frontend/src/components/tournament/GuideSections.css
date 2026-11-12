@@ -1,0 +1,391 @@
+.tb-guide-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  text-align: left;
+}
+
+.tb-guide-heading,
+.tb-guide-layout h2.tb-guide-heading {
+  margin: 0 0 12px;
+  color: #86efac;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+/* Your night, step by step */
+.tb-journey {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.tb-journey::before {
+  content: "";
+  position: absolute;
+  top: 36px;
+  bottom: 36px;
+  left: 17px;
+  width: 3px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.7), rgba(250, 204, 21, 0.85));
+}
+
+.tb-journey-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.tb-journey-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: #07111c;
+  border: 3px solid #22c55e;
+  color: #fff;
+  font-weight: 800;
+}
+
+.tb-journey-step:last-child .tb-journey-dot {
+  border-color: #facc15;
+  color: #fde68a;
+}
+
+.tb-journey-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(8, 17, 30, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.tb-journey-card:hover,
+.tb-journey-card:focus-visible {
+  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(15, 40, 28, 0.75);
+  transform: translateX(3px);
+  outline: none;
+}
+
+.tb-journey-icon {
+  font-size: 1.9rem;
+  line-height: 1;
+}
+
+.tb-journey-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tb-journey-label {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.08rem;
+}
+
+.tb-journey-summary {
+  color: #94a3b8;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.tb-journey-meter {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 22px;
+}
+
+.tb-journey-meter span {
+  width: 5px;
+  border-radius: 2px;
+  background: rgba(148, 163, 184, 0.22);
+}
+
+.tb-journey-meter span.is-on {
+  background: linear-gradient(180deg, #fde047, #22c55e);
+}
+
+.tb-journey-arrow {
+  color: #86efac;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+/* Side panel: tour, quick answers, all topics */
+.tb-guide-side {
+  display: grid;
+  gap: 20px;
+  position: sticky;
+  top: 16px;
+}
+
+.tb-guide-tour {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: 16px;
+  border: 2px solid rgba(250, 204, 21, 0.6);
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.22), rgba(15, 23, 42, 0.9));
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.tb-guide-tour:hover,
+.tb-guide-tour:focus-visible {
+  transform: translateY(-2px);
+  border-color: #facc15;
+  outline: none;
+}
+
+.tb-guide-tour-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.tb-guide-tour strong {
+  display: block;
+  color: #fde68a;
+  font-size: 1.1rem;
+}
+
+.tb-guide-tour strong + span {
+  color: #e2e8f0;
+  font-size: 0.95rem;
+}
+
+.tb-guide-faq ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.tb-guide-faq button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(8, 17, 30, 0.8);
+  color: #e2e8f0;
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tb-guide-faq button span:last-child {
+  color: #86efac;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.tb-guide-faq button:hover,
+.tb-guide-faq button:focus-visible {
+  border-color: rgba(34, 197, 94, 0.55);
+  color: #fff;
+  outline: none;
+}
+
+/* Modal: the overlay scrolls, so long topics fit on small phones. Public guide pages sit in a z-index 9999 layer. */
+.tb-guide-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 6vh 12px 24px;
+  overflow-y: auto;
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(3px);
+}
+
+.tb-guide-modal {
+  box-sizing: border-box;
+  width: min(640px, 100%);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #0c1a2b 0%, #070d17 100%);
+  border: 2px solid rgba(34, 197, 94, 0.45);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  color: #e2e8f0;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  text-align: left;
+}
+
+.tb-guide-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 10px 18px;
+}
+
+.tb-guide-modal-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.tb-guide-modal-titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tb-guide-modal-count {
+  margin: 0 0 2px;
+  color: #86efac;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tb-guide-modal-head h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.35rem;
+}
+
+.tb-guide-modal-close {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.tb-guide-modal-close:hover {
+  background: rgba(148, 163, 184, 0.25);
+  color: #fff;
+}
+
+.tb-guide-modal-body {
+  padding: 4px 18px 8px;
+}
+
+.tb-guide-modal-body p {
+  margin: 0 0 12px;
+  color: #e2e8f0;
+  line-height: 1.55;
+  font-size: 1.02rem;
+  white-space: pre-line;
+}
+
+.tb-guide-modal-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.tb-guide-modal-nav {
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.12);
+  color: #e2e8f0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tb-guide-modal-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tb-guide-modal-nav.is-next {
+  border-color: rgba(34, 197, 94, 0.55);
+  background: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+}
+
+.tb-guide-modal-nav:not(:disabled):hover {
+  color: #fff;
+}
+
+@media (max-width: 820px) {
+  .tb-guide-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .tb-guide-side {
+    position: static;
+  }
+
+  .tb-guide-main {
+    order: 2;
+  }
+
+  .tb-guide-side {
+    display: contents;
+  }
+
+  .tb-guide-tour {
+    order: 1;
+  }
+
+  .tb-guide-faq {
+    order: 3;
+  }
+
+  .tb-guide-all {
+    order: 4;
+  }
+}
+
+@media (max-width: 480px) {
+  .tb-journey-card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .tb-journey-arrow {
+    display: none;
+  }
+
+  .tb-journey-icon {
+    font-size: 1.5rem;
+  }
+
+  .tb-guide-modal-overlay {
+    padding-top: 3vh;
+  }
+}

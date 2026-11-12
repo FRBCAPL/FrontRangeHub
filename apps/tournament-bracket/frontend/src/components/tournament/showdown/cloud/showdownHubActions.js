@@ -19,11 +19,11 @@ export async function openShowdownFromHub(api, item, { confirm = (m) => window.c
   if (local && String(local.id) === String(item.id)) return true;
   if (local && local.status !== 'completed') {
     const unsent = loadSyncMeta(local.id).dirty ? ' It has changes not yet saved to the cloud; they stay on this tablet in Past events.' : '';
-    if (!confirm(`Switch this tablet to "${item.name}"? "${local.name}" is kept in Past events on this tablet.${unsent}`)) return false;
+    if (!(await confirm(`Switch this tablet to "${item.name}"? "${local.name}" is kept in Past events on this tablet.${unsent}`))) return false;
   }
   const res = await api.load(item.id);
   if (!res.data?.payload) {
-    alert(`Could not open "${item.name}" from the cloud. ${res.error ? cloudMessage(res.code) : 'It is no longer saved.'}`);
+    await alert(`Could not open "${item.name}" from the cloud. ${res.error ? cloudMessage(res.code) : 'It is no longer saved.'}`);
     return false;
   }
   if (local) archiveShowdown(local);
@@ -47,10 +47,10 @@ export async function closeObsoleteShowdown(api, state) {
 
 /** Removes the event from the cloud and this tablet after the operator confirms. */
 export async function removeShowdownFromHub(api, item, { confirm = (m) => window.confirm(m), alert = (m) => window.alert(m) } = {}) {
-  if (!confirm(`Remove "${item.name}" from the database and this tablet? This cannot be undone.`)) return false;
+  if (!(await confirm(`Remove "${item.name}" from the database and this tablet? This cannot be undone.`))) return false;
   const res = await api.remove(item.id);
   if (res.error && res.code !== 'unavailable') {
-    alert(`"${item.name}" was not removed. ${cloudMessage(res.code)}`);
+    await alert(`"${item.name}" was not removed. ${cloudMessage(res.code)}`);
     return false;
   }
   const local = loadShowdown();

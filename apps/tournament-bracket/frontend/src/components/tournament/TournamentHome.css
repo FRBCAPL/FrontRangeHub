@@ -1,0 +1,95 @@
+/* Tournaments home, format picker and sign-in screen: grouped sections. */
+
+.tb-hub-section {
+  max-width: 520px;
+  margin: 0 auto 18px;
+  padding: 14px 16px 16px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.tb-hub-section h2 {
+  margin: 0 0 2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+}
+
+.tb-hub-section > p {
+  margin: 0 0 12px;
+  font-size: 0.88rem;
+  color: var(--tb-muted, #94a3b8);
+}
+
+.tb-hub-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tb-hub-section .tb-btn-new,
+.tb-hub-back .tb-btn-new {
+  margin-top: 0;
+}
+
+.tb-guide-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tb-guide-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.tb-guide-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.tb-guide-name {
+  font-weight: 600;
+  color: #e0e7ff;
+}
+
+.tb-guide-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tb-guide-actions .tb-btn-new {
+  padding: 6px 14px;
+  font-size: 0.88rem;
+}
+
+.tb-hub-back {
+  display: flex;
+  justify-content: center;
+  margin: 8px auto 0;
+}
+
+.tb-format-group {
+  margin: 10px 0 -2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a5b4fc;
+}
+
+.cc-format-btn.tb-format-helper {
+  border-style: dashed;
+  border-color: rgba(250, 204, 21, 0.5);
+  background: rgba(250, 204, 21, 0.08);
+}

@@ -1,64 +1,65 @@
 import React from 'react';
+import TournamentRunningList from './TournamentRunningList.jsx';
+import TournamentHubTools from './TournamentHubTools.jsx';
+import './TournamentHome.css';
+import './TournamentDashboard.css';
 
 export default function TournamentHubHome({
-  currentCount = 0,
+  currentEvents = [],
   completedCount = 0,
+  loading = false,
   onNew,
+  onOpenEvent,
   onCurrent,
   onCompleted,
   onTvWide,
   onTvTall,
-  onClimbGuide,
-  onClimbGuideTv,
-  onGuide,
-  onGuideTv,
-  onShowdownGuide,
-  onShowdownGuideTv,
   onSubmit,
   onBackHome,
 }) {
   return (
-    <>
-      <header className="tb-header">
-        <h1>Tournaments</h1>
-        <p>Start a new event, pick up one in progress, or look back at completed tournaments.</p>
+    <div className="tb-dash">
+      <header className="tb-dash-head">
+        <div>
+          <h1>Tournaments</h1>
+          <p>Run tonight’s event, start a new one, or look back at past results.</p>
+        </div>
+        <button type="button" className="tb-dash-primary" onClick={onNew}>+ New tournament</button>
       </header>
 
-      <div className="tb-hub-grid">
-        <button type="button" className="cc-format-btn cc-primary" onClick={onNew}>
-          <strong>New Tournament</strong>
-          <span>Cash Climb, Cash Climb: King of the Hill, Cash Climb: Showdown, Break and Run, single elimination, or double elimination.</span>
+      <section className="tb-dash-section" aria-labelledby="tb-dash-running">
+        <div className="tb-dash-section-head">
+          <h2 id="tb-dash-running">
+            <span className="tb-live-dot" aria-hidden="true" /> Running now
+            {currentEvents.length ? <span className="tb-dash-count">{currentEvents.length}</span> : null}
+          </h2>
+        </div>
+        <TournamentRunningList
+          events={currentEvents}
+          loading={loading}
+          onOpen={onOpenEvent}
+          onSeeAll={onCurrent}
+        />
+      </section>
+
+      <div className="tb-dash-tiles">
+        <button type="button" className="tb-dash-tile" onClick={onCurrent}>
+          <span className="tb-dash-tile-icon" aria-hidden="true">🗂️</span>
+          <strong>Manage running{currentEvents.length ? ` (${currentEvents.length})` : ''}</strong>
+          <span>Open events, or remove ones you no longer need.</span>
         </button>
-        <button type="button" className="cc-format-btn" onClick={onCurrent}>
-          <strong>Current Tournaments</strong>
-          <span>
-            {currentCount
-              ? `${currentCount} in progress`
-              : 'Open an event that is still running.'}
-          </span>
-        </button>
-        <button type="button" className="cc-format-btn" onClick={onCompleted}>
-          <strong>Completed</strong>
-          <span>
-            {completedCount
-              ? `${completedCount} finished`
-              : 'Review finished events.'}
-          </span>
+        <button type="button" className="tb-dash-tile is-done" onClick={onCompleted}>
+          <span className="tb-dash-tile-icon" aria-hidden="true">📁</span>
+          <strong>Completed{completedCount ? ` (${completedCount})` : ''}</strong>
+          <span>Open or clear out finished events.</span>
         </button>
       </div>
 
-      <div className="tb-hub-tools">
-        <button type="button" className="tb-btn-new" onClick={onTvWide}>TV wide 16:9</button>
-        <button type="button" className="tb-btn-new" onClick={onTvTall}>TV tall 9:16</button>
-        <button type="button" className="tb-btn-new" onClick={onClimbGuide}>How Cash Climb works</button>
-        <button type="button" className="tb-btn-new" onClick={onClimbGuideTv}>Cash Climb guide TV</button>
-        <button type="button" className="tb-btn-new" onClick={onGuide}>How King of the Hill works</button>
-        <button type="button" className="tb-btn-new" onClick={onGuideTv}>King of the Hill guide TV</button>
-        <button type="button" className="tb-btn-new" onClick={onShowdownGuide}>How Showdown works</button>
-        <button type="button" className="tb-btn-new" onClick={onShowdownGuideTv}>Showdown guide TV</button>
-        <button type="button" className="tb-btn-new" onClick={onSubmit}>Player submit (public)</button>
-        <button type="button" className="tb-btn-new" onClick={onBackHome}>Back to home</button>
+      <TournamentHubTools onTvWide={onTvWide} onTvTall={onTvTall} onSubmit={onSubmit} />
+
+      <div className="tb-hub-back">
+        <button type="button" className="tb-link-btn" onClick={onBackHome}>← Back to frontrangepool.com</button>
       </div>
-    </>
+    </div>
   );
 }

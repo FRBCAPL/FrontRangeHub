@@ -5,12 +5,33 @@ import {
   rememberLoginReturn,
   clearLoginReturn,
 } from './tournamentOperators.js';
-import { CASH_CLIMB_GUIDE_HASH } from './cash-climb/cashClimbGuideRoute.js';
-import { SHOWDOWN_GUIDE_HASH } from './showdown/public/showdownGuideRoute.js';
-import { CASH_CLIMB_V3_GUIDE_HASH } from './cash-climb-v3/guide/cashClimbV3GuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { hasLocalTournamentWork, localTournamentWorkLabel } from './tournamentLocalWork.js';
+import TournamentGuideLinks from './TournamentGuideLinks.jsx';
 import './TournamentBracketApp.css';
+import './TournamentHome.css';
+
+function PublicLinks({ onSubmit, onHome }) {
+  return (
+    <>
+      <section className="tb-hub-section" aria-labelledby="tb-gate-guides">
+        <h2 id="tb-gate-guides">Player guides</h2>
+        <p>How each format works. Read it here, or put it up on the TV.</p>
+        <TournamentGuideLinks />
+      </section>
+      <section className="tb-hub-section" aria-labelledby="tb-gate-players">
+        <h2 id="tb-gate-players">Playing tonight?</h2>
+        <p>Report your match result here. No sign-in needed.</p>
+        <div className="tb-hub-row">
+          <button type="button" className="tb-btn-new" onClick={onSubmit}>Submit a result</button>
+        </div>
+      </section>
+      <div className="tb-hub-back">
+        <button type="button" className="tb-btn-new" onClick={onHome}>Back to home</button>
+      </div>
+    </>
+  );
+}
 
 /**
  * Cash Climb / open tournament is house-operator only.
@@ -44,12 +65,13 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
 
   const localWork = hasLocalTournamentWork();
   const localLabel = localTournamentWorkLabel();
+  const openSubmit = () => navigate(CASH_CLIMB_SUBMIT_HASH);
 
   if (isAuthenticated && adminLoading) {
     return (
       <div className="tournament-bracket-app">
         <header className="tb-header">
-          <h1>Open Tournament</h1>
+          <h1>Tournaments</h1>
           <p>Checking access…</p>
         </header>
       </div>
@@ -61,25 +83,9 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
       <div className="tournament-bracket-app">
         <header className="tb-header">
           <h1>Operator only</h1>
-          <p>
-            Cash Climb, Cash Climb: King of the Hill, Cash Climb: Showdown, Break and Run, and elimination are house formats. Sign in with the operator account to run an event.
-          </p>
-          <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_V3_GUIDE_HASH)}>
-            How Cash Climb works
-          </button>
-          <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
-            How King of the Hill works
-          </button>
-          <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_GUIDE_HASH)}>
-            How Showdown works
-          </button>
-          <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_SUBMIT_HASH)}>
-            Submit a result
-          </button>
-          <button type="button" className="tb-btn-new" onClick={goHome}>
-            Back to home
-          </button>
+          <p>Only the house operator account can run tournaments. Players can still read the guides and report results below.</p>
         </header>
+        <PublicLinks onSubmit={openSubmit} onHome={goHome} />
       </div>
     );
   }
@@ -87,11 +93,11 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
   return (
     <div className="tournament-bracket-app">
       <header className="tb-header">
-        <h1>Open Tournament</h1>
+        <h1>Tournaments</h1>
         <p>
           {localWork
             ? `${localLabel} is still on this tablet. Sign in with the operator account to save it. Nothing you entered has been deleted.`
-            : 'Operator sign-in is required to run Cash Climb, Cash Climb: King of the Hill, Cash Climb: Showdown, Break and Run, or an elimination bracket.'}
+            : 'Running an event? Sign in with the operator account. Players can read the guides and report results below.'}
         </p>
       </header>
       {localWork ? (
@@ -103,23 +109,7 @@ export default function TournamentBracketGate({ isAuthenticated, adminLoading, o
         <h2 id="tb-gate-login-heading" className="tb-gate-login-title">Sign in</h2>
         <SupabaseLogin compact onSuccess={handleLoginSuccess} />
       </section>
-      <div className="tb-header">
-        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_V3_GUIDE_HASH)}>
-          How Cash Climb works
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_GUIDE_HASH)}>
-          How King of the Hill works
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => navigate(SHOWDOWN_GUIDE_HASH)}>
-          How Showdown works
-        </button>
-        <button type="button" className="tb-btn-new" onClick={() => navigate(CASH_CLIMB_SUBMIT_HASH)}>
-          Submit a result
-        </button>
-        <button type="button" className="tb-btn-new" onClick={goHome}>
-          Back to home
-        </button>
-      </div>
+      <PublicLinks onSubmit={openSubmit} onHome={goHome} />
     </div>
   );
 }

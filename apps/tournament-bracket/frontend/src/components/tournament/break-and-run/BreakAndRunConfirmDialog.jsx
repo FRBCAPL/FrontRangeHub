@@ -41,7 +41,9 @@ export function BreakAndRunConfirmDialog({
           <p key={index} className="bnr-confirm-text">{text}</p>
         ))}
         <div className="form-actions bnr-confirm-actions">
-          <button type="button" className="btn-secondary" onClick={onCancel}>{cancelLabel}</button>
+          {cancelLabel === null ? null : (
+            <button type="button" className="btn-secondary" onClick={onCancel}>{cancelLabel}</button>
+          )}
           <button
             ref={confirmRef}
             type="button"

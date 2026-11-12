@@ -1,6 +1,10 @@
-/** Accounts that can always run Open Tournament / Cash Climb. */
+/**
+ * Accounts that can always run tournaments (hub admins can too).
+ * Keep in sync with supabase-migrations/tournament-operators-2026-11.sql.
+ */
 const TOURNAMENT_OPERATOR_EMAILS = [
   'sslampro@gmail.com',
+  'frbcapl@gmail.com',
   'guest@guestmail.com',
 ];
 

@@ -7,6 +7,7 @@ import ShowdownPublicGuide from '../showdown/public/ShowdownPublicGuide.jsx';
 import { isCashClimbV3Guide } from '../cash-climb-v3/guide/cashClimbV3GuideRoute.js';
 import CashClimbV3PublicGuide from '../cash-climb-v3/guide/CashClimbV3PublicGuide.jsx';
 import GuideFormatSwitch from '../GuideFormatSwitch.jsx';
+import GuideSections from '../GuideSections.jsx';
 import '../TournamentBracketApp.css';
 import './CashClimbPublicGuide.css';
 
@@ -62,34 +63,40 @@ function CashClimbGuide({ isTv }) {
           </div>
         </header>
 
-        <section className="cc-guide-stages" aria-label="Two stages">
-          <article className="cc-guide-stage">
-            <span className="cc-guide-stage-label">Stage 1</span>
-            <h2>Round robin</h2>
-            <p>Keep playing until you take 3 losses. Then you are out.</p>
-            <p className="cc-guide-stage-meta">Usually 1 game</p>
-          </article>
-          <div className="cc-guide-stage-join" aria-hidden="true">
-            <span>Then</span>
-          </div>
-          <article className="cc-guide-stage is-koh">
-            <span className="cc-guide-stage-label">Stage 2</span>
-            <h2>King of the Hill</h2>
-            <p>Winner stays. 2 losses and you are out.</p>
-            <p className="cc-guide-stage-meta">Usually race to 2</p>
-          </article>
-        </section>
-
-        <div className="cc-guide-grid">
-          {guide.sections.map((section) => (
-            <article key={section.title} className="cc-guide-card">
-              <h2>{section.title}</h2>
-              {section.body.map((line) => (
-                <p key={line} className={lineClass(line)}>{line}</p>
-              ))}
+        {isTv ? (
+          <section className="cc-guide-stages" aria-label="Two stages">
+            <article className="cc-guide-stage">
+              <span className="cc-guide-stage-label">Stage 1</span>
+              <h2>Round robin</h2>
+              <p>Keep playing until you take 3 losses. Then you are out.</p>
+              <p className="cc-guide-stage-meta">Usually 1 game</p>
             </article>
-          ))}
-        </div>
+            <div className="cc-guide-stage-join" aria-hidden="true">
+              <span>Then</span>
+            </div>
+            <article className="cc-guide-stage is-koh">
+              <span className="cc-guide-stage-label">Stage 2</span>
+              <h2>King of the Hill</h2>
+              <p>Winner stays. 2 losses and you are out.</p>
+              <p className="cc-guide-stage-meta">Usually race to 2</p>
+            </article>
+          </section>
+        ) : null}
+
+        {isTv ? (
+          <div className="cc-guide-grid">
+            {guide.sections.map((section) => (
+              <article key={section.title} className="cc-guide-card">
+                <h2>{section.title}</h2>
+                {section.body.map((line) => (
+                  <p key={line} className={lineClass(line)}>{line}</p>
+                ))}
+              </article>
+            ))}
+          </div>
+        ) : (
+          <GuideSections journey={guide.journey} faq={guide.faq} details={guide.details} sections={guide.sections} lineClass={lineClass} />
+        )}
 
         {isTv ? null : (
           <footer className="cc-guide-foot">

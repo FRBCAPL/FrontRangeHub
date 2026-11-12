@@ -1,7 +1,7 @@
 import React from 'react';
 
 /** One line of rule text; wrap words in **double asterisks** to make them bold. */
-function RuleLine({ line }) {
+export function RuleLine({ line }) {
   const parts = String(line).split(/\*\*(.+?)\*\*/g);
   return parts.map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
 }

@@ -35,7 +35,8 @@ describe('Cash Climb guide: every claim matches the engine', () => {
         assert.equal(openingScoreSplit(config, 0).loser, 0);
       }
     }
-    assert.match(bodyOf(cashClimbV3Guide()), /shutout pays back your full entry fee \(half that in the preliminary round\)/);
+    assert.match(bodyOf(cashClimbV3Guide()), /\(a shutout\) and you get your full entry fee back/);
+    assert.match(JSON.stringify(cashClimbV3Guide().details.shutout), /extra match to get into the bracket, it pays half that/);
   });
 
   it('in the opening round the winner always earns more than the loser', () => {
@@ -61,7 +62,7 @@ describe('Cash Climb guide: every claim matches the engine', () => {
     const s = cashClimbV3Shape(12);
     assert.equal(s.preliminaryMatches, 4);
     assert.equal(s.preliminaryByes, 4);
-    assert.match(bodyOf(cashClimbV3Guide()), /with 12 players, 8 play 4 preliminary matches and 4 go straight to the opening round/);
+    assert.match(bodyOf(cashClimbV3Guide()), /with 12 players, 8 play 4 extra matches and 4 go straight into the bracket/);
   });
 
   it('every section has short TV lines, and no line repeats inside a section', () => {
@@ -90,7 +91,7 @@ describe('Cash Climb guide route', () => {
   it('renders the Cash Climb guide with a three-format switch', async () => {
     const html = await renderAt(CASH_CLIMB_V3_GUIDE_HASH);
     const page = text(html);
-    for (const t of ['How Cash Climb works', 'Opening round', 'The climb', 'Preliminary round', 'The championship', 'Forfeits and withdrawals', 'Good to know']) {
+    for (const t of ['How Cash Climb works', 'Sam\u2019s night', 'Your first match', 'Keep winning', 'The final', 'Why do some players play an extra match?', 'Read the full rules']) {
       assert.ok(page.includes(t), t);
     }
     assert.match(html, /aria-selected="true"[^>]*>Cash Climb</);

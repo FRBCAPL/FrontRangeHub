@@ -1,6 +1,7 @@
 import React from 'react';
 import BreakAndRunLogo from './break-and-run/BreakAndRunLogo.jsx';
 import './break-and-run/BreakAndRun.css';
+import './TournamentHome.css';
 import { cashClimbFormatLabel } from './tournamentFormats.js';
 
 export default function TournamentFormatPicker({ onCashClimbV3, onCashClimb, onShowdown, showdownResume, onBreakAndRun, onSingleElim, onDoubleElim, onBack, onSmartBuilder }) {
@@ -13,11 +14,13 @@ export default function TournamentFormatPicker({ onCashClimbV3, onCashClimb, onS
 
       <div className="cc-format-grid">
         {onSmartBuilder ? (
-          <button type="button" className="cc-format-btn" onClick={onSmartBuilder}>
+          <button type="button" className="cc-format-btn tb-format-helper" onClick={onSmartBuilder}>
             <strong>Help me choose</strong>
             <span>Not sure which format fits tonight? Get a suggested format and settings for your players, tables and time.</span>
           </button>
         ) : null}
+
+        <h2 className="tb-format-group">Cash Climb formats</h2>
         {onCashClimbV3 ? (
           <button type="button" className="cc-format-btn" onClick={onCashClimbV3}>
             <strong>{cashClimbFormatLabel('cash-climb-v3')}</strong>
@@ -38,6 +41,8 @@ export default function TournamentFormatPicker({ onCashClimbV3, onCashClimb, onS
             </span>
           </button>
         ) : null}
+
+        <h2 className="tb-format-group">Pot game</h2>
         <button type="button" className="cc-format-btn bnr-format-btn" onClick={onBreakAndRun}>
           <BreakAndRunLogo size="thumb" />
           <span className="bnr-format-copy">
@@ -45,6 +50,8 @@ export default function TournamentFormatPicker({ onCashClimbV3, onCashClimb, onS
             <span>One continuous pot. Sessions for each night. Called balls pay full, lucky balls pay less, Final 10 wins the pot.</span>
           </span>
         </button>
+
+        <h2 className="tb-format-group">Classic brackets</h2>
         <button type="button" className="cc-format-btn" onClick={onSingleElim}>
           <strong>Single elimination</strong>
           <span>Classic bracket. Winner advances, loser is out.</span>
@@ -53,9 +60,12 @@ export default function TournamentFormatPicker({ onCashClimbV3, onCashClimb, onS
           <strong>Double elimination</strong>
           <span>Winners and losers brackets plus a grand final.</span>
         </button>
-        <button type="button" className="tb-btn-new" onClick={onBack}>
-          Back
-        </button>
+
+        <div className="tb-hub-back">
+          <button type="button" className="tb-btn-new" onClick={onBack}>
+            Back
+          </button>
+        </div>
       </div>
     </>
   );

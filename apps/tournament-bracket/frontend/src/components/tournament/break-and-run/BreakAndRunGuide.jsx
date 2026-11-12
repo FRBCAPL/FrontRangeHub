@@ -2,23 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadOpenBreakAndRunPotSummary } from './breakAndRunCloud.js';
 import { breakAndRunPhoneHash, buildBreakAndRunPublicBoard, payoutRateTiles } from './breakAndRunDisplay.js';
+import { CALLED_BREAK_AND_RUN_FOOTER } from './breakAndRunCalledRules.js';
 import {
-  CALLED_BREAK_AND_RUN_FOOTER,
-  CALLED_BREAK_AND_RUN_RULES,
-} from './breakAndRunCalledRules.js';
-import {
-  GUIDE_QUICK_ANSWERS,
   breakAndRunGuideHref,
   formatDollars as formatMoney,
   guideExamples,
-  guideSteps,
 } from './breakAndRunGuide.js';
+import { breakAndRunGuideDetails, breakAndRunRuleSections } from './breakAndRunGuideDetails.js';
 import BreakAndRunLogo from './BreakAndRunLogo.jsx';
-import Lines from './BreakAndRunRuleText.jsx';
+import { RuleLine } from './BreakAndRunRuleText.jsx';
+import GuideSections from '../GuideSections.jsx';
 import useBreakAndRunLiveNow from './useBreakAndRunLiveNow.js';
 import './BreakAndRunGuide.css';
 
 const REFRESH_MS = 60000;
+const RULE_SECTIONS = breakAndRunRuleSections();
 
 function useLiveBoard() {
   const [tournament, setTournament] = useState(null);
@@ -97,11 +95,11 @@ export default function BreakAndRunGuide() {
   const navigate = useNavigate();
   const board = useLiveBoard();
   const examples = guideExamples(board?.payoutMode === 'called-ball' ? board.displayPot : undefined);
-  const steps = guideSteps({
+  const guideCards = breakAndRunGuideDetails({
+    examples,
     memberFee: board?.memberFee ?? 10,
     openFee: board?.openFee ?? 20,
-    perBall: examples.perBall,
-    luckyBall: examples.luckyBall,
+    live: board?.payoutMode === 'called-ball',
   });
 
   useEffect(() => {
@@ -136,21 +134,6 @@ export default function BreakAndRunGuide() {
 
         {board ? <LivePot board={board} onWatch={watchLive} /> : null}
 
-        <section className="bnr-guide-section" aria-labelledby="bnr-guide-steps-title">
-          <h2 id="bnr-guide-steps-title">How it works</h2>
-          <ol className="bnr-guide-steps">
-            {steps.map((step, i) => (
-              <li key={step.title}>
-                <span className="bnr-guide-step-num" aria-hidden="true">{i + 1}</span>
-                <div>
-                  <h3>{step.title}</h3>
-                  <p>{step.body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
-
         <section className="bnr-guide-section" aria-labelledby="bnr-guide-values-title">
           <h2 id="bnr-guide-values-title">What each ball pays</h2>
           <p className="bnr-guide-note">
@@ -181,52 +164,16 @@ export default function BreakAndRunGuide() {
           </div>
         </section>
 
-        <section className="bnr-guide-section" aria-labelledby="bnr-guide-examples-title">
-          <h2 id="bnr-guide-examples-title">Examples · {formatMoney(examples.pot)} pot</h2>
-          <div className="bnr-guide-examples">
-            {examples.items.map((item) => (
-              <article key={item.title} className={`bnr-guide-example is-${item.tone}`}>
-                <h3>{item.title}</h3>
-                <p>{item.setup}</p>
-                {item.bonus > 0 ? (
-                  <p className="bnr-guide-example-math">
-                    {formatMoney(item.bank)} bank + {formatMoney(item.bonus)} bonus
-                  </p>
-                ) : null}
-                <p className="bnr-guide-example-result">
-                  {item.payout > 0 ? `Takes home ${formatMoney(item.payout)}` : 'Takes home $0 — can rebuy'}
-                </p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="bnr-guide-section" aria-labelledby="bnr-guide-faq-title">
-          <h2 id="bnr-guide-faq-title">Quick answers</h2>
-          <dl className="bnr-guide-faq">
-            {GUIDE_QUICK_ANSWERS.map((item) => (
-              <div key={item.q}>
-                <dt>{item.q}</dt>
-                <dd>{item.a}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-
-        <section id="bnr-guide-rules" className="bnr-guide-section" aria-labelledby="bnr-guide-rules-title">
-          <h2 id="bnr-guide-rules-title">Official rules</h2>
-          <p className="bnr-guide-note">Tap a rule to read it.</p>
-          <div className="bnr-guide-rules">
-            {CALLED_BREAK_AND_RUN_RULES.map((rule, i) => (
-              <details key={rule.title}>
-                <summary>
-                  <span className="bnr-guide-rule-num">{i + 1}</span>
-                  {rule.title}
-                </summary>
-                <div className="bnr-guide-rule-body"><Lines text={rule.body} /></div>
-              </details>
-            ))}
-          </div>
+        <section id="bnr-guide-rules" className="bnr-guide-section bnr-guide-cards" aria-label="How it works">
+          <GuideSections
+            journey={guideCards.journey}
+            faq={guideCards.faq}
+            details={guideCards.details}
+            sections={RULE_SECTIONS}
+            renderLine={(line) => <RuleLine line={line} />}
+            tour={{ icon: '\u{1F4D6}', title: 'Official rules', text: 'Read them one at a time' }}
+            rulesHeading="Official rules"
+          />
           <p className="bnr-guide-note">{CALLED_BREAK_AND_RUN_FOOTER}</p>
         </section>
 

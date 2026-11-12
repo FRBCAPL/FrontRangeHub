@@ -26,9 +26,6 @@ import {
 } from './break-and-run/breakAndRunCloud.js';
 import { sanitizeCashClimb } from './cash-climb/cashClimbEngine.js';
 import { preferTournamentCopy, withTournamentTimestamp, tournamentTime } from './cash-climb/cashClimbSaved.js';
-import { CASH_CLIMB_GUIDE_HASH, openCashClimbGuideTv } from './cash-climb/cashClimbGuideRoute.js';
-import { SHOWDOWN_GUIDE_HASH, openShowdownGuideTv } from './showdown/public/showdownGuideRoute.js';
-import { CASH_CLIMB_V3_GUIDE_HASH, openCashClimbV3GuideTv } from './cash-climb-v3/guide/cashClimbV3GuideRoute.js';
 import { CASH_CLIMB_SUBMIT_HASH } from './cash-climb/cashClimbSubmit.js';
 import { openCashClimbTv } from './cash-climb/cashClimbTv.js';
 import {
@@ -63,6 +60,7 @@ import {
   isShowdownHubEvent,
   isCashClimbV3HubEvent,
 } from './tournamentHubEvents.js';
+import { askTournament, tellTournament } from './tournamentDialog.jsx';
 import './TournamentBracketApp.css';
 import './cash-climb/CashClimb.css';
 
@@ -86,6 +84,11 @@ export default function TournamentBracketApp() {
   const [savedCashClimbV3, setSavedCashClimbV3] = useState(() => listCashClimbV3HubEvents(cashClimbV3Store(), { syncStore: cashClimbV3SyncStore() }));
   const [cashClimbV3Open, setCashClimbV3Open] = useState({ intent: 'open', eventId: null });
   const [handoff, setHandoff] = useState(null);
+  const [hubLoaded, setHubLoaded] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setHubLoaded(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (handoff) setHandoff(null);
@@ -99,19 +102,23 @@ export default function TournamentBracketApp() {
   }, []);
 
   const refreshSaved = useCallback(async () => {
-    const [elim, cash, bnr, elimLive, cashLive, bnrLive] = await Promise.all([
-      listSavedElimEvents(),
-      listSavedCashClimbEvents(),
-      listSavedBreakAndRunEvents(),
-      listLiveElimEvents(),
-      listLiveCashClimbEvents(),
-      listLiveBreakAndRunEvents(),
-    ]);
-    setSavedElim([...elimLive, ...elim]);
-    setSavedCashClimb([...cashLive, ...cash]);
-    setSavedBreakAndRun([...bnrLive, ...bnr]);
-    setSavedShowdown(await listShowdownsForHub(showdownCloud));
-    setSavedCashClimbV3(await listCashClimbV3ForHub({ cloud: cashClimbV3Cloud, store: cashClimbV3Store(), syncStore: cashClimbV3SyncStore() }));
+    try {
+      const [elim, cash, bnr, elimLive, cashLive, bnrLive] = await Promise.all([
+        listSavedElimEvents(),
+        listSavedCashClimbEvents(),
+        listSavedBreakAndRunEvents(),
+        listLiveElimEvents(),
+        listLiveCashClimbEvents(),
+        listLiveBreakAndRunEvents(),
+      ]);
+      setSavedElim([...elimLive, ...elim]);
+      setSavedCashClimb([...cashLive, ...cash]);
+      setSavedBreakAndRun([...bnrLive, ...bnr]);
+      setSavedShowdown(await listShowdownsForHub(showdownCloud));
+      setSavedCashClimbV3(await listCashClimbV3ForHub({ cloud: cashClimbV3Cloud, store: cashClimbV3Store(), syncStore: cashClimbV3SyncStore() }));
+    } finally {
+      setHubLoaded(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -165,7 +172,10 @@ export default function TournamentBracketApp() {
     if (!tournament?.id || tournament.status === 'completed' || tournament.status === 'ended') return true;
     const result = await parkLiveElimEvent(withTournamentTimestamp(tournament));
     if (result.error) {
-      window.alert('Could not save the current elimination event first. Sign in and try again so it is not lost.');
+      await tellTournament({
+        title: 'Could not save',
+        message: 'Could not save the current elimination event first. Sign in and try again so it is not lost.',
+      });
       return false;
     }
     return true;
@@ -186,9 +196,11 @@ export default function TournamentBracketApp() {
 
   const handleNewElim = async () => {
     if (tournament && tournament.status === 'in-progress') {
-      const ok = window.confirm(
-        'Leave this bracket on this tablet? It stays in Current Tournaments so you can open it again. It will not be erased.'
-      );
+      const ok = await askTournament({
+        title: 'Leave this bracket?',
+        message: 'It stays in Current Tournaments so you can open it again. It will not be erased.',
+        confirmLabel: 'Leave bracket',
+      });
       if (!ok) return;
       if (!(await keepCurrentElim())) return;
     }
@@ -197,7 +209,12 @@ export default function TournamentBracketApp() {
 
   const handleRemoveElim = async () => {
     if (!tournament?.id) return;
-    const ok = window.confirm('Remove this tournament from the database and this tablet? This cannot be undone.');
+    const ok = await askTournament({
+      title: 'Remove this tournament?',
+      message: 'It will be removed from the database and this tablet. This cannot be undone.',
+      confirmLabel: 'Remove',
+      tone: 'danger',
+    });
     if (!ok) return;
     await deleteElimEvent(tournament.id);
     leaveElimToHome();
@@ -206,7 +223,11 @@ export default function TournamentBracketApp() {
   const handleOpenSavedElim = async (item) => {
     if (!item?.tournament && !item?.id) return;
     if (tournament && tournament.status !== 'completed' && !elimIdsEqual(tournament.id, item.id)) {
-      const ok = window.confirm('Switch this tablet to that event? The one you are on stays in Current Tournaments.');
+      const ok = await askTournament({
+        title: 'Switch events?',
+        message: 'Switch this tablet to that event? The one you are on stays in Current Tournaments.',
+        confirmLabel: 'Switch',
+      });
       if (!ok) return;
       if (!(await keepCurrentElim())) return;
     }
@@ -221,7 +242,12 @@ export default function TournamentBracketApp() {
 
   const handleRemoveSavedElim = async (item) => {
     if (!item?.id) return;
-    const ok = window.confirm(`Remove "${item.name}" from the database? This cannot be undone.`);
+    const ok = await askTournament({
+      title: 'Remove this tournament?',
+      message: `Remove "${item.name}" from the database? This cannot be undone.`,
+      confirmLabel: 'Remove',
+      tone: 'danger',
+    });
     if (!ok) return;
     await deleteElimEvent(item.id);
     if (tournament && elimIdsEqual(tournament.id, item.id)) {
@@ -235,7 +261,11 @@ export default function TournamentBracketApp() {
     if (!item?.tournament && !item?.id) return;
     const local = loadCashClimb();
     if (local && local.status !== 'completed' && String(local.id) !== String(item.id)) {
-      const ok = window.confirm('Replace the Cash Climb King of the Hill event on this tablet with the saved one? The current event stays in the database.');
+      const ok = await askTournament({
+        title: 'Switch events?',
+        message: 'Replace the Cash Climb King of the Hill event on this tablet with the saved one? The current event stays in the database.',
+        confirmLabel: 'Switch',
+      });
       if (!ok) return;
       if (local.status !== 'completed') retireCashClimbEvent(local);
     }
@@ -249,7 +279,12 @@ export default function TournamentBracketApp() {
 
   const handleRemoveSavedCashClimb = async (item) => {
     if (!item?.id) return;
-    const ok = window.confirm(`Remove "${item.name}" from the database? This cannot be undone.`);
+    const ok = await askTournament({
+      title: 'Remove this tournament?',
+      message: `Remove "${item.name}" from the database? This cannot be undone.`,
+      confirmLabel: 'Remove',
+      tone: 'danger',
+    });
     if (!ok) return;
     await deleteCashClimbEvent(item.id);
     const local = loadCashClimb();
@@ -261,12 +296,19 @@ export default function TournamentBracketApp() {
     if (!item?.tournament && !item?.id) return;
     const local = loadBreakAndRun();
     if (local && local.status !== 'completed' && String(local.id) !== String(item.id)) {
-      const ok = window.confirm('Switch this tablet to that Break and Run? The one you are on stays in Current Tournaments.');
+      const ok = await askTournament({
+        title: 'Switch events?',
+        message: 'Switch this tablet to that Break and Run? The one you are on stays in Current Tournaments.',
+        confirmLabel: 'Switch',
+      });
       if (!ok) return;
       if (local.status === 'in-progress') {
         const parked = await parkLiveBreakAndRunEvent(local);
         if (parked.error) {
-          window.alert('Could not save the current Break and Run first. Sign in and try again so it is not lost.');
+          await tellTournament({
+            title: 'Could not save',
+            message: 'Could not save the current Break and Run first. Sign in and try again so it is not lost.',
+          });
           return;
         }
       }
@@ -281,7 +323,12 @@ export default function TournamentBracketApp() {
 
   const handleRemoveSavedBreakAndRun = async (item) => {
     if (!item?.id) return;
-    const ok = window.confirm(`Remove "${item.name}" from the database? This cannot be undone.`);
+    const ok = await askTournament({
+      title: 'Remove this tournament?',
+      message: `Remove "${item.name}" from the database? This cannot be undone.`,
+      confirmLabel: 'Remove',
+      tone: 'danger',
+    });
     if (!ok) return;
     await deleteBreakAndRunEvent(item.id);
     const local = loadBreakAndRun();
@@ -290,11 +337,19 @@ export default function TournamentBracketApp() {
   };
 
   const handleOpenSavedShowdown = async (item) => {
-    if (await openShowdownFromHub(showdownCloud, item)) setScreen('showdown');
+    const prompts = {
+      confirm: (message) => askTournament({ title: 'Switch events?', message, confirmLabel: 'Switch' }),
+      alert: (message) => tellTournament({ title: 'Could not open', message }),
+    };
+    if (await openShowdownFromHub(showdownCloud, item, prompts)) setScreen('showdown');
   };
 
   const handleRemoveSavedShowdown = async (item) => {
-    if (await removeShowdownFromHub(showdownCloud, item)) refreshSaved();
+    const prompts = {
+      confirm: (message) => askTournament({ title: 'Remove this tournament?', message, confirmLabel: 'Remove', tone: 'danger' }),
+      alert: (message) => tellTournament({ title: 'Could not remove', message }),
+    };
+    if (await removeShowdownFromHub(showdownCloud, item, prompts)) refreshSaved();
   };
 
   const handleOpenSavedCashClimbV3 = (item) => {
@@ -357,15 +412,18 @@ export default function TournamentBracketApp() {
     toTop();
   };
 
-  const startNewBreakAndRun = () => {
+  const startNewBreakAndRun = async () => {
     const existing = loadBreakAndRun();
     if (existing && existing.status !== 'completed' && existing.status !== 'ended') {
       const potLabel = formatBreakAndRunMoney(existing.currentPot);
-      const ok = window.confirm(
-        `A Break & Run pot is already open (${potLabel}).\n\n` +
+      const ok = await askTournament({
+        title: 'A pot is already open',
+        message:
+          `A Break & Run pot is already open (${potLabel}).\n\n` +
           'For the next play night, open that pot from Current Tournaments and use Start next session so money stays in one continuous pot.\n\n' +
-          'Start setup for a brand-new separate pot anyway?'
-      );
+          'Start setup for a brand-new separate pot anyway?',
+        confirmLabel: 'Start new pot',
+      });
       if (!ok) return;
     }
     setBreakAndRunIntent('new');
@@ -548,19 +606,18 @@ export default function TournamentBracketApp() {
   return (
     <div className="tournament-bracket-app">
       <TournamentHubHome
-        currentCount={currentEvents.length}
+        currentEvents={currentEvents}
         completedCount={completedEvents.length}
+        loading={!hubLoaded}
+        onOpenEvent={(item) => {
+          setLeaveTo('home');
+          handleOpenHubEvent(item);
+        }}
         onNew={() => setScreen('new')}
         onCurrent={() => setScreen('current')}
         onCompleted={() => setScreen('completed')}
         onTvWide={() => openCashClimbTv('landscape')}
         onTvTall={() => openCashClimbTv('portrait')}
-        onClimbGuide={() => navigate(CASH_CLIMB_V3_GUIDE_HASH)}
-        onClimbGuideTv={() => openCashClimbV3GuideTv()}
-        onGuideTv={() => openCashClimbGuideTv()}
-        onGuide={() => navigate(CASH_CLIMB_GUIDE_HASH)}
-        onShowdownGuideTv={() => openShowdownGuideTv()}
-        onShowdownGuide={() => navigate(SHOWDOWN_GUIDE_HASH)}
         onSubmit={() => navigate(CASH_CLIMB_SUBMIT_HASH)}
         onBackHome={() => navigate('/')}
       />

@@ -9,6 +9,12 @@
   text-align: center;
 }
 
+.sd-guide-field {
+  box-sizing: border-box;
+  width: min(520px, 100%);
+  margin: 24px auto 0;
+}
+
 .sd-guide-older {
   margin: 0 auto 18px;
   max-width: 720px;

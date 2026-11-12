@@ -123,7 +123,7 @@ describe('Showdown guide versions', () => {
     assert.equal(SHOW_OLDER_GUIDE_VERSIONS, false);
     const html = await renderAt(GUIDE, SHOWDOWN_GUIDE_HASH);
     const page = text(html);
-    for (const t of ['How Cash Climb Showdown works', 'Who makes the playoffs', 'Follow a Showdown', 'The short version', 'On your phone', 'Good to know']) {
+    for (const t of ['How Cash Climb Showdown works', 'Take the 1-minute tour', 'Quick answers', 'Read the full rules']) {
       assert.ok(page.includes(t), t);
     }
     for (const cls of ['sd-guide-versions', 'sd-guide-compare', 'sd-guide-older']) assert.ok(!html.includes(cls), `no ${cls}`);

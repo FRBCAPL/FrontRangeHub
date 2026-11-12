@@ -28,7 +28,7 @@ function submitFormatProblem(payload, matchId) {
   return smallInt(match.phase === 'qualifying' ? s.qualifyingRaceTo : s.playoffRaceTo) ? '' : 'invalid-settings';
 }
 
-const OPERATOR_EMAILS = ['sslampro@gmail.com', 'guest@guestmail.com'];
+const OPERATOR_EMAILS = ['sslampro@gmail.com', 'frbcapl@gmail.com', 'guest@guestmail.com'];
 const copy = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 
 /**
