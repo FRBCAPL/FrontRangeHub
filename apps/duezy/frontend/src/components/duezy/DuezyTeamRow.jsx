@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { money } from '../../utils/duezyMath.js';
 import { shortNights, teamBalance } from '../../utils/duezyDivisions.js';
-import { methodFrom, playersWith } from '../../utils/duezyPayers.js';
+import { playersWith } from '../../utils/duezyPayers.js';
+import { isSplit, methodText } from '../../utils/duezySplits.js';
 import DuezyTeamDetail from './DuezyTeamDetail.jsx';
 import DuezyTeamModal from './DuezyTeamModal.jsx';
 import DuezyTeamPayButtons from './DuezyTeamPayButtons.jsx';
@@ -37,7 +38,7 @@ function balanceText({ late, due, dueWhen, makeupNights = [], makeupWhen }) {
 }
 
 function readOnlyStatus(status, payment) {
-  if (status === 'paid') return `✓ Paid${payment?.method ? ` · ${methodFrom(payment.method, payment.paid_by)}` : ''}`;
+  if (status === 'paid') return `✓ Paid${methodText(payment) ? ` · ${methodText(payment)}` : ''}`;
   if (status === 'partial') return `Partial ${money(payment?.amount || 0)}`;
   if (status === 'bye') return '⏸ Bye';
   if (status === 'makeup') return '↻ Make up';
@@ -88,8 +89,8 @@ export default function DuezyTeamRow({
                 Late for {shortNights(balance.lateNights)}
               </small>
             ) : null}
-            {payment?.paid_by && (status === 'paid' || status === 'partial') ? (
-              <small className="dz-paid-by">{methodFrom(payment.method, payment.paid_by)}</small>
+            {(payment?.paid_by || isSplit(payment)) && (status === 'paid' || status === 'partial') ? (
+              <small className="dz-paid-by">{methodText(payment)}</small>
             ) : null}
           </span>
         </button>

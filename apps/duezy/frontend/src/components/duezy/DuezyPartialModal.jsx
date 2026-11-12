@@ -4,7 +4,7 @@ import DuezyPartialForm from './DuezyPartialForm.jsx';
 import DuezyCorrectPayment from './DuezyCorrectPayment.jsx';
 import { hasRecordedEntry } from '../../utils/duezyCorrection.js';
 
-/** "Partial" chip on a team row: enter the amount paid, or correct an amount already recorded. */
+/** "Partial" chip on a team row: enter the amount paid, add the rest to a partial week, or correct an amount already recorded. */
 export default function DuezyPartialModal({ league, team, dues, weekName, payment, onSetPayment, onAddPlayer, onClose }) {
   const setAndClose = async (entry) => {
     await onSetPayment(entry);
@@ -14,7 +14,10 @@ export default function DuezyPartialModal({ league, team, dues, weekName, paymen
     <DuezyModal title={`${team.name} · ${weekName}`} onClose={onClose} className="dz-partial-modal">
       <div className="dz-stack">
         {hasRecordedEntry(payment) ? (
-          <DuezyCorrectPayment league={league} dues={dues} weekName={weekName} payment={payment} onSetPayment={setAndClose} startOpen />
+          <DuezyCorrectPayment
+            league={league} team={team} dues={dues} weekName={weekName} payment={payment}
+            onSetPayment={setAndClose} onAddPlayer={onAddPlayer} startOpen startAdd
+          />
         ) : (
           <DuezyPartialForm league={league} team={team} dues={dues} onSetPayment={setAndClose} onAddPlayer={onAddPlayer} />
         )}

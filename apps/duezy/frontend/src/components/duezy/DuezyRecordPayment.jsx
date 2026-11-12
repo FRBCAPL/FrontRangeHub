@@ -8,7 +8,7 @@ import DuezyPayerSelect from './DuezyPayerSelect.jsx';
 
 /**
  * Amount / method / who paid / note form for one team's week. Less than the dues saves as partial.
- * A week that already has money recorded gets "Correct this entry" instead of a second payment form.
+ * A week that already has money recorded gets "Correct this entry" (and "Add payment" while partial) instead.
  */
 export default function DuezyRecordPayment({
   league, team, dues, weekName, payment, onSetPayment, onAddPlayer, startCorrect = false,
@@ -19,7 +19,12 @@ export default function DuezyRecordPayment({
   const [note, setNote] = useState(payment?.note || '');
 
   if (hasRecordedEntry(payment)) {
-    return <DuezyCorrectPayment league={league} dues={dues} weekName={weekName} payment={payment} onSetPayment={onSetPayment} startOpen={startCorrect} />;
+    return (
+      <DuezyCorrectPayment
+        league={league} team={team} dues={dues} weekName={weekName} payment={payment}
+        onSetPayment={onSetPayment} onAddPlayer={onAddPlayer} startOpen={startCorrect}
+      />
+    );
   }
 
   const askPayer = Boolean(team) && asksWhoPaid(method);

@@ -182,14 +182,28 @@ const upsertPayment = async (row) => {
   return result;
 };
 
-/** One row per team per week — saving again replaces it. */
-export async function savePayment(leagueId, teamId, week, { status, amount = 0, method = null, note = null, paid_by = null }) {
+/** Same idea for split payments (duezy-split-payments-2026-11.sql). */
+let noSplitsColumn = false;
+const SPLITS_SQL_NEEDED = 'Split payments need a quick database update first (duezy-split-payments-2026-11.sql).';
+
+/** One row per team per week — saving again replaces it (a normal save clears any old split). */
+export async function savePayment(leagueId, teamId, week, { status, amount = 0, method = null, note = null, paid_by = null, splits = null }) {
   const row = { league_id: leagueId, team_id: teamId, week, status, amount, method, note, updated_at: new Date().toISOString() };
-  if (noPaidByColumn) return check(await upsertPayment(row));
-  const result = await upsertPayment({ ...row, paid_by });
-  if (result.error && /paid_by/.test(result.error.message)) {
-    noPaidByColumn = true;
-    return check(await upsertPayment(row));
+  if (!noPaidByColumn) row.paid_by = paid_by;
+  if (!noSplitsColumn) row.splits = splits?.length > 1 ? splits : null;
+  else if (splits?.length > 1) throw new Error(SPLITS_SQL_NEEDED);
+  let result = await upsertPayment(row);
+  for (let i = 0; i < 2 && result.error; i += 1) {
+    const msg = result.error.message || '';
+    if ('splits' in row && /splits/.test(msg)) {
+      if (row.splits) throw new Error(SPLITS_SQL_NEEDED);
+      noSplitsColumn = true;
+      delete row.splits;
+    } else if ('paid_by' in row && /paid_by/.test(msg)) {
+      noPaidByColumn = true;
+      delete row.paid_by;
+    } else break;
+    result = await upsertPayment(row);
   }
   return check(result);
 }

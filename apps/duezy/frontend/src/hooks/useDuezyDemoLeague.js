@@ -28,7 +28,7 @@ export default function useDuezyDemoLeague() {
     const now = new Date().toISOString();
     const before = payments.find((p) => p.team_id === teamId && p.week === week) || null;
     const row = {
-      id: `${teamId}:${week}`, league_id: DEMO_ID, team_id: teamId, week, amount: 0, method: null, note: null, paid_by: null,
+      id: `${teamId}:${week}`, league_id: DEMO_ID, team_id: teamId, week, amount: 0, method: null, note: null, paid_by: null, splits: null,
       ...entry, updated_at: now, recorded_by_email: DEMO_EMAIL,
     };
     setPayments((prev) => [...prev.filter((p) => !(p.team_id === teamId && p.week === week)), row]);
@@ -36,7 +36,7 @@ export default function useDuezyDemoLeague() {
     setHistory((prev) => [{
       id: nextId('h'), league_id: DEMO_ID, team_id: teamId, week, action: before ? 'changed' : 'created',
       old_status: before?.status ?? null, old_amount: before ? Number(before.amount) || 0 : null,
-      new_status: row.status, new_amount: Number(row.amount) || 0, method: row.method, note: row.note, paid_by: row.paid_by,
+      new_status: row.status, new_amount: Number(row.amount) || 0, method: row.method, note: row.note, paid_by: row.paid_by, splits: row.splits,
       changed_by_email: DEMO_EMAIL, changed_at: now, team: { name: team?.name, division_id: team?.division_id },
     }, ...prev]);
     return before;
@@ -52,7 +52,10 @@ export default function useDuezyDemoLeague() {
     const { teamId, week, before } = lastChange;
     setLastChange(null);
     writePayment(teamId, week, before
-      ? { status: before.status, amount: Number(before.amount) || 0, method: before.method || null, note: before.note || null, paid_by: before.paid_by || null }
+      ? {
+        status: before.status, amount: Number(before.amount) || 0, method: before.method || null, note: before.note || null,
+        paid_by: before.paid_by || null, splits: before.splits || null,
+      }
       : { status: 'unpaid', amount: 0 });
   }, [lastChange, writePayment]);
 

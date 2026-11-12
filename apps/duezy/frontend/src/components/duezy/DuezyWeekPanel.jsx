@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { money, paidFor } from '../../utils/duezyMath.js';
-import { methodFrom } from '../../utils/duezyPayers.js';
+import { isSplit, methodText } from '../../utils/duezySplits.js';
 import DuezyTeamPayButtons from './DuezyTeamPayButtons.jsx';
 import DuezyPayerPicker from './DuezyPayerPicker.jsx';
 
 function statusLine(payment, dues, late) {
   const status = payment?.status || 'unpaid';
-  if (status === 'paid') return `✓ Paid ${money(paidFor(payment, dues))}${payment.method ? ` · ${methodFrom(payment.method, payment.paid_by)}` : ''}`;
-  if (status === 'partial') return `Partial: ${money(paidFor(payment, dues))} of ${money(dues)}`;
+  const how = methodText(payment);
+  if (status === 'paid') return `✓ Paid ${money(paidFor(payment, dues))}${how ? ` · ${how}` : ''}`;
+  if (status === 'partial') return `Partial: ${money(paidFor(payment, dues))} of ${money(dues)}${isSplit(payment) ? ` · ${how}` : ''}`;
   if (status === 'bye') return '⏸ Bye';
   if (status === 'makeup') return `↻ Make up · ${money(dues)} still owed`;
   return late ? `Late · ${money(dues)} owed` : `Not paid yet · ${money(dues)}`;

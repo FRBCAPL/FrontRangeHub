@@ -6,6 +6,7 @@ import { round2 } from './duezyMath.js';
 import { fileSlug, toCsv } from './duezyExport.js';
 import { weekDates } from './duezySchedule.js';
 import { changeKind, statusText } from './duezyHistory.js';
+import { methodCells } from './duezySplits.js';
 
 export const HISTORY_HEADER = [
   'Changed at', 'Division', 'Team', 'Week', 'Night', 'Change', 'Was', 'Now', 'Amount change', 'Method', 'Paid by', 'Note', 'By',
@@ -34,8 +35,7 @@ export function historyRows({ rows, units = [], teamsById = {} }) {
         r.action === 'created' ? '' : statusText(r.old_status, r.old_amount),
         statusText(r.new_status, r.new_amount),
         delta.toFixed(2),
-        r.method || '',
-        r.paid_by || '',
+        ...methodCells(r),
         r.note || '',
         r.changed_by_email || '',
       ];

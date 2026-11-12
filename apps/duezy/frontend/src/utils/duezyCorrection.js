@@ -3,6 +3,7 @@
  * the payment history keeps the original and the correction side by side.
  */
 import { money, paidFor } from './duezyMath.js';
+import { isSplit } from './duezySplits.js';
 
 /** A week with money (or a bye) recorded is corrected rather than recorded again. */
 export const hasRecordedEntry = (payment) => payment?.status === 'paid' || payment?.status === 'partial';
@@ -20,7 +21,8 @@ export function correctionSummary(payment, dues, amount, method) {
   const before = paidFor(payment, dues);
   const n = Math.max(0, Number(amount) || 0);
   const after = n === 0 ? 'not paid' : `${money(n)} corrected`;
-  const methodChange = n > 0 && method && payment?.method && method !== payment.method ? ` (${payment.method} → ${method})` : '';
+  const was = isSplit(payment) ? 'split' : payment?.method;
+  const methodChange = n > 0 && method && was && method !== was ? ` (${was} → ${method})` : '';
   return `${money(before)} recorded → ${after}${methodChange}`;
 }
 

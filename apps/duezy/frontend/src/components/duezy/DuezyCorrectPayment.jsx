@@ -2,15 +2,21 @@ import React, { useState } from 'react';
 import { money, paidFor } from '../../utils/duezyMath.js';
 import { correctionEntry, correctionSummary, isSameEntry } from '../../utils/duezyCorrection.js';
 import { defaultMethod, methodOptions } from '../../utils/duezyLeaguePrefs.js';
-import { asksWhoPaid, methodFrom } from '../../utils/duezyPayers.js';
+import { asksWhoPaid } from '../../utils/duezyPayers.js';
+import { canAddPart, isSplit, methodText } from '../../utils/duezySplits.js';
+import DuezyAddPayment from './DuezyAddPayment.jsx';
 
 /**
  * A week that already has a payment: show what's recorded and offer "Correct this entry"
  * (prefilled amount/method, optional reason, before → after preview, confirm before saving).
+ * A partly paid week can also "Add payment" — the rest coming in later, maybe by another method (a split).
  */
-export default function DuezyCorrectPayment({ league, dues, weekName, payment, onSetPayment, startOpen = false }) {
+export default function DuezyCorrectPayment({
+  league, team = null, dues, weekName, payment, onSetPayment, onAddPlayer, startOpen = false, startAdd = false,
+}) {
   const recorded = paidFor(payment, dues);
-  const [step, setStep] = useState(startOpen ? 'edit' : 'view');
+  const canAdd = payment?.status === 'partial' && canAddPart(payment, dues);
+  const [step, setStep] = useState(startAdd && canAdd ? 'add' : startOpen ? 'edit' : 'view');
   const [amount, setAmount] = useState(String(recorded));
   const [method, setMethod] = useState(payment?.method || defaultMethod(league));
   const [reason, setReason] = useState('');
@@ -44,15 +50,32 @@ export default function DuezyCorrectPayment({ league, dues, weekName, payment, o
   const unchanged = isSameEntry(payment, dues, amount, method);
   const validAmount = amount !== '' && Number(amount) >= 0;
 
+  if (step === 'add') {
+    return (
+      <DuezyAddPayment
+        league={league} team={team} dues={dues} weekName={weekName} payment={payment}
+        onSetPayment={onSetPayment} onAddPlayer={onAddPlayer} onCancel={() => setStep('view')}
+      />
+    );
+  }
+
   if (step === 'view') {
+    const how = methodText(payment);
     return (
       <div className="dz-recorded">
         <p className="dz-small">
           <strong>{money(recorded)} recorded</strong> for {weekName}
-          {payment?.method ? ` · ${methodFrom(payment.method, payment.paid_by)}` : ''}
+          {how ? ` · ${how}` : ''}
           {payment?.status === 'partial' ? ` · partial (${money(dues - recorded)} still due)` : ''}
         </p>
-        <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={open}>Correct this entry</button>
+        <div className="dz-row dz-row--start">
+          {canAdd ? (
+            <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={() => setStep('add')} title="The rest came in — any method, it's kept as a split">
+              + Add payment
+            </button>
+          ) : null}
+          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={open}>Correct this entry</button>
+        </div>
       </div>
     );
   }
@@ -89,6 +112,9 @@ export default function DuezyCorrectPayment({ league, dues, weekName, payment, o
         </select>
         <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (optional)" maxLength={300} aria-label="Reason for correction" />
       </div>
+      {isSplit(payment) ? (
+        <p className="dz-small dz-muted">Recorded as a split ({methodText(payment)}). Saving a correction replaces it with one amount and method.</p>
+      ) : null}
       {unchanged ? (
         <p className="dz-small dz-muted">Change the amount or method to correct this entry. Enter 0 if they haven't actually paid this week.</p>
       ) : (
