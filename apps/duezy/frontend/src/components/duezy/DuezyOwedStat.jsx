@@ -14,10 +14,10 @@ function Line({ className, onClick, title, children }) {
 
 /**
  * "Still to collect" box: late (past grace), make-ups (postponed, never late), and this week's dues
- * that aren't late yet. owed = { late, lateTeams, makeup, makeupTeams, current }.
+ * that aren't late yet, plus prepaid make-ups still to play. owed = { late, lateTeams, makeup, makeupTeams, prepaidTeams, current }.
  */
 export default function DuezyOwedStat({ owed, onShowLate, onShowMakeups, currentNote = '' }) {
-  const { late = 0, lateTeams = 0, makeup = 0, makeupTeams = 0, current = 0 } = owed || {};
+  const { late = 0, lateTeams = 0, makeup = 0, makeupTeams = 0, prepaidTeams = 0, current = 0 } = owed || {};
   const total = late + makeup + current;
 
   return (
@@ -34,6 +34,11 @@ export default function DuezyOwedStat({ owed, onShowLate, onShowMakeups, current
         {makeup > 0 ? (
           <Line className="is-makeup" onClick={onShowMakeups} title="Postponed matches: still owed, but not late until they're made up">
             ↻ <b>{money(makeup)}</b> make-ups · {teamsText(makeupTeams)}
+          </Line>
+        ) : null}
+        {prepaidTeams > 0 ? (
+          <Line className="is-makeup" onClick={onShowMakeups} title="Paid ahead for a make-up match that hasn't been played yet">
+            ↻ {prepaidTeams} prepaid make-up{prepaidTeams === 1 ? '' : 's'} to play
           </Line>
         ) : null}
         {current > 0 ? (

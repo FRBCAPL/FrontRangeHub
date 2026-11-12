@@ -5,7 +5,9 @@ import { loadAdminItemByNumber, loadPublicItem } from '../../services/consignmen
 import useTaxRate from '../../hooks/useTaxRate.js';
 import useTagShape from '../../hooks/useTagShape.js';
 import { consignmentTagItemNumber, isConsignmentTagSheetPath } from '../../utils/consignmentPaths.js';
+import ConsignmentSoldTag from './ConsignmentSoldTag.jsx';
 import ConsignmentTag from './ConsignmentTag.jsx';
+import ConsignmentTagKindToggle from './ConsignmentTagKindToggle.jsx';
 import ConsignmentTagShapeToggle from './ConsignmentTagShapeToggle.jsx';
 import ConsignmentTagSheet from './ConsignmentTagSheet.jsx';
 import './consignment-print.css';
@@ -18,6 +20,7 @@ function SingleTag({ canAdmin }) {
   const [item, setItem] = useState(null);
   const [error, setError] = useState('');
   const [shape, setShape] = useTagShape();
+  const [kind, setKind] = useState(null);
   const taxRate = useTaxRate();
 
   useEffect(() => {
@@ -40,15 +43,20 @@ function SingleTag({ canAdmin }) {
   if (error) return <div className="cs-print"><p>{error}</p></div>;
   if (!item) return <div className="cs-print"><p>Loading tag…</p></div>;
 
+  const shownKind = kind ?? (item.status === 'sold' ? 'sold' : 'shop');
+
   return (
     <div className="cs-print">
       <div className="cs-print-bar">
         <button type="button" onClick={() => window.print()}>Print</button>
         <button type="button" onClick={() => navigate(`${CONSIGNMENT_PATH}/admin`)}>Back to admin</button>
+        <ConsignmentTagKindToggle value={shownKind} onChange={setKind} />
         <ConsignmentTagShapeToggle value={shape} onChange={setShape} />
       </div>
       <p className="cs-print-help">Print at 100% scale (not “Fit to page”) so the tag comes out at its real size.</p>
-      <ConsignmentTag item={item} rate={taxRate} shape={shape} />
+      {shownKind === 'sold'
+        ? <ConsignmentSoldTag item={item} shape={shape} />
+        : <ConsignmentTag item={item} rate={taxRate} shape={shape} />}
     </div>
   );
 }

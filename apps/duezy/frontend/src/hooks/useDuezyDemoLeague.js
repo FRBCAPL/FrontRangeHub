@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { buildDemoLeague, DEMO_EMAIL, DEMO_ID } from '../data/duezyDemoData.js';
 import { indexPayments } from '../utils/duezyMath.js';
+import { entryOf } from '../utils/duezyMakeup.js';
 import { divisionUnits, isMultiDivision } from '../utils/duezyDivisions.js';
 
 let seq = 0;
@@ -28,7 +29,7 @@ export default function useDuezyDemoLeague() {
     const now = new Date().toISOString();
     const before = payments.find((p) => p.team_id === teamId && p.week === week) || null;
     const row = {
-      id: `${teamId}:${week}`, league_id: DEMO_ID, team_id: teamId, week, amount: 0, method: null, note: null, paid_by: null, splits: null,
+      id: `${teamId}:${week}`, league_id: DEMO_ID, team_id: teamId, week, amount: 0, method: null, note: null, paid_by: null, splits: null, makeup_pending: false,
       ...entry, updated_at: now, recorded_by_email: DEMO_EMAIL,
     };
     setPayments((prev) => [...prev.filter((p) => !(p.team_id === teamId && p.week === week)), row]);
@@ -36,7 +37,7 @@ export default function useDuezyDemoLeague() {
     setHistory((prev) => [{
       id: nextId('h'), league_id: DEMO_ID, team_id: teamId, week, action: before ? 'changed' : 'created',
       old_status: before?.status ?? null, old_amount: before ? Number(before.amount) || 0 : null,
-      new_status: row.status, new_amount: Number(row.amount) || 0, method: row.method, note: row.note, paid_by: row.paid_by, splits: row.splits,
+      new_status: row.status, new_amount: Number(row.amount) || 0, method: row.method, note: row.note, paid_by: row.paid_by, splits: row.splits, makeup_pending: row.makeup_pending,
       changed_by_email: DEMO_EMAIL, changed_at: now, team: { name: team?.name, division_id: team?.division_id },
     }, ...prev]);
     return before;
@@ -45,18 +46,14 @@ export default function useDuezyDemoLeague() {
   const setPayment = useCallback(async (teamId, week, entry) => {
     const before = writePayment(teamId, week, entry);
     setLastChange({ teamId, week, entry, before, at: Date.now() });
+    return true;
   }, [writePayment]);
 
   const undoLastChange = useCallback(async () => {
     if (!lastChange) return;
     const { teamId, week, before } = lastChange;
     setLastChange(null);
-    writePayment(teamId, week, before
-      ? {
-        status: before.status, amount: Number(before.amount) || 0, method: before.method || null, note: before.note || null,
-        paid_by: before.paid_by || null, splits: before.splits || null,
-      }
-      : { status: 'unpaid', amount: 0 });
+    writePayment(teamId, week, before ? entryOf(before) : { status: 'unpaid', amount: 0 });
   }, [lastChange, writePayment]);
 
   const dismissLastChange = useCallback(() => setLastChange(null), []);

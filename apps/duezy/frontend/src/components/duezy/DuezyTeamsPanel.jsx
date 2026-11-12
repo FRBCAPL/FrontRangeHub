@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import DuezyTeamRow from './DuezyTeamRow.jsx';
 import DuezyAddTeam from './DuezyAddTeam.jsx';
 import DuezyTeamFilters from './DuezyTeamFilters.jsx';
+import DuezyCollectTonight from './DuezyCollectTonight.jsx';
+import { playersWith } from '../../utils/duezyPayers.js';
 import { entryWords, isSingles } from '../../utils/duezyTeamWords.js';
 import { SEARCH_MIN_TEAMS, groupTeams, isSettled, teamBucket, teamCounts } from '../../utils/duezyTeamGroups.js';
 
@@ -15,7 +17,7 @@ const EMPTY = {
   bye: 'No byes this week.',
 };
 
-/** The team list for one division's week: filters, search, tap-to-record chips, expandable details, add team. */
+/** The team list for one division's week: filters, search, quick pay, the team window (openTeamId), add team. */
 export default function DuezyTeamsPanel({ league, stats, data, divisions, correctRequest = null, filterRequest = null }) {
   const [openTeamId, setOpenTeamId] = useState('');
   const [pinnedId, setPinnedId] = useState('');
@@ -23,6 +25,7 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const [showPaid, setShowPaid] = useState(false);
+  const [collecting, setCollecting] = useState(false);
   const [settling, setSettling] = useState(() => new Set());
   const timers = useRef({});
   const { unit, teams, week, dues, schedule } = stats;
@@ -135,7 +138,28 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
     <section className="dz-panel" ref={panelRef}>
       <div className="dz-row dz-panel-head">
         <h3 className="dz-h3">{divisions.length > 1 ? `${unit.name} ${words.many}` : words.Many}</h3>
+        {canEdit && teams.length ? (
+          <button type="button" className="dz-btn dz-btn--primary dz-btn--sm dz-collect-open" onClick={() => setCollecting(true)}>
+            ⚡ Collect tonight
+          </button>
+        ) : null}
       </div>
+      {collecting ? (
+        <DuezyCollectTonight
+          league={league}
+          teams={teams}
+          week={week}
+          dues={dues}
+          schedule={schedule}
+          paymentIndex={paymentIndex}
+          onSave={(team, entry) => data.setPayment(team.id, week, entry)}
+          onAddPlayer={(team, name) => {
+            const players = 'players' in team ? playersWith(team, name) : null;
+            if (players) data.updateTeam(team.id, { players }).catch(() => {});
+          }}
+          onClose={() => setCollecting(false)}
+        />
+      ) : null}
       {teams.length > 1 ? (
         <DuezyTeamFilters
           counts={counts}

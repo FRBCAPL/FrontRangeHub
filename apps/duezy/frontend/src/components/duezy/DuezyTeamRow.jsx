@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { money } from '../../utils/duezyMath.js';
+import { isPrepaidMakeup, money } from '../../utils/duezyMath.js';
 import { shortNights, teamBalance } from '../../utils/duezyDivisions.js';
-import { playersWith } from '../../utils/duezyPayers.js';
-import { isSplit, methodText } from '../../utils/duezySplits.js';
-import DuezyTeamDetail from './DuezyTeamDetail.jsx';
+import { methodFrom, playersWith } from '../../utils/duezyPayers.js';
+import { methodText } from '../../utils/duezySplits.js';
+import { leagueMethods } from '../../utils/duezyLeaguePrefs.js';
+import useQuickPay from '../../hooks/useQuickPay.js';
 import DuezyTeamModal from './DuezyTeamModal.jsx';
-import DuezyTeamPayButtons from './DuezyTeamPayButtons.jsx';
+import DuezyTeamPayModal from './DuezyTeamPayModal.jsx';
 import DuezyPayerPicker from './DuezyPayerPicker.jsx';
-import DuezyPartialModal from './DuezyPartialModal.jsx';
+import DuezyQuickPay from './DuezyQuickPay.jsx';
 
 const AVATAR_HUES = [245, 190, 160, 320, 30, 275, 205, 350];
 
@@ -37,14 +38,20 @@ function balanceText({ late, due, dueWhen, makeupNights = [], makeupWhen }) {
   return dueText || 'all caught up';
 }
 
-function readOnlyStatus(status, payment) {
-  if (status === 'paid') return `✓ Paid${methodText(payment) ? ` · ${methodText(payment)}` : ''}`;
-  if (status === 'partial') return `Partial ${money(payment?.amount || 0)}`;
+/** Short status for the chip on the right; the method shows under the team name. */
+function statusChip(status, payment) {
+  if (status === 'paid' && isPrepaidMakeup(payment)) return '✓ Paid · ↻ to play';
+  if (status === 'paid') return '✓ Paid';
+  if (status === 'partial') return `½ ${money(payment?.amount || 0)}`;
   if (status === 'bye') return '⏸ Bye';
   if (status === 'makeup') return '↻ Make up';
   return 'Not yet';
 }
 
+/**
+ * One team on the week's list: name + what they owe, a quick-pay button with the team's usual method,
+ * and the week's status. Tapping the name or status opens the team window (every option, history, contact).
+ */
 export default function DuezyTeamRow({
   league, team, week, dues, schedule, paymentIndex, divisions = [], open, onToggle, onSetPayment, onSetWeekPayment, onUpdateTeam,
   canEdit = true, correctKey = 0, focusWeek = null,
@@ -53,27 +60,34 @@ export default function DuezyTeamRow({
   const status = payment?.status || 'unpaid';
   const balance = teamBalance(team.id, schedule, dues, paymentIndex);
   const [editFocus, setEditFocus] = useState(null);
-  const [picking, setPicking] = useState(null);
-  const [partial, setPartial] = useState(false);
   /** Teams only have a players list once the "who paid" SQL has been run. */
   const canSavePlayers = 'players' in team;
+
+  const { usual, owed, partial, picking, setPicking, quickPay, payWith, recordPayer } = useQuickPay({
+    league, team, week, dues, payment, paymentIndex, onSetPayment,
+  });
+  const how = (status === 'paid' || partial) ? methodText(payment) : '';
+  const showUsual = canEdit && owed > 0 && usual.learned && !partial;
 
   const addPlayer = (name) => {
     const players = canSavePlayers ? playersWith(team, name) : null;
     if (players) onUpdateTeam({ players }).catch(() => {});
   };
 
-  const recordPayer = (name, isNew) => {
-    const method = picking;
-    setPicking(null);
-    onSetPayment({ status: 'paid', amount: dues, method, paid_by: name });
+  const pickPayer = (name, isNew) => {
+    recordPayer(name);
     if (isNew) addPlayer(name);
   };
 
+  const editTeam = (focus) => {
+    if (open) onToggle();
+    setEditFocus(focus);
+  };
+
   return (
-    <li className={`dz-team is-${status}`} id={`dz-team-${team.id}`}>
+    <li className={`dz-team is-${isPrepaidMakeup(payment) ? 'makeup' : status}`} id={`dz-team-${team.id}`}>
       <div className="dz-team-main">
-        <button type="button" className="dz-team-name" onClick={onToggle} aria-expanded={open} title={open ? 'Hide details' : 'History, partial payments and captain contact'}>
+        <button type="button" className="dz-team-name" onClick={onToggle} aria-haspopup="dialog" title="Payment options, history and captain contact">
           <span className="dz-team-avatar" style={avatarStyle(team.name)} aria-hidden="true">
             {initials(team.name)}
             <span className="dz-dot" />
@@ -89,8 +103,12 @@ export default function DuezyTeamRow({
                 Late for {shortNights(balance.lateNights)}
               </small>
             ) : null}
-            {(payment?.paid_by || isSplit(payment)) && (status === 'paid' || status === 'partial') ? (
-              <small className="dz-paid-by">{methodText(payment)}</small>
+            {how ? <small className="dz-paid-by">{how}</small> : null}
+            {showUsual ? <small className="dz-usual">usually {methodFrom(usual.method, usual.paid_by)}</small> : null}
+            {balance.prepaidNights.length ? (
+              <small className="dz-makeup-weeks" title={`Paid ahead for ${balance.prepaidWhen}`}>
+                ↻ Prepaid make-up to play: {shortNights(balance.prepaidNights)}
+              </small>
             ) : null}
           </span>
         </button>
@@ -98,44 +116,48 @@ export default function DuezyTeamRow({
           <button
             type="button"
             className="dz-add-phone"
-            onClick={() => setEditFocus('contact')}
+            onClick={() => editTeam('contact')}
             title={`Add ${team.captain || 'the captain'}'s phone or email for one-tap reminders`}
           >
             + phone
           </button>
         ) : null}
-        {canEdit ? (
-          <DuezyTeamPayButtons
-            league={league}
-            team={team}
-            week={week}
-            dues={dues}
-            payment={payment}
-            picking={picking}
-            onSetPayment={(entry) => {
-              setPicking(null);
-              return onSetPayment(entry);
-            }}
-            onAskWhoPaid={setPicking}
-            onPartial={() => { setPicking(null); setPartial(true); }}
-          />
-        ) : (
-          <span className={`dz-chip is-on is-${status}`}>{readOnlyStatus(status, payment)}</span>
-        )}
+        <div className="dz-team-actions dz-team-actions--slim">
+          {canEdit && owed > 0 ? (
+            <DuezyQuickPay
+              usual={usual}
+              owed={owed}
+              partial={partial}
+              picking={Boolean(picking)}
+              methods={leagueMethods(league)}
+              onPay={quickPay}
+              onPayWith={payWith}
+            />
+          ) : null}
+          <button
+            type="button"
+            className={`dz-chip dz-status-chip is-on is-${isPrepaidMakeup(payment) ? 'makeup' : status}`}
+            onClick={onToggle}
+            aria-haspopup="dialog"
+            title={canEdit ? 'Other methods, partial, bye, make up, corrections' : 'Details and history'}
+          >
+            {statusChip(status, payment)} <span className="dz-status-more" aria-hidden="true">▾</span>
+          </button>
+        </div>
       </div>
       {picking ? (
         <DuezyPayerPicker
           key={picking}
           team={team}
           method={picking}
-          amount={dues}
+          amount={owed}
           canSavePlayers={canSavePlayers}
-          onPick={recordPayer}
+          onPick={pickPayer}
           onCancel={() => setPicking(null)}
         />
       ) : null}
       {open ? (
-        <DuezyTeamDetail
+        <DuezyTeamPayModal
           league={league}
           team={team}
           week={week}
@@ -143,25 +165,15 @@ export default function DuezyTeamRow({
           schedule={schedule}
           balance={balance}
           paymentIndex={paymentIndex}
-          onSetWeekPayment={(w, entry) => (w === week ? onSetPayment(entry) : onSetWeekPayment(w, entry))}
-          onAddPlayer={addPlayer}
-          onEditTeam={() => setEditFocus('name')}
           canEdit={canEdit}
           canSavePlayers={canSavePlayers}
+          onSetPayment={onSetPayment}
+          onSetWeekPayment={onSetWeekPayment}
+          onAddPlayer={addPlayer}
+          onEditTeam={() => editTeam('name')}
+          onClose={onToggle}
           correctKey={correctKey}
           focusWeek={focusWeek}
-        />
-      ) : null}
-      {partial ? (
-        <DuezyPartialModal
-          league={league}
-          team={team}
-          dues={dues}
-          weekName={schedule.dates ? schedule.label(week) : `week ${week}`}
-          payment={payment}
-          onSetPayment={onSetPayment}
-          onAddPlayer={addPlayer}
-          onClose={() => setPartial(false)}
         />
       ) : null}
       {editFocus ? (

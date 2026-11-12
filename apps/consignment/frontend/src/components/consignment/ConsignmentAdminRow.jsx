@@ -186,6 +186,9 @@ export default function ConsignmentAdminRow({ item, graceDays, actions, shipOpti
         {item.status === 'sold' && !item.seller_paid_at ? (
           <button type="button" className="cs-btn" onClick={() => sellerPaid(item)}>Seller paid</button>
         ) : null}
+        {item.status === 'sold' ? (
+          <button type="button" className="cs-btn-secondary" onClick={() => printTag(item)}>Sold tag</button>
+        ) : null}
         {item.status === 'sold' && item.seller_paid_at ? (
           <button type="button" className="cs-btn-secondary" onClick={() => undoSellerPaid(item)}>Undo paid</button>
         ) : null}

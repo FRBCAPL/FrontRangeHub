@@ -38,8 +38,11 @@ export function paidFor(payment, dues) {
   return 0;
 }
 
-/** A postponed match: still owed, but never counted late while it's waiting to be made up. */
-export const isMakeup = (p) => p?.status === 'makeup';
+/** Money recorded for a postponed match that hasn't been played yet ("Prepaid" make-up). */
+export const isPrepaidMakeup = (p) => Boolean(p?.makeup_pending) && (p.status === 'paid' || p.status === 'partial');
+
+/** A postponed match still to play: never counted late while it waits. Owes dues unless it was prepaid. */
+export const isMakeup = (p) => p?.status === 'makeup' || isPrepaidMakeup(p);
 
 /**
  * What a team still owes for weeks 1..throughWeek (byes owe nothing; overpaying counts as credit).
@@ -125,11 +128,17 @@ export function unpaidWeeks(teamId, throughWeek, dues, paymentIndex, { skipMakeu
   return weeks;
 }
 
-/** Weeks 1..throughWeek marked "Make up" and still waiting. */
-export function makeupWeeks(teamId, throughWeek, paymentIndex) {
+/**
+ * Weeks 1..throughWeek whose make-up match is still to play (prepaid ones included).
+ * With `dues`, only the ones that still owe money; with `prepaid`, only the fully paid ones.
+ */
+export function makeupWeeks(teamId, throughWeek, paymentIndex, { dues = null, prepaid = false } = {}) {
   const weeks = [];
   for (let w = 1; w <= throughWeek; w += 1) {
-    if (isMakeup(paymentIndex.get(`${teamId}:${w}`))) weeks.push(w);
+    const p = paymentIndex.get(`${teamId}:${w}`);
+    if (!isMakeup(p)) continue;
+    if (dues !== null && (prepaid ? paidFor(p, dues) < dues : paidFor(p, dues) >= dues)) continue;
+    weeks.push(w);
   }
   return weeks;
 }

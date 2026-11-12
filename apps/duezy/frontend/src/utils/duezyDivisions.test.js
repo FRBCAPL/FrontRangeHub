@@ -194,5 +194,35 @@ test('owed splits into late, make-ups and this week', async () => {
     { team_id: 'b', week: 1, status: 'paid', amount: 20 },
   ]);
   const s = unitStats(unit, teams, idx, true);
-  assert.deepEqual(s.owed, { late: 20, lateTeams: 1, makeup: 20, makeupTeams: 1, current: 40 });
+  assert.deepEqual(s.owed, { late: 20, lateTeams: 1, makeup: 20, makeupTeams: 1, prepaidTeams: 0, current: 40 });
+});
+
+test('a prepaid make-up owes nothing, is never late, and stays on the make-up list', async () => {
+  const { unitStats } = await import('./duezyDivisions.js');
+  const unit = { id: null, name: 'L', dues_amount: 20, current_week: 2, total_weeks: 10 };
+  const teams = [{ id: 'a', name: 'A' }];
+  const idx = indexPayments([
+    { team_id: 'a', week: 1, status: 'paid', amount: 20, method: 'Cash', makeup_pending: true },
+    { team_id: 'a', week: 2, status: 'paid', amount: 20 },
+  ]);
+  const s = unitStats(unit, teams, idx, true);
+  assert.deepEqual(s.owed, { late: 0, lateTeams: 0, makeup: 0, makeupTeams: 0, prepaidTeams: 1, current: 0 });
+  assert.deepEqual(s.makeups.map((m) => m.weeks), [[1]]);
+  assert.equal(s.summary.paid, 1);
+  const schedule = { started: true, currentWeek: 2, lateThrough: 1, dates: null, label: (w) => `week ${w}` };
+  const b = teamBalance('a', schedule, 20, idx);
+  assert.deepEqual(b.makeupNights, []);
+  assert.deepEqual(b.prepaidNights, ['week 1']);
+});
+
+test('a partly prepaid make-up still owes the rest, but not as late', async () => {
+  const { unitStats } = await import('./duezyDivisions.js');
+  const unit = { id: null, name: 'L', dues_amount: 20, current_week: 3, total_weeks: 10 };
+  const idx = indexPayments([
+    { team_id: 'a', week: 1, status: 'partial', amount: 5, makeup_pending: true },
+    { team_id: 'a', week: 2, status: 'paid', amount: 20 },
+    { team_id: 'a', week: 3, status: 'paid', amount: 20 },
+  ]);
+  const s = unitStats(unit, [{ id: 'a', name: 'A' }], idx, true);
+  assert.deepEqual(s.owed, { late: 0, lateTeams: 0, makeup: 15, makeupTeams: 1, prepaidTeams: 0, current: 0 });
 });

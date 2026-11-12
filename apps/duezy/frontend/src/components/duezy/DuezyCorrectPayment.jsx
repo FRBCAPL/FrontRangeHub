@@ -4,6 +4,7 @@ import { correctionEntry, correctionSummary, isSameEntry } from '../../utils/due
 import { defaultMethod, methodOptions } from '../../utils/duezyLeaguePrefs.js';
 import { asksWhoPaid } from '../../utils/duezyPayers.js';
 import { canAddPart, isSplit, methodText } from '../../utils/duezySplits.js';
+import { keepPrepaid } from '../../utils/duezyMakeup.js';
 import DuezyAddPayment from './DuezyAddPayment.jsx';
 
 /**
@@ -37,7 +38,7 @@ export default function DuezyCorrectPayment({
     try {
       const entry = correctionEntry(amount, dues, method, reason);
       const keepPayer = entry.amount > 0 && asksWhoPaid(entry.method) ? payment?.paid_by || null : null;
-      await onSetPayment({ ...entry, paid_by: keepPayer });
+      await onSetPayment(keepPrepaid(payment, { ...entry, paid_by: keepPayer }));
       setStep('view');
     } catch (e) {
       setError(e.message);

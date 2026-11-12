@@ -2,18 +2,20 @@
  * How the team list is split for a week: who still needs collecting first, then make-ups;
  * paid and bye teams in their own (collapsible) group. Filters and search narrow the list.
  */
+import { isMakeup } from './duezyMath.js';
 
 export const TEAM_FILTERS = ['all', 'open', 'paid', 'makeup', 'bye'];
 
 /** Teams this big get a search box. */
 export const SEARCH_MIN_TEAMS = 10;
 
-/** 'open' = not paid yet (includes partial). */
+/** 'open' = not paid yet (includes partial). A prepaid make-up still to play counts as 'makeup'. */
 export function teamBucket(team, week, paymentIndex) {
-  const status = paymentIndex.get(`${team.id}:${week}`)?.status || 'unpaid';
+  const p = paymentIndex.get(`${team.id}:${week}`);
+  const status = p?.status || 'unpaid';
+  if (isMakeup(p)) return 'makeup';
   if (status === 'paid') return 'paid';
   if (status === 'bye') return 'bye';
-  if (status === 'makeup') return 'makeup';
   return 'open';
 }
 

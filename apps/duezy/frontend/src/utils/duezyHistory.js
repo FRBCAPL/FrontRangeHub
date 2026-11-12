@@ -1,5 +1,5 @@
 /** Wording for the payment audit trail. A history row is a duezy_payment_history record. */
-import { money } from './duezyMath.js';
+import { isPrepaidMakeup, money } from './duezyMath.js';
 import { methodText } from './duezySplits.js';
 
 export function statusText(status, amount) {
@@ -19,7 +19,8 @@ export function shortStamp(iso) {
 export function historyChange(row, weekLabel = (w) => `Week ${w}`) {
   const next = statusText(row.new_status, row.new_amount);
   const change = row.action === 'created' ? next : `${statusText(row.old_status, row.old_amount)} → ${next}`;
-  return [`${weekLabel(row.week)}: ${change}`, methodText(row), row.note].filter(Boolean).join(' · ');
+  const toPlay = isPrepaidMakeup({ ...row, status: row.new_status }) ? '↻ make-up still to play' : '';
+  return [`${weekLabel(row.week)}: ${change}`, methodText(row), toPlay, row.note].filter(Boolean).join(' · ');
 }
 
 /** A change that took money back off the books (paid → partial / not paid / bye, or a smaller amount). */

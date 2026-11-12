@@ -3,6 +3,7 @@ import { money, paidFor, round2 } from '../../utils/duezyMath.js';
 import { defaultMethod, methodOptions } from '../../utils/duezyLeaguePrefs.js';
 import { asksWhoPaid, payerChoice } from '../../utils/duezyPayers.js';
 import { addPartEntry } from '../../utils/duezySplits.js';
+import { keepPrepaid } from '../../utils/duezyMakeup.js';
 import DuezyPayerSelect from './DuezyPayerSelect.jsx';
 
 /**
@@ -32,7 +33,7 @@ export default function DuezyAddPayment({ league, team, dues, weekName, payment,
     setSaving(true);
     setError('');
     try {
-      await onSetPayment(addPartEntry(payment, dues, { amount: n, method, paid_by: who.name }));
+      await onSetPayment(keepPrepaid(payment, addPartEntry(payment, dues, { amount: n, method, paid_by: who.name })));
       if (who.isNew) onAddPlayer?.(who.name);
       onCancel?.();
     } catch (e) {

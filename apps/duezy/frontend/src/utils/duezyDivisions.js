@@ -7,7 +7,7 @@
  * duezy-one-division SQL may have no division rows; then the league itself acts as one (id: null).
  */
 import {
-  makeupWeeks, matchesToSave, owedThrough, round2, seasonSummary, teamsBehind, unpaidWeeks, weekSummary, weeklyDues,
+  makeupWeeks, matchesToSave, owedThrough, paidFor, round2, seasonSummary, teamsBehind, unpaidWeeks, weekSummary, weeklyDues,
 } from './duezyMath.js';
 
 const LATE = { skipMakeup: true };
@@ -87,7 +87,8 @@ export function teamBalance(teamId, schedule, dues, paymentIndex) {
   const late = owedThrough(teamId, lateThrough, dues, paymentIndex, LATE);
   const due = Math.max(0, owedThrough(teamId, through, dues, paymentIndex) - late);
   const lateNights = late > 0 ? unpaidWeeks(teamId, lateThrough, dues, paymentIndex, LATE).map(label) : [];
-  const makeups = makeupWeeks(teamId, through, paymentIndex);
+  const makeups = makeupWeeks(teamId, through, paymentIndex, { dues });
+  const prepaid = makeupWeeks(teamId, through, paymentIndex, { dues, prepaid: true });
   const regularDue = owedThrough(teamId, through, dues, paymentIndex, LATE) - late > 0;
   return {
     late,
@@ -97,6 +98,8 @@ export function teamBalance(teamId, schedule, dues, paymentIndex) {
     dueWhen: due > 0 ? [...makeups.map(label), regularDue ? label(currentWeek) : ''].filter(Boolean).join(', ') : '',
     makeupNights: makeups.map(label),
     makeupWhen: nightsWithWeeks(makeups, schedule),
+    prepaidNights: prepaid.map(label),
+    prepaidWhen: nightsWithWeeks(prepaid, schedule),
   };
 }
 
@@ -120,10 +123,14 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
     (s, t) => s + Math.max(0, owedThrough(t.id, dueThrough, dues, paymentIndex) - owedThrough(t.id, lateThrough, dues, paymentIndex, LATE)),
     0
   );
-  const makeupList = unitTeams.map((team) => ({ team, weeks: makeupWeeks(team.id, dueThrough, paymentIndex) }));
-  const makeupCounts = makeupList.map((m) => m.weeks.length);
-  const makeupTotal = round2(makeupCounts.reduce((s, n) => s + n * dues, 0));
+  const makeupList = unitTeams.map((team) => {
+    const weeks = makeupWeeks(team.id, dueThrough, paymentIndex);
+    const owed = weeks.reduce((s, w) => s + dues - paidFor(paymentIndex.get(`${team.id}:${w}`), dues), 0);
+    return { team, weeks, owed: Math.max(0, round2(owed)) };
+  });
+  const makeupTotal = round2(makeupList.reduce((s, m) => s + m.owed, 0));
   const makeups = makeupList.filter((m) => m.weeks.length).map((m) => ({ ...m, when: nightsWithWeeks(m.weeks, schedule) }));
+  const makeupTeams = makeups.filter((m) => m.owed > 0).length;
   return {
     unit,
     teams: unitTeams,
@@ -134,7 +141,7 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
     season: seasonSummary(unitTeams, dueThrough, dues, total, paymentIndex),
     behind,
     dueTotal: round2(dueTotal),
-    owed: owedBreakdown(behind, dueTotal, makeupTotal, makeups.length),
+    owed: owedBreakdown(behind, dueTotal, makeupTotal, makeupTeams, makeups.length - makeupTeams),
     makeups,
   };
 }
@@ -142,18 +149,20 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
 /**
  * What's still to collect, split three ways: late (past grace), make-ups (postponed, never late),
  * and this week's dues that aren't late yet. dueTotal = makeup + current.
+ * prepaidTeams = teams whose only make-ups are already paid (nothing owed, match still to play).
  */
-function owedBreakdown(behind, dueTotal, makeup, makeupTeams) {
+function owedBreakdown(behind, dueTotal, makeup, makeupTeams, prepaidTeams = 0) {
   return {
     late: round2(behind.reduce((s, x) => s + x.owed, 0)),
     lateTeams: behind.length,
     makeup,
     makeupTeams,
+    prepaidTeams,
     current: round2(Math.max(0, dueTotal - makeup)),
   };
 }
 
-const OWED_KEYS = ['late', 'lateTeams', 'makeup', 'makeupTeams', 'current'];
+const OWED_KEYS = ['late', 'lateTeams', 'makeup', 'makeupTeams', 'prepaidTeams', 'current'];
 
 const SUMMARY_KEYS = ['paid', 'partial', 'bye', 'makeup', 'unpaid', 'collected', 'expected'];
 const SEASON_KEYS = ['collected', 'expected', 'seasonValue', 'collectedAll'];

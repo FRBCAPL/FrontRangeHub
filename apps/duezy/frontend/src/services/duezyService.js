@@ -171,9 +171,6 @@ export async function markPaidThrough(leagueId, teamIds, throughWeek, dues) {
   ) || [];
 }
 
-/** Set once we learn the "who paid" SQL hasn't been run, so payments keep saving without paid_by. */
-let noPaidByColumn = false;
-
 const upsertPayment = async (row) => {
   const result = await duezy.from('duezy_payments').upsert(row, { onConflict: 'team_id,week' }).select(PAYMENT_FIELDS).single();
   if (row.status === 'makeup' && /status_check/.test(result.error?.message || '')) {
@@ -182,27 +179,43 @@ const upsertPayment = async (row) => {
   return result;
 };
 
-/** Same idea for split payments (duezy-split-payments-2026-11.sql). */
-let noSplitsColumn = false;
-const SPLITS_SQL_NEEDED = 'Split payments need a quick database update first (duezy-split-payments-2026-11.sql).';
+/**
+ * Newer optional columns: until their SQL is run, payments keep saving without them — unless the entry
+ * actually uses one (a split, a prepaid make-up), which gets a clear "run this update" message instead.
+ */
+const OPTIONAL_COLUMNS = {
+  paid_by: { missing: false, inUse: () => false, needs: '' },
+  splits: {
+    missing: false,
+    inUse: (v) => Boolean(v),
+    needs: 'Split payments need a quick database update first (duezy-split-payments-2026-11.sql).',
+  },
+  makeup_pending: {
+    missing: false,
+    inUse: (v) => v === true,
+    needs: 'Prepaid make-ups need a quick database update first (duezy-makeup-prepaid-2026-11.sql).',
+  },
+};
 
-/** One row per team per week — saving again replaces it (a normal save clears any old split). */
-export async function savePayment(leagueId, teamId, week, { status, amount = 0, method = null, note = null, paid_by = null, splits = null }) {
+/** One row per team per week — saving again replaces it (a normal save clears any old split / prepaid make-up). */
+export async function savePayment(leagueId, teamId, week, {
+  status, amount = 0, method = null, note = null, paid_by = null, splits = null, makeup_pending = false,
+}) {
   const row = { league_id: leagueId, team_id: teamId, week, status, amount, method, note, updated_at: new Date().toISOString() };
-  if (!noPaidByColumn) row.paid_by = paid_by;
-  if (!noSplitsColumn) row.splits = splits?.length > 1 ? splits : null;
-  else if (splits?.length > 1) throw new Error(SPLITS_SQL_NEEDED);
+  const optional = { paid_by, splits: splits?.length > 1 ? splits : null, makeup_pending: Boolean(makeup_pending) };
+  Object.entries(optional).forEach(([key, value]) => {
+    const col = OPTIONAL_COLUMNS[key];
+    if (col.inUse(value)) col.missing = false;
+    if (!col.missing) row[key] = value;
+  });
   let result = await upsertPayment(row);
-  for (let i = 0; i < 2 && result.error; i += 1) {
+  for (let i = 0; i < 3 && result.error; i += 1) {
     const msg = result.error.message || '';
-    if ('splits' in row && /splits/.test(msg)) {
-      if (row.splits) throw new Error(SPLITS_SQL_NEEDED);
-      noSplitsColumn = true;
-      delete row.splits;
-    } else if ('paid_by' in row && /paid_by/.test(msg)) {
-      noPaidByColumn = true;
-      delete row.paid_by;
-    } else break;
+    const key = Object.keys(OPTIONAL_COLUMNS).find((k) => k in row && msg.includes(k));
+    if (!key) break;
+    if (OPTIONAL_COLUMNS[key].inUse(row[key])) throw new Error(OPTIONAL_COLUMNS[key].needs);
+    OPTIONAL_COLUMNS[key].missing = true;
+    delete row[key];
     result = await upsertPayment(row);
   }
   return check(result);

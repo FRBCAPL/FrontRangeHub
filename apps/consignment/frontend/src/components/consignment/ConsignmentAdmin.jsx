@@ -240,8 +240,12 @@ export default function ConsignmentAdmin() {
           <ConsignmentItemStatusTabs value={status} counts={counts} onChange={setStatus} />
           <p className="cs-hint cs-status-hint">
             {ITEM_STATUS_TABS.find((t) => t.id === status)?.hint || status}{' '}
-            <button type="button" className="cs-btn-secondary" onClick={() => navigate(CONSIGNMENT_TAG_SHEET_PATH)}>
-              🏷️ Print tags
+            <button
+              type="button"
+              className="cs-btn-secondary"
+              onClick={() => navigate(status === 'sold' ? `${CONSIGNMENT_TAG_SHEET_PATH}?kind=sold` : CONSIGNMENT_TAG_SHEET_PATH)}
+            >
+              🏷️ {status === 'sold' ? 'Print sold tags' : 'Print tags'}
             </button>
           </p>
           {sellerFilter ? (

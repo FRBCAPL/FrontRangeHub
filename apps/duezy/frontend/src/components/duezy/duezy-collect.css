@@ -1,0 +1,108 @@
+/* Quick-pay hold menu, "usually …" hint, strip marks, and the Collect tonight window. */
+.dz-quick-wrap { position: relative; display: inline-flex; }
+.dz-quick-pay { -webkit-touch-callout: none; user-select: none; touch-action: manipulation; }
+.dz-quick-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 6px;
+  background: var(--dz-surface-solid);
+  border: 1px solid var(--dz-line-strong);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  animation: dz-modal-fade 0.12s ease-out;
+}
+.dz-quick-menu p { margin: 2px 8px 6px; color: var(--dz-muted); font-size: 0.75rem; }
+.dz-quick-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dz-text);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+.dz-quick-menu button:hover, .dz-quick-menu button:focus-visible { background: rgba(255, 255, 255, 0.06); }
+.dz-quick-menu button small { margin-left: auto; color: #86efac; font-size: 0.7rem; }
+
+.dz-team-name small.dz-usual { color: var(--dz-muted); font-size: 0.72rem; opacity: 0.85; }
+
+.dz-strip span.is-paid, .dz-strip span.is-partial, .dz-strip span.is-bye, .dz-strip span.is-makeup,
+.dz-strip span.is-late, .dz-strip span.is-prepaid { position: relative; }
+.dz-strip-mark {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: var(--dz-surface-solid);
+  border: 1px solid var(--dz-line-strong);
+  color: var(--dz-text);
+  font-size: 0.58rem;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+.dz-strip .is-late .dz-strip-mark { color: #fca5a5; border-color: rgba(248, 113, 113, 0.6); }
+.dz-strip .is-paid .dz-strip-mark { color: #86efac; }
+.dz-strip .is-makeup .dz-strip-mark, .dz-strip .is-prepaid .dz-strip-mark { color: #67e8f9; }
+.dz-strip { padding-top: 6px; }
+
+/* Collect tonight */
+.dz-panel-head .dz-collect-open { margin-left: auto; }
+.dz-collect-modal { width: min(560px, 100%); }
+.dz-collect-totals { display: flex; flex-direction: column; gap: 6px; }
+.dz-collect-totals p { margin: 0; }
+.dz-collect-tonight { font-size: 1rem; }
+.dz-collect-tonight strong { font-size: 1.6rem; color: #86efac; margin-right: 4px; }
+.dz-collect-bar { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.dz-collect-bar span { display: block; height: 100%; background: linear-gradient(90deg, #22c55e, #22d3ee); transition: width 0.3s ease; }
+.dz-collect-tip { font-size: 0.72rem; opacity: 0.8; }
+
+.dz-collect-list { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.dz-collect-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--dz-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  animation: dz-modal-fade 0.15s ease-out;
+}
+.dz-collect-main { display: flex; align-items: center; gap: 10px; }
+.dz-collect-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.dz-collect-name strong { overflow-wrap: anywhere; }
+.dz-collect-name small { color: var(--dz-muted); font-size: 0.8rem; }
+.dz-quick-pay--big { min-height: 48px; padding: 0 16px; font-size: 1rem; font-weight: 700; }
+.dz-collect-more { display: flex; gap: 6px; }
+.dz-collect-more .dz-chip { min-height: 34px; font-size: 0.8rem; }
+.dz-collect-row .dz-payer { margin: 0; }
+.dz-collect-empty { margin: 8px 0; text-align: center; font-size: 1.05rem; }
+
+.dz-collect-done { display: flex; flex-direction: column; gap: 6px; }
+.dz-collect-done p { margin: 0; }
+.dz-collect-done ul { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.dz-collect-done li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.08);
+  font-size: 0.85rem;
+}

@@ -214,6 +214,67 @@
 .cs-tag-hang .cs-tag-price { margin-top: 0.05in; }
 .cs-tag-hang .cs-tag-inspect { align-self: center; }
 
+/* SOLD tag: big red word, item, sold date, a line to write the buyer's name. */
+.cs-tag-sold { border-color: #c00; }
+.cs-tag-sold .cs-tag-band { background: #c00; }
+
+.cs-tag-sold-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.02in;
+  padding: 0.04in 0.12in;
+  text-align: center;
+}
+
+.cs-tag-sold-word {
+  color: #c00;
+  font-size: 30pt;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cs-tag-sold .cs-tag-sub { max-width: 100%; }
+
+.cs-tag-sold-hold {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.05in;
+  width: 100%;
+  margin-top: 0.06in !important;
+  font-size: 7pt;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cs-tag-sold-hold span {
+  flex: 1;
+  border-bottom: 1px solid #111;
+  height: 0.16in;
+}
+
+.cs-tag-sold-blank .cs-tag-sold-hold { margin-top: 0.03in !important; }
+.cs-tag-sold-blank.cs-tag-hang .cs-tag-sold-hold { margin-top: 0.12in !important; padding-bottom: 0; }
+
+.cs-sheet-blank {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.cs-sheet-blank input { width: 70px; min-height: 36px; padding: 4px 8px; font-size: 1rem; }
+
+.cs-tag-hang .cs-tag-sold-word { font-size: 26pt; margin-bottom: 0.08in; }
+.cs-tag-hang .cs-tag-sold-hold { margin-top: auto !important; padding-bottom: 0.08in; }
+
 /* ── Letter sheets: 8in × 10.5in inside the 0.25in page margin ── */
 .cs-sheet-page {
   box-sizing: border-box;

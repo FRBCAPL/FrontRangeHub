@@ -3,7 +3,7 @@ import { money, paidFor, teamReminder } from '../../utils/duezyMath.js';
 import { methodFrom } from '../../utils/duezyPayers.js';
 import DuezyContactLinks from './DuezyContactLinks.jsx';
 import DuezyPaymentHistory from './DuezyPaymentHistory.jsx';
-import DuezyRecordPayment from './DuezyRecordPayment.jsx';
+import DuezyMorePayment from './DuezyMorePayment.jsx';
 import DuezySeasonStrip from './DuezySeasonStrip.jsx';
 import DuezyWeekPanel from './DuezyWeekPanel.jsx';
 import { shortStamp } from '../../utils/duezyHistory.js';
@@ -16,8 +16,8 @@ function reminderFor(league, team, { late, due, lateWhen, dueWhen }) {
 }
 
 /**
- * Expanded team: Season so far (tap a week to record it), partial / correct form, history, contact.
- * Everything payment-related follows the tapped week, or the page's week when none is open.
+ * Team window body: Season so far picks the week, one payment panel records it (buttons, then
+ * "Other amount…" / correct), then notes, history and contact. The page's week is the default.
  * focusWeek = { week, key } opens a week from outside (make-up jump).
  */
 export default function DuezyTeamDetail({
@@ -33,8 +33,15 @@ export default function DuezyTeamDetail({
   const activeWeek = openWeek || week;
   const payment = paymentIndex.get(`${team.id}:${activeWeek}`);
   const weekName = schedule.dates ? schedule.label(activeWeek) : `week ${activeWeek}`;
+  const label = (w) => (schedule.dates ? `${schedule.label(w)} (week ${w})` : `Week ${w}`);
   const setPayment = (entry) => onSetWeekPayment(activeWeek, entry);
   const contact = team.contact ? <DuezyContactLinks contact={team.contact} message={reminderFor(league, team, balance)} /> : null;
+  const backToWeek = activeWeek !== week ? (
+    <button type="button" className="dz-link dz-small" onClick={() => setOpenWeek(null)}>
+      ← back to {schedule.dates ? schedule.label(week) : `week ${week}`}
+    </button>
+  ) : null;
+
   return (
     <div className="dz-team-detail">
       <p className="dz-small dz-muted">
@@ -46,22 +53,36 @@ export default function DuezyTeamDetail({
         dues={dues}
         paymentIndex={paymentIndex}
         schedule={schedule}
-        openWeek={openWeek}
-        onPick={canEdit ? setOpenWeek : undefined}
+        openWeek={activeWeek}
+        onPick={canEdit ? (w) => setOpenWeek(w) : undefined}
       />
-      {canEdit && openWeek ? (
+      {canEdit ? (
         <DuezyWeekPanel
           league={league}
           team={team}
-          week={openWeek}
+          week={activeWeek}
           dues={dues}
           schedule={schedule}
           payment={payment}
           canSavePlayers={canSavePlayers}
           onSetPayment={setPayment}
           onAddPlayer={onAddPlayer}
-          onClose={() => setOpenWeek(null)}
+          heading={label(activeWeek)}
+          extra={backToWeek}
           scrollKey={focusWeek?.week === openWeek ? focusWeek.key : 0}
+          more={(save) => (
+            <DuezyMorePayment
+              key={`${correctKey}-${activeWeek}`}
+              league={league}
+              team={team}
+              dues={dues}
+              weekName={weekName}
+              payment={payment}
+              onSetPayment={save}
+              onAddPlayer={onAddPlayer}
+              startCorrect={correctKey > 0 && !openWeek}
+            />
+          )}
         />
       ) : null}
       {balance.late > 0 ? <p className="dz-small dz-owe-late">Late for {balance.lateWhen}</p> : null}
@@ -69,6 +90,12 @@ export default function DuezyTeamDetail({
         <p className="dz-small dz-muted">
           ↻ Make-up for {balance.makeupWhen}. Still owed, but not late.
           {canEdit ? ' Tap that week above to record it.' : ''}
+        </p>
+      ) : null}
+      {balance.prepaidNights.length ? (
+        <p className="dz-small dz-muted">
+          ↻ Prepaid make-up for {balance.prepaidWhen}: paid, match still to play.
+          {canEdit ? ' Tap that week above to mark it played.' : ''}
         </p>
       ) : null}
 
@@ -88,24 +115,7 @@ export default function DuezyTeamDetail({
       ) : null}
 
       <div className="dz-detail-block">
-        {canEdit ? (
-          <DuezyRecordPayment
-            key={`${correctKey}-${activeWeek}`}
-            league={league}
-            team={team}
-            dues={dues}
-            weekName={weekName}
-            payment={payment}
-            onSetPayment={setPayment}
-            onAddPlayer={onAddPlayer}
-            startCorrect={correctKey > 0 && !openWeek}
-          />
-        ) : null}
-        <DuezyPaymentHistory
-          teamId={team.id}
-          weekLabel={(w) => (schedule.dates ? `${schedule.label(w)} (week ${w})` : `Week ${w}`)}
-          refreshKey={payment?.updated_at}
-        />
+        <DuezyPaymentHistory teamId={team.id} weekLabel={label} refreshKey={payment?.updated_at} />
       </div>
 
       {canEdit ? (

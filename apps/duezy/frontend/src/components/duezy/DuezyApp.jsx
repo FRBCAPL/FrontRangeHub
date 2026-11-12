@@ -48,6 +48,8 @@ import './duezy-import.css';
 import './duezy-seasons.css';
 import './duezy-join.css';
 import './duezy-payers.css';
+import './duezy-team-row.css';
+import './duezy-collect.css';
 import './duezy-touch.css';
 import './duezy-landing.css';
 import './duezy-demo.css';

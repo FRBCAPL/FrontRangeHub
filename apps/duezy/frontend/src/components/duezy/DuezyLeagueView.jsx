@@ -14,6 +14,7 @@ import DuezyExportButton from './DuezyExportButton.jsx';
 import DuezyActivityPanel from './DuezyActivityPanel.jsx';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyUndoToast from './DuezyUndoToast.jsx';
+import DuezyErrorBanner from './DuezyErrorBanner.jsx';
 import DuezyGettingStarted from './DuezyGettingStarted.jsx';
 import DuezySessionNudge from './DuezySessionNudge.jsx';
 import DuezyPastSessions from './DuezyPastSessions.jsx';
@@ -171,12 +172,7 @@ export default function DuezyLeagueView({ data, demo = false }) {
         </p>
       ) : null}
 
-      {error ? (
-        <p className="dz-error" role="alert">
-          {error}{' '}
-          <button type="button" className="dz-link dz-small" onClick={() => setError('')}>Dismiss</button>
-        </p>
-      ) : null}
+      <DuezyErrorBanner error={error} onDismiss={() => setError('')} />
 
       {data.isOwner && data.canEdit ? (
         <DuezyGettingStarted league={league} teamCount={teams.length} settingsTo={settingsTo} />

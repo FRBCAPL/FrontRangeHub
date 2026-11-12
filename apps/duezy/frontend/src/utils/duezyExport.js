@@ -3,7 +3,7 @@
  * weeks included), so the columns reconcile with the screens:
  *   sum(Paid) = collected · sum(Paid + Balance) = full-season value (byes excluded) · sum(Due now) = owed today.
  */
-import { indexPayments, paidFor, round2, weeklyDues } from './duezyMath.js';
+import { indexPayments, isPrepaidMakeup, paidFor, round2, weeklyDues } from './duezyMath.js';
 import { teamsInUnit, unitSchedule } from './duezyDivisions.js';
 import { methodCells } from './duezySplits.js';
 
@@ -54,7 +54,7 @@ export function ledgerRows({ units, teams, payments, today, defaultGrace = 0 }) 
           schedule.dates?.[w - 1] || '',
           whenLabel(w, schedule),
           dues.toFixed(2),
-          STATUS[status] || status,
+          `${STATUS[status] || status}${isPrepaidMakeup(p) ? ' (make-up to play)' : ''}`,
           round2(paid).toFixed(2),
           balance.toFixed(2),
           (w <= through ? balance : 0).toFixed(2),

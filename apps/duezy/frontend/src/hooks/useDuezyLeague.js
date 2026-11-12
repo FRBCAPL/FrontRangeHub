@@ -13,6 +13,7 @@ import {
 import { listDivisions, updateDivision } from '../services/duezyDivisionService.js';
 import { getPeople } from '../services/duezyPeopleService.js';
 import { indexPayments } from '../utils/duezyMath.js';
+import { entryOf } from '../utils/duezyMakeup.js';
 import { currentSessionTeams, divisionUnits, isMultiDivision } from '../utils/duezyDivisions.js';
 import { canEdit as roleCanEdit, isOwner as roleIsOwner } from '../utils/duezyPeople.js';
 
@@ -60,7 +61,7 @@ export default function useDuezyLeague(leagueId) {
   const writePayment = useCallback(
     async (teamId, week, entry) => {
       const previous = payments;
-      const optimistic = { id: `tmp-${teamId}-${week}`, team_id: teamId, week, amount: 0, method: null, note: null, paid_by: null, splits: null, ...entry };
+      const optimistic = { id: `tmp-${teamId}-${week}`, team_id: teamId, week, amount: 0, method: null, note: null, paid_by: null, splits: null, makeup_pending: false, ...entry };
       setPayments((prev) => [...prev.filter((p) => !(p.team_id === teamId && p.week === week)), optimistic]);
       try {
         const saved = await savePayment(leagueId, teamId, week, entry);
@@ -81,6 +82,7 @@ export default function useDuezyLeague(leagueId) {
       const before = payments.find((p) => p.team_id === teamId && p.week === week) || null;
       const ok = await writePayment(teamId, week, entry);
       if (ok) setLastChange({ teamId, week, entry, before, at: Date.now() });
+      return ok;
     },
     [payments, writePayment]
   );
@@ -90,12 +92,7 @@ export default function useDuezyLeague(leagueId) {
     if (!lastChange) return;
     const { teamId, week, before } = lastChange;
     setLastChange(null);
-    await writePayment(teamId, week, before
-      ? {
-        status: before.status, amount: Number(before.amount) || 0, method: before.method || null, note: before.note || null,
-        paid_by: before.paid_by || null, splits: before.splits || null,
-      }
-      : { status: 'unpaid', amount: 0 });
+    await writePayment(teamId, week, before ? entryOf(before) : { status: 'unpaid', amount: 0 });
   }, [lastChange, writePayment]);
 
   const dismissLastChange = useCallback(() => setLastChange(null), []);

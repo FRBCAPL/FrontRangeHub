@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { money } from '../../utils/duezyMath.js';
+import { isMakeup, isPrepaidMakeup, money, paidFor, round2 } from '../../utils/duezyMath.js';
 import DuezyModal from './DuezyModal.jsx';
 import DuezyWeekPanel from './DuezyWeekPanel.jsx';
 
@@ -11,7 +11,10 @@ function byNight(makeups) {
 }
 
 const TAG = { makeup: ['owes', 'is-owed'], paid: ['✓ paid', 'is-paid'], partial: ['partial', 'is-partial'], bye: ['bye', 'is-bye'] };
-const tagFor = (payment) => TAG[payment?.status] || ['not yet', 'is-open'];
+function tagFor(payment) {
+  if (isPrepaidMakeup(payment)) return payment.status === 'paid' ? ['✓ prepaid · to play', 'is-paid'] : ['partial · to play', 'is-partial'];
+  return TAG[payment?.status] || ['not yet', 'is-open'];
+}
 
 /**
  * Every make-up match waiting in this division: one compact row per night (teams that missed the same night
@@ -23,23 +26,27 @@ export default function DuezyMakeupModal({ league, stats, paymentIndex, onSetPay
   const [groups] = useState(() => byNight(stats.makeups));
   const [openWeek, setOpenWeek] = useState(() => (groups.length === 1 ? groups[0].week : null));
   const pay = (team, week) => paymentIndex.get(`${team.id}:${week}`);
-  const owes = (team, week) => pay(team, week)?.status === 'makeup';
+  const owedFor = (team, week) => (isMakeup(pay(team, week)) ? Math.max(0, dues - paidFor(pay(team, week), dues)) : 0);
+  const owes = (team, week) => owedFor(team, week) > 0;
   const waiting = groups.reduce((n, g) => n + g.teams.filter((t) => owes(t, g.week)).length, 0);
+  const owedTotal = round2(groups.reduce((s, g) => s + g.teams.reduce((x, t) => x + owedFor(t, g.week), 0), 0));
+  const prepaid = groups.reduce((n, g) => n + g.teams.filter((t) => isPrepaidMakeup(pay(t, g.week)) && !owes(t, g.week)).length, 0);
   const date = (w) => (schedule.dates ? schedule.label(w) : `Week ${w}`);
+  const prepaidText = prepaid ? ` ${prepaid} prepaid ${prepaid === 1 ? 'match' : 'matches'} still to play — mark played once it happens.` : '';
 
   return (
     <DuezyModal title="Make-up matches" onClose={onClose} className="dz-makeup-modal">
       <p className="dz-small dz-muted">
         {waiting
-          ? `${waiting} ${waiting === 1 ? 'team' : 'teams'} · ${money(waiting * dues)} still owed. Tap a match to record each team’s payment.`
-          : 'All caught up. Every make-up here has been recorded.'}
+          ? `${waiting} ${waiting === 1 ? 'team' : 'teams'} · ${money(owedTotal)} still owed. Tap a match to record each team’s payment.${prepaidText}`
+          : `Nothing owed for make-ups.${prepaidText || ' Every make-up here has been recorded.'}`}
       </p>
 
       {groups.length ? (
         <ul className="dz-makeup-list">
           {groups.map(({ week, teams }) => {
             const open = openWeek === week;
-            const left = teams.filter((t) => owes(t, week)).length;
+            const left = round2(teams.reduce((s, t) => s + owedFor(t, week), 0));
             return (
               <li key={week} className={`dz-makeup-item${open ? ' is-open' : ''}${left ? '' : ' is-done'}`}>
                 <button
@@ -63,7 +70,7 @@ export default function DuezyMakeupModal({ league, stats, paymentIndex, onSetPay
                       );
                     })}
                   </span>
-                  <span className="dz-makeup-owed">{left ? money(left * dues) : '✓'}</span>
+                  <span className="dz-makeup-owed">{left ? money(left) : '✓'}</span>
                   <span className="dz-makeup-caret" aria-hidden="true">{open ? '▾' : '›'}</span>
                 </button>
 

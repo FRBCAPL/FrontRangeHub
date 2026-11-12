@@ -1,4 +1,5 @@
 import { brandModelLabel, conditionLabel, itemLabel } from '../data/consignmentConstants.js';
+import { formatShortDate } from './consignmentDates.js';
 import { formatDollars } from './consignmentMoney.js';
 import { withTax } from './consignmentTax.js';
 
@@ -48,8 +49,49 @@ export function sheetPages(items, shape) {
   return pages;
 }
 
+function within(value, days, now) {
+  const t = new Date(value).getTime();
+  return Number.isFinite(t) && now - t <= days * 86400000;
+}
+
+export const MAX_BLANK_TAGS = 60;
+
+export function clampBlankCount(n) {
+  const v = Math.floor(Number(n));
+  return Number.isFinite(v) ? Math.min(Math.max(v, 0), MAX_BLANK_TAGS) : 0;
+}
+
+/** Blank tags needed after `used` tags to finish the current page (a full page when nothing is used). */
+export function blanksToFillPage(used, shape) {
+  const per = TAGS_PER_SHEET[normalizeTagShape(shape)];
+  const rest = used % per;
+  return rest ? per - rest : per;
+}
+
 /** Items to pre-check on the sheet page: submitted within `days` days. */
 export function recentlyAdded(item, days = 7, now = Date.now()) {
-  const t = new Date(item?.created_at).getTime();
-  return Number.isFinite(t) && now - t <= days * 86400000;
+  return within(item?.created_at, days, now);
+}
+
+/** Sold items to pre-check on the sold-tag sheet: sold within `days` days. */
+export function recentlySold(item, days = 7, now = Date.now()) {
+  return within(item?.sold_at, days, now);
+}
+
+/** 'shop' (price + QR) or 'sold' (big SOLD, hold-for line). */
+export const TAG_KINDS = ['shop', 'sold'];
+
+export function normalizeTagKind(kind) {
+  return TAG_KINDS.includes(kind) ? kind : 'shop';
+}
+
+/** What a SOLD tag says: item, sold date, and how it sold. */
+export function soldTagText(item) {
+  return {
+    id: itemLabel(item),
+    name: item?.name || '',
+    sub: [brandModelLabel(item), conditionLabel(item?.condition)].filter(Boolean).join(' · '),
+    soldOn: item?.sold_at ? `Sold ${formatShortDate(item.sold_at)}` : 'Sold',
+    how: item?.sale_method === 'auction' ? 'Won online' : '',
+  };
 }
