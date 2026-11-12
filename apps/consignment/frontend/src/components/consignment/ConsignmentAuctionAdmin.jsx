@@ -10,6 +10,7 @@ import {
   returnToSeller,
   setAuctionAtLegends,
 } from '../../services/consignmentAuctionAdminService.js';
+import { auctionLengthDays } from '../../utils/consignmentAuctionDates.js';
 import ConsignmentListingEditModal from './ConsignmentListingEditModal.jsx';
 import ConsignmentAuctionAdminRow from './ConsignmentAuctionAdminRow.jsx';
 import ConsignmentAuctionStartModal from './ConsignmentAuctionStartModal.jsx';
@@ -134,6 +135,7 @@ export default function ConsignmentAuctionAdmin({ settings, initialStatus }) {
           settings={settings}
           isRelist
           previousReserve={relisting.opening_bid}
+          previousDays={auctionLengthDays(relisting)}
           previouslyDelivered={Boolean(relisting.delivered_at)}
           sellerReserve={relisting.sellerReserve ?? null}
           onClose={closeWith(setRelisting)}

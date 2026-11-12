@@ -3,6 +3,7 @@ import { auctionStatusLabel } from '../../data/consignmentConstants.js';
 import { originalListingFee, saleSplit } from '../../utils/consignmentFeePolicy.js';
 import { formatDateTime } from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentAuctionDaysPicker from './ConsignmentAuctionDaysPicker.jsx';
 
 function sellerGets(price, commission, credit) {
   const n = Number(price);
@@ -25,8 +26,11 @@ function AuctionSummary({ auction }) {
   );
 }
 
-/** Money section of the edit modal for auction items: reserve + Buy It Now instead of retail price. */
-export default function ConsignmentEditAuctionFields({ item, form, set, editable, commission }) {
+/**
+ * Money section of the edit modal for auction items: reserve + Buy It Now instead of retail price.
+ * length (live, no bids): { days, setDays, startDays, endHour, newEnd, tooLate } from useAuctionLengthEdit.
+ */
+export default function ConsignmentEditAuctionFields({ item, form, set, editable, commission, length = null }) {
   const auction = item.auction && item.auction.status !== 'cancelled' ? item.auction : null;
   const reserve = auction ? auction.opening_bid : form.seller_payout;
   const buyNow = auction ? auction.buy_now_price : form.requested_buy_now;
@@ -55,8 +59,20 @@ export default function ConsignmentEditAuctionFields({ item, form, set, editable
             <AuctionSummary auction={auction} />
           </div>
         ) : null}
+        {auction?.status === 'live' && length ? (
+          <ConsignmentAuctionDaysPicker
+            value={length.days}
+            onChange={length.setDays}
+            endHour={length.endHour}
+            hint={length.days === length.startDays
+              ? `Started ${formatDateTime(auction.starts_at)}. Switch length to move the end date.`
+              : length.tooLate
+                ? `Too late: ${length.days} days from the start would end it ${formatDateTime(length.newEnd)}.`
+                : `Saving moves the end to ${formatDateTime(length.newEnd)}.`}
+          />
+        ) : null}
         <p className="cs-hint">
-          You can change the reserve and Buy It Now until the first bid is placed
+          You can change the reserve, Buy It Now{auction?.status === 'live' ? ' and length' : ''} until the first bid is placed
           {auction?.status === 'live' ? '. Changes show on the live auction right away.' : '.'}
         </p>
       </>

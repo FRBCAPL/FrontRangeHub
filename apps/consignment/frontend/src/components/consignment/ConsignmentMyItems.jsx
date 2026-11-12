@@ -1,9 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CONSIGNMENT_PATH } from '../../data/consignmentConstants.js';
 import { currentUserId, onAuthChange, openHubLogin } from '../../services/consignmentAuctionService.js';
 import { currentUserEmail, loadMyItems } from '../../services/consignmentSellerService.js';
 import { loadPublicSettings } from '../../services/consignmentSellerAccessService.js';
+import { sortMyItems } from '../../utils/consignmentMyItemsSort.js';
+import { filterMyItems, myItemFilterCounts } from '../../utils/consignmentMyItemsFilter.js';
+import ConsignmentMyItemsFilters from './ConsignmentMyItemsFilters.jsx';
 import ConsignmentMyItemCard from './ConsignmentMyItemCard.jsx';
 import ConsignmentContactButton from './ConsignmentContactButton.jsx';
 import ConsignmentSellerOffers from './ConsignmentSellerOffers.jsx';
@@ -15,6 +18,10 @@ export default function ConsignmentMyItems() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [settings, setSettings] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [query, setQuery] = useState('');
+  const counts = useMemo(() => myItemFilterCounts(items, query), [items, query]);
+  const shown = useMemo(() => filterMyItems(items, filter, query), [items, filter, query]);
 
   useEffect(() => {
     let alive = true;
@@ -29,7 +36,7 @@ export default function ConsignmentMyItems() {
     setError('');
     try {
       const [rows, mail] = await Promise.all([loadMyItems(), currentUserEmail()]);
-      setItems(rows);
+      setItems(sortMyItems(rows));
       setEmail(mail);
     } catch (err) {
       setError(err.message);
@@ -76,9 +83,18 @@ export default function ConsignmentMyItems() {
               <ConsignmentContactButton topic="account" />
             </div>
           ) : null}
-          {items.length ? (
+          {items.length > 1 ? (
+            <ConsignmentMyItemsFilters filter={filter} onFilter={setFilter} query={query} onQuery={setQuery} counts={counts} />
+          ) : null}
+          {items.length && !shown.length ? (
+            <p className="cs-meta cs-mine-nomatch">
+              No items match.{' '}
+              <button type="button" className="cs-btn-secondary" onClick={() => { setFilter('all'); setQuery(''); }}>Show all</button>
+            </p>
+          ) : null}
+          {shown.length ? (
             <ul className="cs-mine-list">
-              {items.map((item) => <ConsignmentMyItemCard key={item.id} item={item} settings={settings} onChanged={() => load(userId)} />)}
+              {shown.map((item) => <ConsignmentMyItemCard key={item.id} item={item} settings={settings} onChanged={() => load(userId)} />)}
             </ul>
           ) : null}
         </>

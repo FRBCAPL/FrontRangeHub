@@ -1,5 +1,6 @@
 import React from 'react';
 import { categoryLabel, conditionLabel, FIELD_LIMITS } from '../../data/consignmentConstants.js';
+import { DEFAULT_AUCTION_END_HOUR, formatEndHour, normalizeAuctionDays } from '../../utils/consignmentAuctionDates.js';
 import { listingFee } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { sellPretaxPrice, taxIncludedOn } from '../../utils/consignmentSellSteps.js';
@@ -34,7 +35,7 @@ function Row({ label, value }) {
   );
 }
 
-export function StepReview({ form, files, goTo, policy, deliverDays = 3 }) {
+export function StepReview({ form, files, goTo, policy, deliverDays = 3, endHour = DEFAULT_AUCTION_END_HOUR }) {
   const isAuction = form.sale_method === 'auction';
   const method = SALE_METHODS.find((m) => m.id === form.sale_method)?.label;
   const rate = useTaxRate();
@@ -56,6 +57,12 @@ export function StepReview({ form, files, goTo, policy, deliverDays = 3 }) {
           value={<>{priceText} <EditLink onClick={() => goTo('price')} /></>}
         />
         {isAuction && form.buy_now_price !== '' ? <Row label="Buy It Now" value={formatDollars(form.buy_now_price)} /> : null}
+        {isAuction ? (
+          <Row
+            label="Auction length"
+            value={`${normalizeAuctionDays(form.auction_days)} days, ending at ${formatEndHour(endHour)} Colorado time`}
+          />
+        ) : null}
         {isAuction ? null : <Row label="In-store inspection" value={form.allow_inspection ? 'Allowed (ID held)' : 'Not allowed'} />}
         <Row
           label="Listing fee"

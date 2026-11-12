@@ -5,6 +5,7 @@ import { onAuthChange } from '../services/consignmentAuctionService.js';
 import { loadSettings } from '../services/consignmentService.js';
 import { loadPublicSettings } from '../services/consignmentSellerAccessService.js';
 import { loadShippingInfo, SHIPPING_OFF } from '../services/consignmentShippingService.js';
+import { auctionEndHour, formatEndHour } from '../utils/consignmentAuctionDates.js';
 import { DEFAULT_SOFT_CLOSE_MINUTES } from '../utils/consignmentAuctionMath.js';
 import { feeTextValues } from '../utils/consignmentFeeText.js';
 import { taxPercent } from '../utils/consignmentTax.js';
@@ -25,6 +26,7 @@ function valuesFrom(row, feeRow, shipping = SHIPPING_OFF) {
     graceDays: row?.pickup_grace_days ?? PICKUP_GRACE_DAYS,
     payDays: row?.auction_payment_days ?? 7,
     deliverDays: row?.auction_delivery_days ?? 3,
+    endHour: formatEndHour(auctionEndHour(row?.auction_end_hour != null ? row : feeRow)),
     softClose: row?.auction_soft_close_minutes ?? DEFAULT_SOFT_CLOSE_MINUTES,
     offerDays: row?.offer_days ?? feeRow?.offer_days ?? 3,
     offerHoldDays: row?.offer_hold_days ?? feeRow?.offer_hold_days ?? 3,

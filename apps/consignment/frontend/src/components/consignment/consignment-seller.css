@@ -19,6 +19,62 @@
   margin: 0;
 }
 
+.cs-mine-filters {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.cs-mine-search {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--cs-line);
+  background: var(--cs-card);
+  color: var(--cs-ink);
+  font: inherit;
+}
+
+.cs-mine-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cs-mine-chips button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cs-line);
+  background: transparent;
+  color: var(--cs-muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cs-mine-chips button.active {
+  border-color: #38bdf8;
+  background: rgba(14, 165, 233, 0.16);
+  color: #e0f2fe;
+}
+
+.cs-mine-chip-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.cs-mine-nomatch { margin: 8px 0 14px; }
+
 .cs-mine-list {
   list-style: none;
   margin: 0;

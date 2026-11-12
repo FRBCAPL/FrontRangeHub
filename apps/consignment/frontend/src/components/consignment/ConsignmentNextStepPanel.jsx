@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PICKUP_GRACE_DAYS, SELLER_CHOICES } from '../../data/consignmentConstants.js';
 import { chooseNextStep } from '../../services/consignmentSellerService.js';
-import { AUCTION_DAYS } from '../../utils/consignmentAuctionDates.js';
+import { auctionLengthDays } from '../../utils/consignmentAuctionDates.js';
 import { auctionRelistFee, DEFAULT_FEE_POLICY, listingFee } from '../../utils/consignmentFeePolicy.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import ConsignmentFeePayCodes from './ConsignmentFeePayCodes.jsx';
@@ -30,6 +30,7 @@ export default function ConsignmentNextStepPanel({ item, settings, onDone }) {
   const freeLimit = freeReserveLimit(previous, policy.freeRepeatDropPct);
   const originalFee = Number(item.original_fee) || listingFee(previous, 'auction', policy);
   const atLegends = Boolean(a.delivered_at);
+  const days = auctionLengthDays(a);
   const graceDays = Number(settings?.pickup_grace_days ?? PICKUP_GRACE_DAYS);
 
   const [editing, setEditing] = useState(!a.seller_choice);
@@ -44,7 +45,7 @@ export default function ConsignmentNextStepPanel({ item, settings, onDone }) {
   const submit = async (e) => {
     e.preventDefault();
     if (choice === 'relist' && rule.free && !(await confirm({
-      title: `Start a new ${AUCTION_DAYS}-day auction now with a ${formatDollars(reserve)} reserve?`,
+      title: `Start a new ${days}-day auction now with a ${formatDollars(reserve)} reserve?`,
       message: 'Bidders can see it right away.',
       confirmLabel: 'Start auction',
     }))) return;
@@ -73,7 +74,7 @@ export default function ConsignmentNextStepPanel({ item, settings, onDone }) {
         </p>
         <p className="cs-meta">
           {a.seller_choice === 'relist'
-            ? `Pay the ${formatDollars(savedRule?.amount)} relist fee and FRPL will start your new ${AUCTION_DAYS}-day auction.`
+            ? `Pay the ${formatDollars(savedRule?.amount)} relist fee and FRPL will start your new ${days}-day auction.`
             : 'FRPL will confirm it and let you know.'}
         </p>
         {a.seller_choice === 'relist' && savedRule?.amount > 0 ? (
@@ -110,7 +111,7 @@ export default function ConsignmentNextStepPanel({ item, settings, onDone }) {
           </label>
           <p className={rule.free ? 'cs-next-free' : 'cs-next-fee'}>
             {rule.free
-              ? `Free: you lowered it ${rule.dropPct}%. Your new ${AUCTION_DAYS}-day auction starts as soon as you confirm.`
+              ? `Free: you lowered it ${rule.dropPct}%. Your new ${days}-day auction starts as soon as you confirm.`
               : `Relist fee ${formatDollars(rule.amount)} (${policy.repeatFeePct}% of your original listing fee). `
                 + `Lower the reserve to ${formatDollars(freeLimit)} or less to relist for free.`}
           </p>

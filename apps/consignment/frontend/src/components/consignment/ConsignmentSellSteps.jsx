@@ -82,6 +82,6 @@ export function StepItem({ form, set }) {
   );
 }
 
-export function StepPrice({ form, set, policy }) {
-  return <PriceFields method={form.sale_method} form={form} set={set} policy={policy} />;
+export function StepPrice({ form, set, policy, endHour }) {
+  return <PriceFields method={form.sale_method} form={form} set={set} policy={policy} endHour={endHour} />;
 }

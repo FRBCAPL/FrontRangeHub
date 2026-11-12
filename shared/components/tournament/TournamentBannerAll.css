@@ -221,6 +221,27 @@
   line-height: 1.4;
 }
 
+.tba-modal-empty p { margin: 0 0 0.75rem; }
+
+.tba-modal-empty-btn {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.6rem 1rem;
+  border: 1px solid rgba(74, 222, 128, 0.6);
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.18);
+  color: #dcfce7;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tba-modal-empty-btn:hover,
+.tba-modal-empty-btn:focus-visible {
+  background: rgba(34, 197, 94, 0.3);
+}
+
 .tba-modal-list {
   list-style: none;
   margin: 0;

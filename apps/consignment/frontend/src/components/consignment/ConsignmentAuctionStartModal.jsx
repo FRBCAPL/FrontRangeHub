@@ -12,13 +12,16 @@ import {
   originalListingFee,
   saleSplit,
 } from '../../utils/consignmentFeePolicy.js';
-import { AUCTION_DAYS, auctionEndFrom, formatDateTime } from '../../utils/consignmentAuctionDates.js';
+import {
+  AUCTION_DAYS, auctionEndFrom, auctionEndHour, formatDateTime, normalizeAuctionDays,
+} from '../../utils/consignmentAuctionDates.js';
 import { formatDollars } from '../../utils/consignmentMoney.js';
+import ConsignmentAuctionDaysPicker from './ConsignmentAuctionDaysPicker.jsx';
 import ConsignmentAuctionFeeFields from './ConsignmentAuctionFeeFields.jsx';
 import ConsignmentModal from './ConsignmentModal.jsx';
 
 export default function ConsignmentAuctionStartModal({
-  item, settings, isRelist = false, previousReserve = null, previouslyDelivered = false,
+  item, settings, isRelist = false, previousReserve = null, previousDays = null, previouslyDelivered = false,
   sellerReserve = null, onClose,
 }) {
   const policy = feePolicyFrom(settings);
@@ -39,6 +42,9 @@ export default function ConsignmentAuctionStartModal({
   const [atLegends, setAtLegends] = useState(
     previouslyDelivered || (item.sale_method === 'fixed' && Boolean(item.intake_at)),
   );
+  const requestedDays = item.auction_days ? normalizeAuctionDays(item.auction_days) : null;
+  const [days, setDays] = useState(requestedDays ?? (isRelist && previousDays ? previousDays : AUCTION_DAYS));
+  const endHour = auctionEndHour(settings);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -83,6 +89,7 @@ export default function ConsignmentAuctionStartModal({
         consent: needsConsent ? consent : null,
         feeNote: rule?.free ? rule.reason : null,
         atLegends,
+        days,
       });
       onClose(true);
     } catch (err) {
@@ -163,9 +170,15 @@ export default function ConsignmentAuctionStartModal({
           ) : null}
         </div>
 
-        <p className="cs-hint">
-          Runs {AUCTION_DAYS} days: if you start it now, it ends {formatDateTime(auctionEndFrom())}. Bids in the final minutes extend it.
-        </p>
+        <ConsignmentAuctionDaysPicker
+          value={days}
+          onChange={setDays}
+          endHour={endHour}
+          hint={
+            `${requestedDays ? `The seller asked for ${requestedDays} days. ` : ''}`
+            + `If you start it now, it ends ${formatDateTime(auctionEndFrom(new Date(), days, endHour))}. Bids in the final minutes extend it.`
+          }
+        />
 
         <ConsignmentAuctionFeeFields
           isRelist={isRelist}

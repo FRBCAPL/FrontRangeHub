@@ -4,7 +4,9 @@ import { formatDollars } from '../../utils/consignmentMoney.js';
 import { sellPretaxPrice } from '../../utils/consignmentSellSteps.js';
 import { taxPercent, withTax } from '../../utils/consignmentTax.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
+import { DEFAULT_AUCTION_END_HOUR, normalizeAuctionDays } from '../../utils/consignmentAuctionDates.js';
 import ConsignmentAgreementModal from './ConsignmentAgreementModal.jsx';
+import ConsignmentAuctionDaysPicker from './ConsignmentAuctionDaysPicker.jsx';
 
 function Req() {
   return <span className="cs-req" aria-label="required">*</span>;
@@ -81,7 +83,7 @@ function TaxIncludedHint({ form, rate }) {
   );
 }
 
-export function PriceFields({ method, form, set, policy }) {
+export function PriceFields({ method, form, set, policy, endHour }) {
   const rate = useTaxRate();
   if (method !== 'auction') {
     return (
@@ -125,6 +127,11 @@ export function PriceFields({ method, form, set, policy }) {
           </p>
         </div>
       </div>
+      <ConsignmentAuctionDaysPicker
+        value={normalizeAuctionDays(form.auction_days)}
+        onChange={(d) => set('auction_days')({ target: { value: d } })}
+        endHour={endHour ?? DEFAULT_AUCTION_END_HOUR}
+      />
       <FeePreview price={form.seller_payout} method="auction" policy={policy} />
     </>
   );

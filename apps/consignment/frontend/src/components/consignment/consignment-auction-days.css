@@ -1,0 +1,42 @@
+.cs-days {
+  display: grid;
+  gap: 6px;
+}
+
+.cs-days-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  max-width: 320px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--cs-line, rgba(148, 163, 184, 0.28));
+}
+
+.cs-days-option {
+  min-height: 38px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--cs-muted, #94a3b8);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.cs-days-option:hover {
+  color: var(--cs-ink, #e2e8f0);
+}
+
+.cs-days-option.active {
+  background: linear-gradient(135deg, #e53e3e, #a855f7);
+  color: #fff;
+}
+
+.cs-days-option:focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+}

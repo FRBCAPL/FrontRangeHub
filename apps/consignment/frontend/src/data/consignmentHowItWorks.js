@@ -84,7 +84,7 @@ export const HOW_IT_WORKS_TABS = [
       { icon: '⚡', title: 'Optional Buy It Now', text: 'Add an optional Buy It Now price. It disappears once bidding reaches it.' },
       { icon: '🤝', title: 'Offers before bidding', text: 'Until someone bids (or if it ends with no bids), buyers can make offers from half your reserve. Accept, decline or counter on My items; accepting ends the auction as a sale.' },
       { icon: '💳', title: 'Pay the listing fee', text: 'If FRPL accepts it, pay the listing fee by Cash App or Venmo from your My items page, or in person at Legends. Your auction goes live once it’s paid.', home: false },
-      { icon: '🗓️', title: 'You keep it meanwhile', text: 'You keep the item while it’s up for auction. Every auction runs 7 days from the moment it starts.' },
+      { icon: '🗓️', title: 'You keep it meanwhile', text: 'You keep the item while it’s up for auction. Pick a 7- or 14-day auction; it ends at {endHour} Colorado time on the last day.' },
       { icon: '🚚', title: 'Sold? Deliver it', text: 'Sold? Bring it to Legends within {deliverDays} days. The winner looks it over and pays there. Miss the deadline and the sale is cancelled, the fee isn’t refunded, and you lose selling access.' },
       { icon: '💵', title: 'Get paid', text: 'Collect your payment at Legends within 7 days of the winner paying.{sellerShipping}' },
       { icon: '🔁', title: 'No bids?', text: 'No bids? Choose what’s next on My items: relist it (free every time you lower the reserve 10% or more), switch to a fixed-price consignment, or keep it. If it’s already at Legends, pick it up within {graceDays} days; otherwise there’s nothing to pick up.' },
@@ -158,7 +158,7 @@ export const HOME_SELL_PITCH = {
   points: [
     'You set the price',
     'Accept, decline or counter offers',
-    'In the case or a 7-day auction',
+    'In the case or a 7- or 14-day auction',
   ],
   cta: 'Sell an item',
 };

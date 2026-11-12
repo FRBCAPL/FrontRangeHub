@@ -6,7 +6,7 @@ import { StepAgree, StepDetails, StepReview } from './ConsignmentSellReviewSteps
 
 /**
  * Guided sell-an-item modal. Form state lives in the parent, so closing and reopening keeps progress.
- * props: form, set, setMethod, files, setFiles, index, setIndex, draftRestored, policy, days, deliverDays, agreementText,
+ * props: form, set, setMethod, files, setFiles, index, setIndex, draftRestored, policy, days, deliverDays, endHour, agreementText,
  * busy, busyLabel, submitError, onSubmit, onClose, onCancel (clears the listing so it isn't offered again)
  */
 export default function ConsignmentSellWizard(props) {

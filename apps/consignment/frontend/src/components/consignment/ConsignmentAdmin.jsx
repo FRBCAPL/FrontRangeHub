@@ -26,6 +26,7 @@ import { clearSellerPaid } from '../../services/consignmentPayoutService.js';
 import ConsignmentSellerPaidModal from './ConsignmentSellerPaidModal.jsx';
 import { CONSIGNMENT_TAG_SHEET_PATH, consignmentTagPath } from '../../utils/consignmentPaths.js';
 import { feePolicyFrom } from '../../utils/consignmentFeePolicy.js';
+import { auctionEndHour, auctionLengthDays } from '../../utils/consignmentAuctionDates.js';
 import ConsignmentAdminEditModal from './ConsignmentAdminEditModal.jsx';
 import ConsignmentApproveModal from './ConsignmentApproveModal.jsx';
 import ConsignmentAdminRow from './ConsignmentAdminRow.jsx';
@@ -282,6 +283,7 @@ export default function ConsignmentAdmin() {
           settings={settings}
           isRelist={Boolean(auctioning.auction && auctioning.auction.status !== 'cancelled')}
           previousReserve={auctioning.auction?.opening_bid}
+          previousDays={auctioning.auction?.ends_at ? auctionLengthDays(auctioning.auction) : null}
           onClose={(saved) => { setAuctioning(null); if (saved) refresh(); }}
         />
       ) : null}
@@ -301,6 +303,7 @@ export default function ConsignmentAdmin() {
           item={edit}
           defaultFee={defaultFee}
           policy={policy}
+          endHour={auctionEndHour(settings)}
           onClose={() => { setEdit(null); refresh(); }}
           onSave={(patch) => updateItemIfStatus(edit.id, edit.status, patch)}
         />

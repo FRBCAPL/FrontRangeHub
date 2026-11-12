@@ -2,7 +2,9 @@ import React from 'react';
 import { formatDollars } from '../../utils/consignmentMoney.js';
 import { DEFAULT_COMPLAINT_DAYS } from '../../utils/consignmentShipping.js';
 import { shipRulesFromSettings } from '../../utils/consignmentShipPrice.js';
+import { auctionEndHour, formatEndHour } from '../../utils/consignmentAuctionDates.js';
 import ConsignmentSettingsSection from './ConsignmentSettingsSection.jsx';
+import ConsignmentAuctionTimeSettings from './ConsignmentAuctionTimeSettings.jsx';
 import ConsignmentTaxSettings, { taxPercentText } from './ConsignmentTaxSettings.jsx';
 import ConsignmentAgreementSettings, { agreementsOutdated } from './ConsignmentAgreementSettings.jsx';
 import ConsignmentShippingSettings from './ConsignmentShippingSettings.jsx';
@@ -49,6 +51,14 @@ export default function ConsignmentSettingsPanel({ settings, error, onError, onS
         summary={`${taxPercentText(settings.tax_rate)}% added to the prices shoppers see`}
       >
         <ConsignmentTaxSettings settings={settings} onError={onError} onSaved={onSaved} />
+      </ConsignmentSettingsSection>
+
+      <ConsignmentSettingsSection
+        icon="⏰"
+        title="Auction end time"
+        summary={`Every auction ends at ${formatEndHour(auctionEndHour(settings))} Colorado time (7 or 14 days)`}
+      >
+        <ConsignmentAuctionTimeSettings settings={settings} onError={onError} onSaved={onSaved} />
       </ConsignmentSettingsSection>
 
       <ConsignmentSettingsSection

@@ -1,5 +1,5 @@
 import { supabase } from '@shared/config/supabase.js';
-import { AUCTION_DAYS } from '../utils/consignmentAuctionDates.js';
+import { AUCTION_DAYS, normalizeAuctionDays } from '../utils/consignmentAuctionDates.js';
 import { openingBid } from '../utils/consignmentAuctionMath.js';
 
 export * from './consignmentAuctionDeliveryService.js';
@@ -117,6 +117,7 @@ export async function loadAuctionSettings() {
 }
 
 const FIXES_MISSING = 'Run supabase-migrations/consignment-auction-fixes-2026-10.sql in the Supabase SQL editor, then refresh.';
+const LENGTH_MISSING = 'Run supabase-migrations/consignment-auction-length-2026-11.sql in the Supabase SQL editor, then refresh.';
 
 async function fixesRpc(name, args, fallback) {
   const { data, error } = await supabase.rpc(name, args);
@@ -135,14 +136,26 @@ async function fixesRpc(name, args, fallback) {
  * expired, and relisted items. The reserve (opening bid) is stored as the item's Seller Payout, so the
  * payout guard keeps it from selling below the reserve.
  */
-export function startAuction(item, {
+export async function startAuction(item, {
   reserve, commissionPct, buyNowPrice, listingFee, feeKind = 'auction_listing', feePaidNow, paymentMethod,
-  consent = null, feeNote = null, atLegends = false,
+  consent = null, feeNote = null, atLegends = false, days = AUCTION_DAYS,
 }) {
   const opening = openingBid(reserve);
   if (!opening) throw new Error('Enter a valid reserve.');
   const buyNow = buyNowPrice === '' || buyNowPrice == null ? null : Number(buyNowPrice);
   if (buyNow != null && !(buyNow > opening)) throw new Error('Buy It Now must be higher than the reserve.');
+  const length = normalizeAuctionDays(days);
+  // The end-time trigger reads the item's length, and relists reuse it.
+  if (Number(item.auction_days) !== length) {
+    const { error } = await supabase
+      .from('consignment_items')
+      .update({ auction_days: length, updated_at: new Date().toISOString() })
+      .eq('id', item.id);
+    if (error) {
+      if (/auction_days|schema cache/i.test(error.message || '')) throw new Error(LENGTH_MISSING);
+      throw new Error(error.message || 'Could not save the auction length.');
+    }
+  }
   return fixesRpc('consignment_admin_start_auction', {
     p_item_id: item.id,
     p_reserve: opening,
@@ -155,7 +168,7 @@ export function startAuction(item, {
     p_consent: consent || null,
     p_fee_note: feeNote || null,
     p_at_legends: Boolean(atLegends),
-    p_days: AUCTION_DAYS,
+    p_days: length,
   }, 'Could not start the auction.');
 }
 
@@ -198,6 +211,21 @@ export async function updateAuctionTerms(itemId, { reserve, buyNow }) {
   if (error) {
     if (/could not find the function|schema cache/i.test(error.message || '')) throw new Error(TERMS_MISSING);
     throw new Error(error.message || 'Could not update the reserve.');
+  }
+  return data;
+}
+
+/** Live auction with no bids: switch between 7 and 14 days. The start stays; the end moves to the new last day. */
+export async function setAuctionLength(auctionId, days) {
+  const { data, error } = await supabase.rpc('consignment_admin_set_auction_length', {
+    p_auction_id: auctionId,
+    p_days: Number(days),
+  });
+  if (error) {
+    if (/could not find the function|schema cache/i.test(error.message || '')) {
+      throw new Error('Run supabase-migrations/consignment-auction-length-edit-2026-11.sql in the Supabase SQL editor, then refresh.');
+    }
+    throw new Error(error.message || 'Could not change the auction length.');
   }
   return data;
 }

@@ -10,7 +10,9 @@ import {
 } from '../../data/consignmentConstants.js';
 import { DEFAULT_COMMISSION_PCT } from '../../utils/consignmentAuctionMath.js';
 import ConsignmentEditAuctionFields from './ConsignmentEditAuctionFields.jsx';
-import { updateAuctionTerms } from '../../services/consignmentAuctionAdminService.js';
+import { setAuctionLength, updateAuctionTerms } from '../../services/consignmentAuctionAdminService.js';
+import { DEFAULT_AUCTION_END_HOUR } from '../../utils/consignmentAuctionDates.js';
+import useAuctionLengthEdit from '../../hooks/useAuctionLengthEdit.js';
 import { formatDollars, frplRevenue } from '../../utils/consignmentMoney.js';
 import { pretaxFromTotal, withTax } from '../../utils/consignmentTax.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
@@ -28,6 +30,7 @@ import ConsignmentFeesPanel from './ConsignmentFeesPanel.jsx';
 import ConsignmentHistoryPanel from './ConsignmentHistoryPanel.jsx';
 import ConsignmentPayoutModal from './ConsignmentPayoutModal.jsx';
 import ConsignmentModal from './ConsignmentModal.jsx';
+import './consignment-edit-modal.css';
 
 const LISTED = ['available', 'sold'];
 const ACTIVE_AUCTION = ['draft', 'live', 'awaiting_payment'];
@@ -36,6 +39,7 @@ export default function ConsignmentAdminEditModal({
   item,
   defaultFee = DEFAULT_CONSIGNMENT_FEE,
   policy = DEFAULT_FEE_POLICY,
+  endHour = DEFAULT_AUCTION_END_HOUR,
   onClose,
   onSave,
 }) {
@@ -47,6 +51,7 @@ export default function ConsignmentAdminEditModal({
   const termsEditable = isAuction
     && ['pending', 'available'].includes(item.status)
     && !(activeAuction && (activeAuction.status === 'awaiting_payment' || activeAuction.bid_count > 0));
+  const length = useAuctionLengthEdit(item, activeAuction, termsEditable, endHour);
   const startReserve = activeAuction ? activeAuction.opening_bid : item.seller_payout;
   const startBuyNow = (activeAuction ? activeAuction.buy_now_price : item.requested_buy_now) ?? '';
   const taxRate = useTaxRate();
@@ -80,6 +85,7 @@ export default function ConsignmentAdminEditModal({
     ? STATUSES
     : STATUSES.filter((s) => s.id === item.status || !['sold', 'available'].includes(s.id));
   const needsRetail = LISTED.includes(form.status) && !isAuction;
+  const feeCount = (item.fees || []).length;
 
   const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
@@ -126,6 +132,10 @@ export default function ConsignmentAdminEditModal({
     }
     const termsChanged = termsEditable
       && (reserve !== Number(startReserve) || buyNow !== numOrNull(startBuyNow));
+    if (length?.changed && length.tooLate) {
+      setError(`Too late to switch to ${length.days} days; it would already be over.`);
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -142,6 +152,7 @@ export default function ConsignmentAdminEditModal({
         delete patch.selling_price;
       }
       if (termsChanged) await updateAuctionTerms(item.id, { reserve, buyNow });
+      if (length?.changed) await setAuctionLength(activeAuction.id, length.days);
       if (!isAuction && expiresOn !== toDateInput(item.expires_at)) {
         patch.expires_at = fromDateInput(expiresOn);
       }
@@ -158,11 +169,15 @@ export default function ConsignmentAdminEditModal({
 
   return (
     <ConsignmentModal titleId="cs-edit-title" onClose={onClose} busy={busy}>
-      <form className="cs-modal-card cs-form" onSubmit={save}>
-        <h2 id="cs-edit-title">
-          Edit {itemLabel(item)}
-          {isAuction ? <span className="cs-badge auction" style={{ marginLeft: 8 }}>Online auction</span> : null}
-        </h2>
+      <form className="cs-modal-card cs-form cs-edit-modal" onSubmit={save}>
+        <div className="cs-edit-head">
+          <h2 id="cs-edit-title">
+            Edit {itemLabel(item)}
+            {isAuction ? <span className="cs-badge auction" style={{ marginLeft: 8 }}>Online auction</span> : null}
+          </h2>
+          <button type="button" className="cs-how-close" onClick={onClose} disabled={busy} aria-label="Close">×</button>
+        </div>
+        <div className="cs-edit-body">
         <ConsignmentPhotoManager
           photos={form.photo_urls}
           onChange={(photo_urls) => setForm((prev) => ({ ...prev, photo_urls }))}
@@ -234,6 +249,7 @@ export default function ConsignmentAdminEditModal({
             set={set}
             editable={termsEditable}
             commission={Number(item.auction?.commission_pct ?? DEFAULT_COMMISSION_PCT)}
+            length={length}
           />
         ) : (
         <>
@@ -323,13 +339,22 @@ export default function ConsignmentAdminEditModal({
             </div>
           </div>
         )}
-        <ConsignmentFeesPanel item={item} defaultFee={defaultFee} />
-        <ConsignmentHistoryPanel itemId={item.id} reloadKey={historyKey} />
+        <details className="cs-edit-more">
+          <summary>Fees <span>{feeCount ? `${feeCount} recorded` : 'None recorded'}</span></summary>
+          <ConsignmentFeesPanel item={item} defaultFee={defaultFee} />
+        </details>
+        <details className="cs-edit-more">
+          <summary>History &amp; notes <span>Saves right away</span></summary>
+          <ConsignmentHistoryPanel itemId={item.id} reloadKey={historyKey} />
+        </details>
+        </div>
 
-        {error ? <p className="cs-error">{error}</p> : null}
-        <div className="cs-actions">
-          <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
-          <button className="cs-btn-secondary" type="button" onClick={onClose}>Cancel</button>
+        <div className="cs-edit-foot">
+          {error ? <p className="cs-error" role="alert">{error}</p> : null}
+          <div className="cs-actions">
+            <button className="cs-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
+            <button className="cs-btn-secondary" type="button" onClick={onClose}>Cancel</button>
+          </div>
         </div>
       </form>
       {changingPayout ? (

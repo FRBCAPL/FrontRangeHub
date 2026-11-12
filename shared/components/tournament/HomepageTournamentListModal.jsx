@@ -8,6 +8,7 @@ export default function HomepageTournamentListModal({
   onClose,
   onPick,
   footerLink,
+  emptyAction,
 }) {
   useEffect(() => {
     const onKey = (e) => {
@@ -56,7 +57,14 @@ export default function HomepageTournamentListModal({
             ))}
           </ul>
         ) : (
-          <p className="tba-modal-empty">No live tournaments right now.</p>
+          <div className="tba-modal-empty">
+            <p>No live tournaments right now.</p>
+            {emptyAction ? (
+              <button type="button" className="tba-modal-empty-btn" onClick={emptyAction.onClick}>
+                {emptyAction.label}
+              </button>
+            ) : null}
+          </div>
         )}
         <div className="tba-modal-foot">
           {footerLink ? (

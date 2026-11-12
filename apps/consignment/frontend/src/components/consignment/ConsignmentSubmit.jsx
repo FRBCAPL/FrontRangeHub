@@ -4,7 +4,10 @@ import { CONSIGNMENT_DAYS, CONSIGNMENT_PATH, itemLabel, LEGENDS_PLACE } from '..
 import { loadSettings, submitItem } from '../../services/consignmentService.js';
 import { uploadConsignmentPhotos } from '../../services/consignmentPhotos.js';
 import { clearSellDraft, loadSellDraft, saveSellDraft } from '../../services/consignmentSellDraft.js';
-import { currentUserEmail, setMyItemTaxIncluded } from '../../services/consignmentSellerService.js';
+import { currentUserEmail, setMyItemAuctionDays, setMyItemTaxIncluded } from '../../services/consignmentSellerService.js';
+import {
+  AUCTION_DAYS, DEFAULT_AUCTION_END_HOUR, auctionEndHour, normalizeAuctionDays,
+} from '../../utils/consignmentAuctionDates.js';
 import { sellPretaxPrice, taxIncludedOn } from '../../utils/consignmentSellSteps.js';
 import useTaxRate from '../../hooks/useTaxRate.js';
 import useConsignmentConfirm from '../../hooks/useConsignmentConfirm.js';
@@ -37,6 +40,7 @@ const empty = {
   seller_payout: '',
   price_tax_included: false,
   buy_now_price: '',
+  auction_days: AUCTION_DAYS,
   allow_inspection: false,
   agreement: false,
 };
@@ -63,6 +67,7 @@ export default function ConsignmentSubmit() {
   const [busyLabel, setBusyLabel] = useState('');
   const [days, setDays] = useState(CONSIGNMENT_DAYS);
   const [deliverDays, setDeliverDays] = useState(3);
+  const [endHour, setEndHour] = useState(DEFAULT_AUCTION_END_HOUR);
   const [policy, setPolicy] = useState(DEFAULT_FEE_POLICY);
   const [agreementText, setAgreementText] = useState(() => fillConsignmentAgreement(DEFAULT_CONSIGNMENT_AGREEMENT, null));
   const [auctionAgreement, setAuctionAgreement] = useState(() => fillAuctionAgreement(DEFAULT_AUCTION_AGREEMENT, null));
@@ -82,6 +87,7 @@ export default function ConsignmentSubmit() {
         if (!row) return;
         if (row.consignment_days) setDays(Number(row.consignment_days));
         if (row.auction_delivery_days) setDeliverDays(Number(row.auction_delivery_days));
+        setEndHour(auctionEndHour(row));
         setPolicy(feePolicyFrom(row));
         setAgreementText(fillConsignmentAgreement(consignmentAgreementTemplate(row), row));
         setAuctionAgreement(fillAuctionAgreement(auctionAgreementTemplate(row), row));
@@ -168,6 +174,15 @@ export default function ConsignmentSubmit() {
           taxNote = 'Your item was submitted, but we couldn’t mark the price as tax included. Mention it to FRPL and they’ll set it when they review.';
         }
       }
+      const auctionDays = normalizeAuctionDays(form.auction_days);
+      if (isAuction && auctionDays !== AUCTION_DAYS && data?.id) {
+        try {
+          await setMyItemAuctionDays(data.id, auctionDays);
+        } catch {
+          taxNote = [taxNote, `Your item was submitted, but we couldn’t save the ${auctionDays}-day length. Mention it to FRPL and they’ll set it when they start your auction.`]
+            .filter(Boolean).join(' ');
+        }
+      }
       clearSellDraft();
       setWizardOpen(false);
       setDone({ ...data, taxNote });
@@ -247,6 +262,7 @@ export default function ConsignmentSubmit() {
           policy={policy}
           days={days}
           deliverDays={deliverDays}
+          endHour={endHour}
           agreementText={isAuction ? auctionAgreement : agreementText}
           index={stepIndex}
           setIndex={setStepIndex}

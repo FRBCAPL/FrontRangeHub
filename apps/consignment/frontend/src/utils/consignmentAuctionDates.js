@@ -1,11 +1,38 @@
-import { addShopDays, SHOP_TIME_ZONE, shopParts } from './consignmentTimeZone.js';
+import { SHOP_TIME_ZONE, shopParts, shopTime } from './consignmentTimeZone.js';
 
-/** Every auction runs exactly this long from the moment it starts (late bids can still extend it). */
+/** Default auction length; sellers pick from AUCTION_DAY_CHOICES (late bids can still extend it). */
 export const AUCTION_DAYS = 7;
+export const AUCTION_DAY_CHOICES = [7, 14];
+/** Colorado hour every auction ends (24h); admins can change it in Settings (consignment_settings.auction_end_hour). */
+export const DEFAULT_AUCTION_END_HOUR = 20;
 
-/** End time for an auction starting at `start`: the same Colorado time of day, AUCTION_DAYS later. */
-export function auctionEndFrom(start = new Date()) {
-  return addShopDays(start, AUCTION_DAYS);
+export function normalizeAuctionDays(days) {
+  const n = Number(days);
+  return AUCTION_DAY_CHOICES.includes(n) ? n : AUCTION_DAYS;
+}
+
+export function auctionEndHour(settings) {
+  const n = Number(settings?.auction_end_hour);
+  return Number.isInteger(n) && n >= 0 && n <= 23 ? n : DEFAULT_AUCTION_END_HOUR;
+}
+
+/** "8 PM", "12 PM", "12 AM". */
+export function formatEndHour(hour) {
+  const h = Number(hour);
+  return `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
+/** Which choice a past auction used: the nearest one, since late-bid extensions and the end-hour snap shift it by hours. */
+export function auctionLengthDays(auction) {
+  const days = (new Date(auction?.ends_at) - new Date(auction?.starts_at)) / 86400000;
+  if (!(days > 0)) return AUCTION_DAYS;
+  return AUCTION_DAY_CHOICES.reduce((best, d) => (Math.abs(d - days) < Math.abs(best - days) ? d : best));
+}
+
+/** Mirrors consignment_auction_end(): the Colorado date `days` after `start`, at `endHour` Colorado time. */
+export function auctionEndFrom(start = new Date(), days = AUCTION_DAYS, endHour = DEFAULT_AUCTION_END_HOUR) {
+  const p = shopParts(start);
+  return shopTime(p.year, p.month, p.day + Number(days), Number(endHour));
 }
 
 /** Value for <input type="datetime-local"> in Colorado time. */

@@ -64,6 +64,18 @@ export async function setMyItemTaxIncluded(itemId, included) {
   }
 }
 
+const AUCTION_LENGTH_MISSING = 'Run supabase-migrations/consignment-auction-length-2026-11.sql in the Supabase SQL editor, then refresh.';
+
+/** Saves the auction length (7 or 14 days) the seller picked for a just-submitted (pending) item. */
+export async function setMyItemAuctionDays(itemId, days) {
+  const { error } = await supabase.rpc('consignment_seller_set_auction_days', { p_item_id: itemId, p_days: Number(days) });
+  if (error) {
+    const msg = error.message || '';
+    if (/consignment_seller_set_auction_days|schema cache|does not exist/i.test(msg)) throw new Error(AUCTION_LENGTH_MISSING);
+    throw new Error(msg || 'Could not save the auction length.');
+  }
+}
+
 export async function currentUserEmail() {
   const { data } = await supabase.auth.getSession();
   return data?.session?.user?.email || '';

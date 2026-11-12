@@ -53,6 +53,17 @@ export async function saveTaxRate(tax_rate) {
   if (error) throwNice(error, 'Could not save the tax rate');
 }
 
+export async function saveAuctionEndHour(auction_end_hour) {
+  const { error } = await supabase
+    .from('consignment_settings')
+    .update({ auction_end_hour, updated_at: new Date().toISOString() })
+    .eq('id', 'frpl');
+  if (error && /auction_end_hour|schema cache/i.test(error.message || '')) {
+    throw new Error('Run supabase-migrations/consignment-auction-length-2026-11.sql in the Supabase SQL editor, then refresh.');
+  }
+  if (error) throwNice(error, 'Could not save the auction end time');
+}
+
 export async function loadCatalog({ category = 'all', status = 'available' } = {}) {
   let query = supabase
     .from('consignment_catalog')
