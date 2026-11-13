@@ -1,0 +1,39 @@
+/* Legends inner pages: events, play, karaoke, visit, rewards. */
+
+.lg-page { max-width: 72rem !important; margin: 0 auto; padding: 3rem 1.25rem; }
+.lg-page--narrow { max-width: 48rem !important; }
+.lg-page .lg-display--page { margin-top: 0.5rem; }
+
+.lg-card--solid { background: var(--lg-charcoal); }
+.lg-card--featured { box-shadow: 0 0 0 1px rgba(174, 0, 232, 0.45); }
+.lg-card--solid.lg-card--link:hover { border-color: var(--lg-purple); }
+.lg-card .lg-text-link,
+.lg-card .lg-underline-link { align-self: flex-start; }
+
+.lg-empty {
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 1.5rem;
+  padding: 2rem 1.25rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.lg-facts-list { display: grid; gap: 0.75rem; font-size: 0.875rem; }
+.lg-facts-list dt { color: rgba(255, 255, 255, 0.5); }
+
+.lg-link-row { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.875rem; font-weight: 600; }
+.lg-link-row a { color: #fff; }
+.lg-link-row a:hover { color: var(--lg-purple); }
+
+.lg-bullets { display: grid; gap: 0.75rem; color: rgba(255, 255, 255, 0.75); }
+
+.lg-visit-page { display: grid; gap: 2.5rem; }
+
+@media (min-width: 1024px) {
+  .lg-visit-page { grid-template-columns: 1.15fr 0.85fr; align-items: start; }
+  .lg-visit-page__facts { padding-top: 4rem; }
+}
+
+@media (max-width: 480px) {
+  .lg-display--page { font-size: 3rem; }
+}

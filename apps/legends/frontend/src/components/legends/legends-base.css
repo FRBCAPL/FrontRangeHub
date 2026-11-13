@@ -1,0 +1,237 @@
+/* Legends Brews & Cues — tokens, resets scoped to .lg-app, shared pieces. */
+
+.lg-app {
+  --lg-ink: #0d0d0f;
+  --lg-panel: #17161a;
+  --lg-charcoal: #29272c;
+  --lg-purple: #ae00e8;
+  --lg-line: rgba(255, 255, 255, 0.1);
+  --lg-font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --lg-font-display: 'Barlow Condensed', Impact, 'Arial Narrow', sans-serif;
+  --lg-glow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 18px rgba(0, 0, 0, 0.9), 0 0 36px rgba(0, 0, 0, 0.7);
+  background: var(--lg-ink);
+  color: #fff;
+  font-family: var(--lg-font-sans);
+  line-height: 1.5;
+  text-align: left;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Full-bleed inside the hub shell (only while a Legends page is showing).
+ * The hub's index.css sets `* { max-width: unset !important }`, so every Legends max-width is !important.
+ */
+body:has(.lg-shell) #root { padding: 0 !important; }
+.lg-shell > main.main-app-content { max-width: none !important; margin: 0 !important; padding: 0 !important; }
+
+/*
+ * Resets so hub-wide element rules (e.g. `p { margin-bottom: 1.5rem }`) do not leak in.
+ * Doubled element selectors outrank bare element rules in any load order; single classes still win.
+ */
+:where(.lg-app) *,
+:where(.lg-app) *::before,
+:where(.lg-app) *::after {
+  box-sizing: border-box;
+}
+:where(.lg-app) :is(h1, h2, h3, p, ul, li, figure, dl, dt, dd, address):is(h1, h2, h3, p, ul, li, figure, dl, dt, dd, address) {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+:where(.lg-app) ul:is(ul) {
+  list-style: none;
+}
+:where(.lg-app) address:is(address) {
+  font-style: normal;
+}
+:where(.lg-app) img:is(img) {
+  display: block;
+  max-width: 100% !important;
+}
+:where(.lg-app) a:is(a),
+:where(.lg-app) a:is(a):hover {
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+}
+:where(.lg-app) ::selection {
+  background: var(--lg-purple);
+  color: #fff;
+}
+:where(.lg-app) :focus-visible {
+  outline: 2px solid var(--lg-purple);
+  outline-offset: 3px;
+}
+
+.lg-display {
+  font-family: var(--lg-font-display);
+  font-weight: 500;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.lg-display--page { font-size: 3.75rem; }
+.lg-display--section { font-size: 3rem; }
+.lg-display--sub { font-size: 2.25rem; line-height: 2.5rem; }
+.lg-display--card { font-size: 1.875rem; }
+
+.lg-eyebrow {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--lg-purple);
+}
+.lg-eyebrow--above { margin-bottom: 0.5rem; }
+.lg-eyebrow--tight { letter-spacing: 0.18em; }
+.lg-eyebrow--muted { color: rgba(255, 255, 255, 0.45); letter-spacing: 0.18em; }
+
+.lg-glow { text-shadow: var(--lg-glow); }
+.lg-center { text-align: center; }
+.lg-nowrap-block { display: inline-block; }
+.lg-copy { color: rgba(255, 255, 255, 0.75); }
+.lg-lede { font-size: 1.125rem; line-height: 1.75rem; color: rgba(255, 255, 255, 0.8); }
+.lg-max-md { max-width: 28rem !important; }
+.lg-max-xl { max-width: 36rem !important; }
+.lg-max-2xl { max-width: 42rem !important; }
+.lg-mt-2 { margin-top: 0.5rem; }
+.lg-mt-3 { margin-top: 0.75rem; }
+.lg-mt-4 { margin-top: 1rem; }
+.lg-mt-6 { margin-top: 1.5rem; }
+.lg-mt-8 { margin-top: 2rem; }
+.lg-mt-10 { margin-top: 2.5rem; }
+.lg-mt-12 { margin-top: 3rem; }
+
+.lg-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Buttons (links styled as pills) */
+.lg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+.lg-btn--md { min-height: 2.75rem; padding-left: 1.25rem; padding-right: 1.25rem; font-size: 0.875rem; }
+.lg-btn--lg { min-height: 3rem; padding-left: 1.5rem; padding-right: 1.5rem; font-size: 1rem; }
+.lg-btn--primary { background: var(--lg-purple); color: #fff; }
+.lg-btn--primary:hover { background: #c026ff; color: #fff; }
+.lg-btn--secondary { border: 1px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.05); color: #fff; }
+.lg-btn--secondary:hover { border-color: var(--lg-purple); background: rgba(255, 255, 255, 0.1); color: #fff; }
+.lg-btn--quiet { color: rgba(255, 255, 255, 0.8); }
+.lg-btn--quiet:hover { color: #fff; }
+
+.lg-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+.lg-underline-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: var(--lg-purple);
+  text-underline-offset: 4px;
+}
+.lg-underline-link:hover { color: #fff; text-decoration: underline; text-decoration-color: #fff; }
+
+.lg-text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+}
+.lg-text-link:hover { color: var(--lg-purple); }
+
+/* Legends header inside the hub (the hub nav stays on top) */
+.lg-header { border-bottom: 1px solid var(--lg-line); background: rgba(13, 13, 15, 0.9); }
+.lg-header__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 72rem !important;
+  margin: 0 auto;
+  padding: 0.5rem 1.25rem 0.5rem;
+}
+.lg-header__logo img { width: auto; height: 3.5rem; }
+.lg-subnav {
+  display: flex;
+  gap: 0.25rem;
+  max-width: 100% !important;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lg-subnav a {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.85);
+}
+/* Auto margins center the links when they fit and keep the first one reachable when they scroll. */
+.lg-subnav a:first-child { margin-left: auto; }
+.lg-subnav a:last-child { margin-right: auto; }
+.lg-subnav a:hover { background: var(--lg-charcoal); color: #fff; }
+
+@media (max-width: 480px) {
+  .lg-subnav { gap: 0; }
+  .lg-subnav a { padding: 0.5rem 0.6rem; }
+}
+.lg-subnav a.active { background: rgba(174, 0, 232, 0.2); color: #fff; box-shadow: inset 0 0 0 1px rgba(174, 0, 232, 0.6); }
+
+@media (min-width: 768px) {
+  .lg-header__inner { flex-direction: row; justify-content: space-between; padding-top: 0.75rem; padding-bottom: 0.5rem; }
+  .lg-header__logo img { height: 4.5rem; }
+}
+
+/* Footer */
+.lg-footer { border-top: 1px solid var(--lg-line); background: #000; }
+.lg-footer__inner { display: grid; gap: 2.5rem; max-width: 72rem !important; margin: 0 auto; padding: 3rem 1.25rem; }
+.lg-footer__logo { width: auto; height: 7rem; }
+.lg-footer__name { margin-top: 1rem; font-size: 1.5rem; }
+.lg-footer__blurb { margin-top: 0.75rem; max-width: 24rem !important; font-size: 0.875rem; color: rgba(255, 255, 255, 0.7); }
+.lg-footer__links { display: grid; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.875rem; }
+.lg-footer__links a { color: rgba(255, 255, 255, 0.8); }
+.lg-footer__links a:hover { color: #fff; }
+.lg-footer__cta { display: inline-flex; align-items: center; min-height: 2.75rem; margin-top: 1rem; font-size: 0.875rem; font-weight: 600; color: #fff; }
+.lg-footer__cta:hover { color: var(--lg-purple); }
+
+@media (min-width: 768px) {
+  .lg-footer__inner { grid-template-columns: 1.4fr 1fr 1fr; }
+}
+
+/* Visit facts (address, hours, contact) */
+.lg-facts { display: grid; gap: 1.5rem; }
+.lg-facts--compact { gap: 1rem; font-size: 0.875rem; color: rgba(255, 255, 255, 0.75); }
+.lg-facts__title { font-weight: 600; color: #fff; }
+.lg-facts__address { margin-top: 0.25rem; }
+.lg-facts__address span { display: block; }
+.lg-facts p + p { margin-top: 0.25rem; }
+.lg-facts__title + p { margin-top: 0.25rem; }
+.lg-facts__hours { display: grid; gap: 0.25rem; margin-top: 0.5rem; }
+.lg-facts__hours li { display: flex; justify-content: space-between; gap: 1rem; }

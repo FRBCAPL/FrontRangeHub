@@ -408,6 +408,9 @@ const Homepage = ({ canRunTournament = false }) => {
           <button type="button" className="homepage-footer-app homepage-footer-app--duezy" onClick={handleNavigateToDuesTracker}>
             <span aria-hidden="true">💰</span> FRUSAPL Dues Tracker
           </button>
+          <button type="button" className="homepage-footer-app homepage-footer-app--legends" onClick={() => navigate('/legends')}>
+            <span aria-hidden="true">🎱</span> Legends Brews &amp; Cues
+          </button>
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>
       </div>

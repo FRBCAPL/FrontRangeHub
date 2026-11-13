@@ -29,6 +29,9 @@ function hubCenterTitle(pathname, currentAppName, userFirstName, search) {
   if (pathname === '/consignment' || String(pathname || '').startsWith('/consignment/')) {
     return 'Consignment Shop';
   }
+  if (pathname === '/legends' || String(pathname || '').startsWith('/legends/')) {
+    return 'Legends Brews & Cues';
+  }
   if (pathname === '/hub') return !userFirstName ? 'Ladder - Login' : 'Ladder of Legends';
   if (pathname === '/guest/ladder' || pathname === '/ladder') return 'Ladder of Legends';
   if (pathname === '/cueless') return 'Cueless in the Booth';
@@ -129,6 +132,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
 
   const isLadderApp = location.pathname === '/guest/ladder' || location.pathname === '/ladder' || location.pathname.startsWith('/ladder/') || currentAppName === 'Ladder of Legends';
   const isUsaplApp = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
+  const isLegendsApp = location.pathname === '/legends' || location.pathname.startsWith('/legends/');
   const isConsignmentApp = location.pathname === '/consignment' || location.pathname.startsWith('/consignment/');
   const isCuelessApp = location.pathname === '/cueless' || location.pathname.startsWith('/cueless/');
   const isArcadeApp = location.pathname.startsWith('/arcade/');
@@ -151,7 +155,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
   
   return (
-    <div ref={navRootRef} className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isArcadeApp ? 'arcade-nav' : ''} ${isAdminHome ? 'admin-home-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div ref={navRootRef} className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp || isLegendsApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isArcadeApp ? 'arcade-nav' : ''} ${isAdminHome ? 'admin-home-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 

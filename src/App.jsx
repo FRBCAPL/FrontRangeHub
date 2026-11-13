@@ -154,6 +154,7 @@ import LadderTvView from '@shared/components/guest/LadderTvView';
 import ArcadeKiosk from '@apps/arcade/frontend/src/components/arcade/ArcadeKiosk';
 import ArcadeAdmin from '@apps/arcade/frontend/src/components/arcade/ArcadeAdmin';
 import UsaplApp from '@apps/usapl/frontend/src/components/usapl/UsaplApp.jsx';
+import LegendsApp from '@apps/legends/frontend/src/components/legends/LegendsApp.jsx';
 import PaymentSuccess from './components/payment/PaymentSuccess';
 import ResetPassword from './components/auth/ResetPassword';
 import ConfirmEmail from './components/auth/ConfirmEmail';
@@ -317,6 +318,7 @@ function AppContent() {
     const targetHash = PATHNAME_TO_HASH_ROUTE[pathname]
       || (pathname.startsWith('/usapl') ? `#${pathname}` : null)
       || (pathname === '/consignment' || pathname.startsWith('/consignment/') ? `#${pathname}` : null)
+      || (pathname === '/legends' || pathname.startsWith('/legends/') ? `#${pathname}` : null)
       || (pathname.startsWith('/duezy/') ? `#${pathname}` : null)
       || (pathname.startsWith('/itemsure/') ? `#${pathname}` : null)
       || (isCashClimbSubmitPath(pathname) ? `#${pathname}` : null)
@@ -571,6 +573,7 @@ function AppContent() {
     location.pathname.startsWith('/estate-inventory/');
   const isUsaplLeague = location.pathname === '/usapl' || location.pathname.startsWith('/usapl/');
   const isConsignment = isConsignmentPath(location.pathname) && !isConsignmentPrintPath(location.pathname);
+  const isLegends = location.pathname === '/legends' || location.pathname.startsWith('/legends/');
 
   const isFiduciaryLogHost = (() => {
     const host = (window.location.hostname || '').toLowerCase();
@@ -861,7 +864,7 @@ function AppContent() {
           const isLadderRoute = location.pathname.startsWith('/ladder');
           const isEmbedPreview = location.pathname === '/embed-preview';
           const isAdminHome = ['/admin/inbox', '/admin/ladder-applications', '/admin/payments'].includes(location.pathname);
-          return !isLadderRoute && !isEmbedPreview && !isAdminHome && !isEstateInventory && !isUsaplLeague && !isConsignment && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) && <FloatingLogos />;
+          return !isLadderRoute && !isEmbedPreview && !isAdminHome && !isEstateInventory && !isUsaplLeague && !isConsignment && !isLegends && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) && <FloatingLogos />;
         })()}
         {!isEstateInventory && location.pathname !== '/tournament-bracket/tv' && !isBreakAndRunDisplayPath(location.pathname) ? (
                          <HubNavigation 
@@ -881,7 +884,7 @@ function AppContent() {
         />
         ) : null}
 
-                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}${isConsignment ? ' cs-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague || isConsignment ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", overflowX: "hidden", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : isConsignment ? "120px" : "96px" }}>
+                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}${isConsignment ? ' cs-shell' : ''}${isLegends ? ' lg-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague || isConsignment || isLegends ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", overflowX: "hidden", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : isConsignment ? "120px" : "96px" }}>
           <Routes>
             
             {/* League App Routes */}
@@ -1184,6 +1187,18 @@ function AppContent() {
                 <AppRouteWrapper appName="FRPL Consignment">
                   <main className="main-app-content">
                     <ConsignmentApp canAdmin={isAuthenticated && isAdmin()} />
+                  </main>
+                </AppRouteWrapper>
+              }
+            />
+
+            {/* Legends Brews & Cues — public venue site inside the hub */}
+            <Route
+              path="/legends/*"
+              element={
+                <AppRouteWrapper appName="Legends Brews & Cues">
+                  <main className="main-app-content">
+                    <LegendsApp />
                   </main>
                 </AppRouteWrapper>
               }
