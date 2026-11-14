@@ -19,7 +19,7 @@ export default function EventDetailPage() {
         </div>
         <div>
           <dt>Time</dt>
-          <dd>Not published</dd>
+          <dd>{activity.timeLabel ?? 'Not published'}</dd>
         </div>
       </dl>
       <Link to="/legends/events" className="lg-text-link lg-mt-8">

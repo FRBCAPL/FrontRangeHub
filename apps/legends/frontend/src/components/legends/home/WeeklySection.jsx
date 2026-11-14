@@ -1,26 +1,41 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { weekdayInTimeZone } from '../../../data/legendsSchedule.js';
-import { orderWeeklyCards, runsTonight } from '../../../data/legendsWeekly.js';
+import { WEEKLY_CARDS, orderWeeklyCards, runsTonight } from '../../../data/legendsWeekly.js';
+import useNow from '../../../hooks/useNow.js';
+import { leagueCardState } from '../../../services/legendsLeagueCard.js';
 import { MoreLink, SectionHeading } from '../LegendsUi.jsx';
 
-export default function WeeklySection() {
-  const weekday = weekdayInTimeZone(new Date());
+/** League nights change week to week, so that card follows CueSync; the rest follow the weekly schedule. */
+function cardView(card, weekday, league) {
+  if (card.key === 'leagues') {
+    return { tonight: league.tonight, tag: league.tag, blurb: league.blurb ?? card.blurb };
+  }
+  const tonight = runsTonight(card, weekday);
+  return { tonight, tag: tonight ? 'Tonight' : null, blurb: card.blurb };
+}
+
+export default function WeeklySection({ today }) {
+  const now = useNow();
+  const weekday = weekdayInTimeZone(now);
+  const league = leagueCardState(today.summary, now);
+  const views = new Map(WEEKLY_CARDS.map((card) => [card.key, cardView(card, weekday, league)]));
+
   return (
     <section className="lg-section lg-section--weekly" aria-labelledby="weekly-heading">
       <SectionHeading id="weekly-heading" title="Legends Regulars" />
       <ul className="lg-grid lg-grid--3 lg-mt-6">
-        {orderWeeklyCards(weekday).map((card) => {
-          const tonight = runsTonight(card, weekday);
+        {orderWeeklyCards((card) => views.get(card.key).tonight).map((card) => {
+          const view = views.get(card.key);
           return (
             <li key={card.key}>
-              <Link to={card.to} className={`lg-card lg-card--link ${tonight ? 'lg-card--tonight' : ''}`}>
+              <Link to={card.to} className={`lg-card lg-card--link ${view.tonight ? 'lg-card--tonight' : ''}`}>
                 <div className="lg-weekly__top">
                   <p className="lg-eyebrow lg-eyebrow--tight">{card.daysLabel}</p>
-                  {tonight ? <span className="lg-tonight-tag">Tonight</span> : null}
+                  {view.tag ? <span className={`lg-tonight-tag ${view.tonight ? '' : 'lg-tonight-tag--next'}`}>{view.tag}</span> : null}
                 </div>
                 <h3 className="lg-display lg-display--card lg-mt-2">{card.title}</h3>
-                <p className="lg-card__copy lg-mt-3">{card.blurb}</p>
+                <p className="lg-card__copy lg-mt-3">{view.blurb}</p>
                 <MoreLink />
               </Link>
             </li>

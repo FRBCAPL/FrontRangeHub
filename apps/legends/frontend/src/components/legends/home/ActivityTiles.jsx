@@ -5,8 +5,8 @@ import { MoreLink, SectionHeading } from '../LegendsUi.jsx';
 const TILES = [
   { title: 'Pool', copy: 'Pool is the main draw. Grab a table and play.', to: '/legends/play/pool', wide: true },
   { title: 'Leagues', copy: 'League play every day of the week.', to: '/legends/play/leagues' },
-  { title: 'Tournaments', copy: 'Every Sunday, plus others as they are scheduled.', to: '/legends/play/tournaments' },
-  { title: 'Karaoke', copy: 'Friday and Saturday nights.', to: '/legends/karaoke' },
+  { title: 'Tournaments', copy: 'Sunday Night Nine Ball at 6:30 PM, plus others as they are scheduled.', to: '/legends/play/tournaments' },
+  { title: 'Karaoke', copy: 'Friday and Saturday nights at 8 PM.', to: '/legends/karaoke' },
   { title: 'Darts', copy: 'Dart boards are part of the room.' },
   { title: 'Sports', copy: 'Games are on the TVs.' },
   { title: 'Food & drinks', copy: 'Food and drinks from the bar.' },

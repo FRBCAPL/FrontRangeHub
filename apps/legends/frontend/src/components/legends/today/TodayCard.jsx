@@ -1,41 +1,48 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { activitiesOn, weekdayInTimeZone } from '../../../data/legendsSchedule.js';
-import useLegendsToday from '../../../hooks/useLegendsToday.js';
-import { buildLiveView, itemsNotCoveredByLive, liveBadges, updatedAgoLabel } from '../../../services/legendsLive.js';
+import { buildLiveView, liveBadges, updatedAgoLabel } from '../../../services/legendsLive.js';
 import { ButtonLink } from '../LegendsUi.jsx';
 import TodayMatches, { TodayBadge } from './TodayMatches.jsx';
+import TodayScheduled, { SCHEDULED_TONIGHT } from './TodayScheduled.jsx';
 
-function todayItems(now) {
-  return activitiesOn(weekdayInTimeZone(now)).map((activity) => ({
-    key: activity.slug,
-    title: activity.title,
-    to: `/legends/events/${activity.slug}`,
-    category: activity.category,
-  }));
+/**
+ * Leagues come only from CueSync, so a night without matches never shows them.
+ * Karaoke and the Sunday tournament follow the weekly schedule; the tournament
+ * switches to CueSync's bracket matches once they are listed.
+ */
+function scheduledTonight(now, tournamentMatches) {
+  const categories = new Set(activitiesOn(weekdayInTimeZone(now)).map((activity) => activity.category));
+  const kinds = [];
+  if (categories.has('tournament') && tournamentMatches.length === 0) kinds.push('tournament');
+  if (categories.has('karaoke')) kinds.push('karaoke');
+  return kinds;
 }
 
-export default function TodayCard() {
-  const { summary, loaded, now } = useLegendsToday();
+function cardHeading(hasLiveContent, scheduled) {
+  if (hasLiveContent) return 'On the tables';
+  if (scheduled.length > 0) return SCHEDULED_TONIGHT[scheduled[0]].heading;
+  return 'No events today';
+}
+
+export default function TodayCard({ today }) {
+  const { summary, loaded, now } = today;
   if (!loaded) return <p className="lg-today__loading">Checking today&apos;s schedule…</p>;
 
   const live = buildLiveView(summary, now);
-  const items = itemsNotCoveredByLive(todayItems(now), live);
   const matches = live?.matches ?? [];
   const leagueMatches = matches.filter((match) => match.kind === 'league');
   const tournaments = matches.filter((match) => match.kind === 'tournament');
   const hasMatches = matches.length > 0;
   const badges = liveBadges(live);
   const hasLiveContent = hasMatches || badges.leagues || badges.tournament;
+  const scheduled = scheduledTonight(now, tournaments);
 
   return (
     <article className="lg-today">
-      {hasLiveContent ? (
-        <div className="lg-today__head">
-          <h3 className="lg-display lg-display--card">On the tables</h3>
-          {!hasMatches && badges.leagues ? <TodayBadge className="lg-mt-4">Legends Leagues</TodayBadge> : null}
-        </div>
-      ) : null}
+      <div className="lg-today__head">
+        <h3 className="lg-display lg-display--card">{cardHeading(hasLiveContent, scheduled)}</h3>
+        {!hasMatches && badges.leagues ? <TodayBadge className="lg-mt-4">Legends Leagues</TodayBadge> : null}
+      </div>
 
       <TodayMatches
         heading={tournaments.length > 1 ? 'Legends Tournaments' : 'Legends Tournament'}
@@ -44,23 +51,12 @@ export default function TodayCard() {
       />
       <TodayMatches heading="Legends Leagues" finishedText="League play is finished for tonight." matches={leagueMatches} />
 
-      {items.length > 0 ? (
-        <div className="lg-today__group">
-          <p className="lg-today__label">{hasMatches ? 'Also today' : 'On today'}</p>
-          <ul className="lg-today__items">
-            {items.map((item) => (
-              <li key={item.key}>
-                <Link to={item.to}>{item.title}</Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {!hasLiveContent && items.length === 0 ? <p className="lg-today__empty">Nothing is listed for today yet.</p> : null}
+      {scheduled.map((kind, index) => (
+        <TodayScheduled key={kind} kind={kind} withBadge={hasLiveContent || index > 0} />
+      ))}
 
       <div className="lg-today__foot">
-        <p className="lg-today__updated">{live ? `Table info ${updatedAgoLabel(live.updatedAt, now).toLowerCase()}` : null}</p>
+        <p className="lg-today__updated">{hasMatches ? `Table info ${updatedAgoLabel(live.updatedAt, now).toLowerCase()}` : null}</p>
         <ButtonLink to="/legends/events" variant="quiet">See schedule</ButtonLink>
       </div>
     </article>

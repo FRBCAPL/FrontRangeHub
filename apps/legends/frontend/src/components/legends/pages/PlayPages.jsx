@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { NINE_BALL_RULES } from '../../../data/legendsSchedule.js';
 import { LEGENDS_APPS } from '../../../data/legendsSite.js';
 import { PageIntro } from '../LegendsUi.jsx';
 
 const PLAY_HUBS = [
   ['/legends/play/leagues', 'Pool leagues', 'Every day. Names and start times are not published yet.'],
-  ['/legends/play/tournaments', 'Sunday tournament', 'Every Sunday, plus other tournaments when they are scheduled.'],
-  ['/legends/karaoke', 'Karaoke', 'Friday and Saturday nights.'],
+  ['/legends/play/tournaments', 'Sunday Night Nine Ball', 'Sundays at 6:30 PM. $20 entry, 100% payout.'],
+  ['/legends/karaoke', 'Karaoke', 'Friday and Saturday nights at 8 PM.'],
   ['/legends/play/pool', 'Recreational pool', 'Open play is the reason the room exists.'],
 ];
 
@@ -90,16 +91,36 @@ export function LeaguesPage() {
 
 export function TournamentsPage() {
   return (
-    <article className="lg-page lg-page--narrow">
-      <PageIntro eyebrow="Sunday" title="Tournaments">
-        <p className="lg-lede lg-mt-4">A pool tournament runs every Sunday.</p>
-        <p className="lg-copy lg-mt-4">
-          Entry fees, race lengths, and start times are not listed because they have not been confirmed for this site. Other tournaments show up on Events when staff publish a date.
-        </p>
-      </PageIntro>
-      <div className="lg-link-row lg-mt-8">
-        <Link to="/legends/events/sunday-tournament">Sunday tournament</Link>
-        <Link to="/legends/events">All events</Link>
+    <article className="lg-page">
+      <div className="lg-tourney">
+        <div>
+          <PageIntro eyebrow="Sundays at 6:30 PM" title="Sunday Night Nine Ball">
+            <p className="lg-lede lg-mt-4">$20 entry, 100% payout. Results are reported to FargoRate.</p>
+          </PageIntro>
+          <dl className="lg-facts-list lg-mt-8">
+            <div>
+              <dt>Sign-ups</dt>
+              <dd>From 3 PM every Sunday, in person only. No late entries.</dd>
+            </div>
+            <div>
+              <dt>Start</dt>
+              <dd>6:30 PM, or earlier if the bracket is full</dd>
+            </div>
+          </dl>
+          <h2 className="lg-display lg-display--sub lg-mt-10">House rules</h2>
+          <ul className="lg-bullets lg-bullets--dots lg-mt-3">
+            {NINE_BALL_RULES.map((rule) => (
+              <li key={rule}>{rule}</li>
+            ))}
+          </ul>
+          <p className="lg-card__muted lg-mt-8">Other tournaments show up on Events when staff publish a date.</p>
+          <div className="lg-link-row lg-mt-4">
+            <Link to="/legends/events">All events</Link>
+          </div>
+        </div>
+        <figure className="lg-photo lg-photo--framed lg-tourney__flyer">
+          <img src="/legends/sunday-nine-ball.jpg" alt="Sunday Night Nine Ball flyer for Legends Brews & Cues" loading="lazy" />
+        </figure>
       </div>
     </article>
   );

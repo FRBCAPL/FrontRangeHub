@@ -133,6 +133,7 @@
   letter-spacing: 0.16em;
   color: #fff;
 }
+.lg-tonight-tag--next { background: transparent; box-shadow: inset 0 0 0 1px var(--lg-purple); color: rgba(255, 255, 255, 0.85); }
 
 @media (min-width: 640px) {
   .lg-grid--tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }

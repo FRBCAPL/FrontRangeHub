@@ -5,8 +5,8 @@ const SOURCES = [
     key: 'leagues',
     category: 'leagues',
     title: 'Pool leagues',
-    daysLabel: 'Every day',
-    blurb: 'League play is on the tables every day of the week.',
+    daysLabel: 'League nights',
+    blurb: 'See the Leagues page for league play at Legends.',
     to: '/legends/play/leagues',
   },
   {
@@ -14,15 +14,15 @@ const SOURCES = [
     category: 'karaoke',
     title: 'Karaoke',
     daysLabel: 'Fridays & Saturdays',
-    blurb: 'Two karaoke nights every weekend.',
+    blurb: 'Two karaoke nights every weekend, starting at 8 PM.',
     to: '/legends/karaoke',
   },
   {
     key: 'tournament',
     category: 'tournament',
-    title: 'Sunday tournament',
+    title: 'Sunday Nine Ball',
     daysLabel: 'Sundays',
-    blurb: 'A pool tournament every Sunday.',
+    blurb: 'Race to 7, single elimination at 6:30 PM. $20 entry, 100% payout.',
     to: '/legends/play/tournaments',
   },
 ];
@@ -37,7 +37,7 @@ export function runsTonight(card, weekday) {
   return weekday !== null && card.weekdays.includes(weekday);
 }
 
-/** Tonight's cards first; otherwise the original order. */
-export function orderWeeklyCards(weekday, cards = WEEKLY_CARDS) {
-  return [...cards].sort((a, b) => Number(runsTonight(b, weekday)) - Number(runsTonight(a, weekday)));
+/** Tonight's cards first; otherwise the original order. `isTonight(card)` decides each card. */
+export function orderWeeklyCards(isTonight, cards = WEEKLY_CARDS) {
+  return [...cards].sort((a, b) => Number(isTonight(b)) - Number(isTonight(a)));
 }

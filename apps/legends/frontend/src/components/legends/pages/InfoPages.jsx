@@ -11,21 +11,27 @@ const KARAOKE_NIGHTS = [
 export function KaraokePage() {
   return (
     <article className="lg-page lg-page--narrow">
-      <PageIntro eyebrow="Nights" title="Karaoke" />
+      <PageIntro eyebrow="Fridays & Saturdays" title="Karaoke">
+        <p className="lg-lede lg-mt-4">Karaoke starts at 8 PM every Friday and Saturday.</p>
+      </PageIntro>
       <div className="lg-grid lg-grid--2 lg-mt-8">
         {KARAOKE_NIGHTS.map(({ day, slug }) => (
           <section key={slug} className="lg-card lg-card--solid">
             <h2 className="lg-display lg-display--card">{day}</h2>
-            <p className="lg-card__copy lg-mt-2">Karaoke night. Start time is not published yet.</p>
+            <p className="lg-card__copy lg-mt-2">Karaoke night, starting at 8 PM.</p>
             <Link to={`/legends/events/${slug}`} className="lg-text-link">
               {day} details
             </Link>
           </section>
         ))}
       </div>
-      <p className="lg-card__muted lg-mt-8">
-        Song lists, hosts, and drink specials will be added here when Legends has them. Nothing on this page is a promotion with a price.
-      </p>
+      <h2 className="lg-display lg-display--sub lg-mt-12">Sign up to sing</h2>
+      <p className="lg-copy lg-mt-3">Scan the karaoke QR code at Legends to:</p>
+      <ul className="lg-bullets lg-bullets--dots lg-mt-3">
+        <li>See the song catalog</li>
+        <li>See the rotation</li>
+        <li>Sign up to sing</li>
+      </ul>
     </article>
   );
 }

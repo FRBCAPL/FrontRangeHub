@@ -54,23 +54,31 @@
 @media (min-width: 640px) {
   .lg-today__matches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lg-today__match:nth-child(2) { border-top: 0; }
+  /* One match left: keep the column width, centered under the badge. */
+  .lg-today__matches--single {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: calc(50% - 1rem) !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
-.lg-today__label {
-  font-size: 0.75rem;
-  line-height: 1rem;
+.lg-today__scheduled { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.lg-today__scheduled-line { margin-top: 0.75rem; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
+.lg-today__scheduled > .lg-today__scheduled-line:first-child { margin-top: 0; }
+.lg-today__scheduled-sub { margin-top: 0.25rem; font-size: 0.875rem; color: rgba(255, 255, 255, 0.7); }
+.lg-today__scheduled-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: var(--lg-purple);
+  text-underline-offset: 4px;
 }
-.lg-today__items { margin-top: 0.5rem; }
-.lg-today__items li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; }
-.lg-today__items li + li { border-top: 1px solid var(--lg-line); }
-.lg-today__items a { display: inline-flex; align-items: center; min-height: 2.75rem; font-weight: 600; color: #fff; }
-.lg-today__items a:hover { color: var(--lg-purple); }
-
-.lg-today__empty { margin-top: 1rem; font-size: 0.875rem; color: rgba(255, 255, 255, 0.7); }
+.lg-today__scheduled-link:hover { color: var(--lg-purple); }
 .lg-today__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 1rem; }
 .lg-today__updated { font-size: 0.75rem; line-height: 1rem; color: rgba(255, 255, 255, 0.45); }
 

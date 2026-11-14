@@ -48,6 +48,7 @@ function toLiveMatch(match, index) {
     home: match.home,
     away: match.away || null,
     detail: detail || null,
+    startTime: match.startTime || null,
     when: whenLabel(status, match.startLabel),
     status,
     tables: match.tables,
@@ -83,21 +84,6 @@ export function liveBadges(live) {
 /** Finished matches are not shown; the caller shows a wrap-up line once nothing is left. */
 export function matchesStillOn(matches) {
   return matches.filter((match) => match.status !== 'completed');
-}
-
-/**
- * Drops recurring items the live match list already covers, so "Pool leagues" is not listed twice.
- * Finished matches count too, so the line does not reappear after league play ends.
- */
-export function itemsNotCoveredByLive(items, live) {
-  if (!live || live.matches.length === 0) return items;
-  const hasLeague = live.matches.some((match) => match.kind === 'league');
-  const hasTournament = live.matches.some((match) => match.kind === 'tournament');
-  return items.filter((item) => {
-    if (item.category === 'leagues') return !hasLeague;
-    if (item.category === 'tournament') return !hasTournament;
-    return true;
-  });
 }
 
 export function tablesLabel(tables) {

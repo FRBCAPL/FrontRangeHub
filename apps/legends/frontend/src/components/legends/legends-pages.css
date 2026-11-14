@@ -26,6 +26,26 @@
 .lg-link-row a:hover { color: var(--lg-purple); }
 
 .lg-bullets { display: grid; gap: 0.75rem; color: rgba(255, 255, 255, 0.75); }
+.lg-bullets--dots { gap: 0.4rem; }
+.lg-bullets--dots li { position: relative; padding-left: 1.1rem; }
+.lg-bullets--dots li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--lg-purple);
+}
+
+.lg-tourney { display: grid; gap: 2.5rem; align-items: start; }
+.lg-tourney__flyer { max-width: 26rem !important; width: 100%; margin: 0 auto; }
+.lg-tourney__flyer img { aspect-ratio: auto; }
+
+@media (min-width: 900px) {
+  .lg-tourney { grid-template-columns: 1fr 24rem; }
+}
 
 .lg-visit-page { display: grid; gap: 2.5rem; }
 

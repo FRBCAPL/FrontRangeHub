@@ -1,8 +1,10 @@
 import React from 'react';
+import useNow from '../../../hooks/useNow.js';
 import { venueDateLabel } from '../../../services/legendsClock.js';
 import TodayCard from '../today/TodayCard.jsx';
 
-export default function HomeHero() {
+export default function HomeHero({ today }) {
+  const now = useNow();
   return (
     <section className="lg-hero">
       {/* On wide screens the photo keeps its 3:2 shape at full width, so vw offsets track the hanging lights. */}
@@ -23,11 +25,11 @@ export default function HomeHero() {
           <h2 id="happening-heading" className="lg-display lg-display--section lg-glow">
             Tonight at Legends
           </h2>
-          <p className="lg-hero__date lg-glow">{venueDateLabel(new Date())}</p>
+          <p className="lg-hero__date lg-glow">{venueDateLabel(now)}</p>
         </div>
         {/* Card bottom is the photo's bottom edge; a taller card makes the photo taller. */}
         <div className="lg-hero__card" aria-labelledby="happening-heading">
-          <TodayCard />
+          <TodayCard today={today} />
         </div>
       </div>
     </section>

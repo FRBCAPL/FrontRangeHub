@@ -17,7 +17,7 @@ export default function TodayMatches({ heading, finishedText, matches }) {
       {stillOn.length === 0 ? (
         <p className="lg-today__finished lg-glow">{finishedText}</p>
       ) : (
-        <ul className="lg-today__matches">
+        <ul className={`lg-today__matches${stillOn.length === 1 ? ' lg-today__matches--single' : ''}`}>
           {stillOn.map((match) => {
             const tables = tablesLabel(match.tables);
             return (
