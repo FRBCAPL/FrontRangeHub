@@ -1198,7 +1198,7 @@ function AppContent() {
               element={
                 <AppRouteWrapper appName="Legends Brews & Cues">
                   <main className="main-app-content">
-                    <LegendsApp />
+                    <LegendsApp canAdmin={isAuthenticated && isAdminState} isAuthenticated={isAuthenticated} />
                   </main>
                 </AppRouteWrapper>
               }

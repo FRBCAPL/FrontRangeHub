@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { primaryNav, site } from '../../data/legendsSite.js';
+import { useLegendsAdmin } from './LegendsAdminContext.jsx';
 
 export default function LegendsNav() {
+  const { canAdmin } = useLegendsAdmin();
   return (
     <header className="lg-header">
       <div className="lg-header__inner">
@@ -15,6 +17,12 @@ export default function LegendsNav() {
               {item.label}
             </NavLink>
           ))}
+          <NavLink to="/legends/my">My Legends</NavLink>
+          {canAdmin ? (
+            <NavLink to="/legends/admin" className="lg-subnav__staff">
+              Staff
+            </NavLink>
+          ) : null}
         </nav>
       </div>
     </header>

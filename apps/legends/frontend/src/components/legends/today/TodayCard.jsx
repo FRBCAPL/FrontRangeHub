@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { activitiesOn, weekdayInTimeZone } from '../../../data/legendsSchedule.js';
+import { fetchLegendsContent } from '../../../services/legendsContentService.js';
 import { buildLiveView, liveBadges, updatedAgoLabel } from '../../../services/legendsLive.js';
 import { ButtonLink } from '../LegendsUi.jsx';
 import TodayMatches, { TodayBadge } from './TodayMatches.jsx';
@@ -26,6 +27,22 @@ function cardHeading(hasLiveContent, scheduled) {
 
 export default function TodayCard({ today }) {
   const { summary, loaded, now } = today;
+  const [staffNote, setStaffNote] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchLegendsContent()
+      .then((data) => {
+        if (!cancelled) setStaffNote(data.todayNote?.body || null);
+      })
+      .catch(() => {
+        if (!cancelled) setStaffNote(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   if (!loaded) return <p className="lg-today__loading">Checking today&apos;s schedule…</p>;
 
   const live = buildLiveView(summary, now);
@@ -43,6 +60,8 @@ export default function TodayCard({ today }) {
         <h3 className="lg-display lg-display--card">{cardHeading(hasLiveContent, scheduled)}</h3>
         {!hasMatches && badges.leagues ? <TodayBadge className="lg-mt-4">Legends Leagues</TodayBadge> : null}
       </div>
+
+      {staffNote ? <p className="lg-today__note">{staffNote}</p> : null}
 
       <TodayMatches
         heading={tournaments.length > 1 ? 'Legends Tournaments' : 'Legends Tournament'}

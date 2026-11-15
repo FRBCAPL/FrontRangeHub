@@ -37,7 +37,22 @@ export function runsTonight(card, weekday) {
   return weekday !== null && card.weekdays.includes(weekday);
 }
 
-/** Tonight's cards first; otherwise the original order. `isTonight(card)` decides each card. */
-export function orderWeeklyCards(isTonight, cards = WEEKLY_CARDS) {
-  return [...cards].sort((a, b) => Number(isTonight(b)) - Number(isTonight(a)));
+/** Days until the next weekday in `weekdays` (0 = today). */
+export function daysUntilWeekdays(weekday, weekdays) {
+  if (weekday === null || !weekdays?.length) return Number.POSITIVE_INFINITY;
+  for (let offset = 0; offset < 7; offset += 1) {
+    if (weekdays.includes((weekday + offset) % 7)) return offset;
+  }
+  return Number.POSITIVE_INFINITY;
+}
+
+/**
+ * Soonest next night first. `daysAway(card)` returns 0 for tonight, 1 for tomorrow, etc.
+ * Unknown nights sort last; ties keep the source order.
+ */
+export function orderWeeklyCards(daysAway, cards = WEEKLY_CARDS) {
+  return [...cards]
+    .map((card, index) => ({ card, index, days: daysAway(card) ?? Number.POSITIVE_INFINITY }))
+    .sort((a, b) => a.days - b.days || a.index - b.index)
+    .map(({ card }) => card);
 }

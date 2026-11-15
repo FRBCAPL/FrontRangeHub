@@ -118,6 +118,25 @@ body:has(.lg-shell) #root { padding: 0 !important; }
   border: 0;
 }
 
+.lg-skip {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 80;
+  transform: translateY(-200%);
+  background: #fff;
+  color: #0d0d0f;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.lg-skip:focus {
+  transform: none;
+  outline: 2px solid var(--lg-purple);
+  outline-offset: 2px;
+}
+
 /* Buttons (links styled as pills) */
 .lg-btn {
   display: inline-flex;

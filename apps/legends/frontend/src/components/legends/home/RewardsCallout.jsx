@@ -11,10 +11,10 @@ export default function RewardsCallout() {
             Legends Rewards
           </h2>
           <p className="lg-copy lg-mt-3 lg-max-xl">
-            Join free with an email, a mobile number, or both. Members will be able to earn points, unlock achievements, and open member benefits. Rates and rewards will be posted when they launch.
+            Join free with an email or mobile number — or use your hub login. You get an independent Legends membership and digital card. Points and rewards post here when Legends turns them on.
           </p>
         </div>
-        <ButtonLink to="/legends/rewards" size="lg">See Rewards</ButtonLink>
+        <ButtonLink to="/legends/my?rewards=1" size="lg">My Legends Rewards</ButtonLink>
       </div>
     </section>
   );

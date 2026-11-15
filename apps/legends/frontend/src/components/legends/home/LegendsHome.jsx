@@ -1,6 +1,7 @@
 import React from 'react';
 import useLegendsToday from '../../../hooks/useLegendsToday.js';
 import ActivityTiles from './ActivityTiles.jsx';
+import AnnouncementsBand from './AnnouncementsBand.jsx';
 import HomeHero from './HomeHero.jsx';
 import RewardsCallout from './RewardsCallout.jsx';
 import RoomBand from './RoomBand.jsx';
@@ -13,6 +14,7 @@ export default function LegendsHome() {
   return (
     <>
       <HomeHero today={today} />
+      <AnnouncementsBand />
       <WeeklySection today={today} />
       <ActivityTiles />
       <RoomBand />

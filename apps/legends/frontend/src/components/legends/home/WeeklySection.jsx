@@ -1,18 +1,30 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { weekdayInTimeZone } from '../../../data/legendsSchedule.js';
-import { WEEKLY_CARDS, orderWeeklyCards, runsTonight } from '../../../data/legendsWeekly.js';
+import { WEEKLY_CARDS, daysUntilWeekdays, orderWeeklyCards, runsTonight } from '../../../data/legendsWeekly.js';
 import useNow from '../../../hooks/useNow.js';
+import { karaokeCardState } from '../../../services/legendsKaraokeCard.js';
 import { leagueCardState } from '../../../services/legendsLeagueCard.js';
 import { MoreLink, SectionHeading } from '../LegendsUi.jsx';
 
-/** League nights change week to week, so that card follows CueSync; the rest follow the weekly schedule. */
+/** Leagues follow CueSync; karaoke follows the weekly schedule; Nine Ball stays fixed. */
 function cardView(card, weekday, league) {
   if (card.key === 'leagues') {
-    return { tonight: league.tonight, tag: league.tag, blurb: league.blurb ?? card.blurb };
+    return {
+      tonight: league.tonight,
+      tag: league.tag,
+      blurb: league.blurb ?? card.blurb,
+      daysAway: league.daysAway,
+    };
   }
+  if (card.key === 'karaoke') return karaokeCardState(card, weekday);
   const tonight = runsTonight(card, weekday);
-  return { tonight, tag: tonight ? 'Tonight' : null, blurb: card.blurb };
+  return {
+    tonight,
+    tag: tonight ? 'Tonight' : null,
+    blurb: card.blurb,
+    daysAway: daysUntilWeekdays(weekday, card.weekdays),
+  };
 }
 
 export default function WeeklySection({ today }) {
@@ -25,7 +37,7 @@ export default function WeeklySection({ today }) {
     <section className="lg-section lg-section--weekly" aria-labelledby="weekly-heading">
       <SectionHeading id="weekly-heading" title="Legends Regulars" />
       <ul className="lg-grid lg-grid--3 lg-mt-6">
-        {orderWeeklyCards((card) => views.get(card.key).tonight).map((card) => {
+        {orderWeeklyCards((card) => views.get(card.key).daysAway).map((card) => {
           const view = views.get(card.key);
           return (
             <li key={card.key}>

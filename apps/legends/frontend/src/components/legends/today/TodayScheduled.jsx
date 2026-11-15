@@ -6,8 +6,11 @@ import { TodayBadge } from './TodayMatches.jsx';
 export const SCHEDULED_TONIGHT = {
   karaoke: {
     heading: 'Karaoke tonight',
-    lines: ['Karaoke starts at 8 PM.', 'Scan the QR code at Legends to sign up to sing.'],
-    link: { to: '/legends/karaoke', label: 'Karaoke details' },
+    lines: [
+      'Karaoke starts at 8 PM.',
+      'Scan the QR code at Legends to see the catalog, check the rotation, and sign up to sing.',
+    ],
+    link: { to: '/legends/karaoke', label: 'How karaoke works' },
   },
   tournament: {
     heading: 'Nine Ball tonight',

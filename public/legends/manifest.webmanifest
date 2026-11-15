@@ -1,0 +1,31 @@
+{
+  "name": "Legends Brews & Cues",
+  "short_name": "Legends",
+  "description": "Pool, leagues, karaoke, and Legends Rewards in Colorado Springs.",
+  "start_url": "/#/legends",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0D0D0F",
+  "theme_color": "#0D0D0F",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/legends/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/legends/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/legends/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -29,7 +29,7 @@ export default function LegendsFooter() {
         <div>
           <Eyebrow>Rewards</Eyebrow>
           <p className="lg-footer__blurb">Legends Rewards membership is free.</p>
-          <Link to="/legends/rewards" className="lg-footer__cta">
+          <Link to="/legends/my?rewards=1" className="lg-footer__cta">
             About Legends Rewards
           </Link>
         </div>

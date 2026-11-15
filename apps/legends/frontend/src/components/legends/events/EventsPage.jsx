@@ -1,11 +1,33 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { activitiesOn, RECURRING_ACTIVITIES, WEEKDAY_LABELS, weekdayInTimeZone } from '../../../data/legendsSchedule.js';
+import { fetchPublishedEvents } from '../../../services/legendsEventsService.js';
 import { PageIntro } from '../LegendsUi.jsx';
 import RecurringCard from './ActivityCard.jsx';
+import ScheduledEventCard from './ScheduledEventCard.jsx';
 
 export default function EventsPage() {
   const weekday = weekdayInTimeZone(new Date());
   const today = activitiesOn(weekday);
+  const [events, setEvents] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublishedEvents()
+      .then((data) => {
+        if (!cancelled) setEvents(data.events || []);
+      })
+      .catch(() => {
+        if (!cancelled) setEvents([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="lg-page">
       <PageIntro eyebrow="Events" title="What's happening">
@@ -32,9 +54,19 @@ export default function EventsPage() {
       </div>
 
       <h2 className="lg-display lg-display--sub lg-mt-12">Scheduled events</h2>
-      <p className="lg-empty lg-mt-4">
-        No one-time events are published yet. Recurring leagues, karaoke, and the Sunday tournament are listed above.
-      </p>
+      {!loaded ? <p className="lg-card__muted lg-mt-4">Loading…</p> : null}
+      {loaded && events.length === 0 ? (
+        <p className="lg-empty lg-mt-4">
+          No one-time events are published yet. Recurring leagues, karaoke, and the Sunday tournament are listed above.
+        </p>
+      ) : null}
+      {events.length > 0 ? (
+        <div className="lg-grid lg-grid--2 lg-mt-4">
+          {events.map((event) => (
+            <ScheduledEventCard key={event.id} event={event} />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

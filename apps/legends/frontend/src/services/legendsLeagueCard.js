@@ -32,14 +32,28 @@ function nextNightCopy(next, now) {
   return `Next league night is ${when}${time}.${count}`;
 }
 
+function daysFromToday(dateKey, now) {
+  if (!DATE_PATTERN.test(dateKey ?? '')) return null;
+  const today = dateFromKey(venueDateKey(now));
+  const then = dateFromKey(dateKey);
+  return Math.round((then - today) / 86400000);
+}
+
+/** Badge text for an upcoming league night: "Monday", etc. */
+function nextNightTag(dateKey, now) {
+  if (!DATE_PATTERN.test(dateKey ?? '') || dateKey <= venueDateKey(now)) return null;
+  return new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'long' }).format(dateFromKey(dateKey));
+}
+
 /**
  * What the Legends Regulars league card says, from CueSync:
  * tonight's matches, else the next league night, else a plain fallback.
  * `tonight` is true only when CueSync shows league play today.
+ * `daysAway` is how soon the next league night is (0 = tonight), for card order.
  */
 export function leagueCardState(summary, now) {
   const live = buildLiveView(summary, now);
-  if (!live) return { tonight: false, tag: null, blurb: null };
+  if (!live) return { tonight: false, tag: null, blurb: null, daysAway: null };
 
   const leagueMatches = live.matches.filter((match) => match.kind === 'league');
   const stillOn = matchesStillOn(leagueMatches);
@@ -48,14 +62,21 @@ export function leagueCardState(summary, now) {
     const blurb = stillOn.length > 0
       ? `${plural(stillOn.length, 'league match')} tonight${start ? `, starting at ${start}` : ''}.`
       : 'League play is on the tables tonight.';
-    return { tonight: true, tag: 'Tonight', blurb };
+    return { tonight: true, tag: 'Tonight', blurb, daysAway: 0 };
   }
 
+  const nextDate = summary.nextLeagueNight?.date;
+  const daysAway = daysFromToday(nextDate, now);
   const next = nextNightCopy(summary.nextLeagueNight, now);
   if (leagueMatches.length > 0) {
-    return { tonight: false, tag: null, blurb: `League play is finished for tonight.${next ? ` ${next}` : ''}` };
+    return {
+      tonight: false,
+      tag: null,
+      blurb: `League play is finished for tonight.${next ? ` ${next}` : ''}`,
+      daysAway,
+    };
   }
-  if (next) return { tonight: false, tag: 'Next up', blurb: next };
-  if (!('nextLeagueNight' in summary)) return { tonight: false, tag: null, blurb: null };
-  return { tonight: false, tag: null, blurb: 'No league nights are on the schedule yet.' };
+  if (next) return { tonight: false, tag: nextNightTag(nextDate, now), blurb: next, daysAway };
+  if (!('nextLeagueNight' in summary)) return { tonight: false, tag: null, blurb: null, daysAway: null };
+  return { tonight: false, tag: null, blurb: 'No league nights are on the schedule yet.', daysAway: null };
 }
