@@ -237,6 +237,90 @@
   overflow-wrap: anywhere;
 }
 
+/* As-ordered supplier prices on the Details tab. */
+.isu-supplier-prices {
+  margin: 0 0 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--isu-line);
+}
+
+.isu-supplier-price-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.isu-supplier-price-list__best {
+  background: color-mix(in srgb, var(--isu-accent, #2a6) 8%, transparent);
+  border-radius: 6px;
+}
+
+.isu-supplier-price-row,
+.isu-supplier-price-edit {
+  display: grid;
+  gap: 6px 10px;
+  padding: 8px;
+  align-items: center;
+}
+
+.isu-supplier-price-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.isu-supplier-price-edit {
+  grid-template-columns: minmax(0, 1fr) minmax(5rem, 7rem) minmax(5rem, 8rem) auto;
+}
+
+.isu-supplier-price-name {
+  grid-column: 1 / -1;
+}
+
+.isu-supplier-price-tag {
+  margin-left: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--isu-accent, #2a6);
+  text-transform: lowercase;
+}
+
+.isu-supplier-price-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.isu-supplier-price-code {
+  grid-column: 1 / -1;
+}
+
+.isu-supplier-price-field {
+  display: grid;
+  gap: 2px;
+}
+
+.isu-supplier-price-field input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--isu-line);
+  border-radius: 6px;
+  background: var(--isu-surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+
+@media (max-width: 560px) {
+  .isu-supplier-price-edit {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .isu-supplier-price-edit .isu-btn {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
 .isu-undo-bar {
   position: fixed;
   left: 50%;

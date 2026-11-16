@@ -279,7 +279,7 @@ export default function ItemsureItemModal({ itemId, onClose }) {
         ) : null}
 
         {tab === 'details' ? (
-          <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} variantLabel={showDetails ? variantLabelFor(organization) : ''} onEdit={editItem} />
+          <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} variantLabel={showDetails ? variantLabelFor(organization) : ''} onEdit={editItem} canManagePrices={can('items.manage')} />
         ) : null}
 
         {tab === 'clover' ? (

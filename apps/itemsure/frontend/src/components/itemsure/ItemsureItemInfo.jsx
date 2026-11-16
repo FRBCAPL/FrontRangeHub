@@ -4,6 +4,8 @@ import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { contentLabel } from '../../utils/itemsureItemContent.js';
 import { singularUnit } from '../../utils/itemsureItemLook.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
+import useSupplierPrices from '../../hooks/useSupplierPrices.js';
+import ItemsureSupplierPrices from './ItemsureSupplierPrices.jsx';
 
 function Row({ label, children }) {
   return (
@@ -14,12 +16,14 @@ function Row({ label, children }) {
   );
 }
 
-/** The Details tab: the item's catalog facts, including who it is bought from. */
-export default function ItemsureItemInfo({ organizationId, item, unitName, showPackaging, variantLabel, onEdit }) {
+/** The Details tab: the item's catalog facts, including who it is bought from and as-ordered prices. */
+export default function ItemsureItemInfo({ organizationId, item, unitName, showPackaging, variantLabel, onEdit, canManagePrices = false }) {
   const [packages, setPackages] = useState(null);
   const suppliers = useSuppliers(organizationId);
+  const prices = useSupplierPrices(organizationId);
   const supplier = suppliers.supplierFor(item.id);
   const others = suppliers.otherIdsFor(item.id).map((id) => suppliers.suppliers.find((s) => s.id === id)).filter(Boolean);
+  const itemSuppliers = [supplier, ...others].filter(Boolean);
 
   useEffect(() => {
     if (!showPackaging) return undefined;
@@ -84,6 +88,15 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
         <Row label="Description">{item.description}</Row>
         <Row label="Status">{item.is_active ? 'Active' : 'Archived'}</Row>
       </dl>
+      {prices.available && itemSuppliers.length ? (
+        <ItemsureSupplierPrices
+          suppliers={itemSuppliers}
+          mainId={supplier?.id || null}
+          prices={prices.forItem(item.id)}
+          canManage={canManagePrices}
+          onSave={canManagePrices ? (supplierId, fields) => prices.save(item.id, supplierId, fields) : null}
+        />
+      ) : null}
       {onEdit ? (
         <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={onEdit}>Edit details</button>
       ) : null}

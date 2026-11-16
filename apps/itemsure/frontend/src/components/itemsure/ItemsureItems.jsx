@@ -30,6 +30,7 @@ export default function ItemsureItems() {
   const [catalog, setCatalog] = useState(null);
   const [query, setQuery] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
@@ -82,18 +83,24 @@ export default function ItemsureItems() {
 
   const activeCategories = useMemo(() => (catalog?.categories || []).filter((c) => c.is_active), [catalog]);
 
-  /** Items after the archived and location filters; the category buttons count these. */
+  const activeSuppliers = useMemo(
+    () => (suppliers.available ? suppliers.suppliers.filter((s) => s.is_active) : []),
+    [suppliers],
+  );
+
+  /** Items after the archived, location, and supplier filters; the category buttons count these. */
   const filteredItems = useMemo(() => (catalog?.items || []).filter((item) => {
     if (!showArchived && !item.is_active) return false;
     if (clover.keep && !clover.keep(item)) return false;
+    if (supplierFilter && !suppliers.supplierIdsFor(item.id).includes(supplierFilter)) return false;
     if (!locationFilter) return true;
     const sources = { ...(stock || {}), places: places.placesFor(item.id) || [], locations: places.locations };
     return visibleSlots(item.id, sources).some((g) => g.location.id === locationFilter);
-  }), [catalog, showArchived, locationFilter, places, stock, clover.keep]);
+  }), [catalog, showArchived, locationFilter, supplierFilter, places, stock, clover.keep, suppliers]);
 
   const needle = query.trim().toLowerCase();
-  // With categories set up, the list waits until a category, search, or location is chosen.
-  const browsing = !category && !needle && !locationFilter && !cloverOnly && activeCategories.length > 0;
+  // With categories set up, the list waits until a category, search, site, or supplier is chosen.
+  const browsing = !category && !needle && !locationFilter && !supplierFilter && !cloverOnly && activeCategories.length > 0;
 
   const tree = useMemo(() => categoryTree(activeCategories), [activeCategories]);
   const showDetails = Boolean(features.details && catalog?.detailsAvailable);
@@ -109,7 +116,7 @@ export default function ItemsureItems() {
       if (!foundIn(tree, item, category)) return false;
       if (!needle) return true;
       const details = showDetails ? [item.brand, item.variant] : [];
-      return [item.name, item.sku, item.barcode, item.categoryName, suppliers.supplierFor(item.id)?.name, ...details, ...extraCategoryNames(tree, item)]
+      return [item.name, item.sku, item.barcode, item.categoryName, ...suppliers.supplierNamesFor(item.id), ...details, ...extraCategoryNames(tree, item)]
         .some((v) => String(v || '').toLowerCase().includes(needle));
     });
     if (!stock) return matches;
@@ -169,6 +176,12 @@ export default function ItemsureItems() {
             {activeLocations.map((l) => <option key={l.id} value={l.id}>At {l.name}</option>)}
           </select>
         ) : null}
+        {activeSuppliers.length ? (
+          <select className="isu-item-filter" aria-label="Supplier" value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)}>
+            <option value="">All suppliers</option>
+            {activeSuppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+          </select>
+        ) : null}
         <label className="isu-check">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Show archived
         </label>
@@ -178,7 +191,7 @@ export default function ItemsureItems() {
       {catalog && !browsing && visibleItems.length === 0 ? (
         <div className="isu-card isu-empty">
           <h2>{catalog.items.length ? 'No matching items' : 'No items yet'}</h2>
-          <p className="isu-muted">{catalog.items.length ? `Try a different category, search, or ${site}.` : canManageItems ? 'Add your first item to start the catalog.' : 'Nothing has been added yet.'}</p>
+          <p className="isu-muted">{catalog.items.length ? `Try a different category, search, ${site}, or supplier.` : canManageItems ? 'Add your first item to start the catalog.' : 'Nothing has been added yet.'}</p>
           {canManageItems && (needle || !catalog.items.length) ? (
             <button type="button" className="isu-btn isu-btn--primary" onClick={() => addItem(query.trim())}>
               {needle ? `+ Add \u201c${query.trim()}\u201d as a new item` : '+ Add your first item'}
@@ -202,7 +215,7 @@ export default function ItemsureItems() {
             supplier={suppliers.supplierFor(item.id)}
             alsoIn={extraCategoryNames(tree, item)}
             showAlsoIn={!tree.byId.has(category)}
-            showSupplier={Boolean(needle) && String(suppliers.supplierFor(item.id)?.name || '').toLowerCase().includes(needle)}
+            showSupplier={Boolean(supplierFilter) || (Boolean(needle) && suppliers.supplierNamesFor(item.id).some((n) => n.toLowerCase().includes(needle)))}
             details={showDetails ? detailsLine(item) : ''}
             onCount={item.is_active && openCounts.sessions.length ? () => setCountItem(item) : null}
             counted={item.is_active && openCounts.sessions.length > 0 && !openCounts.waitingFor(item.id).length}
@@ -212,7 +225,7 @@ export default function ItemsureItems() {
       {catalog && browsing ? (
         <p className="isu-muted isu-center">
           {stock && !visibleItems.length ? 'Nothing needs attention right now. ' : ''}
-          {visibleItems.length ? 'Pick a category above to see everything, or search.' : 'Pick a category above to see its items, or search.'}
+          {visibleItems.length ? 'Pick a category above to see everything, or search / filter by supplier.' : 'Pick a category above to see its items, or search / filter by supplier.'}
         </p>
       ) : null}
 

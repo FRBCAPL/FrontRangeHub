@@ -2,7 +2,7 @@ import React from 'react';
 import { PageHead } from './ItemsureUi.jsx';
 
 const NOT_BUILT = [
-  { title: 'Supplier ordering details', body: 'You can already choose who you buy each item from. Next: their product code for it, the pack size you order, and what it costs.' },
+  { title: 'Supplier pack sizes', body: 'You can already enter each supplier\'s as-ordered price and product code. Next: the pack size you order from them.' },
   { title: 'Purchase orders', body: 'Turn the shopping list into orders, grouped by supplier.' },
   { title: 'Receiving', body: 'Check deliveries against orders and add them to stock.' },
   { title: 'Inventory value', body: 'Track cost and value over time.' },

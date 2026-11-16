@@ -9,6 +9,12 @@ test('tripSupplierId lists an item under this trip\'s choice only while it is on
   assert.equal(tripSupplierId(undefined, null, []), null);
 });
 
+test('tripSupplierId defaults to the cheapest priced supplier when there is no trip choice', () => {
+  const prices = new Map([['main', 12.5], ['corner', 9]]);
+  assert.equal(tripSupplierId(null, 'main', ['main', 'corner'], prices), 'corner');
+  assert.equal(tripSupplierId('main', 'main', ['main', 'corner'], prices), 'main');
+});
+
 test('itemIdsOfTicks skips hand-added lines', () => {
   assert.deepEqual(itemIdsOfTicks(['item-1', 'extra:9', 'item-2']), ['item-1', 'item-2']);
 });

@@ -6,6 +6,7 @@ import useSuppliers from '../../hooks/useSuppliers.js';
 import useShoppingTicks from '../../hooks/useShoppingTicks.js';
 import useShoppingExtras from '../../hooks/useShoppingExtras.js';
 import useTripSuppliers from '../../hooks/useTripSuppliers.js';
+import useSupplierPrices from '../../hooks/useSupplierPrices.js';
 import { itemIdsOfTicks } from '../../utils/itemsureTripSupplier.js';
 import { EXTRA_GROUP, extraTick, mergeExtras } from '../../utils/itemsureShoppingExtras.js';
 import { listOpenPlans, loadNeededRecommendations } from '../../services/itemsureRestockService.js';
@@ -64,7 +65,8 @@ export default function ItemsureRestock() {
   const { organization, features, can } = useItemsureWorkspace();
   const { data, error: dataError, reload: reloadData } = useTargetsData(organization.id);
   const suppliers = useSuppliers(organization.id);
-  const trip = useTripSuppliers(organization.id, suppliers);
+  const prices = useSupplierPrices(organization.id);
+  const trip = useTripSuppliers(organization.id, suppliers, prices);
   const extras = useShoppingExtras(organization.id);
   const navigate = useNavigate();
   const [adding, setAdding] = useState(null);
@@ -91,6 +93,7 @@ export default function ItemsureRestock() {
   }, [organization.id]);
 
   const reloadSuppliers = suppliers.reload;
+  const reloadPrices = prices.reload;
   const reloadExtras = extras.reload;
   const reloadTrip = trip.reload;
   useEffect(() => {
@@ -99,11 +102,12 @@ export default function ItemsureRestock() {
       load();
       reloadData();
       reloadSuppliers();
+      reloadPrices();
       reloadExtras();
       reloadTrip();
     });
     return stop;
-  }, [load, reloadData, reloadSuppliers, reloadExtras, reloadTrip]);
+  }, [load, reloadData, reloadSuppliers, reloadPrices, reloadExtras, reloadTrip]);
 
   const afterAction = async () => {
     setAction(null);

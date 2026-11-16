@@ -58,7 +58,11 @@ export default function ItemsureShoppingRow({ row, tick, names, item, onTick, on
           <span className="isu-shop-name">{row.name}</span>
           <span className="isu-shop-where">{TARGET_STATUS[row.status]?.label} · {where}</span>
           {by ? <span className="isu-shop-by">{by}</span> : null}
-          {supplierChoice?.changed ? <span className="isu-shop-trip">This trip only · usually {supplierChoice.options[0].name}</span> : null}
+          {supplierChoice?.changed ? (
+            <span className="isu-shop-trip">
+              This trip only · default {supplierChoice.defaultName || supplierChoice.options[0].name}
+            </span>
+          ) : null}
         </button>
         <GotAmount row={row} tick={tick} onEdit={() => setEditing((e) => !e)} />
       </div>

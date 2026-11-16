@@ -55,9 +55,14 @@ export default function ItemsureShoppingBuy({ groups, ticks, trip = null, onTick
   const supplierChoice = (row) => {
     const options = trip?.optionsFor(row.itemId) || [];
     if (!options.length) return null;
+    const defaultId = trip.defaultIdFor?.(row.itemId) || options[0]?.id;
+    const defaultName = options.find((s) => s.id === defaultId)?.name || options[0]?.name;
     return {
       options,
       current: trip.supplierIdFor(row.itemId),
+      defaultId,
+      defaultName,
+      prices: trip.priceMapFor?.(row.itemId) || null,
       changed: trip.changed(row.itemId),
       onChoose: (supplierId) => trip.choose(row.itemId, supplierId),
     };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listItemSuppliers, listSuppliers } from '../services/itemsureSupplierService.js';
 import { listOtherSuppliers } from '../services/itemsureOtherSupplierService.js';
 
@@ -7,7 +7,7 @@ const EMPTY = { ready: true, available: false, othersAvailable: false, suppliers
 /**
  * Suppliers plus each item's main supplier and other suppliers ("Also from").
  * { ready, available, othersAvailable, suppliers, supplierIdFor(itemId), supplierFor(itemId),
- *   otherIdsFor(itemId), supplierIdsFor(itemId) (main first), reload }.
+ *   otherIdsFor(itemId), supplierIdsFor(itemId) (main first), supplierNamesFor(itemId), reload }.
  * available is false until both supplier database updates are applied; then
  * nothing supplier-related is shown or saved. othersAvailable needs one more update.
  */
@@ -39,9 +39,11 @@ export default function useSuppliers(organizationId) {
     reload();
   }, [reload]);
 
+  const byId = useMemo(() => new Map(state.suppliers.map((s) => [s.id, s])), [state.suppliers]);
   const supplierIdFor = (itemId) => state.links.get(itemId) || null;
-  const supplierFor = (itemId) => state.suppliers.find((s) => s.id === supplierIdFor(itemId)) || null;
+  const supplierFor = (itemId) => byId.get(supplierIdFor(itemId)) || null;
   const otherIdsFor = (itemId) => (state.others.get(itemId) || []).filter((id) => id !== supplierIdFor(itemId));
   const supplierIdsFor = (itemId) => [supplierIdFor(itemId), ...otherIdsFor(itemId)].filter(Boolean);
-  return { ...state, supplierIdFor, supplierFor, otherIdsFor, supplierIdsFor, reload };
+  const supplierNamesFor = (itemId) => supplierIdsFor(itemId).map((id) => byId.get(id)?.name).filter(Boolean);
+  return { ...state, supplierIdFor, supplierFor, otherIdsFor, supplierIdsFor, supplierNamesFor, reload };
 }
