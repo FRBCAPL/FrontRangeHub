@@ -6,7 +6,8 @@ const DRAFT = /\b(draft|draught|kegs?|on tap|taps?)\b/i;
 const WINE = /\b(wines?|champagne|prosecco|cava|sangria|merlot|cabernet|chardonnay|pinot|ros[eé]|moscato|riesling)\b/i;
 const LIQUOR = /\b(liquors?|spirits?|wells?|rum|vodka|whiske?y|bourbon|tequila|gin|scotch|schnapps|liqueu?rs?|cordials?|mezcal|brandy|cognac|moonshine)\b/i;
 const PACKAGED = /\b(beers?|bottles?|btl|cans?|canned|ciders?|seltzers?|lagers?|ipas?|ales?|tall ?boys?|sodas?|pop|energy|mixers?)\b/i;
-const GROUP_UNIT = /^(case|cases|cs|pack|packs|pk|box|boxes|bx|carton|cartons|ctn|tray|trays|crate|crates|sleeve|sleeves|flat|flats|bundle|bundles)\b/i;
+// Bags/sacks count like packs: "how many portions in one", then Clover sells portions.
+const GROUP_UNIT = /^(case|cases|cs|pack|packs|pk|box|boxes|bx|carton|cartons|ctn|tray|trays|crate|crates|sleeve|sleeves|flat|flats|bundle|bundles|bags?|sacks?)\b/i;
 
 /** 'draft' | 'wine' | 'liquor' | 'packaged' | 'other', from names (and a keg unit). */
 export function kindOf(text, unit) {
@@ -29,8 +30,14 @@ export function kindForNames(itemName, categoryNames, unit) {
   return kindOf(`${itemName || ''} ${names.join(' ')}`, unit);
 }
 
-/** True for units that hold several singles: case, pack, box, sleeve… */
+/** True for units that hold several singles: case, pack, box, bag, sleeve… */
 export const isGroupUnit = (unit) => GROUP_UNIT.test((unit?.code || '').trim()) || GROUP_UNIT.test((unit?.name || '').trim());
+
+/** Bags/sacks of food: portions per bag, not 24-pack beer defaults. */
+export const isBagGroupUnit = (unit) => {
+  const text = `${unit?.code || ''} ${unit?.name || ''}`.trim();
+  return /\b(bags?|sacks?)\b/i.test(text);
+};
 
 const HALF_BARREL_ML = 15.5 * 3785.41;
 export const DEFAULT_PIECES = 24;
@@ -46,9 +53,19 @@ export function starterFor(text, unit) {
   if (kind === 'wine') return { amount: 6, unit: 'fl_oz', contentMl: 750, pieces: null, reason: 'Looks like wine: a 6 oz glass from 750 ml bottles' };
   if (kind === 'draft') return { amount: 16, unit: 'fl_oz', contentMl: HALF_BARREL_ML, pieces: null, reason: 'Looks like draft: a 16 oz pour from a half barrel' };
   if (group) {
-    return kind === 'packaged'
-      ? { amount: 1, unit: 'piece', contentMl: null, pieces: DEFAULT_PIECES, reason: 'Counted in cases, sold one at a time' }
-      : null;
+    if (kind === 'packaged') {
+      return { amount: 1, unit: 'piece', contentMl: null, pieces: DEFAULT_PIECES, reason: 'Counted in cases, sold one at a time' };
+    }
+    if (isBagGroupUnit(unit)) {
+      return {
+        amount: 1,
+        unit: 'piece',
+        contentMl: null,
+        pieces: null,
+        reason: 'Counted by the bag: set how many portions are in one, then how many each sale uses',
+      };
+    }
+    return null;
   }
   if (kind === 'packaged' || kind === 'other') return { amount: 1, unit: 'base', contentMl: null, pieces: null, reason: 'Sold whole, one at a time' };
   return null;

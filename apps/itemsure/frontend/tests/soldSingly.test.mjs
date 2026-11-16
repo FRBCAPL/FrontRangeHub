@@ -26,9 +26,11 @@ test('kindForNames: kegs stay draft under Liquor; well still liquor', () => {
   assert.equal(kindForNames("Tito's", ['Call', 'Liquor'], bottle), 'liquor');
 });
 
-test('isGroupUnit spots cases and packs', () => {
+test('isGroupUnit spots cases, packs, and bags', () => {
   assert.equal(isGroupUnit(caseUnit), true);
   assert.equal(isGroupUnit({ code: 'pk', name: '6 Pack' }), true);
+  assert.equal(isGroupUnit({ code: 'bag', name: 'Bag' }), true);
+  assert.equal(isGroupUnit({ code: 'bags', name: 'Bags' }), true);
   assert.equal(isGroupUnit(bottle), false);
   assert.equal(isGroupUnit(null), false);
 });
@@ -41,6 +43,7 @@ test('the item form asks what fits "Counted as"', () => {
   assert.equal(unitAsks(caseUnit), 'pieces');
   assert.equal(unitAsks({ code: 'case_24', name: 'Case (24 cans)' }), 'pieces');
   assert.equal(unitAsks({ code: 'box', name: 'Box' }), 'pieces');
+  assert.equal(unitAsks({ code: 'bag', name: 'Bag' }), 'pieces');
   assert.equal(unitAsks({ code: 'each', name: 'Each' }), null);
   assert.equal(unitAsks({ code: 'pound', name: 'Pound' }), null);
   assert.equal(unitAsks({ code: 'liter', name: 'Liter' }), null);
@@ -66,6 +69,10 @@ test('starterFor guesses by kind', () => {
   assert.equal(starterFor('Draft', keg).amount, 16);
   assert.equal(starterFor('Bottled Beer', bottle).unit, 'base');
   assert.equal(starterFor('Paper', caseUnit), null);
+  const wingsBag = starterFor('Bone In Wings Food', { code: 'bag', name: 'Bag' });
+  assert.equal(wingsBag.unit, 'piece');
+  assert.equal(wingsBag.pieces, null);
+  assert.match(wingsBag.reason, /bag/i);
 });
 
 test('size buttons fit the kind; old saved sizes still match', () => {

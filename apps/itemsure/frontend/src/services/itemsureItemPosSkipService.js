@@ -18,7 +18,7 @@ export async function listNotSoldInPos(organizationId) {
   return new Set((data || []).map((row) => row.id));
 }
 
-/** Marks or unmarks an ItemSure item as not sold in Clover. Does not change Clover or stock. */
+/** Marks or unmarks an ItemSure item as skipped for sales counting. Does not change Clover or stock. */
 export async function setNotSoldInPos(organizationId, itemId, skip) {
   const { data, error } = await itemsure.from('inventory_items')
     .update({ not_sold_in_pos: skip })
@@ -26,8 +26,8 @@ export async function setNotSoldInPos(organizationId, itemId, skip) {
     .eq('id', itemId)
     .select('id');
   if (missingColumn(error)) {
-    throw new Error('Marking items as not sold in Clover needs a database update first. Nothing else is affected.');
+    throw new Error("Don't track in sales needs a database update first. Nothing else is affected.");
   }
-  const rows = assertOk({ data, error }, skip ? 'mark as not sold in Clover' : 'match this item in Clover again');
+  const rows = assertOk({ data, error }, skip ? "mark Don't track in sales" : 'track in sales again');
   if (!rows?.length) throw new Error('You do not have permission to change this item.');
 }

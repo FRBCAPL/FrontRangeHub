@@ -5,8 +5,8 @@ import { cloverUsesFor } from '../../utils/itemsureItemClover.js';
 import ItemsureItemNotSoldAsk from './ItemsureItemNotSoldAsk.jsx';
 
 /**
- * On the item window: if Clover is connected and this item isn't matched yet, a heads-up.
- * Kitchen and supply items can be marked not sold in Clover so we stop asking.
+ * Quiet Clover status under the item title: unmatched or skipped for sales counting.
+ * The loud match work lives on the Sold in Clover tab.
  */
 export default function ItemsureItemCloverNote({
   organizationId, itemId, itemName, notSoldInPos, data, hidden, canEdit, onMatch, onChanged,
@@ -30,10 +30,10 @@ export default function ItemsureItemCloverNote({
   if (notSoldInPos) {
     return (
       <div className="isu-item-clover-note is-quiet" role="status">
-        <p>Marked as not sold in Clover, so ItemSure won&apos;t ask you to match {itemName}.</p>
+        <p>Not tracked in sales</p>
         {canEdit ? (
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={undo}>
-            {busy ? 'Saving…' : 'Undo: it is sold in Clover'}
+            {busy ? 'Saving…' : 'Track in sales'}
           </button>
         ) : null}
       </div>
@@ -41,17 +41,17 @@ export default function ItemsureItemCloverNote({
   }
 
   return (
-    <div className="isu-item-clover-note" role="status">
-      <p>No Clover button is matched to {itemName} yet, so its sales aren&apos;t counted.</p>
+    <div className="isu-item-clover-note is-quiet" role="status">
+      <p>Sales aren&apos;t counted until this is matched in Clover.</p>
       {canEdit ? (
         <span className="isu-pos-mod-actions">
-          <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={onMatch}>Match to Clover</button>
+          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={onMatch}>Match</button>
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => setAsking(true)}>
-            Not sold in Clover
+            Don&apos;t track in sales
           </button>
         </span>
       ) : (
-        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={onMatch}>See Sold in Clover</button>
+        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={onMatch}>See Clover</button>
       )}
       <ItemsureItemNotSoldAsk
         itemName={itemName}

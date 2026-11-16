@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useItemLink } from '../../hooks/useItemModal.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
-import { cardTone, categoryHue, itemInitials } from '../../utils/itemsureItemLook.js';
+import { cardTone, categoryHue, itemInitials, topUpCanWait } from '../../utils/itemsureItemLook.js';
 import { StockAmount as Amount, StockBar } from './ItemsureStockBits.jsx';
 import ItemsureItemMeta, { spotCount } from './ItemsureItemMeta.jsx';
 import useFitText from '../../hooks/useFitText.js';
@@ -43,17 +43,22 @@ function CountButton({ item, counted, onCount }) {
  * `compact` is a single line (name and amount) for items that are fine, or whose topping up can wait.
  * Needing topping up is a slim card: name and amount, then supplier and the status bar.
  * Running low keeps it brief too: name, amount, supplier, and the bar (the item window has the rest).
+ * Pill colour matches list grouping: under-par amounts that can wait read as OK, not amber.
  * `icon` is the category's icon, shown instead of the initials.
  * `onCount` (only while a count is open) shows "Add to count", or a "✓ Counted" button that reopens it once counted.
  */
 export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoIn, details, icon = '', compact = false, onCount, counted, showSupplier = false, showAlsoIn = true, pieces = 0 }) {
-  const tone = cardTone(summary);
+  // Same top-off soften as Inventory grouping, so 1.8/2 with warn-at-1 is a green pill, not amber.
+  const display = summary && topUpCanWait(summary, item.topoffPercent)
+    ? { ...summary, status: 'above_minimum' }
+    : summary;
+  const tone = cardTone(display);
   const hue = categoryHue(item.category_id);
   const nameRef = useFitText(item.name);
   const itemLink = useItemLink();
   const attention = tone === 'danger' || tone === 'warn';
   const brief = tone === 'danger' && item.is_active;
-  const status = summary?.status ? TARGET_STATUS[summary.status] : null;
+  const status = display?.status ? TARGET_STATUS[display.status] : null;
   const link = <Link ref={nameRef} {...itemLink(item.id)} className="isu-stockcard-link">{item.name}</Link>;
 
   const badge = (
@@ -69,11 +74,11 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
 
   if (compact) {
     return (
-      <li className={`isu-card isu-stockcard isu-stockcard--${tone === 'warn' ? 'ok' : tone} is-compact${item.is_active ? '' : ' is-archived'}`}>
+      <li className={`isu-card isu-stockcard isu-stockcard--${tone} is-compact${item.is_active ? '' : ' is-archived'}`}>
         {badge}
         <div className="isu-stockcard-line">
           <div className="isu-stockcard-name">{link}</div>
-          <Pill summary={summary} unitName={item.unitName} pieces={pieces} tone={tone} />
+          <Pill summary={display} unitName={item.unitName} pieces={pieces} tone={tone} />
           <CountButton item={item} counted={counted} onCount={onCount} />
         </div>
       </li>
@@ -87,11 +92,11 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
         <div className="isu-stockcard-body">
           <div className="isu-stockcard-line">
             <div className="isu-stockcard-name">{link}</div>
-            <Pill summary={summary} unitName={item.unitName} pieces={pieces} tone={tone} />
+            <Pill summary={display} unitName={item.unitName} pieces={pieces} tone={tone} />
           </div>
           <div className="isu-stockcard-slim-sub">
             <ItemsureItemMeta supplier={supplier} />
-            <StockBar summary={summary} />
+            <StockBar summary={display} />
             <CountButton item={item} counted={counted} onCount={onCount} />
           </div>
         </div>
@@ -104,14 +109,14 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
       {badge}
       <div className="isu-stockcard-body">
         <div className="isu-stockcard-top">
-          <Pill summary={summary} unitName={item.unitName} pieces={pieces} tone={tone} hidden />
+          <Pill summary={display} unitName={item.unitName} pieces={pieces} tone={tone} hidden />
           <div className="isu-stockcard-title">
             {link}
             {!item.is_active ? <span className="isu-badge">Archived</span> : null}
             {details && !brief ? <span className="isu-stockcard-brand">{details}</span> : null}
           </div>
           <div className="isu-stockcard-side">
-            <Pill summary={summary} unitName={item.unitName} pieces={pieces} tone={tone} />
+            <Pill summary={display} unitName={item.unitName} pieces={pieces} tone={tone} />
           </div>
         </div>
 
@@ -123,7 +128,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
 
         {attention || tone === 'muted' || onCount ? (
           <div className="isu-stockcard-bottom">
-            {attention ? <StockBar summary={summary} /> : null}
+            {attention ? <StockBar summary={display} /> : null}
             {tone === 'muted' ? <span className="isu-stockcard-label isu-stockcard-label--muted">{status?.label}</span> : null}
             <CountButton item={item} counted={counted} onCount={onCount} />
           </div>

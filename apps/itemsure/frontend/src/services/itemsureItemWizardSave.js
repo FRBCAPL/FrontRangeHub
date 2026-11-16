@@ -14,6 +14,25 @@ import { asksContent, checkContent, checkPieces, unitAsks } from '../utils/items
 const needsAmountUpdate = (message) => /set_inventory_quantity|could not find the function|schema cache/i.test(message || '');
 
 /**
+ * Catalog fields only (name, category, unit, portion, suppliers) — no on-hand or levels.
+ * Used by the quick Edit details modal over the item window.
+ */
+export async function saveItemBasics({ organizationId, item, itemId, form, unit, renameArchivedId = null }) {
+  return saveItemWizard({
+    organizationId,
+    item,
+    itemId,
+    form,
+    entries: [],
+    unit,
+    labelFor: () => '',
+    renameArchivedId,
+    canAmounts: false,
+    canLevels: false,
+  });
+}
+
+/**
  * Saves everything from the guided Add / Edit item, in order: the item, then
  * amounts, then levels, then places with nothing else saved. Each part that
  * works is reflected in the returned entries, so a retry only redoes what failed.
@@ -63,8 +82,11 @@ export async function saveItemWizard({ organizationId, item, itemId, form, entri
       const count = checkPieces(form.pieces);
       if (count.error) throw new Error(count.error);
       const had = item?.pieces ?? null;
-      if (count.pieces != null && count.pieces !== had) await saveItemPieces(organizationId, id, count.pieces);
-      else if (count.pieces == null && had != null) await removeItemPieces(organizationId, id);
+      const label = String(form.piece_label || '').trim();
+      const hadLabel = item?.pieceLabel || '';
+      if (count.pieces != null && (count.pieces !== had || label !== hadLabel)) {
+        await saveItemPieces(organizationId, id, count.pieces, { label });
+      } else if (count.pieces == null && had != null) await removeItemPieces(organizationId, id);
     } catch (err) {
       problems.push({ key: null, message: `"How many in one" not saved. ${err.message}` });
     }

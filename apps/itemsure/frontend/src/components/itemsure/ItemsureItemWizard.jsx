@@ -9,6 +9,7 @@ import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
 import useItemUsage from '../../hooks/useItemUsage.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
+import useSupplierPrices from '../../hooks/useSupplierPrices.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { itemAddress } from '../../hooks/useItemModal.js';
 import { SITE } from '../../data/itemsureTerms.js';
@@ -18,7 +19,8 @@ import { checkAmounts, checkLevels, entriesFromGroups, STEPS, wizardSteps } from
 import { mergeUnits } from '../../utils/itemsureUnits.js';
 import { findNameClash } from '../../utils/itemsureItemNames.js';
 import { checkTopOffPercent } from '../../utils/itemsureTopOff.js';
-import { checkContent, checkPieces, contentForm, unitAsks } from '../../utils/itemsureItemContent.js';
+import { checkContent, checkPieces, unitAsks } from '../../utils/itemsureItemContent.js';
+import { emptyForm } from '../../utils/itemsureItemWizardForm.js';
 import { ErrorNote, LoadFailed, PageHead } from './ItemsureUi.jsx';
 import ItemsureWizardProgress from './ItemsureWizardProgress.jsx';
 import ItemsureWizardBasics from './ItemsureWizardBasics.jsx';
@@ -27,30 +29,6 @@ import ItemsureWizardLevels from './ItemsureWizardLevels.jsx';
 import ItemsureWizardExtras from './ItemsureWizardExtras.jsx';
 import ItemsureWizardReview from './ItemsureWizardReview.jsx';
 import ItemsureWizardArchive from './ItemsureWizardArchive.jsx';
-
-/** ?supplier=<id> (from a supplier card) pre-selects it for a new item, if it is an active supplier. */
-const startingSupplier = (suppliers, wanted) =>
-  (wanted && suppliers.suppliers.some((s) => s.id === wanted && s.is_active) ? wanted : '');
-
-const emptyForm = (item, units, suppliers, extrasAvailable, wantedSupplier, detailsOn, topOffAvailable, contentsAvailable, piecesAvailable) => ({
-  name: item?.name || '',
-  description: item?.description || '',
-  sku: item?.sku || '',
-  barcode: item?.barcode || '',
-  category_id: item?.category_id || '',
-  base_unit_id: item?.base_unit_id || units.find((u) => u.code === 'each' && !u.organization_id)?.id || units[0]?.id || '',
-  // Only once suppliers are set up in the database, so saving never sends an unknown column.
-  ...(suppliers.available
-    ? { supplier_id: item ? suppliers.supplierIdFor(item.id) || '' : startingSupplier(suppliers, wantedSupplier) }
-    : {}),
-  ...(suppliers.othersAvailable ? { other_supplier_ids: item ? suppliers.otherIdsFor(item.id) : [] } : {}),
-  ...(extrasAvailable ? { extra_category_ids: item?.extraCategoryIds || [] } : {}),
-  // Only when brand and details are set up and switched on, so a hidden value is never cleared.
-  ...(detailsOn ? { brand: item?.brand || '', variant: item?.variant || '' } : {}),
-  ...(topOffAvailable ? { topoff_percent: item?.topoffPercent ? String(item.topoffPercent) : '' } : {}),
-  ...(contentsAvailable ? contentForm(item?.contentMl) : {}),
-  ...(piecesAvailable ? { pieces: item?.pieces != null ? String(item.pieces) : '' } : {}),
-});
 
 /** Guided Add item (/items/new) and Edit item (/items/:itemId/edit, ?step=levels to jump). */
 export default function ItemsureItemWizard() {
@@ -76,6 +54,7 @@ export default function ItemsureItemWizard() {
   const [addedUnits, setAddedUnits] = useState([]);
   const places = useItemPlaces(organization.id);
   const suppliers = useSuppliers(organization.id);
+  const supplierPrices = useSupplierPrices(organization.id);
   const { stock } = useItemStock(organization.id, canView);
   const usage = useItemUsage(organization.id, routeItemId, Boolean(routeItemId) && canView && can('inventory.activity'));
   const started = useRef(false);
@@ -242,6 +221,7 @@ export default function ItemsureItemWizard() {
         {step === 'basics' ? (
           <ItemsureWizardBasics
             {...shared}
+            stepError={stepError}
             organizationId={organization.id}
             categories={categories}
             categoryDefaults={catalog.categoryDefaults}
@@ -268,6 +248,7 @@ export default function ItemsureItemWizard() {
               await suppliers.reload();
               setForm((f) => ({ ...f, supplier_id: id }));
             }}
+            supplierPrices={supplierPrices}
           />
         ) : null}
         {step === 'where' ? <ItemsureWizardWhere {...shared} locations={places.locations} /> : null}

@@ -130,9 +130,13 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     await refresh();
     setSkipping(null);
   });
-  const savePour = (externalId, itemId, amount, unit, contentMl, pieces) => run(async () => {
+  const savePour = (externalId, itemId, amount, unit, contentMl, pieces, pieceLabel) => run(async () => {
     if (contentMl !== undefined) await saveItemContent(organizationId, itemId, contentMl);
-    if (pieces !== undefined) await saveItemPieces(organizationId, itemId, pieces);
+    if (pieces !== undefined || pieceLabel !== undefined) {
+      const count = pieces ?? data.pieces?.get(itemId);
+      if (!(count > 0)) throw new Error('Set how many are in one first.');
+      await saveItemPieces(organizationId, itemId, count, pieceLabel !== undefined ? { label: pieceLabel } : {});
+    }
     await setButtonPour(organizationId, externalId, itemId, amount, unit);
     await refresh();
   });
@@ -168,7 +172,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       onAdd={(itemId) => add(p.external_id, itemId)}
       onRemove={(itemId) => remove(p.external_id, itemId)}
       pourInfo={pourInfo}
-      onSavePour={(itemId, amount, unit, contentMl, pieces) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces)}
+      onSavePour={(itemId, amount, unit, contentMl, pieces, pieceLabel) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces, pieceLabel)}
       onSkip={(skip) => skipItem(p, skip)}
       recipe={recipesById.get(recipeUses.uses.get(p.external_id)) || null}
       recipes={recipeUses.recipes}

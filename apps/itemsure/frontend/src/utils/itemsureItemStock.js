@@ -22,9 +22,12 @@ export function worstStatus(statuses) {
   return statuses.filter(Boolean).sort((a, b) => STATUS_RANK[a] - STATUS_RANK[b])[0] || null;
 }
 
+const byName = (a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
+  || String(a.id || '').localeCompare(String(b.id || ''));
+
 /**
  * Items most in need of attention first: running low, needs topping up, no amount yet,
- * fine, no par set, then archived. Ties keep their order (by name).
+ * fine, no par set, then archived. Same status is A–Z by name.
  */
 export function sortByAttention(items, summaryFor) {
   const rank = (item) => {
@@ -32,7 +35,9 @@ export function sortByAttention(items, summaryFor) {
     const status = summaryFor(item)?.status;
     return status ? STATUS_RANK[status] ?? 4 : 4;
   };
-  return items.map((item) => ({ item, r: rank(item) })).sort((a, b) => a.r - b.r).map((x) => x.item);
+  return items.map((item) => ({ item, r: rank(item) }))
+    .sort((a, b) => a.r - b.r || byName(a.item, b.item))
+    .map((x) => x.item);
 }
 
 const slotOf = (row) => `${row.location_id}|${row.storage_area_id || ''}`;

@@ -3,6 +3,7 @@ import { POUR_UNITS } from '../../utils/itemsurePosUsage.js';
 import { asksContent, checkContent, contentForm, CONTENT_UNITS } from '../../utils/itemsureItemContent.js';
 import { isGroupUnit, starterFor } from '../../utils/itemsureCategoryKind.js';
 import { singularUnit } from '../../utils/itemsureItemLook.js';
+import { pieceWord } from '../../utils/itemsurePieceWord.js';
 import ItemsureSizePresetPick from './ItemsureSizePresetPick.jsx';
 import ItemsurePiecesField from './ItemsurePiecesField.jsx';
 
@@ -25,7 +26,9 @@ export default function ItemsureCategoryAmountForm({ row, parentName, piecesRead
   const [unit, setUnit] = useState(start.unit || (group ? (piecesReady ? 'piece' : 'base') : 'fl_oz'));
   const [size, setSize] = useState(first.content_size);
   const [sizeUnit, setSizeUnit] = useState(first.content_unit);
-  const [pieces, setPieces] = useState(trimNum(start.pieces));  const unitName = singularUnit(row.unit?.name || 'unit').toLowerCase();
+  const [pieces, setPieces] = useState(trimNum(start.pieces));
+  const unitName = singularUnit(row.unit?.name || 'unit').toLowerCase();
+  const word = pieceWord(hint);
   const offerSingles = piecesReady && (group || unit === 'piece');
   const showSize = (!row.unit || asksContent(row.unit.code)) && (unit === 'fl_oz' || unit === 'ml');
   const showPieces = unit === 'piece' && piecesReady;
@@ -58,10 +61,10 @@ export default function ItemsureCategoryAmountForm({ row, parentName, piecesRead
         <span className="isu-pos-pour-inputs">
           <input type="number" inputMode="decimal" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Amount for each one sold" placeholder="1.5" autoFocus />
           <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unit">
+            {offerSingles ? <option value="piece">{word.one} from the {unitName}</option> : null}
+            <option value="base">whole {unitName}</option>
             <option value="fl_oz">{POUR_UNITS.fl_oz}</option>
             <option value="ml">{POUR_UNITS.ml}</option>
-            <option value="base">whole {unitName}</option>
-            {offerSingles ? <option value="piece">single from the {unitName}</option> : null}
           </select>
         </span>
       </label>

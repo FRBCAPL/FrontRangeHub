@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import { detailsLine, variantLabelFor } from '../../utils/itemsureItemDetails.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemPlaces from '../../hooks/useItemPlaces.js';
 import useItemStock from '../../hooks/useItemStock.js';
-import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { SITE } from '../../data/itemsureTerms.js';
 import { addQuantity, itemSummary, visibleSlots } from '../../utils/itemsureItemStock.js';
 import { canonicalQuantity, displayQuantity } from '../../utils/itemsureQuantity.js';
@@ -20,9 +18,12 @@ import ItemsureUndoBar from './ItemsureUndoBar.jsx';
 import ItemsureItemSummary from './ItemsureItemSummary.jsx';
 import ItemsureItemCountButton from './ItemsureItemCountButton.jsx';
 import ItemsureItemInfo from './ItemsureItemInfo.jsx';
+import ItemsureItemEditModal from './ItemsureItemEditModal.jsx';
 import ItemsureTabs from './ItemsureTabs.jsx';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
+import useSupplierPrices from '../../hooks/useSupplierPrices.js';
+import useItemAlwaysWith from '../../hooks/useItemAlwaysWith.js';
 import ItemsurePlacePicker from './ItemsurePlacePicker.jsx';
 import useItemUsage from '../../hooks/useItemUsage.js';
 import useLoosePieces from '../../hooks/useLoosePieces.js';
@@ -32,13 +33,15 @@ import ItemsureItemClover from './ItemsureItemClover.jsx';
 import ItemsureItemCloverNote from './ItemsureItemCloverNote.jsx';
 import usePosConnected from '../../hooks/usePosConnected.js';
 import useItemCloverUses from '../../hooks/useItemCloverUses.js';
+import { cloverUsesFor } from '../../utils/itemsureItemClover.js';
+import { cheapestSupplierId, formatPrice } from '../../utils/itemsureSupplierPrices.js';
+import { packagingForCatalogItem } from '../../utils/itemsureAlwaysWith.js';
 
 /**
  * Everything about one item in a window: a summary, then tabs for its places, history, and
  * details. Setting an amount or levels swaps the window's content, with a way back.
  */
 export default function ItemsureItemModal({ itemId, onClose }) {
-  const navigate = useNavigate();
   const { organization, features, can } = useItemsureWorkspace();
   const piecesFor = useLoosePieces();
   const [catalog, setCatalog] = useState(null);
@@ -48,6 +51,7 @@ export default function ItemsureItemModal({ itemId, onClose }) {
   const [removeError, setRemoveError] = useState('');
   const [toggled, setToggled] = useState(() => new Set());
   const [chosenTab, setChosenTab] = useState('');
+  const [editingDetails, setEditingDetails] = useState(false);
   const clearDone = useCallback(() => setDone(null), []);
   const places = useItemPlaces(organization.id);
   const canView = can('inventory.view');
@@ -56,6 +60,8 @@ export default function ItemsureItemModal({ itemId, onClose }) {
   const usage = useItemUsage(organization.id, itemId, canView && canHistory);
   const openCounts = useOpenCounts(organization.id, can('counts.view') || can('counts.edit'));
   const suppliers = useSuppliers(organization.id);
+  const prices = useSupplierPrices(organization.id);
+  const alwaysWith = useItemAlwaysWith(organization.id);
   const cloverConnected = usePosConnected(organization.id);
   const clover = useItemCloverUses(cloverConnected ? organization.id : null);
   const allowed = {
@@ -64,14 +70,6 @@ export default function ItemsureItemModal({ itemId, onClose }) {
     levels: can('inventory.targets.manage'),
     items: can('items.manage'),
   };
-
-  const tabs = [
-    canView && { id: 'stock', label: 'Stock' },
-    canHistory && { id: 'history', label: 'History' },
-    { id: 'details', label: 'Details' },
-    cloverConnected && { id: 'clover', label: 'Sold in Clover' },
-  ].filter(Boolean);
-  const tab = tabs.some((t) => t.id === chosenTab) ? chosenTab : tabs[0].id;
 
   const load = useCallback(async () => {
     try {
@@ -88,9 +86,24 @@ export default function ItemsureItemModal({ itemId, onClose }) {
     setAction(null);
     setToggled(new Set());
     setChosenTab('');
+    setEditingDetails(false);
   }, [itemId]);
 
   const raw = catalog?.items.find((i) => i.id === itemId) || null;
+  const cloverNeedsMatch = Boolean(
+    cloverConnected
+    && clover.data?.posItems?.length
+    && raw
+    && !raw.notSoldInPos
+    && !cloverUsesFor(raw.id, clover.data.posItems, clover.data.links).length,
+  );
+  const tabs = [
+    canView && { id: 'stock', label: 'Stock' },
+    canHistory && { id: 'history', label: 'History' },
+    { id: 'details', label: 'Details' },
+    cloverConnected && { id: 'clover', label: 'Clover', badge: cloverNeedsMatch ? 'Match' : null },
+  ].filter(Boolean);
+  const tab = tabs.some((t) => t.id === chosenTab) ? chosenTab : (tabs[0]?.id || 'details');
   const item = useMemo(() => {
     if (!raw) return null;
     const unit = catalog.units.find((u) => u.id === raw.base_unit_id);
@@ -147,7 +160,10 @@ export default function ItemsureItemModal({ itemId, onClose }) {
     setAction(null);
     if (result?.undo) setDone(result);
   };
-  const editItem = can('items.manage') && raw ? () => navigate(`${ITEMSURE_PATH}/items/${raw.id}/edit`) : null;
+  const editItem = can('items.manage') && raw ? () => setEditingDetails(true) : null;
+  const afterEditSaved = useCallback(async () => {
+    await Promise.all([load(), suppliers.reload(), prices.reload()]);
+  }, [load, suppliers, prices]);
 
   const removePlace = async (slot) => {
     setRemoveError('');
@@ -167,10 +183,28 @@ export default function ItemsureItemModal({ itemId, onClose }) {
     }
   };
 
-  const title = action ? ACTION_TITLES[action.kind] : 'Item Details';
   const keptAt = groups
     .map((g) => (g.slots.length > 1 ? `${g.location.name} \u00b7 ${g.slots.map((s) => s.areaName || NO_AREA_LABEL).join(', ')}` : labelFor(g.slots[0])))
     .join('; ');
+  const showDetails = Boolean(catalog && features.details && catalog.detailsAvailable);
+  const subtitle = raw && !action
+    ? [showDetails && detailsLine(raw), raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ')
+    : null;
+  const title = action ? ACTION_TITLES[action.kind] : (raw?.name || 'Item');
+  const mainSupplier = raw ? suppliers.supplierFor(raw.id) : null;
+  const supplierNote = (() => {
+    if (!raw || !prices.available || !mainSupplier) return '';
+    const ids = suppliers.supplierIdsFor(raw.id);
+    const priceMap = prices.priceMapFor(raw.id);
+    const cheapId = cheapestSupplierId(mainSupplier.id, ids, priceMap);
+    const price = cheapId ? priceMap.get(cheapId) : null;
+    if (price == null) return '';
+    const cheapName = suppliers.suppliers.find((s) => s.id === cheapId)?.name;
+    if (cheapId !== mainSupplier.id && cheapName) return `from ${formatPrice(price)} at ${cheapName}`;
+    return `from ${formatPrice(price)}`;
+  })();
+  const singlePlace = slotCount === 1;
+
   let body;
   if (loadError) body = <LoadFailed message={loadError} onRetry={load} />;
   else if (!catalog) body = <p className="isu-muted">Loading…</p>;
@@ -190,20 +224,8 @@ export default function ItemsureItemModal({ itemId, onClose }) {
       />
     );
   } else {
-    const showDetails = Boolean(features.details && catalog.detailsAvailable);
-    const description = [showDetails && detailsLine(raw), raw.categoryName, !raw.is_active && 'Archived'].filter(Boolean).join(' \u00b7 ');
     body = (
       <div className="isu-stack isu-item-modal">
-        <div className="isu-item-modal-name">
-          <h3>{raw.name}</h3>
-          {description ? <p className="isu-muted isu-small">{description}</p> : null}
-          {canView && stock ? <p className="isu-muted isu-small">{keptAt || 'Not kept anywhere yet'}</p> : null}
-        </div>
-        {editItem ? (
-          <div className="isu-item-modal-head">
-            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit item</button>
-          </div>
-        ) : null}
         {cloverConnected ? (
           <ItemsureItemCloverNote
             organizationId={organization.id}
@@ -219,7 +241,16 @@ export default function ItemsureItemModal({ itemId, onClose }) {
         ) : null}
 
         {canView ? (
-          <ItemsureItemSummary item={raw} summary={summary} pieces={item.loose} usage={usage} unitSymbol={item.unitSymbol} placeCount={stock ? slotCount : null} supplier={suppliers.supplierFor(raw.id)}>
+          <ItemsureItemSummary
+            item={raw}
+            summary={summary}
+            pieces={item.loose}
+            usage={usage}
+            unitSymbol={item.unitSymbol}
+            placeCount={stock ? slotCount : null}
+            supplier={mainSupplier}
+            supplierNote={supplierNote}
+          >
             <ItemsureItemCountButton organizationId={organization.id} item={raw} counts={openCounts} keptAt={groups} precision={item.precision} can={can} />
           </ItemsureItemSummary>
         ) : (
@@ -227,6 +258,11 @@ export default function ItemsureItemModal({ itemId, onClose }) {
         )}
 
         {tabs.length > 1 ? <ItemsureTabs tabs={tabs} selected={tab} onSelect={setChosenTab} label="Item sections" /> : null}
+        {tab === 'details' && editItem ? (
+          <div className="isu-item-tab-actions">
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit details</button>
+          </div>
+        ) : null}
 
         {tab === 'stock' ? (
           <section className="isu-stack" aria-label="Where it is">
@@ -255,12 +291,13 @@ export default function ItemsureItemModal({ itemId, onClose }) {
                       key={slot.key}
                       item={item}
                       slot={settleSlot(slot, raw.topoffPercent)}
-                      label={rowLabel(slot, g)}
+                      label={singlePlace ? (keptAt || rowLabel(slot, g)) : rowLabel(slot, g)}
                       can={allowed}
                       perDay={usage ? usage.forSlot(slot.locationId, slot.storageAreaId) : null}
                       open={isOpen(slot.key)}
                       onToggle={() => toggle(slot.key)}
                       onAction={(kind, s) => (kind === 'removePlace' ? removePlace(s) : setAction({ kind, slot: s }))}
+                      actionsOnly={singlePlace}
                     />
                   ))}
                 </React.Fragment>
@@ -279,7 +316,18 @@ export default function ItemsureItemModal({ itemId, onClose }) {
         ) : null}
 
         {tab === 'details' ? (
-          <ItemsureItemInfo organizationId={organization.id} item={raw} unitName={item.unitName} showPackaging={features.packaging} variantLabel={showDetails ? variantLabelFor(organization) : ''} onEdit={editItem} canManagePrices={can('items.manage')} />
+          <ItemsureItemInfo
+            organizationId={organization.id}
+            item={raw}
+            unitName={item.unitName}
+            showPackaging={features.packaging}
+            variantLabel={showDetails ? variantLabelFor(organization) : ''}
+            canManagePrices={can('items.manage')}
+            categories={catalog.categories}
+            catalogItems={catalog.items}
+            alwaysWith={alwaysWith}
+            canManageAlwaysWith={can('items.manage')}
+          />
         ) : null}
 
         {tab === 'clover' ? (
@@ -290,6 +338,16 @@ export default function ItemsureItemModal({ itemId, onClose }) {
             data={clover.data}
             loadError={clover.error}
             reload={async () => { await load(); await clover.reload(); }}
+            packagingAttached={
+              alwaysWith.available
+                ? packagingForCatalogItem(
+                  alwaysWith.byItem,
+                  raw,
+                  catalog.categories,
+                  new Map(catalog.items.map((i) => [i.id, i])),
+                )
+                : []
+            }
           />
         ) : null}
       </div>
@@ -298,9 +356,31 @@ export default function ItemsureItemModal({ itemId, onClose }) {
 
   return (
     <>
-      <Modal open title={title} onClose={onClose} className="isu-modal--item">
+      <Modal
+        open
+        title={title}
+        subtitle={subtitle}
+        headStart={editItem && !action && !editingDetails ? (
+          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit</button>
+        ) : null}
+        onClose={onClose}
+        className="isu-modal--item"
+        ariaLabel={action ? title : (raw?.name || 'Item')}
+      >
         {body}
       </Modal>
+      {editingDetails && raw && catalog ? (
+        <ItemsureItemEditModal
+          key={raw.id}
+          item={raw}
+          catalog={catalog}
+          suppliers={suppliers}
+          supplierPrices={prices}
+          onClose={() => setEditingDetails(false)}
+          onSaved={afterEditSaved}
+          onCatalogChanged={load}
+        />
+      ) : null}
       <ItemsureUndoBar done={done} onClose={clearDone} />
     </>
   );

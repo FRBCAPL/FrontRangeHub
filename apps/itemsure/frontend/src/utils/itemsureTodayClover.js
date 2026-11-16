@@ -79,7 +79,7 @@ export function buildCloverTasks(clover, paths, now = Date.now()) {
       key: 'clover-items',
       tone: 'info',
       title: `${plural(clover.unmatchedItems, 'item', 'items')} not matched to Clover`,
-      detail: 'Match them, or mark ones you never ring up (like kitchen supplies) as Not sold in Clover.',
+      detail: "Match them, or mark Don't track in sales for ones that shouldn't count (like kitchen supplies).",
       to: paths.itemsNoClover,
       button: 'See items',
     });

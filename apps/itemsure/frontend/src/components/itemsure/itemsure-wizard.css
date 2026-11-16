@@ -347,6 +347,11 @@
   margin: 0;
 }
 
+/* Item step sub-tabs (About / Counted in / Suppliers). */
+.isu-app .isu-wizard-basics > .isu-tabs {
+  margin-bottom: 4px;
+}
+
 /* Brand and Style are short, so they share a row even on phones. */
 .isu-app .isu-details-pair {
   display: grid;

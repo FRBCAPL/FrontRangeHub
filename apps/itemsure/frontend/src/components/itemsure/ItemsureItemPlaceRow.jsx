@@ -17,8 +17,10 @@ function levelsText(target, unit) {
 /**
  * One place for an item, as a compact row: name, on hand / par, a small bar, and the status.
  * Tapping it opens the buttons for that place.
+ * `actionsOnly` (single-place modal): skip the amount/status header — the summary already shows it —
+ * and keep the action buttons open.
  */
-export default function ItemsureItemPlaceRow({ item, slot, label, can, perDay = null, open, onToggle, onAction }) {
+export default function ItemsureItemPlaceRow({ item, slot, label, can, perDay = null, open, onToggle, onAction, actionsOnly = false }) {
   const bodyId = useId();
   const rate = describeRate(perDay, item.unitSymbol);
   const left = slot.quantity !== null ? describeDays(daysLeft(slot.quantity, perDay)) : null;
@@ -28,35 +30,42 @@ export default function ItemsureItemPlaceRow({ item, slot, label, can, perDay = 
   // Only an empty place can go, and only when the person may undo every part of it.
   const canRemove = isEmptySlot(slot) && (slot.kept || slot.target) && (!slot.kept || can.items) && (!slot.target || can.levels);
   const par = slot.target?.par_text ?? null;
+  const showBody = actionsOnly || open;
 
   return (
-    <li className={`isu-card isu-place-row isu-place-row--${tone}${open ? ' is-open' : ''}`}>
-      <button type="button" className="isu-place-row-toggle" onClick={onToggle} aria-expanded={open} aria-controls={bodyId}>
-        <span className="isu-place-row-name">{label}</span>
-        {hasAmount && item.loose ? (
-          <span className="isu-place-row-amount">
-            <strong>{looseText(slot.quantity, item.loose, item.unitName)}</strong>
-            {par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(par)} {item.unitSymbol}</span> : null}
-          </span>
-        ) : (
-          <span className="isu-place-row-amount">
-            <strong>{hasAmount ? displayQuantity(slot.quantity) : '\u2013'}</strong>
-            {par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(par)}</span> : null}
-            <span className="isu-stockcard-unit"> {item.unitSymbol}</span>
-          </span>
-        )}
-        <span className="isu-place-row-status">
-          {par !== null ? (
-            <span className="isu-stockbar" aria-hidden="true">
-              <span className={`isu-stockbar-fill isu-stockbar--${tone}`} style={{ width: `${fillPercent(slot.quantity, par)}%` }} />
+    <li className={`isu-card isu-place-row isu-place-row--${tone}${showBody ? ' is-open' : ''}${actionsOnly ? ' is-actions-only' : ''}`}>
+      {actionsOnly ? (
+        <div className="isu-place-row-place">
+          <span className="isu-place-row-name">{label}</span>
+        </div>
+      ) : (
+        <button type="button" className="isu-place-row-toggle" onClick={onToggle} aria-expanded={open} aria-controls={bodyId}>
+          <span className="isu-place-row-name">{label}</span>
+          {hasAmount && item.loose ? (
+            <span className="isu-place-row-amount">
+              <strong>{looseText(slot.quantity, item.loose, item.unitName)}</strong>
+              {par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(par)} {item.unitSymbol}</span> : null}
             </span>
-          ) : null}
-          <span className={`isu-stockcard-label isu-stockcard-label--${status ? tone : 'muted'}`}>{status ? status.label : 'No par set'}</span>
-        </span>
-        <span className="isu-place-row-arrow" aria-hidden="true">{open ? '\u25b4' : '\u25be'}</span>
-      </button>
+          ) : (
+            <span className="isu-place-row-amount">
+              <strong>{hasAmount ? displayQuantity(slot.quantity) : '\u2013'}</strong>
+              {par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(par)}</span> : null}
+              <span className="isu-stockcard-unit"> {item.unitSymbol}</span>
+            </span>
+          )}
+          <span className="isu-place-row-status">
+            {par !== null ? (
+              <span className="isu-stockbar" aria-hidden="true">
+                <span className={`isu-stockbar-fill isu-stockbar--${tone}`} style={{ width: `${fillPercent(slot.quantity, par)}%` }} />
+              </span>
+            ) : null}
+            <span className={`isu-stockcard-label isu-stockcard-label--${status ? tone : 'muted'}`}>{status ? status.label : 'No par set'}</span>
+          </span>
+          <span className="isu-place-row-arrow" aria-hidden="true">{open ? '\u25b4' : '\u25be'}</span>
+        </button>
+      )}
 
-      {open ? (
+      {showBody ? (
         <div className="isu-place-row-body" id={bodyId}>
           {slot.target || rate ? (
             <p className="isu-muted isu-small">

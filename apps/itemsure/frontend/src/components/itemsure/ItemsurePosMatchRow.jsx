@@ -66,10 +66,11 @@ export default function ItemsurePosMatchRow({
               unit={pourInfo.unitFor(item.id)}
               pieces={pourInfo.pieces?.get(item.id)}
               piecesFrom={pourInfo.piecesFrom?.get(item.id) || ''}
+              pieceLabel={pourInfo.pieces?.labels?.get(item.id) || ''}
               piecesReady={pourInfo.piecesReady}
               canEdit={canLink}
               busy={busy}
-              onSave={(amount, unit, contentMl, pieces) => onSavePour(item.id, amount, unit, contentMl, pieces)}
+              onSave={(amount, unit, contentMl, pieces, pieceLabel) => onSavePour(item.id, amount, unit, contentMl, pieces, pieceLabel)}
             />
           ))}
         </div>

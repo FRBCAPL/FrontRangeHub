@@ -171,6 +171,7 @@ export function withCategoryDefaults({ links, pours, contents, pieces = null, it
     }
   }
   const outPieces = pieces ? new Map(pieces) : null;
+  if (outPieces && pieces.labels) outPieces.labels = new Map(pieces.labels);
   const piecesFrom = new Map();
   if (outPieces) {
     for (const item of items) {

@@ -7,15 +7,17 @@ import { recipeText, recipeUseCounts } from '../../utils/itemsureRecipes.js';
 import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureRecipeForm from './ItemsureRecipeForm.jsx';
 import ItemsureRecipeButtons from './ItemsureRecipeButtons.jsx';
+import ItemsureRecipeBulkAdd from './ItemsureRecipeBulkAdd.jsx';
 
 /** Inventory → Recipes: build a drink or dish once, then use it on any number of Clover buttons. */
 export default function ItemsureRecipes() {
   const { organization, can } = useItemsureWorkspace();
   const canEdit = can('items.manage');
-  const { state, error, setError, save, remove, applyTo, stopOn } = useRecipes(organization.id);
+  const { state, error, setError, save, remove, applyTo, stopOn, addIngredient } = useRecipes(organization.id);
   const [editing, setEditing] = useState(null); // { recipe|null }
   const [picking, setPicking] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [bulkAdd, setBulkAdd] = useState(false);
   const [search, setSearch] = useState('');
 
   const itemsById = useMemo(() => new Map((state?.items || []).map((i) => [i.id, i])), [state]);
@@ -39,7 +41,14 @@ export default function ItemsureRecipes() {
       title="Recipes"
       description="Build a drink or dish once, then use it on every Clover button that makes it. Change the recipe and they all follow."
       action={canEdit && state && !state.missing ? (
-        <button type="button" className="isu-btn isu-btn--primary" onClick={() => open(setEditing, { recipe: null })}>Add recipe</button>
+        <span className="isu-pos-ask-actions">
+          {state.recipes.length ? (
+            <button type="button" className="isu-btn isu-btn--ghost" onClick={() => { setError(''); setBulkAdd(true); }}>
+              Add ingredient to recipes…
+            </button>
+          ) : null}
+          <button type="button" className="isu-btn isu-btn--primary" onClick={() => open(setEditing, { recipe: null })}>Add recipe</button>
+        </span>
       ) : null}
     />
   );
@@ -58,7 +67,7 @@ export default function ItemsureRecipes() {
     <div className="isu-page">
       {head}
       <p className="isu-small"><Link to={`${ITEMSURE_PATH}/items`}>{'\u2190'} Inventory</Link></p>
-      <ErrorNote message={editing || picking || deleting ? '' : error} />
+      <ErrorNote message={editing || picking || deleting || bulkAdd ? '' : error} />
       {state.recipes.length > 6 ? (
         <input type="search" className="isu-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a recipe or ingredient" aria-label="Find a recipe" />
       ) : null}
@@ -137,6 +146,21 @@ export default function ItemsureRecipes() {
               <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setDeleting(null)}>Cancel</button>
             </div>
           </div>
+        ) : null}
+      </Modal>
+
+      <Modal open={bulkAdd} title="Add ingredient to recipes" wide onClose={() => setBulkAdd(false)}>
+        {bulkAdd ? (
+          <ItemsureRecipeBulkAdd
+            recipes={state.recipes}
+            items={state.items}
+            error={error}
+            onSave={async (itemId, amount, unit, recipeIds) => {
+              const result = await addIngredient(itemId, amount, unit, recipeIds);
+              return result || false;
+            }}
+            onClose={() => setBulkAdd(false)}
+          />
         ) : null}
       </Modal>
     </div>

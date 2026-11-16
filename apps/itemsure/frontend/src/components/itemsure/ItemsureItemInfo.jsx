@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { listPackages } from '../../services/itemsurePackageService.js';
-import { displayQuantity } from '../../utils/itemsureQuantity.js';
-import { contentLabel } from '../../utils/itemsureItemContent.js';
-import { singularUnit } from '../../utils/itemsureItemLook.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import useSupplierPrices from '../../hooks/useSupplierPrices.js';
+import { useItemLink } from '../../hooks/useItemModal.js';
+import { alwaysWithHint, packagingAttachedLabel, packagingForCatalogItem } from '../../utils/itemsureAlwaysWith.js';
+import { Modal } from './ItemsureUi.jsx';
 import ItemsureSupplierPrices from './ItemsureSupplierPrices.jsx';
+import ItemsureItemAlwaysWith from './ItemsureItemAlwaysWith.jsx';
+import {
+  IdentifiersSheet,
+  WhatItIsSheet,
+  identifiersHint,
+  whatItIsHint,
+} from './ItemsureItemInfoSheets.jsx';
 
 function Row({ label, children }) {
   return (
@@ -16,14 +24,36 @@ function Row({ label, children }) {
   );
 }
 
-/** The Details tab: the item's catalog facts, including who it is bought from and as-ordered prices. */
-export default function ItemsureItemInfo({ organizationId, item, unitName, showPackaging, variantLabel, onEdit, canManagePrices = false }) {
+function Door({ title, hint, onOpen }) {
+  return (
+    <button type="button" className="isu-item-info-door" onClick={onOpen}>
+      <span className="isu-item-info-door-title">{title}</span>
+      {hint ? <span className="isu-item-info-door-hint">{hint}</span> : null}
+      <span className="isu-item-info-door-chevron" aria-hidden="true">{'\u203a'}</span>
+    </button>
+  );
+}
+
+/** The Details tab: ordering stays open; catalog facts open in short nested sheets. */
+export default function ItemsureItemInfo({
+  organizationId, item, unitName, showPackaging, variantLabel, canManagePrices = false,
+  categories = [], catalogItems = [], alwaysWith = null, canManageAlwaysWith = false,
+}) {
   const [packages, setPackages] = useState(null);
+  const [sheet, setSheet] = useState(null);
+  const itemLink = useItemLink();
   const suppliers = useSuppliers(organizationId);
   const prices = useSupplierPrices(organizationId);
   const supplier = suppliers.supplierFor(item.id);
   const others = suppliers.otherIdsFor(item.id).map((id) => suppliers.suppliers.find((s) => s.id === id)).filter(Boolean);
   const itemSuppliers = [supplier, ...others].filter(Boolean);
+  const showPrices = prices.available && itemSuppliers.length > 0;
+  const alwaysRules = alwaysWith?.available ? alwaysWith.forItem(item.id) : [];
+  const showAlways = Boolean(alwaysWith?.available);
+  const itemsById = new Map((catalogItems || []).map((i) => [i.id, i]));
+  const attached = alwaysWith?.available
+    ? packagingForCatalogItem(alwaysWith.byItem, item, categories, itemsById)
+    : [];
 
   useEffect(() => {
     if (!showPackaging) return undefined;
@@ -37,69 +67,108 @@ export default function ItemsureItemInfo({ organizationId, item, unitName, showP
   }, [organizationId, item.id, showPackaging]);
 
   return (
-    <section className="isu-card isu-item-info" aria-label="Details">
-      <dl>
-        {variantLabel ? (
-          <>
-            <Row label="Brand">{item.brand}</Row>
-            <Row label={variantLabel}>{item.variant}</Row>
-          </>
-        ) : null}
-        <Row label="Category">{item.categoryName}</Row>
-        <Row label="Counted in">{unitName}</Row>
-        {item.contentMl ? <Row label={`One ${singularUnit(unitName || 'unit').toLowerCase()} holds`}>{contentLabel(item.contentMl)}</Row> : null}
-        {!item.contentMl && item.categorySize ? (
-          <Row label={`One ${singularUnit(unitName || 'unit').toLowerCase()} holds`}>
-            {contentLabel(item.categorySize.ml)} <span className="isu-muted isu-small">(uses {item.categorySize.fromCategory})</span>
-          </Row>
-        ) : null}
-        {item.pieces != null || item.categoryPieces ? (
-          <Row label={`Sold out of one ${singularUnit(unitName || 'unit').toLowerCase()}`}>
-            {item.pieces != null ? String(item.pieces) : (
-              <>{String(item.categoryPieces.pieces)} <span className="isu-muted isu-small">(uses {item.categoryPieces.fromCategory})</span></>
-            )}
-          </Row>
-        ) : null}
-        {showPackaging ? (
-          <Row label="Packaging">
-            {packages === null ? <span className="isu-muted">Loading…</span> : packages.length
-              ? packages.map((p) => `${p.name} (${displayQuantity(p.size)} ${unitName})`).join(', ')
-              : null}
-          </Row>
-        ) : null}
-        {suppliers.available ? (
-          <Row label="Buy from">
-            {supplier ? (
-              <>
-                {supplier.icon ? `${supplier.icon} ` : ''}{supplier.name}{supplier.is_active ? '' : ' (archived)'}
-                {supplier.phone ? <> · <a href={`tel:${supplier.phone.replace(/[^\d+]/g, '')}`}>{supplier.phone}</a></> : null}
-                {supplier.email ? <> · <a href={`mailto:${supplier.email}`}>{supplier.email}</a></> : null}
-              </>
+    <div className="isu-item-info" aria-label="Details">
+      {suppliers.available || showPrices ? (
+        <section className="isu-item-info-section" aria-label="Ordering">
+          <h4 className="isu-item-info-section-title">Ordering</h4>
+          <div className="isu-card isu-item-info-block">
+            {suppliers.available ? (
+              <dl>
+                <Row label="Buy from">
+                  {supplier ? (
+                    <>
+                      {supplier.icon ? `${supplier.icon} ` : ''}{supplier.name}{supplier.is_active ? '' : ' (archived)'}
+                      {supplier.phone ? <> · <a href={`tel:${supplier.phone.replace(/[^\d+]/g, '')}`}>{supplier.phone}</a></> : null}
+                      {supplier.email ? <> · <a href={`mailto:${supplier.email}`}>{supplier.email}</a></> : null}
+                    </>
+                  ) : null}
+                </Row>
+                {!showPrices && others.length ? (
+                  <Row label="Also from">
+                    {others.map((s) => `${s.icon ? `${s.icon} ` : ''}${s.name}${s.is_active ? '' : ' (archived)'}`).join(', ')}
+                  </Row>
+                ) : null}
+              </dl>
             ) : null}
-          </Row>
-        ) : null}
-        {others.length ? (
-          <Row label="Also from">
-            {others.map((s) => `${s.icon ? `${s.icon} ` : ''}${s.name}${s.is_active ? '' : ' (archived)'}`).join(', ')}
-          </Row>
-        ) : null}
-        <Row label="SKU">{item.sku}</Row>
-        <Row label="Barcode">{item.barcode}</Row>
-        <Row label="Description">{item.description}</Row>
-        <Row label="Status">{item.is_active ? 'Active' : 'Archived'}</Row>
-      </dl>
-      {prices.available && itemSuppliers.length ? (
-        <ItemsureSupplierPrices
-          suppliers={itemSuppliers}
-          mainId={supplier?.id || null}
-          prices={prices.forItem(item.id)}
-          canManage={canManagePrices}
-          onSave={canManagePrices ? (supplierId, fields) => prices.save(item.id, supplierId, fields) : null}
+            {showPrices ? (
+              <ItemsureSupplierPrices
+                suppliers={itemSuppliers}
+                mainId={supplier?.id || null}
+                prices={prices.forItem(item.id)}
+                canManage={canManagePrices}
+                previewLimit={2}
+                onSave={canManagePrices ? (supplierId, fields) => prices.save(item.id, supplierId, fields) : null}
+              />
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {attached.length ? (
+        <div className="isu-notice isu-item-always-attached" role="status">
+          <p>
+            When sold in Clover, also takes off{' '}
+            {attached.map((row, i) => (
+              <span key={row.itemId}>
+                {i ? ', ' : null}
+                <Link {...itemLink(row.itemId)} className="isu-link">
+                  {packagingAttachedLabel([row])}
+                </Link>
+              </span>
+            ))}
+            <span className="isu-muted isu-small"> — Goes with sales</span>
+          </p>
+        </div>
+      ) : null}
+
+      <div className="isu-item-info-doors" role="group" aria-label="More details">
+        <Door
+          title="What it is"
+          hint={whatItIsHint(item, unitName)}
+          onOpen={() => setSheet('what')}
         />
-      ) : null}
-      {onEdit ? (
-        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={onEdit}>Edit details</button>
-      ) : null}
-    </section>
+        <Door
+          title="Identifiers"
+          hint={identifiersHint(item)}
+          onOpen={() => setSheet('ids')}
+        />
+        {showAlways ? (
+          <Door
+            title="Goes with sales"
+            hint={alwaysWithHint(alwaysRules, categories)}
+            onOpen={() => setSheet('always')}
+          />
+        ) : null}
+      </div>
+
+      <Modal nested open={sheet === 'what'} title="What it is" onClose={() => setSheet(null)}>
+        <WhatItIsSheet
+          item={item}
+          unitName={unitName}
+          showPackaging={showPackaging}
+          variantLabel={variantLabel}
+          packages={packages}
+        />
+      </Modal>
+
+      <Modal nested open={sheet === 'ids'} title="Identifiers" onClose={() => setSheet(null)}>
+        <IdentifiersSheet item={item} />
+      </Modal>
+
+      <Modal nested open={sheet === 'always'} title="Goes with sales" onClose={() => setSheet(null)}>
+        <ItemsureItemAlwaysWith
+          key={`${item.id}-${alwaysRules.map((r) => r.categoryId).join(',')}`}
+          organizationId={organizationId}
+          item={{ ...item, unitName }}
+          categories={categories}
+          rules={alwaysRules}
+          canManage={canManageAlwaysWith}
+          onSave={async (rows) => {
+            await alwaysWith.save(item.id, rows);
+            setSheet(null);
+          }}
+        />
+      </Modal>
+    </div>
   );
 }

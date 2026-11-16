@@ -10,7 +10,7 @@ export default function ItemsureItemsCloverFilter({ count, ready, error, onClear
         <strong>Not matched to Clover{ready ? `: ${count}` : ''}</strong>
         <br />
         <span className="isu-small">
-          Open an item, then Match to Clover or mark it Not sold in Clover (kitchen and supply items).
+          Open an item, then Match to Clover or mark Don&apos;t track in sales (kitchen and supply items).
         </span>
       </p>
       <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={onClear}>Show all items</button>

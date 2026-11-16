@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listCatalog } from '../services/itemsureItemService.js';
 import { listPosItems, listPosLinks } from '../services/itemsurePosService.js';
-import { applyRecipeTo, deleteRecipe, listRecipes, listRecipeUses, saveRecipe, stopRecipeOn } from '../services/itemsureRecipeService.js';
+import { addIngredientToRecipes, applyRecipeTo, deleteRecipe, listRecipes, listRecipeUses, saveRecipe, stopRecipeOn } from '../services/itemsureRecipeService.js';
 
 /**
  * Inventory → Recipes: the recipes, catalog items, Clover buttons, and which buttons use which
@@ -49,5 +49,6 @@ export default function useRecipes(organizationId) {
     remove: (id) => act(() => deleteRecipe(organizationId, id)),
     applyTo: (recipeId, externalIds) => act(() => applyRecipeTo(organizationId, recipeId, externalIds)),
     stopOn: (externalIds) => act(() => stopRecipeOn(organizationId, externalIds)),
+    addIngredient: (itemId, amount, unit, recipeIds) => act(() => addIngredientToRecipes(organizationId, itemId, amount, unit, recipeIds)),
   };
 }

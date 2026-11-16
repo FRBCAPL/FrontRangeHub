@@ -58,6 +58,9 @@ export const ITEM_GROUPS = [
  * then a "Top Offs" part (needing topping up), or just "Top Offs" when nothing is running low.
  * `show` ('low' | 'topoff') marks headings that link to the Shopping list on that status.
  */
+const byItemName = (a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
+  || String(a.id || '').localeCompare(String(b.id || ''));
+
 export function groupByStatus(items, toneFor) {
   const buckets = { attention: [], good: [], other: [], archived: [] };
   const danger = [];
@@ -71,6 +74,10 @@ export function groupByStatus(items, toneFor) {
     } else if (tone === 'ok') buckets.good.push(item);
     else buckets.other.push(item);
   }
+  // A–Z inside each section (top-off soften can otherwise leave Fine scrambled).
+  for (const key of Object.keys(buckets)) buckets[key].sort(byItemName);
+  danger.sort(byItemName);
+  warn.sort(byItemName);
   return ITEM_GROUPS
     .map((g) => {
       const items = buckets[g.key];

@@ -32,6 +32,16 @@ test('items split into needs attention, all good, others, and archived, in order
   assert.deepEqual(groupByStatus([], () => 'ok'), []);
 });
 
+test('each status section is A to Z by name', () => {
+  const items = [
+    { id: '1', name: 'Zebra', is_active: true },
+    { id: '2', name: 'Apple', is_active: true },
+    { id: '3', name: 'Mango', is_active: true },
+  ];
+  const groups = groupByStatus(items, () => 'ok');
+  assert.deepEqual(groups[0].items.map((i) => i.name), ['Apple', 'Mango', 'Zebra']);
+});
+
 test('a subcategory without an icon uses its main category icon', () => {
   const tree = categoryTree([
     { id: 'liq', name: 'Liquor', icon: '\u{1F943}', parent_category_id: null },

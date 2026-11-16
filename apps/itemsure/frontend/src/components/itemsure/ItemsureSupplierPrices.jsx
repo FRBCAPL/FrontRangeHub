@@ -7,12 +7,19 @@ import { ErrorNote } from './ItemsureUi.jsx';
  * Compare as-ordered prices across an item's suppliers, and (when allowed) edit price + product code.
  * `suppliers` is the list for this item (main first); `mainId` is Buy from; `prices` is Map
  * supplierId -> { price, code }; `onSave(supplierId, { priceText, code })` when canManage.
+ * `previewLimit` (e.g. 2 on Details) shows the cheapest N and tucks the rest behind Expand.
  */
-export default function ItemsureSupplierPrices({ suppliers, mainId, prices, canManage, onSave }) {
+export default function ItemsureSupplierPrices({ suppliers, mainId, prices, canManage, onSave, previewLimit = null }) {
   const rows = supplierPriceRows(suppliers, mainId, prices);
+  const [expanded, setExpanded] = useState(false);
   if (!rows.length) return null;
+
   const anyPrice = rows.some((r) => r.price != null);
   const cheapest = anyPrice ? rows.find((r) => r.price != null)?.id : null;
+  const limit = previewLimit > 0 ? previewLimit : null;
+  const canCollapse = limit != null && rows.length > limit;
+  const shown = canCollapse && !expanded ? rows.slice(0, limit) : rows;
+  const hidden = canCollapse && !expanded ? rows.length - limit : 0;
 
   return (
     <div className="isu-supplier-prices">
@@ -22,7 +29,7 @@ export default function ItemsureSupplierPrices({ suppliers, mainId, prices, canM
           : 'As ordered — enter what each supplier charges so the shopping list can default to the cheapest.'}
       </p>
       <ul className="isu-supplier-price-list" aria-label="Supplier prices">
-        {rows.map((row) => (
+        {shown.map((row) => (
           <li key={row.id} className={row.id === cheapest ? 'isu-supplier-price-list__best' : undefined}>
             {canManage && onSave ? (
               <PriceEdit row={row} cheapest={row.id === cheapest} onSave={onSave} />
@@ -32,6 +39,16 @@ export default function ItemsureSupplierPrices({ suppliers, mainId, prices, canM
           </li>
         ))}
       </ul>
+      {canCollapse ? (
+        <button
+          type="button"
+          className="isu-btn isu-btn--ghost isu-btn--sm isu-supplier-price-more"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+        >
+          {expanded ? 'Show fewer suppliers' : `Show ${hidden} more supplier${hidden === 1 ? '' : 's'}`}
+        </button>
+      ) : null}
     </div>
   );
 }

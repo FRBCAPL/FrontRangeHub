@@ -21,11 +21,15 @@ export function StockAmount({ summary, unitName, className = '', pieces = 0 }) {
   );
 }
 
-/** "Buy from Southern Glazer's", on its own line under the item name. `supplier` is { name, is_active }. */
-export function SupplierLine({ supplier }) {
+/**
+ * "Buy from Southern Glazer's", on its own line under the item name.
+ * `supplier` is { name, is_active, icon? }. Optional `note` (e.g. "from $9.25").
+ */
+export function SupplierLine({ supplier, note = '' }) {
   return (
     <span className="isu-supplier-line" title="Main supplier">
       <span aria-hidden="true">{supplier.icon || '\u26DF'}</span> {supplier.name}{supplier.is_active ? '' : ' (archived)'}
+      {note ? <span className="isu-supplier-line-note"> · {note}</span> : null}
     </span>
   );
 }

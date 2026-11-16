@@ -5,6 +5,7 @@ import { addPosLink, leaveRecipe, removePosLink, saveItemContent, setPosNotTrack
 import { setButtonPour } from '../../services/itemsureRecipeService.js';
 import { saveItemPieces } from '../../services/itemsureItemContentService.js';
 import { alsoUses, cloverLinkable, cloverSuggestionsFor, cloverUsesFor } from '../../utils/itemsureItemClover.js';
+import { packagingAttachedLabel } from '../../utils/itemsureAlwaysWith.js';
 import { posPrice } from '../../utils/itemsurePosMatch.js';
 import { ErrorNote } from './ItemsureUi.jsx';
 import ItemsureItemSearchPick from './ItemsureItemSearchPick.jsx';
@@ -15,8 +16,9 @@ import ItemsurePosPourEdit from './ItemsurePosPourEdit.jsx';
 /**
  * Item window → "Sold in Clover": every Clover item that uses this item and how much one sale
  * of it takes off, plus linking more. Only changes matches and amounts, never stock or Clover.
+ * `packagingAttached` is Goes with sales packaging that rides along when this item is sold.
  */
-export default function ItemsureItemClover({ organizationId, itemId, canEdit, data, loadError, reload }) {
+export default function ItemsureItemClover({ organizationId, itemId, canEdit, data, loadError, reload, packagingAttached = [] }) {
   const { busy, error, run } = useItemsureAction();
   const [skipping, setSkipping] = useState(null);
   const [askingNotSold, setAskingNotSold] = useState(false);
@@ -31,10 +33,12 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
   }
 
   const unit = (data.units || []).find((u) => u.id === item.base_unit_id) || null;
+  const notSold = Boolean(item.notSoldInPos);
   const uses = cloverUsesFor(itemId, data.posItems, data.links);
-  const suggestions = canEdit ? cloverSuggestionsFor(itemId, data.posItems, data.links, data.items) : [];
-  const linkable = canEdit ? cloverLinkable(itemId, data.posItems, data.links) : [];
-  const skippable = canEdit
+  // When skipped for sales counting, hide match/link tools until they undo.
+  const suggestions = canEdit && !notSold ? cloverSuggestionsFor(itemId, data.posItems, data.links, data.items) : [];
+  const linkable = canEdit && !notSold ? cloverLinkable(itemId, data.posItems, data.links) : [];
+  const skippable = canEdit && !notSold
     ? data.posItems.filter((p) => !p.is_deleted && !p.not_tracked).map((p) => ({ id: p.external_id, name: p.name || 'Unnamed Clover item' }))
     : [];
 
@@ -67,25 +71,37 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
     await setNotSoldInPos(organizationId, itemId, false);
     await reload();
   });
-  const savePour = (externalId, amount, pourUnit, contentMl, pieces) => run(async () => {
+  const savePour = (externalId, amount, pourUnit, contentMl, pieces, pieceLabel) => run(async () => {
     if (contentMl !== undefined) await saveItemContent(organizationId, itemId, contentMl);
-    if (pieces !== undefined) await saveItemPieces(organizationId, itemId, pieces);
+    if (pieces !== undefined || pieceLabel !== undefined) {
+      const count = pieces ?? data.pieces?.get(itemId);
+      if (!(count > 0)) throw new Error('Set how many are in one bag (or case) first.');
+      await saveItemPieces(organizationId, itemId, count, pieceLabel !== undefined ? { label: pieceLabel } : {});
+    }
     await setButtonPour(organizationId, externalId, itemId, amount, pourUnit);
     await reload();
   });
 
   return (
     <section className="isu-stack isu-item-clover" aria-label="Sold in Clover">
-      <p className="isu-muted isu-small">
-        Each Clover button that uses {item.name} can take off a different amount, like a shot, a double, or a mixed drink.
-        Set how much one tap of each button uses. If Clover sells 2, that is counted twice.
-        Stop tracking a Clover button when it&apos;s too generic to tie to stock, like a $10 pitcher.
-        Mark this item Not sold in Clover when it never has a Clover button, like kitchen supplies. This never changes anything in Clover.
-      </p>
-      {data.pours === null ? <p className="isu-notice">Amounts per sale need a database update first.</p> : null}
+      {!notSold ? (
+        <p className="isu-muted isu-small">
+          Each Clover button that uses {item.name} can take off a different amount, like a shot, a double, or a mixed drink.
+          Set how much one tap of each button uses. If Clover sells 2, that is counted twice.
+          Stop tracking a Clover button when it&apos;s too generic to tie to stock, like a $10 pitcher.
+          Mark Don&apos;t track in sales when it never has a Clover button, like kitchen supplies. This never changes anything in Clover.
+        </p>
+      ) : null}
+      {!notSold && data.pours === null ? <p className="isu-notice">Amounts per sale need a database update first.</p> : null}
+      {packagingAttached.length ? (
+        <p className="isu-notice isu-small" role="status">
+          Goes with sales also takes off <strong>{packagingAttachedLabel(packagingAttached)}</strong> once per sale
+          (unless that packaging is already linked on the button).
+        </p>
+      ) : null}
       <ErrorNote message={error} />
 
-      {uses.length ? (
+      {uses.length && !notSold ? (
         <ul className="isu-pos-list">
           {uses.map((p) => {
             const others = alsoUses(p.external_id, itemId, data.links, itemsById);
@@ -114,10 +130,11 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
                       sizeFrom={data.contentFrom?.get(itemId) || ''}
                       pieces={data.pieces?.get(itemId)}
                       piecesFrom={data.piecesFrom?.get(itemId) || ''}
+                      pieceLabel={data.pieces?.labels?.get(itemId) || ''}
                       piecesReady={data.piecesReady}
                       canEdit={canEdit}
                       busy={busy}
-                      onSave={(amount, pourUnit, contentMl, pieces) => savePour(p.external_id, amount, pourUnit, contentMl, pieces)}
+                      onSave={(amount, pourUnit, contentMl, pieces, pieceLabel) => savePour(p.external_id, amount, pourUnit, contentMl, pieces, pieceLabel)}
                     />
                   </div>
                 ) : null}
@@ -127,12 +144,12 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
         </ul>
       ) : item.notSoldInPos ? (
         <p className="isu-muted">
-          {item.name} is marked as not sold in Clover, so ItemSure won&apos;t ask you to match it.
+          {item.name} is not tracked in sales, so ItemSure won&apos;t ask you to match it.
           {canEdit ? (
             <>
               {' '}
               <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={undoNotSold}>
-                {busy ? 'Saving…' : 'Undo: it is sold in Clover'}
+                {busy ? 'Saving…' : 'Track in sales'}
               </button>
             </>
           ) : null}
@@ -144,7 +161,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
             <>
               {' '}
               <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => setAskingNotSold(true)}>
-                Not sold in Clover
+                Don&apos;t track in sales
               </button>
             </>
           ) : null}
@@ -168,26 +185,30 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
         </div>
       ) : null}
 
-      <div className="isu-pos-mod-actions">
-        {linkable.length ? (
-          <ItemsureItemSearchPick items={linkable} label="+ Link a Clover item" placeholder="Type to find a Clover item" disabled={busy} onPick={link} />
-        ) : null}
-        {skippable.length ? (
-          <ItemsureItemSearchPick
-            items={skippable}
-            label="+ Stop tracking a Clover button"
-            placeholder="Type to find a Clover item"
-            disabled={busy}
-            onPick={(id) => {
-              const pos = data.posItems.find((p) => p.external_id === id);
-              if (pos) skip(pos);
-            }}
-          />
-        ) : null}
-      </div>
-      <p className="isu-muted isu-small">
-        Tip: to set one amount for a whole category (like 1.5 oz for all liquor), use Settings → Point of sale → Pour sizes → Pours by category.
-      </p>
+      {!notSold && (linkable.length || skippable.length) ? (
+        <div className="isu-pos-mod-actions">
+          {linkable.length ? (
+            <ItemsureItemSearchPick items={linkable} label="+ Link a Clover item" placeholder="Type to find a Clover item" disabled={busy} onPick={link} />
+          ) : null}
+          {skippable.length ? (
+            <ItemsureItemSearchPick
+              items={skippable}
+              label="+ Stop tracking a Clover button"
+              placeholder="Type to find a Clover item"
+              disabled={busy}
+              onPick={(id) => {
+                const pos = data.posItems.find((p) => p.external_id === id);
+                if (pos) skip(pos);
+              }}
+            />
+          ) : null}
+        </div>
+      ) : null}
+      {!notSold ? (
+        <p className="isu-muted isu-small">
+          Tip: to set one amount for a whole category (like 1.5 oz for all liquor), use Settings → Point of sale → Pour sizes → Pours by category.
+        </p>
+      ) : null}
       <ItemsurePosNotTrackedAsk pos={skipping} busy={busy} error={error} onConfirm={confirmSkip} onClose={() => setSkipping(null)} />
       <ItemsureItemNotSoldAsk
         itemName={item.name}

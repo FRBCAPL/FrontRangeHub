@@ -1,22 +1,25 @@
 import React, { useState } from 'react';
 import { needsContent, needsPieces, POUR_UNITS } from '../../utils/itemsurePosUsage.js';
 import { checkContent, contentForm, contentLabel, CONTENT_UNITS } from '../../utils/itemsureItemContent.js';
-import { DEFAULT_PIECES, isGroupUnit } from '../../utils/itemsureCategoryKind.js';
+import { DEFAULT_PIECES, isBagGroupUnit, isGroupUnit } from '../../utils/itemsureCategoryKind.js';
 import { singularUnit } from '../../utils/itemsureItemLook.js';
+import { pieceWordFromLabel } from '../../utils/itemsurePieceWord.js';
 import ItemsureSizePresetPick from './ItemsureSizePresetPick.jsx';
 import ItemsurePiecesField from './ItemsurePiecesField.jsx';
 
 const trimNum = (n) => (n == null ? '' : String(Math.round(n * 1000) / 1000));
 
 /**
- * "How much does one sale use?" for one matched item: e.g. 1.5 oz of rum, or 1 single from a
- * case. Pours in oz or ml out of something counted in bottles also ask once how much a bottle
- * holds; singles ask once how many come in the case. A `pour` with fromCategory (or a
- * `sizeFrom` / `piecesFrom`) comes from the item's category; saving here gives it its own.
- * onSave(amount|null, unit, contentMl|undefined, pieces|undefined).
+ * "How much does one sale use?" for one matched item: e.g. 1.5 oz of rum, 1 single from a
+ * case, or 1 portion from a bag. Pours in oz or ml out of something counted in bottles also ask
+ * once how much a bottle holds; portions ask once how many come in the bag/case. A `pour` with
+ * fromCategory (or a `sizeFrom` / `piecesFrom`) comes from the item's category; saving here
+ * gives it its own.
+ * onSave(amount|null, unit, contentMl|undefined, pieces|undefined, pieceLabel|undefined).
  */
 export default function ItemsurePosPourEdit({
-  item, unitCode, unit: countedUnit = null, pour, contentMl, sizeFrom = '', pieces, piecesFrom = '', piecesReady = false, canEdit, busy, onSave,
+  item, unitCode, unit: countedUnit = null, pour, contentMl, sizeFrom = '', pieces, piecesFrom = '',
+  pieceLabel = '', piecesReady = false, canEdit, busy, onSave,
 }) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState('');
@@ -24,10 +27,16 @@ export default function ItemsurePosPourEdit({
   const [size, setSize] = useState('');
   const [sizeUnit, setSizeUnit] = useState('ml');
   const [count, setCount] = useState('');
+  const [wordLabel, setWordLabel] = useState('');
   const unitName = singularUnit(item.unitName || 'unit').toLowerCase();
   const unitObj = countedUnit || { code: unitCode, name: item.unitName };
+  const about = `${item.name || ''} ${item.categoryName || ''}`;
+  const activeLabel = wordLabel || pieceLabel || '';
+  const word = pieceWordFromLabel(activeLabel, about);
   const offerSingles = piecesReady && (isGroupUnit(unitObj) || pour?.unit === 'piece');
-  const label = (u, n) => ({ base: unitName, piece: n === 1 ? `single from the ${unitName}` : `singles from the ${unitName}` }[u] || POUR_UNITS[u]);
+  const pickLabel = isBagGroupUnit(unitObj) || Boolean(pieceLabel) || Boolean(wordLabel);
+  const pieceLabelText = (n) => (n === 1 ? `${word.one} from the ${unitName}` : `${word.many} from the ${unitName}`);
+  const label = (u, n) => ({ base: unitName, piece: pieceLabelText(n) }[u] || POUR_UNITS[u]);
 
   const start = () => {
     setAmount(trimNum(pour?.amount ?? null));
@@ -35,7 +44,9 @@ export default function ItemsurePosPourEdit({
     const f = contentForm(contentMl);
     setSize(f.content_size);
     setSizeUnit(f.content_unit);
-    setCount(trimNum(pieces ?? DEFAULT_PIECES));
+    const fallback = pieces != null ? pieces : (isBagGroupUnit(unitObj) ? null : DEFAULT_PIECES);
+    setCount(trimNum(fallback));
+    setWordLabel(pieceLabel || '');
     setOpen(true);
   };
   const draft = { amount: Number(amount), unit };
@@ -50,7 +61,9 @@ export default function ItemsurePosPourEdit({
     if (!valid) return;
     const changedSize = askSize && Math.abs(sizeMl - (contentMl || 0)) > 0.01 ? sizeMl : undefined;
     const changedCount = askCount && n !== pieces ? n : undefined;
-    if (await onSave(Number(amount), unit, changedSize, changedCount)) setOpen(false);
+    const changedLabel = askCount && wordLabel !== (pieceLabel || '') ? wordLabel : undefined;
+    const piecesToSave = changedCount !== undefined ? n : (changedLabel !== undefined ? (pieces ?? n) : undefined);
+    if (await onSave(Number(amount), unit, changedSize, piecesToSave, changedLabel)) setOpen(false);
   };
 
   const fromCategory = pour?.fromCategory || '';
@@ -66,7 +79,7 @@ export default function ItemsurePosPourEdit({
         ) : null}
         {needsPieces(pour) && !pieces ? <span className="isu-badge">Count needed</span> : null}
         {needsPieces(pour) && pieces ? (
-          <span className="isu-muted isu-small">({trimNum(pieces)} in a {unitName}{piecesFrom ? `, uses ${piecesFrom}` : ''})</span>
+          <span className="isu-muted isu-small">({trimNum(pieces)} {word.many} in a {unitName}{piecesFrom ? `, uses ${piecesFrom}` : ''})</span>
         ) : null}
         {canEdit ? (
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={start}>
@@ -84,10 +97,10 @@ export default function ItemsurePosPourEdit({
         <span className="isu-pos-pour-inputs">
           <input type="number" inputMode="decimal" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Amount for each one sold" autoFocus />
           <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unit">
+            {offerSingles ? <option value="piece">{word.one} from the {unitName}</option> : null}
+            <option value="base">{unitName}</option>
             <option value="fl_oz">oz</option>
             <option value="ml">ml</option>
-            <option value="base">{unitName}</option>
-            {offerSingles ? <option value="piece">single from the {unitName}</option> : null}
           </select>
         </span>
         <span className="isu-muted isu-small">If Clover sells 2, this is counted twice.</span>
@@ -95,7 +108,7 @@ export default function ItemsurePosPourEdit({
       {askSize ? (
         <div className="isu-pos-pour-field">
           <span>One {unitName} holds{isGroupUnit(unitObj) ? ' (everything in it, added up)' : ''}</span>
-          <ItemsureSizePresetPick unit={unitObj} hint={`${item.name} ${item.categoryName || ''}`} valueMl={sizeMl} disabled={busy} onPick={(p) => { setSize(p.input.content_size); setSizeUnit(p.input.content_unit); }} />
+          <ItemsureSizePresetPick unit={unitObj} hint={about} valueMl={sizeMl} disabled={busy} onPick={(p) => { setSize(p.input.content_size); setSizeUnit(p.input.content_unit); }} />
           <span className="isu-pos-pour-inputs">
             <input type="number" inputMode="decimal" min="0" step="any" value={size} onChange={(e) => setSize(e.target.value)} aria-label={`How much one ${unitName} holds`} placeholder="750" />
             <select value={sizeUnit} onChange={(e) => setSizeUnit(e.target.value)} aria-label="Size unit">
@@ -104,7 +117,18 @@ export default function ItemsurePosPourEdit({
           </span>
         </div>
       ) : null}
-      {askCount ? <ItemsurePiecesField unitName={unitName} value={count} onChange={setCount} disabled={busy} about={`${item.name} ${item.categoryName || ''}`} /> : null}
+      {askCount ? (
+        <ItemsurePiecesField
+          unitName={unitName}
+          value={count}
+          onChange={setCount}
+          disabled={busy}
+          about={about}
+          pickLabel={pickLabel}
+          label={activeLabel}
+          onLabelChange={setWordLabel}
+        />
+      ) : null}
       <div className="isu-pos-ask-actions">
         <button type="submit" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy || !valid}>Save</button>
         {pour && !fromCategory ? (

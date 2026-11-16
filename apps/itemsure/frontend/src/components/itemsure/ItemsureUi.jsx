@@ -56,7 +56,11 @@ export function PageHead({ title, description, action }) {
   );
 }
 
-export function Modal({ open, title, onClose, wide = false, className = '', children }) {
+/**
+ * `headStart` sits left of the title (e.g. Edit). `subtitle` is a quiet line under the title.
+ * `ariaLabel` overrides the dialog name when `title` is long or visual-only.
+ */
+export function Modal({ open, title, subtitle = null, headStart = null, onClose, wide = false, nested = false, className = '', ariaLabel = null, children }) {
   const panelRef = useRef(null);
 
   useEffect(() => {
@@ -65,19 +69,32 @@ export function Modal({ open, title, onClose, wide = false, className = '', chil
 
   useEffect(() => {
     if (!open) return undefined;
+    // Nested dialogs listen in capture and stop Escape so the parent item window stays open.
     const onKey = (event) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Escape') return;
+      if (nested) event.stopImmediatePropagation();
+      onClose();
     };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+    document.addEventListener('keydown', onKey, nested);
+    return () => document.removeEventListener('keydown', onKey, nested);
+  }, [open, onClose, nested]);
 
   if (!open) return null;
   return (
-    <div className="isu-modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`isu-modal${wide ? ' is-wide' : ''}${className ? ` ${className}` : ''}`} role="dialog" aria-modal="true" aria-label={title} ref={panelRef}>
+    <div className={`isu-modal-backdrop${nested ? ' is-nested' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div
+        className={`isu-modal${wide ? ' is-wide' : ''}${className ? ` ${className}` : ''}${headStart ? ' has-head-start' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={ariaLabel || (typeof title === 'string' ? title : 'Dialog')}
+        ref={panelRef}
+      >
         <div className="isu-modal-head">
-          <h2>{title}</h2>
+          {headStart ? <div className="isu-modal-head-start">{headStart}</div> : null}
+          <div className="isu-modal-title">
+            <h2>{title}</h2>
+            {subtitle ? <p className="isu-modal-subtitle">{subtitle}</p> : null}
+          </div>
           <button type="button" className="isu-icon-btn" onClick={onClose} aria-label="Close">
             {'\u00d7'}
           </button>

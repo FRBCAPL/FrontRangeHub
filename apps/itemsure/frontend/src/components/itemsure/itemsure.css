@@ -301,6 +301,9 @@
   justify-content: center;
   background: rgba(0, 0, 0, 0.65);
 }
+.isu-modal-backdrop.is-nested {
+  z-index: 10060;
+}
 .isu-modal {
   width: 100%;
   max-width: 560px !important;

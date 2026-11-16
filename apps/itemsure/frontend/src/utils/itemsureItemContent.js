@@ -19,7 +19,7 @@ const CONTAINER_UNIT = /\b(bottles?|btls?|kegs?|barrels?|cans?|jugs?|carafes?|gr
 
 /**
  * What the item form asks, from what it's counted in: 'size' for containers ("One bottle holds
- * 750 ml"), 'pieces' for cases, packs and boxes ("One case has 24"), else null (each, pounds, liters…).
+ * 750 ml"), 'pieces' for cases, packs, boxes and bags ("One bag has 10"), else null (each, pounds, liters…).
  */
 export function unitAsks(unit) {
   if (!unit || VOLUME_ML[unit.code]) return null;

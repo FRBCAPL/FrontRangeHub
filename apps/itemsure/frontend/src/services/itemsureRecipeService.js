@@ -1,10 +1,14 @@
 import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
 import { setPosPour } from './itemsurePosService.js';
+import { addIngredientToRecipes as addIngredientToRecipesRpc } from './itemsureAlwaysWithService.js';
 
 // Recipes (a drink or dish built once from catalog items) and the Clover buttons that use them.
 // Every change goes through database functions that also write the buttons' ordinary matches,
 // so reports read them the same as hand-made ones. Nothing here changes stock or Clover.
+
+/** Append one ingredient to many recipes; buttons using them follow. See itemsureAlwaysWithService. */
+export const addIngredientToRecipes = addIngredientToRecipesRpc;
 
 const PROVIDER = 'clover';
 

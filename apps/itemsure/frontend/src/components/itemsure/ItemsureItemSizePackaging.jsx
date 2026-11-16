@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemPackages from '../../hooks/useItemPackages.js';
+import { isBagGroupUnit } from '../../utils/itemsureCategoryKind.js';
 import { unitAsks } from '../../utils/itemsureItemContent.js';
 import { pluralUnit, singularUnit } from '../../utils/itemsureItemLook.js';
 import ItemsureItemContentField from './ItemsureItemContentField.jsx';
@@ -39,6 +40,9 @@ export default function ItemsureItemSizePackaging({ form, setForm, unit, unitInf
           about={sizeHint || form.name}
           fallback={categoryPieces ? { pieces: categoryPieces.pieces, from: categoryPieces.fromCategory } : null}
           hint={categoryPieces ? `Leave it blank to use ${categoryPieces.fromCategory}'s number.` : ''}
+          pickLabel={isBagGroupUnit(unit) || 'piece_label' in form}
+          label={form.piece_label || ''}
+          onLabelChange={'piece_label' in form ? (v) => setForm((f) => ({ ...f, piece_label: v })) : null}
         />
       ) : null}
       {showPackaging ? (

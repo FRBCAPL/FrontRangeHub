@@ -16,17 +16,26 @@ test('slotsInUse: kept, levels, or stock other than 0; Loose only when actually 
 
 test('sortByAttention puts low first, then topping up, no amount, fine, no par, archived', () => {
   const items = [
-    { id: 'fine', is_active: true },
-    { id: 'nopar', is_active: true },
-    { id: 'old', is_active: false },
-    { id: 'low', is_active: true },
-    { id: 'empty', is_active: true },
-    { id: 'top', is_active: true },
-    { id: 'full', is_active: true },
+    { id: 'fine', name: 'Fine', is_active: true },
+    { id: 'nopar', name: 'No Par', is_active: true },
+    { id: 'old', name: 'Old', is_active: false },
+    { id: 'low', name: 'Low', is_active: true },
+    { id: 'empty', name: 'Empty', is_active: true },
+    { id: 'top', name: 'Top', is_active: true },
+    { id: 'full', name: 'Full', is_active: true },
   ];
   const status = { fine: 'above_minimum', nopar: null, old: 'low', low: 'low', empty: 'not_set_up', top: 'below_par', full: 'at_target' };
   const order = sortByAttention(items, (i) => ({ status: status[i.id] })).map((i) => i.id);
   assert.deepEqual(order, ['low', 'top', 'empty', 'fine', 'full', 'nopar', 'old']);
+});
+
+test('sortByAttention ties are A to Z by name', () => {
+  const items = [
+    { id: 'z', name: 'Zebra', is_active: true },
+    { id: 'a', name: 'Apple', is_active: true },
+  ];
+  const order = sortByAttention(items, () => ({ status: 'above_minimum' })).map((i) => i.name);
+  assert.deepEqual(order, ['Apple', 'Zebra']);
 });
 
 const locations = [

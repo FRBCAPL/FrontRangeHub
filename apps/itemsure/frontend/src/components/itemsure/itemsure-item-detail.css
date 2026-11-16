@@ -213,10 +213,37 @@
 }
 
 /* Details tab. */
+.isu-item-info {
+  display: grid;
+  gap: 14px;
+}
+
+.isu-item-info-section-title {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--isu-muted);
+}
+
+.isu-item-info-block {
+  padding: 4px 12px 8px;
+}
+
+.isu-item-info-block .isu-supplier-prices {
+  margin-bottom: 4px;
+}
+
 .isu-item-info dl {
-  margin: 0 0 12px;
+  margin: 0;
   display: grid;
   gap: 0;
+}
+
+.isu-item-info-block dl:last-child,
+.isu-item-info-block .isu-supplier-prices:last-child {
+  margin-bottom: 0;
 }
 
 .isu-item-info-row {
@@ -237,6 +264,60 @@
   overflow-wrap: anywhere;
 }
 
+/* Door buttons open nested sheets for long catalog blocks. */
+.isu-item-info-doors {
+  display: grid;
+  gap: 8px;
+}
+
+.isu-item-info-door {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  text-align: left;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-paper);
+  color: inherit;
+  cursor: pointer;
+}
+
+.isu-item-info-door:hover,
+.isu-item-info-door:focus-visible {
+  border-color: color-mix(in srgb, var(--isu-accent, #2a6) 45%, var(--isu-line));
+  outline: none;
+}
+
+.isu-item-info-door-title {
+  grid-column: 1;
+  grid-row: 1;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.isu-item-info-door-hint {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 0.85rem;
+  color: var(--isu-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.isu-item-info-door-chevron {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--isu-muted);
+}
+
 /* As-ordered supplier prices on the Details tab. */
 .isu-supplier-prices {
   margin: 0 0 12px;
@@ -250,6 +331,28 @@
   padding: 0;
   display: grid;
   gap: 8px;
+}
+
+.isu-supplier-price-more {
+  margin-top: 8px;
+}
+
+/* Goes with sales (packaging taken once per matching Clover sale). */
+.isu-always-with-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.isu-always-with-row {
+  display: grid;
+  gap: 6px;
+}
+
+.isu-item-always-attached p {
+  margin: 0;
 }
 
 .isu-supplier-price-list__best {

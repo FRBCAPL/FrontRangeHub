@@ -65,6 +65,7 @@ export async function listCatalog(organizationId) {
       contentMl: contents?.get(item.id) ?? null,
       categorySize: asks(item) === 'size' ? categorySize(item, categoriesById, categoryDefaults, unitsById.get(item.base_unit_id)) : null,
       pieces: pieces?.get(item.id) ?? null,
+      pieceLabel: pieces?.labels?.get(item.id) || '',
       categoryPieces: asks(item) === 'pieces' ? categoryPieces(item, categoriesById, categoryDefaults, unitsById.get(item.base_unit_id)) : null,
       notSoldInPos: Boolean(notSold?.has(item.id)),
     })),
