@@ -1,9 +1,11 @@
 // Taking Clover sales off stock: which windows to bring in and take off, and one combined result.
 
 const HOUR = 3600 * 1000;
-const MAX_WINDOW = 44 * 24 * HOUR;
+/** How much to bring in and take off at once. Short windows keep Clover from rate-limiting a busy bar. */
+export const TAKE_SYNC_HOURS = 12;
+const MAX_WINDOW = TAKE_SYNC_HOURS * HOUR;
 
-/** Finished-hour windows from `throughIso` up to the start of the current hour, at most 44 days each. */
+/** Finished-hour windows from `throughIso` up to the start of the current hour, at most TAKE_SYNC_HOURS each. */
 export function takeWindows(throughIso, now = Date.now()) {
   const end = Math.floor(now / HOUR) * HOUR;
   const windows = [];

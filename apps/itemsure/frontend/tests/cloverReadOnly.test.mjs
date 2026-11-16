@@ -28,6 +28,11 @@ test('the Clover client only ever sends GET, with no body', () => {
   assert.doesNotMatch(body, /method:(?!\s*'GET')/);
 });
 
+test('a busy Clover (429) is retried a few times before giving up', () => {
+  assert.match(client, /RETRIES_429\s*=\s*3/);
+  assert.match(code(client), /res\.status\s*===\s*429/);
+});
+
 test('the Clover addresses are the two fixed API hosts', () => {
   const hosts = [...client.matchAll(/https:\/\/[^'"`\s]+/g)].map((m) => m[0]).sort();
   assert.deepEqual(hosts, ['https://api.clover.com', 'https://apisandbox.dev.clover.com']);

@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeTakeResults, moveSpot, orderedSpots, shortByItem, takeWindows } from '../src/utils/itemsurePosStock.js';
+import {
+  mergeTakeResults, moveSpot, orderedSpots, shortByItem, TAKE_SYNC_HOURS, takeWindows,
+} from '../src/utils/itemsurePosStock.js';
 
 const HOUR = 3600 * 1000;
 const at = (iso) => Date.parse(iso);
@@ -13,14 +15,15 @@ test('takeWindows covers finished hours only', () => {
   assert.deepEqual(takeWindows(null, now), []);
 });
 
-test('takeWindows splits long gaps into 44-day pieces', () => {
-  const from = '2026-08-01T00:00:00Z';
-  const now = at(from) + 100 * 24 * HOUR + 30 * 60 * 1000;
+test('takeWindows splits long gaps into short pieces so Clover is not asked for days at once', () => {
+  assert.equal(TAKE_SYNC_HOURS, 12);
+  const from = '2026-11-01T00:00:00Z';
+  const now = at(from) + 30 * HOUR + 30 * 60 * 1000;
   const windows = takeWindows(from, now);
   assert.equal(windows.length, 3);
-  assert.equal(windows[0][0], '2026-08-01T00:00:00.000Z');
+  assert.deepEqual(windows[0], ['2026-11-01T00:00:00.000Z', '2026-11-01T12:00:00.000Z']);
   assert.equal(windows[1][0], windows[0][1]);
-  assert.equal(windows[2][1], new Date(at(from) + 100 * 24 * HOUR).toISOString());
+  assert.deepEqual(windows[2], ['2026-11-02T00:00:00.000Z', '2026-11-02T06:00:00.000Z']);
 });
 
 test('mergeTakeResults adds up and lists missing setups once', () => {

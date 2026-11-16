@@ -1,7 +1,9 @@
 import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
 import { mergeTakeResults, takeWindows } from '../utils/itemsurePosStock.js';
+import { salesCovered } from '../utils/itemsurePosUsage.js';
 import { syncCloverSales } from './itemsurePosService.js';
+import { listSalesSyncs } from './itemsurePosSalesService.js';
 
 // Taking Clover sales off stock. The database does the math and the stock changes
 // (itemsure.take_pos_sales), so tapping twice or on two phones never takes sales twice.
@@ -38,7 +40,8 @@ export async function setSalesSpots(locationId, areaIds) {
 }
 
 /**
- * Brings in new Clover sales, then takes every finished hour off stock, window by window.
+ * Brings in new Clover sales (skipping hours already brought in), then takes every finished
+ * hour off stock, in short windows so a busy Clover is less likely to rate-limit.
  * Returns { taken, counted, notSetUp, short: [...], missing: [...], to, nothing }.
  */
 export async function takeSalesOffStock(organizationId) {
@@ -47,9 +50,13 @@ export async function takeSalesOffStock(organizationId) {
   if (!status.on) throw new Error('Taking sales off stock is switched off.');
   const windows = takeWindows(status.stock_through);
   if (!windows.length) return { ...mergeTakeResults([]), nothing: true, next: status.stock_through };
+  let syncs = await listSalesSyncs(organizationId);
   const results = [];
   for (const [from, to] of windows) {
-    await syncCloverSales(organizationId, from, to);
+    if (!salesCovered(syncs, from, to)) {
+      await syncCloverSales(organizationId, from, to);
+      syncs = await listSalesSyncs(organizationId);
+    }
     results.push(assertOk(await itemsure.rpc('take_pos_sales', { p_organization: organizationId, p_through: to }), 'take sales off stock'));
   }
   return { ...mergeTakeResults(results), nothing: results.every((r) => r?.nothing) };
