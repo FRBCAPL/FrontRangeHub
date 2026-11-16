@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ALL_ITEMS, labelWithIcon, NO_CATEGORY, rootOf, searchCategories } from '../../utils/itemsureCategories.js';
-import { Modal } from './ItemsureUi.jsx';
+import { Modal, Tip } from './ItemsureUi.jsx';
 import ItemsureCategoryRow from './ItemsureCategoryRow.jsx';
 import ItemsureSubcategoryPanel from './ItemsureSubcategoryPanel.jsx';
 
@@ -119,10 +119,14 @@ export default function ItemsureCategoryPanel({ open, onClose, tree, count, tota
           {(onReorder && tree.roots.length > 1) || archivedCount ? (
             <div className="isu-catpanel-tools">
               {onReorder && tree.roots.length > 1 ? (
-                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => finish(() => onReorder(''))}>Change order</button>
+                <Tip label="Drag main categories into a new order">
+                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => finish(() => onReorder(''))}>Change order</button>
+                </Tip>
               ) : null}
               {archivedCount ? (
-                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => finish(onShowArchived)}>Archived ({archivedCount})</button>
+                <Tip label="Categories you’ve hidden from the chip row">
+                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => finish(onShowArchived)}>Archived ({archivedCount})</button>
+                </Tip>
               ) : null}
             </div>
           ) : null}

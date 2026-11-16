@@ -1,17 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import usePosRecipeUses from '../../hooks/usePosRecipeUses.js';
 import { setButtonPour } from '../../services/itemsureRecipeService.js';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import {
-  addPosLink, listItemContents, listPosItems, listPosLinks, listPosPours, removePosLink, saveItemContent, setPosNotTracked,
+  addPosLink, ignorePosMatch, ignorePosMatches, listItemContents, listPosItems, listPosLinks,
+  listPosMatchIgnores, listPosPours, removePosLink, saveItemContent, setPosNotTracked,
 } from '../../services/itemsurePosService.js';
 import { withCategoryDefaults } from '../../utils/itemsureCategoryDefaults.js';
 import { listItemPieces, saveItemPieces } from '../../services/itemsureItemContentService.js';
 import {
   groupByCategory, groupByMainMatch, MATCH_FILTERS, matchableItems, posRows, sortByCategory, suggestMatch,
 } from '../../utils/itemsurePosMatch.js';
-import { ErrorNote, Modal } from './ItemsureUi.jsx';
+import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import { ErrorNote, Modal, Tip } from './ItemsureUi.jsx';
 import ItemsurePosMatchRow from './ItemsurePosMatchRow.jsx';
 import ItemsurePosNewRecipe from './ItemsurePosNewRecipe.jsx';
 import ItemsurePosNotTrackedAsk from './ItemsurePosNotTrackedAsk.jsx';
@@ -24,6 +27,7 @@ import ItemsurePosSuggestReview from './ItemsurePosSuggestReview.jsx';
  * Clover items are brought in again; `onChanged` runs after anything here is saved.
  */
 export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, onChanged }) {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('todo');
   const [search, setSearch] = useState('');
@@ -37,17 +41,21 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
 
   const load = useCallback(async () => {
     try {
-      const [posItems, links, catalog, ownPours, ownContents, ownPieces] = await Promise.all([
+      const [posItems, links, catalog, ownPours, ownContents, ownPieces, ignores] = await Promise.all([
         listPosItems(organizationId), listPosLinks(organizationId), listCatalog(organizationId),
         listPosPours(organizationId), listItemContents(organizationId), listItemPieces(organizationId),
+        listPosMatchIgnores(organizationId),
       ]);
       const filled = withCategoryDefaults({
         links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
       });
-      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, ownPours, piecesReady: ownPieces !== null });
+      setData({
+        posItems, links, items: catalog.items, units: catalog.units, ...filled, ownPours,
+        piecesReady: ownPieces !== null, ignores: ignores || new Map(), ignoresReady: ignores !== null,
+      });
     } catch (e) {
       setError(e.message);
-      setData((d) => d || { posItems: [], links: new Map(), items: [], units: [], pours: null, contents: null });
+      setData((d) => d || { posItems: [], links: new Map(), items: [], units: [], pours: null, contents: null, ignores: new Map() });
     }
   }, [organizationId, setError]);
 
@@ -83,7 +91,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     if (!data || !canMatch) return map;
     for (const p of rows) {
       if ((data.links.get(p.external_id) || []).length) continue;
-      const s = suggestMatch(p.name, choices);
+      const s = suggestMatch(p.name, choices, { ignoreItemIds: data.ignores?.get(p.external_id) || null });
       if (s) map.set(p.external_id, s);
     }
     return map;
@@ -108,6 +116,10 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     const first = !(data.links.get(externalId) || []).length;
     await addPosLink(organizationId, externalId, itemId);
     if (first) setAsk(externalId, true);
+    await refresh();
+  });
+  const ignoreSuggestion = (externalId, itemId) => run(async () => {
+    await ignorePosMatch(organizationId, externalId, itemId);
     await refresh();
   });
   const remove = (externalId, itemId) => run(async () => {
@@ -156,6 +168,14 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
     await recipeUses.create(newRecipeFor.external_id, name, lines);
     await refresh();
   });
+  const addItemFor = (p) => {
+    const query = new URLSearchParams({
+      name: (p.name || '').trim(),
+      from: 'pos',
+      clover: p.external_id,
+    });
+    navigate(`${ITEMSURE_PATH}/items/new?${query}`);
+  };
   const grouped = filter === 'done';
   const row = (p) => (
     <ItemsurePosMatchRow
@@ -170,6 +190,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       asking={asking.has(p.external_id) && (data.links.get(p.external_id) || []).length > 0}
       onDone={() => setAsk(p.external_id, false)}
       onAdd={(itemId) => add(p.external_id, itemId)}
+      onIgnoreSuggestion={data.ignoresReady ? (itemId) => ignoreSuggestion(p.external_id, itemId) : null}
       onRemove={(itemId) => remove(p.external_id, itemId)}
       pourInfo={pourInfo}
       onSavePour={(itemId, amount, unit, contentMl, pieces, pieceLabel) => savePour(p.external_id, itemId, amount, unit, contentMl, pieces, pieceLabel)}
@@ -179,15 +200,21 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
       onUseRecipe={(recipeId) => applyRecipe(p.external_id, recipeId)}
       onStopRecipe={() => stopRecipe(p.external_id)}
       onNewRecipe={recipeUses.ready ? () => openNewRecipe(p) : null}
+      onAddItem={canMatch ? () => addItemFor(p) : null}
     />
   );
   const matchAll = () => run(async () => {
     for (const [externalId, item] of suggestions) await addPosLink(organizationId, externalId, item.id);
     await refresh();
   });
-  const matchSome = async (list) => {
+  const matchSome = async (list, { ignoreUnticked = [] } = {}) => {
     const ok = await run(async () => {
       for (const { pos, item } of list) await addPosLink(organizationId, pos.external_id, item.id);
+      if (data.ignoresReady) {
+        for (const { pos, item } of ignoreUnticked) {
+          await ignorePosMatches(organizationId, pos.external_id, [item.id]);
+        }
+      }
     });
     await refresh();
     if (ok) setReviewing(false);
@@ -196,25 +223,39 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
   return (
     <div className="isu-stack isu-pos-match">
       <p className="isu-muted isu-small">
-        Every button on your Clover menu. Link each one to what it uses from your stock, and how much (like 1.5 oz of rum; 2 sold = 3 oz). A drink can use more than one item, or a recipe from Inventory → Recipes. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Stop tracking button. They move to Not tracked. This never changes stock or Clover.
+        Every button on your Clover menu. Link each one to what it uses from your stock, and how much (like 1.5 oz of rum, or 1 single from a box of chips). Match an existing item, add a new one, or use a recipe. For generic buttons (like a $10 pitcher when you can&apos;t tell which beer), tap Stop tracking button. They move to Not tracked. This never changes stock or Clover.
       </p>
       <div className="isu-pos-filters" role="group" aria-label="Show">
-        {Object.entries(MATCH_FILTERS).map(([key, label]) => (
-          <button key={key} type="button" className={`isu-chip${filter === key ? ' is-active' : ''}`} aria-pressed={filter === key} onClick={() => setFilter(key)}>
-            {label} ({counts[key] || 0})
-          </button>
-        ))}
+        {Object.entries(MATCH_FILTERS).map(([key, label]) => {
+          const tip = {
+            todo: 'Buttons that still need a stock link',
+            done: 'Buttons already linked to stock',
+            skip: 'Generic buttons you chose not to track',
+            all: 'Every Clover button on the menu',
+          }[key];
+          return (
+            <Tip key={key} label={tip}>
+              <button type="button" className={`isu-chip${filter === key ? ' is-active' : ''}`} aria-pressed={filter === key} onClick={() => setFilter(key)}>
+                {label} ({counts[key] || 0})
+              </button>
+            </Tip>
+          );
+        })}
       </div>
       <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find a Clover item" aria-label="Find a Clover item" />
       {canMatch && suggestions.size ? (
         <div className="isu-pos-actions">
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => setReviewing(true)}>
-            Review {suggestions.size} suggestion{suggestions.size === 1 ? '' : 's'}
-          </button>
-          {suggestions.size > 1 ? (
-            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={matchAll}>
-              Match all {suggestions.size} suggestions
+          <Tip label="Check each suggested name match before saving">
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => setReviewing(true)}>
+              Review {suggestions.size} suggestion{suggestions.size === 1 ? '' : 's'}
             </button>
+          </Tip>
+          {suggestions.size > 1 ? (
+            <Tip label="Link every suggested match at once — never changes stock">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={matchAll}>
+                Match all {suggestions.size} suggestions
+              </button>
+            </Tip>
           ) : null}
         </div>
       ) : null}
@@ -233,6 +274,7 @@ export default function ItemsurePosMatch({ organizationId, canMatch, reloadKey, 
             suggestions={rows.filter((p) => suggestions.has(p.external_id)).map((p) => ({ pos: p, item: suggestions.get(p.external_id) }))}
             busy={busy}
             error={error}
+            canIgnore={Boolean(data.ignoresReady)}
             onMatch={matchSome}
             onCancel={() => setReviewing(false)}
           />

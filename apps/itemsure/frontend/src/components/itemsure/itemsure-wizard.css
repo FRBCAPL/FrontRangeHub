@@ -9,8 +9,14 @@
   gap: 6px;
 }
 
-.isu-wizard-step > button,
-.isu-wizard-step > span {
+/* Step chrome lives on the control itself — not on a Tip wrapper (.isu-tip). */
+.isu-wizard-step > .isu-tip {
+  display: inline-flex;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.isu-wizard-step-hit {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -24,13 +30,22 @@
   font-size: 0.9rem;
 }
 
-.isu-wizard-step > button {
+button.isu-wizard-step-hit {
   cursor: pointer;
   color: var(--isu-ink);
 }
 
-.isu-wizard-step > button:hover {
+button.isu-wizard-step-hit:hover {
   border-color: var(--isu-pine-line);
+}
+
+button.isu-wizard-step-hit:focus {
+  outline: none;
+}
+
+button.isu-wizard-step-hit:focus-visible {
+  outline: 3px solid var(--isu-pine);
+  outline-offset: 2px;
 }
 
 .isu-wizard-num {
@@ -49,7 +64,7 @@
   color: var(--isu-pine);
 }
 
-.isu-wizard-step.is-current > span {
+.isu-wizard-step.is-current .isu-wizard-step-hit {
   border-color: var(--isu-pine);
   color: var(--isu-ink);
   font-weight: 600;
@@ -65,8 +80,7 @@
     display: none;
   }
 
-  .isu-wizard-step:not(.is-current) > button,
-  .isu-wizard-step:not(.is-current) > span {
+  .isu-wizard-step:not(.is-current) .isu-wizard-step-hit {
     padding-right: 4px;
   }
 }
@@ -274,7 +288,8 @@
 }
 
 /* Tighter spacing so more of each step fits on screen. */
-.isu-app .isu-wizard {
+.isu-app .isu-page.isu-wizard {
+  padding-bottom: 24px;
   gap: 12px;
 }
 
@@ -301,6 +316,126 @@
 
 .isu-wizard-intro {
   padding-bottom: 8px;
+}
+
+/* Warn & restock + Check & save: fit without scrolling on a normal laptop view. */
+.isu-app .isu-wizard--fit {
+  gap: 8px;
+}
+
+.isu-app .isu-wizard--fit .isu-page-head h1 {
+  font-size: 1.28rem;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-body {
+  padding: 10px 12px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-body .isu-stack,
+.isu-app .isu-wizard--fit .isu-wizard-fit-step {
+  gap: 8px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-intro {
+  padding-bottom: 4px;
+  gap: 2px;
+  border-bottom: none;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-title {
+  font-size: 1.02rem;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-intro .isu-muted {
+  font-size: 0.88rem;
+}
+
+.isu-app .isu-wizard--fit .isu-check--tight {
+  min-height: 32px;
+  gap: 6px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-places {
+  gap: 8px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-place {
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-place-head {
+  gap: 6px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-onhand {
+  padding: 2px 8px;
+  font-size: 0.85rem;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-levels {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.isu-app .isu-wizard--fit .isu-level-suggest--compact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.isu-app .isu-wizard--fit .isu-level-suggest--compact p {
+  margin: 0;
+}
+
+.isu-app .isu-wizard--fit .isu-topoff--compact {
+  gap: 6px;
+  padding: 8px 10px;
+}
+
+.isu-app .isu-wizard--fit .isu-topoff-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-section {
+  gap: 6px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-section + .isu-wizard-section {
+  padding-top: 8px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-section-head h3 {
+  font-size: 0.95rem;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-summary--dense {
+  gap: 2px 12px;
+  font-size: 0.9rem;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-place--line {
+  gap: 2px;
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-place-line {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--isu-muted);
+}
+
+.isu-app .isu-wizard--fit .isu-wizard-nav .isu-btn {
+  min-height: 40px;
+  padding: 8px 16px;
 }
 
 .isu-wizard-nav > :last-child {
@@ -451,6 +586,18 @@
 .isu-app .isu-topoff-input { width: 4.5em; text-align: center; font-weight: 700; }
 .isu-app .isu-topoff-quick { display: flex; flex-wrap: wrap; gap: 6px; }
 .isu-app .isu-topoff p { margin: 0; }
+.isu-app .isu-wizard--fit .isu-topoff--compact {
+  margin-top: 4px;
+  padding: 8px 10px;
+  gap: 6px;
+}
+.isu-app .isu-topoff-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
 
 /* Size and packaging, together under "counted in". */
 .isu-app .isu-size-packaging {
@@ -465,6 +612,57 @@
 .isu-app .isu-size-packaging .isu-packaging { margin: 0; }
 .isu-app .isu-size-packaging .isu-packaging h3 { font-size: 0.95rem; }
 .isu-app .isu-size-packaging-more { justify-self: start; }
+
+/* Counted in: keep unit + pack choices compact so picking numbers fits on screen. */
+.isu-app .isu-wizard-basics .isu-wizard-count {
+  gap: 10px;
+}
+.isu-app .isu-wizard-basics .isu-size-packaging {
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+}
+.isu-app .isu-wizard-basics .isu-size-packaging > h3 {
+  font-size: 0.95rem;
+}
+.isu-app .isu-wizard-basics .isu-pieces {
+  gap: 6px;
+}
+.isu-app .isu-wizard-basics .isu-pieces-sentence {
+  font-size: 0.95rem;
+}
+.isu-app .isu-wizard-basics .isu-pieces-sentence strong {
+  font-size: 1.1rem;
+}
+.isu-app .isu-wizard-basics .isu-pieces-example,
+.isu-app .isu-wizard-basics .isu-pieces .isu-hint {
+  font-size: 0.82rem;
+}
+.isu-app .isu-wizard-basics .isu-size-presets {
+  gap: 4px;
+}
+.isu-app .isu-wizard-basics .isu-size-presets .isu-chip {
+  min-height: 30px;
+  padding: 3px 10px;
+  font-size: 0.82rem;
+}
+.isu-app .isu-wizard-basics .isu-size-presets--counts .isu-chip {
+  min-width: 2.1rem;
+  padding: 3px 7px;
+  justify-content: center;
+}
+.isu-app .isu-wizard-basics .isu-pieces-other {
+  gap: 6px;
+}
+.isu-app .isu-wizard-basics .isu-pieces-other input {
+  width: 88px;
+  min-height: 34px;
+}
+.isu-app .isu-wizard-basics .isu-size-packaging-more {
+  min-height: 34px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+}
 
 /* How much one counted unit holds (item_contents). */
 .isu-app .isu-item-content-inputs { display: flex; gap: 8px; max-width: 320px; }

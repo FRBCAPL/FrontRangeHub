@@ -1,4 +1,5 @@
 import React from 'react';
+import Tip from './ItemsureTip.jsx';
 
 const gap = <span className="isu-catpanel-gap" aria-hidden="true" />;
 
@@ -16,9 +17,11 @@ export default function ItemsureCategoryRow({ label, count, on, sub = false, onP
       {subsColumn ? subs || gap : null}
       {editable ? (
         onEdit ? (
-          <button type="button" className="isu-catpanel-edit" aria-label={`Edit ${label}`} title={`Edit ${label}`} onClick={onEdit}>
-            <span aria-hidden="true">{'\u270E'}</span>
-          </button>
+          <Tip label={`Rename or change ${label}`}>
+            <button type="button" className="isu-catpanel-edit" aria-label={`Edit ${label}`} onClick={onEdit}>
+              <span aria-hidden="true">{'\u270E'}</span>
+            </button>
+          </Tip>
         ) : gap
       ) : null}
     </li>

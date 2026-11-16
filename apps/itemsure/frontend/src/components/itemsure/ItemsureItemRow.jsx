@@ -7,14 +7,20 @@ import { StockAmount as Amount, StockBar } from './ItemsureStockBits.jsx';
 import ItemsureItemMeta, { spotCount } from './ItemsureItemMeta.jsx';
 import useFitText from '../../hooks/useFitText.js';
 import { isLetterIcon } from '../../utils/itemsureIcons.js';
+import Tip from './ItemsureTip.jsx';
 
 /** On hand vs par in a pill coloured by status, with a check when it's fine. */
 function Pill({ summary, unitName, pieces, tone, hidden = false }) {
   if (!summary) return null;
   const status = summary.status ? TARGET_STATUS[summary.status] : null;
+  const okLabel = status?.label || 'Stock looks fine';
   return (
     <div className={`isu-stockcard-pill isu-stockcard-pill--${tone}${hidden ? ' isu-stockcard-mirror' : ''}`} aria-hidden={hidden || undefined}>
-      {tone === 'ok' ? <span className="isu-stockcard-ok" title={status?.label} aria-label={hidden ? undefined : status?.label}>{'\u2713'}</span> : null}
+      {tone === 'ok' ? (
+        <Tip label={okLabel}>
+          <span className="isu-stockcard-ok" aria-label={hidden ? undefined : okLabel}>{'\u2713'}</span>
+        </Tip>
+      ) : null}
       <Amount summary={summary} unitName={unitName} pieces={pieces} />
     </div>
   );
@@ -25,9 +31,11 @@ function CountButton({ item, counted, onCount }) {
   return (
     <div className="isu-stockcard-actions">
       {counted ? (
-        <button type="button" className="isu-stockcard-counted" onClick={onCount} aria-label={`Edit the count for ${item.name}`} title="Edit the count">
-          {'\u2713'} Counted
-        </button>
+        <Tip label="Edit this count">
+          <button type="button" className="isu-stockcard-counted" onClick={onCount} aria-label={`Edit the count for ${item.name}`}>
+            {'\u2713'} Counted
+          </button>
+        </Tip>
       ) : (
         <button type="button" className="isu-stockcard-edit is-count" onClick={onCount} aria-label={`Add ${item.name} to the count`}>Add to count</button>
       )}
@@ -62,14 +70,15 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
   const link = <Link ref={nameRef} {...itemLink(item.id)} className="isu-stockcard-link">{item.name}</Link>;
 
   const badge = (
-    <span
-      className={`isu-stockcard-badge${hue === null ? ' is-plain' : ''}${icon && !isLetterIcon(icon) ? ' is-icon' : ''}`}
-      style={hue === null ? undefined : { '--badge-hue': hue }}
-      title={item.categoryName || 'No category'}
-      aria-hidden="true"
-    >
-      {icon || itemInitials(item.name)}
-    </span>
+    <Tip label={item.categoryName || 'No category'}>
+      <span
+        className={`isu-stockcard-badge${hue === null ? ' is-plain' : ''}${icon && !isLetterIcon(icon) ? ' is-icon' : ''}`}
+        style={hue === null ? undefined : { '--badge-hue': hue }}
+        aria-hidden="true"
+      >
+        {icon || itemInitials(item.name)}
+      </span>
+    </Tip>
   );
 
   if (compact) {

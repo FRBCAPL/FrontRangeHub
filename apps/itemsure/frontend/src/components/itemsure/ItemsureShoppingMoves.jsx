@@ -3,6 +3,7 @@ import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { spotLabel } from '../../utils/itemsureShoppingList.js';
 import { site } from '../../data/itemsureTerms.js';
+import Tip from './ItemsureTip.jsx';
 
 const fromLabel = (move, withLocation) =>
   withLocation || !move.same_location ? `${move.location_name} \u00b7 ${move.area_name || NO_AREA_LABEL}` : move.area_name || NO_AREA_LABEL;
@@ -30,9 +31,13 @@ export default function ItemsureShoppingMoves({ moves, canTransfer, withLocation
             {canTransfer ? (
               <div className="isu-restock-move-actions isu-shop-move-actions">
                 {move.same_location ? null : (
-                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('plan', rec, move)}>Plan</button>
+                  <Tip label="Schedule a move between sites for later">
+                    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('plan', rec, move)}>Plan</button>
+                  </Tip>
                 )}
-                <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => onAction('transfer', rec, move)}>Transfer</button>
+                <Tip label="Move stock now from the spare place">
+                  <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => onAction('transfer', rec, move)}>Transfer</button>
+                </Tip>
               </div>
             ) : null}
           </li>

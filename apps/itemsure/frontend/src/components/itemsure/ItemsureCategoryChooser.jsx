@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { categoryTree, rootOf, searchCategories } from '../../utils/itemsureCategories.js';
+import { byCategoryName, categoryTree, rootOf, searchCategoriesAlpha } from '../../utils/itemsureCategories.js';
 import { Modal } from './ItemsureUi.jsx';
 import ItemsureCategoryQuickAdd from './ItemsureCategoryQuickAdd.jsx';
 
@@ -38,7 +38,7 @@ export default function ItemsureCategoryChooser({
   const [query, setQuery] = useState('');
   const [inside, setInside] = useState(null);
   const searching = query.trim() !== '';
-  const groups = searchCategories(tree, query);
+  const groups = searchCategoriesAlpha(tree, query);
   const root = inside ? tree.byId.get(inside) : null;
 
   // Opening again starts in the chosen category's main one, if it has subcategories.
@@ -103,7 +103,7 @@ export default function ItemsureCategoryChooser({
               note={noteFor(root.id)}
               onPick={() => choose(root.id)}
             />
-            {tree.childrenOf(root.id).map((c) => row(c, true))}
+            {[...tree.childrenOf(root.id)].sort(byCategoryName).map((c) => row(c, true))}
           </ul>
           {canManage ? <ItemsureCategoryQuickAdd key={root.id} organizationId={organizationId} parent={root} onCreated={created} /> : null}
         </div>

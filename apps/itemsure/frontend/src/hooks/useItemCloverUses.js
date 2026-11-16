@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listCatalog } from '../services/itemsureItemService.js';
-import { listItemContents, listPosItems, listPosLinks, listPosPours } from '../services/itemsurePosService.js';
+import { listItemContents, listPosItems, listPosLinks, listPosMatchIgnores, listPosPours } from '../services/itemsurePosService.js';
 import { listItemPieces } from '../services/itemsureItemContentService.js';
 import { withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
 
@@ -14,14 +14,18 @@ export default function useItemCloverUses(organizationId) {
 
   const load = useCallback(async () => {
     try {
-      const [posItems, links, catalog, ownPours, ownContents, ownPieces] = await Promise.all([
+      const [posItems, links, catalog, ownPours, ownContents, ownPieces, ignores] = await Promise.all([
         listPosItems(organizationId), listPosLinks(organizationId), listCatalog(organizationId),
         listPosPours(organizationId), listItemContents(organizationId), listItemPieces(organizationId),
+        listPosMatchIgnores(organizationId),
       ]);
       const filled = withCategoryDefaults({
         links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: catalog.items, categories: catalog.categories, defaults: catalog.categoryDefaults, units: catalog.units,
       });
-      setData({ posItems, links, items: catalog.items, units: catalog.units, ...filled, piecesReady: ownPieces !== null });
+      setData({
+        posItems, links, items: catalog.items, units: catalog.units, ...filled,
+        piecesReady: ownPieces !== null, ignores: ignores || new Map(),
+      });
       setError('');
     } catch (e) {
       setError(e.message);

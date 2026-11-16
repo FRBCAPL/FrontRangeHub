@@ -45,7 +45,7 @@ export default function ItemsurePiecesField({
         {own === null && fallback ? <span className="isu-muted isu-small"> (from {fallback.from})</span> : null}
       </p>
       {pickLabel && onLabelChange ? (
-        <div className="isu-size-presets" role="group" aria-label="What to call them">
+        <div className="isu-size-presets isu-size-presets--words" role="group" aria-label="What to call them">
           {choices.map((w) => (
             <button
               key={w.many}
@@ -53,6 +53,7 @@ export default function ItemsurePiecesField({
               className={`isu-chip${activeMany === w.many ? ' is-active' : ''}`}
               aria-pressed={activeMany === w.many}
               disabled={disabled}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => pickWord(w.many)}
             >
               {w.many}
@@ -60,13 +61,13 @@ export default function ItemsurePiecesField({
           ))}
         </div>
       ) : null}
-      <div className="isu-size-presets">
+      <div className="isu-size-presets isu-size-presets--counts" role="group" aria-label={`How many ${activeMany} in one ${unitName}`}>
         {COMMON.map((n) => (
-          <button key={n} type="button" className={`isu-chip${text === String(n) ? ' is-active' : ''}`} aria-pressed={text === String(n)} disabled={disabled} onClick={() => pick(n)}>
+          <button key={n} type="button" className={`isu-chip${text === String(n) ? ' is-active' : ''}`} aria-pressed={text === String(n)} disabled={disabled} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(n)}>
             {n}
           </button>
         ))}
-        <button type="button" className={`isu-chip${showOther ? ' is-active' : ''}`} aria-pressed={showOther} disabled={disabled} onClick={openOther}>
+        <button type="button" className={`isu-chip${showOther ? ' is-active' : ''}`} aria-pressed={showOther} disabled={disabled} onMouseDown={(e) => e.preventDefault()} onClick={openOther}>
           Other
         </button>
       </div>

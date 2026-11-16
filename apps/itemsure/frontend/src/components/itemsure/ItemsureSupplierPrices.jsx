@@ -2,6 +2,7 @@ import React, { useEffect, useId, useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { formatPrice, supplierPriceRows } from '../../utils/itemsureSupplierPrices.js';
 import { ErrorNote } from './ItemsureUi.jsx';
+import Tip from './ItemsureTip.jsx';
 
 /**
  * Compare as-ordered prices across an item's suppliers, and (when allowed) edit price + product code.
@@ -59,7 +60,11 @@ function PriceView({ row, cheapest }) {
       <span className="isu-supplier-price-name">
         {row.icon ? `${row.icon} ` : ''}{row.name}
         {row.isMain ? <span className="isu-muted isu-small"> · usual</span> : null}
-        {cheapest ? <span className="isu-supplier-price-tag">cheapest</span> : null}
+        {cheapest ? (
+          <Tip label="Shopping list defaults here unless you pick another for this trip">
+            <span className="isu-supplier-price-tag">cheapest</span>
+          </Tip>
+        ) : null}
         {!row.is_active ? <span className="isu-muted isu-small"> (archived)</span> : null}
       </span>
       <span className="isu-supplier-price-amount">{formatPrice(row.price) || '—'}</span>
@@ -92,7 +97,11 @@ function PriceEdit({ row, cheapest, onSave }) {
       <div className="isu-supplier-price-name">
         {row.icon ? `${row.icon} ` : ''}{row.name}
         {row.isMain ? <span className="isu-muted isu-small"> · usual</span> : null}
-        {cheapest ? <span className="isu-supplier-price-tag">cheapest</span> : null}
+        {cheapest ? (
+          <Tip label="Shopping list defaults here unless you pick another for this trip">
+            <span className="isu-supplier-price-tag">cheapest</span>
+          </Tip>
+        ) : null}
         {!row.is_active ? <span className="isu-muted isu-small"> (archived)</span> : null}
       </div>
       <label className="isu-supplier-price-field" htmlFor={`${id}-price`}>

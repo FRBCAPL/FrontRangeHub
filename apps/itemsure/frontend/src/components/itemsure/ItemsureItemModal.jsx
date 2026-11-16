@@ -11,7 +11,7 @@ import { topUpCanWait } from '../../utils/itemsureItemLook.js';
 import { settleSlot } from '../../utils/itemsureTopOff.js';
 import { removeEmptyPlace, restorePlace } from '../../services/itemsurePlaceCleanup.js';
 import { findBalance, NO_AREA_LABEL, parseSlotKey, slotKey, slotOptions } from '../../utils/itemsureStock.js';
-import { ErrorNote, LoadFailed, Modal } from './ItemsureUi.jsx';
+import { ErrorNote, LoadFailed, Modal, Tip } from './ItemsureUi.jsx';
 import ItemsureItemPlaceRow from './ItemsureItemPlaceRow.jsx';
 import ItemsureItemHistory from './ItemsureItemHistory.jsx';
 import ItemsureUndoBar from './ItemsureUndoBar.jsx';
@@ -101,7 +101,12 @@ export default function ItemsureItemModal({ itemId, onClose }) {
     canView && { id: 'stock', label: 'Stock' },
     canHistory && { id: 'history', label: 'History' },
     { id: 'details', label: 'Details' },
-    cloverConnected && { id: 'clover', label: 'Clover', badge: cloverNeedsMatch ? 'Match' : null },
+    cloverConnected && {
+      id: 'clover',
+      label: 'Clover',
+      badge: cloverNeedsMatch ? 'Match' : null,
+      badgeTip: cloverNeedsMatch ? 'Not linked to a Clover button yet' : null,
+    },
   ].filter(Boolean);
   const tab = tabs.some((t) => t.id === chosenTab) ? chosenTab : (tabs[0]?.id || 'details');
   const item = useMemo(() => {
@@ -260,7 +265,9 @@ export default function ItemsureItemModal({ itemId, onClose }) {
         {tabs.length > 1 ? <ItemsureTabs tabs={tabs} selected={tab} onSelect={setChosenTab} label="Item sections" /> : null}
         {tab === 'details' && editItem ? (
           <div className="isu-item-tab-actions">
-            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit details</button>
+            <Tip label="Name, category, counted-in, suppliers">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit details</button>
+            </Tip>
           </div>
         ) : null}
 
@@ -361,7 +368,9 @@ export default function ItemsureItemModal({ itemId, onClose }) {
         title={title}
         subtitle={subtitle}
         headStart={editItem && !action && !editingDetails ? (
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit</button>
+          <Tip label="Edit catalog details" side="bottom">
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={editItem}>Edit</button>
+          </Tip>
         ) : null}
         onClose={onClose}
         className="isu-modal--item"

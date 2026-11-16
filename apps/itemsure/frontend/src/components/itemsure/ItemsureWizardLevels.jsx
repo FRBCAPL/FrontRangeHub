@@ -5,6 +5,7 @@ import { FILL_DAYS, suggestLevels, WARN_DAYS } from '../../utils/itemsureUsage.j
 import ItemsureStepper from './ItemsureStepper.jsx';
 import ItemsureWizardIntro from './ItemsureWizardIntro.jsx';
 import ItemsureTopOffField from './ItemsureTopOffField.jsx';
+import Tip from './ItemsureTip.jsx';
 
 const blank = (text) => String(text ?? '').trim() === '';
 
@@ -23,19 +24,19 @@ export default function ItemsureWizardLevels({ form, setForm, entries, setEntrie
 
   if (!active.length) {
     return (
-      <ItemsureWizardIntro title="Low-stock warning and restock target">
-        Add where it&apos;s kept in the On hand step first. These are set for each place you keep the item.
+      <ItemsureWizardIntro title="Warn & restock">
+        Add where it&apos;s kept in the On hand step first.
       </ItemsureWizardIntro>
     );
   }
 
   return (
-    <div className="isu-stack">
-      <ItemsureWizardIntro title="Low-stock warning and restock target">
-        These are not your count. They tell ItemSure when to warn you and how much to restock. Both are optional.
+    <div className="isu-stack isu-wizard-fit-step">
+      <ItemsureWizardIntro title="Warn & restock">
+        Optional. Running low uses Warn me at; the shopping list fills up to par.
       </ItemsureWizardIntro>
       {active.length > 1 ? (
-        <label className="isu-check">
+        <label className="isu-check isu-check--tight">
           <input
             type="checkbox"
             checked={same}
@@ -53,27 +54,30 @@ export default function ItemsureWizardLevels({ form, setForm, entries, setEntrie
           const suggestion = usage ? suggestLevels(usage.forSlot(e.locationId, e.storageAreaId), unitInfo.precision) : null;
           return (
             <li key={e.key} className="isu-wizard-place">
-              <strong>{same ? 'Every place' : labelFor(e)}</strong>
-              {!same ? <p className="isu-wizard-onhand">On hand now: <strong>{onHand(e)}</strong></p> : null}
+              <div className="isu-wizard-place-head">
+                <strong>{same ? 'Every place' : labelFor(e)}</strong>
+                {!same ? <span className="isu-wizard-onhand">On hand: <strong>{onHand(e)}</strong></span> : null}
+              </div>
               {suggestion ? (
-                <div className="isu-level-suggest">
-                  <p>Suggested from your last 4 weeks: warn at {suggestion.minimum}, fill up to {suggestion.par} {unit}.</p>
-                  <p className="isu-muted isu-small">Warns with about {WARN_DAYS} days left; fills up for about {FILL_DAYS} days.</p>
-                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => update(e.key, { minimum: suggestion.minimum, par: suggestion.par })}>
-                    Use these
+                <div className="isu-level-suggest isu-level-suggest--compact">
+                  <span>Suggest warn {suggestion.minimum}, fill {suggestion.par} {unit} (~{WARN_DAYS}/{FILL_DAYS} days).</span>
+                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onMouseDown={(ev) => ev.preventDefault()} onClick={() => update(e.key, { minimum: suggestion.minimum, par: suggestion.par })}>
+                    Use
                   </button>
                 </div>
               ) : null}
               <div className="isu-wizard-levels">
                 <div className="isu-wizard-amount">
-                  <span>Warn me at ({unit})</span>
+                  <Tip label={`Shows Running low when ${same ? 'a spot' : 'this spot'} is at or below this`}>
+                    <span>Warn me at ({unit})</span>
+                  </Tip>
                   <ItemsureStepper label="warn me at" value={e.minimum} onChange={(v) => update(e.key, { minimum: v })} aria-label={`Warn me at, ${labelFor(e)}`} />
-                  <span className="isu-muted isu-small">Shows as Running low when {same ? 'a spot' : 'this spot'} is at or below this.</span>
                 </div>
                 <div className="isu-wizard-amount">
-                  <span>Fill up to ({unit})</span>
+                  <Tip label="Shopping list tops this spot back up to this amount (par)">
+                    <span>Fill up to ({unit})</span>
+                  </Tip>
                   <ItemsureStepper label="fill up to" value={e.par} onChange={(v) => update(e.key, { par: v })} aria-label={`Fill up to, ${labelFor(e)}`} />
-                  <span className="isu-muted isu-small">This sets the par. The shopping list tops it back up to this.</span>
                 </div>
               </div>
             </li>
@@ -86,6 +90,7 @@ export default function ItemsureWizardLevels({ form, setForm, entries, setEntrie
           onChange={(v) => setForm((f) => ({ ...f, topoff_percent: v }))}
           example={active.find((e) => !blank(e.par)) || null}
           unit={unit}
+          compact
         />
       ) : null}
     </div>

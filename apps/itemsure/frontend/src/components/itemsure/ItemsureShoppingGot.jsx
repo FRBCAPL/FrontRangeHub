@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { checkQuantity, sameQuantity, stepQuantity } from '../../utils/itemsureQuantity.js';
 import { boughtAmount, boughtDiffers } from '../../utils/itemsureShoppingReceive.js';
 import { buyLabel } from '../../utils/itemsureShoppingList.js';
+import Tip from './ItemsureTip.jsx';
 
 const listedLabel = (row) => (row.extra ? row.amount : buyLabel(row));
 const timeOf = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '');
@@ -21,20 +22,22 @@ export function GotAmount({ row, tick, onEdit }) {
   const differs = tick && boughtDiffers(row, tick.amount);
   const listed = listedLabel(row);
   return (
-    <button
-      type="button"
-      className={`isu-shop-amount isu-shop-got${differs ? ' is-changed' : ''}${!row.extra && row.total === null ? ' is-unset' : ''}`}
-      onClick={onEdit}
-      aria-label={`Change how many ${row.name} you are getting`}
-    >
-      {differs ? (
-        <>
-          <span className="isu-shop-got-now">Got {tick.amount}{row.extra ? '' : ` ${row.unit}`}</span>
-          {listed ? <span className="isu-shop-got-was">{listed}</span> : null}
-        </>
-      ) : listed || 'Amount'}
-      <span className="isu-shop-got-edit" aria-hidden="true">{'\u270e'}</span>
-    </button>
+    <Tip label="Change how many you’re actually getting">
+      <button
+        type="button"
+        className={`isu-shop-amount isu-shop-got${differs ? ' is-changed' : ''}${!row.extra && row.total === null ? ' is-unset' : ''}`}
+        onClick={onEdit}
+        aria-label={`Change how many ${row.name} you are getting`}
+      >
+        {differs ? (
+          <>
+            <span className="isu-shop-got-now">Got {tick.amount}{row.extra ? '' : ` ${row.unit}`}</span>
+            {listed ? <span className="isu-shop-got-was">{listed}</span> : null}
+          </>
+        ) : listed || 'Amount'}
+        <span className="isu-shop-got-edit" aria-hidden="true">{'\u270e'}</span>
+      </button>
+    </Tip>
   );
 }
 

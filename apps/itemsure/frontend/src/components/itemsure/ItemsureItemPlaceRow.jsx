@@ -5,6 +5,7 @@ import { looseText } from '../../utils/itemsureLoose.js';
 import { fillPercent } from '../../utils/itemsureItemLook.js';
 import { daysLeft, describeDays, describeRate } from '../../utils/itemsureUsage.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
+import Tip from './ItemsureTip.jsx';
 
 /** "Par 2 · warns at 1 btl". */
 function levelsText(target, unit) {
@@ -76,25 +77,35 @@ export default function ItemsureItemPlaceRow({ item, slot, label, can, perDay = 
           ) : null}
           <div className="isu-place-actions">
             {can.set ? (
-              <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => onAction('set', slot)}>
-                {hasAmount ? 'Set amount' : 'Set starting amount'}
-              </button>
+              <Tip label={hasAmount ? 'Replace the on-hand amount here' : 'First count for this place'}>
+                <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => onAction('set', slot)}>
+                  {hasAmount ? 'Set amount' : 'Set starting amount'}
+                </button>
+              </Tip>
             ) : null}
             {can.adjust && hasAmount ? (
               <>
-                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('add', slot)}>+ Add</button>
-                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('remove', slot)}>{'\u2212'} Use</button>
+                <Tip label="Add stock received or moved here">
+                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('add', slot)}>+ Add</button>
+                </Tip>
+                <Tip label="Take stock used or wasted">
+                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('remove', slot)}>{'\u2212'} Use</button>
+                </Tip>
               </>
             ) : null}
             {can.levels ? (
-              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('levels', slot)}>
-                {slot.target ? 'Change levels' : 'Set levels'}
-              </button>
+              <Tip label="Warn-at and fill-up-to numbers for this place">
+                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('levels', slot)}>
+                  {slot.target ? 'Change levels' : 'Set levels'}
+                </button>
+              </Tip>
             ) : null}
             {canRemove ? (
-              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('removePlace', slot)}>
-                Remove place
-              </button>
+              <Tip label="Stop keeping this item at this place">
+                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAction('removePlace', slot)}>
+                  Remove place
+                </button>
+              </Tip>
             ) : null}
           </div>
           {!hasAmount && !can.set ? (

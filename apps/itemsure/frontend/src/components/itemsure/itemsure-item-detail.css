@@ -265,6 +265,15 @@
 }
 
 /* Door buttons open nested sheets for long catalog blocks. */
+.isu-item-info-doors > .isu-tip {
+  display: block;
+  width: 100%;
+}
+
+.isu-item-info-doors > .isu-tip > .isu-item-info-door {
+  width: 100%;
+}
+
 .isu-item-info-doors {
   display: grid;
   gap: 8px;

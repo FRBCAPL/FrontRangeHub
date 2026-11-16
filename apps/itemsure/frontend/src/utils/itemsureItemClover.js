@@ -17,14 +17,18 @@ export function cloverLinkable(itemId, posItems, links) {
     .map((p) => ({ id: p.external_id, name: p.name || 'Unnamed Clover item' }));
 }
 
-/** Unmatched Clover items whose best name match is this item (same guess as the Match list), up to `max`. */
-export function cloverSuggestionsFor(itemId, posItems, links, items, max = 5) {
+/**
+ * Unmatched Clover items whose best name match is this item (same guess as the Match list), up to `max`.
+ * `ignores`: Map of Clover id -> Set of dismissed item ids (same shape as listPosMatchIgnores).
+ */
+export function cloverSuggestionsFor(itemId, posItems, links, items, max = 5, ignores = null) {
   const active = matchableItems(items);
   const found = [];
   for (const p of posItems) {
     if (found.length >= max) break;
     if (p.is_deleted || p.not_tracked || linkedTo(links, p.external_id).length) continue;
-    if (suggestMatch(p.name, active)?.id === itemId) found.push(p);
+    const ignoreItemIds = ignores?.get(p.external_id) || null;
+    if (suggestMatch(p.name, active, { ignoreItemIds })?.id === itemId) found.push(p);
   }
   return found;
 }

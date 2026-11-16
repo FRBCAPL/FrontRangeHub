@@ -60,11 +60,13 @@ export default function ItemsurePosLeft({ organizationId, can, salesReady, onGo 
     );
   }
   if (toCheck || sizes) {
-    const parts = [toCheck ? plural(toCheck, 'pour size', 'pour sizes') : '', sizes ? plural(sizes, 'bottle or case size', 'bottle or case sizes') : ''].filter(Boolean).join(' and ');
+    const parts = [toCheck ? plural(toCheck, 'sale amount', 'sale amounts') : '', sizes ? plural(sizes, 'bottle or case size', 'bottle or case sizes') : ''].filter(Boolean).join(' and ');
     lines.push(
-      <Line key="pours" title={`${parts} to check`}
-        detail={guessed ? `ItemSure already guessed ${guessed}. Setting a whole category (like Liquor) fills in most of them.` : 'Setting a whole category (like Liquor: 1.5 oz from 750 ml bottles) fills in most of them.'}
-        button="Set pour sizes" onGo={canEdit ? () => onGo('pours') : null} />,
+      <Line key="pours" title={`${parts} to set`}
+        detail={guessed
+          ? `ItemSure already guessed ${guessed}. Food is often 1 single from a box; liquor is often ounces from a bottle.`
+          : 'How much stock each Clover sale uses. Set a whole category once (Food: 1 single from the box · Liquor: 1.5 oz from 750 ml), then fix the exceptions.'}
+        button="Set amounts" onGo={canEdit ? () => onGo('pours') : null} />,
     );
   }
   if (unsetAddons) {

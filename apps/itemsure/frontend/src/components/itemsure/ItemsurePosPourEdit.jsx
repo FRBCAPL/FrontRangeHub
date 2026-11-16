@@ -11,10 +11,9 @@ const trimNum = (n) => (n == null ? '' : String(Math.round(n * 1000) / 1000));
 
 /**
  * "How much does one sale use?" for one matched item: e.g. 1.5 oz of rum, 1 single from a
- * case, or 1 portion from a bag. Pours in oz or ml out of something counted in bottles also ask
- * once how much a bottle holds; portions ask once how many come in the bag/case. A `pour` with
- * fromCategory (or a `sizeFrom` / `piecesFrom`) comes from the item's category; saving here
- * gives it its own.
+ * case, or 1 portion from a bag. Oz/ml out of bottles also ask once how much a bottle holds;
+ * singles ask once how many come in the bag/case. A `pour` with fromCategory (or a `sizeFrom` /
+ * `piecesFrom`) comes from the item's category; saving here gives it its own.
  * onSave(amount|null, unit, contentMl|undefined, pieces|undefined, pieceLabel|undefined).
  */
 export default function ItemsurePosPourEdit({
@@ -99,7 +98,7 @@ export default function ItemsurePosPourEdit({
           <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unit">
             {offerSingles ? <option value="piece">{word.one} from the {unitName}</option> : null}
             <option value="base">{unitName}</option>
-            <option value="fl_oz">oz</option>
+            <option value="fl_oz">oz (liquor / draft)</option>
             <option value="ml">ml</option>
           </select>
         </span>

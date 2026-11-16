@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { focusFirstField } from '../../utils/itemsureFocus.js';
+export { default as Tip } from './ItemsureTip.jsx';
 
 export function Field({ label, hint, children }) {
   const id = useId();

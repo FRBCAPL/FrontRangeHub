@@ -75,7 +75,7 @@ export function WizardBasicsCount({
   const sizeHint = [form.name, cat?.name, byId.get(cat?.parent_category_id)?.name].filter(Boolean).join(' ');
 
   return (
-    <div className="isu-stack" role="tabpanel" aria-label="Counted in">
+    <div className="isu-stack isu-wizard-count" role="tabpanel" aria-label="Counted in">
       <ItemsureUnitPicker
         organizationId={organizationId}
         units={units}

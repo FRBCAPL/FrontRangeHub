@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { categoryOptions } from '../../utils/itemsureCategories.js';
 import { sites, SITE } from '../../data/itemsureTerms.js';
 import { Field, Modal } from './ItemsureUi.jsx';
+import Tip from './ItemsureTip.jsx';
 
 const STATUSES = [
-  { value: '', label: 'All' },
-  { value: 'low', label: 'Running low' },
-  { value: 'below_par', label: 'Needs topping up' },
+  { value: '', label: 'All', tip: 'Everything on the shopping list' },
+  { value: 'low', label: 'Running low', tip: 'At or under warn-at' },
+  { value: 'below_par', label: 'Needs topping up', tip: 'Above warn-at, still under fill-up-to' },
 ];
 
 /** Status chips plus a Filters button that opens Place, Category and Group by. */
@@ -18,20 +19,23 @@ export default function ItemsureShoppingFilters({ filters, onChange, groups, loc
     <div className="isu-shop-filters">
       <div className="isu-chips" role="group" aria-label="Show">
         {STATUSES.map((s) => (
-          <button
-            key={s.value || 'all'}
-            type="button"
-            className={`isu-chip isu-chip--choice${filters.status === s.value ? ' is-selected' : ''}`}
-            aria-pressed={filters.status === s.value}
-            onClick={() => onChange({ status: s.value })}
-          >
-            {s.label}
-            <span className="isu-chip-count">{counts[s.value || 'all']}</span>
-          </button>
+          <Tip key={s.value || 'all'} label={s.tip}>
+            <button
+              type="button"
+              className={`isu-chip isu-chip--choice${filters.status === s.value ? ' is-selected' : ''}`}
+              aria-pressed={filters.status === s.value}
+              onClick={() => onChange({ status: s.value })}
+            >
+              {s.label}
+              <span className="isu-chip-count">{counts[s.value || 'all']}</span>
+            </button>
+          </Tip>
         ))}
-        <button type="button" className="isu-chip isu-chip--choice isu-shop-filter-btn" onClick={() => setOpen(true)}>
-          Filters{active ? ` (${active})` : ''} · {groups[filters.group]?.label}
-        </button>
+        <Tip label="Filter by place, category, or how the list is grouped">
+          <button type="button" className="isu-chip isu-chip--choice isu-shop-filter-btn" onClick={() => setOpen(true)}>
+            Filters{active ? ` (${active})` : ''} · {groups[filters.group]?.label}
+          </button>
+        </Tip>
       </div>
 
       <Modal open={open} title="Filter the list" onClose={() => setOpen(false)}>

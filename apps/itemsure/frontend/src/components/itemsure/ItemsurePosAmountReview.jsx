@@ -7,6 +7,14 @@ const SHORT_LIST = 5;
 const FILTERS = { guessed: 'Guessed', needs: 'Needs you', all: 'All' };
 const trim = (n) => (n == null ? '' : String(Math.round(n * 1000) / 1000));
 
+const unitWords = (unit, unitName) => {
+  if (unit === 'piece') return `single from the ${unitName}`;
+  if (unit === 'base') return unitName;
+  if (unit === 'fl_oz') return 'oz';
+  if (unit === 'ml') return 'ml';
+  return unit;
+};
+
 /**
  * "How much does each sale use?" for every matched Clover item without an amount, filled in
  * with guesses. Guessed rows start ticked; typing an amount ticks a row. onSave([{ row, amount, unit }]).
@@ -44,7 +52,11 @@ export default function ItemsurePosAmountReview({ rows, piecesReady = false, bus
 
   return (
     <div className="isu-stack">
-      <p className="isu-muted isu-small">Check the amounts, change any that are wrong, and untick ones you&apos;re not sure about. Only ticked rows are saved.</p>
+      <p className="isu-muted isu-small">
+        For each Clover button, say how much stock one sale should take off. Food in boxes is often
+        &ldquo;1 single from the box&rdquo;; liquor is often ounces. Change any that are wrong, and untick
+        ones you&apos;re not sure about. Only ticked rows are saved.
+      </p>
       {short ? null : (
         <>
           <div className="isu-pos-filters" role="group" aria-label="Show">
@@ -64,6 +76,7 @@ export default function ItemsurePosAmountReview({ rows, piecesReady = false, bus
         {shown.slice(0, limit).map((r) => {
           const e = edits[r.key];
           const unitName = (r.unit?.name || 'unit').toLowerCase();
+          const offerSingles = singles(r);
           return (
             <li key={r.key}>
               <label className="isu-check">
@@ -73,14 +86,21 @@ export default function ItemsurePosAmountReview({ rows, piecesReady = false, bus
               <span className="isu-pos-amount-line">
                 <input type="number" inputMode="decimal" min="0" step="any" value={e.amount} placeholder="?" onChange={(ev) => change(r.key, { amount: ev.target.value })} aria-label={`Amount of ${r.item.name} in ${r.pos.name}`} />
                 <select value={e.unit} onChange={(ev) => change(r.key, { unit: ev.target.value })} aria-label="Unit">
+                  {offerSingles ? <option value="piece">single from the {unitName}</option> : null}
+                  <option value="base">{unitName}</option>
                   <option value="fl_oz">oz</option>
                   <option value="ml">ml</option>
-                  <option value="base">{unitName}</option>
-                  {singles(r) ? <option value="piece">single from the {unitName}</option> : null}
                 </select>
                 <span>of <strong>{r.item.name}</strong></span>
               </span>
-              <span className="isu-muted isu-small">{r.suggestion ? r.suggestion.reason : 'No guess: type how much each one sold uses'}</span>
+              {valid(e) ? (
+                <span className="isu-muted isu-small">
+                  If Clover sells 1 {r.pos.name} → take {e.amount} {unitWords(e.unit, unitName)} of {r.item.name} off stock.
+                </span>
+              ) : (
+                <span className="isu-muted isu-small">{r.suggestion ? r.suggestion.reason : 'No guess: type how much each one sold uses'}</span>
+              )}
+              {valid(e) && r.suggestion ? <span className="isu-muted isu-small">{r.suggestion.reason}</span> : null}
             </li>
           );
         })}

@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { setNotSoldInPos } from '../../services/itemsureItemPosSkipService.js';
-import { addPosLink, leaveRecipe, removePosLink, saveItemContent, setPosNotTracked } from '../../services/itemsurePosService.js';
+import { addPosLink, ignorePosMatch, leaveRecipe, removePosLink, saveItemContent, setPosNotTracked } from '../../services/itemsurePosService.js';
 import { setButtonPour } from '../../services/itemsureRecipeService.js';
 import { saveItemPieces } from '../../services/itemsureItemContentService.js';
 import { alsoUses, cloverLinkable, cloverSuggestionsFor, cloverUsesFor } from '../../utils/itemsureItemClover.js';
 import { packagingAttachedLabel } from '../../utils/itemsureAlwaysWith.js';
 import { posPrice } from '../../utils/itemsurePosMatch.js';
-import { ErrorNote } from './ItemsureUi.jsx';
+import { ErrorNote, Tip } from './ItemsureUi.jsx';
 import ItemsureItemSearchPick from './ItemsureItemSearchPick.jsx';
 import ItemsureItemNotSoldAsk from './ItemsureItemNotSoldAsk.jsx';
 import ItemsurePosNotTrackedAsk from './ItemsurePosNotTrackedAsk.jsx';
@@ -36,7 +36,9 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
   const notSold = Boolean(item.notSoldInPos);
   const uses = cloverUsesFor(itemId, data.posItems, data.links);
   // When skipped for sales counting, hide match/link tools until they undo.
-  const suggestions = canEdit && !notSold ? cloverSuggestionsFor(itemId, data.posItems, data.links, data.items) : [];
+  const suggestions = canEdit && !notSold
+    ? cloverSuggestionsFor(itemId, data.posItems, data.links, data.items, 5, data.ignores)
+    : [];
   const linkable = canEdit && !notSold ? cloverLinkable(itemId, data.posItems, data.links) : [];
   const skippable = canEdit && !notSold
     ? data.posItems.filter((p) => !p.is_deleted && !p.not_tracked).map((p) => ({ id: p.external_id, name: p.name || 'Unnamed Clover item' }))
@@ -45,6 +47,10 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
   const link = (externalId) => run(async () => {
     await leaveRecipe(organizationId, externalId);
     await addPosLink(organizationId, externalId, itemId);
+    await reload();
+  });
+  const ignoreSuggestion = (externalId) => run(async () => {
+    await ignorePosMatch(organizationId, externalId, itemId);
     await reload();
   });
   const unlink = (p) => {
@@ -113,8 +119,12 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
                   {p.is_deleted ? <span className="isu-badge">Removed in Clover</span> : null}
                   {canEdit ? (
                     <span className="isu-pos-mod-actions">
-                      <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => unlink(p)}>Unlink</button>
-                      <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => skip(p)}>Stop tracking button</button>
+                      <Tip label="Remove this Clover button from this item">
+                        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => unlink(p)}>Unlink</button>
+                      </Tip>
+                      <Tip label="Generic button — don’t take stock when it sells">
+                        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => skip(p)}>Stop tracking button</button>
+                      </Tip>
                     </span>
                   ) : null}
                 </div>
@@ -148,9 +158,11 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
           {canEdit ? (
             <>
               {' '}
-              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={undoNotSold}>
-                {busy ? 'Saving…' : 'Track in sales'}
-              </button>
+              <Tip label="Ask to match this item to Clover again">
+                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={undoNotSold}>
+                  {busy ? 'Saving…' : 'Track in sales'}
+                </button>
+              </Tip>
             </>
           ) : null}
         </p>
@@ -160,9 +172,11 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
           {canEdit ? (
             <>
               {' '}
-              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => setAskingNotSold(true)}>
-                Don&apos;t track in sales
-              </button>
+              <Tip label="Skip matching — sales won’t take this off stock">
+                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => setAskingNotSold(true)}>
+                  Don&apos;t track in sales
+                </button>
+              </Tip>
             </>
           ) : null}
         </p>
@@ -176,8 +190,15 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
               <li key={p.external_id} className="isu-pos-suggest">
                 <span>{p.name}{posPrice(p) ? <span className="isu-muted isu-small"> · {posPrice(p)}</span> : null}</span>
                 <span className="isu-pos-mod-actions">
-                  <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={() => link(p.external_id)}>Link</button>
-                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => skip(p)}>Stop tracking button</button>
+                  <Tip label="Link this Clover button to this item">
+                    <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={() => link(p.external_id)}>Link</button>
+                  </Tip>
+                  <Tip label="Don’t suggest this button for this item again">
+                    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => ignoreSuggestion(p.external_id)}>Not this</button>
+                  </Tip>
+                  <Tip label="Generic button — don’t take stock when it sells">
+                    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => skip(p)}>Stop tracking button</button>
+                  </Tip>
                 </span>
               </li>
             ))}
@@ -206,7 +227,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
       ) : null}
       {!notSold ? (
         <p className="isu-muted isu-small">
-          Tip: to set one amount for a whole category (like 1.5 oz for all liquor), use Settings → Point of sale → Pour sizes → Pours by category.
+          Tip: to set one amount for a whole category (Food: 1 single from the box, or Liquor: 1.5 oz), use Settings → Point of sale → Amount each sale uses → Amounts by category.
         </p>
       ) : null}
       <ItemsurePosNotTrackedAsk pos={skipping} busy={busy} error={error} onConfirm={confirmSkip} onClose={() => setSkipping(null)} />

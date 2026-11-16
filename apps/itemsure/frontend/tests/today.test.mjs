@@ -68,9 +68,10 @@ test('topping up, planned moves, and counts each get one line', () => {
 test('unfinished Clover sales tracking setup shows one task, only with a link to fix it', () => {
   const clover = { amounts: 45, guessed: 40, sizes: 1 };
   const [task] = buildTodayTasks({ clover, paths: { ...paths, posSetup: '/pos' } });
-  assert.equal(task.title, 'Clover: 45 pour sizes and 1 bottle or case size to check');
-  assert.equal(task.detail, 'ItemSure already guessed 40. Check them so sales vs counts is right.');
+  assert.equal(task.title, 'Clover: 45 sale amounts and 1 bottle or case size to set');
+  assert.equal(task.detail, 'ItemSure already guessed 40. Confirm how much stock each sale uses.');
   assert.equal(task.to, '/pos?tab=pours');
+  assert.equal(task.button, 'Set amounts');
   assert.deepEqual(buildTodayTasks({ clover, paths }), []);
   assert.deepEqual(buildTodayTasks({ clover: { amounts: 0, guessed: 0, sizes: 0 }, paths: { ...paths, posSetup: '/pos' } }), []);
 });

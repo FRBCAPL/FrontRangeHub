@@ -36,6 +36,11 @@ test('suggestMatch leaves ties for a person', () => {
   assert.equal(suggestMatch('Lime Coke', items), null);
 });
 
+test('suggestMatch skips ignored item ids and can fall through to the next fit', () => {
+  assert.equal(suggestMatch('Diet Coke 12oz', items, { ignoreItemIds: new Set(['diet']) })?.id, 'coke');
+  assert.equal(suggestMatch('Bacardi Superior Rum Shot', items, { ignoreItemIds: new Set(['rum']) }), null);
+});
+
 test('matchableItems skips archived items and items not sold in Clover', () => {
   const list = [
     { id: 'a', is_active: true },

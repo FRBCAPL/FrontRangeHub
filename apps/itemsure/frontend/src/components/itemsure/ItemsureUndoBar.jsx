@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Tip from './ItemsureTip.jsx';
 
 const SHOW_FOR_MS = 10000;
 
@@ -35,11 +36,15 @@ export default function ItemsureUndoBar({ done, onClose }) {
     <div className="isu-undo-bar" role="status">
       <span>{error || done.message}</span>
       {error ? null : (
-        <button type="button" className="isu-undo-btn" onClick={undo} disabled={busy}>
-          {busy ? 'Undoing…' : 'Undo'}
-        </button>
+        <Tip label="Reverse this change">
+          <button type="button" className="isu-undo-btn" onClick={undo} disabled={busy}>
+            {busy ? 'Undoing…' : 'Undo'}
+          </button>
+        </Tip>
       )}
-      <button type="button" className="isu-undo-close" onClick={onClose} aria-label="Close">{'\u00d7'}</button>
+      <Tip label="Dismiss">
+        <button type="button" className="isu-undo-close" onClick={onClose} aria-label="Close">{'\u00d7'}</button>
+      </Tip>
     </div>
   );
 }

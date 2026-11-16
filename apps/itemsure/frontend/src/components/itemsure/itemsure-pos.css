@@ -192,6 +192,8 @@
 .isu-app .isu-size-presets { display: flex; flex-wrap: wrap; gap: 6px; }
 .isu-app .isu-size-presets .isu-chip { cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--isu-ink); min-height: 36px; }
 .isu-app .isu-size-presets .isu-chip.is-active { border-color: var(--isu-pine); color: var(--isu-pine); font-weight: 700; }
+.isu-app .isu-size-presets--words { gap: 5px; }
+.isu-app .isu-size-presets--counts { gap: 5px; }
 
 /* "One case has 24 bottles" */
 .isu-app .isu-pieces { display: grid; gap: 8px; }

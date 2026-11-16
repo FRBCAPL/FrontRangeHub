@@ -13,6 +13,8 @@ import useSupplierPrices from '../../hooks/useSupplierPrices.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { itemAddress } from '../../hooks/useItemModal.js';
 import { SITE } from '../../data/itemsureTerms.js';
+import { posTabPath } from '../../utils/itemsurePosTabs.js';
+import { addPosLink } from '../../services/itemsurePosService.js';
 import { visibleSlots } from '../../utils/itemsureItemStock.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { checkAmounts, checkLevels, entriesFromGroups, STEPS, wizardSteps } from '../../utils/itemsureItemWizard.js';
@@ -23,7 +25,7 @@ import { checkContent, checkPieces, unitAsks } from '../../utils/itemsureItemCon
 import { emptyForm } from '../../utils/itemsureItemWizardForm.js';
 import { ErrorNote, LoadFailed, PageHead } from './ItemsureUi.jsx';
 import ItemsureWizardProgress from './ItemsureWizardProgress.jsx';
-import ItemsureWizardBasics from './ItemsureWizardBasics.jsx';
+import ItemsureWizardBasics, { basicsPanelForError, basicsPanels } from './ItemsureWizardBasics.jsx';
 import ItemsureWizardWhere from './ItemsureWizardWhere.jsx';
 import ItemsureWizardLevels from './ItemsureWizardLevels.jsx';
 import ItemsureWizardExtras from './ItemsureWizardExtras.jsx';
@@ -46,6 +48,7 @@ export default function ItemsureItemWizard() {
   const [form, setForm] = useState(null);
   const [entries, setEntries] = useState(null);
   const [step, setStep] = useState(() => (steps.includes(params.get('step')) ? params.get('step') : 'basics'));
+  const [basicsPanel, setBasicsPanel] = useState('about');
   const [visited, setVisited] = useState(() => new Set(['basics']));
   const [stepError, setStepError] = useState('');
   const [problems, setProblems] = useState([]);
@@ -73,11 +76,30 @@ export default function ItemsureItemWizard() {
 
   const item = catalog?.items.find((i) => i.id === routeItemId) || null;
   const editing = Boolean(routeItemId);
-  // Opened from the Suppliers page or the Shopping list: Back, Cancel, and Save return there.
-  // From the Shopping list, the new item is also put on the list (with ?amount= if given).
+  // Opened from Suppliers, Shopping list, or Clover matching: Back/Cancel/Save return there.
+  // From Shopping, the new item is also put on the list (?amount=). From Clover, it is linked to that button.
   const fromSuppliers = params.get('from') === 'suppliers';
   const fromShopping = params.get('from') === 'shopping' && !editing;
-  const leaveTo = fromSuppliers ? `${ITEMSURE_PATH}/suppliers` : fromShopping ? `${ITEMSURE_PATH}/restock` : editing ? itemAddress(routeItemId) : `${ITEMSURE_PATH}/items`;
+  const fromPos = params.get('from') === 'pos' && !editing;
+  const cloverExternalId = fromPos ? (params.get('clover') || '').trim() : '';
+  const leaveTo = fromSuppliers
+    ? `${ITEMSURE_PATH}/suppliers`
+    : fromShopping
+      ? `${ITEMSURE_PATH}/restock`
+      : fromPos
+        ? posTabPath(ITEMSURE_PATH, 'buttons')
+        : editing
+          ? itemAddress(routeItemId)
+          : `${ITEMSURE_PATH}/items`;
+  const leaveLabel = fromSuppliers
+    ? 'Suppliers'
+    : fromShopping
+      ? 'Shopping list'
+      : fromPos
+        ? 'Clover buttons'
+        : editing
+          ? (item?.name || 'Inventory')
+          : 'Inventory';
 
   // Fill the form and places once everything has loaded; later reloads never overwrite typing.
   useEffect(() => {
@@ -147,6 +169,9 @@ export default function ItemsureItemWizard() {
     return '';
   };
 
+  const showBuy = form ? 'supplier_id' in form : false;
+  const panelOrder = basicsPanels(showBuy);
+
   const goTo = (target) => {
     const here = steps.indexOf(step);
     const there = steps.indexOf(target);
@@ -156,16 +181,50 @@ export default function ItemsureItemWizard() {
         if (p) {
           setStep(id);
           setStepError(p);
+          if (id === 'basics') setBasicsPanel(basicsPanelForError(p));
           return;
         }
       }
     }
     setStepError('');
     setStep(target);
+    if (target === 'basics' && there < here) setBasicsPanel(panelOrder[panelOrder.length - 1] || 'about');
     setVisited((v) => new Set([...v, target]));
     window.scrollTo?.(0, 0);
   };
+
+  /** On the Item step, Next/Back walk About → Counted in → Suppliers before leaving. */
+  const moveBasics = (dir) => {
+    const i = panelOrder.indexOf(basicsPanel);
+    if (dir > 0) {
+      const p = problemFor('basics');
+      if (p && basicsPanelForError(p) === basicsPanel) {
+        setStepError(p);
+        return true;
+      }
+      if (i >= 0 && i < panelOrder.length - 1) {
+        setStepError('');
+        setBasicsPanel(panelOrder[i + 1]);
+        window.scrollTo?.(0, 0);
+        return true;
+      }
+      return false;
+    }
+    if (i > 0) {
+      setStepError('');
+      setBasicsPanel(panelOrder[i - 1]);
+      window.scrollTo?.(0, 0);
+      return true;
+    }
+    return false;
+  };
+
   const index = steps.indexOf(step);
+  const nextBasicsLabel = step === 'basics' && basicsPanel === 'about'
+    ? 'Next: Counted in'
+    : step === 'basics' && basicsPanel === 'count' && showBuy
+      ? 'Next: Suppliers'
+      : null;
 
   const save = async () => {
     for (const id of steps) {
@@ -173,6 +232,7 @@ export default function ItemsureItemWizard() {
       if (p) {
         setStep(id);
         setStepError(p);
+        if (id === 'basics') setBasicsPanel(basicsPanelForError(p));
         return;
       }
     }
@@ -197,7 +257,10 @@ export default function ItemsureItemWizard() {
       if (fromShopping) {
         await addShoppingExtra(organization.id, { itemId: result.itemId, supplierId: form.supplier_id, name: form.name, amount: params.get('amount') || '' }).catch(() => {});
       }
-      navigate(fromSuppliers || fromShopping ? leaveTo : itemAddress(result.itemId));
+      if (cloverExternalId) {
+        await addPosLink(organization.id, cloverExternalId, result.itemId).catch(() => {});
+      }
+      navigate(fromSuppliers || fromShopping || fromPos ? leaveTo : itemAddress(result.itemId));
       return;
     }
     setProblems(result.problems);
@@ -208,12 +271,14 @@ export default function ItemsureItemWizard() {
   const title = editing ? `Edit ${typedName || item.name}` : typedName ? `Add item: ${typedName}` : 'Add item';
   const shared = { form, setForm, entries, setEntries, labelFor, unitInfo, allowed, features, variantLabel: variantLabelFor(organization) };
 
+  const fitStep = step === 'levels' || step === 'review';
+
   return (
-    <div className="isu-page isu-wizard">
+    <div className={`isu-page isu-wizard${fitStep ? ' isu-wizard--fit' : ''}`}>
       <Link to={leaveTo} className="isu-link isu-small">
-        {'\u2190'} {fromSuppliers ? 'Suppliers' : fromShopping ? 'Shopping list' : editing ? item.name : 'Inventory'}
+        {'\u2190'} {leaveLabel}
       </Link>
-      <PageHead title={title} description={`Step ${index + 1} of ${steps.length}: ${STEPS[step]}`} />
+      <PageHead title={title} description={fitStep ? null : `Step ${index + 1} of ${steps.length}: ${STEPS[step]}`} />
       <ItemsureWizardProgress steps={steps} current={step} reachable={(id) => editing || visited.has(id)} onPick={goTo} />
       <ErrorNote message={stepError} />
 
@@ -221,6 +286,8 @@ export default function ItemsureItemWizard() {
         {step === 'basics' ? (
           <ItemsureWizardBasics
             {...shared}
+            panel={basicsPanel}
+            onPanel={setBasicsPanel}
             stepError={stepError}
             organizationId={organization.id}
             categories={categories}
@@ -263,20 +330,49 @@ export default function ItemsureItemWizard() {
             type="button"
             className="isu-btn isu-btn--ghost"
             disabled={saving}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => navigate(leaveTo)}
           >
             Cancel
           </button>
-          {index > 0 ? <button type="button" className="isu-btn isu-btn--ghost" onClick={() => goTo(steps[index - 1])}>Back</button> : null}
+          {index > 0 || (step === 'basics' && panelOrder.indexOf(basicsPanel) > 0) ? (
+            <button
+              type="button"
+              className="isu-btn isu-btn--ghost"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                if (step === 'basics' && moveBasics(-1)) return;
+                goTo(steps[index - 1]);
+              }}
+            >
+              Back
+            </button>
+          ) : null}
         </div>
         <div className="isu-wizard-nav-group">
           {step === 'review' || editing ? (
-            <button type="button" className="isu-btn isu-btn--primary" disabled={saving} onClick={save}>
+            <button
+              type="button"
+              className="isu-btn isu-btn--primary"
+              disabled={saving}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={save}
+            >
               {saving ? 'Saving…' : problems.length ? 'Save again' : editing ? 'Save changes' : 'Save item'}
             </button>
           ) : null}
           {step !== 'review' ? (
-            <button type="button" className={`isu-btn ${editing ? 'isu-btn--ghost' : 'isu-btn--primary'}`} onClick={() => goTo(steps[index + 1])}>Next</button>
+            <button
+              type="button"
+              className={`isu-btn ${editing ? 'isu-btn--ghost' : 'isu-btn--primary'}`}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                if (step === 'basics' && moveBasics(1)) return;
+                goTo(steps[index + 1]);
+              }}
+            >
+              {nextBasicsLabel || 'Next'}
+            </button>
           ) : null}
         </div>
       </div>

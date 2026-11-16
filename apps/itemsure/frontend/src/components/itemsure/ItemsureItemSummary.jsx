@@ -2,6 +2,7 @@ import React from 'react';
 import { cardTone, categoryHue, itemInitials } from '../../utils/itemsureItemLook.js';
 import { StockAmount, StockBar, SupplierLine } from './ItemsureStockBits.jsx';
 import ItemsureItemUsage from './ItemsureItemUsage.jsx';
+import Tip from './ItemsureTip.jsx';
 
 /** Top of the item page: badge, on hand vs par, status bar, usage, where it's kept, and its supplier. `children` are extra buttons. */
 export default function ItemsureItemSummary({ item, summary, pieces = 0, usage, unitSymbol, placeCount, supplier, supplierNote = '', children }) {
@@ -9,14 +10,15 @@ export default function ItemsureItemSummary({ item, summary, pieces = 0, usage, 
   const hue = categoryHue(item.category_id);
   return (
     <section className={`isu-card isu-stockcard isu-stockcard--${tone} isu-item-summary`} aria-label="Stock summary">
-      <span
-        className={`isu-stockcard-badge${hue === null ? ' is-plain' : ''}`}
-        style={hue === null ? undefined : { '--badge-hue': hue }}
-        title={item.categoryName || 'No category'}
-        aria-hidden="true"
-      >
-        {itemInitials(item.name)}
-      </span>
+      <Tip label={item.categoryName || 'No category'}>
+        <span
+          className={`isu-stockcard-badge${hue === null ? ' is-plain' : ''}`}
+          style={hue === null ? undefined : { '--badge-hue': hue }}
+          aria-hidden="true"
+        >
+          {itemInitials(item.name)}
+        </span>
+      </Tip>
       <div className="isu-stockcard-body isu-item-summary-body">
         <div className="isu-item-summary-top">
           <StockAmount summary={summary} unitName={item.unitName} pieces={pieces} className="isu-item-summary-amount" />

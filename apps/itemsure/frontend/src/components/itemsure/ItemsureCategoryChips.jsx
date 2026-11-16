@@ -3,6 +3,7 @@ import { ALL_ITEMS, categoryTree, foundIn, labelWithIcon, NO_CATEGORY, rootOf } 
 import useScrollArrows from '../../hooks/useScrollArrows.js';
 import ItemsureCategoryPanel from './ItemsureCategoryPanel.jsx';
 import ItemsureScrollArrow from './ItemsureScrollArrow.jsx';
+import Tip from './ItemsureTip.jsx';
 
 export { ALL_ITEMS, NO_CATEGORY };
 
@@ -66,9 +67,11 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
               <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
             ))}
             {onAdd ? (
-              <button type="button" className="isu-chip isu-chip--add" onClick={() => onAdd(openRoot)} title={`Add a subcategory in ${rootName}`}>
-                {subs.length ? '+ Sub' : `+ Add a subcategory in ${rootName}`}
-              </button>
+              <Tip label={`Add a subcategory in ${rootName}`}>
+                <button type="button" className="isu-chip isu-chip--add" onClick={() => onAdd(openRoot)}>
+                  {subs.length ? '+ Sub' : `+ Add a subcategory in ${rootName}`}
+                </button>
+              </Tip>
             ) : null}
           </div>
           <ItemsureScrollArrow direction={1} label="Subcategories" arrows={subArrows} />
@@ -76,9 +79,11 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
       ) : null}
       <div className="isu-chips-actions">
         <Chip value={ALL_ITEMS} label="All items" count={items.length} selected={selected} onSelect={onSelect} />
-        <button type="button" className="isu-chip isu-chip--more" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">
-          Browse/Edit Categories {'\u25BE'}
-        </button>
+        <Tip label="Search, edit, reorder, or archive categories">
+          <button type="button" className="isu-chip isu-chip--more" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">
+            Browse/Edit Categories {'\u25BE'}
+          </button>
+        </Tip>
       </div>
       <ItemsureCategoryPanel
         open={panelOpen}

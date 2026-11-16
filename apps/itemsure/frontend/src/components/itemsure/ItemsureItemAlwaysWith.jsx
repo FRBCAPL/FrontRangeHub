@@ -3,7 +3,7 @@ import { categoryPath, categoryTree } from '../../utils/itemsureCategories.js';
 import { singularUnit } from '../../utils/itemsureItemLook.js';
 import { alwaysWithToForm, checkAlwaysWith } from '../../utils/itemsureAlwaysWith.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
-import { ErrorNote } from './ItemsureUi.jsx';
+import { ErrorNote, Tip } from './ItemsureUi.jsx';
 import ItemsureCategoryChooser from './ItemsureCategoryChooser.jsx';
 
 /**
@@ -75,9 +75,11 @@ export default function ItemsureItemAlwaysWith({
                     <option value="fl_oz">oz</option>
                     <option value="ml">ml</option>
                   </select>
-                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => remove(row.categoryId)} aria-label="Remove">
-                    {'\u00d7'}
-                  </button>
+                  <Tip label="Stop taking this packaging off when that category sells">
+                    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => remove(row.categoryId)} aria-label="Remove">
+                      {'\u00d7'}
+                    </button>
+                  </Tip>
                 </span>
               ) : (
                 <span className="isu-muted isu-small">{row.amount} {row.unit === 'base' ? unitName : row.unit}</span>

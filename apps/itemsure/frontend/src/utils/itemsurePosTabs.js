@@ -6,7 +6,7 @@ export const POS_SETTINGS_PATH = '/settings/pos';
 export const POS_TABS = [
   { key: 'left', label: "What's left" },
   { key: 'buttons', label: '1. Clover buttons' },
-  { key: 'pours', label: '2. Pour sizes' },
+  { key: 'pours', label: '2. Amount each sale uses' },
   { key: 'addons', label: '3. Add-ons' },
   { key: 'stock', label: '4. Stock' },
   { key: 'connection', label: 'Connection' },

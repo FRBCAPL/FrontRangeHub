@@ -5,6 +5,11 @@ export const ALL_ITEMS = 'all';
 export const NO_CATEGORY = 'none';
 export const PATH_SEPARATOR = ' \u203a ';
 
+/** A–Z by name (case-insensitive). Used by pickers; chip bars keep custom sort_order. */
+export const byCategoryName = (a, b) =>
+  String(a?.name || '').localeCompare(String(b?.name || ''), undefined, { sensitivity: 'base' })
+  || String(a?.id || '').localeCompare(String(b?.id || ''));
+
 /** Active categories as { roots, childrenOf(id), parentOf(id), byId }. */
 export function categoryTree(categories) {
   const active = categories.filter((c) => c.is_active !== false);
@@ -82,6 +87,13 @@ export function searchCategories(tree, query) {
       return { root, children: children.filter(hit) };
     })
     .filter(({ root, children }) => !needle || hit(root) || children.length);
+}
+
+/** Same groups as searchCategories, but main categories and subs are A–Z for pickers. */
+export function searchCategoriesAlpha(tree, query) {
+  return searchCategories(tree, query)
+    .map(({ root, children }) => ({ root, children: [...children].sort(byCategoryName) }))
+    .sort((a, b) => byCategoryName(a.root, b.root));
 }
 
 /** "🥃 Liquor" when the category has its own icon, otherwise just the name. */

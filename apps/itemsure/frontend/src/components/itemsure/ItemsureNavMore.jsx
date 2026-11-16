@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import Tip from './ItemsureTip.jsx';
 
 const DESKTOP = '(min-width: 820px)';
 const isDesktop = () => typeof window !== 'undefined' && window.matchMedia?.(DESKTOP).matches;
@@ -42,25 +43,34 @@ export default function ItemsureNavMore({ links, linkClass }) {
 
   return (
     <div className={`isu-nav-more${open ? ' is-open' : ''}`} ref={rootRef}>
-      <button
-        type="button"
-        className={`isu-nav-link isu-nav-more-btn${current ? ' is-active' : ''}`}
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((o) => !o)}
-      >
-        <span aria-hidden="true" className="isu-nav-icon">{'\u22EF'}</span>
-        <span>More</span>
-        <span aria-hidden="true" className="isu-nav-more-caret">{open ? '\u25B4' : '\u25BE'}</span>
-      </button>
+      <Tip label="Recipes, levels, sites, Clover, settings, and more" side="right">
+        <button
+          type="button"
+          className={`isu-nav-link isu-nav-more-btn${current ? ' is-active' : ''}`}
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setOpen((o) => !o)}
+        >
+          <span aria-hidden="true" className="isu-nav-icon">{'\u22EF'}</span>
+          <span>More</span>
+          <span aria-hidden="true" className="isu-nav-more-caret">{open ? '\u25B4' : '\u25BE'}</span>
+        </button>
+      </Tip>
       {open ? (
         <div id={panelId} className="isu-nav-more-panel">
-          {links.map((link) => (
-            <NavLink key={link.to} to={link.to} className={linkClass}>
-              <span aria-hidden="true" className="isu-nav-icon">{link.icon}</span>
-              <span>{link.label}</span>
-            </NavLink>
-          ))}
+          {links.map((link) => {
+            const row = (
+              <NavLink to={link.to} className={linkClass}>
+                <span aria-hidden="true" className="isu-nav-icon">{link.icon}</span>
+                <span>{link.label}</span>
+              </NavLink>
+            );
+            return link.tip ? (
+              <Tip key={link.to} label={link.tip} side="right">{row}</Tip>
+            ) : (
+              <React.Fragment key={link.to}>{row}</React.Fragment>
+            );
+          })}
         </div>
       ) : null}
     </div>

@@ -153,3 +153,44 @@ export async function removePosLink(organizationId, externalId, itemId) {
     'remove the match',
   );
 }
+
+/**
+ * Dismissed name suggestions: Map of Clover external_id -> Set of item ids.
+ * null until the pos_match_ignores migration is applied.
+ */
+export async function listPosMatchIgnores(organizationId) {
+  const { data, error } = await itemsure.from('pos_match_ignores')
+    .select('external_id, item_id')
+    .eq('organization_id', organizationId).eq('provider', PROVIDER);
+  if (error) return null;
+  const map = new Map();
+  for (const r of data || []) {
+    if (!map.has(r.external_id)) map.set(r.external_id, new Set());
+    map.get(r.external_id).add(r.item_id);
+  }
+  return map;
+}
+
+/** Stops suggesting this ItemSure item for this Clover button. Already ignored is fine. */
+export async function ignorePosMatch(organizationId, externalId, itemId) {
+  const { error } = await itemsure.from('pos_match_ignores')
+    .insert({ organization_id: organizationId, provider: PROVIDER, external_id: externalId, item_id: itemId });
+  if (error && error.code !== '23505') assertOk({ error }, 'ignore that suggestion');
+}
+
+/** Stops suggesting several ItemSure items for one Clover button. */
+export async function ignorePosMatches(organizationId, externalId, itemIds) {
+  const ids = [...new Set((itemIds || []).filter(Boolean))];
+  if (!ids.length) return;
+  const rows = ids.map((item_id) => ({
+    organization_id: organizationId,
+    provider: PROVIDER,
+    external_id: externalId,
+    item_id,
+  }));
+  const { error } = await itemsure.from('pos_match_ignores').upsert(rows, {
+    onConflict: 'organization_id,provider,external_id,item_id',
+    ignoreDuplicates: true,
+  });
+  if (error) assertOk({ error }, 'ignore those suggestions');
+}

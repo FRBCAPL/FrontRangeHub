@@ -4,6 +4,7 @@ import { shoppingText, tickOf } from '../../utils/itemsureShoppingList.js';
 import ItemsureShoppingExtraRow from './ItemsureShoppingExtraRow.jsx';
 import ItemsureShoppingRow from './ItemsureShoppingRow.jsx';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
+import Tip from './ItemsureTip.jsx';
 
 function note({ shared, canReceive, hasExtras }) {
   if (shared) {
@@ -74,19 +75,31 @@ export default function ItemsureShoppingBuy({ groups, ticks, trip = null, onTick
       <div className="isu-shop-section-head">
         <h2 className="isu-shop-heading">To buy</h2>
         <div className="isu-shop-tools">
-          {onAdd && !(iconFor && groups.length) ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAdd('')}>+ Add item</button> : null}
-          {tickedKeys.length ? (
-            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={clearTicked} disabled={busy}>
-              {tickedExtras.length ? 'Clear ticked' : 'Clear ticks'}
-            </button>
+          {onAdd && !(iconFor && groups.length) ? (
+            <Tip label="Add something that isn’t on the auto list">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => onAdd('')}>+ Add item</button>
+            </Tip>
           ) : null}
-          {groups.length ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={copy}>Copy list</button> : null}
+          {tickedKeys.length ? (
+            <Tip label={tickedExtras.length ? 'Untick and remove hand-added lines' : 'Clear got marks without changing stock'}>
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={clearTicked} disabled={busy}>
+                {tickedExtras.length ? 'Clear ticked' : 'Clear ticks'}
+              </button>
+            </Tip>
+          ) : null}
+          {groups.length ? (
+            <Tip label="Copy a plain-text list to paste elsewhere">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={copy}>Copy list</button>
+            </Tip>
+          ) : null}
         </div>
       </div>
       {onReceive && tickedKeys.length ? (
-        <button type="button" className="isu-btn isu-btn--primary isu-shop-receive" onClick={onReceive}>
-          Receive bought items
-        </button>
+        <Tip label="Add ticked items to on-hand stock">
+          <button type="button" className="isu-btn isu-btn--primary isu-shop-receive" onClick={onReceive}>
+            Receive bought items
+          </button>
+        </Tip>
       ) : null}
       <ErrorNote message={error || ticks.error || trip?.error} />
       <p className="isu-muted isu-small isu-shop-note" role="status">

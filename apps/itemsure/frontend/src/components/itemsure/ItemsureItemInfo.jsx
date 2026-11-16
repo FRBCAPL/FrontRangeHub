@@ -5,7 +5,7 @@ import useSuppliers from '../../hooks/useSuppliers.js';
 import useSupplierPrices from '../../hooks/useSupplierPrices.js';
 import { useItemLink } from '../../hooks/useItemModal.js';
 import { alwaysWithHint, packagingAttachedLabel, packagingForCatalogItem } from '../../utils/itemsureAlwaysWith.js';
-import { Modal } from './ItemsureUi.jsx';
+import { Modal, Tip } from './ItemsureUi.jsx';
 import ItemsureSupplierPrices from './ItemsureSupplierPrices.jsx';
 import ItemsureItemAlwaysWith from './ItemsureItemAlwaysWith.jsx';
 import {
@@ -24,14 +24,15 @@ function Row({ label, children }) {
   );
 }
 
-function Door({ title, hint, onOpen }) {
-  return (
+function Door({ title, hint, tip, onOpen }) {
+  const button = (
     <button type="button" className="isu-item-info-door" onClick={onOpen}>
       <span className="isu-item-info-door-title">{title}</span>
       {hint ? <span className="isu-item-info-door-hint">{hint}</span> : null}
       <span className="isu-item-info-door-chevron" aria-hidden="true">{'\u203a'}</span>
     </button>
   );
+  return tip ? <Tip label={tip}>{button}</Tip> : button;
 }
 
 /** The Details tab: ordering stays open; catalog facts open in short nested sheets. */
@@ -124,18 +125,21 @@ export default function ItemsureItemInfo({
       <div className="isu-item-info-doors" role="group" aria-label="More details">
         <Door
           title="What it is"
+          tip="Brand, variant, and how it’s counted"
           hint={whatItIsHint(item, unitName)}
           onOpen={() => setSheet('what')}
         />
         <Door
           title="Identifiers"
+          tip="SKU, barcode, and other codes"
           hint={identifiersHint(item)}
           onOpen={() => setSheet('ids')}
         />
         {showAlways ? (
           <Door
             title="Goes with sales"
-            hint={alwaysWithHint(alwaysRules, categories)}
+            tip="Take packaging off once when matching food categories sell"
+            hint={alwaysRules.length ? alwaysWithHint(alwaysRules, categories) : 'Packaging taken off once with sales in these categories'}
             onOpen={() => setSheet('always')}
           />
         ) : null}

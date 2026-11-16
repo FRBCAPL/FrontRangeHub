@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { categoryOptions, categoryPath, categoryTree, extraCategoryNames, foundIn, inCategory, NO_CATEGORY, rootOf, searchCategories } from '../src/utils/itemsureCategories.js';
+import { categoryOptions, categoryPath, categoryTree, extraCategoryNames, foundIn, inCategory, NO_CATEGORY, rootOf, searchCategories, searchCategoriesAlpha } from '../src/utils/itemsureCategories.js';
 
 const categories = [
   { id: 'liq', name: 'Liquor', is_active: true, parent_category_id: null },
@@ -47,6 +47,11 @@ test('category search keeps a matching main whole and narrows the rest', () => {
   assert.deepEqual(ids(searchCategories(tree, 'rum')), [['liq', ['rum']]]);
   assert.deepEqual(ids(searchCategories(tree, 'LIQ')), [['liq', ['rum', 'vod']]]);
   assert.deepEqual(ids(searchCategories(tree, 'zzz')), []);
+});
+
+test('picker search lists main categories A–Z', () => {
+  const ids = (groups) => groups.map((g) => [g.root.id, g.children.map((c) => c.id)]);
+  assert.deepEqual(ids(searchCategoriesAlpha(tree, '')), [['beer', []], ['orphan', []], ['liq', ['rum', 'vod']]]);
 });
 
 test('extra categories help find an item; the main category alone decides "No category"', () => {

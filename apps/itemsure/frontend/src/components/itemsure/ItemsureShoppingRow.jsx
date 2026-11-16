@@ -8,6 +8,7 @@ import ItemsureShoppingTripSupplier from './ItemsureShoppingTripSupplier.jsx';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site } from '../../data/itemsureTerms.js';
+import Tip from './ItemsureTip.jsx';
 
 const q = (text) => (text === null || text === undefined ? '—' : displayQuantity(text));
 
@@ -45,15 +46,17 @@ export default function ItemsureShoppingRow({ row, tick, names, item, onTick, on
   return (
     <li className={`isu-shop-row ${tone}${ticked ? ' is-ticked' : ''}`}>
       <div className="isu-shop-row-main">
-        <button
-          type="button"
-          className="isu-shop-tick"
-          aria-pressed={ticked}
-          aria-label={ticked ? `Untick ${row.name}` : `Got ${row.name}`}
-          onClick={onTick}
-        >
-          {ticked ? '\u2713' : ''}
-        </button>
+        <Tip label={ticked ? 'Untick — not bought yet' : 'Mark as got while shopping'}>
+          <button
+            type="button"
+            className="isu-shop-tick"
+            aria-pressed={ticked}
+            aria-label={ticked ? `Untick ${row.name}` : `Got ${row.name}`}
+            onClick={onTick}
+          >
+            {ticked ? '\u2713' : ''}
+          </button>
+        </Tip>
         <button type="button" className="isu-shop-row-body" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           <span className="isu-shop-name">{row.name}</span>
           <span className="isu-shop-where">{TARGET_STATUS[row.status]?.label} · {where}</span>

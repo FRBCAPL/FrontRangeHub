@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, SITES } from '../../data/itemsureTerms.js';
 import ItemsureNavMore from './ItemsureNavMore.jsx';
+import Tip from './ItemsureTip.jsx';
 
 /** Everyday pages, always visible. */
 const MAIN = [
@@ -14,18 +15,18 @@ const MAIN = [
 
 /** Everything else, under "More". */
 const MORE = [
-  { to: `${ITEMSURE_PATH}/items/recipes`, label: 'Recipes', icon: '\u2615' },
-  { to: `${ITEMSURE_PATH}/low-stock`, label: 'Running low', icon: '\u26A0', permission: 'inventory.view' },
-  { to: `${ITEMSURE_PATH}/levels`, label: 'Warning levels', icon: '\u2195', permission: 'inventory.view' },
-  { to: `${ITEMSURE_PATH}/stock`, label: `Stock by ${site}`, icon: '\u25A4', permission: 'inventory.view' },
-  { to: `${ITEMSURE_PATH}/locations`, label: SITES, icon: '\u25A6' },
-  { to: `${ITEMSURE_PATH}/suppliers`, label: 'Suppliers', icon: '\u26DF' },
-  { to: `${ITEMSURE_PATH}/activity`, label: 'History', icon: '\u25F7', permission: 'audit.read' },
-  { to: `${ITEMSURE_PATH}/clover-sales`, label: 'Clover sales', icon: '$', permission: 'inventory.activity' },
-  { to: `${ITEMSURE_PATH}/sales-vs-counts`, label: 'Sales vs counts', icon: '\u2696', permission: 'inventory.activity' },
-  { to: `${ITEMSURE_PATH}/settings`, label: 'Settings', icon: '\u2699' },
-  { to: `${ITEMSURE_PATH}/help`, label: 'Help', icon: '?' },
-  { to: `${ITEMSURE_PATH}/coming-next`, label: 'Coming next', icon: '\u2605' },
+  { to: `${ITEMSURE_PATH}/items/recipes`, label: 'Recipes', icon: '\u2615', tip: 'Shared ingredients for Clover buttons' },
+  { to: `${ITEMSURE_PATH}/low-stock`, label: 'Running low', icon: '\u26A0', tip: 'Items under their warn-at level', permission: 'inventory.view' },
+  { to: `${ITEMSURE_PATH}/levels`, label: 'Warning levels', icon: '\u2195', tip: 'Warn-at and restock targets', permission: 'inventory.view' },
+  { to: `${ITEMSURE_PATH}/stock`, label: `Stock by ${site}`, icon: '\u25A4', tip: 'Amounts by location', permission: 'inventory.view' },
+  { to: `${ITEMSURE_PATH}/locations`, label: SITES, icon: '\u25A6', tip: 'Sites and storage spots' },
+  { to: `${ITEMSURE_PATH}/suppliers`, label: 'Suppliers', icon: '\u26DF', tip: 'Who you buy from' },
+  { to: `${ITEMSURE_PATH}/activity`, label: 'History', icon: '\u25F7', tip: 'Stock changes and audit', permission: 'audit.read' },
+  { to: `${ITEMSURE_PATH}/clover-sales`, label: 'Clover sales', icon: '$', tip: 'Sales pulled from Clover', permission: 'inventory.activity' },
+  { to: `${ITEMSURE_PATH}/sales-vs-counts`, label: 'Sales vs counts', icon: '\u2696', tip: 'Compare sales take-off to counts', permission: 'inventory.activity' },
+  { to: `${ITEMSURE_PATH}/settings`, label: 'Settings', icon: '\u2699', tip: 'Org, roles, and Clover' },
+  { to: `${ITEMSURE_PATH}/help`, label: 'Help', icon: '?', tip: 'How ItemSure works' },
+  { to: `${ITEMSURE_PATH}/coming-next`, label: 'Coming next', icon: '\u2605', tip: 'Planned features' },
 ];
 
 const WITHOUT_ORG = [
@@ -48,9 +49,11 @@ export default function ItemsureNav({ hasOrganization, can, alerts }) {
             <span aria-hidden="true" className="isu-nav-icon">{link.icon}</span>
             <span>{link.label}</span>
             {count ? (
-              <span className="isu-nav-badge" aria-label={`${count} running low`}>
-                {count > 99 ? '99+' : count}
-              </span>
+              <Tip label={`${count} item${count === 1 ? '' : 's'} running low`} side="right">
+                <span className="isu-nav-badge" aria-label={`${count} running low`}>
+                  {count > 99 ? '99+' : count}
+                </span>
+              </Tip>
             ) : null}
           </NavLink>
         );

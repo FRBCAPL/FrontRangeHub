@@ -7,6 +7,16 @@
   gap: 10px;
 }
 
+.isu-app .isu-home-actions > .isu-tip {
+  display: block;
+  min-width: 0;
+}
+
+.isu-app .isu-home-actions > .isu-tip > .isu-home-action {
+  width: 100%;
+  height: 100%;
+}
+
 @media (min-width: 640px) {
   .isu-app .isu-home-actions {
     grid-template-columns: none;

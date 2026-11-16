@@ -36,7 +36,7 @@ test('every Clover line, in order: problem, take-off, buttons, amounts, items', 
   assert.equal(tasks[1].to, null);
   assert.equal(tasks[2].title, '12 Clover buttons not linked yet');
   assert.equal(tasks[2].to, '/pos?tab=buttons');
-  assert.equal(tasks[3].title, 'Clover: 3 pour sizes to check');
+  assert.equal(tasks[3].title, 'Clover: 3 sale amounts to set');
   assert.equal(tasks[3].to, '/pos?tab=pours');
   assert.equal(tasks[4].title, '9 items not matched to Clover');
   assert.equal(tasks[4].to, '/items?clover=unmatched');

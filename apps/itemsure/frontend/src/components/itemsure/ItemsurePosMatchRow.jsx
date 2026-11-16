@@ -2,6 +2,7 @@ import React from 'react';
 import { posPrice } from '../../utils/itemsurePosMatch.js';
 import ItemsureItemSearchPick from './ItemsureItemSearchPick.jsx';
 import ItemsurePosPourEdit from './ItemsurePosPourEdit.jsx';
+import Tip from './ItemsureTip.jsx';
 /**
  * One Clover item: what it is, the ItemSure items it uses (tap × to remove), a suggested
  * match, and "Match to…" for any active item. Read-only without `canMatch`. `asking` (just
@@ -11,7 +12,8 @@ import ItemsurePosPourEdit from './ItemsurePosPourEdit.jsx';
  */
 export default function ItemsurePosMatchRow({
   pos, matchedIds, itemsById, choices, suggestion, canMatch, busy, asking = false, pourInfo = null,
-  onDone, onAdd, onRemove, onSavePour, onSkip, recipe = null, recipes = [], onUseRecipe, onStopRecipe, onNewRecipe = null,
+  onDone, onAdd, onIgnoreSuggestion = null, onRemove, onSavePour, onSkip, recipe = null, recipes = [], onUseRecipe, onStopRecipe, onNewRecipe = null,
+  onAddItem = null,
 }) {
   const matched = matchedIds.map((id) => itemsById.get(id)).filter(Boolean);
   const left = choices.filter((i) => !matchedIds.includes(i.id));
@@ -44,9 +46,11 @@ export default function ItemsurePosMatchRow({
               {item.name}
               {index === 0 && matched.length > 1 ? <span className="isu-extra-category-tag">main</span> : null}
               {canLink ? (
-                <button type="button" className="isu-extra-category-remove" disabled={busy} onClick={() => onRemove(item.id)} aria-label={`Remove ${item.name} from ${pos.name}`}>
-                  {'\u00d7'}
-                </button>
+                <Tip label={`Unlink ${item.name} from this button`}>
+                  <button type="button" className="isu-extra-category-remove" disabled={busy} onClick={() => onRemove(item.id)} aria-label={`Remove ${item.name} from ${pos.name}`}>
+                    {'\u00d7'}
+                  </button>
+                </Tip>
               ) : null}
             </li>
           ))}
@@ -86,7 +90,14 @@ export default function ItemsurePosMatchRow({
       {canLink && !matched.length && !pos.not_tracked && suggestion ? (
         <div className="isu-pos-suggest">
           <span>Looks like <strong>{suggestion.name}</strong></span>
-          <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={() => onAdd(suggestion.id)}>Match</button>
+          <Tip label="Link this suggested ItemSure item">
+            <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={() => onAdd(suggestion.id)}>Match</button>
+          </Tip>
+          {onIgnoreSuggestion ? (
+            <Tip label="Don’t suggest this item for this button again">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onIgnoreSuggestion(suggestion.id)}>Not this</button>
+            </Tip>
+          ) : null}
         </div>
       ) : null}
 
@@ -100,23 +111,34 @@ export default function ItemsurePosMatchRow({
         </div>
       ) : null}
 
-      {canLink && !asking && !pos.not_tracked && (left.length || recipes.length || onNewRecipe) ? (
+      {canLink && !asking && !pos.not_tracked && (left.length || recipes.length || onNewRecipe || onAddItem) ? (
         <div className="isu-pos-recipe">
           {left.length ? <ItemsureItemSearchPick items={left} label={matched.length ? '+ Also uses…' : 'Match to an item…'} disabled={busy} onPick={onAdd} /> : null}
+          {onAddItem && !matched.length ? (
+            <Tip label="Create a new stock item named like this button, then link it">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={onAddItem}>+ Add item…</button>
+            </Tip>
+          ) : null}
           {recipes.length && onUseRecipe ? (
             <ItemsureItemSearchPick items={recipes} label={matched.length ? 'Use a recipe instead…' : 'Use a recipe…'} placeholder="Type to find a recipe" disabled={busy} onPick={onUseRecipe} />
           ) : null}
           {onNewRecipe ? (
-            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={onNewRecipe}>+ New recipe…</button>
+            <Tip label="Build a recipe from this button’s ingredients">
+              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={onNewRecipe}>+ New recipe…</button>
+            </Tip>
           ) : null}
         </div>
       ) : null}
 
       {canLink && onSkip && !asking ? (
         pos.not_tracked && !matched.length ? (
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(false)}>Track this again</button>
+          <Tip label="Bring this button back into matching">
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(false)}>Track this again</button>
+          </Tip>
         ) : !matched.length ? (
-          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(true)}>Stop tracking button</button>
+          <Tip label="Generic button — don’t take stock when it sells">
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => onSkip(true)}>Stop tracking button</button>
+          </Tip>
         ) : null
       ) : null}
     </li>

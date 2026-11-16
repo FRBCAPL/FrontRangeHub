@@ -9,7 +9,7 @@ import useLoosePieces from '../../hooks/useLoosePieces.js';
 import { itemSummary, sortByAttention, visibleSlots, whereAmounts } from '../../utils/itemsureItemStock.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, sites, SITE } from '../../data/itemsureTerms.js';
-import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
+import { ErrorNote, Modal, PageHead, Tip } from './ItemsureUi.jsx';
 import ItemsureItemRow from './ItemsureItemRow.jsx';
 import ItemsureCategoryManager from './ItemsureCategoryManager.jsx';
 import ItemsureCategoryChips from './ItemsureCategoryChips.jsx';
@@ -134,7 +134,11 @@ export default function ItemsureItems() {
       <PageHead
         title="Inventory"
         description="Everything you stock. Tap an item to see how many you have and change it."
-        action={<Link to={`${ITEMSURE_PATH}/items/recipes`} className="isu-btn isu-btn--ghost">Recipes</Link>}
+        action={(
+          <Tip label="Shared ingredients for Clover buttons">
+            <Link to={`${ITEMSURE_PATH}/items/recipes`} className="isu-btn isu-btn--ghost">Recipes</Link>
+          </Tip>
+        )}
       />
       <ErrorNote message={error} />
       {cloverOnly ? (
@@ -167,24 +171,32 @@ export default function ItemsureItems() {
             onChange={(e) => setQuery(e.target.value)}
           />
           {canManageItems ? (
-            <button type="button" className="isu-btn isu-btn--primary isu-search-add-btn" onClick={() => addItem()} >Add Item</button>
+            <Tip label="Start the add-item wizard">
+              <button type="button" className="isu-btn isu-btn--primary isu-search-add-btn" onClick={() => addItem()}>Add Item</button>
+            </Tip>
           ) : null}
         </div>
         {places.ready && activeLocations.length > 1 ? (
-          <select className="isu-item-filter" aria-label={SITE} value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
-            <option value="">All {sites}</option>
-            {activeLocations.map((l) => <option key={l.id} value={l.id}>At {l.name}</option>)}
-          </select>
+          <Tip label={`Only show items kept at this ${site}`}>
+            <select className="isu-item-filter" aria-label={SITE} value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+              <option value="">All {sites}</option>
+              {activeLocations.map((l) => <option key={l.id} value={l.id}>At {l.name}</option>)}
+            </select>
+          </Tip>
         ) : null}
         {activeSuppliers.length ? (
-          <select className="isu-item-filter" aria-label="Supplier" value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)}>
-            <option value="">All suppliers</option>
-            {activeSuppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
+          <Tip label="Only show items from this supplier">
+            <select className="isu-item-filter" aria-label="Supplier" value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)}>
+              <option value="">All suppliers</option>
+              {activeSuppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </Tip>
         ) : null}
-        <label className="isu-check">
-          <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Show archived
-        </label>
+        <Tip label="Include items you’ve archived">
+          <label className="isu-check">
+            <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Show archived
+          </label>
+        </Tip>
       </div>
 
       {catalog === null ? <p className="isu-muted">Loading…</p> : null}

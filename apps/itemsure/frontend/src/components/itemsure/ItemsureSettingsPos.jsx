@@ -15,7 +15,7 @@ import ItemsurePosModifiers from './ItemsurePosModifiers.jsx';
 
 /**
  * Settings → Point of sale, in tabs in the order people set things up: what's left, Clover
- * buttons, pour sizes, add-ons, stock, connection. ?tab= picks one (see itemsurePosTabs.js).
+ * buttons, amount each sale uses, add-ons, stock, connection. ?tab= picks one (see itemsurePosTabs.js).
  */
 export default function ItemsureSettingsPos() {
   const { organization, can } = useItemsureWorkspace();

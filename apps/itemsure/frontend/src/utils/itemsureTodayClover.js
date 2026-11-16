@@ -59,18 +59,18 @@ export function buildCloverTasks(clover, paths, now = Date.now()) {
   const toCheck = (clover.amounts || 0) + (clover.sizes || 0);
   if (toCheck && fix) {
     const parts = [
-      clover.amounts ? plural(clover.amounts, 'pour size', 'pour sizes') : '',
+      clover.amounts ? plural(clover.amounts, 'sale amount', 'sale amounts') : '',
       clover.sizes ? plural(clover.sizes, 'bottle or case size', 'bottle or case sizes') : '',
     ].filter(Boolean).join(' and ');
     tasks.push({
       key: 'pos-setup',
       tone: 'info',
-      title: `Clover: ${parts} to check`,
+      title: `Clover: ${parts} to set`,
       detail: clover.guessed
-        ? `ItemSure already guessed ${clover.guessed}. Check them so sales vs counts is right.`
-        : 'Needed so sales vs counts can tell what each Clover sale used.',
+        ? `ItemSure already guessed ${clover.guessed}. Confirm how much stock each sale uses.`
+        : 'Tell ItemSure how much stock each Clover sale uses (food, drinks, and packs).',
       to: fixAt('pours'),
-      button: 'Check',
+      button: 'Set amounts',
     });
   }
 

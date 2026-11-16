@@ -6,14 +6,16 @@ const words = (text) => (text || '').toLowerCase().replace(/&/g, ' and ').split(
  * The ItemSure item a Clover item most likely is, or null. Every word of the ItemSure
  * item's name (with its brand) must appear in the Clover name, and the closest fit wins
  * ("Bacardi Superior" matches "Bacardi Superior Rum Shot"). Ties are left for a person.
+ * `ignoreItemIds` (Set) skips dismissed guesses for that Clover button.
  */
-export function suggestMatch(posName, items) {
+export function suggestMatch(posName, items, { ignoreItemIds = null } = {}) {
   const have = new Set(words(posName));
   if (!have.size) return null;
   let best = null;
   let bestScore = 0;
   let tie = false;
   for (const item of items) {
+    if (ignoreItemIds?.has(item.id)) continue;
     const want = [...new Set(words(`${item.brand || ''} ${item.name}`))];
     if (!want.length || !want.every((w) => have.has(w))) continue;
     const score = want.length / have.size;

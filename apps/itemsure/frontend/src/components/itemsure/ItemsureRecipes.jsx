@@ -4,7 +4,7 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useRecipes from '../../hooks/useRecipes.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { recipeText, recipeUseCounts } from '../../utils/itemsureRecipes.js';
-import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
+import { ErrorNote, Modal, PageHead, Tip } from './ItemsureUi.jsx';
 import ItemsureRecipeForm from './ItemsureRecipeForm.jsx';
 import ItemsureRecipeButtons from './ItemsureRecipeButtons.jsx';
 import ItemsureRecipeBulkAdd from './ItemsureRecipeBulkAdd.jsx';
@@ -43,11 +43,15 @@ export default function ItemsureRecipes() {
       action={canEdit && state && !state.missing ? (
         <span className="isu-pos-ask-actions">
           {state.recipes.length ? (
-            <button type="button" className="isu-btn isu-btn--ghost" onClick={() => { setError(''); setBulkAdd(true); }}>
-              Add ingredient to recipes…
-            </button>
+            <Tip label="Append the same ingredient to many recipes at once">
+              <button type="button" className="isu-btn isu-btn--ghost" onClick={() => { setError(''); setBulkAdd(true); }}>
+                Add ingredient to recipes…
+              </button>
+            </Tip>
           ) : null}
-          <button type="button" className="isu-btn isu-btn--primary" onClick={() => open(setEditing, { recipe: null })}>Add recipe</button>
+          <Tip label="Build a drink or dish once for Clover">
+            <button type="button" className="isu-btn isu-btn--primary" onClick={() => open(setEditing, { recipe: null })}>Add recipe</button>
+          </Tip>
         </span>
       ) : null}
     />
@@ -90,10 +94,16 @@ export default function ItemsureRecipes() {
               {canEdit ? (
                 <div className="isu-pos-ask-actions">
                   {hasClover ? (
-                    <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => open(setPicking, r)}>Use on Clover buttons…</button>
+                    <Tip label="Attach this recipe to menu buttons">
+                      <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => open(setPicking, r)}>Use on Clover buttons…</button>
+                    </Tip>
                   ) : null}
-                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => open(setEditing, { recipe: r })}>Change</button>
-                  <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => open(setDeleting, r)}>Delete</button>
+                  <Tip label="Edit name or ingredients">
+                    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => open(setEditing, { recipe: r })}>Change</button>
+                  </Tip>
+                  <Tip label="Remove the recipe; linked buttons keep their amounts">
+                    <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => open(setDeleting, r)}>Delete</button>
+                  </Tip>
                 </div>
               ) : null}
             </li>

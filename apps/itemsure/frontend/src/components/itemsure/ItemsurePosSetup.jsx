@@ -26,8 +26,8 @@ function Step({ done, children, action }) {
 }
 
 /**
- * Point of sale → Pour sizes: a short to-do list (by category, amounts, sizes, usual pours) with
- * ItemSure's guesses filled in, so people confirm instead of typing. `onChanged` runs after saves.
+ * Point of sale → Amount each sale uses: a short to-do list (by category, amounts, sizes, house
+ * words) with ItemSure's guesses filled in, so people confirm instead of typing. `onChanged` runs after saves.
  */
 export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, onChanged }) {
   const { summary, error: loadError, reload } = usePosSetup(organizationId, reloadKey);
@@ -41,12 +41,12 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
     if (summary.sizes.length) setOpen('sizes');
   }, [sizesNext, summary]);
 
-  if (loadError) return <Card title="Pour sizes"><ErrorNote message={loadError} /></Card>;
+  if (loadError) return <Card title="Amount each sale uses"><ErrorNote message={loadError} /></Card>;
   if (!summary) return null;
   if (!summary.ready) {
     return (
-      <Card title="Pour sizes">
-        <p className="isu-muted">Pour sizes need a database update first. Nothing else is affected.</p>
+      <Card title="Amount each sale uses">
+        <p className="isu-muted">Amount-per-sale setup needs a database update first. Nothing else is affected.</p>
       </Card>
     );
   }
@@ -99,8 +99,12 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
   ].filter(Boolean).join(' and ');
 
   return (
-    <Card title="Pour sizes">
-      <p className="isu-muted isu-small">How much each Clover sale uses. Set it once for a whole category; single drinks only need their own when they&apos;re different. ItemSure fills in its best guesses, so you mostly just check them.</p>
+    <Card title="Amount each sale uses">
+      <p className="isu-muted isu-small">
+        When Clover sells something, how much stock should come off? Works for food, drinks, and packs —
+        not only liquor. Set a whole category once; change a button only when it&apos;s different. ItemSure
+        fills in guesses, so you mostly confirm.
+      </p>
       <ol className="isu-pos-steps">
         {summary.categoryReady ? (
           <Step
@@ -112,19 +116,19 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
             ) : null}
           >
             {categorySet
-              ? <><strong>Pours by category</strong><span className="isu-muted isu-small"> · cover {coveredText}</span></>
-              : <><strong>Set pours by category</strong><span className="isu-muted isu-small"> · quickest: Liquor 1.5 oz a drink, 750 ml bottles</span></>}
+              ? <><strong>Amounts by category</strong><span className="isu-muted isu-small"> · cover {coveredText}</span></>
+              : <><strong>Set amounts by category</strong><span className="isu-muted isu-small"> · e.g. Food 1 single from the box · Liquor 1.5 oz, 750 ml bottles</span></>}
           </Step>
         ) : null}
         <Step
           done={!summary.amounts.length}
           action={summary.amounts.length && canEdit ? (
-            <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => setOpen('amounts')}>Check them</button>
+            <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => setOpen('amounts')}>Review amounts</button>
           ) : null}
         >
           {summary.amounts.length
-            ? <><strong>{summary.amounts.length} pour size{summary.amounts.length === 1 ? '' : 's'} to check</strong><span className="isu-muted isu-small"> · {guessed} already guessed for you</span></>
-            : <strong>Every linked drink has a pour size</strong>}
+            ? <><strong>{summary.amounts.length} sale amount{summary.amounts.length === 1 ? '' : 's'} to set</strong><span className="isu-muted isu-small"> · {guessed} already guessed for you</span></>
+            : <strong>Every linked button has an amount</strong>}
         </Step>
         <Step
           done={!summary.sizes.length}
@@ -133,11 +137,11 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
           ) : null}
         >
           {summary.sizes.length
-            ? <><strong>{summary.sizes.length} item{summary.sizes.length === 1 ? ' needs' : 's need'} a size</strong><span className="isu-muted isu-small"> · like how big a keg or bottle is, or how many come in a case</span></>
-            : <strong>Every poured item has a size</strong>}
+            ? <><strong>{summary.sizes.length} item{summary.sizes.length === 1 ? ' needs' : 's need'} a size</strong><span className="isu-muted isu-small"> · bottle/keg size, or how many come in a box or case</span></>
+            : <strong>Every item that needs a size has one</strong>}
         </Step>
         <Step done action={canEdit ? <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={() => setOpen('standards')}>Change</button> : null}>
-          <strong>Usual pour sizes</strong><span className="isu-muted isu-small"> · used for guesses: {houseList}</span>
+          <strong>Usual amounts from names</strong><span className="isu-muted isu-small"> · guesses when a button name has these words: {houseList}</span>
         </Step>
       </ol>
       {allSet ? <Link to={`${ITEMSURE_PATH}/sales-vs-counts`} className="isu-link">All set. See sales vs counts {'\u203A'}</Link> : null}
@@ -148,12 +152,12 @@ export default function ItemsurePosSetup({ organizationId, canEdit, reloadKey, o
       <Modal open={open === 'sizes'} title="Sizes and case counts" onClose={close} wide>
         {open === 'sizes' ? <ItemsurePosSizeReview rows={summary.sizes} busy={busy} error={error} onSave={saveSizes} onCancel={close} /> : null}
       </Modal>
-      <Modal open={open === 'categories'} title="Pours by category" onClose={close} wide>
+      <Modal open={open === 'categories'} title="Amounts by category" onClose={close} wide>
         {open === 'categories' ? (
           <ItemsureCategoryAmounts summary={summary} canEdit={canEdit} busy={busy} error={error} onSave={saveCategory} onClose={close} />
         ) : null}
       </Modal>
-      <Modal open={open === 'standards'} title="Usual pour sizes" onClose={close}>
+      <Modal open={open === 'standards'} title="Usual amounts from names" onClose={close}>
         {open === 'standards' ? (
           <ItemsureStandardAmounts standards={summary.standards} canSave={summary.standardsSaved !== null} busy={busy} error={error} onSave={saveStandards} onCancel={close} />
         ) : null}

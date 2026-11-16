@@ -7,7 +7,7 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { COUNT_STATUS_LABELS, ITEMSURE_PATH, REVIEW_STATUS_LABELS } from '../../data/itemsureConstants.js';
 import { formatWhen } from '../../utils/itemsureText.js';
 import { site, SITE } from '../../data/itemsureTerms.js';
-import { ErrorNote, PageHead } from './ItemsureUi.jsx';
+import { ErrorNote, PageHead, Tip } from './ItemsureUi.jsx';
 
 function placeLabel(session, locations) {
   const location = locations.find((l) => l.id === session.location_id);
@@ -98,7 +98,11 @@ export default function ItemsureCounts() {
       <PageHead
         title="Counts"
         description={`Walk around and count everything at a ${site}, one spot, or one supplier's items in one go.`}
-        action={canStart ? <Link to={`${ITEMSURE_PATH}/counts/new`} className="isu-btn isu-btn--primary">Start count</Link> : null}
+        action={canStart ? (
+          <Tip label="Begin a physical inventory count">
+            <Link to={`${ITEMSURE_PATH}/counts/new`} className="isu-btn isu-btn--primary">Start count</Link>
+          </Tip>
+        ) : null}
       />
       <ErrorNote message={error} />
       {sessions === null ? <p className="isu-muted">Loading…</p> : null}
