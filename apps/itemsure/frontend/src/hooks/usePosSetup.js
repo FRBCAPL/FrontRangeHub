@@ -100,6 +100,8 @@ export default function usePosSetup(organizationId, reloadKey, { enabled = true,
       categories: data.categories,
       items: data.items,
       units: data.units,
+      contents: data.contents,
+      pieces: data.pieces,
       matchedItemIds: new Set([...data.links.values()].flat()),
       sizes: [
         ...[...sizeIds].map((id) => ({ item: itemsById.get(id), unit: unitOf(itemsById.get(id)), need: 'size' })),

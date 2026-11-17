@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ItemSure">
+  <rect width="512" height="512" fill="#0f1412"/>
+  <rect x="36" y="36" width="440" height="440" rx="88" fill="none" stroke="#2f6b52" stroke-width="12"/>
+  <path d="M175 285 L240 350 L355 195" fill="none" stroke="#3c8c64" stroke-opacity="0.4" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="236" text-anchor="middle" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="100" font-weight="700">
+    <tspan fill="#ffffff">I</tspan><tspan fill="#4cc38a">tem</tspan>
+  </text>
+  <text x="256" y="348" text-anchor="middle" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="100" font-weight="700">
+    <tspan fill="#ffffff">S</tspan><tspan fill="#4cc38a">ure</tspan>
+  </text>
+</svg>

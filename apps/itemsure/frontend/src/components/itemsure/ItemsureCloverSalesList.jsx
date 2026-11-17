@@ -1,11 +1,12 @@
 import React from 'react';
 import { shortQty } from '../../utils/itemsurePosUsage.js';
 import { modifierNotes } from '../../utils/itemsurePosModifiers.js';
+import { salesGapLabel } from '../../utils/itemsurePosFixGap.js';
 
 const usedText = (row) => {
   if (row.complete) return `About ${shortQty(row.used)} ${row.unit} of stock`;
   if (row.used > 0) return `At least ${shortQty(row.used)} ${row.unit} (some amounts per sale not set)`;
-  return row.missingPour.length ? 'Amount per sale not set' : 'Size not set';
+  return salesGapLabel(row) || 'Can’t compare yet';
 };
 
 /** One line per item: how many Clover sales used it, how much stock that is, and which Clover buttons. */
@@ -31,7 +32,7 @@ export default function ItemsureCloverSalesList({ rows, onFix }) {
           {row.modifiers?.length ? (
             <span className="isu-muted isu-small">Includes modifiers: {modifierNotes(row.modifiers)}</span>
           ) : null}
-          {onFix && !row.complete && row.buttons.length ? (
+          {onFix && !row.complete && (row.buttons.length || row.modifiers?.length) ? (
             <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => onFix(row)}>Fix it</button>
           ) : null}
         </li>

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { shortQty } from '../../utils/itemsurePosUsage.js';
 import { modifierNotes } from '../../utils/itemsurePosModifiers.js';
+import { salesGapLabel } from '../../utils/itemsurePosFixGap.js';
 import { SALES_SORT_COLUMNS, sortSalesRows, toggleSalesSort } from '../../utils/itemsurePosSalesSort.js';
 
 const CLOSE = 0.05;
@@ -22,7 +23,7 @@ function SalesUsed({ row }) {
   const unset = row.missingPour.length || row.missingContent;
   if (!unset) return `${shortQty(row.expected)} ${row.unit}`;
   if (row.expected > 0) return `${shortQty(row.expected)}+ ${row.unit}`;
-  return <span className="isu-sales-unset">{row.missingPour.length ? 'amount per sale not set' : 'size not set'}</span>;
+  return <span className="isu-sales-unset">{salesGapLabel(row)}</span>;
 }
 
 const mark = (dir) => (dir === 'asc' ? ' \u2191' : ' \u2193');
@@ -68,7 +69,9 @@ export default function ItemsurePosSalesTable({ rows, posNames, onFix }) {
             {row.missingPour.length ? (
               <span className="isu-badge">Set the amount for {row.missingPour.map((id) => posNames.get(id) || 'a Clover item').join(', ')}</span>
             ) : null}
-            {row.missingContent ? <span className="isu-badge">Size needed</span> : null}
+            {row.missingPour.length || row.missingContent ? (
+              <span className="isu-badge">{salesGapLabel(row)}</span>
+            ) : null}
             {onFix && (row.missingPour.length || row.missingContent) ? (
               <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" onClick={() => onFix(row)}>Fix it</button>
             ) : null}

@@ -1,0 +1,31 @@
+{
+  "name": "ItemSure",
+  "short_name": "ItemSure",
+  "description": "Know what you've got — inventory, counts, and Clover sales.",
+  "start_url": "/itemsure",
+  "scope": "/itemsure",
+  "display": "standalone",
+  "background_color": "#0f1412",
+  "theme_color": "#0f1412",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/itemsure/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/itemsure/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/itemsure/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

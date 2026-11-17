@@ -75,12 +75,12 @@ export default function usePosSalesReport(organizationId) {
   const counts = base?.counts;
   const rounds = useMemo(() => countRounds((counts || []).filter((c) => c.locationId === siteId)), [counts, siteId]);
 
-  /** After a "Fix it": reload amounts and sizes only, keeping the chosen counts. */
+  /** After a "Fix it": reload amounts, sizes, and add-on rules, keeping the chosen counts. */
   const refreshSetup = useCallback(async () => {
     try {
-      const [links, ownPours, ownContents, defaults, ownPieces] = await Promise.all([
+      const [links, ownPours, ownContents, defaults, ownPieces, modifiers] = await Promise.all([
         listPosLinks(organizationId), listPosPours(organizationId), listItemContents(organizationId), listCategoryDefaults(organizationId),
-        listItemPieces(organizationId),
+        listItemPieces(organizationId), listModifiers(organizationId).catch(() => null),
       ]);
       setBase((b) => (b ? {
         ...b,
@@ -88,6 +88,7 @@ export default function usePosSalesReport(organizationId) {
         ...withCategoryDefaults({ links, pours: ownPours, contents: ownContents, pieces: ownPieces, items: b.items, categories: b.categories, defaults, units: b.units }),
         doubles: doublesByCategory({ links, items: b.items, categories: b.categories, defaults }),
         usual: usualPourFor({ items: b.items, categories: b.categories, defaults, units: b.units }),
+        modifiers: modifiers ? modifierSetup(modifiers) : b.modifiers,
       } : b));
     } catch (e) {
       setError(e.message);

@@ -4,6 +4,7 @@ import { acceptEmailLink, getSession, onAuthChange, signOut } from '../../servic
 import { itemsureAuthFromHash } from '../../utils/itemsureAuthLanding.js';
 import { ItemsureWorkspaceProvider } from '../../hooks/useItemsureWorkspace.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
+import useItemsurePwa from '../../hooks/useItemsurePwa.js';
 import ItemsureAuth from './ItemsureAuth.jsx';
 import ItemsureWelcome from './ItemsureWelcome.jsx';
 import ItemsureWorkspace from './ItemsureWorkspace.jsx';
@@ -48,6 +49,7 @@ function Wordmark() {
 export default function ItemsureApp() {
   const location = useLocation();
   const navigate = useNavigate();
+  useItemsurePwa();
   const [session, setSession] = useState(undefined);
   const [linkLanding] = useState(() => itemsureAuthFromHash(window.location.hash));
   const [linkError, setLinkError] = useState('');

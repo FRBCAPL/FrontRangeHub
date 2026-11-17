@@ -136,7 +136,23 @@
 .isu-app .isu-pos-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .isu-app .isu-pos-tabs .isu-chip { cursor: pointer; font: inherit; font-size: 0.9rem; color: var(--isu-ink); min-height: 40px; }
 .isu-app .isu-pos-tabs .isu-chip.is-active { border-color: var(--isu-pine); color: var(--isu-pine); font-weight: 700; }
-.isu-app .isu-pos-mod-line { display: grid; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--isu-border, #e5e7eb); }.isu-app .isu-pos-report-note { grid-column: 1 / -1; }
+.isu-app .isu-pos-mod-line { display: grid; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--isu-border, #e5e7eb); }
+.isu-app .isu-pos-report-note { grid-column: 1 / -1; }
+
+/* Fix-it add-ons: one clear choice at a time. */
+.isu-app .isu-pos-fix-choices { display: grid; gap: 8px; }
+.isu-app .isu-pos-fix-choice {
+  display: grid; gap: 2px; text-align: left;
+  padding: 10px 12px; border: 1px solid var(--isu-line); border-radius: 10px;
+  background: transparent; color: inherit; font: inherit; cursor: pointer;
+}
+.isu-app .isu-pos-fix-choice.is-on {
+  border-color: var(--isu-pine); box-shadow: inset 0 0 0 1px var(--isu-pine);
+}
+.isu-app .isu-pos-fix-suggest {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+}
+.isu-app .isu-pos-fix-suggest > p { margin: 0; }
 
 /* How much one sale uses, and the site Clover sells from. */
 .isu-app .isu-pos-pours { display: grid; gap: 4px; }

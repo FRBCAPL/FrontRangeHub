@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import ItemsureTabs from './ItemsureTabs.jsx';
 import {
   WizardBasicsAbout,
@@ -17,11 +17,19 @@ export { basicsPanelForError };
 /**
  * Step 1 split into short panels: About (name / category / brand), Counted in
  * (unit + portion), and Suppliers — so Edit Item stays skim-friendly.
- * `panel` / `onPanel` are controlled by the wizard so Next/Back walk these panels.
+ * Pass `panel` / `onPanel` from the full wizard so Next/Back walk these panels;
+ * Edit details can omit them and manages the tabs itself.
  */
-export default function ItemsureWizardBasics({ panel, onPanel, ...props }) {
+export default function ItemsureWizardBasics({ panel: panelProp, onPanel: onPanelProp, ...props }) {
   const { form, stepError = '' } = props;
   const showBuy = 'supplier_id' in form;
+  const controlled = typeof onPanelProp === 'function';
+  const [ownPanel, setOwnPanel] = useState('about');
+  const panel = controlled ? panelProp : ownPanel;
+  const onPanel = useCallback((id) => {
+    if (controlled) onPanelProp(id);
+    else setOwnPanel(id);
+  }, [controlled, onPanelProp]);
   const tabs = useMemo(() => [
     { id: 'about', label: 'About', tip: 'Name, brand, category, also found in' },
     { id: 'count', label: 'Counted in', tip: 'Unit, portions, and packaging' },

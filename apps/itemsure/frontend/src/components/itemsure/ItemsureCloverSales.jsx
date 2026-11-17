@@ -102,7 +102,7 @@ export default function ItemsureCloverSales() {
 
       <Modal open={Boolean(fixing)} title={fixing ? `Fix ${fixing.name}` : ''} onClose={() => setFixing(null)} wide>
         {fixing ? (
-          <ItemsurePosFixItem organizationId={organization.id} itemId={fixing.itemId} onChanged={s.refreshSetup} onClose={() => setFixing(null)} />
+          <ItemsurePosFixItem organizationId={organization.id} itemId={fixing.itemId} issue={fixing} onChanged={s.refreshSetup} onClose={() => setFixing(null)} />
         ) : null}
       </Modal>
     </div>
