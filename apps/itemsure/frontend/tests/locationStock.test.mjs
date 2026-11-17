@@ -53,7 +53,9 @@ test('locationRows shows every active item when asked or when places could not l
 
 test('locationCounts and matchesFilter agree', () => {
   const rows = locationRows(items, sources, location);
-  assert.deepEqual(locationCounts(rows), { all: 3, low: 1, below_par: 1, unset: 1 });
+  // Gin 8/10 is under Fill up to but above Usual top-off → OK, not Needs topping up (same as Home).
+  assert.deepEqual(locationCounts(rows), { all: 3, low: 1, below_par: 0, unset: 1 });
+  assert.equal(rows.find((r) => r.item.id === 'gin').summary.status, 'above_minimum');
   assert.deepEqual(rows.filter((r) => matchesFilter(r, 'unset')).map((r) => r.item.id), ['lime']);
   assert.deepEqual(rows.filter((r) => matchesFilter(r, 'low')).map((r) => r.item.id), ['rum']);
 });

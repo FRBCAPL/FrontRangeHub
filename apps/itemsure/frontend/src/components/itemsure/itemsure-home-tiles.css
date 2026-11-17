@@ -65,6 +65,10 @@
   font-size: 1.1rem;
 }
 
+.isu-health-setup-lead {
+  margin: 0 0 6px;
+}
+
 .isu-app .isu-health-setup {
   justify-self: start;
 }

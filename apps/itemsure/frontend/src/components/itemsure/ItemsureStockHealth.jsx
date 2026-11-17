@@ -30,7 +30,11 @@ export default function ItemsureStockHealth({ organizationId, hasLevels, today, 
     return (
       <section className="isu-card isu-health" aria-label="Stock health">
         <h2>Stock health</h2>
-        <p className="isu-muted isu-small">Set warning levels to see what is running low, what needs topping up, and what is fully stocked.</p>
+        <p className="isu-health-setup-lead"><strong>Not set up yet</strong></p>
+        <p className="isu-muted isu-small">
+          No warning levels means these tiles can&apos;t show Running low, Need topping up, or Stocked —
+          and &ldquo;nothing to restock&rdquo; would be misleading. Set &ldquo;Warn me at&rdquo; and &ldquo;Fill up to&rdquo; on your items first.
+        </p>
         {canSetLevels ? <Link to={`${ITEMSURE_PATH}/levels`} className="isu-btn isu-btn--ghost isu-btn--sm isu-health-setup">Set warning levels</Link> : null}
       </section>
     );
@@ -55,12 +59,14 @@ export default function ItemsureStockHealth({ organizationId, hasLevels, today, 
           </Link>
         ))}
       </div>
-      <p className="isu-muted isu-small isu-health-note">Counted per item in each place it is kept.</p>
+      <p className="isu-muted isu-small isu-health-note">
+        Counted per item in each place it is kept. Need topping up uses the Top off line (Usual), not every dip under Fill up to.
+      </p>
       {today?.recs ? (
         <Link to={`${ITEMSURE_PATH}/restock`} className="isu-health-shopping">
           <span>
             <strong>Shopping list:</strong>{' '}
-            {toBuy ? plural(toBuy, 'item to restock', 'items to restock') : 'nothing to restock'}
+            {toBuy ? plural(toBuy, 'item to restock', 'items to restock') : 'nothing to restock (levels are set)'}
             {planned ? ` \u00b7 ${plural(planned, 'planned move', 'planned moves')}` : ''}
           </span>
           <span aria-hidden="true">{'\u203A'}</span>

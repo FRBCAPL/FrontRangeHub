@@ -1,6 +1,7 @@
 // The Stock page's view of one location: each item's spots there, a summary, and filters.
 import { itemSummary, sortByAttention, visibleSlots } from './itemsureItemStock.js';
 import { NO_AREA_LABEL } from './itemsureStock.js';
+import { settleSlot, topOffCanWait } from './itemsureTopOff.js';
 
 export const STOCK_FILTERS = [
   { id: 'all', label: 'All' },
@@ -12,18 +13,30 @@ export const STOCK_FILTERS = [
 /** Spot name for a slot; Loose gets its full label. */
 export const spotName = (slot) => slot.areaName || NO_AREA_LABEL;
 
+/** Same Usual / Top off at softening Home and Warning levels use (display only). */
+function settleRow(item, slots, summary) {
+  const percent = item.topoffPercent ?? null;
+  const settledSlots = slots.map((s) => settleSlot(s, percent));
+  const waits = topOffCanWait(
+    { status: summary.status, onHand: summary.total, minimum: summary.minimum, par: summary.par },
+    percent,
+  );
+  return { item, slots: settledSlots, summary: waits ? { ...summary, status: 'above_minimum' } : summary };
+}
+
 /**
  * One row per item at this location: { item, slots, summary }, most urgent first.
  * Items show when they are kept, have levels, or have stock here; a spot that is empty with
  * nothing set (e.g. everything was moved out) is left out, as on the item's page. `showAll` adds every
  * other active item (with no slots); so does a missing places list, so nothing is hidden by mistake.
+ * Status labels match Home / Warning levels (Usual top-off), not raw under-fill.
  */
 export function locationRows(items, { balances = [], targets = [], places = null }, location, { showAll = false } = {}) {
   const sources = { balances, targets, places: places || [], locations: [location] };
   const rows = items
     .map((item) => {
       const slots = visibleSlots(item.id, sources)[0]?.slots || [];
-      return { item, slots, summary: itemSummary(item.id, sources) };
+      return settleRow(item, slots, itemSummary(item.id, sources));
     })
     .filter((row) => row.slots.length || ((showAll || places === null) && row.item.isActive));
   const summaries = new Map(rows.map((r) => [r.item.id, r.summary]));

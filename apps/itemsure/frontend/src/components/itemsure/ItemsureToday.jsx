@@ -48,14 +48,18 @@ export default function ItemsureToday({ data, can, features }) {
     ? buildTodayTasks({ ...data, canApprove: can('counts.approve'), showMoves: features.transfers, clover: cloverFrom(pos, cloverStatus), paths })
     : [];
   const noLevels = canStock && data.hasLevels === false;
+  const levelsUnknown = canStock && data.loaded && data.hasLevels == null;
   const clear = data.loaded && !tasks.length && !(canStock && data.recs === null);
+  // Never call "All caught up" when levels aren't set (or couldn't be checked) — that reads as healthy stock.
   const summaryHint = !data.loaded
     ? 'Checking…'
     : tasks.length
       ? `${tasks.length} TO DO`
-      : clear
-        ? 'All caught up'
-        : '';
+      : clear && noLevels
+        ? 'Set warning levels'
+        : clear && !levelsUnknown
+          ? 'All caught up'
+          : '';
 
   return (
     <details className="isu-card isu-today isu-today-fold">
@@ -68,13 +72,16 @@ export default function ItemsureToday({ data, can, features }) {
         {data.loaded && canStock && data.recs === null ? (
           <p className="isu-muted isu-small">Couldn&apos;t check stock levels just now. Open the shopping list to see them.</p>
         ) : null}
-        {clear && !noLevels ? (
+        {clear && !noLevels && !levelsUnknown ? (
           <p className="isu-today-clear">You&apos;re all caught up. Nothing is running low and no counts are waiting.</p>
         ) : null}
         {clear && noLevels ? (
           <div className="isu-today-nolevels">
             <p>
-              {canCounts ? 'No counts are waiting. ' : ''}ItemSure can&apos;t tell you what&apos;s running low yet, because no warning levels are set.
+              <strong>Stock isn&apos;t set up yet.</strong>
+              {' '}
+              {canCounts ? 'No counts are waiting. ' : ''}
+              No warning levels means ItemSure can&apos;t tell what&apos;s running low or what to buy — this is not the same as &ldquo;all stocked.&rdquo;
             </p>
             {can('inventory.targets.manage') ? (
               <Link to={`${ITEMSURE_PATH}/levels`} className="isu-btn isu-btn--ghost isu-btn--sm">Set warning levels</Link>

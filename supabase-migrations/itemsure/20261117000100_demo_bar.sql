@@ -19,9 +19,9 @@ alter table itemsure.organizations
 comment on column itemsure.organizations.is_demo is
   'Private product demo for one member. Resettable sample data; not a real business.';
 
-create index if not exists organizations_demo_member_idx
-  on itemsure.organization_memberships (user_id)
-  where status = 'active';
+-- Memberships already have organization_memberships_user_idx (user_id WHERE active).
+-- Do not add a second identical index (advisor flagged organizations_demo_member_idx as a duplicate).
+drop index if exists itemsure.organizations_demo_member_idx;
 
 -- ── Wipe demo content (keep the organization row) ───────────────────────────
 

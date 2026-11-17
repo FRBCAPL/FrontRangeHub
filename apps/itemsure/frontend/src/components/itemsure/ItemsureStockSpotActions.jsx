@@ -22,7 +22,7 @@ export default function ItemsureStockSpotActions({ item, slot, canAdjust, canMov
         {status ? <span className={`isu-badge isu-status--${status.tone}`}>{status.label}</span> : null}
         <p className="isu-muted isu-small">
           {par !== null || min !== null
-            ? [par !== null ? `Par ${displayQuantity(par)}` : 'No par', min !== null ? `warns at ${displayQuantity(min)}` : 'no warning'].join(' \u00b7 ')
+            ? [par !== null ? `Fill up to ${displayQuantity(par)}` : 'No Fill up to', min !== null ? `Warn me at ${displayQuantity(min)}` : 'no warning'].join(' \u00b7 ')
             : 'No levels set here'}
         </p>
       </div>
