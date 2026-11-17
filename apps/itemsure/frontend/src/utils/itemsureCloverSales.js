@@ -1,5 +1,6 @@
 // Clover sales page: what sold in a period, per ItemSure item and per unmatched Clover item.
 // Read only; nothing here changes stock.
+import { categoryPath, categoryTree } from './itemsureCategories.js';
 import { expectedUse } from './itemsurePosUsage.js';
 
 export const PERIODS = { today: 'Today', yesterday: 'Yesterday', week: 'Last 7 days', month: 'Last 30 days', custom: 'Pick dates' };
@@ -35,12 +36,16 @@ export function salesTotals(hours) {
 }
 
 /**
- * One row per ItemSure item with sales: { itemId, name, unit, sold, used, complete, missingPour,
- * missingContent, buttons: [{ externalId, name, sold }] }, most sold first. `used` is in the item's
- * counted unit; `complete` is false when some sales have no amount (or size) set yet.
- * `mods` (from modifierUse) adds what modifiers used, with `modifiers` notes like "6 Double".
+ * One row per ItemSure item with sales: { itemId, name, unit, categoryId, categoryLabel, sold, used,
+ * complete, missingPour, missingContent, buttons: [{ externalId, name, sold }] }, most sold first.
+ * `used` is in the item's counted unit; `complete` is false when some sales have no amount (or size)
+ * set yet. `mods` (from modifierUse) adds what modifiers used, with `modifiers` notes like "6 Double".
+ * Pass `categories` (catalog list) so each row gets a category label for filter/sort.
  */
-export function itemSalesRows({ totals, links, pours, unitCodes, contents, pieces, itemsById, posNames, mods = new Map() }) {
+export function itemSalesRows({
+  totals, links, pours, unitCodes, contents, pieces, itemsById, posNames, mods = new Map(), categories = [],
+}) {
+  const tree = categoryTree(categories);
   const use = expectedUse({ links, sold: totals, pours, unitCodes, contents, pieces });
   for (const itemId of mods.keys()) {
     if (!use.has(itemId)) use.set(itemId, { expected: 0, sold: 0, missingPour: [], missingContent: false });
@@ -57,16 +62,23 @@ export function itemSalesRows({ totals, links, pours, unitCodes, contents, piece
   for (const [itemId, e] of use) {
     const item = itemsById.get(itemId);
     const m = mods.get(itemId);
+    const categoryId = item?.category_id || null;
+    const known = categoryId && tree.byId.has(categoryId);
+    // Add-ons that still can't convert (e.g. Double needs oz→bottle) count as missing content
+    // so Fix it forces size — not a fake "Finished" while the row still says not set.
+    const missingContent = Boolean(e.missingContent || m?.incomplete);
     rows.push({
       itemId,
       name: item?.name || 'Item',
       unit: item?.unitName || '',
+      categoryId: known ? categoryId : null,
+      categoryLabel: known ? categoryPath(tree, categoryId) : 'No category',
       sold: e.sold,
       used: e.expected + (m?.extra || 0),
-      complete: !e.missingPour.length && !e.missingContent && !m?.incomplete,
+      complete: !e.missingPour.length && !missingContent,
       modifiers: m?.notes || [],
       missingPour: e.missingPour,
-      missingContent: e.missingContent,
+      missingContent,
       buttons: (buttons.get(itemId) || []).sort((a, b) => b.sold - a.sold || a.name.localeCompare(b.name)),
     });
   }

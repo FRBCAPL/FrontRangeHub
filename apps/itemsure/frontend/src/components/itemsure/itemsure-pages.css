@@ -91,6 +91,25 @@
   text-align: center;
 }
 .isu-app .isu-page-head .isu-muted { margin-top: 4px; }
+.isu-app .isu-page-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.isu-app .isu-inv-edit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.isu-app .isu-inv-edit-menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
 .isu-app .isu-stack { display: flex; flex-direction: column; gap: 14px; }
 .isu-app .isu-empty { text-align: center; padding: 32px 20px; }
 .isu-app .isu-empty h2 { margin-bottom: 6px; }

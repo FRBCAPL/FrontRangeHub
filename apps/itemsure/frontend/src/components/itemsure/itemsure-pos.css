@@ -6,6 +6,9 @@
 .isu-app .isu-pos-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .isu-app .isu-pos-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.isu-app .isu-clover-sales-toolbar { margin: 10px 0 6px; }
+.isu-app .isu-sales-cat-chips { margin: 10px 0 4px; }
+.isu-app .isu-clover-sales-sort { display: flex; flex-wrap: wrap; gap: 2px 4px; }
 .isu-app .isu-pos-filters .isu-chip { cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--isu-ink); min-height: 36px; }
 .isu-app .isu-pos-filters .isu-chip.is-active { border-color: var(--isu-pine); color: var(--isu-pine); font-weight: 700; }
 

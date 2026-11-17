@@ -24,6 +24,33 @@
   border-radius: 16px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
+.isu-app .isu-nav-more-section { display: flex; flex-direction: column; gap: 2px; }
+.isu-app .isu-nav-more-section + .isu-nav-more-section { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--isu-line); }
+.isu-app .isu-nav-more-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--isu-muted);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 10px;
+}
+.isu-app .isu-nav-more-heading:hover,
+.isu-app .isu-nav-more-heading:focus-visible { color: var(--isu-ink); background: var(--isu-raised); }
+.isu-app .isu-nav-more-section.is-current > .isu-nav-more-heading { color: var(--isu-pine); }
+.isu-app .isu-nav-more-section-caret { font-size: 0.75rem; opacity: 0.8; }
+.isu-app .isu-nav-more-section-body { display: flex; flex-direction: column; gap: 2px; }
 .isu-app .isu-nav-more-panel .isu-nav-link {
   flex: none;
   flex-direction: row;
@@ -56,6 +83,8 @@
     border-radius: 0;
     box-shadow: none;
   }
+  .isu-app .isu-nav-more-section + .isu-nav-more-section { border-top-color: transparent; margin-top: 2px; padding-top: 2px; }
+  .isu-app .isu-nav-more-heading { padding: 6px 10px 6px 14px; }
   .isu-app .isu-nav-more-panel .isu-nav-link { min-height: 40px; font-size: 0.9rem; }
 }
 

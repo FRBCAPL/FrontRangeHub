@@ -3,6 +3,7 @@ import useItemsureAction from '../../hooks/useItemsureAction.js';
 import usePosSetup from '../../hooks/usePosSetup.js';
 import { setButtonPour } from '../../services/itemsureRecipeService.js';
 import { saveSizeAnswers } from '../../services/itemsureItemContentService.js';
+import { isGroupUnit } from '../../utils/itemsureCategoryKind.js';
 import { forcedSizeRow } from '../../utils/itemsurePosFixGap.js';
 import { ErrorNote } from './ItemsureUi.jsx';
 import ItemsurePosAmountReview from './ItemsurePosAmountReview.jsx';
@@ -11,12 +12,15 @@ import ItemsurePosSizeReview from './ItemsurePosSizeReview.jsx';
 
 /**
  * "Fix it" from Sales vs counts / Clover sales — in order:
- * 1) amounts each sale uses, 2) bottle size / pack count, 3) unset add-ons only,
- * 4) size again if Doubles/add-ons still need it. Honest finish; no fake "all set".
+ * 1) amounts each sale uses, 2) bottle size / pack count, 3) unset/broken add-ons,
+ * 4) size again if Doubles/add-ons still need it. "Review add-ons again" forces every
+ * matching add-on (not only unset/broken), so it can't no-op back to this screen.
  */
 export default function ItemsurePosFixItem({ organizationId, itemId, issue = null, onChanged, onClose }) {
   const [key, setKey] = useState(0);
   const [modsDone, setModsDone] = useState(false);
+  const [reviewAllMods, setReviewAllMods] = useState(false);
+  const [forceSizeEdit, setForceSizeEdit] = useState(false);
   const [sizeSkip, setSizeSkip] = useState(false);
   const { summary, error: loadError } = usePosSetup(organizationId, key);
   const { busy, error, run } = useItemsureAction();
@@ -29,17 +33,26 @@ export default function ItemsurePosFixItem({ organizationId, itemId, issue = nul
     if (!summary) return [];
     const listed = summary.sizes.filter((s) => s.item.id === itemId);
     if (listed.length) return listed;
-    // Doubles / add-ons can need size even when no oz button pour flagged it.
-    if (!issue?.missingContent || sizeSkip) return [];
+    const item = summary.items.find((i) => i.id === itemId);
+    const unit = summary.units.find((u) => u.id === item?.base_unit_id) || null;
+    const group = isGroupUnit(unit);
+    // Manual "Set size / pack count" always opens the form, even when a value already exists.
+    if (forceSizeEdit && !sizeSkip && item) {
+      return [{ item, unit, need: group ? 'pieces' : 'size' }];
+    }
+    const forceSize = Boolean(issue?.missingContent) || Boolean(issue && !issue.complete && issue.modifiers?.length);
+    if (!forceSize || sizeSkip) return [];
     const forced = forcedSizeRow({
       itemId,
       items: summary.items,
       units: summary.units,
       contents: summary.contents,
       pieces: summary.pieces,
+      needContent: !group,
+      needPieces: group,
     });
     return forced ? [forced] : [];
-  }, [summary, itemId, issue, sizeSkip]);
+  }, [summary, itemId, issue, sizeSkip, forceSizeEdit]);
 
   const itemName = issue?.name
     || amounts[0]?.item?.name
@@ -59,14 +72,33 @@ export default function ItemsurePosFixItem({ organizationId, itemId, issue = nul
   const saveAmounts = async (list) => saved(await run(async () => {
     for (const { row, amount, unit } of list) await setButtonPour(organizationId, row.pos.external_id, row.item.id, amount, unit);
   }));
-  const saveSizes = async (list) => saved(await run(async () => {
-    await saveSizeAnswers(organizationId, list);
-  }));
+  const saveSizes = async (list) => {
+    const ok = await run(async () => {
+      await saveSizeAnswers(organizationId, list);
+    });
+    if (!ok) return;
+    setForceSizeEdit(false);
+    saved(true);
+  };
   const finishModifiers = () => {
     setModsDone(true);
-    setSizeSkip(false); // allow a second size pass after add-ons
+    setReviewAllMods(false);
+    setSizeSkip(false);
     setKey((k) => k + 1);
     onChanged?.();
+  };
+  const openAddOnReview = () => {
+    setModsDone(false);
+    setReviewAllMods(true); // show every matching add-on, even if a rule already exists
+    setForceSizeEdit(false);
+    setKey((k) => k + 1);
+  };
+  const openSizeAgain = () => {
+    setSizeSkip(false);
+    setForceSizeEdit(true);
+    setModsDone(true);
+    setReviewAllMods(false);
+    setKey((k) => k + 1);
   };
 
   const stepHint = amounts.length
@@ -76,7 +108,7 @@ export default function ItemsurePosFixItem({ organizationId, itemId, issue = nul
         ? 'Step — bottle size or how many in a pack (Doubles and add-ons need this too)'
         : 'Step — bottle size or how many in a pack')
       : needsModifiers
-        ? 'Step — set each add-on that still has no rule'
+        ? (reviewAllMods ? 'Step — review each add-on on this row' : 'Step — set each add-on that still needs a usable rule')
         : '';
 
   if (amounts.length) {
@@ -117,11 +149,17 @@ export default function ItemsurePosFixItem({ organizationId, itemId, issue = nul
       <div className="isu-stack">
         <p className="isu-small"><strong>{stepHint}</strong></p>
         <ItemsurePosFixModifiers
+          key={`m-${key}-${reviewAllMods ? 'all' : 'gap'}`}
           organizationId={organizationId}
           itemId={itemId}
           itemName={itemName}
           notes={issue.modifiers}
-          onlyUnset
+          onlyUnset={!reviewAllMods}
+          includeBroken
+          forceReview={reviewAllMods}
+          units={summary.units}
+          contents={summary.contents}
+          pieces={summary.pieces}
           onDone={finishModifiers}
           onCancel={onClose}
         />
@@ -129,12 +167,18 @@ export default function ItemsurePosFixItem({ organizationId, itemId, issue = nul
     );
   }
 
+  const stillNeedsSize = Boolean(issue?.missingContent) || Boolean(issue && !issue.complete && issue.modifiers?.length);
+  const finishItem = summary.items.find((i) => i.id === itemId);
+  const finishUnit = summary.units.find((u) => u.id === finishItem?.base_unit_id) || null;
+  const finishGroup = isGroupUnit(finishUnit);
   const gapLeft = forcedSizeRow({
     itemId,
     items: summary.items,
     units: summary.units,
     contents: summary.contents,
     pieces: summary.pieces,
+    needContent: stillNeedsSize && !finishGroup,
+    needPieces: stillNeedsSize && finishGroup,
   });
 
   return (
@@ -142,23 +186,51 @@ export default function ItemsurePosFixItem({ organizationId, itemId, issue = nul
       {gapLeft ? (
         <>
           <p>
-            <strong>{itemName}</strong> still needs a {gapLeft.need === 'pieces' ? 'pack count' : 'bottle size'} before Doubles/add-ons can be counted.
+            <strong>{itemName}</strong> still needs a {gapLeft.need === 'pieces' ? 'pack count' : 'size (how much one holds)'} before add-ons can be counted — even if the add-on rule itself is saved.
           </p>
-          <button type="button" className="isu-btn isu-btn--primary" onClick={() => setSizeSkip(false)}>
+          <button type="button" className="isu-btn isu-btn--primary" onClick={openSizeAgain}>
             Set {gapLeft.need === 'pieces' ? 'pack count' : 'size'} now
+          </button>
+          {hasModifierNotes ? (
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={openAddOnReview}>
+              Review add-ons instead
+            </button>
+          ) : null}
+        </>
+      ) : stillNeedsSize && sizeSkip ? (
+        <>
+          <p>
+            <strong>{itemName}</strong> still can&apos;t convert add-ons without a size (or pack count). Skip only delays that.
+          </p>
+          <button type="button" className="isu-btn isu-btn--primary" onClick={openSizeAgain}>
+            Set size now
+          </button>
+        </>
+      ) : stillNeedsSize && hasModifierNotes && modsDone ? (
+        <>
+          <p>Saved what we could for <strong>{itemName}</strong>.</p>
+          <p className="isu-muted isu-small">
+            Close and check the row. If it still isn&apos;t right, review the add-ons — a splash can be a fraction of one single (like 0.25), not ounces.
+            Or set size / pack count if this item is poured from a bottle or bag.
+          </p>
+          <button type="button" className="isu-btn isu-btn--primary" onClick={openAddOnReview}>
+            Review add-ons again
+          </button>
+          <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={openSizeAgain}>
+            Set size / pack count
           </button>
         </>
       ) : (
         <>
           <p>Finished the Fix steps for <strong>{itemName}</strong>.</p>
           <p className="isu-muted isu-small">
-            Close this and check the row. You should see a Clover used amount. If it still says it can&apos;t compare, open the item and confirm Counted in, or set amount per sale on its Clover button — saving &ldquo;Double&rdquo; alone is not enough without those.
+            Close this and check the row. You should see a Clover used amount. If it still says not set, open the item and confirm Counted in, or set amount per sale on its Clover button.
           </p>
         </>
       )}
       <div className="isu-pos-actions">
         <button type="button" className="isu-btn isu-btn--primary" onClick={() => { onChanged?.(); onClose(); }}>
-          Done
+          {gapLeft || (stillNeedsSize && sizeSkip) ? 'Close for now' : 'Done'}
         </button>
       </div>
     </div>

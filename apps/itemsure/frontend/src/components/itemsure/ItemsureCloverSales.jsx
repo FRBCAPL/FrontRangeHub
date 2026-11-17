@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useCloverSales from '../../hooks/useCloverSales.js';
+import useSuppliers from '../../hooks/useSuppliers.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { PERIODS } from '../../utils/itemsureCloverSales.js';
+import { ALL_ITEMS, categoryTree, inCategory } from '../../utils/itemsureCategories.js';
 import { shortQty } from '../../utils/itemsurePosUsage.js';
 import { formatWhen } from '../../utils/itemsureText.js';
 import { Card, ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureCloverSalesList from './ItemsureCloverSalesList.jsx';
+import ItemsureSalesCategoryChips from './ItemsureSalesCategoryChips.jsx';
+import ItemsureSupplierChips from './ItemsureSupplierChips.jsx';
 import ItemsurePosFixItem from './ItemsurePosFixItem.jsx';
 
 const POS_SETTINGS = `${ITEMSURE_PATH}/settings/pos`;
@@ -17,9 +21,19 @@ const UNMATCHED_SHOWN = 15;
 export default function ItemsureCloverSales() {
   const { organization, can } = useItemsureWorkspace();
   const s = useCloverSales(organization.id);
+  const suppliers = useSuppliers(organization.id);
   const [search, setSearch] = useState('');
+  const [category, setCategory] = useState(ALL_ITEMS);
+  const [supplierFilter, setSupplierFilter] = useState('');
   const [fixing, setFixing] = useState(null);
   const head = <PageHead title="Clover sales" description="What Clover sold, item by item, and how much stock that uses. This page never changes stock." />;
+
+  const categories = s.base?.categories || [];
+  const tree = useMemo(() => categoryTree(categories), [categories]);
+  const activeSuppliers = useMemo(
+    () => (suppliers.available ? suppliers.suppliers.filter((x) => x.is_active) : []),
+    [suppliers],
+  );
 
   if (!s.base) return <div className="isu-page">{head}<p className="isu-muted">Loading…</p></div>;
   if (!s.base.connection || !s.base.salesReady) {
@@ -36,7 +50,17 @@ export default function ItemsureCloverSales() {
 
   const r = s.result;
   const words = search.trim().toLowerCase();
-  const rows = (r?.rows || []).filter((row) => !words || row.name.toLowerCase().includes(words) || row.buttons.some((b) => b.name.toLowerCase().includes(words)));
+  const afterSearch = (r?.rows || []).filter((row) => (
+    !words
+    || row.name.toLowerCase().includes(words)
+    || (row.categoryLabel || '').toLowerCase().includes(words)
+    || row.buttons.some((b) => b.name.toLowerCase().includes(words))
+    || suppliers.supplierNamesFor(row.itemId).some((n) => n.toLowerCase().includes(words))
+  ));
+  const afterCategory = afterSearch.filter((row) => inCategory(tree, { category_id: row.categoryId }, category));
+  const rows = afterCategory.filter((row) => (
+    !supplierFilter || suppliers.supplierIdsFor(row.itemId).includes(supplierFilter)
+  ));
   const setKey = (key) => s.setPeriod((p) => ({ ...p, key }));
   const setDay = (field) => (e) => s.setPeriod((p) => ({ ...p, [field]: e.target.value }));
 
@@ -74,9 +98,29 @@ export default function ItemsureCloverSales() {
           <p className="isu-muted isu-small">
             About {Math.round(r.total).toLocaleString()} Clover sales in this period. &ldquo;Sold&rdquo; is how many times Clover rang it up. Stock is that number times the amount for each one sold. A drink with two items counts for both.
           </p>
-          {r.rows.length > 8 ? (
-            <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Find an item" aria-label="Find an item" />
+          <ItemsureSalesCategoryChips
+            categories={categories}
+            rows={afterSearch}
+            selected={category}
+            onSelect={setCategory}
+          />
+          {activeSuppliers.length ? (
+            <ItemsureSupplierChips
+              suppliers={activeSuppliers}
+              value={supplierFilter}
+              onChange={setSupplierFilter}
+            />
           ) : null}
+          <div className="isu-toolbar isu-clover-sales-toolbar">
+            <input
+              type="search"
+              className="isu-search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Find an item, category, supplier, or Clover button"
+              aria-label="Find an item"
+            />
+          </div>
           {rows.length ? (
             <ItemsureCloverSalesList rows={rows} onFix={can('items.manage') ? setFixing : null} />
           ) : (

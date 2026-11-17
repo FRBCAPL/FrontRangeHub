@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { ALL_ITEMS, categoryTree, foundIn, labelWithIcon, NO_CATEGORY, rootOf } from '../../utils/itemsureCategories.js';
+import React, { useEffect } from 'react';
+import { categoryTree, foundIn, labelWithIcon, NO_CATEGORY, rootOf } from '../../utils/itemsureCategories.js';
 import useScrollArrows from '../../hooks/useScrollArrows.js';
 import ItemsureCategoryPanel from './ItemsureCategoryPanel.jsx';
 import ItemsureScrollArrow from './ItemsureScrollArrow.jsx';
 import Tip from './ItemsureTip.jsx';
-
-export { ALL_ITEMS, NO_CATEGORY };
 
 function Chip({ value, label, count, selected, onSelect, closeTo = '' }) {
   const on = selected === value;
@@ -18,15 +16,15 @@ function Chip({ value, label, count, selected, onSelect, closeTo = '' }) {
 
 /**
  * A one-line swipe row of main categories with item counts (a main category counts its
- * subcategories too). Under it, "All items" and "Browse/Edit Categories ▾" (a searchable list of everything).
- * Choosing a main category opens a slim swipe row of its subcategories right under it (with
- * "+ Sub" at the end). Choosing it again closes the row.
- * `onAdd(parentId)` adds a category; with a parent it adds a subcategory.
- * `onEdit(category)` edits one, from the "All categories" panel. `onReorder(parentId)` opens the
- * order window ('' for main categories); `onShowArchived` lists the `archivedCount` archived ones.
+ * subcategories too). Choosing a main category opens a slim swipe row of its subcategories
+ * (with "+ Sub" at the end). Choosing it again closes the row.
+ * "All items" lives under the supplier row on Inventory. Category manage UI is opened from
+ * Inventory via `manageOpen` / `onManageOpenChange` (Edit → Edit categories).
  */
-export default function ItemsureCategoryChips({ categories, items, selected, onSelect, onAdd, onEdit, onReorder = null, archivedCount = 0, onShowArchived }) {
-  const [panelOpen, setPanelOpen] = useState(false);
+export default function ItemsureCategoryChips({
+  categories, items, selected, onSelect, onAdd, onEdit, onReorder = null,
+  archivedCount = 0, onShowArchived, manageOpen = false, onManageOpenChange = null,
+}) {
   const mainArrows = useScrollArrows(`${categories.length}|${items.length}`);
   const tree = categoryTree(categories);
   const count = (key) => items.filter((item) => foundIn(tree, item, key)).length;
@@ -77,17 +75,9 @@ export default function ItemsureCategoryChips({ categories, items, selected, onS
           <ItemsureScrollArrow direction={1} label="Subcategories" arrows={subArrows} />
         </div>
       ) : null}
-      <div className="isu-chips-actions">
-        <Chip value={ALL_ITEMS} label="All items" count={items.length} selected={selected} onSelect={onSelect} />
-        <Tip label="Search, edit, reorder, or archive categories">
-          <button type="button" className="isu-chip isu-chip--more" onClick={() => setPanelOpen(true)} aria-haspopup="dialog">
-            Browse/Edit Categories {'\u25BE'}
-          </button>
-        </Tip>
-      </div>
       <ItemsureCategoryPanel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
+        open={manageOpen}
+        onClose={() => onManageOpenChange?.(false)}
         tree={tree}
         count={count}
         total={items.length}

@@ -55,7 +55,10 @@ function CountButton({ item, counted, onCount }) {
  * `icon` is the category's icon, shown instead of the initials.
  * `onCount` (only while a count is open) shows "Add to count", or a "✓ Counted" button that reopens it once counted.
  */
-export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoIn, details, icon = '', compact = false, onCount, counted, showSupplier = false, showAlsoIn = true, pieces = 0 }) {
+export default function ItemsureItemRow({
+  item, summary, keptAt, supplier, alsoIn, details, icon = '', compact = false, onCount, counted,
+  showSupplier = false, showAlsoIn = true, listedUnder = '', pieces = 0,
+}) {
   // Same top-off soften as Inventory grouping, so 1.8/2 with warn-at-1 is a green pill, not amber.
   const display = summary && topUpCanWait(summary, item.topoffPercent)
     ? { ...summary, status: 'above_minimum' }
@@ -104,7 +107,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
             <Pill summary={display} unitName={item.unitName} pieces={pieces} tone={tone} />
           </div>
           <div className="isu-stockcard-slim-sub">
-            <ItemsureItemMeta supplier={supplier} />
+            <ItemsureItemMeta supplier={supplier} listedUnder={listedUnder} />
             <StockBar summary={display} />
             <CountButton item={item} counted={counted} onCount={onCount} />
           </div>
@@ -133,6 +136,7 @@ export default function ItemsureItemRow({ item, summary, keptAt, supplier, alsoI
           supplier={supplier && (attention || showSupplier) ? supplier : null}
           keptAt={!brief && spotCount(keptAt) > 1 ? keptAt : null}
           alsoIn={showAlsoIn && !brief ? alsoIn || [] : []}
+          listedUnder={!brief ? listedUnder : ''}
         />
 
         {attention || tone === 'muted' || onCount ? (

@@ -49,6 +49,7 @@ export default function useCloverSales(organizationId) {
         });
         setBase({
           connection, salesReady, links, pours, contents, pieces,
+          categories: catalog.categories || [],
           itemsById: new Map(catalog.items.map((i) => [i.id, i])),
           unitCodes: new Map(catalog.items.map((i) => [i.id, codes.get(i.base_unit_id) || ''])),
           posNames: new Map(posItems.map((p) => [p.external_id, p.name])),

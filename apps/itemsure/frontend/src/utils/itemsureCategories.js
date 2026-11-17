@@ -65,6 +65,59 @@ export function foundIn(tree, item, selected) {
   return (item.extraCategoryIds || []).some((id) => tree.byId.has(id) && (id === selected || tree.parentOf(id) === selected));
 }
 
+/**
+ * True when the item only appears under this chip via "Also in" (extra categories), not as its
+ * main category (or a subcategory of that main).
+ */
+export function alsoFoundIn(tree, item, selected) {
+  if (!selected || selected === ALL_ITEMS || selected === NO_CATEGORY) return false;
+  return foundIn(tree, item, selected) && !inCategory(tree, item, selected);
+}
+
+/**
+ * Which subcategory bucket an item belongs in under a selected main category chip.
+ * Main members use their own category_id; Also-in members use the extra tag under this
+ * main (prefer a sub). Mixed lists: main membership wins when both apply.
+ * Returns the subcategory id, or `selected` when the item sits directly on the main category.
+ */
+export function subcategoryBucketId(tree, item, selected) {
+  if (!selected || !tree.byId.has(selected)) return null;
+  if (!tree.childrenOf(selected).length) return selected;
+  if (inCategory(tree, item, selected)) {
+    if (item.category_id === selected) return selected;
+    if (tree.parentOf(item.category_id) === selected) return item.category_id;
+    return selected;
+  }
+  const extras = (item.extraCategoryIds || []).filter((id) => tree.byId.has(id));
+  const subHit = extras.find((id) => tree.parentOf(id) === selected);
+  if (subHit) return subHit;
+  if (extras.includes(selected)) return selected;
+  return selected;
+}
+
+/**
+ * Split items into subcategory sections under a main category chip (main + Also-in together).
+ * Empty when `selected` has no children (caller can show one flat list).
+ * Returns [{ id, label, items }] in chip order; direct-on-main last as "In {name} (no subcategory)".
+ */
+export function groupBySubcategory(tree, items, selected) {
+  if (!selected || !tree.byId.has(selected)) return [];
+  const subs = tree.childrenOf(selected);
+  if (!subs.length) return [];
+  const main = tree.byId.get(selected);
+  const buckets = new Map(subs.map((s) => [s.id, { id: s.id, label: s.name, items: [] }]));
+  buckets.set(selected, {
+    id: selected,
+    label: `In ${main?.name || 'this category'} (no subcategory)`,
+    items: [],
+  });
+  for (const item of items) {
+    const id = subcategoryBucketId(tree, item, selected) || selected;
+    (buckets.get(id) || buckets.get(selected)).items.push(item);
+  }
+  return [...buckets.values()].filter((b) => b.items.length);
+}
+
 /** Paths like "Bar › Garnish" for an item's extra categories that are still active. */
 export function extraCategoryNames(tree, item) {
   return (item.extraCategoryIds || [])

@@ -4,7 +4,7 @@
 // a house word in the category. Otherwise no guess.
 // A drink that uses several items only gets a guess for its liquor; the rest need a person.
 
-import { kindOf } from './itemsureCategoryKind.js';
+import { isGroupUnit, kindOf } from './itemsureCategoryKind.js';
 import { VOLUME_ML } from './itemsurePosUsage.js';
 
 /** Starting house standards for a business that hasn't set its own. */
@@ -41,6 +41,11 @@ export function suggestAmount(pos, unit, standards = DEFAULT_STANDARDS, options 
   const asShot = shot ? { amount: shot.amount, unit: shot.unit, reason: 'Liquor: a shot' } : null;
 
   if (options.shared) return LIQUOR.test(options.itemName || '') ? asShot : null;
+
+  // Counted in cases/packs/boxes: each Clover sale is usually one single out of that.
+  if (isGroupUnit(unit)) {
+    return { amount: 1, unit: 'piece', reason: 'Counted by case — each sale is usually 1 out of the case' };
+  }
 
   const container = CONTAINER.test(name);
   const size = container ? null : name.match(SIZE_IN_NAME);

@@ -25,10 +25,10 @@ function Places({ keptAt }) {
 
 /**
  * One small grey line under the name with only what is worth knowing:
- * the supplier, where the stock is split, and other categories it is found in.
- * Callers decide which parts to pass; nothing renders when there are none.
+ * the supplier, where the stock is split, main category (when listed via Also in),
+ * and other categories it is found in. Callers decide which parts to pass.
  */
-export default function ItemsureItemMeta({ supplier = null, keptAt = null, alsoIn = [] }) {
+export default function ItemsureItemMeta({ supplier = null, keptAt = null, alsoIn = [], listedUnder = '' }) {
   const parts = [];
   if (supplier) {
     parts.push(
@@ -38,6 +38,7 @@ export default function ItemsureItemMeta({ supplier = null, keptAt = null, alsoI
     );
   }
   if (keptAt?.length) parts.push(<span key="places"><Places keptAt={keptAt} /></span>);
+  if (listedUnder) parts.push(<span key="main">Main category: {listedUnder}</span>);
   if (alsoIn.length) parts.push(<span key="also">Also in {alsoIn.join(', ')}</span>);
   if (!parts.length) return null;
   return <p className="isu-stockcard-meta">{parts}</p>;

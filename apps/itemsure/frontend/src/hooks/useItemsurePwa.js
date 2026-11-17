@@ -2,11 +2,12 @@ import { useEffect } from 'react';
 
 const MANIFEST_HREF = '/itemsure/manifest.webmanifest';
 const APPLE_ICON = '/itemsure/icons/apple-touch-icon.png';
-const FAVICON = '/itemsure/icons/icon.svg';
+/** PNG reads more reliably in the address bar than SVG on some browsers. */
+const FAVICON = '/itemsure/icons/icon-192.png';
 
 /**
- * While ItemSure is open: use ItemSure's name, theme, and home-screen icons
- * (same pattern as Legends). Remove on leave so the hub favicon returns.
+ * While ItemSure is open: use ItemSure's name, theme, and icons — including swapping the
+ * document favicon so the address bar shows ItemSure (not the hub Vite icon).
  */
 export default function useItemsurePwa() {
   useEffect(() => {
@@ -28,15 +29,28 @@ export default function useItemsurePwa() {
     }
     apple.href = APPLE_ICON;
 
-    let icon = document.querySelector('link[data-itemsure-icon="1"]');
-    if (!icon) {
-      icon = document.createElement('link');
-      icon.rel = 'icon';
-      icon.type = 'image/svg+xml';
-      icon.setAttribute('data-itemsure-icon', '1');
-      document.head.appendChild(icon);
+    // Replace existing favicon links so the tab/address bar updates (adding a second
+    // link leaves /vite.svg first, which many browsers keep using).
+    const iconLinks = [...document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]')];
+    const previous = iconLinks.map((el) => ({
+      el,
+      href: el.getAttribute('href'),
+      type: el.getAttribute('type'),
+      sizes: el.getAttribute('sizes'),
+    }));
+    if (!iconLinks.length) {
+      const created = document.createElement('link');
+      created.rel = 'icon';
+      created.setAttribute('data-itemsure-icon', '1');
+      document.head.appendChild(created);
+      iconLinks.push(created);
+      previous.push({ el: created, href: null, type: null, sizes: null, created: true });
     }
-    icon.href = FAVICON;
+    for (const el of iconLinks) {
+      el.setAttribute('href', FAVICON);
+      el.setAttribute('type', 'image/png');
+      el.removeAttribute('sizes');
+    }
 
     let theme = document.querySelector('meta[data-itemsure-theme="1"]');
     if (!theme) {
@@ -50,8 +64,19 @@ export default function useItemsurePwa() {
     return () => {
       document.querySelector('link[data-itemsure-manifest="1"]')?.remove();
       document.querySelector('link[data-itemsure-apple="1"]')?.remove();
-      document.querySelector('link[data-itemsure-icon="1"]')?.remove();
       document.querySelector('meta[data-itemsure-theme="1"]')?.remove();
+      for (const prev of previous) {
+        if (prev.created) {
+          prev.el.remove();
+          continue;
+        }
+        if (prev.href == null) prev.el.removeAttribute('href');
+        else prev.el.setAttribute('href', prev.href);
+        if (prev.type == null) prev.el.removeAttribute('type');
+        else prev.el.setAttribute('type', prev.type);
+        if (prev.sizes == null) prev.el.removeAttribute('sizes');
+        else prev.el.setAttribute('sizes', prev.sizes);
+      }
     };
   }, []);
 }

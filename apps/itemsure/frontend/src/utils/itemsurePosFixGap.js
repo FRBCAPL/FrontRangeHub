@@ -1,18 +1,35 @@
 // What "Fix it" still needs for one sales row: amounts, size/pieces, unset add-ons.
-import { unitAsks } from './itemsureItemContent.js';
+import { asksContent, unitAsks } from './itemsureItemContent.js';
+import { isGroupUnit } from './itemsureCategoryKind.js';
 
 /**
  * Size/pieces row for Fix it when the report can't convert this item, even if the setup
  * list didn't flag it (common with Doubles / add-ons).
  * `contents` / `pieces` are the Maps used for sales (own + category fill-ins).
+ * `needContent`: sales/add-ons still need oz→stock conversion (e.g. counted in "each").
+ * `needPieces`: a piece/pack pour still needs "how many in one".
+ * Case/pack items never ask for ounces — only pack count, and only when missing.
  */
-export function forcedSizeRow({ itemId, items, units, contents, pieces }) {
+export function forcedSizeRow({
+  itemId, items, units, contents, pieces, needContent = false, needPieces = false,
+}) {
   const item = (items || []).find((i) => i.id === itemId);
   if (!item) return null;
   const unit = (units || []).find((u) => u.id === item.base_unit_id) || null;
   const asks = unitAsks(unit);
-  if (asks === 'size' && !(contents?.get(itemId) > 0)) return { item, unit, need: 'size' };
-  if (asks === 'pieces' && !(pieces?.get(itemId) > 0)) return { item, unit, need: 'pieces' };
+  const group = isGroupUnit(unit);
+
+  // Cases/packs: how many singles in one — never "ounces in a case".
+  if (group || asks === 'pieces' || needPieces) {
+    if (!(pieces?.get(itemId) > 0)) return { item, unit, need: 'pieces' };
+    return null;
+  }
+
+  // unitAsks only covers bottle-like units; sales also need size for "each"/etc. when pours are oz/ml.
+  const wantsSize = asks === 'size' || (needContent && asksContent(unit?.code));
+  if (wantsSize && !(contents?.get(itemId) > 0)) {
+    return { item, unit, need: 'size' };
+  }
   return null;
 }
 

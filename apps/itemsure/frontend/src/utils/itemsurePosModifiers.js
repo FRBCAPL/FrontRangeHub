@@ -1,5 +1,6 @@
 // Clover modifiers in the reports: what each one does for stock, and how much stock the
 // modifiers sold should have used. Reports only; nothing here changes stock.
+import { isGroupUnit } from './itemsureCategoryKind.js';
 import { pourInBase } from './itemsurePosUsage.js';
 
 const NOTHING = /\b(neat|rocks|on the rocks|up|straight up|chilled|no ice|light ice|easy ice|extra ice|ice|lime|lemon|orange|salt|sugar|olive|olives|twist|cherry|tall|short|dirty|shaken|stirred|well done|medium|rare|no)\b/i;
@@ -36,6 +37,26 @@ export function ruleLines(rule) {
   if (rule?.action === 'item') return [{ itemId: rule.itemId, amount: rule.amount, unit: rule.unit }];
   if (rule?.action === 'items' || rule?.action === 'recipe') return rule.lines || [];
   return [];
+}
+
+/**
+ * True when a saved rule still can't turn into stock for `itemId` — e.g. leftover oz/ml on a
+ * case item, or amount that won't convert. Fix it must re-ask these even when onlyUnset.
+ */
+export function modifierRuleBroken(rule, itemId, {
+  item = null, unit = null, unitCode = '', contents = null, pieces = null, usual = null,
+} = {}) {
+  if (!rule || rule.action === 'none' || rule.action === 'extra') return false;
+  const group = isGroupUnit(unit) || isGroupUnit({ name: item?.unitName || '', code: unitCode || '' });
+  for (const line of ruleLines(rule)) {
+    if (line.itemId !== itemId) continue;
+    if (group && (line.unit === 'fl_oz' || line.unit === 'ml')) return true;
+    const pour = line.amount == null ? (usual?.(itemId) || null) : { amount: line.amount, unit: line.unit };
+    if (!pour || !(Number(pour.amount) > 0)) return true;
+    const per = pourInBase(pour, unitCode || unit?.code || '', contents?.get?.(itemId), pieces?.get?.(itemId));
+    if (per == null) return true;
+  }
+  return false;
 }
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;

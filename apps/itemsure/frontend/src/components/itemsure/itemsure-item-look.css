@@ -160,6 +160,52 @@
 }
 
 /* Status sections. */
+.isu-app .isu-item-cat-heading {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--isu-ink);
+}
+.isu-app .isu-item-cat-block + .isu-item-cat-block {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--isu-line);
+}
+.isu-app .isu-item-sub-block {
+  border-top: 1px dashed var(--isu-line);
+  padding-top: 10px;
+}
+.isu-app .isu-item-sub-split > .isu-item-sub-block:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.isu-app .isu-item-sub-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--isu-muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.isu-app .isu-item-sub-heading::-webkit-details-marker { display: none; }
+.isu-app .isu-item-sub-heading::before {
+  content: '\25BE';
+  display: inline-block;
+  font-size: 0.85em;
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+.isu-app .isu-item-sub-block:not([open]) > .isu-item-sub-heading {
+  margin-bottom: 0;
+}
+.isu-app .isu-item-sub-block:not([open]) > .isu-item-sub-heading::before {
+  transform: rotate(-90deg);
+}
+.isu-app .isu-item-sub-label { flex: 1 1 auto; min-width: 0; }
 .isu-item-groups {
   display: grid;
   gap: 16px;
@@ -228,6 +274,23 @@
   font-size: 0.75rem;
   text-align: center;
   letter-spacing: 0;
+}
+
+/* Collapsed subcategory: badge matches Running Low / Top Offs / All good. */
+.isu-app .isu-item-sub-block:not([open]) > .isu-item-sub-heading .isu-item-group-count.is-danger {
+  background: var(--isu-danger-soft);
+  color: var(--isu-danger);
+  box-shadow: inset 0 0 0 1px var(--isu-danger-line);
+}
+.isu-app .isu-item-sub-block:not([open]) > .isu-item-sub-heading .isu-item-group-count.is-warn {
+  background: color-mix(in srgb, var(--isu-amber) 18%, transparent);
+  color: var(--isu-amber);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--isu-amber) 45%, transparent);
+}
+.isu-app .isu-item-sub-block:not([open]) > .isu-item-sub-heading .isu-item-group-count.is-ok {
+  background: var(--isu-pine-soft);
+  color: var(--isu-pine);
+  box-shadow: inset 0 0 0 1px var(--isu-pine-line);
 }
 
 /* Icon picker (category form). */

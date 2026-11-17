@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { listCatalog } from '../../services/itemsureItemService.js';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
@@ -10,13 +10,15 @@ import { itemSummary, sortByAttention, visibleSlots, whereAmounts } from '../../
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, sites, SITE } from '../../data/itemsureTerms.js';
 import { ErrorNote, Modal, PageHead, Tip } from './ItemsureUi.jsx';
-import ItemsureItemRow from './ItemsureItemRow.jsx';
 import ItemsureCategoryManager from './ItemsureCategoryManager.jsx';
 import ItemsureCategoryChips from './ItemsureCategoryChips.jsx';
-import ItemsureItemGroups from './ItemsureItemGroups.jsx';
-import { categoryIcon, categoryTree, extraCategoryNames, foundIn } from '../../utils/itemsureCategories.js';
-import { groupByStatus, listTone } from '../../utils/itemsureItemLook.js';
-import { detailsLine } from '../../utils/itemsureItemDetails.js';
+import ItemsureSupplierChips from './ItemsureSupplierChips.jsx';
+import ItemsureCategoryItemLists from './ItemsureCategoryItemLists.jsx';
+import ItemsureInventoryEditMenu from './ItemsureInventoryEditMenu.jsx';
+import {
+  ALL_ITEMS, categoryTree, extraCategoryNames, foundIn,
+} from '../../utils/itemsureCategories.js';
+import { listTone } from '../../utils/itemsureItemLook.js';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
 import useSuppliers from '../../hooks/useSuppliers.js';
 import ItemsureQuickCount from './ItemsureQuickCount.jsx';
@@ -32,6 +34,7 @@ export default function ItemsureItems() {
   const [locationFilter, setLocationFilter] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [categoryManageOpen, setCategoryManageOpen] = useState(false);
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const category = params.get('category') || '';
@@ -135,9 +138,12 @@ export default function ItemsureItems() {
         title="Inventory"
         description="Everything you stock. Tap an item to see how many you have and change it."
         action={(
-          <Tip label="Shared ingredients for Clover buttons">
-            <Link to={`${ITEMSURE_PATH}/items/recipes`} className="isu-btn isu-btn--ghost">Recipes</Link>
-          </Tip>
+          <ItemsureInventoryEditMenu
+            canManageItems={canManageItems}
+            canManageCategories={canManageCategories}
+            onAddItem={() => addItem()}
+            onEditCategories={() => setCategoryManageOpen(true)}
+          />
         )}
       />
       <ErrorNote message={error} />
@@ -156,7 +162,30 @@ export default function ItemsureItems() {
           onReorder={canManageCategories ? (parentId) => setCategoryRequest({ kind: 'order', parentId: parentId || '' }) : null}
           archivedCount={canManageCategories ? archivedCategories : 0}
           onShowArchived={() => setCategoryRequest({ kind: 'archived' })}
+          manageOpen={categoryManageOpen}
+          onManageOpenChange={setCategoryManageOpen}
         />
+      ) : null}
+
+      {activeSuppliers.length ? (
+        <ItemsureSupplierChips
+          suppliers={activeSuppliers}
+          value={supplierFilter}
+          onChange={setSupplierFilter}
+        />
+      ) : null}
+
+      {catalog ? (
+        <div className="isu-chips-actions">
+          <button
+            type="button"
+            className={`isu-chip isu-chip--choice${category === ALL_ITEMS ? ' is-selected' : ''}`}
+            aria-pressed={category === ALL_ITEMS}
+            onClick={() => chooseCategory(category === ALL_ITEMS ? '' : ALL_ITEMS)}
+          >
+            All items <span className="isu-chip-count">{filteredItems.length}</span>
+          </button>
+        </div>
       ) : null}
 
       <div className="isu-toolbar">
@@ -170,25 +199,12 @@ export default function ItemsureItems() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          {canManageItems ? (
-            <Tip label="Start the add-item wizard">
-              <button type="button" className="isu-btn isu-btn--primary isu-search-add-btn" onClick={() => addItem()}>Add Item</button>
-            </Tip>
-          ) : null}
         </div>
         {places.ready && activeLocations.length > 1 ? (
           <Tip label={`Only show items kept at this ${site}`}>
             <select className="isu-item-filter" aria-label={SITE} value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
               <option value="">All {sites}</option>
               {activeLocations.map((l) => <option key={l.id} value={l.id}>At {l.name}</option>)}
-            </select>
-          </Tip>
-        ) : null}
-        {activeSuppliers.length ? (
-          <Tip label="Only show items from this supplier">
-            <select className="isu-item-filter" aria-label="Supplier" value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)}>
-              <option value="">All suppliers</option>
-              {activeSuppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </Tip>
         ) : null}
@@ -212,32 +228,27 @@ export default function ItemsureItems() {
         </div>
       ) : null}
 
-      <ItemsureItemGroups
-        groups={groupByStatus(visibleItems, (item) => listTone(summaryFor(item.id), item.topoffPercent))}
+      <ItemsureCategoryItemLists
+        items={visibleItems}
         titled={browsing}
-        renderItem={(item, compact) => (
-          <ItemsureItemRow
-            key={item.id}
-            item={item}
-            compact={compact}
-            icon={categoryIcon(tree, item.category_id)}
-            summary={summaryFor(item.id)}
-            pieces={piecesFor(item.id)}
-            keptAt={stock || places.ready ? whereFor(item.id) : null}
-            supplier={suppliers.supplierFor(item.id)}
-            alsoIn={extraCategoryNames(tree, item)}
-            showAlsoIn={!tree.byId.has(category)}
-            showSupplier={Boolean(supplierFilter) || (Boolean(needle) && suppliers.supplierNamesFor(item.id).some((n) => n.toLowerCase().includes(needle)))}
-            details={showDetails ? detailsLine(item) : ''}
-            onCount={item.is_active && openCounts.sessions.length ? () => setCountItem(item) : null}
-            counted={item.is_active && openCounts.sessions.length > 0 && !openCounts.waitingFor(item.id).length}
-          />
-        )}
+        tree={tree}
+        category={category}
+        summaryFor={summaryFor}
+        piecesFor={piecesFor}
+        whereFor={whereFor}
+        stock={stock}
+        placesReady={places.ready}
+        suppliers={suppliers}
+        supplierFilter={supplierFilter}
+        needle={needle}
+        showDetails={showDetails}
+        openCounts={openCounts}
+        onCountItem={setCountItem}
       />
       {catalog && browsing ? (
         <p className="isu-muted isu-center">
           {stock && !visibleItems.length ? 'Nothing needs attention right now. ' : ''}
-          {visibleItems.length ? 'Pick a category above to see everything, or search / filter by supplier.' : 'Pick a category above to see its items, or search / filter by supplier.'}
+          {visibleItems.length ? 'Pick a category or supplier above to see everything, or search.' : 'Pick a category or supplier above to see its items, or search.'}
         </p>
       ) : null}
 

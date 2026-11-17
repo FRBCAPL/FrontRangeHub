@@ -5,6 +5,7 @@ import { listItemPieces } from '../services/itemsureItemContentService.js';
 import { listStandardAmounts } from '../services/itemsureStandardAmountService.js';
 import { DEFAULT_STANDARDS, suggestAmount } from '../utils/itemsurePourSuggest.js';
 import { asksContent } from '../utils/itemsureItemContent.js';
+import { isGroupUnit } from '../utils/itemsureCategoryKind.js';
 import { withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
 
 /**
@@ -73,15 +74,23 @@ export default function usePosSetup(organizationId, reloadKey, { enabled = true,
         const key = `${externalId}|${itemId}`;
         const pour = data.pours?.get(key);
         const options = { shared: itemIds.length > 1, itemName: item.name };
-        if (!pour) amounts.push({ key, pos, item, unit, suggestion: suggestAmount(pos, unit, standards, options) });
-        else if (pour.unit === 'piece') {
+        const group = isGroupUnit(unit);
+        // Case/pack items with a leftover oz/ml pour (from when they were bottles) need a
+        // "1 out of the case" amount — not "how many ounces in a case".
+        const staleVolume = Boolean(pour && group && (pour.unit === 'fl_oz' || pour.unit === 'ml'));
+        if (!pour || staleVolume) {
+          const suggestion = staleVolume
+            ? { amount: 1, unit: 'piece', reason: 'Counted by case — each sale is usually 1 out of the case (not ounces)' }
+            : suggestAmount(pos, unit, standards, options);
+          amounts.push({ key, pos, item, unit, suggestion, staleVolume });
+        } else if (pour.unit === 'piece') {
           if (!data.pieces?.get(itemId)) countIds.add(itemId);
           else if (!data.ownPieces?.get(itemId)) byCategory.sizes.add(itemId);
-        } else if (pour.unit !== 'base' && asksContent(unit?.code)) {
+        } else if (pour.unit !== 'base' && asksContent(unit?.code) && !group) {
           if (!data.contents?.get(itemId)) sizeIds.add(itemId);
           else if (!data.ownContents?.get(itemId)) byCategory.sizes.add(itemId);
         }
-        if (pour?.fromCategory) byCategory.amounts += 1;
+        if (pour?.fromCategory && !staleVolume) byCategory.amounts += 1;
       }
     }
     amounts.sort((a, b) => Number(!a.suggestion) - Number(!b.suggestion) || a.pos.name.localeCompare(b.pos.name));

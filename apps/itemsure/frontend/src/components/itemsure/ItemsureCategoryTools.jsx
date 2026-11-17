@@ -41,7 +41,7 @@ export default function ItemsureCategoryTools({ organizationId, category, tree, 
         </p>
       ) : confirming ? (
         <div className="isu-cattools-confirm">
-          <p>Archive {category.name}? It&apos;s hidden everywhere. You can bring it back from Browse/Edit Categories &rsaquo; Archived.</p>
+          <p>Archive {category.name}? It&apos;s hidden everywhere. You can bring it back from Edit categories &rsaquo; Archived.</p>
           <div className="isu-cattools-actions">
             <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={() => setConfirming(false)}>Keep it</button>
             <button type="button" className="isu-btn isu-btn--danger-solid isu-btn--sm" disabled={busy} onClick={archive}>{busy ? 'Archiving…' : 'Archive'}</button>

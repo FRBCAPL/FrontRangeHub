@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { isGroupUnit } from '../../utils/itemsureCategoryKind.js';
 import { ruleLines } from '../../utils/itemsurePosModifiers.js';
 import { singularUnit } from '../../utils/itemsureItemLook.js';
 import ItemsureItemSearchPick from './ItemsureItemSearchPick.jsx';
@@ -6,10 +7,11 @@ import ItemsureItemSearchPick from './ItemsureItemSearchPick.jsx';
 /**
  * One add-on in the Fix-it walkthrough: three plain choices, then only the follow-up that
  * choice needs. `focusItemId` pre-fills “another item” with the stock item being fixed.
+ * `preferPiece`: case/pack items should start as “1 single from the case”, not ounces.
  * onSave(rule) → true when saved.
  */
 export default function ItemsurePosFixModifierStep({
-  modifier, items, focusItemId = null, itemName = 'this item', onSave, onBack, onSkip,
+  modifier, items, focusItemId = null, itemName = 'this item', preferPiece = false, onSave, onBack, onSkip,
 }) {
   const guess = modifier.guess;
   const start = modifier.rule || guess || null;
@@ -18,14 +20,15 @@ export default function ItemsurePosFixModifierStep({
   const [pours, setPours] = useState(String(start?.extraPours ?? (guess?.extraPours ?? 1)));
   const [line, setLine] = useState(() => {
     const fromRule = ruleLines(start).find((l) => l.itemId);
+    const pieceUnit = (unit) => (preferPiece && (unit === 'fl_oz' || unit === 'ml' || !unit) ? 'piece' : (unit || (preferPiece ? 'piece' : 'base')));
     if (fromRule) {
       return {
         itemId: fromRule.itemId,
         amount: String(fromRule.amount ?? 1),
-        unit: fromRule.unit || 'base',
+        unit: pieceUnit(fromRule.unit),
       };
     }
-    if (focusItemId) return { itemId: focusItemId, amount: '1', unit: 'base' };
+    if (focusItemId) return { itemId: focusItemId, amount: '1', unit: preferPiece ? 'piece' : 'base' };
     return null;
   });
   const [busy, setBusy] = useState(false);
@@ -62,9 +65,11 @@ export default function ItemsurePosFixModifierStep({
   const pick = (next) => {
     setAction(next);
     if (next === 'item' && !line && focusItemId) {
-      setLine({ itemId: focusItemId, amount: '1', unit: 'base' });
+      setLine({ itemId: focusItemId, amount: '1', unit: preferPiece ? 'piece' : 'base' });
     }
   };
+
+  const groupPick = picked && isGroupUnit({ name: picked.unitName || '', code: '' });
 
   const choice = (value, title, hint) => (
     <button
@@ -160,8 +165,8 @@ export default function ItemsurePosFixModifierStep({
                   onChange={(e) => setLine((l) => ({ ...l, unit: e.target.value }))}
                   aria-label="Unit"
                 >
+                  {(groupPick || preferPiece) ? <option value="piece">1 single from the {unitName}</option> : null}
                   <option value="base">{unitName}(s)</option>
-                  <option value="piece">1 single from the {unitName}</option>
                   <option value="fl_oz">oz</option>
                   <option value="ml">ml</option>
                 </select>
@@ -175,7 +180,9 @@ export default function ItemsurePosFixModifierStep({
                 </button>
               </span>
               <span className="isu-muted isu-small">
-                Prefer “{unitName}(s)” or “single” when you can — oz/ml also need a bottle size on the item.
+                {(groupPick || preferPiece)
+                  ? `For a ${unitName}, pick “single from the ${unitName}”. A full can is 1; a splash/add-on can be a fraction (0.25, 0.5, …). Ounces are for poured bottles, not cases.`
+                  : `Prefer “${unitName}(s)” or “single” when you can — oz/ml also need a bottle size on the item.`}
               </span>
             </div>
           ) : (
@@ -183,7 +190,11 @@ export default function ItemsurePosFixModifierStep({
               items={items}
               label="Which item does it take?"
               disabled={busy}
-              onPick={(id) => setLine({ itemId: id, amount: '1', unit: 'base' })}
+              onPick={(id) => {
+                const it = byId.get(id);
+                const group = isGroupUnit({ name: it?.unitName || '', code: '' });
+                setLine({ itemId: id, amount: '1', unit: group || preferPiece ? 'piece' : 'base' });
+              }}
             />
           )}
         </div>

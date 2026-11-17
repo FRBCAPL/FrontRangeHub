@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { GUIDE_BASICS } from '../../data/itemsureGuideBasics.js';
 import { GUIDE_STOCK } from '../../data/itemsureGuideStock.js';
 import { GUIDE_TEAM } from '../../data/itemsureGuideTeam.js';
+import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { PageHead } from './ItemsureUi.jsx';
 import ItemsureHelpSection from './ItemsureHelpSection.jsx';
 
@@ -56,6 +57,9 @@ export default function ItemsureHelp() {
       <div className="isu-help-list">
         {SECTIONS.map((s) => <ItemsureHelpSection key={s.id} section={s} open={openIds.has(s.id)} onToggle={toggle} />)}
       </div>
+      <p className="isu-muted isu-small">
+        Curious what&apos;s planned? <Link to={`${ITEMSURE_PATH}/coming-next`} className="isu-link">Coming next</Link>
+      </p>
     </div>
   );
 }

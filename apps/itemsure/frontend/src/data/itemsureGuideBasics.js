@@ -44,8 +44,8 @@ export const GUIDE_BASICS = [
     title: 'Finding your way around',
     summary: 'The main menu, and what is under More.',
     paragraphs: [
-      'The main menu holds the four things most people use: Home, Inventory, Count, and Shopping list. On a phone it sits along the bottom of the screen; on a bigger screen it is on the left.',
-      'Everything else is under More: Running low, Warning levels (for many items at once), Stock by site, Sites, History, Settings, this Help page, and Coming next.',
+      'The main menu holds the everyday pages: Home, Inventory, Count, Shopping list, and Running low. On a phone it sits along the bottom of the screen; on a bigger screen it is on the left.',
+      'More is grouped by job: Stock (Recipes, Warning levels, Stock by site), Places & buying (Sites, Suppliers), Clover (sales and Sales vs counts), and Account (History, Settings, Help).',
       'Some pages only appear if your role allows them. If you expect to see something and it is missing, ask the owner of your business.',
     ],
   },

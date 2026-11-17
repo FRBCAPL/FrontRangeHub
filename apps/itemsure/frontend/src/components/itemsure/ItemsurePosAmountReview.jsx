@@ -22,13 +22,14 @@ const unitWords = (unit, unitName) => {
 export default function ItemsurePosAmountReview({ rows, piecesReady = false, busy, error = '', onSave, onCancel }) {
   const singles = (r) => piecesReady && isGroupUnit(r.unit);
   const startUnit = (r) => {
-    if (r.suggestion?.unit) return r.suggestion.unit === 'base' && singles(r) ? 'piece' : r.suggestion.unit;
-    if (singles(r)) return 'piece';
+    // Cases/packs: always start as "single from the case", even if an old oz guess remains.
+    if (singles(r) || r.staleVolume) return 'piece';
+    if (r.suggestion?.unit) return r.suggestion.unit;
     return r.unit?.code === 'each' ? 'base' : 'fl_oz';
   };
   const [edits, setEdits] = useState(() => Object.fromEntries(rows.map((r) => [r.key, {
-    ticked: Boolean(r.suggestion),
-    amount: trim(r.suggestion?.amount ?? (singles(r) ? 1 : null)),
+    ticked: Boolean(r.suggestion) || Boolean(r.staleVolume),
+    amount: trim(r.suggestion?.amount ?? ((singles(r) || r.staleVolume) ? 1 : null)),
     unit: startUnit(r),
   }])));
   const short = rows.length <= SHORT_LIST;
@@ -76,7 +77,7 @@ export default function ItemsurePosAmountReview({ rows, piecesReady = false, bus
         {shown.slice(0, limit).map((r) => {
           const e = edits[r.key];
           const unitName = (r.unit?.name || 'unit').toLowerCase();
-          const offerSingles = singles(r);
+          const offerSingles = isGroupUnit(r.unit) && piecesReady;
           return (
             <li key={r.key}>
               <label className="isu-check">
@@ -93,6 +94,11 @@ export default function ItemsurePosAmountReview({ rows, piecesReady = false, bus
                 </select>
                 <span>of <strong>{r.item.name}</strong></span>
               </span>
+              {r.staleVolume ? (
+                <span className="isu-muted isu-small">
+                  This was still set in ounces from when it was counted by bottle. For a case, pick how many singles each sale uses (usually 1).
+                </span>
+              ) : null}
               {valid(e) ? (
                 <span className="isu-muted isu-small">
                   If Clover sells 1 {r.pos.name} → take {e.amount} {unitWords(e.unit, unitName)} of {r.item.name} off stock.
