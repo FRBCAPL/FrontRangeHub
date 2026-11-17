@@ -41,3 +41,14 @@ export function salesGapLabel(row) {
   if (row.missingContent) return 'Size or pack count not set';
   return '';
 }
+
+/**
+ * Honest finish: only claim "all set" when setup has no leftover amounts/sizes for this
+ * item and the sales row (if provided) looks complete. Stale "Finished" is worse than
+ * "close and check".
+ */
+export function fixItCanClaimDone({ amountsLeft = 0, sizesLeft = 0, gapLeft = null, sizeSkipped = false, issue = null }) {
+  if (amountsLeft > 0 || sizesLeft > 0 || gapLeft || sizeSkipped) return false;
+  if (issue && !issue.complete) return false;
+  return true;
+}

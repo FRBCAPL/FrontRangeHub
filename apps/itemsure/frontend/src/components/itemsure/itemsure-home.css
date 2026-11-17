@@ -63,6 +63,32 @@
   margin: 2px 0 0;
 }
 
+.isu-clover-ready-meter {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--isu-line);
+  overflow: hidden;
+}
+
+.isu-clover-ready-meter-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--isu-pine);
+  transition: width 0.25s ease;
+}
+
+.isu-clover-ready-hint {
+  margin: 0;
+}
+
+.isu-gs-step.is-locked .isu-gs-mark {
+  opacity: 0.45;
+}
+
+.isu-gs-step.is-locked .isu-gs-text strong {
+  color: var(--isu-muted);
+}
+
 /* Home page: Today list. */
 
 .isu-today {

@@ -8,6 +8,7 @@ import { sites, SITES } from '../../data/itemsureTerms.js';
 import { onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { PageHead } from './ItemsureUi.jsx';
 import ItemsureGettingStarted from './ItemsureGettingStarted.jsx';
+import ItemsureCloverReady from './ItemsureCloverReady.jsx';
 import ItemsureHomeActions from './ItemsureHomeActions.jsx';
 import ItemsureToday from './ItemsureToday.jsx';
 import ItemsureHomeSalesStock from './ItemsureHomeSalesStock.jsx';
@@ -34,6 +35,7 @@ export default function ItemsureDashboard() {
   const [progress, setProgress] = useState(null);
   const canSetUp = can('items.manage');
   const canStock = can('inventory.view');
+  const canCloverReady = can('pos.manage') && can('items.manage');
   const today = useTodayData(organization.id, { stock: canStock, counts: can('counts.view') });
 
   useEffect(() => {
@@ -69,6 +71,8 @@ export default function ItemsureDashboard() {
       ) : null}
 
       {canSetUp ? <ItemsureGettingStarted organizationId={organization.id} counts={counts} progress={progress} /> : null}
+
+      {canCloverReady ? <ItemsureCloverReady organizationId={organization.id} enabled /> : null}
 
       <ItemsureToday data={today} can={can} features={features} />
 

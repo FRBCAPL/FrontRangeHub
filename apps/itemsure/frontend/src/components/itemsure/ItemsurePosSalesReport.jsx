@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import usePosSalesReport from '../../hooks/usePosSalesReport.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, SITE } from '../../data/itemsureTerms.js';
+import { cloverReadyVisitedKey } from '../../utils/itemsureCloverReady.js';
 import { Card, ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsurePosSalesTable from './ItemsurePosSalesTable.jsx';
 import ItemsurePosFixItem from './ItemsurePosFixItem.jsx';
@@ -20,6 +21,15 @@ export default function ItemsurePosSalesReport() {
   const { organization, can } = useItemsureWorkspace();
   const r = usePosSalesReport(organization.id);
   const [fixing, setFixing] = useState(null);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(cloverReadyVisitedKey(organization.id), '1');
+    } catch {
+      /* private browsing */
+    }
+  }, [organization.id]);
+
   const head = <PageHead title="Sales vs counts" description="Pick a starting count and an ending count. The difference between them (plus deliveries) is what was used, then ItemSure compares that to Clover. This never changes stock." />;
 
   if (!r.base) return <div className="isu-page">{head}<p className="isu-muted">Loading…</p></div>;
