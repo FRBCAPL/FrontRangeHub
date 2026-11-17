@@ -17,7 +17,7 @@ export const GUIDE_BASICS = [
       'Only create a separate business for a company with its own books and its own team.',
       'If you have more than one business, tap the business name at the top of any page to switch.',
       'The owner can archive a business in Settings \u2192 Business. It is hidden for everyone on its team, but nothing is deleted. Restore it from the same place any time.',
-      'New here? Set up offers Try the Demo Bar: a private sample business with stock, counts, and Demo Clover sales. Only you see it. Reset sample any time, then create your real business when ready.',
+      'New here? Try the Demo Bar from the welcome screen — no account needed. You get a private sample with stock, counts, and Demo Clover. Reset sample any time; create an account when you want a real business.',
     ],
   },
   {

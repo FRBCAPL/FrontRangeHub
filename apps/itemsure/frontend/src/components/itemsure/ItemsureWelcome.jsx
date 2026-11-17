@@ -1,6 +1,7 @@
 import React from 'react';
 import { ITEMSURE_TAGLINE } from '../../data/itemsureConstants.js';
 import { site, sites } from '../../data/itemsureTerms.js';
+import ItemsureDemoTry from './ItemsureDemoTry.jsx';
 
 const PRINCIPLES = [
   {
@@ -26,9 +27,13 @@ export default function ItemsureWelcome({ onSignIn, onSignUp }) {
         <p className="isu-lede">
           The inventory record for a business: what the items are, where they are kept, and who is allowed to see them.
         </p>
-        <div className="isu-hero-actions">
-          <button type="button" className="isu-btn isu-btn--primary" onClick={onSignUp}>Create account</button>
-          <button type="button" className="isu-btn isu-btn--ghost" onClick={onSignIn}>Sign in</button>
+        <div className="isu-hero-actions isu-hero-actions--stack">
+          <ItemsureDemoTry label="Try the Demo Bar" />
+          <p className="isu-muted isu-small isu-hero-demo-note">No account needed. Sample stock, counts, and Demo Clover — private to this device.</p>
+          <div className="isu-hero-actions">
+            <button type="button" className="isu-btn isu-btn--ghost" onClick={onSignUp}>Create account</button>
+            <button type="button" className="isu-btn isu-btn--ghost" onClick={onSignIn}>Sign in</button>
+          </div>
         </div>
       </section>
       <section className="isu-principles">

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { acceptEmailLink, getSession, onAuthChange, signOut } from '../../services/itemsureAuthService.js';
+import { acceptEmailLink, getSession, isGuestUser, onAuthChange, signOut } from '../../services/itemsureAuthService.js';
 import { itemsureAuthFromHash } from '../../utils/itemsureAuthLanding.js';
 import { ItemsureWorkspaceProvider } from '../../hooks/useItemsureWorkspace.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
@@ -127,6 +127,8 @@ export default function ItemsureApp() {
               <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={handleSignOut}>Sign out</button>
               {session.user?.email ? (
                 <span className="isu-account-email" title={session.user.email}>{session.user.email}</span>
+              ) : isGuestUser(session.user) ? (
+                <span className="isu-account-email" title="Guest demo">Guest</span>
               ) : null}
             </div>
           ) : session === null && !authMode ? (

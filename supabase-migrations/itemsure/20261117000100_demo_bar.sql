@@ -8,9 +8,10 @@
 -- Sales and sync windows are pre-seeded so Sales vs counts works offline.
 --
 -- APPLY BEFORE SMOKE TEST (does not run itself):
---   Supabase SQL editor or CLI: run this file on the ItemSure project.
---   Optional check: verify/demo-bar.sql (rolls back).
---   Then in the app: sign in → Try the Demo Bar → Home / Inventory / Sales vs counts → Reset sample.
+--   1) Supabase SQL editor or CLI: run this file on the ItemSure project.
+--   2) Auth → Providers → enable Anonymous sign-ins (guest Demo Bar needs this).
+--   3) Optional check: verify/demo-bar.sql (rolls back).
+--   4) App (no account): Welcome → Try the Demo Bar → Home / Inventory / Sales vs counts → Reset sample.
 
 alter table itemsure.organizations
   add column if not exists is_demo boolean not null default false;
@@ -203,12 +204,25 @@ begin
     (s1, beer_case, bar, 4, case_u, t_open),
     (s1, soda, bar, 12, each_u, t_open),
     (s1, chips, kitchen, 20, each_u, t_open);
+  -- Stamp entry times before approve so review cutoffs / movements use demo dates.
+  -- (session_replication_role is not allowed on hosted Supabase.)
+  alter table itemsure.count_entries disable trigger count_entries_guard;
+  update itemsure.count_entries
+    set updated_at = t_open, created_at = t_open, counted_from = t_open
+    where session_id = s1;
+  alter table itemsure.count_entries enable trigger count_entries_guard;
   perform itemsure.submit_count_session(s1, true);
   preview := itemsure.preview_count_approval(s1);
   perform itemsure.approve_count_session(s1, (preview ->> 'watermark')::bigint, true);
+  alter table itemsure.count_sessions disable trigger count_sessions_guard;
+  alter table itemsure.count_sessions disable trigger count_sessions_touch_updated_at;
+  alter table itemsure.count_sessions disable trigger count_sessions_audit;
   update itemsure.count_sessions
     set submitted_at = t_open, started_at = t_open - interval '30 minutes', created_at = t_open - interval '40 minutes'
     where id = s1;
+  alter table itemsure.count_sessions enable trigger count_sessions_guard;
+  alter table itemsure.count_sessions enable trigger count_sessions_touch_updated_at;
+  alter table itemsure.count_sessions enable trigger count_sessions_audit;
   update itemsure.count_reviews set decided_at = t_open + interval '5 minutes' where session_id = s1;
 
   -- Mock Clover menu + pours (written as definer; browsers cannot).
@@ -277,12 +291,23 @@ begin
     (s2, beer_case, bar, 2, case_u, t_close),
     (s2, soda, bar, 7, each_u, t_close),
     (s2, chips, kitchen, 12, each_u, t_close);
+  alter table itemsure.count_entries disable trigger count_entries_guard;
+  update itemsure.count_entries
+    set updated_at = t_close, created_at = t_close, counted_from = t_close
+    where session_id = s2;
+  alter table itemsure.count_entries enable trigger count_entries_guard;
   perform itemsure.submit_count_session(s2, true);
   preview := itemsure.preview_count_approval(s2);
   perform itemsure.approve_count_session(s2, (preview ->> 'watermark')::bigint, true);
+  alter table itemsure.count_sessions disable trigger count_sessions_guard;
+  alter table itemsure.count_sessions disable trigger count_sessions_touch_updated_at;
+  alter table itemsure.count_sessions disable trigger count_sessions_audit;
   update itemsure.count_sessions
     set submitted_at = t_close, started_at = t_close - interval '45 minutes', created_at = t_close - interval '50 minutes'
     where id = s2;
+  alter table itemsure.count_sessions enable trigger count_sessions_guard;
+  alter table itemsure.count_sessions enable trigger count_sessions_touch_updated_at;
+  alter table itemsure.count_sessions enable trigger count_sessions_audit;
   update itemsure.count_reviews set decided_at = t_close + interval '5 minutes' where session_id = s2;
 end;
 $$;
@@ -331,6 +356,11 @@ begin
       '{"spots": true, "packaging": true, "transfers": true, "approvals": true, "details": false, "loose": false}'::jsonb
     );
     -- Owner membership comes from organizations_create_owner trigger.
+    perform itemsure.seed_demo_bar(org);
+  elsif not exists (
+    select 1 from itemsure.locations where organization_id = org
+  ) then
+    -- Earlier seed failed after org create (or was wiped); finish loading sample.
     perform itemsure.seed_demo_bar(org);
   end if;
 

@@ -24,6 +24,23 @@ export async function signIn(email, password) {
   if (error) throw new Error(friendly(error.message));
 }
 
+/**
+ * Starts a guest session (no email). Needs “Allow anonymous sign-ins” in the Supabase Auth settings.
+ * Returns the session. Guest users are still authenticated for RLS.
+ */
+export async function signInAsGuest() {
+  const { data, error } = await itemsure.auth.signInAnonymously({
+    options: { data: { full_name: 'Guest', app: ITEMSURE_APP_CODE } },
+  });
+  if (error) throw new Error(friendly(error.message));
+  if (!data?.session) throw new Error('Could not start a guest session. Try again.');
+  return data.session;
+}
+
+export function isGuestUser(user) {
+  return Boolean(user?.is_anonymous);
+}
+
 // Other hub apps reroute any returning Google tokens while their flag is set,
 // so a stale flag would hand an ItemSure sign-in to the wrong app.
 const OTHER_APP_OAUTH_FLAGS = ['__DUEZY_OAUTH__', '__DUES_TRACKER_OAUTH__', '__ESTATE_VAULT_OAUTH__'];
@@ -106,6 +123,9 @@ export async function signOut() {
 }
 
 function friendly(message = '') {
+  if (/anonymous sign-ins? are disabled|signups? not allowed for anonymous/i.test(message)) {
+    return 'Guest demo is not turned on yet. In Supabase: Authentication → Providers → Anonymous → enable, then try again.';
+  }
   if (/rate limit|for security purposes/i.test(message)) return 'Too many tries. Wait a minute and try again.';
   if (/invalid login/i.test(message)) return 'That email and password don\u2019t match.';
   if (/already registered/i.test(message)) return 'An account already uses this email. Sign in instead.';

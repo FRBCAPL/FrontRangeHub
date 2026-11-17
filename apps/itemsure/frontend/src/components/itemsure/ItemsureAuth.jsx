@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { sendReset, signIn, signInWithGoogle, signUp } from '../../services/itemsureAuthService.js';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import ItemsureDemoTry from './ItemsureDemoTry.jsx';
 import { ErrorNote, Field } from './ItemsureUi.jsx';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -57,6 +58,13 @@ export default function ItemsureAuth({ initialMode = 'signin', initialError = ''
         ) : null}
         <ErrorNote message={error || initialError} />
         {notice ? <p className="isu-notice" role="status">{notice}</p> : null}
+
+        {mode === 'signin' ? (
+          <>
+            <ItemsureDemoTry block label="Try the Demo Bar — no account needed" />
+            <p className="isu-auth-or"><span>or sign in</span></p>
+          </>
+        ) : null}
 
         {mode !== 'forgot' ? (
           <>

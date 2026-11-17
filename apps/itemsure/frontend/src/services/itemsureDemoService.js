@@ -1,5 +1,6 @@
 import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
+import { getSession, signInAsGuest } from './itemsureAuthService.js';
 import { rememberActiveOrg } from './itemsureOrgService.js';
 
 /**
@@ -11,6 +12,18 @@ export async function enterDemo(userId) {
   if (!orgId) throw new Error('Could not open the Demo Bar.');
   if (userId) rememberActiveOrg(userId, orgId);
   return orgId;
+}
+
+/**
+ * Try Demo with no sign-in form: starts a guest session if needed, then opens Demo Bar.
+ * Returns { orgId, userId }. Caller should navigate / reload workspace after.
+ */
+export async function tryDemoBar() {
+  let session = await getSession();
+  if (!session) session = await signInAsGuest();
+  const userId = session.user.id;
+  const orgId = await enterDemo(userId);
+  return { orgId, userId };
 }
 
 /** Wipes and reseeds the Demo Bar for this organization. Same org id. */
