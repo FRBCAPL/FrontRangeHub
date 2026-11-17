@@ -4,7 +4,7 @@ import { PageHead } from './ItemsureUi.jsx';
 const NOT_BUILT = [
   { title: 'Supplier pack sizes', body: 'You can already enter each supplier\'s as-ordered price and product code. Next: the pack size you order from them.' },
   { title: 'Purchase orders', body: 'Turn the shopping list into orders, grouped by supplier.' },
-  { title: 'Receiving', body: 'Check deliveries against orders and add them to stock.' },
+  { title: 'Receive against orders', body: 'You can already receive from the shopping list into stock. Next: check deliveries against purchase orders, then add them.' },
   { title: 'Inventory value', body: 'Track cost and value over time.' },
 ];
 

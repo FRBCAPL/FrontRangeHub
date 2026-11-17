@@ -31,7 +31,8 @@ export const GUIDE_STOCK = [
     paragraphs: [
       '"Warn me at" is your warning point. When the amount drops to this number or below, the item shows as Running low.',
       '"Fill up to" is your full amount: how many you want after restocking. The shopping list tops you back up to this.',
-      'Example: lemons, warn me at 10, fill up to 40. 10 or fewer is Running low. Needs topping up only once you hit the Top off line (Usual is about 16 or fewer). Between that and 39 is still OK. 40 is Full. More than 40 is More than full.',
+      'Example: lemons, warn me at 10, fill up to 40. 10 or fewer is Running low. Needs topping up only once you hit the Top off line (Usual is about 16 or fewer). Between that and 39 is still OK on Home, Inventory, and Warning levels. 40 is Full. More than 40 is More than full.',
+      'Home, Inventory, and Warning levels use that Top off line so you are not nudged to buy while stock is only a little under "Fill up to". Stock by site can still show "Needs topping up" for anything under "Fill up to" — that screen is about how full each place is, not only the shopping alert.',
     ],
     steps: [
       'For one item: open it from Inventory and choose "Set levels" next to a place.',
@@ -42,6 +43,7 @@ export const GUIDE_STOCK = [
     tips: [
       'Each place can have its own numbers.',
       'Either one can be left blank. Without "Warn me at" the item never shows as running low. Without "Fill up to" nothing goes on the shopping list.',
+      'If no places have levels yet, Home will not say "All caught up" for stock — set levels first so Running low and Need topping up mean something.',
       'On Warning levels, use "Copy to another site" to reuse one site\u2019s numbers at another site.',
     ],
   },
@@ -59,7 +61,10 @@ export const GUIDE_STOCK = [
       'For a suggested move, choose Transfer to move the stock now.',
       'For a move between two sites that will happen later (for example on the next delivery run), choose Plan. Choose Complete once it has arrived.',
     ],
-    tips: ['If an item says it has no "Fill up to" number, open the item and choose Set levels to get a suggested amount.'],
+    tips: [
+      'If an item says it has no "Fill up to" number, open the item and choose Set levels to get a suggested amount.',
+      'On the shopping list, tick what you got, then Receive. Stock is added and those lines leave the list for everyone. The list and amounts refresh as soon as Receive finishes — you should not need to reload the page.',
+    ],
   },
   {
     id: 'suppliers',
@@ -87,13 +92,14 @@ export const GUIDE_STOCK = [
     title: 'Keeping it simple (features)',
     summary: 'Switch off the parts you don\u2019t use.',
     paragraphs: [
-      'Settings has a Features section. The owner or an administrator can switch four things on or off: spots inside sites, case and pack sizes, moving stock between places, and count approvals.',
-      'New businesses start with all four off, so ItemSure stays simple. Switch one on when you need it.',
+      'Settings has a Features section. The owner or an administrator can switch parts on or off: spots inside sites, case and pack sizes, moving stock between places, count approvals, and — when available — brand and item details, and counting loose ones out of a case.',
+      'New businesses start with the main four off (spots, packaging, moves, approvals), so ItemSure stays simple. Switch one on when you need it.',
       'Switching something off only hides it. Nothing is deleted, and anything already recorded (for example stock in a spot) still shows.',
     ],
     tips: [
       'With count approvals off, a count submitted by someone who can approve updates stock straight away. If something needs a closer look, the count waits for approval as usual.',
       'With moving switched off, the shopping list shows the full amount to buy.',
+      'Brand and item details, and "Count loose ones too", only appear after their database updates are applied.',
     ],
   },
   {
@@ -105,12 +111,16 @@ export const GUIDE_STOCK = [
       ['Why did my count not change the amounts?', 'A count only changes amounts after it is approved. Check Count for anything "Awaiting approval".'],
       ['Why can I not add or use an item?', 'It has no amount at that place yet. Open the item and choose "Set starting amount" first.'],
       ['Why is an item not showing as running low?', 'It needs a "Warn me at" number for that place, and an amount.'],
+      ['Home says Stocked / OK but Stock by site says Needs topping up?', 'Home, Inventory, and Warning levels wait until stock hits the Top off line (Usual is about a fifth of the way from Warn me at up to Fill up to). Stock by site flags anything under Fill up to. Both can be right for their job.'],
+      ['Why does Home say nothing to restock when I have no levels?', 'Set "Warn me at" and "Fill up to" first. Until levels exist, ItemSure cannot tell what is running low. Use Warning levels or Set levels on an item.'],
+      ['How do I try ItemSure without signing up?', 'On the welcome screen, choose Try the Demo Bar. No email needed. Use Reset sample on the banner to restore the sample; Create your own business when you are ready.'],
+      ['What is Demo Clover?', 'In the Demo Bar, Demo Clover is sample menu and sales so Sales vs counts works. It is not a live merchant. Connect real Clover from your own business under More \u2192 Clover.'],
       ['Blank or zero when counting?', 'Zero means you counted and there were none. Blank means you did not count it.'],
       ['Can I undo a change?', 'Nothing is deleted. Set the right amount or make a new change; both are kept in the history.'],
       ['How do I add someone to my business?', 'Settings \u2192 People \u2192 Invite people. Enter their email and pick a role. They get an email, sign in, and tap Join.'],
       ['Someone left. How do I take away their access?', 'Settings \u2192 People, find them, then "Remove from business". Their past work stays in History.'],
       ['Why can\u2019t someone do something?', 'Their role does not allow it. Change their role, or have the owner switch it on in Settings \u2192 What each role can do.'],
-      ['Where did a page go?', 'Less-used pages are under More in the menu. Low stock is now "Running low", Par levels is "Warning levels", Restock is "Shopping list", and Activity log is "History".'],
+      ['Where did a page go?', 'Less-used pages are under More in the menu. Low stock is now "Running low", Par levels is "Warning levels", Restock is "Shopping list", Stocked is "Inventory", and Activity log is "History".'],
     ],
   },
 ];

@@ -17,7 +17,22 @@ export const GUIDE_BASICS = [
       'Only create a separate business for a company with its own books and its own team.',
       'If you have more than one business, tap the business name at the top of any page to switch.',
       'The owner can archive a business in Settings \u2192 Business. It is hidden for everyone on its team, but nothing is deleted. Restore it from the same place any time.',
-      'New here? Try the Demo Bar from the welcome screen — no account needed. You get a private sample with stock, counts, and Demo Clover. Reset sample any time; create an account when you want a real business.',
+      'New here? Try the Demo Bar from the welcome screen — no account needed. You get a private sample with stock, counts, and Demo Clover. See the Demo Bar topic for Reset sample and how it differs from a real business.',
+    ],
+  },
+  {
+    id: 'demo-bar',
+    title: 'Demo Bar',
+    summary: 'Try ItemSure with sample stock and Demo Clover — no account required.',
+    paragraphs: [
+      'From the welcome screen (or Set up), choose Try the Demo Bar. ItemSure opens a private sample business for you: items, warning levels, two approved counts, and Demo Clover sales so Sales vs counts works.',
+      'Guests do not enter an email. The demo stays on this device until you sign out or clear the browser. It is not shared with other people.',
+      'A banner at the top offers Reset sample (puts the demo back to the original numbers and history) and Create your own business when you are ready for real data.',
+    ],
+    tips: [
+      'Demo Clover is sample menu and sales only. It is not a live merchant. Connect a real Clover from your own business when you want live sync.',
+      'Reset sample works after receipts, stock changes, and shopping-list ticks. It wipes demo data for that sample and reloads it; your real businesses are untouched.',
+      'You can also open Demo Bar from the business switcher if you already have other businesses and have not opened the demo yet.',
     ],
   },
   {
@@ -26,12 +41,13 @@ export const GUIDE_BASICS = [
     summary: 'What ItemSure does and the order to set things up.',
     paragraphs: [
       'ItemSure keeps track of what you have, where it is, and when you are running low. Every change is recorded, so you can always see who changed what and why.',
-      'Home shows a getting-started checklist until these steps are done.',
-      'At the top of Home are big buttons for everyday jobs: Start a count, Add a delivery, Use stock, and Find an item. You only see the ones your role can do.',
-      'Home also has a "Today" list: items running low (with how many to move or buy), items that need topping up, planned moves to finish, and counts to continue or approve. Each line has one button that takes you straight there.',
-      'Below that, Stock health shows how many items are Running low, Need topping up, or are Stocked; tap one to see them. It also shows a one-line peek at the shopping list.',
+      'On Home, Stock health comes first: how many items are Running low, Need topping up, or are Stocked. Tap a tile to open that list. It also shows a one-line peek at the shopping list. If no warning levels are set yet, Stock health asks you to set them instead of saying everything is fine.',
+      'Next are big buttons for everyday jobs: Start a count, Add a delivery, Use stock, and Find an item. You only see the ones your role can do.',
+      'Today is a collapsible list (often closed at first): items running low, items that need topping up, planned moves, and counts to continue or approve. Each line has one button that takes you straight there.',
+      'Home also shows a getting-started checklist until setup steps are done, and — when your role allows — a short Clover checklist.',
     ],
     steps: [
+      'Optional: try the Demo Bar from the welcome screen to see a full sample first.',
       'Set up your business. You become its owner.',
       'Add a site (for example a bar, a store, a warehouse, or a van). Spots inside it, like "Back room" or "Walk-in cooler", are optional.',
       'Add your items.',

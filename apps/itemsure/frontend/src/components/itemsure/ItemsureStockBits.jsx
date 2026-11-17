@@ -14,7 +14,7 @@ export function StockAmount({ summary, unitName, className = '', pieces = 0 }) {
   const total = summary.total === null ? null : (pieces && fullCases(summary.total, pieces)) || displayQuantity(summary.total);
   const label = `${total === null ? 'No amount yet' : `${total} on hand`}${summary.par !== null ? `, par ${displayQuantity(summary.par)}` : ''}`;
   return (
-    <Tip label={summary.par !== null ? 'On hand / restock target (par)' : 'On hand'}>
+    <Tip label={summary.par !== null ? 'On hand / Fill up to' : 'On hand'}>
       <div className={`isu-stockcard-amount${className ? ` ${className}` : ''}`} aria-label={label}>
         <strong>{total === null ? '\u2013' : total}</strong>
         {summary.par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(summary.par)}</span> : null}
@@ -40,11 +40,11 @@ export function SupplierLine({ supplier, note = '' }) {
 }
 
 const STATUS_TIP = {
-  low: 'At or under the warn-at level',
-  below_par: 'At or below Top off at, still above Warn me at',
-  at_target: 'On hand matches fill-up-to',
-  above_target: 'More on hand than fill-up-to',
-  above_minimum: 'Above warn-at with no fill-up-to set',
+  low: 'At or under Warn me at',
+  below_par: 'At or below Top off at, still above Warn me at — buy or move soon',
+  at_target: 'On hand matches Fill up to',
+  above_target: 'More on hand than Fill up to',
+  above_minimum: 'Above Warn me at; not at the Top off line yet (still OK for shopping)',
   not_set_up: 'No on-hand amount recorded yet',
 };
 
@@ -53,11 +53,11 @@ export function StockBar({ summary }) {
   if (!summary) return null;
   const status = summary.status ? TARGET_STATUS[summary.status] : null;
   const tone = status?.tone || 'muted';
-  const tip = status ? STATUS_TIP[summary.status] : 'Set a fill-up-to level to track restock';
+  const tip = status ? STATUS_TIP[summary.status] : 'Set a Fill up to level to track restock';
   return (
     <div className="isu-stockcard-status">
       {summary.par !== null ? (
-        <Tip label="How full vs fill-up-to (par)">
+        <Tip label="How full vs Fill up to">
           <div className="isu-stockbar" aria-hidden="true">
             <div className={`isu-stockbar-fill isu-stockbar--${tone}`} style={{ width: `${fillPercent(summary.total, summary.par)}%` }} />
           </div>
@@ -65,7 +65,7 @@ export function StockBar({ summary }) {
       ) : null}
       <Tip label={tip}>
         <span className={`isu-stockcard-label isu-stockcard-label--${summary.par !== null || status ? tone : 'muted'}`}>
-          {status ? status.label : 'No par set'}
+          {status ? status.label : 'No Fill up to'}
         </span>
       </Tip>
     </div>
