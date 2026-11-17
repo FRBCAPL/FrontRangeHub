@@ -1,5 +1,25 @@
 /* The business you're working in, at the top of every page, and the switch list. */
 
+.isu-demo-banner {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--isu-pine-line);
+  background: var(--isu-pine-soft);
+}
+
+.isu-demo-banner > p {
+  margin: 0;
+}
+
+.isu-demo-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .isu-business-bar {
   position: relative;
   display: grid;

@@ -49,11 +49,20 @@ export async function loadWorkspace(user) {
     profile = await itemsure.from('profiles').select('full_name, email').eq('id', userId).maybeSingle();
   }
 
-  const memberRows = await itemsure
+  let memberRows = await itemsure
     .from('organization_memberships')
-    .select('organization_id, role_code, location_scope, organizations(id, name, slug, industry_type)')
+    .select('organization_id, role_code, location_scope, organizations(id, name, slug, industry_type, is_demo)')
     .eq('user_id', userId)
     .eq('status', 'active');
+
+  // Older databases without is_demo still load.
+  if (memberRows.error && /is_demo|column/i.test(memberRows.error.message || '')) {
+    memberRows = await itemsure
+      .from('organization_memberships')
+      .select('organization_id, role_code, location_scope, organizations(id, name, slug, industry_type)')
+      .eq('user_id', userId)
+      .eq('status', 'active');
+  }
 
   if (memberRows.error) {
     return { databaseMessage: readableDatabaseError(memberRows.error), memberships: [], organization: null, permissions: [] };
@@ -68,6 +77,7 @@ export async function loadWorkspace(user) {
         organizationName: org.name,
         slug: org.slug,
         industryType: org.industry_type,
+        isDemo: Boolean(org.is_demo),
         roleCode: row.role_code,
         roleName: ROLE_LABELS[row.role_code] || row.role_code,
         locationScope: row.location_scope === 'restricted' ? 'restricted' : 'all',
@@ -134,7 +144,18 @@ export async function loadWorkspace(user) {
     archived,
     archiveAvailable,
     organization: active
-      ? { ...active, id: active.organizationId, name: active.organizationName, industryName, features, featuresSaved, variantLabel, detailsAvailable, looseAvailable }
+      ? {
+        ...active,
+        id: active.organizationId,
+        name: active.organizationName,
+        industryName,
+        features,
+        featuresSaved,
+        variantLabel,
+        detailsAvailable,
+        looseAvailable,
+        isDemo: Boolean(active.isDemo),
+      }
       : null,
     permissions,
   };

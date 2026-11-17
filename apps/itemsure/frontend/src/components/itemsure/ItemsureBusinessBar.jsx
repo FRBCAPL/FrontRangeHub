@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { sites } from '../../data/itemsureTerms.js';
+import ItemsureDemoEnter from './ItemsureDemoEnter.jsx';
 import ItemsureLevelsExplainer from './ItemsureLevelsExplainer.jsx';
 
 /**
@@ -17,6 +18,7 @@ export default function ItemsureBusinessBar() {
   const [switching, setSwitching] = useState(false);
   const memberships = workspace?.memberships || [];
   const several = memberships.length > 1;
+  const hasDemo = memberships.some((m) => m.isDemo);
   if (!organization) return null;
 
   const pick = async (id) => {
@@ -44,10 +46,15 @@ export default function ItemsureBusinessBar() {
           <ItemsureLevelsExplainer focus="business" />
           {memberships.map((m) => (
             <button key={m.organizationId} type="button" className={`isu-business-option${m.organizationId === organization.id ? ' is-current' : ''}`} onClick={() => pick(m.organizationId)}>
-              <span>{m.organizationId === organization.id ? '\u2713 ' : ''}{m.organizationName}</span>
+              <span>{m.organizationId === organization.id ? '\u2713 ' : ''}{m.organizationName}{m.isDemo ? ' (demo)' : ''}</span>
               <span className="isu-muted isu-small">{m.roleName}</span>
             </button>
           ))}
+          {!hasDemo ? (
+            <div className="isu-business-demo-enter">
+              <ItemsureDemoEnter label="Try the Demo Bar" />
+            </div>
+          ) : null}
         </div>
       ) : null}
 

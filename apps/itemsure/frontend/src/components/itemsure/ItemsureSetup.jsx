@@ -6,6 +6,7 @@ import useItemsureAction from '../../hooks/useItemsureAction.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site, sites } from '../../data/itemsureTerms.js';
 import { Card, ErrorNote, Field, PageHead } from './ItemsureUi.jsx';
+import ItemsureDemoEnter from './ItemsureDemoEnter.jsx';
 import ItemsureLevelsExplainer from './ItemsureLevelsExplainer.jsx';
 import { ArchivedBusinesses } from './ItemsureBusinessArchive.jsx';
 
@@ -72,7 +73,14 @@ export default function ItemsureSetup() {
           <ArchivedBusinesses />
         </Card>
       ) : null}
-      <Card>
+      <Card title="Try ItemSure first">
+        <p className="isu-muted isu-small">
+          Open a private <strong>Demo Bar</strong> with sample stock, warning levels, two approved counts, and Demo Clover sales —
+          including Sales vs counts. Only you see it. Reset any time, or create your real business when you&apos;re ready.
+        </p>
+        <ItemsureDemoEnter />
+      </Card>
+      <Card title={hasOrganizations ? 'Create a new business' : 'Or create your own'}>
         <form onSubmit={submit} noValidate>
           <ErrorNote message={error} />
           <Field label="Business name">

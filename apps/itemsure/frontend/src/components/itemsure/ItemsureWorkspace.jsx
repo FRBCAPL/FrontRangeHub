@@ -26,6 +26,7 @@ import ItemsureSuppliers from './ItemsureSuppliers.jsx';
 import ItemsurePosSalesReport from './ItemsurePosSalesReport.jsx';
 import ItemsureCloverSales from './ItemsureCloverSales.jsx';
 import ItemsureBusinessBar from './ItemsureBusinessBar.jsx';
+import ItemsureDemoBanner from './ItemsureDemoBanner.jsx';
 import ItemsureInviteBanner from './ItemsureInviteBanner.jsx';
 import useStockAlerts from '../../hooks/useStockAlerts.js';
 
@@ -57,6 +58,7 @@ export default function ItemsureWorkspace() {
       <ItemsureNav hasOrganization={Boolean(organization)} can={can} alerts={alerts} />
       <div className="isu-content">
         <ItemsureBusinessBar />
+        <ItemsureDemoBanner />
         <ItemsureInviteBanner />
         <Routes>
           <Route index element={needsOrg(<ItemsureDashboard />)} />

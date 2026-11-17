@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import { isDemoCloverConnection } from '../../services/itemsureDemoService.js';
 import { checkClover, disconnectClover, syncCloverItems } from '../../services/itemsurePosService.js';
 import { Card, ErrorNote } from './ItemsureUi.jsx';
 import ItemsurePosSitePick from './ItemsurePosSitePick.jsx';
@@ -30,28 +31,44 @@ export default function ItemsurePosConnection({ organizationId, connection: c, s
     await act(() => disconnectClover(organizationId), 'Clover is disconnected.')();
   };
 
+  const demo = isDemoCloverConnection(c);
+
   return (
     <Card title="Connection">
       <p>
         <strong>{c.merchant_name || 'Clover'}</strong>
-        <span className="isu-muted"> · {c.environment === 'sandbox' ? 'Sandbox' : 'Live'} · Merchant {c.merchant_id}</span>
+        <span className="isu-muted">
+          {' '}· {demo ? 'Demo sample' : c.environment === 'sandbox' ? 'Sandbox' : 'Live'} · Merchant {c.merchant_id}
+        </span>
       </p>
-      {c.status === 'error' ? (
+      {demo ? (
+        <p className="isu-muted isu-small">
+          Demo Clover is sample menu and sales for discovering ItemSure. Use <strong>Reset sample</strong> on the Demo Bar banner to refresh it.
+          Connect a real merchant from your own business when you&apos;re ready.
+        </p>
+      ) : c.status === 'error' ? (
         <p className="isu-error" role="alert">{c.last_error || 'Clover stopped answering.'} If the token was deleted, disconnect and connect again with a new one.</p>
       ) : (
         <p className="isu-muted isu-small">Connected. {c.items_synced_at ? `Menu last brought in ${when(c.items_synced_at)}.` : 'Menu not brought in yet.'}</p>
       )}
       {notice ? <p className="isu-notice" role="status">{notice}</p> : null}
       <ErrorNote message={error} />
-      <div className="isu-pos-actions">
-        <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={getMenu}>
-          {busy ? 'Working…' : c.items_synced_at ? 'Refresh menu from Clover' : 'Get menu from Clover'}
-        </button>
-        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={act(() => checkClover(organizationId), 'Clover is answering.')}>Test connection</button>
-        <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={disconnect}>Disconnect</button>
-      </div>
-      <p className="isu-muted isu-small">Refreshing brings in new or changed Clover buttons. ItemSure only reads from Clover and never changes it.</p>
-      {salesReady ? <ItemsurePosSitePick organizationId={organizationId} locationId={c.location_id} canEdit={canPickSite} onSaved={onChanged} /> : null}
+      {!demo ? (
+        <>
+          <div className="isu-pos-actions">
+            <button type="button" className="isu-btn isu-btn--primary isu-btn--sm" disabled={busy} onClick={getMenu}>
+              {busy ? 'Working…' : c.items_synced_at ? 'Refresh menu from Clover' : 'Get menu from Clover'}
+            </button>
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={act(() => checkClover(organizationId), 'Clover is answering.')}>Test connection</button>
+            <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={busy} onClick={disconnect}>Disconnect</button>
+          </div>
+          <p className="isu-muted isu-small">Refreshing brings in new or changed Clover buttons. ItemSure only reads from Clover and never changes it.</p>
+        </>
+      ) : null}
+      {salesReady && !demo ? <ItemsurePosSitePick organizationId={organizationId} locationId={c.location_id} canEdit={canPickSite} onSaved={onChanged} /> : null}
+      {salesReady && demo ? (
+        <p className="isu-muted isu-small">Sales site: the Demo Bar location (set with the sample).</p>
+      ) : null}
     </Card>
   );
 }

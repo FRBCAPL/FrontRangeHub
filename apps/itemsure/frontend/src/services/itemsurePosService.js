@@ -1,11 +1,19 @@
 import itemsure from './itemsureClient.js';
 import { assertOk } from '../utils/itemsureErrors.js';
+import { isDemoCloverConnection } from './itemsureDemoService.js';
 
 // Point-of-sale (Clover) connection and item matching. The Clover token only ever goes
 // to the itemsure-clover Edge Function; nothing here can read it back.
 
 const PROVIDER = 'clover';
 const FUNCTION = 'itemsure-clover';
+const DEMO_CLOVER_MSG = 'Demo Clover is sample data. Use Reset sample on the Demo Bar banner to refresh it — there is no live merchant to call.';
+
+async function requireLiveClover(organizationId) {
+  const { connection } = await getPosConnection(organizationId);
+  if (isDemoCloverConnection(connection)) throw new Error(DEMO_CLOVER_MSG);
+  return connection;
+}
 
 /** The business's Clover connection: { missing } until the database update is applied, else { connection|null }. */
 export async function getPosConnection(organizationId) {
@@ -38,16 +46,37 @@ async function callClover(organizationId, action, extra = {}) {
   throw new Error(message || 'Could not reach the Clover connection service. Try again.');
 }
 
-export const connectClover = (organizationId, { environment, merchantId, token }) =>
-  callClover(organizationId, 'connect', { environment, merchantId: merchantId.trim(), token: token.trim() });
-export const checkClover = (organizationId) => callClover(organizationId, 'check');
-export const disconnectClover = (organizationId) => callClover(organizationId, 'disconnect');
+export async function connectClover(organizationId, { environment, merchantId, token }) {
+  const { connection } = await getPosConnection(organizationId);
+  if (isDemoCloverConnection(connection)) throw new Error(DEMO_CLOVER_MSG);
+  return callClover(organizationId, 'connect', { environment, merchantId: merchantId.trim(), token: token.trim() });
+}
+export async function checkClover(organizationId) {
+  await requireLiveClover(organizationId);
+  return callClover(organizationId, 'check');
+}
+export async function disconnectClover(organizationId) {
+  await requireLiveClover(organizationId);
+  return callClover(organizationId, 'disconnect');
+}
 /** Copies Clover's items in again. Returns { count, removed }. */
-export const syncCloverItems = (organizationId) => callClover(organizationId, 'sync_items');
+export async function syncCloverItems(organizationId) {
+  await requireLiveClover(organizationId);
+  return callClover(organizationId, 'sync_items');
+}
 /** Brings in Clover sales for whole hours covering from..to (ISO). Returns { from, to, orders, lines }. */
-export const syncCloverSales = (organizationId, from, to) => callClover(organizationId, 'sync_sales', { from, to });
+export async function syncCloverSales(organizationId, from, to) {
+  const { connection } = await getPosConnection(organizationId);
+  if (isDemoCloverConnection(connection)) {
+    return { from, to, orders: 0, lines: 0, demo: true };
+  }
+  return callClover(organizationId, 'sync_sales', { from, to });
+}
 /** The site Clover's sales come out of (null clears it). */
-export const setCloverLocation = (organizationId, locationId) => callClover(organizationId, 'set_location', { locationId: locationId || null });
+export async function setCloverLocation(organizationId, locationId) {
+  await requireLiveClover(organizationId);
+  return callClover(organizationId, 'set_location', { locationId: locationId || null });
+}
 
 const POS_ITEM_COLS = 'external_id, name, sku, code, price_cents, price_type, category_name, is_hidden, is_deleted, not_tracked';
 const POS_ITEM_COLS_OLD = 'external_id, name, sku, code, price_cents, price_type, category_name, is_hidden, is_deleted';
