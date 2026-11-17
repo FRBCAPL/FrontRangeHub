@@ -36,27 +36,62 @@ begin
     raise exception 'Not a Demo Bar.';
   end if;
 
-  delete from itemsure.pos_modifier_hourly where organization_id = p_organization;
-  delete from itemsure.pos_sales_hourly where organization_id = p_organization;
-  delete from itemsure.pos_sales_syncs where organization_id = p_organization;
-  delete from itemsure.pos_modifiers where organization_id = p_organization;
-  delete from itemsure.pos_item_links where organization_id = p_organization;
-  delete from itemsure.pos_match_ignores where organization_id = p_organization;
-  delete from itemsure.pos_items where organization_id = p_organization;
-  delete from itemsure.pos_connections where organization_id = p_organization;
+  -- Approved counts and ledger rows refuse ordinary deletes. Disable those guards
+  -- only for this wipe (same approach as seeding backdated counts).
+  alter table itemsure.count_session_items disable trigger count_session_items_guard;
+  alter table itemsure.count_entries disable trigger count_entries_guard;
+  alter table itemsure.count_sessions disable trigger count_sessions_guard;
+  alter table itemsure.inventory_movements disable trigger inventory_movements_protect;
+  alter table itemsure.inventory_movement_packages disable trigger inventory_movement_packages_protect;
 
-  delete from itemsure.count_sessions where organization_id = p_organization;
-  delete from itemsure.inventory_movements where organization_id = p_organization;
-  delete from itemsure.inventory_balances where organization_id = p_organization;
-  delete from itemsure.inventory_targets where organization_id = p_organization;
-  delete from itemsure.item_contents where organization_id = p_organization;
-  delete from itemsure.item_piece_counts where organization_id = p_organization;
-  delete from itemsure.item_suppliers where organization_id = p_organization;
-  delete from itemsure.inventory_items where organization_id = p_organization;
-  delete from itemsure.inventory_categories where organization_id = p_organization;
-  delete from itemsure.inventory_storage_areas where organization_id = p_organization;
-  delete from itemsure.locations where organization_id = p_organization;
-  delete from itemsure.suppliers where organization_id = p_organization;
+  begin
+    delete from itemsure.pos_modifier_hourly where organization_id = p_organization;
+    delete from itemsure.pos_sales_hourly where organization_id = p_organization;
+    delete from itemsure.pos_sales_syncs where organization_id = p_organization;
+    delete from itemsure.pos_modifiers where organization_id = p_organization;
+    delete from itemsure.pos_item_links where organization_id = p_organization;
+    delete from itemsure.pos_match_ignores where organization_id = p_organization;
+    delete from itemsure.pos_items where organization_id = p_organization;
+    delete from itemsure.pos_connections where organization_id = p_organization;
+
+    delete from itemsure.shopping_ticks where organization_id = p_organization;
+    delete from itemsure.shopping_extras where organization_id = p_organization;
+    delete from itemsure.shopping_supplier_choices where organization_id = p_organization;
+    delete from itemsure.shopping_receipts where organization_id = p_organization;
+
+    delete from itemsure.count_sessions where organization_id = p_organization;
+    delete from itemsure.inventory_movements where organization_id = p_organization;
+    delete from itemsure.inventory_balances where organization_id = p_organization;
+    delete from itemsure.inventory_targets where organization_id = p_organization;
+    delete from itemsure.item_places where organization_id = p_organization;
+    delete from itemsure.item_contents where organization_id = p_organization;
+    delete from itemsure.item_piece_counts where organization_id = p_organization;
+    delete from itemsure.item_suppliers where organization_id = p_organization;
+    delete from itemsure.item_extra_categories where organization_id = p_organization;
+    delete from itemsure.item_supplier_prices where organization_id = p_organization;
+    delete from itemsure.item_always_with where organization_id = p_organization;
+    delete from itemsure.recipes where organization_id = p_organization;
+    delete from itemsure.inventory_items where organization_id = p_organization;
+    delete from itemsure.inventory_categories where organization_id = p_organization;
+    delete from itemsure.inventory_storage_areas where organization_id = p_organization;
+    delete from itemsure.locations where organization_id = p_organization;
+    delete from itemsure.suppliers where organization_id = p_organization;
+    delete from itemsure.audit_events where organization_id = p_organization;
+  exception
+    when others then
+      alter table itemsure.count_session_items enable trigger count_session_items_guard;
+      alter table itemsure.count_entries enable trigger count_entries_guard;
+      alter table itemsure.count_sessions enable trigger count_sessions_guard;
+      alter table itemsure.inventory_movements enable trigger inventory_movements_protect;
+      alter table itemsure.inventory_movement_packages enable trigger inventory_movement_packages_protect;
+      raise;
+  end;
+
+  alter table itemsure.count_session_items enable trigger count_session_items_guard;
+  alter table itemsure.count_entries enable trigger count_entries_guard;
+  alter table itemsure.count_sessions enable trigger count_sessions_guard;
+  alter table itemsure.inventory_movements enable trigger inventory_movements_protect;
+  alter table itemsure.inventory_movement_packages enable trigger inventory_movement_packages_protect;
 end;
 $$;
 

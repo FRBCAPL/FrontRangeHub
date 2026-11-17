@@ -215,10 +215,11 @@ export default function ItemsureRestock() {
     await trip.clear(itemIdsOfTicks(payload.tickKeys));
     return result;
   };
-  const afterReceive = (count) => {
+  const afterReceive = async (count) => {
     setReceiving(false);
     setReceived(count ? `Received. Stock added in ${plural(count, 'place')}.` : 'Done. Those lines are off the list.');
-    ticks.reload();
+    // Wait for stock + list + ticks before showing the page again (avoids stale checked lines).
+    await Promise.all([ticks.reload(), reloadData(), load(), extras.reload()]);
     notifyInventoryChanged();
   };
 

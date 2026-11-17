@@ -72,7 +72,7 @@ export default function ItemsureShoppingReceive({ groups, ticked, itemsById, pla
     const payload = receivePayload(all, { itemsById, supplierNameOf });
     if (payload.error) return setError(payload.error);
     const done = await run(() => onReceive({ receiptId, ...payload }));
-    if (done) onDone(payload.lines.length);
+    if (done) await onDone(payload.lines.length);
   };
 
   return (

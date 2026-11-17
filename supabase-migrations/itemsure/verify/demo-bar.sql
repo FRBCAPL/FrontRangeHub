@@ -56,9 +56,21 @@ begin
     raise exception 'CHECK: enter_demo should return the existing Demo Bar';
   end if;
 
+  -- Stock activity then reset (the case that used to fail on immutable count rows).
+  perform itemsure.adjust_inventory(
+    (select id from itemsure.locations where organization_id = org limit 1),
+    (select id from itemsure.inventory_storage_areas where organization_id = org order by name limit 1),
+    (select id from itemsure.inventory_items where organization_id = org and name = 'Vodka' limit 1),
+    'add', 1, 'Demo verify receive'
+  );
   perform itemsure.reset_demo(org);
   select count(*) into n from itemsure.inventory_items where organization_id = org and is_active;
   if n <> items1 then raise exception 'CHECK: reset should restore % items, got %', items1, n; end if;
+  if exists (
+    select 1 from itemsure.audit_events where organization_id = org and action = 'inventory.added'
+  ) then
+    raise exception 'CHECK: reset should clear demo audit history';
+  end if;
 
   raise notice 'ItemSure Demo Bar checks passed.';
 end;
