@@ -89,11 +89,69 @@
   color: var(--isu-muted);
 }
 
-/* Home page: Today list. */
+/* Home page: Today list (collapsible; starts closed). */
 
 .isu-today {
   display: grid;
   gap: 12px;
+}
+
+/* Do not set display:flex/grid on details — browsers then fail to hide the body. */
+.isu-today-fold {
+  display: block;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.isu-today-summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 1.5rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.isu-today-summary::-webkit-details-marker {
+  display: none;
+}
+
+.isu-today-summary::before {
+  content: '\25B8';
+  flex: 0 0 auto;
+  color: var(--isu-muted);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.isu-today-fold[open] > .isu-today-summary::before {
+  content: '\25BE';
+}
+
+.isu-today-summary h2 {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+}
+
+.isu-today-summary-hint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--isu-ink);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.isu-today-body {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .isu-today h2 {

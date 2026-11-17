@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { listBalances, listStockItems } from '../services/itemsureInventoryService.js';
 import { listLocations } from '../services/itemsureLocationService.js';
 import { listCategoryRows, listTargets } from '../services/itemsureTargetService.js';
+import { listTopOffPercents } from '../services/itemsureTopOffService.js';
 import { listPlaces } from '../services/itemsurePlaceService.js';
 import { targetKey } from '../utils/itemsureTargets.js';
 
@@ -12,7 +13,7 @@ export default function useTargetsData(organizationId) {
 
   const reload = useCallback(async () => {
     try {
-      const [locations, items, balances, targets, cats, places] = await Promise.all([
+      const [locations, items, balances, targets, cats, places, topOffs] = await Promise.all([
         listLocations(organizationId),
         listStockItems(organizationId),
         listBalances(organizationId),
@@ -20,6 +21,7 @@ export default function useTargetsData(organizationId) {
         listCategoryRows(organizationId),
         // Null when places can't load, so the page falls back to showing every spot.
         listPlaces(organizationId).catch(() => null),
+        listTopOffPercents(organizationId).catch(() => null),
       ]);
       const categoryOf = new Map(cats.itemCategories.map((r) => [r.id, r.category_id]));
       const targetsByKey = {};
@@ -28,7 +30,11 @@ export default function useTargetsData(organizationId) {
       });
       setData({
         locations,
-        items: items.map((i) => ({ ...i, categoryId: categoryOf.get(i.id) || null })),
+        items: items.map((i) => ({
+          ...i,
+          categoryId: categoryOf.get(i.id) || null,
+          topoffPercent: topOffs?.get(i.id) ?? null,
+        })),
         balances,
         targets,
         targetsByKey,

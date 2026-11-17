@@ -7,7 +7,7 @@ import Tip from './ItemsureTip.jsx';
 const STATUSES = [
   { value: '', label: 'All', tip: 'Everything on the shopping list' },
   { value: 'low', label: 'Running low', tip: 'At or under warn-at' },
-  { value: 'below_par', label: 'Needs topping up', tip: 'Above warn-at, still under fill-up-to' },
+  { value: 'below_par', label: 'Needs topping up', tip: 'At or below Top off at, still above Warn me at' },
 ];
 
 /** Status chips plus a Filters button that opens Place, Category and Group by. */

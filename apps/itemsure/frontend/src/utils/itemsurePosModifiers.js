@@ -15,6 +15,19 @@ export function guessModifier(name) {
   return null;
 }
 
+/** Inventory item that shares this add-on's name (Ranch → Ranch), or null. Exact match first. */
+export function matchItemByModifierName(name, items = []) {
+  const needle = String(name || '').trim().toLowerCase();
+  if (!needle || !items.length) return null;
+  const exact = items.find((i) => String(i.name || '').trim().toLowerCase() === needle);
+  if (exact) return exact;
+  // Mild fallback: "Add Ranch" → Ranch, or "Ranch dressing" ↔ Ranch
+  return items.find((i) => {
+    const n = String(i.name || '').trim().toLowerCase();
+    return n && (needle.includes(n) || n.includes(needle));
+  }) || null;
+}
+
 /** The saved rule in app form, or null when not decided yet. */
 export function ruleOf(row) {
   if (row?.action === 'none') return { action: 'none' };
@@ -67,7 +80,7 @@ const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
  */
 export function ruleText(rule, describeLine = () => ({ name: 'an item', unit: '' })) {
   if (!rule) return 'Not set yet (counts as nothing)';
-  if (rule.action === 'none') return 'Nothing extra';
+  if (rule.action === 'none') return 'Nothing from stock';
   if (rule.action === 'extra') return `${plural(rule.extraPours, 'more pour', 'more pours')} of the drink`;
   if (rule.action === 'recipe') return rule.recipeName ? `Uses the ${rule.recipeName} recipe` : 'Uses a recipe that was deleted';
   const lines = ruleLines(rule);

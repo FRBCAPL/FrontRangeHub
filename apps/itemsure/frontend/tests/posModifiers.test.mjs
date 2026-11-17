@@ -1,8 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  addModifierUse, asSalesRows, doubledItems, guessModifier, modifierNotes, modifierSetup, modifierTotals, modifierUse, ruleLines, ruleOf, ruleText,
+  addModifierUse, asSalesRows, doubledItems, guessModifier, matchItemByModifierName, modifierNotes, modifierSetup, modifierTotals, modifierUse, ruleLines, ruleOf, ruleText,
 } from '../src/utils/itemsurePosModifiers.js';
+
+test('matches an add-on to a same-named stock item', () => {
+  const ranch = { id: 'r1', name: 'Ranch' };
+  const red = { id: 'rb', name: 'Red Bull' };
+  assert.equal(matchItemByModifierName('Ranch', [ranch, red])?.id, 'r1');
+  assert.equal(matchItemByModifierName('Add Ranch', [ranch, red])?.id, 'r1');
+  assert.equal(matchItemByModifierName('Double', [ranch, red]), null);
+});
 
 test('guesses common bar modifiers from their names', () => {
   assert.deepEqual(guessModifier('Double'), { action: 'extra', extraPours: 1 });
@@ -22,7 +30,7 @@ test('reads saved rules and says them plainly', () => {
   assert.deepEqual(ruleOf({ action: 'extra', extra_pours: '1.000000' }), { action: 'extra', extraPours: 1 });
   assert.deepEqual(ruleOf({ action: 'item', item_id: 'RB', uses_amount: '1', uses_unit: 'piece' }), { action: 'item', itemId: 'RB', amount: 1, unit: 'piece' });
   assert.equal(ruleText(null), 'Not set yet (counts as nothing)');
-  assert.equal(ruleText({ action: 'none' }), 'Nothing extra');
+  assert.equal(ruleText({ action: 'none' }), 'Nothing from stock');
   assert.equal(ruleText({ action: 'extra', extraPours: 1 }), '1 more pour of the drink');
   assert.equal(ruleText({ action: 'extra', extraPours: 2 }), '2 more pours of the drink');
   assert.equal(ruleText({ action: 'item', amount: 1 }, () => ({ name: 'Red Bull', unit: 'single' })), 'Uses 1 single of Red Bull');

@@ -39,7 +39,7 @@ export default function ItemsureStockHealth({ organizationId, hasLevels, today, 
   const tiles = [
     { key: 'low', tone: 'danger', label: 'Running low', value: health?.low, to: `${ITEMSURE_PATH}/low-stock` },
     { key: 'par', tone: 'warn', label: 'Need topping up', value: health?.belowPar, to: `${ITEMSURE_PATH}/low-stock?show=topoff` },
-    { key: 'ok', tone: 'ok', label: 'Stocked', value: health?.stocked, to: `${ITEMSURE_PATH}/levels` },
+    { key: 'ok', tone: 'ok', label: 'Stocked', value: health?.stocked, to: `${ITEMSURE_PATH}/items?category=all` },
   ];
   const toBuy = (today?.recs || []).length;
   const planned = showMoves ? (today?.plans || []).length : 0;

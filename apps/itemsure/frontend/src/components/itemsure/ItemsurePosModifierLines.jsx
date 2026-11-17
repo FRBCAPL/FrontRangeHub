@@ -40,13 +40,20 @@ export default function ItemsurePosModifierLines({ lines, items, multiReady, bus
         );
       })}
       {canAdd && left.length ? (
-        <ItemsureItemSearchPick items={left} label={lines.length ? '+ Also uses…' : 'Pick the item'} onPick={add} disabled={busy} />
+        <ItemsureItemSearchPick
+          items={left}
+          label={lines.length ? '+ Also uses…' : 'Which inventory item?'}
+          onPick={add}
+          disabled={busy}
+        />
       ) : null}
       {!multiReady && lines.length > 1 ? (
         <span className="isu-notice isu-small">This one was saved with several items, and it still counts them. To change it, remove items until one is left. Several items per modifier will come back with recipes.</span>
       ) : null}
       {lines.length ? (
-        <span className="isu-muted isu-small">Oz or ml need the item&apos;s size, and singles need how many come in one. Set those on the item or its category.</span>
+        <span className="isu-muted isu-small">
+          Prefer the item&apos;s own unit or &ldquo;single from the case&rdquo; when you can. Oz/ml also need a bottle size on the item or its category.
+        </span>
       ) : null}
     </div>
   );

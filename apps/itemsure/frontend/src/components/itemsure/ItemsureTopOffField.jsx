@@ -3,7 +3,7 @@ import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { checkTopOffPercent, topOffLine } from '../../utils/itemsureTopOff.js';
 import Tip from './ItemsureTip.jsx';
 
-const QUICK = [50, 75, 90];
+const QUICK = [25, 50, 75];
 const blank = (text) => String(text ?? '').trim() === '';
 
 /** "Top off at __% of Fill up to" for the item, with quick picks and an example from its first level. */
@@ -14,7 +14,9 @@ export default function ItemsureTopOffField({ value, onChange, example, unit, co
   const shown = line === null ? null : displayQuantity(String(Math.floor(line * 100) / 100));
   const tip = [
     'Shows in Top Offs and on the shopping list once a spot drops this low.',
-    blank(value) ? 'Usual is halfway between Warn me at and Fill up to.' : '',
+    blank(value)
+      ? 'Usual is about a fifth of the way from Warn me at up to Fill up to — nearer running low than “a bit under fill.”'
+      : '',
     shown !== null ? `Example: fill up to ${displayQuantity(example.par)} → top off at ${shown} ${unit} or less.` : '',
   ].filter(Boolean).join(' ');
 

@@ -130,6 +130,19 @@
 .isu-app .isu-pos-mod-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .isu-app .isu-pos-mod-form { display: grid; gap: 10px; }
 .isu-app .isu-pos-mod-form > p { margin: 0; }
+.isu-app .isu-pos-mod-form--cards { gap: 12px; }
+.isu-app .isu-pos-mod-lead { margin: 0; font-size: 0.95rem; line-height: 1.4; }
+.isu-app .isu-pos-mod-recommend { margin: 0; }
+.isu-app .isu-pos-mod-recommend > p { margin: 0; }
+.isu-app .isu-pos-mod-detail {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--isu-line);
+  background: var(--isu-pine-soft);
+}
+.isu-app .isu-pos-mod-detail > p { margin: 0; }
 .isu-app .isu-pos-mod-choice { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .isu-app .isu-pos-mod-choice input { margin-top: 4px; }
 .isu-app .isu-pos-doubles { display: grid; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--isu-border, #e5e7eb); }

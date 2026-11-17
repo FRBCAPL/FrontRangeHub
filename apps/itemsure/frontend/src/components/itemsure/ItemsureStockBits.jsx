@@ -41,7 +41,7 @@ export function SupplierLine({ supplier, note = '' }) {
 
 const STATUS_TIP = {
   low: 'At or under the warn-at level',
-  below_par: 'Above warn-at, still under fill-up-to',
+  below_par: 'At or below Top off at, still above Warn me at',
   at_target: 'On hand matches fill-up-to',
   above_target: 'More on hand than fill-up-to',
   above_minimum: 'Above warn-at with no fill-up-to set',

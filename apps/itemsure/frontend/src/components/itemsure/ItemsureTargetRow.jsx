@@ -1,6 +1,6 @@
 import React from 'react';
 import { displayQuantity, sameQuantity } from '../../utils/itemsureQuantity.js';
-import { TARGET_STATUS, targetStatus } from '../../utils/itemsureTargets.js';
+import { TARGET_STATUS, displayTargetStatus } from '../../utils/itemsureTargets.js';
 import ItemsureStepper from './ItemsureStepper.jsx';
 
 function StatusBadge({ status }) {
@@ -15,7 +15,7 @@ export default function ItemsureTargetRow({ row, title, edit, error, dirty, canE
   const value = (field, savedText) => edit?.[field] ?? (savedText ? displayQuantity(savedText) : '');
   const minimum = value('minimum', saved?.minimum_text);
   const par = value('par', saved?.par_text);
-  const status = targetStatus(saved, balance?.quantity_text);
+  const status = displayTargetStatus(saved, balance?.quantity_text, item.topoffPercent ?? null);
   const unit = item.unitSymbol;
   const sameAsPar = !error && minimum.trim() !== '' && par.trim() !== '' && sameQuantity(minimum, par);
 

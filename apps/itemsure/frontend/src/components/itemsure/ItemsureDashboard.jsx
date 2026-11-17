@@ -26,8 +26,8 @@ const setupDone = (counts, progress) =>
   Boolean(counts && progress && counts.locations > 0 && counts.items > 0 && progress.amounts && progress.levels);
 
 /**
- * Home, phone first: quick actions, what needs doing today, and stock health.
- * Site / spot / item totals only show while the business is still being set up.
+ * Home, phone first: stock health first, then quick actions / today / Clover,
+ * with setup checklists lower once day-to-day is in view.
  */
 export default function ItemsureDashboard() {
   const { organization, workspace, features, can } = useItemsureWorkspace();
@@ -62,22 +62,6 @@ export default function ItemsureDashboard() {
     <div className="isu-page isu-home">
       <PageHead title={organization.name} description={organization.roleName} />
 
-      <ItemsureHomeActions can={can} />
-
-      {showAllNeeds ? (
-        <Link to={`${ITEMSURE_PATH}/all-needs`} className="isu-btn isu-btn--ghost isu-all-needs-btn">
-          See needs for all {sites}
-        </Link>
-      ) : null}
-
-      {canSetUp ? <ItemsureGettingStarted organizationId={organization.id} counts={counts} progress={progress} /> : null}
-
-      {canCloverReady ? <ItemsureCloverReady organizationId={organization.id} enabled /> : null}
-
-      <ItemsureToday data={today} can={can} features={features} />
-
-      <ItemsureHomeSalesStock organizationId={organization.id} can={can} />
-
       {canStock ? (
         <ItemsureStockHealth
           organizationId={organization.id}
@@ -87,6 +71,22 @@ export default function ItemsureDashboard() {
           canSetLevels={can('inventory.targets.manage')}
         />
       ) : null}
+
+      {showAllNeeds ? (
+        <Link to={`${ITEMSURE_PATH}/all-needs`} className="isu-btn isu-btn--ghost isu-all-needs-btn">
+          See needs for all {sites}
+        </Link>
+      ) : null}
+
+      <ItemsureHomeActions can={can} />
+
+      <ItemsureToday data={today} can={can} features={features} />
+
+      <ItemsureHomeSalesStock organizationId={organization.id} can={can} />
+
+      {canSetUp ? <ItemsureGettingStarted organizationId={organization.id} counts={counts} progress={progress} /> : null}
+
+      {canCloverReady ? <ItemsureCloverReady organizationId={organization.id} enabled /> : null}
 
       {settingUp ? (
         <div className={`isu-stats${features.spots ? '' : ' is-two'}`}>

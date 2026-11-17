@@ -3,18 +3,19 @@ import assert from 'node:assert/strict';
 import { cardTone, categoryHue, groupByStatus, itemInitials, listTone, topUpCanWait } from '../src/utils/itemsureItemLook.js';
 import { categoryIcon, categoryTree, labelWithIcon } from '../src/utils/itemsureCategories.js';
 
-test('topping up can wait while more than halfway from warn-at to par', () => {
+test('topping up can wait while above the usual fifth of the Warn→Fill span', () => {
   const lemons = (total, minimum = '10') => ({ total, par: '40', minimum, status: 'below_par' });
   assert.equal(topUpCanWait(lemons('39')), true);
   assert.equal(topUpCanWait(lemons('26')), true);
-  assert.equal(topUpCanWait(lemons('25')), false);
+  assert.equal(topUpCanWait(lemons('17')), true);
+  assert.equal(topUpCanWait(lemons('16')), false);
   assert.equal(topUpCanWait(lemons('11')), false);
-  assert.equal(topUpCanWait(lemons('21', null)), true);
-  assert.equal(topUpCanWait(lemons('20', null)), false);
+  assert.equal(topUpCanWait(lemons('9', null)), true);
+  assert.equal(topUpCanWait(lemons('8', null)), false);
   assert.equal(topUpCanWait({ total: '5', par: '40', minimum: '10', status: 'low' }), false);
   assert.equal(topUpCanWait(null), false);
   assert.equal(listTone(lemons('30')), 'ok');
-  assert.equal(listTone(lemons('20')), 'warn');
+  assert.equal(listTone(lemons('15')), 'warn');
   assert.equal(listTone({ total: '5', par: '40', minimum: '10', status: 'low' }), 'danger');
 });
 

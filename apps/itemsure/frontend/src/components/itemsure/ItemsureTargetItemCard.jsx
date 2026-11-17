@@ -1,6 +1,6 @@
 import React from 'react';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
-import { TARGET_STATUS, targetStatus } from '../../utils/itemsureTargets.js';
+import { TARGET_STATUS, displayTargetStatus } from '../../utils/itemsureTargets.js';
 
 /** "Par 6 · warn 2", or what's missing. */
 function levelsLine(saved, unit) {
@@ -23,7 +23,7 @@ export default function ItemsureTargetItemCard({ item, rows, onOpen, canEdit }) 
         </span>
         <span className="isu-target-card-spots">
           {rows.map((row) => {
-            const status = TARGET_STATUS[targetStatus(row.saved, row.balance?.quantity_text)];
+            const status = TARGET_STATUS[displayTargetStatus(row.saved, row.balance?.quantity_text, item.topoffPercent ?? null)];
             return (
               <span key={row.key} className="isu-target-card-spot">
                 <span className="isu-target-card-spot-name">{row.areaName}</span>

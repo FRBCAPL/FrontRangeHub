@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-const { buildSaveRows, compareQuantity, isTargetChanged, targetKey, targetStatus, validateTargetEdit } =
+const { buildSaveRows, compareQuantity, displayTargetStatus, isTargetChanged, targetKey, targetStatus, validateTargetEdit } =
   await import('../src/utils/itemsureTargets.js');
 
 test('compares decimal text exactly', () => {
@@ -42,6 +42,14 @@ test('status matches the database rules', () => {
   assert.equal(targetStatus({ minimum_text: null, par_text: '4' }, '0'), 'below_par');
   assert.equal(targetStatus({ minimum_text: '4', par_text: '4' }, '4'), 'low');
   assert.equal(targetStatus(null, '4'), null);
+});
+
+test('display status softens under-fill that can still wait', () => {
+  const amaretto = { minimum_text: '2', par_text: '4' };
+  assert.equal(targetStatus(amaretto, '3.022519'), 'below_par');
+  assert.equal(displayTargetStatus(amaretto, '3.022519'), 'above_minimum');
+  assert.equal(displayTargetStatus(amaretto, '2.3'), 'below_par');
+  assert.equal(displayTargetStatus(amaretto, '2'), 'low');
 });
 
 test('unchanged edits are not saved; "2.50" equals saved "2.5"', () => {

@@ -105,8 +105,8 @@ export function cardTone(summary) {
 
 /**
  * True when an item is under par but still above its top-off line: its own "Top off at"
- * percent of par, or by default halfway from "warn me at" (or 0) up to par, e.g. 26–39
- * for warn at 10, par 40. Display only.
+ * percent of par, or by default about a fifth of the way from "warn me at" (or 0) up to par
+ * (e.g. ~16–39 for warn at 10, par 40). Display only.
  */
 export function topUpCanWait(summary, percent = null) {
   if (!summary) return false;

@@ -1,6 +1,8 @@
 // When something below its "Fill up to" number is worth topping up ("Top Offs").
 // Each item can set a percent of Fill up to (inventory_items.topoff_percent); without
-// one it is halfway between "Warn me at" (0 when unset) and Fill up to.
+// one it uses "Usual": a quarter of the way from "Warn me at" (0 when unset) up to
+// Fill up to — close enough to running low that topping up is practical, not every
+// slight dip under fill.
 // Display only: the database still calls anything under Fill up to 'below_par'.
 
 /** Smallest and largest percent people can choose. */
@@ -8,15 +10,25 @@ export const TOPOFF_MIN = 1;
 export const TOPOFF_MAX = 99;
 
 /**
+ * Share of the Warn→Fill span used when "Top off at" is left on Usual.
+ * ~1/5 ≈ practical: don’t nag until you’re clearly nearer running low than fill.
+ * Example: warn 2 / fill 4 → top off at 2.4 or less (3 of 4 is still fine).
+ */
+export const DEFAULT_TOPOFF_SPAN = 0.2;
+
+/**
  * The amount at or below which a spot needs topping up, or null without a Fill up to.
  * Never more than Fill up to minus 1, so at least one whole unit is missing first
- * (fill up to 2: top off at 1 or less, never at 1.5).
+ * (fill up to 2: top off at 1 or less under older halfway; with Usual + small pars
+ * the line can sit lower — still never above fill − 1).
  */
 export function topOffLine(minimum, par, percent = null) {
   if (par === null || par === undefined || par === '') return null;
   const fill = Number(par);
   const warn = minimum === null || minimum === undefined || minimum === '' ? 0 : Number(minimum);
-  const line = percent ? (fill * percent) / 100 : warn + (fill - warn) / 2;
+  const line = percent
+    ? (fill * percent) / 100
+    : warn + (fill - warn) * DEFAULT_TOPOFF_SPAN;
   return Math.min(line, fill - 1);
 }
 

@@ -1,6 +1,7 @@
 // Minimum and par levels. Quantities stay strings; comparisons are done on the
 // decimal text so nothing is rounded through floats.
 import { canonicalQuantity, checkQuantity } from './itemsureQuantity.js';
+import { topOffCanWait } from './itemsureTopOff.js';
 
 export const TARGET_STATUS = {
   low: { label: 'Running low', tone: 'danger' },
@@ -98,4 +99,20 @@ export function targetStatus(target, balanceText) {
     return c === 0 ? 'at_target' : 'above_target';
   }
   return 'above_minimum';
+}
+
+/**
+ * Badge status for Warning levels / UI: same as the database, except under-fill
+ * spots that are still above the item's Top off line read as OK (not "Needs topping up").
+ */
+export function displayTargetStatus(target, balanceText, percent = null) {
+  const status = targetStatus(target, balanceText);
+  if (status !== 'below_par' || !target) return status;
+  const waits = topOffCanWait({
+    status: 'below_par',
+    onHand: balanceText,
+    minimum: target.minimum_text,
+    par: target.par_text,
+  }, percent);
+  return waits ? 'above_minimum' : 'below_par';
 }

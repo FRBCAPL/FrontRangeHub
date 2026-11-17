@@ -96,7 +96,12 @@ export default function ItemsurePosModifiers({ organizationId, canEdit }) {
       ) : null}
       <p className="isu-muted isu-small">Add-ons count in the sales reports. They come off stock only if &ldquo;Count add-ons&rdquo; is turned on under Take sales off stock.</p>
       </div>
-      <Modal open={Boolean(editing)} title={editing ? `${editing.name || 'Add-on'}` : ''} onClose={() => setEditing(null)}>
+      <Modal
+        open={Boolean(editing)}
+        title={editing ? `Set “${editing.name || 'Add-on'}”` : ''}
+        subtitle={editing ? 'Choose what inventory this Clover tap should count.' : null}
+        onClose={() => setEditing(null)}
+      >
         {editing ? (
           <ItemsurePosModifierForm
             modifier={editing}

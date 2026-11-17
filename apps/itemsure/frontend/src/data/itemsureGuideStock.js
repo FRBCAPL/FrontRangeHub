@@ -31,7 +31,7 @@ export const GUIDE_STOCK = [
     paragraphs: [
       '"Warn me at" is your warning point. When the amount drops to this number or below, the item shows as Running low.',
       '"Fill up to" is your full amount: how many you want after restocking. The shopping list tops you back up to this.',
-      'Example: lemons, warn me at 10, fill up to 40. 10 or fewer is Running low. 11 to 39 is Needs topping up. 40 is Full. More than 40 is More than full.',
+      'Example: lemons, warn me at 10, fill up to 40. 10 or fewer is Running low. Needs topping up only once you hit the Top off line (Usual is about 16 or fewer). Between that and 39 is still OK. 40 is Full. More than 40 is More than full.',
     ],
     steps: [
       'For one item: open it from Inventory and choose "Set levels" next to a place.',
