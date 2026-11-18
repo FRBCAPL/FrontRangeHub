@@ -70,6 +70,24 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
     () => splitForSpot(items, inUse, session.location_id, selectedAreaId, countedHere),
     [items, inUse, session.location_id, selectedAreaId, countedHere],
   );
+  // Progress for the selected spot uses items kept there — not the whole catalog.
+  const countedInSpot = useMemo(() => {
+    if (allSpots) return countedItems;
+    const ids = new Set();
+    Object.values(entries).forEach((e) => {
+      if ((e.storage_area_id || null) === selectedAreaId) ids.add(e.item_id);
+    });
+    Object.values(drafts).forEach((d) => {
+      if (d.text.trim() === '') return;
+      if ((d.storageAreaId || null) === selectedAreaId) ids.add(d.itemId);
+    });
+    return ids;
+  }, [allSpots, countedItems, entries, drafts, selectedAreaId]);
+  const hereIds = useMemo(() => new Set(here.map((i) => i.item_id)), [here]);
+  const spotProgressCounted = useMemo(
+    () => [...countedInSpot].filter((id) => hereIds.has(id)).length,
+    [countedInSpot, hereIds],
+  );
 
   const needle = query.trim().toLowerCase();
   const matches = (i) =>
@@ -106,6 +124,9 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
   };
 
   const areaName = (id) => areas.find((a) => (a.id || null) === (id || null))?.name || 'Loose (no specific spot)';
+  const progressText = allSpots || here.length >= items.length
+    ? `${countedItems.size} of ${items.length} items counted`
+    : `${spotProgressCounted} of ${here.length} kept in ${areaName(selectedAreaId)} counted`;
   const row = (item, rowAreaId = areaId) => (
     <ItemsureCountRow
       key={`${item.item_id}:${rowAreaId}`}
@@ -127,7 +148,7 @@ export default function ItemsureCountActive({ data, userId, onReload }) {
           <p className="isu-eyebrow">{COUNT_STATUS_LABELS[session.status]}</p>
           <h1>{session.name}</h1>
           <p className="isu-muted">
-            {location?.name || SITE} · {countedItems.size} of {items.length} items counted
+            {location?.name || SITE} · {progressText}
           </p>
         </div>
       </div>

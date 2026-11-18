@@ -4,12 +4,16 @@
 .isu-app .isu-stockcard-pill {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 5px;
+  max-width: 100%;
+  min-width: 0;
   padding: 3px 10px;
   border: 1px solid transparent;
   border-radius: 999px;
   background: var(--isu-badge);
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .isu-app .isu-stockcard-pill .isu-stockcard-amount {

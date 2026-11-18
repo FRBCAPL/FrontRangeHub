@@ -52,6 +52,12 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 10px;
+  min-width: 0;
+}
+
+.isu-app .isu-stockloc-top .isu-stockcard-amount {
+  flex: 0 1 auto;
+  max-width: 55%;
 }
 
 .isu-app a.isu-stockloc-name {
