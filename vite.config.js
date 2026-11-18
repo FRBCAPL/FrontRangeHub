@@ -6,28 +6,35 @@ import { existsSync, mkdirSync, copyFileSync } from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..')
-// Prefer repo-root apps/ (monorepo single source of truth); fall back to FrontEnd/apps for FrontEnd-only trees
 const rootApps = path.join(repoRoot, 'apps')
 const frontEndApps = path.join(__dirname, 'apps')
-const appsDir = existsSync(rootApps) ? rootApps : frontEndApps
 const rootShared = path.join(repoRoot, 'shared')
-const sharedDir = existsSync(rootShared)
-  ? rootShared
-  : path.join(__dirname, 'shared')
-// Log which sources are used so Render / local logs show correct resolve paths
+const frontEndShared = path.join(__dirname, 'shared')
+// Local monorepo: Vite lives in FrontEnd/, prefer parent apps/ + shared/.
+// On Render/CI: ALWAYS use apps/ + shared/ next to this file (the git checkout).
+// Otherwise a leftover ../apps outside the checkout can shadow what you just pushed,
+// so copy → push → deploy looks like it "didn't update."
+const onDeployHost = Boolean(process.env.RENDER || process.env.CI)
+const folderName = path.basename(__dirname)
+const localMonorepo =
+  !onDeployHost &&
+  (folderName === 'FrontEnd' || folderName === 'Frontend') &&
+  existsSync(rootApps)
+const appsDir = localMonorepo ? rootApps : existsSync(frontEndApps) ? frontEndApps : rootApps
+const sharedDir = localMonorepo
+  ? existsSync(rootShared) ? rootShared : frontEndShared
+  : existsSync(frontEndShared) ? frontEndShared : rootShared
 if (typeof process !== 'undefined') {
-  const usingRootApps = existsSync(rootApps)
-  const usingRootShared = existsSync(rootShared)
   console.log(
     '[vite] @apps resolved to:',
     appsDir,
-    usingRootApps ? '(repo root apps)' : '(FrontEnd/apps fallback)'
+    localMonorepo ? '(local monorepo root apps)' : '(checkout apps — deploy-safe)'
   )
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' || onDeployHost) {
     console.log(
       '[vite] @shared resolved to:',
       sharedDir,
-      usingRootShared ? '(repo root shared)' : '(FrontEnd/shared fallback)'
+      localMonorepo ? '(local monorepo root shared)' : '(checkout shared — deploy-safe)'
     )
   }
 }
