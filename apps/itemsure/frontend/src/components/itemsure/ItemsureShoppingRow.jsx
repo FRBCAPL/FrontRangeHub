@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useItemLink } from '../../hooks/useItemModal.js';
 import { displayQuantity, wholeToBuy } from '../../utils/itemsureQuantity.js';
+import { looseText } from '../../utils/itemsureLoose.js';
 import { spotLabel } from '../../utils/itemsureShoppingList.js';
 import ItemsureShoppingGotEditor, { boughtBy, GotAmount } from './ItemsureShoppingGot.jsx';
 import ItemsureShoppingTripSupplier from './ItemsureShoppingTripSupplier.jsx';
@@ -10,15 +11,24 @@ import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { site } from '../../data/itemsureTerms.js';
 import Tip from './ItemsureTip.jsx';
 
+/** On hand matches Inventory when loose/case counting is on (e.g. "9 loose", not "0.750005"). */
+const onHand = (text, pieces, unitName) => {
+  if (text === null || text === undefined) return '—';
+  if (pieces) {
+    const loose = looseText(text, pieces, unitName || 'Case');
+    if (loose) return loose;
+  }
+  return displayQuantity(text);
+};
 const q = (text) => (text === null || text === undefined ? '—' : displayQuantity(text));
 
-function SpotDetail({ spot, unit, withLocation }) {
+function SpotDetail({ spot, unit, withLocation, pieces = 0 }) {
   const { rec, amount } = spot;
   const levelsLink = `${ITEMSURE_PATH}/levels?location=${rec.location_id}&area=${rec.storage_area_id || ''}&search=${encodeURIComponent(rec.item_name)}`;
   return (
     <li>
       <strong>{spotLabel(rec, withLocation)}</strong>
-      <span className="isu-muted"> · has {q(rec.on_hand)} · warn at {q(rec.minimum)} · fill to {q(rec.par)}</span>
+      <span className="isu-muted"> · has {onHand(rec.on_hand, pieces, unit)} · warn at {q(rec.minimum)} · fill to {q(rec.par)}</span>
       {amount === null ? (
         <span> · No &ldquo;Fill up to&rdquo; number. <Link to={levelsLink}>Set one</Link></span>
       ) : (
@@ -34,13 +44,15 @@ function SpotDetail({ spot, unit, withLocation }) {
  * figures. `tick` ({ amount, by, at }) when ticked; tapping the amount sets what the shopper got.
  * `supplierChoice` (items with more than one supplier) adds "Buy from this trip" to the figures.
  */
-export default function ItemsureShoppingRow({ row, tick, names, item, onTick, onSetAmount, withLocation, supplierChoice = null }) {
+export default function ItemsureShoppingRow({ row, tick, names, item, onTick, onSetAmount, withLocation, supplierChoice = null, pieces = 0 }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const itemLink = useItemLink();
   const ticked = Boolean(tick);
   const tone = row.status === 'low' ? 'is-low' : 'is-topup';
-  const where = row.spots.map(({ rec }) => `${spotLabel(rec, withLocation)} ${q(rec.on_hand)} of ${q(rec.par)}`).join(' \u00b7 ');
+  const where = row.spots
+    .map(({ rec }) => `${spotLabel(rec, withLocation)} ${onHand(rec.on_hand, pieces, row.unit)} of ${q(rec.par)}`)
+    .join(' \u00b7 ');
   const by = boughtBy(tick, names);
 
   return (
@@ -74,7 +86,7 @@ export default function ItemsureShoppingRow({ row, tick, names, item, onTick, on
         <div className="isu-shop-detail">
           <ul>
             {row.spots.map((spot) => (
-              <SpotDetail key={spot.rec.target_id} spot={spot} unit={row.unit} withLocation={withLocation} />
+              <SpotDetail key={spot.rec.target_id} spot={spot} unit={row.unit} withLocation={withLocation} pieces={pieces} />
             ))}
           </ul>
           {supplierChoice ? <ItemsureShoppingTripSupplier choice={supplierChoice} /> : null}

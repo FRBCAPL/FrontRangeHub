@@ -18,7 +18,9 @@ export default function ItemsureHomeSalesStock({ organizationId, can }) {
     <section className="isu-card isu-home-sales" aria-label="Clover sales">
       <div>
         <strong>Clover sales</strong>
-        <p className="isu-muted isu-small">Taken off {status.location_name} stock up to {formatWhen(status.stock_through)}.</p>
+        <p className="isu-muted isu-small">
+          {status.location_name} stock reduced for sales through {formatWhen(status.stock_through)}.
+        </p>
       </div>
       <ItemsurePosTakeSales organizationId={organizationId} canFix={can('pos.manage') && can('items.manage')} onDone={load} />
     </section>

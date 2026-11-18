@@ -116,7 +116,9 @@ export default function ItemsurePosAutoSync({ organizationId, canManage, siteKey
             {status.paused ? 'No more imports until it is fixed.' : schedulerMissing(status) ? `Would next run ${formatWhen(status.next_at)}.` : `Next: ${formatWhen(status.next_at)}.`}
           </p>
           <p className="isu-muted isu-small">
-            {status.ok_at ? `Last brought in ${formatWhen(status.ok_at)}, with sales up to ${formatWhen(status.ok_through)}.` : 'Not brought in automatically yet.'}
+            {status.ok_at
+              ? `Last automatic import ran ${formatWhen(status.ok_at)} and covered sales through ${formatWhen(status.ok_through)}. This is the import schedule — separate from “Take sales off stock.”`
+              : 'Not imported automatically yet.'}
           </p>
         </div>
       ) : null}

@@ -48,6 +48,9 @@ test('half a case of 12 is 6 Each; a part that lands on 2 decimals is fine', () 
 
 test('parts display, step, and buy sensibly', () => {
   assert.equal(displayQuantity('0.50'), '0.5');
+  assert.equal(displayQuantity('2.9087643'), '2.9');
+  assert.equal(displayQuantity('0.750005'), '0.8');
+  assert.equal(displayQuantity('2.95'), '3');
   assert.equal(stepQuantity('0.5', 1), '1.5');
   assert.equal(stepQuantity('0.5', -1), '0');
   assert.equal(wholeToBuy('2.5'), '3');

@@ -53,8 +53,12 @@ export default function ItemsurePosStockCard({ organizationId, locationId, can }
       {status.on ? (
         <>
           <p className="isu-small">
-            {last ? `Sales taken off up to ${formatWhen(status.stock_through)}.` : `Starts with sales after ${formatWhen(status.stock_through)}.`}
-            {last ? <span className="isu-muted"> Last tapped {formatWhen(last.ran_at)}.</span> : null}
+            {last
+              ? `Stock reduced for sales through ${formatWhen(status.stock_through)}.`
+              : `Starts reducing stock for sales after ${formatWhen(status.stock_through)}.`}
+            {last ? <span className="isu-muted"> Last take-off {formatWhen(last.ran_at)}.</span> : null}
+            {' '}
+            <span className="isu-muted">Different from how far sales have been imported.</span>
           </p>
           <ItemsurePosAddOnsSwitch organizationId={organizationId} status={status} canManage={canManage} onChanged={load} />
           {can('inventory.adjust') ? <ItemsurePosTakeSales organizationId={organizationId} canFix={can('items.manage')} onDone={load} /> : null}

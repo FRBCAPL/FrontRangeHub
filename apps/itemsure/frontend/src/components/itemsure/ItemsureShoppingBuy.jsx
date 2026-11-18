@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
+import useLoosePieces from '../../hooks/useLoosePieces.js';
 import { shoppingText, tickOf } from '../../utils/itemsureShoppingList.js';
 import ItemsureShoppingExtraRow from './ItemsureShoppingExtraRow.jsx';
 import ItemsureShoppingRow from './ItemsureShoppingRow.jsx';
@@ -30,6 +31,7 @@ export default function ItemsureShoppingBuy({ groups, ticks, trip = null, onTick
   const [copied, setCopied] = useState('');
   const [copyText, setCopyText] = useState('');
   const { busy, error, run } = useItemsureAction();
+  const piecesFor = useLoosePieces();
   const rows = groups.flatMap((g) => g.rows);
   const tickedKeys = rows.map(tickOf).filter((k) => ticked.has(k));
   const tickedExtras = rows.filter((r) => r.extra && ticked.has(r.tick)).map((r) => r.extraId);
@@ -122,7 +124,7 @@ export default function ItemsureShoppingBuy({ groups, ticks, trip = null, onTick
               return row.extra ? (
                 <ItemsureShoppingExtraRow key={row.key} row={row} {...shared} onRemove={() => remove(row)} busy={busy} />
               ) : (
-                <ItemsureShoppingRow key={row.key} row={row} {...shared} item={itemsById?.get(row.itemId)} withLocation={withLocation} supplierChoice={supplierChoice(row)} />
+                <ItemsureShoppingRow key={row.key} row={row} {...shared} item={itemsById?.get(row.itemId)} withLocation={withLocation} supplierChoice={supplierChoice(row)} pieces={piecesFor(row.itemId)} />
               );
             })}
           </ul>

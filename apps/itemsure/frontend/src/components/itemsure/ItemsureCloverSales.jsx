@@ -82,7 +82,11 @@ export default function ItemsureCloverSales() {
           </div>
         ) : null}
         {s.period.key === 'custom' && !s.range ? <p className="isu-muted isu-small">Pick a start and end date.</p> : null}
-        {r?.through ? <p className="isu-muted isu-small">Clover sales brought in up to {formatWhen(r.through)}.</p> : null}
+        {r?.through ? (
+          <p className="isu-muted isu-small">
+            Sales data in ItemSure goes through {formatWhen(r.through)}. That is how far imports have reached — not when stock was last reduced.
+          </p>
+        ) : null}
         <div className="isu-pos-actions">
           <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" disabled={s.syncing || r?.loading || !s.range} onClick={s.bringInSales}>
             {s.syncing ? 'Bringing in sales…' : 'Bring in latest sales'}

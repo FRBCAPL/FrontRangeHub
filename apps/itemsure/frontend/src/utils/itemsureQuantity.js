@@ -37,9 +37,31 @@ export function sameQuantity(a, b) {
   return canonicalQuantity(a) === canonicalQuantity(b);
 }
 
-/** Display form: trims trailing zeros, keeps the exact value. */
+/**
+ * Round a quantity string to `places` decimals (half up), without floats.
+ * Trailing zeros are trimmed. Used for what people read on screen — stored values stay exact.
+ */
+export function roundQuantity(text, places = 1) {
+  const canon = canonicalQuantity(text);
+  if (!canon) return '0';
+  const p = Math.max(0, Math.min(6, places | 0));
+  const [whole, fraction = ''] = canon.split('.');
+  if (p === 0) {
+    const bump = (fraction[0] || '0') >= '5';
+    return (BigInt(whole) + (bump ? 1n : 0n)).toString();
+  }
+  const padded = fraction.padEnd(p + 1, '0');
+  let scaled = BigInt(whole + padded.slice(0, p));
+  if (padded[p] >= '5') scaled += 1n;
+  const digits = scaled.toString().padStart(p + 1, '0');
+  const w = digits.slice(0, -p);
+  const f = digits.slice(-p).replace(/0+$/, '');
+  return f ? `${w}.${f}` : w;
+}
+
+/** Display form: one decimal place (2.9087643 → 2.9). Comparisons/saves still use the exact value. */
 export function displayQuantity(text) {
-  return canonicalQuantity(text) || '0';
+  return roundQuantity(text, 1);
 }
 
 /** An amount to buy, rounded up to a whole number: "2.5" → "3", "4" stays "4". You can't buy half a case. */
@@ -73,7 +95,7 @@ export function stepQuantity(text, delta) {
 export function quantitySign(text) {
   const raw = String(text ?? '').trim();
   const negative = raw.startsWith('-');
-  const magnitude = displayQuantity(negative || raw.startsWith('+') ? raw.slice(1) : raw);
+  const magnitude = canonicalQuantity(negative || raw.startsWith('+') ? raw.slice(1) : raw) || '0';
   if (magnitude === '0') return 0;
   return negative ? -1 : 1;
 }
