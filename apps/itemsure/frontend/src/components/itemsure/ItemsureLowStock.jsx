@@ -2,14 +2,26 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { listNeededStatus } from '../../services/itemsureTargetService.js';
+import { listLoosePieces } from '../../services/itemsureLooseService.js';
 import { onInventoryChanged } from '../../utils/itemsureChanges.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
+import { looseText } from '../../utils/itemsureLoose.js';
 import { NO_AREA_LABEL } from '../../utils/itemsureStock.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { ErrorNote, LoadFailed, PageHead } from './ItemsureUi.jsx';
 import { useItemLink } from '../../hooks/useItemModal.js';
 
 const q = (text, unit) => (text === null || text === undefined ? '—' : `${displayQuantity(text)} ${unit}`);
+/** Same on-hand wording as Inventory cards when the item counts loose out of a case. */
+const onHand = (row, piecesByItem) => {
+  if (row.on_hand_text === null || row.on_hand_text === undefined) return '—';
+  const pieces = piecesByItem?.get(row.item_id);
+  if (pieces) {
+    const loose = looseText(row.on_hand_text, pieces, row.unit_symbol || 'Case');
+    if (loose) return loose;
+  }
+  return q(row.on_hand_text, row.unit_symbol);
+};
 const items = (n) => `${n} ${n === 1 ? 'item' : 'items'}`;
 
 /** The two lists this page shows: running low (default) or `?show=topoff`. */
@@ -41,7 +53,7 @@ function byLocation(rows) {
   return [...groups.entries()];
 }
 
-function AlertRow({ row, badge, pending }) {
+function AlertRow({ row, badge, pending, piecesByItem }) {
   const itemLink = useItemLink();
   const levels = `${ITEMSURE_PATH}/levels?location=${row.location_id}&area=${row.storage_area_id || ''}&search=${encodeURIComponent(row.item_name)}`;
   const low = !pending && badge.className === 'isu-status--danger';
@@ -55,7 +67,7 @@ function AlertRow({ row, badge, pending }) {
         <span className={`isu-badge ${pending ? 'isu-status--muted' : badge.className}`}>{pending ? 'No amount yet' : badge.label}</span>
       </div>
       <div className="isu-restock-figures">
-        {pending ? null : <span>On hand <strong>{q(row.on_hand_text, row.unit_symbol)}</strong></span>}
+        {pending ? null : <span>On hand <strong>{onHand(row, piecesByItem)}</strong></span>}
         <span>Warn me at {q(row.minimum_text, row.unit_symbol)}</span>
         <span>Fill up to {q(row.par_text, row.unit_symbol)}</span>
       </div>
@@ -84,11 +96,17 @@ export default function ItemsureLowStock() {
   const mode = MODES[modeKey];
   const other = MODES[modeKey === 'low' ? 'topoff' : 'low'];
   const [rows, setRows] = useState(null);
+  const [piecesByItem, setPiecesByItem] = useState(() => new Map());
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
     try {
-      setRows(await listNeededStatus(organization.id, ['low', 'below_par', 'not_set_up']));
+      const [nextRows, pieces] = await Promise.all([
+        listNeededStatus(organization.id, ['low', 'below_par', 'not_set_up']),
+        listLoosePieces(organization.id),
+      ]);
+      setRows(nextRows);
+      setPiecesByItem(pieces);
       setError('');
     } catch (e) {
       setError(e.message);
@@ -137,7 +155,7 @@ export default function ItemsureLowStock() {
       {byLocation(shown).map(([id, group]) => (
         <section key={id} className="isu-restock-group">
           <h2>{group.name} <span className="isu-muted isu-small">({group.rows.length})</span></h2>
-          <ul className="isu-levels-list">{group.rows.map((r) => <AlertRow key={r.target_id} row={r} badge={mode.badge} />)}</ul>
+          <ul className="isu-levels-list">{group.rows.map((r) => <AlertRow key={r.target_id} row={r} badge={mode.badge} piecesByItem={piecesByItem} />)}</ul>
         </section>
       ))}
 
@@ -147,7 +165,7 @@ export default function ItemsureLowStock() {
         <section className="isu-restock-group">
           <h2>Levels set, but no amount yet <span className="isu-muted isu-small">({notSetUp.length})</span></h2>
           <p className="isu-muted isu-small">These have warning levels but no amount yet, so ItemSure can&apos;t tell if they&apos;re low. Set the amount to fix that.</p>
-          <ul className="isu-levels-list">{notSetUp.map((r) => <AlertRow key={r.target_id} row={r} badge={mode.badge} pending />)}</ul>
+          <ul className="isu-levels-list">{notSetUp.map((r) => <AlertRow key={r.target_id} row={r} badge={mode.badge} piecesByItem={piecesByItem} pending />)}</ul>
         </section>
       ) : null}
     </div>

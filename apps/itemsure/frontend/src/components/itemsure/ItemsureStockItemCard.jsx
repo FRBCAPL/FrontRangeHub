@@ -4,16 +4,20 @@ import { useItemLink } from '../../hooks/useItemModal.js';
 import { cardTone } from '../../utils/itemsureItemLook.js';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
+import { looseText } from '../../utils/itemsureLoose.js';
 import { StockAmount, StockBar } from './ItemsureStockBits.jsx';
 
 /** One spot as a tappable chip: "Bar 1 / 6", coloured by its status. */
-export function SpotChip({ slot, onClick }) {
+export function SpotChip({ slot, onClick, pieces = 0, unitName = '' }) {
   const tone = slot.status ? TARGET_STATUS[slot.status]?.tone : null;
   const par = slot.target?.par_text ?? null;
+  const qty = slot.quantity === null
+    ? null
+    : (pieces && looseText(slot.quantity, pieces, unitName)) || displayQuantity(slot.quantity);
   return (
     <button type="button" className={`isu-spot-chip${tone ? ` is-${tone}` : ''}`} onClick={onClick}>
       <span>{slot.areaName || 'Loose'}</span>
-      <strong>{slot.quantity === null ? '\u2013' : displayQuantity(slot.quantity)}</strong>
+      <strong>{qty === null ? '\u2013' : qty}</strong>
       {par !== null ? <span className="isu-spot-chip-par">/ {displayQuantity(par)}</span> : null}
     </button>
   );
@@ -33,7 +37,15 @@ export default function ItemsureStockItemCard({ row, onSpot, pieces = 0 }) {
         <StockBar summary={summary} />
         {slots.length ? (
           <div className="isu-stockloc-spots">
-            {slots.map((slot) => <SpotChip key={slot.key} slot={slot} onClick={() => onSpot(item, slot)} />)}
+            {slots.map((slot) => (
+              <SpotChip
+                key={slot.key}
+                slot={slot}
+                pieces={pieces}
+                unitName={item.unitName}
+                onClick={() => onSpot(item, slot)}
+              />
+            ))}
           </div>
         ) : (
           <p className="isu-muted isu-small">Not kept here.</p>

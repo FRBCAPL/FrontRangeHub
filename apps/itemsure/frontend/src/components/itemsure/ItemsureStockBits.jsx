@@ -2,23 +2,26 @@ import React from 'react';
 import { displayQuantity } from '../../utils/itemsureQuantity.js';
 import { TARGET_STATUS } from '../../utils/itemsureTargets.js';
 import { fillPercent, pluralUnit } from '../../utils/itemsureItemLook.js';
-import { fullCases } from '../../utils/itemsureLoose.js';
+import { looseText } from '../../utils/itemsureLoose.js';
 import Tip from './ItemsureTip.jsx';
 
 /**
  * "6 / 12 Bottles" on one line: on hand, par, unit. `summary` is { total, par }. With `pieces`
- * (counting loose ones too), on hand is full cases only; loose ones show on the item page.
+ * (counting loose ones too), on hand is "2 cases + 7 loose" — same wording as Running low and spot rows,
+ * so a partial case never reads as a bare "0".
  */
 export function StockAmount({ summary, unitName, className = '', pieces = 0 }) {
   if (!summary) return null;
-  const total = summary.total === null ? null : (pieces && fullCases(summary.total, pieces)) || displayQuantity(summary.total);
-  const label = `${total === null ? 'No amount yet' : `${total} on hand`}${summary.par !== null ? `, par ${displayQuantity(summary.par)}` : ''}`;
+  const unit = pluralUnit(unitName);
+  const loose = summary.total !== null && pieces ? looseText(summary.total, pieces, unitName) : null;
+  const total = summary.total === null ? null : loose || displayQuantity(summary.total);
+  const label = `${total === null ? 'No amount yet' : `${total}${loose ? '' : ` ${unit}`} on hand`}${summary.par !== null ? `, par ${displayQuantity(summary.par)}` : ''}`;
   return (
     <Tip label={summary.par !== null ? 'On hand / Fill up to' : 'On hand'}>
       <div className={`isu-stockcard-amount${className ? ` ${className}` : ''}`} aria-label={label}>
         <strong>{total === null ? '\u2013' : total}</strong>
         {summary.par !== null ? <span className="isu-stockcard-par"> / {displayQuantity(summary.par)}</span> : null}
-        <span className="isu-stockcard-unit"> {pluralUnit(unitName)}</span>
+        {loose && summary.par === null ? null : <span className="isu-stockcard-unit"> {unit}</span>}
       </div>
     </Tip>
   );
