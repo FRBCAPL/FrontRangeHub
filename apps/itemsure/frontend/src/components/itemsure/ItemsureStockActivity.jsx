@@ -1,22 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listMovements, MOVEMENT_LABELS } from '../../services/itemsureInventoryService.js';
 import { loadPeopleNames } from '../../services/itemsureCountService.js';
 import { listMovementPackages } from '../../services/itemsurePackageService.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { displayQuantity, displaySigned, quantitySign } from '../../utils/itemsureQuantity.js';
+import {
+  ACTIVITY_KINDS,
+  activityKindCounts,
+  matchesActivityKind,
+  showActivityActor,
+} from '../../utils/itemsureStockActivity.js';
 import { slotLabel } from '../../utils/itemsureStock.js';
 import { formatWhen } from '../../utils/itemsureText.js';
 import { ErrorNote } from './ItemsureUi.jsx';
 
 const PAGE = 100;
 
-/** Newest first. Each row is one posted movement; nothing here can be edited. */
+/** Newest first. Filter chips group by what happened; nothing here can be edited. */
 export default function ItemsureStockActivity({ organizationId, location, locations }) {
   const [rows, setRows] = useState(null);
   const [names, setNames] = useState({});
   const [packages, setPackages] = useState({});
   const [error, setError] = useState('');
+  const [kind, setKind] = useState('all');
 
   useEffect(() => {
     let alive = true;
@@ -42,6 +49,16 @@ export default function ItemsureStockActivity({ organizationId, location, locati
     };
   }, [organizationId, location.id]);
 
+  const counts = useMemo(() => (rows ? activityKindCounts(rows) : null), [rows]);
+  const chips = useMemo(
+    () => (counts ? ACTIVITY_KINDS.filter((k) => k.id === 'all' || counts[k.id] > 0) : []),
+    [counts],
+  );
+  const shown = useMemo(
+    () => (rows || []).filter((m) => matchesActivityKind(m, kind)),
+    [rows, kind],
+  );
+
   if (rows === null) return <p className="isu-muted">Loading activity…</p>;
 
   return (
@@ -53,10 +70,31 @@ export default function ItemsureStockActivity({ organizationId, location, locati
           <p className="isu-muted">Approved counts, adjustments, and transfers at {location.name} will appear here.</p>
         </div>
       ) : null}
+
+      {rows.length ? (
+        <div className="isu-chips" role="group" aria-label="Show activity">
+          {chips.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={`isu-chip isu-chip--choice${kind === c.id ? ' is-selected' : ''}`}
+              aria-pressed={kind === c.id}
+              onClick={() => setKind(c.id)}
+            >
+              {c.label}
+              <span className="isu-chip-count">{counts[c.id]}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {!shown.length && rows.length ? <p className="isu-muted isu-center">Nothing in this group.</p> : null}
+
       <ul className="isu-count-report">
-        {rows.map((m) => {
+        {shown.map((m) => {
           const sign = quantitySign(m.quantity_text);
           const pack = packages[m.id];
+          const who = showActivityActor(m) ? ` by ${names[m.created_by] || 'a member'}` : '';
           return (
             <li key={m.id} className="isu-card isu-stock-move">
               <div className="isu-count-report-head">
@@ -71,7 +109,7 @@ export default function ItemsureStockActivity({ organizationId, location, locati
                 </span>
               </div>
               <p className="isu-muted isu-small">
-                {formatWhen(m.posted_at)} by {names[m.created_by] || 'a member'} {'\u00b7'} After: {displayQuantity(m.balance_after_text)} {m.unit_symbol || m.unit_name}
+                {formatWhen(m.posted_at)}{who} {'\u00b7'} After: {displayQuantity(m.balance_after_text)} {m.unit_symbol || m.unit_name}
               </p>
               {m.effective_at !== m.posted_at && m.source_type === 'count_session' ? (
                 <p className="isu-muted isu-small">As of the count, {formatWhen(m.effective_at)}</p>
