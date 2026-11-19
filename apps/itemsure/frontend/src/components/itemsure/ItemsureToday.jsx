@@ -8,7 +8,7 @@ import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import usePosSetup from '../../hooks/usePosSetup.js';
 import useTodayClover from '../../hooks/useTodayClover.js';
 
-const POS_SETUP = `${ITEMSURE_PATH}/settings/pos`;
+const POS_SETUP = `${ITEMSURE_PATH}/clover`;
 const PATHS = {
   shopping: `${ITEMSURE_PATH}/restock`,
   count: (id) => `${ITEMSURE_PATH}/counts/${id}`,

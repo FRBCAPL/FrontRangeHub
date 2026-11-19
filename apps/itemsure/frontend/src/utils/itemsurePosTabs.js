@@ -1,7 +1,7 @@
-// Settings → Point of sale tabs, in the order people set things up. Links elsewhere use
+// Clover setup tabs (More → Clover → Clover setup). Links elsewhere use
 // posTabPath('pours') etc. so they land on the right tab.
 
-export const POS_SETTINGS_PATH = '/settings/pos';
+export const POS_SETTINGS_PATH = '/clover';
 
 export const POS_TABS = [
   { key: 'left', label: "What's left" },

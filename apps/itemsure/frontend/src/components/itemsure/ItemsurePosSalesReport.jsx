@@ -10,7 +10,7 @@ import ItemsurePosSalesTable from './ItemsurePosSalesTable.jsx';
 import ItemsurePosFixItem from './ItemsurePosFixItem.jsx';
 
 const when = (iso) => (iso ? new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '');
-const POS_SETTINGS = `${ITEMSURE_PATH}/settings/pos`;
+const POS_SETTINGS = `${ITEMSURE_PATH}/clover`;
 const roundLabel = (round) => {
   const names = round.names.length > 3 ? `${round.names.slice(0, 3).join(', ')} +${round.names.length - 3}` : round.names.join(', ');
   return `${round.day} · ${names}`;
@@ -34,7 +34,7 @@ export default function ItemsurePosSalesReport() {
 
   if (!r.base) return <div className="isu-page">{head}<p className="isu-muted">Loading…</p></div>;
   const { connection, salesReady } = r.base;
-  const settingsLink = can('pos.manage') ? <Link to={POS_SETTINGS} className="isu-link">Point of sale settings</Link> : null;
+  const settingsLink = can('pos.manage') ? <Link to={POS_SETTINGS} className="isu-link">Clover setup</Link> : null;
   if (!connection || !salesReady) {
     return (
       <div className="isu-page">

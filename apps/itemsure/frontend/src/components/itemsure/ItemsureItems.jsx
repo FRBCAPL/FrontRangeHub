@@ -16,7 +16,7 @@ import ItemsureSupplierChips from './ItemsureSupplierChips.jsx';
 import ItemsureCategoryItemLists from './ItemsureCategoryItemLists.jsx';
 import ItemsureInventoryEditMenu from './ItemsureInventoryEditMenu.jsx';
 import {
-  ALL_ITEMS, categoryTree, extraCategoryNames, foundIn,
+  categoryTree, extraCategoryNames, foundIn,
 } from '../../utils/itemsureCategories.js';
 import { listTone } from '../../utils/itemsureItemLook.js';
 import useOpenCounts from '../../hooks/useOpenCounts.js';
@@ -173,19 +173,6 @@ export default function ItemsureItems() {
           value={supplierFilter}
           onChange={setSupplierFilter}
         />
-      ) : null}
-
-      {catalog ? (
-        <div className="isu-chips-actions">
-          <button
-            type="button"
-            className={`isu-chip isu-chip--choice${category === ALL_ITEMS ? ' is-selected' : ''}`}
-            aria-pressed={category === ALL_ITEMS}
-            onClick={() => chooseCategory(category === ALL_ITEMS ? '' : ALL_ITEMS)}
-          >
-            All items <span className="isu-chip-count">{filteredItems.length}</span>
-          </button>
-        </div>
       ) : null}
 
       <div className="isu-toolbar">

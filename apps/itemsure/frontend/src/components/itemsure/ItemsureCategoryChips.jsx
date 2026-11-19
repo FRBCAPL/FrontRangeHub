@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { categoryTree, foundIn, labelWithIcon, NO_CATEGORY, rootOf } from '../../utils/itemsureCategories.js';
+import { ALL_ITEMS, categoryTree, foundIn, labelWithIcon, NO_CATEGORY, rootOf } from '../../utils/itemsureCategories.js';
 import useScrollArrows from '../../hooks/useScrollArrows.js';
 import ItemsureCategoryPanel from './ItemsureCategoryPanel.jsx';
 import ItemsureScrollArrow from './ItemsureScrollArrow.jsx';
@@ -16,10 +16,10 @@ function Chip({ value, label, count, selected, onSelect, closeTo = '' }) {
 
 /**
  * A one-line swipe row of main categories with item counts (a main category counts its
- * subcategories too). Choosing a main category opens a slim swipe row of its subcategories
- * (with "+ Sub" at the end). Choosing it again closes the row.
- * "All items" lives under the supplier row on Inventory. Category manage UI is opened from
- * Inventory via `manageOpen` / `onManageOpenChange` (Edit → Edit categories).
+ * subcategories too). "All items" stays pinned in spot 1. Choosing a main category opens a
+ * slim swipe row of its subcategories (with "+ Sub" at the end); "All {name}" stays pinned
+ * on that row. Category manage UI is opened from Inventory via `manageOpen` /
+ * `onManageOpenChange` (Edit → Edit categories).
  */
 export default function ItemsureCategoryChips({
   categories, items, selected, onSelect, onAdd, onEdit, onReorder = null,
@@ -38,14 +38,20 @@ export default function ItemsureCategoryChips({
 
   // Keep the chosen category (and subcategory) in view in the swipe rows.
   useEffect(() => {
+    if (selected === ALL_ITEMS || !selected) return;
     scroller.current?.querySelector('.is-selected')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-    subScroller.current?.querySelector('.is-selected')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [selected, scroller, subScroller]);
+    if (selected !== openRoot) {
+      subScroller.current?.querySelector('.is-selected')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [selected, scroller, subScroller, openRoot]);
 
   return (
     <div className="isu-chip-rows">
       <div className="isu-chipbar">
         <ItemsureScrollArrow direction={-1} label="Categories" arrows={mainArrows} />
+        <div className="isu-chip-pinned">
+          <Chip value={ALL_ITEMS} label="All items" count={items.length} selected={selected} onSelect={onSelect} />
+        </div>
         <div className="isu-chips isu-chips--scroll" role="group" aria-label="Categories" ref={scroller} onScroll={mainArrows.onScroll}>
           {tree.roots.map((c) => (
             <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={openRoot} onSelect={onSelect} />
@@ -57,10 +63,12 @@ export default function ItemsureCategoryChips({
       {openRoot && (subs.length || onAdd) ? (
         <div className="isu-chipbar isu-subbar">
           <ItemsureScrollArrow direction={-1} label="Subcategories" arrows={subArrows} />
-          <div className="isu-chips isu-chips--scroll isu-chips--subs" role="group" aria-label={`Subcategories in ${rootName}`} ref={subScroller} onScroll={subArrows.onScroll}>
-            {subs.length ? (
+          {subs.length ? (
+            <div className="isu-chip-pinned">
               <Chip value={openRoot} label={`All ${rootName}`} count={count(openRoot)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
-            ) : null}
+            </div>
+          ) : null}
+          <div className="isu-chips isu-chips--scroll isu-chips--subs" role="group" aria-label={`Subcategories in ${rootName}`} ref={subScroller} onScroll={subArrows.onScroll}>
             {subs.map((c) => (
               <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={selected} onSelect={onSelect} closeTo={openRoot} />
             ))}

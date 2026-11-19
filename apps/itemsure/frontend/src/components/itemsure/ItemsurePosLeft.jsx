@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import usePosSetup from '../../hooks/usePosSetup.js';
 import useTodayClover from '../../hooks/useTodayClover.js';
@@ -39,6 +39,7 @@ function useUnsetAddons(organizationId, enabled) {
  * tab with onGo(tab). Read-only.
  */
 export default function ItemsurePosLeft({ organizationId, can, salesReady, onGo }) {
+  const navigate = useNavigate();
   const canEdit = can('items.manage');
   const { summary } = usePosSetup(organizationId, 0);
   const status = useTodayClover(organizationId, { manage: can('pos.manage'), take: salesReady && can('inventory.adjust') });
@@ -57,6 +58,14 @@ export default function ItemsurePosLeft({ organizationId, can, salesReady, onGo 
       <Line key="buttons" title={`${plural(summary.unmatched, 'Clover button isn’t', 'Clover buttons aren’t')} linked yet`}
         detail="Start with your best sellers. Stop tracking things you don't stock, like ball rentals."
         button="Link buttons" onGo={canEdit ? () => onGo('buttons') : null} />,
+    );
+  }
+  if (summary.unmatchedItems) {
+    lines.push(
+      <Line key="items" title={`${plural(summary.unmatchedItems, 'item isn’t', 'items aren’t')} matched to Clover`}
+        detail="Match them from Inventory, or mark Don't track in sales for stock you don't sell on Clover (like kitchen supplies)."
+        button="See items"
+        onGo={canEdit ? () => navigate(`${ITEMSURE_PATH}/items?clover=unmatched`) : null} />,
     );
   }
   if (toCheck || sizes) {
@@ -83,7 +92,7 @@ export default function ItemsurePosLeft({ organizationId, can, salesReady, onGo 
         button="Open" primary={false} onGo={() => onGo('stock')} />,
     );
   }
-  const done = !status?.problem && !summary.unmatched && !toCheck && !sizes && !unsetAddons;
+  const done = !status?.problem && !summary.unmatched && !summary.unmatchedItems && !toCheck && !sizes && !unsetAddons;
 
   return (
     <Card title="What's left">

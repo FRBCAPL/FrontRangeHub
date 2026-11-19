@@ -114,7 +114,7 @@ export const GUIDE_STOCK = [
       ['Home says Stocked / OK but Stock by site says Needs topping up?', 'Home, Inventory, and Warning levels wait until stock hits the Top off line (Usual is about a fifth of the way from Warn me at up to Fill up to). Stock by site flags anything under Fill up to. Both can be right for their job.'],
       ['Why does Home say nothing to restock when I have no levels?', 'Set "Warn me at" and "Fill up to" first. Until levels exist, ItemSure cannot tell what is running low. Use Warning levels or Set levels on an item.'],
       ['How do I try ItemSure without signing up?', 'On the welcome screen, choose Try the Demo Bar. No email needed. Use Reset sample on the banner to restore the sample; Create your own business when you are ready.'],
-      ['What is Demo Clover?', 'In the Demo Bar, Demo Clover is sample menu and sales so Sales vs counts works. It is not a live merchant. Connect real Clover from your own business under More \u2192 Clover.'],
+      ['What is Demo Clover?', 'In the Demo Bar, Demo Clover is sample menu and sales so Sales vs counts works. It is not a live merchant. Connect real Clover from your own business under More \u2192 Clover \u2192 Clover setup.'],
       ['Blank or zero when counting?', 'Zero means you counted and there were none. Blank means you did not count it.'],
       ['Can I undo a change?', 'Nothing is deleted. Set the right amount or make a new change; both are kept in the history.'],
       ['How do I add someone to my business?', 'Settings \u2192 People \u2192 Invite people. Enter their email and pick a role. They get an email, sign in, and tap Join.'],

@@ -9,6 +9,7 @@ import { ErrorNote, Modal, PageHead } from './ItemsureUi.jsx';
 import ItemsureStockBalances from './ItemsureStockBalances.jsx';
 import ItemsureStockActivity from './ItemsureStockActivity.jsx';
 import ItemsureStockAdjustForm from './ItemsureStockAdjustForm.jsx';
+import ItemsureStockDirectionPick from './ItemsureStockDirectionPick.jsx';
 import ItemsureStockTransferForm from './ItemsureStockTransferForm.jsx';
 import ItemsureStockSpotActions from './ItemsureStockSpotActions.jsx';
 
@@ -19,7 +20,7 @@ export default function ItemsureStock() {
   const [tab, setTab] = useState('balances');
   const [params] = useSearchParams();
   const [locationId, setLocationId] = useState(() => params.get('location') || '');
-  // modal: '' | 'adjust' | 'transfer' | 'spot'; preset fills the forms when opened from a spot.
+  // modal: '' | 'direction' | 'adjust' | 'transfer' | 'spot'; preset fills forms when opened from a spot / Home.
   const [modal, setModal] = useState('');
   const [picked, setPicked] = useState(null);
   const [preset, setPreset] = useState(null);
@@ -45,7 +46,15 @@ export default function ItemsureStock() {
     await reload();
   }, [reload]);
 
+  const openDirection = (direction = 'add') => {
+    setPreset({ direction: direction === 'remove' ? 'remove' : 'add' });
+    setModal('direction');
+  };
   const openForm = (kind) => {
+    if (kind === 'adjust') {
+      openDirection('add');
+      return;
+    }
     setPreset(null);
     setModal(kind);
   };
@@ -58,18 +67,22 @@ export default function ItemsureStock() {
     setPreset({ itemId: item.id, locationId: slot.locationId, storageAreaId: slot.storageAreaId, direction: kind });
     setModal(kind === 'move' ? 'transfer' : 'adjust');
   };
+  const afterDirection = (direction) => {
+    setPreset((prev) => ({ ...(prev || {}), direction }));
+    setModal('adjust');
+  };
 
-  // Home quick actions: ?do=add or ?do=use opens Add / Use with that direction chosen, once.
+  // Home quick actions: ?do=add or ?do=use opens the add/use chooser with that option selected.
   const wanted = params.get('do');
   const [opened, setOpened] = useState(false);
   useEffect(() => {
     if (opened || !data || !canAdjust || (wanted !== 'add' && wanted !== 'use')) return;
     setOpened(true);
-    setPreset({ direction: wanted === 'use' ? 'remove' : 'add' });
-    setModal('adjust');
+    openDirection(wanted === 'use' ? 'remove' : 'add');
   }, [opened, data, canAdjust, wanted]);
 
   const location = locations.find((l) => l.id === locationId) || null;
+  const adjustTitle = preset?.direction === 'remove' ? 'Use stock' : 'Add stock';
   const actions = (
     <div className="isu-stock-actions">
       {canAdjust ? (
@@ -133,8 +146,21 @@ export default function ItemsureStock() {
           <ItemsureStockSpotActions item={picked.item} slot={picked.slot} canAdjust={canAdjust} canMove={canMove} onPick={pickAction} />
         ) : null}
       </Modal>
-      <Modal open={modal === 'adjust'} title="Add or use stock" onClose={closeModal}>
-        {data && modal === 'adjust' ? <ItemsureStockAdjustForm data={data} defaultLocationId={locationId} preset={preset} onDone={afterChange} /> : null}
+      <Modal open={modal === 'direction'} title="Adding or using stock?" onClose={closeModal}>
+        {modal === 'direction' ? (
+          <ItemsureStockDirectionPick initial={preset?.direction || 'add'} onContinue={afterDirection} />
+        ) : null}
+      </Modal>
+      <Modal open={modal === 'adjust'} title={adjustTitle} onClose={closeModal}>
+        {data && modal === 'adjust' ? (
+          <ItemsureStockAdjustForm
+            data={data}
+            defaultLocationId={locationId}
+            preset={preset}
+            onDone={afterChange}
+            onDirectionChange={(direction) => setPreset((prev) => ({ ...(prev || {}), direction }))}
+          />
+        ) : null}
       </Modal>
       <Modal open={modal === 'transfer'} title="Move stock" onClose={closeModal}>
         {data && modal === 'transfer' ? <ItemsureStockTransferForm data={data} defaultLocationId={locationId} preset={preset} onDone={afterChange} /> : null}

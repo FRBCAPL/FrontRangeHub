@@ -70,10 +70,10 @@ export default function ItemsurePosFixModifiers({
       <div className="isu-stack">
         <p className="isu-muted isu-small">
           {forceReview
-            ? `No Clover add-ons matched “${[...noteNames].join('”, “') || itemName}” by name. You can set them under Settings → Point of sale → Add-ons, or continue.`
+            ? `No Clover add-ons matched “${[...noteNames].join('”, “') || itemName}” by name. You can set them under More → Clover → Clover setup → Add-ons, or continue.`
             : onlyUnset
               ? 'Every add-on on this row already has a usable rule. Next we check size / pack count if still needed.'
-              : 'No matching add-ons found. You can finish under Settings → Point of sale → Add-ons.'}
+              : 'No matching add-ons found. You can finish under More → Clover → Clover setup → Add-ons.'}
         </p>
         <div className="isu-pos-actions">
           <button type="button" className="isu-btn isu-btn--primary" onClick={onDone}>Continue</button>

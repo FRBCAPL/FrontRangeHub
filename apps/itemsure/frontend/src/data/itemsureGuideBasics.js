@@ -62,7 +62,7 @@ export const GUIDE_BASICS = [
     summary: 'The main menu, and what is under More.',
     paragraphs: [
       'The main menu holds the everyday pages: Home, Inventory, Count, Shopping list, and Running low. On a phone it sits along the bottom of the screen; on a bigger screen it is on the left.',
-      'More is grouped by job: Stock (Recipes, Warning levels, Stock by site), Places & buying (Sites, Suppliers), Clover (sales and Sales vs counts), and Account (History, Settings, Help).',
+      'More is grouped by job: Stock (Recipes, Warning levels, Stock by site), Places & buying (Sites, Suppliers), Clover (sales, Sales vs counts, and Clover setup), and Account (History, Settings, Help).',
       'Some pages only appear if your role allows them. If you expect to see something and it is missing, ask the owner of your business.',
     ],
   },
@@ -100,7 +100,7 @@ export const GUIDE_BASICS = [
     tips: [
       'Tap an item to open it in a window over the page you are on. It shows how many you have at each place. From there you can set the amount, add a delivery, take some out, set warning levels, and see its history.',
       '"Set amount" is for when you know the real number (for example after looking at the shelf). ItemSure records the difference for you.',
-      'Tap a category button to see the items in it. Tap it again to close it. "All items", under the category buttons, shows everything.',
+      'Tap a category button to see the items in it. Tap it again to close it. "All items" stays pinned at the start of the category row and shows everything.',
       'The list is split into "Running Low" first, then "Top Offs", then "All good" as short one-line rows. Give a category an icon (tap its pencil in "Browse/Edit Categories"; tap one, or type a word like "lemon" to search for more) and its items show that icon; a subcategory without one uses its main category\u2019s.',
       'Items that are fine show a small \u2713 next to the amount. Items running low get a full card with a red bar and who you buy them from. Where an item is kept only shows when it is split across more than one spot.',
       'An item only needs topping up once it drops to its "Top off at" level. Usually that\u2019s about a fifth of the way from "Warn me at" up to "Fill up to" (lemons, warn at 10, fill up to 40: about 16 or fewer; Amaretto warn 2 / fill 4: about 2.4 or fewer, so 3 bottles is still fine). To change it for an item, edit the item and, on Warn & restock, set "Top off at" to a percent of "Fill up to" (75% of 40 means 30 or fewer). At least one whole unit has to be missing first, so with "Fill up to" 2 the line never sits above 1. Top Offs show as slim cards with the supplier and an amber bar. Above the line an item stays OK / All good, and it isn\u2019t on the Shopping list, the Home tiles, or the topping-up list yet.',

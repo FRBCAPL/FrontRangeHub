@@ -21,7 +21,8 @@ function Chip({ value, label, count, selected, onSelect, closeTo = ALL_ITEMS }) 
 
 /**
  * Scrollable category filter for sales lists (same swipe pattern as Inventory).
- * `rows` need `categoryId`. `selected` uses ALL_ITEMS when showing every row.
+ * "All categories" stays pinned. `rows` need `categoryId`. `selected` uses ALL_ITEMS when
+ * showing every row.
  */
 export default function ItemsureSalesCategoryChips({ categories, rows, selected, onSelect }) {
   const tree = useMemo(() => categoryTree(categories || []), [categories]);
@@ -37,9 +38,12 @@ export default function ItemsureSalesCategoryChips({ categories, rows, selected,
   const subScroller = subArrows.ref;
 
   useEffect(() => {
+    if (pick === ALL_ITEMS) return;
     scroller.current?.querySelector('.is-selected')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-    subScroller.current?.querySelector('.is-selected')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [pick, scroller, subScroller]);
+    if (pick !== openRoot) {
+      subScroller.current?.querySelector('.is-selected')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [pick, scroller, subScroller, openRoot]);
 
   if (!tree.roots.length && !uncategorized) return null;
 
@@ -47,8 +51,10 @@ export default function ItemsureSalesCategoryChips({ categories, rows, selected,
     <div className="isu-chip-rows isu-sales-cat-chips">
       <div className="isu-chipbar">
         <ItemsureScrollArrow direction={-1} label="Categories" arrows={mainArrows} />
-        <div className="isu-chips isu-chips--scroll" role="group" aria-label="Filter by category" ref={scroller} onScroll={mainArrows.onScroll}>
+        <div className="isu-chip-pinned">
           <Chip value={ALL_ITEMS} label="All categories" count={rows.length} selected={pick} onSelect={onSelect} />
+        </div>
+        <div className="isu-chips isu-chips--scroll" role="group" aria-label="Filter by category" ref={scroller} onScroll={mainArrows.onScroll}>
           {tree.roots.map((c) => (
             <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={openRoot || pick} onSelect={onSelect} />
           ))}
@@ -61,8 +67,10 @@ export default function ItemsureSalesCategoryChips({ categories, rows, selected,
       {openRoot && subs.length ? (
         <div className="isu-chipbar isu-subbar">
           <ItemsureScrollArrow direction={-1} label="Subcategories" arrows={subArrows} />
-          <div className="isu-chips isu-chips--scroll isu-chips--subs" role="group" aria-label={`Subcategories in ${rootName}`} ref={subScroller} onScroll={subArrows.onScroll}>
+          <div className="isu-chip-pinned">
             <Chip value={openRoot} label={`All ${rootName}`} count={count(openRoot)} selected={pick} onSelect={onSelect} />
+          </div>
+          <div className="isu-chips isu-chips--scroll isu-chips--subs" role="group" aria-label={`Subcategories in ${rootName}`} ref={subScroller} onScroll={subArrows.onScroll}>
             {subs.map((c) => (
               <Chip key={c.id} value={c.id} label={labelWithIcon(c)} count={count(c.id)} selected={pick} onSelect={onSelect} closeTo={openRoot} />
             ))}

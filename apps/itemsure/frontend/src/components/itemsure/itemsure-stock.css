@@ -3,6 +3,36 @@
 .isu-app .isu-stock-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .isu-app .isu-chip-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 
+/* Add vs Use chooser before the adjust form */
+.isu-app .isu-stock-dir-picks {
+  display: grid;
+  gap: 10px;
+}
+.isu-app .isu-stock-dir-pick {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 16px;
+  text-align: left;
+  border: 1px solid var(--isu-line);
+  border-radius: 12px;
+  background: var(--isu-paper);
+  color: var(--isu-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.isu-app .isu-stock-dir-pick strong { font-size: 1.05rem; }
+.isu-app .isu-stock-dir-pick:hover,
+.isu-app .isu-stock-dir-pick:focus-visible {
+  border-color: var(--isu-pine-line);
+}
+.isu-app .isu-stock-dir-pick.is-selected {
+  border-color: var(--isu-pine);
+  background: var(--isu-pine-soft);
+  box-shadow: inset 0 0 0 1px var(--isu-pine);
+}
+
 .isu-app .isu-tabs {
   display: flex;
   gap: 4px;

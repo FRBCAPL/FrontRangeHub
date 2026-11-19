@@ -20,7 +20,7 @@ const REASONS = ['Delivery received', 'Used', 'Damaged', 'Expired', 'Returned', 
  * goes through Set amount (people who may approve counts) or a count.
  * `preset` ({ itemId, locationId, storageAreaId, direction }) fills it in when opened from a spot.
  */
-export default function ItemsureStockAdjustForm({ data, defaultLocationId, preset = null, onDone }) {
+export default function ItemsureStockAdjustForm({ data, defaultLocationId, preset = null, onDone, onDirectionChange = null }) {
   const { features, can } = useItemsureWorkspace();
   const options = useMemo(() => slotOptions(data.locations, { spots: features.spots }), [data.locations, features.spots]);
   const items = useMemo(() => data.items.filter((i) => i.isActive), [data.items]);
@@ -134,16 +134,21 @@ export default function ItemsureStockAdjustForm({ data, defaultLocationId, prese
         <p className="isu-notice isu-notice--warn">No starting balance here yet. Count it and approve the count to set it up.</p>
       )}
 
-      <fieldset className="isu-fieldset">
-        <legend>Change</legend>
-        <div className="isu-chip-row">
-          {[['add', 'Add'], ['remove', 'Remove']].map(([value, label]) => (
-            <button key={value} type="button" className={`isu-chip isu-chip--choice${direction === value ? ' is-selected' : ''}`} aria-pressed={direction === value} onClick={() => setDirection(value)}>
-              {label}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      <p className="isu-muted isu-small">
+        {direction === 'add' ? 'Adding to on-hand.' : 'Taking off on-hand.'}
+        {' '}
+        <button
+          type="button"
+          className="isu-link"
+          onClick={() => {
+            const next = direction === 'add' ? 'remove' : 'add';
+            setDirection(next);
+            onDirectionChange?.(next);
+          }}
+        >
+          Switch to {direction === 'add' ? 'use' : 'add'}
+        </button>
+      </p>
 
       {item ? (
         <ItemsurePackageQuantity

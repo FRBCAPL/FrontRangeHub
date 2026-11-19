@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listCatalog } from '../services/itemsureItemService.js';
+import { listNotSoldInPos } from '../services/itemsureItemPosSkipService.js';
 import { getPosConnection, listItemContents, listPosItems, listPosLinks, listPosPours } from '../services/itemsurePosService.js';
 import { listItemPieces } from '../services/itemsureItemContentService.js';
 import { listStandardAmounts } from '../services/itemsureStandardAmountService.js';
@@ -7,6 +8,7 @@ import { DEFAULT_STANDARDS, suggestAmount } from '../utils/itemsurePourSuggest.j
 import { asksContent } from '../utils/itemsureItemContent.js';
 import { isGroupUnit } from '../utils/itemsureCategoryKind.js';
 import { withCategoryDefaults } from '../utils/itemsureCategoryDefaults.js';
+import { itemsNotOnClover } from '../utils/itemsurePosMatch.js';
 
 /**
  * Sales tracking setup: what's left to do, with suggestions.
@@ -29,10 +31,10 @@ export default function usePosSetup(organizationId, reloadKey, { enabled = true,
           return;
         }
       }
-      const [posItems, links, ownPours, ownContents, catalog, saved, ownPieces] = await Promise.all([
+      const [posItems, links, ownPours, ownContents, catalog, saved, ownPieces, notSold] = await Promise.all([
         listPosItems(organizationId), listPosLinks(organizationId), listPosPours(organizationId),
         listItemContents(organizationId), listCatalog(organizationId), listStandardAmounts(organizationId),
-        listItemPieces(organizationId),
+        listItemPieces(organizationId), listNotSoldInPos(organizationId),
       ]);
       const defaults = catalog.categoryDefaults;
       const { pours, contents, pieces } = withCategoryDefaults({
@@ -41,6 +43,7 @@ export default function usePosSetup(organizationId, reloadKey, { enabled = true,
       setData({
         posItems, links, pours, contents, pieces, ownPours, ownContents, ownPieces, defaults, saved,
         items: catalog.items, units: catalog.units, categories: catalog.categories,
+        notSold: notSold || new Set(),
       });
       setError('');
     } catch (e) {
@@ -95,12 +98,18 @@ export default function usePosSetup(organizationId, reloadKey, { enabled = true,
     }
     amounts.sort((a, b) => Number(!a.suggestion) - Number(!b.suggestion) || a.pos.name.localeCompare(b.pos.name));
     const matched = [...data.links.values()].filter((ids) => ids.length).length;
+    const matchedItemIds = new Set([...data.links.values()].flat());
+    const unmatchedItems = itemsNotOnClover(
+      data.items.map((item) => ({ ...item, notSoldInPos: data.notSold.has(item.id) })),
+      matchedItemIds,
+    ).length;
     return {
       ready: data.pours !== null && data.contents !== null,
       standardsSaved: data.saved,
       standards,
       matched,
       unmatched: data.posItems.filter((p) => !p.is_deleted && !p.not_tracked && !(data.links.get(p.external_id) || []).length).length,
+      unmatchedItems,
       amounts,
       byCategory: { amounts: byCategory.amounts, sizes: byCategory.sizes.size },
       categoryReady: data.defaults !== null,
@@ -111,7 +120,7 @@ export default function usePosSetup(organizationId, reloadKey, { enabled = true,
       units: data.units,
       contents: data.contents,
       pieces: data.pieces,
-      matchedItemIds: new Set([...data.links.values()].flat()),
+      matchedItemIds,
       sizes: [
         ...[...sizeIds].map((id) => ({ item: itemsById.get(id), unit: unitOf(itemsById.get(id)), need: 'size' })),
         ...[...countIds].map((id) => ({ item: itemsById.get(id), unit: unitOf(itemsById.get(id)), need: 'pieces' })),

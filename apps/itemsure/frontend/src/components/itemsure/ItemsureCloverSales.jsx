@@ -14,7 +14,7 @@ import ItemsureSalesCategoryChips from './ItemsureSalesCategoryChips.jsx';
 import ItemsureSupplierChips from './ItemsureSupplierChips.jsx';
 import ItemsurePosFixItem from './ItemsurePosFixItem.jsx';
 
-const POS_SETTINGS = `${ITEMSURE_PATH}/settings/pos`;
+const POS_SETTINGS = `${ITEMSURE_PATH}/clover`;
 const UNMATCHED_SHOWN = 15;
 
 /** Clover sales: what sold in a period, item by item, and how much stock that is. Never changes stock. */
@@ -41,7 +41,7 @@ export default function ItemsureCloverSales() {
       <div className="isu-page">
         {head}
         <Card>
-          <p className="isu-muted">{s.base.connection ? 'This page needs a database update first.' : 'Connect Clover first in Settings → Point of sale.'}</p>
+          <p className="isu-muted">{s.base.connection ? 'This page needs a database update first.' : 'Connect Clover first under More → Clover → Clover setup.'}</p>
           <ErrorNote message={s.error} />
         </Card>
       </div>
@@ -136,7 +136,7 @@ export default function ItemsureCloverSales() {
       {r?.unmatched?.length ? (
         <Card title="Sold, but not linked to an item">
           <p className="isu-muted isu-small">
-            These Clover items sold but aren&apos;t linked to anything you stock, so they don&apos;t count above. For generic buttons (like a $10 pitcher), mark them as Not tracked in Point of sale settings.
+            These Clover items sold but aren&apos;t linked to anything you stock, so they don&apos;t count above. For generic buttons (like a $10 pitcher), mark them as Not tracked in Clover setup.
           </p>
           <ul className="isu-sales-unmatched">
             {r.unmatched.slice(0, UNMATCHED_SHOWN).map((u) => (
@@ -144,7 +144,7 @@ export default function ItemsureCloverSales() {
             ))}
           </ul>
           {r.unmatched.length > UNMATCHED_SHOWN ? <p className="isu-muted isu-small">And {r.unmatched.length - UNMATCHED_SHOWN} more.</p> : null}
-          {can('items.manage') ? <Link to={`${POS_SETTINGS}?tab=buttons`} className="isu-link isu-small">Link them in Point of sale settings {'\u203A'}</Link> : null}
+          {can('items.manage') ? <Link to={`${POS_SETTINGS}?tab=buttons`} className="isu-link isu-small">Link them in Clover setup {'\u203A'}</Link> : null}
         </Card>
       ) : null}
 

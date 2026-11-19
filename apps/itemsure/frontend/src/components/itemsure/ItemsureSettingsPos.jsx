@@ -14,7 +14,7 @@ import ItemsurePosAutoSync from './ItemsurePosAutoSync.jsx';
 import ItemsurePosModifiers from './ItemsurePosModifiers.jsx';
 
 /**
- * Settings → Point of sale, in tabs in the order people set things up: what's left, Clover
+ * Clover setup tabs, in the order people set things up: what's left, Clover
  * buttons, amount each sale uses, add-ons, stock, connection. ?tab= picks one (see itemsurePosTabs.js).
  */
 export default function ItemsureSettingsPos() {

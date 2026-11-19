@@ -9,11 +9,11 @@ export const GUIDE_CLOVER = [
     summary: 'Connect a merchant, match buttons, and compare sales to counts.',
     paragraphs: [
       'ItemSure reads from Clover. It does not change prices, menus, or orders in Clover. The merchant token is stored on the server, not in your browser.',
-      'Under More \u2192 Clover you connect (or see Demo Clover in the Demo Bar), bring in the menu, match Clover buttons to inventory items, set pour amounts, and handle add-ons (modifiers).',
+      'Under More \u2192 Clover \u2192 Clover setup you connect (or see Demo Clover in the Demo Bar), bring in the menu, match Clover buttons to inventory items, set pour amounts, and handle add-ons (modifiers).',
       'Sales vs counts compares what Clover sold between two approved counts with what the counts say was used — including case/bottle conversions and modifiers when those are set up.',
     ],
     steps: [
-      'Open More, then Clover (or Point of sale / Connection, depending on your menu labels).',
+      'Open More, then Clover, then Clover setup.',
       'Connect with your merchant id and an API token that can read inventory and orders. Prefer the least access your Clover plan allows for reading.',
       'Choose Get menu from Clover, then match buttons to items and set how much each sale uses.',
       'Pick which site Clover sales belong to.',

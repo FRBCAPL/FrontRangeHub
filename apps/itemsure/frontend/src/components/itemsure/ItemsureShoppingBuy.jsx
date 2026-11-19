@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import useItemsureAction from '../../hooks/useItemsureAction.js';
 import useLoosePieces from '../../hooks/useLoosePieces.js';
 import { shoppingText, tickOf } from '../../utils/itemsureShoppingList.js';
+import { downloadShoppingListPdf } from '../../utils/itemsureShoppingPdf.js';
 import ItemsureShoppingExtraRow from './ItemsureShoppingExtraRow.jsx';
 import ItemsureShoppingRow from './ItemsureShoppingRow.jsx';
 import { ErrorNote, Modal } from './ItemsureUi.jsx';
@@ -26,10 +27,23 @@ function note({ shared, canReceive, hasExtras }) {
  * `trip` (useTripSuppliers, once set up) lets a row with more than one supplier be bought
  * from another this trip; `onTicksCleared(keys)` resets those choices with the ticks.
  */
-export default function ItemsureShoppingBuy({ groups, ticks, trip = null, onTicksCleared = null, itemsById, withLocation, iconFor = null, onAdd = null, onRemove = null, onReceive = null }) {
+export default function ItemsureShoppingBuy({
+  groups,
+  ticks,
+  trip = null,
+  onTicksCleared = null,
+  itemsById,
+  withLocation,
+  iconFor = null,
+  onAdd = null,
+  onRemove = null,
+  onReceive = null,
+  businessName = '',
+}) {
   const { ticked, names, toggle, setAmount, clear } = ticks;
   const [copied, setCopied] = useState('');
   const [copyText, setCopyText] = useState('');
+  const [printing, setPrinting] = useState(false);
   const { busy, error, run } = useItemsureAction();
   const piecesFor = useLoosePieces();
   const rows = groups.flatMap((g) => g.rows);
@@ -48,6 +62,17 @@ export default function ItemsureShoppingBuy({ groups, ticks, trip = null, onTick
       setCopied('Copied. Paste it into a message or note.');
     } catch {
       setCopyText(text);
+    }
+  };
+  const printList = async () => {
+    setPrinting(true);
+    try {
+      const result = await downloadShoppingListPdf(groups, ticked, { businessName });
+      setCopied(result.empty ? 'Everything is ticked.' : 'PDF ready — check your downloads.');
+    } catch (e) {
+      setCopied(e.message || 'Could not make the PDF.');
+    } finally {
+      setPrinting(false);
     }
   };
   const clearTicked = async () => {
@@ -90,9 +115,16 @@ export default function ItemsureShoppingBuy({ groups, ticks, trip = null, onTick
             </Tip>
           ) : null}
           {groups.length ? (
-            <Tip label="Copy a plain-text list to paste elsewhere">
-              <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={copy}>Copy list</button>
-            </Tip>
+            <>
+              <Tip label="Copy a plain-text list to paste elsewhere">
+                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={copy}>Copy list</button>
+              </Tip>
+              <Tip label="Download a printable PDF of what’s left to buy">
+                <button type="button" className="isu-btn isu-btn--ghost isu-btn--sm" onClick={printList} disabled={printing}>
+                  {printing ? 'Making PDF…' : 'Print list'}
+                </button>
+              </Tip>
+            </>
           ) : null}
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { ITEMSURE_PATH } from '../data/itemsureConstants.js';
 
-const POS_SETUP = `${ITEMSURE_PATH}/settings/pos`;
+const POS_SETUP = `${ITEMSURE_PATH}/clover`;
 const COUNTS = `${ITEMSURE_PATH}/counts`;
 const SALES_VS = `${ITEMSURE_PATH}/sales-vs-counts`;
 

@@ -42,6 +42,7 @@ const MORE_SECTIONS = [
     links: [
       { to: `${ITEMSURE_PATH}/clover-sales`, label: 'Clover sales', icon: '$', tip: 'Sales pulled from Clover', permission: 'inventory.activity' },
       { to: `${ITEMSURE_PATH}/sales-vs-counts`, label: 'Sales vs counts', icon: '\u2696', tip: 'Compare sales take-off to counts', permission: 'inventory.activity' },
+      { to: `${ITEMSURE_PATH}/clover`, label: 'Clover setup', icon: '\u2699', tip: 'Connect, match buttons, and take sales off stock', permission: 'pos.manage' },
     ],
   },
   {
@@ -49,7 +50,7 @@ const MORE_SECTIONS = [
     label: 'Account',
     links: [
       { to: `${ITEMSURE_PATH}/activity`, label: 'History', icon: '\u25F7', tip: 'Stock changes and audit', permission: 'audit.read' },
-      { to: `${ITEMSURE_PATH}/settings`, label: 'Settings', icon: '\u2699', tip: 'Org, roles, and Clover' },
+      { to: `${ITEMSURE_PATH}/settings`, label: 'Settings', icon: '\u2699', tip: 'Profile, business, people, and roles' },
       { to: `${ITEMSURE_PATH}/help`, label: 'Help', icon: '?', tip: 'How ItemSure works' },
     ],
   },

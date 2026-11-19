@@ -29,7 +29,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
   const item = itemsById.get(itemId);
   if (!item) return null;
   if (!data.posItems.length) {
-    return <p className="isu-muted">No Clover buttons yet. Get them from Settings → Point of sale → Connection.</p>;
+    return <p className="isu-muted">No Clover buttons yet. Get them from More → Clover → Clover setup → Connection.</p>;
   }
 
   const unit = (data.units || []).find((u) => u.id === item.base_unit_id) || null;
@@ -227,7 +227,7 @@ export default function ItemsureItemClover({ organizationId, itemId, canEdit, da
       ) : null}
       {!notSold ? (
         <p className="isu-muted isu-small">
-          Tip: to set one amount for a whole category (Food: 1 single from the box, or Liquor: 1.5 oz), use Settings → Point of sale → Amount each sale uses → Amounts by category.
+          Tip: to set one amount for a whole category (Food: 1 single from the box, or Liquor: 1.5 oz), use More → Clover → Clover setup → Amount each sale uses → Amounts by category.
         </p>
       ) : null}
       <ItemsurePosNotTrackedAsk pos={skipping} busy={busy} error={error} onConfirm={confirmSkip} onClose={() => setSkipping(null)} />

@@ -76,7 +76,13 @@ export default function ItemsureRestock() {
   const [plans, setPlans] = useState([]);
   const [error, setError] = useState('');
   const [params] = useSearchParams();
-  const [filters, setFilters] = useState(() => ({ locationId: '', categoryId: '', status: SHOW_STATUS[params.get('show')] || '', group: '' }));
+  const [filters, setFilters] = useState(() => ({
+    locationId: '',
+    categoryId: '',
+    supplierId: '',
+    status: SHOW_STATUS[params.get('show')] || '',
+    group: '',
+  }));
   const [action, setAction] = useState(null);
   const canTransfer = can('inventory.transfer');
   const showMoves = features.transfers;
@@ -139,8 +145,14 @@ export default function ItemsureRestock() {
   const supplierIcons = useMemo(() => new Map(supplierList.map((s) => [s.name, s.icon])), [supplierList]);
 
   const placed = useMemo(
-    () => (recs || []).filter((r) => (!filters.locationId || r.location_id === filters.locationId) && inCategory(tree, r, filters.categoryId)),
-    [recs, filters.locationId, filters.categoryId, tree],
+    () =>
+      (recs || []).filter((r) => {
+        if (filters.locationId && r.location_id !== filters.locationId) return false;
+        if (!inCategory(tree, r, filters.categoryId)) return false;
+        if (!filters.supplierId) return true;
+        return supplierOfItem(r.item_id) === filters.supplierId;
+      }),
+    [recs, filters.locationId, filters.categoryId, filters.supplierId, tree, supplierOfItem],
   );
   const counts = useMemo(() => {
     const items = (status) => new Set(placed.filter((r) => !status || r.status === status).map((r) => r.item_id)).size;
@@ -155,13 +167,16 @@ export default function ItemsureRestock() {
       if (!extras.available) return worked;
       const names = new Map(supplierList.map((s) => [s.id, s.name]));
       const bySupplier = group === 'supplier';
-      return mergeExtras(worked, extras.extras, {
+      const extraRows = filters.supplierId
+        ? extras.extras.filter((e) => ((e.item_id && supplierOfItem(e.item_id)) || e.supplier_id) === filters.supplierId)
+        : extras.extras;
+      return mergeExtras(worked, extraRows, {
         groupOf: (e) => (bySupplier ? names.get((e.item_id && supplierOfItem(e.item_id)) || e.supplier_id) || NO_SUPPLIER : EXTRA_GROUP),
         lastGroup: bySupplier ? NO_SUPPLIER : EXTRA_GROUP,
         itemsById,
       });
     },
-    [showMoves, groupChoices, group, extras.available, extras.extras, supplierList, supplierOfItem, itemsById],
+    [showMoves, groupChoices, group, extras.available, extras.extras, supplierList, supplierOfItem, itemsById, filters.supplierId],
   );
   const toBuy = useMemo(() => groupsFor(shown), [groupsFor, shown]);
   const moves = useMemo(() => moveRows(shown, showMoves), [shown, showMoves]);
@@ -242,7 +257,15 @@ export default function ItemsureRestock() {
       {ready && recs.length ? (
         <>
           <p className="isu-shop-summary">{summary}</p>
-          <ItemsureShoppingFilters filters={{ ...filters, group }} onChange={set} groups={groupChoices} locations={data.locations} tree={tree} counts={counts} />
+          <ItemsureShoppingFilters
+            filters={{ ...filters, group }}
+            onChange={set}
+            groups={groupChoices}
+            locations={data.locations}
+            tree={tree}
+            counts={counts}
+            suppliers={hasSuppliers ? supplierList.filter((s) => s.is_active) : []}
+          />
         </>
       ) : null}
 
@@ -252,6 +275,7 @@ export default function ItemsureRestock() {
       {received ? <p className="isu-notice" role="status">{received}</p> : null}
       {ready ? (
         <ItemsureShoppingBuy
+          businessName={organization?.name || ''}
           groups={toBuy}
           ticks={ticks}
           trip={trip.available ? trip : null}

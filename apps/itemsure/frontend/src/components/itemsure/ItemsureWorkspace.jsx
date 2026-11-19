@@ -25,6 +25,7 @@ import ItemsureComingNext from './ItemsureComingNext.jsx';
 import ItemsureSuppliers from './ItemsureSuppliers.jsx';
 import ItemsurePosSalesReport from './ItemsurePosSalesReport.jsx';
 import ItemsureCloverSales from './ItemsureCloverSales.jsx';
+import ItemsureCloverSetup from './ItemsureCloverSetup.jsx';
 import ItemsureBusinessBar from './ItemsureBusinessBar.jsx';
 import ItemsureDemoBanner from './ItemsureDemoBanner.jsx';
 import ItemsureInviteBanner from './ItemsureInviteBanner.jsx';
@@ -52,6 +53,7 @@ export default function ItemsureWorkspace() {
   const needsOwner = (page) => needsStock(organization?.roleCode === 'owner' ? page : <Navigate to={ITEMSURE_PATH} replace />);
   const needsAudit = (page) => needsOrg(can('audit.read') ? page : <Navigate to={ITEMSURE_PATH} replace />);
   const needsActivity = (page) => needsOrg(can('inventory.activity') ? page : <Navigate to={ITEMSURE_PATH} replace />);
+  const needsPos = (page) => needsOrg(can('pos.manage') ? page : <Navigate to={ITEMSURE_PATH} replace />);
 
   return (
     <div className="isu-workspace">
@@ -81,6 +83,7 @@ export default function ItemsureWorkspace() {
           <Route path="activity" element={needsAudit(<ItemsureActivity />)} />
           <Route path="sales-vs-counts" element={needsActivity(<ItemsurePosSalesReport />)} />
           <Route path="clover-sales" element={needsActivity(<ItemsureCloverSales />)} />
+          <Route path="clover" element={needsPos(<ItemsureCloverSetup />)} />
           <Route path="settings/*" element={needsOrg(<ItemsureSettings />)} />
           <Route path="setup" element={<ItemsureSetup />} />
           <Route path="help" element={<ItemsureHelp />} />

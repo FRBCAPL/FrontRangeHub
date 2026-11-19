@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Link, Navigate, Route, Routes, useParams, useSearchParams } from 'react-router-dom';
 import { useItemsureWorkspace } from '../../hooks/useItemsureWorkspace.js';
 import { ITEMSURE_PATH } from '../../data/itemsureConstants.js';
 import { sites } from '../../data/itemsureTerms.js';
@@ -10,8 +10,15 @@ import ItemsureMemberAccess from './ItemsureMemberAccess.jsx';
 import ItemsureFeatureSwitches from './ItemsureFeatureSwitches.jsx';
 import ItemsureInvitePeople from './ItemsureInvitePeople.jsx';
 import ItemsureRoleSettings from './ItemsureRoleSettings.jsx';
-import ItemsureSettingsPos from './ItemsureSettingsPos.jsx';
 const SETTINGS_PATH = `${ITEMSURE_PATH}/settings`;
+const CLOVER_SETUP = `${ITEMSURE_PATH}/clover`;
+
+/** Old Settings → Point of sale URL; Clover setup now lives under More → Clover. */
+function PosRedirect() {
+  const [params] = useSearchParams();
+  const q = params.toString();
+  return <Navigate to={`${CLOVER_SETUP}${q ? `?${q}` : ''}`} replace />;
+}
 
 function PeoplePage() {
   const { user, organization, can } = useItemsureWorkspace();
@@ -67,14 +74,6 @@ const SECTIONS = [
     summary: () => 'Choose what Managers and Staff are allowed to do',
     show: ({ can }) => can('organization.update'),
     Page: ItemsureRoleSettings,
-  },
-  {
-    id: 'pos',
-    icon: '\u{1F9FE}',
-    title: 'Point of sale (Clover)',
-    summary: () => 'Connect Clover and match its items to yours',
-    show: ({ can }) => can('pos.manage'),
-    Page: ItemsureSettingsPos,
   },
   {
     id: 'features',
@@ -135,6 +134,7 @@ export default function ItemsureSettings() {
   return (
     <Routes>
       <Route index element={<SettingsMenu />} />
+      <Route path="pos" element={<PosRedirect />} />
       <Route path=":section" element={<SettingsSection />} />
     </Routes>
   );

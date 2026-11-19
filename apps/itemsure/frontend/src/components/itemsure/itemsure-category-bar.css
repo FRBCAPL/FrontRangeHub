@@ -1,4 +1,4 @@
-/* Inventory category row: swipeable categories. "All items" sits under the supplier row. */
+/* Inventory category / supplier / filter rows: swipeable chips with a pinned "All" in spot 1. */
 
 .isu-app .isu-supplier-bar { margin-top: 4px; }
 
@@ -7,6 +7,30 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+}
+
+/* "All …" stays put while the rest of the row scrolls. */
+.isu-app .isu-chip-pinned {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  max-width: min(46vw, 11rem);
+}
+
+.isu-app .isu-chip-pinned > .isu-chip {
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.isu-app .isu-chipbar--subs .isu-chip-pinned > .isu-chip,
+.isu-app .isu-subbar .isu-chip-pinned > .isu-chip {
+  min-height: 30px !important;
+  padding: 3px 10px !important;
+  font-size: 0.8rem;
+  line-height: 1.2;
 }
 
 .isu-app .isu-chips--scroll {
@@ -129,19 +153,6 @@
   border-color: var(--isu-pine-line);
   background: transparent;
   font-weight: 600;
-}
-
-/* "All items" under suppliers — centered so category/supplier rows keep full width. */
-.isu-app .isu-chips-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.isu-app .isu-chips-actions > .isu-chip {
-  white-space: nowrap;
 }
 
 .isu-app .isu-chip--more {
