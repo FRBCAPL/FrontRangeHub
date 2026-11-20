@@ -2,8 +2,7 @@ import React, { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import UsaplNav from './UsaplNav.jsx';
 import UsaplHome from './UsaplHome.jsx';
-import UsaplSignupPage from './UsaplSignupPage.jsx';
-import UsaplRosterPage from './UsaplRosterPage.jsx';
+import UsaplJoinPage, { UsaplRosterRedirect } from './UsaplJoinPage.jsx';
 import UsaplDivisionsPage from './UsaplDivisionsPage.jsx';
 import UsaplPastDivisionsPage from './UsaplPastDivisionsPage.jsx';
 import UsaplDivisionDetail from './UsaplDivisionDetail.jsx';
@@ -18,6 +17,7 @@ import UsaplAdminArchived from './UsaplAdminArchived.jsx';
 import UsaplAdminLocations from './UsaplAdminLocations.jsx';
 import UsaplAdminVisits from './UsaplAdminVisits.jsx';
 import UsaplAdminIncomePage from './UsaplAdminIncomePage.jsx';
+import UsaplAdminBylaws from './UsaplAdminBylaws.jsx';
 import UsaplPayoutChartPage from './UsaplPayoutChartPage.jsx';
 import './usapl.css';
 import './usapl-mobile.css';
@@ -47,8 +47,8 @@ export default function UsaplApp({ canAdmin = false }) {
       <UsaplNav canAdmin={canAdmin} />
       <Routes>
         <Route index element={<UsaplHome />} />
-        <Route path="signup" element={<UsaplSignupPage />} />
-        <Route path="roster" element={<UsaplRosterPage />} />
+        <Route path="signup" element={<UsaplJoinPage />} />
+        <Route path="roster" element={<UsaplRosterRedirect />} />
         <Route path="divisions" element={<UsaplDivisionsPage />} />
         <Route path="past-divisions" element={<UsaplPastDivisionsPage />} />
         <Route path="divisions/:divisionId" element={<UsaplDivisionDetail />} />
@@ -89,6 +89,10 @@ export default function UsaplApp({ canAdmin = false }) {
         <Route
           path="admin/income"
           element={canAdmin ? <UsaplAdminIncomePage /> : <Navigate to="/usapl" replace />}
+        />
+        <Route
+          path="admin/bylaws"
+          element={canAdmin ? <UsaplAdminBylaws /> : <Navigate to="/usapl" replace />}
         />
         <Route path="*" element={<Navigate to="/usapl" replace />} />
       </Routes>

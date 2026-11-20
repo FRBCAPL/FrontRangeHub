@@ -48,7 +48,7 @@ export default function UsaplDivisionDetail() {
         <div className="usapl-division-page-links">
           <UsaplDivisionFacts division={division} />
           <UsaplSchedulePic division={division} />
-          <Link className="usapl-btn-secondary" to={`/usapl/roster?division=${division.id}`}>Team roster</Link>
+          <Link className="usapl-btn-secondary" to={`/usapl/signup?tab=roster&division=${division.id}`}>Team roster</Link>
         </div>
         {usaplDivisionIsPast(division) ? (
           <Link className="usapl-btn-secondary" to="/usapl/past-divisions">Past divisions</Link>

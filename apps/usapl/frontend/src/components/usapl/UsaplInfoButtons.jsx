@@ -1,5 +1,5 @@
 import React from 'react';
-import { USAPL_INFO_TOC } from '../../data/usaplInfo.js';
+import { USAPL_INFO_TOC, usaplInfoTheme } from '../../data/usaplInfo.js';
 
 function blurbLines(text) {
   return String(text || '')
@@ -29,20 +29,24 @@ function onCardKey(event, id, onOpen) {
 export default function UsaplInfoButtons({ onOpen }) {
   return (
     <div className="usapl-info-topics">
-      {USAPL_INFO_TOC.map((item) => (
-        <div
-          key={item.id}
-          role="button"
-          tabIndex={0}
-          className={`usapl-info-topic${item.id === 'faq' ? ' is-wide' : ''}`}
-          onClick={() => onOpen(item.id)}
-          onKeyDown={(event) => onCardKey(event, item.id, onOpen)}
-        >
-          <span className="usapl-info-topic-name">{item.label}</span>
-          <Blurb text={item.blurb} />
-          <span className="usapl-info-topic-open">Open</span>
-        </div>
-      ))}
+      {USAPL_INFO_TOC.map((item) => {
+        const theme = usaplInfoTheme(item.id);
+        return (
+          <div
+            key={item.id}
+            role="button"
+            tabIndex={0}
+            className={`usapl-info-topic tone-${theme.tone}${item.id === 'faq' ? ' is-wide' : ''}`}
+            onClick={() => onOpen(item.id)}
+            onKeyDown={(event) => onCardKey(event, item.id, onOpen)}
+          >
+            <span className="usapl-info-topic-kicker">{theme.kicker}</span>
+            <span className="usapl-info-topic-name">{item.label}</span>
+            <Blurb text={item.blurb} />
+            <span className="usapl-info-topic-open">Open</span>
+          </div>
+        );
+      })}
     </div>
   );
 }

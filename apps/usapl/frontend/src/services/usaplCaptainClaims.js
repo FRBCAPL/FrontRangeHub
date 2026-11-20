@@ -37,7 +37,7 @@ export async function signUpUsaplCaptain(email, password) {
 export async function startUsaplGoogleLogin() {
   localStorage.removeItem('pendingOAuthSignup');
   localStorage.removeItem('__DUES_TRACKER_OAUTH__');
-  localStorage.setItem('oauthReturnTo', '/usapl/roster');
+  localStorage.setItem('oauthReturnTo', '/usapl/signup?tab=roster');
   const result = await supabaseAuthService.signInWithOAuth('google');
   if (result && result.success === false) {
     throw new Error(result.message || 'Could not start Google sign-in.');

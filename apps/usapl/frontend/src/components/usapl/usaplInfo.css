@@ -26,40 +26,64 @@
 }
 
 .usapl-info-topic {
+  --info-accent: var(--usapl-gold);
+  --info-glow: rgba(224, 179, 77, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  min-height: 148px;
+  min-height: 168px;
   margin: 0;
-  padding: 20px 22px 18px;
+  padding: 18px 20px 16px;
   text-align: center;
   white-space: normal;
   color: inherit;
   font: inherit;
   cursor: pointer;
   border-radius: 16px;
-  border: 1px solid var(--usapl-line);
-  background: rgba(21, 18, 24, 0.88);
+  border: 1px solid color-mix(in srgb, var(--info-accent) 35%, transparent);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--info-accent) 14%, transparent), transparent 42%),
+    rgba(21, 18, 24, 0.92);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
   transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
 }
 
 .usapl-info-topic:hover,
 .usapl-info-topic:focus-visible {
-  border-color: var(--usapl-gold);
-  background: rgba(28, 22, 26, 0.96);
+  border-color: var(--info-accent);
   transform: translateY(-2px);
   outline: none;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28), 0 0 0 1px color-mix(in srgb, var(--info-accent) 25%, transparent);
 }
 
 .usapl-info-topic.is-wide {
   grid-column: 1 / -1;
-  min-height: 120px;
+  min-height: 132px;
+}
+
+.usapl-info-topic.tone-rack { --info-accent: #e23b4a; --info-glow: rgba(226, 59, 74, 0.22); }
+.usapl-info-topic.tone-score { --info-accent: #3dcf6e; --info-glow: rgba(61, 207, 110, 0.2); }
+.usapl-info-topic.tone-rate { --info-accent: #e0b34d; --info-glow: rgba(224, 179, 77, 0.22); }
+.usapl-info-topic.tone-dual { --info-accent: #7eb6ff; --info-glow: rgba(126, 182, 255, 0.2); }
+.usapl-info-topic.tone-vegas { --info-accent: #c084fc; --info-glow: rgba(192, 132, 252, 0.22); }
+.usapl-info-topic.tone-links { --info-accent: #c4b5a0; --info-glow: rgba(196, 181, 160, 0.18); }
+.usapl-info-topic.tone-faq { --info-accent: #ff6b4a; --info-glow: rgba(255, 107, 74, 0.24); }
+
+.usapl-info-topic-kicker,
+.usapl-info-topic-modal .usapl-info-topic-kicker {
+  margin: 0;
+  color: var(--info-accent, var(--usapl-gold));
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  width: 100%;
 }
 
 .usapl-info-topic-name {
-  color: var(--usapl-gold);
+  color: var(--usapl-ink);
   font-family: Georgia, Palatino, serif;
   font-size: 1.28rem;
   font-weight: 700;
@@ -83,16 +107,19 @@
 }
 
 .usapl-info-topic-open {
-  color: var(--usapl-ink);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  color: var(--info-accent, var(--usapl-gold));
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  text-align: center;
-  width: 100%;
 }
 
 .usapl-info-topic-overlay {
+  /* Portaled to document.body — redefine tokens outside .usapl-app */
+  --usapl-red: #e23b4a;
+  --usapl-gold: #e0b34d;
+  --usapl-ink: #f4efe6;
+  --usapl-muted: rgba(244, 239, 230, 0.72);
   position: fixed;
   inset: 0;
   z-index: 1300;
@@ -102,37 +129,103 @@
   justify-content: center;
   overflow: hidden;
   padding: 24px 16px;
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(0, 0, 0, 0.78);
+  color: var(--usapl-ink);
 }
 
 .usapl-info-topic-modal {
+  --info-accent: var(--usapl-gold);
   display: flex;
   flex-direction: column;
-  width: min(640px, 100%);
-  max-width: 640px;
-  max-height: 80vh;
+  width: min(720px, 100%);
+  max-width: 720px;
+  max-height: 84vh;
   min-height: 0;
   overflow: hidden;
   margin: 0;
-  padding: 18px 22px 16px;
-  text-align: center;
-  border-radius: 18px;
-  border: 1px solid var(--usapl-line, rgba(224, 179, 77, 0.22));
-  background: #151218;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  padding: 0;
+  text-align: left;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--info-accent) 40%, transparent);
+  background:
+    radial-gradient(ellipse at top left, color-mix(in srgb, var(--info-accent) 18%, transparent), transparent 55%),
+    #121014;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.5);
+}
+
+.usapl-info-topic-modal.tone-rack { --info-accent: #e23b4a; }
+.usapl-info-topic-modal.tone-score { --info-accent: #3dcf6e; }
+.usapl-info-topic-modal.tone-rate { --info-accent: #e0b34d; }
+.usapl-info-topic-modal.tone-dual { --info-accent: #7eb6ff; }
+.usapl-info-topic-modal.tone-vegas { --info-accent: #c084fc; }
+.usapl-info-topic-modal.tone-links { --info-accent: #c4b5a0; }
+.usapl-info-topic-modal.tone-faq {
+  --info-accent: #ff6b4a;
+  background: #121014;
 }
 
 .usapl-info-topic-modal.is-fill {
-  height: 80vh;
+  height: 84vh;
 }
 
-.usapl-info-topic-modal > h2 {
+.usapl-info-topic-head {
   flex: 0 0 auto;
-  margin: 0 0 12px;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px 52px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--info-accent) 28%, transparent);
+  background: transparent;
   text-align: center;
-  color: var(--usapl-gold, #e0b34d);
-  font-size: 1.25rem;
-  letter-spacing: 0.06em;
+}
+
+.usapl-info-topic-head-copy {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+.usapl-info-topic-head .usapl-info-topic-kicker {
+  text-align: center;
+}
+
+.usapl-info-topic-head h2 {
+  margin: 6px 0 0;
+  color: #f4efe6;
+  font-family: Georgia, Palatino, serif;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.usapl-info-topic-x {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(244, 239, 230, 0.18);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--usapl-ink);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.usapl-info-topic-x:hover,
+.usapl-info-topic-x:focus-visible {
+  border-color: var(--info-accent);
+  color: var(--info-accent);
+  outline: none;
 }
 
 .usapl-info-topic-body {
@@ -142,80 +235,243 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  text-align: center;
+  padding: 16px 22px 8px;
+  text-align: left;
 }
 
-.usapl-info-topic-modal > .usapl-actions {
+.usapl-info-topic-foot {
   flex: 0 0 auto;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--usapl-line, rgba(224, 179, 77, 0.22));
-  justify-content: center;
-}
-
-.usapl-info-topic-modal ul {
-  margin: 0 auto;
-  padding: 0;
-  list-style: none;
-}
-
-.usapl-info-topic-modal li {
   margin: 0;
-  padding: 8px 10px;
-  border-bottom: 1px solid rgba(224, 179, 77, 0.12);
-  color: var(--usapl-muted);
+  padding: 12px 22px 16px;
+  border-top: 1px solid color-mix(in srgb, var(--info-accent) 22%, transparent);
+  justify-content: flex-end;
+}
+
+.usapl-info-lead {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border-top: 3px solid var(--info-accent, var(--usapl-gold));
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--usapl-ink);
+  font-size: 1.02rem;
+  font-weight: 600;
   line-height: 1.45;
   text-align: center;
-  white-space: pre-line;
 }
 
-.usapl-info-topic-modal li:last-child {
-  border-bottom: none;
-}
-
-.usapl-info-topic-modal .usapl-actions {
-  margin-top: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.usapl-info-topic-body > p {
+.usapl-info-intro-p {
   color: var(--usapl-muted);
   line-height: 1.5;
-  margin: 0 auto 12px;
-  text-align: center;
+  margin: 0 0 12px;
   white-space: pre-line;
+}
+
+.usapl-info-faq-intro {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--info-accent, #ff6b4a) 28%, transparent);
+  text-align: center;
+}
+
+.usapl-info-faq-intro p {
+  margin: 0 0 8px;
+  color: var(--usapl-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  white-space: pre-line;
+  text-align: center;
+}
+
+.usapl-info-faq-intro p:last-child {
+  margin-bottom: 0;
+}
+
+.usapl-info-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.usapl-info-points li {
+  display: grid;
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(224, 179, 77, 0.12);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.usapl-info-point-num {
+  color: var(--info-accent, var(--usapl-gold));
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+}
+
+.usapl-info-point-copy {
+  color: var(--usapl-muted);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.usapl-info-cta {
+  margin-top: 18px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.usapl-info-link-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.usapl-info-link-group-title {
+  margin: 0 0 10px;
+  color: #c4b5a0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.usapl-info-link-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.usapl-info-link-group .usapl-info-cta {
+  margin-top: 0;
+}
+
+.usapl-info-link-grid .usapl-btn-secondary {
+  justify-content: center;
+  text-align: center;
 }
 
 .usapl-info-faq-list {
   display: grid;
-  gap: 14px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 4px;
 }
 
 .usapl-info-faq {
+  margin: 0;
+  border-radius: 16px;
+  background: rgba(18, 14, 16, 0.9);
+  border: 1px solid color-mix(in srgb, var(--info-accent, #ff6b4a) 22%, transparent);
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.usapl-info-faq[open] {
+  border-color: color-mix(in srgb, var(--info-accent, #ff6b4a) 48%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--info-accent, #ff6b4a) 16%, transparent),
+    0 12px 28px rgba(0, 0, 0, 0.28);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--info-accent, #ff6b4a) 14%, transparent), transparent 42%),
+    rgba(18, 14, 16, 0.96);
+}
+
+.usapl-info-faq summary {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) 1.2rem;
+  gap: 10px;
+  align-items: start;
+  cursor: pointer;
+  list-style: none;
+  padding: 14px 16px;
+  color: var(--usapl-ink);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.usapl-info-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.usapl-info-faq-num {
+  color: var(--info-accent, var(--usapl-gold));
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+}
+
+.usapl-info-faq-q {
+  min-width: 0;
+}
+
+.usapl-info-faq summary::after {
+  content: '+';
+  color: var(--info-accent, var(--usapl-gold));
+  font-weight: 800;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.usapl-info-faq[open] summary::after {
+  content: '–';
+}
+
+.usapl-info-faq[open] summary {
+  border-bottom: 1px solid color-mix(in srgb, var(--info-accent, #ff6b4a) 24%, transparent);
+}
+
+.usapl-info-faq-a {
+  padding: 14px 16px 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.usapl-info-faq-takeaway {
+  margin: 0;
   padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(224, 179, 77, 0.14);
-  text-align: center;
-}
-
-.usapl-info-faq h3 {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
+  border-left: 3px solid var(--info-accent, #ff6b4a);
+  background: color-mix(in srgb, var(--info-accent, #ff6b4a) 14%, transparent);
   color: var(--usapl-ink);
-  text-align: center;
-}
-
-.usapl-info-faq p {
-  margin: 0 0 8px;
-  color: var(--usapl-muted);
-  line-height: 1.45;
-  text-align: center;
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.5;
   white-space: pre-line;
 }
 
-.usapl-info-faq p:last-child {
-  margin-bottom: 0;
+.usapl-info-faq-notes {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.usapl-info-faq-notes p {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid color-mix(in srgb, var(--info-accent, #ff6b4a) 14%, transparent);
+  color: var(--usapl-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+@supports not (background: color-mix(in srgb, red 10%, blue)) {
+  .usapl-info-topic,
+  .usapl-info-topic-modal {
+    border-color: var(--usapl-line);
+  }
 }

@@ -20,10 +20,10 @@ function formatDate(iso) {
 function Fact({ label, children }) {
   if (children == null || children === '') return null;
   return (
-    <p className="usapl-fact">
+    <div className="usapl-fact">
       <span className="usapl-fact-label">{label}</span>
       <span className="usapl-fact-value">{children}</span>
-    </p>
+    </div>
   );
 }
 
@@ -37,9 +37,9 @@ export default function UsaplDivisionFactsBody({ division }) {
     : (division.duesPerPlayer != null && division.duesPerPlayer !== ''
       ? `$${division.duesPerPlayer} / player`
       : '');
+
   return (
     <div className="usapl-facts-body">
-      <h2>{division.name || division.shortName}</h2>
       <div className="usapl-facts-place">
         <UsaplPlayPlaceBadge division={division} />
       </div>
@@ -54,17 +54,17 @@ export default function UsaplDivisionFactsBody({ division }) {
         <Fact label="Fargo cap">
           {division.combinedFargoCap ? `${division.combinedFargoCap} combined` : ''}
         </Fact>
-        {extraNotes.length ? (
-          <div className="usapl-fact usapl-facts-notes">
-            <span className="usapl-fact-label">Notes</span>
-            <ul className="usapl-fact-value">
-              {extraNotes.map((note) => (
-                <li key={note}>{note}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
       </div>
+      {extraNotes.length ? (
+        <div className="usapl-facts-notes">
+          <p className="usapl-facts-notes-label">Notes</p>
+          <ul>
+            {extraNotes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

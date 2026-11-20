@@ -14,7 +14,7 @@ export default function UsaplRosterPage() {
           <h1>Roster received</h1>
           <p>The league office will review this before the team list is updated. You can come back any time to add a player.</p>
           <div className="usapl-actions">
-            <Link className="usapl-btn" to="/usapl/roster?mode=add" onClick={() => setDone(null)}>
+            <Link className="usapl-btn" to="/usapl/signup?tab=roster&mode=add" onClick={() => setDone(null)}>
               Add another player
             </Link>
             <Link className="usapl-btn-secondary" to="/usapl">League home</Link>

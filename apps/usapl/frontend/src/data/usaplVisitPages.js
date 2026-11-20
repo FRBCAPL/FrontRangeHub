@@ -1,5 +1,6 @@
 const PAGE_LABELS = [
   { test: (path) => path === '/usapl' || path === '/usapl/', label: 'Home' },
+  { test: (path) => path.includes('/usapl/signup') && /[?&]tab=roster\b/.test(path), label: 'Team roster' },
   { test: (path) => path.startsWith('/usapl/signup'), label: 'Sign up' },
   { test: (path) => path.startsWith('/usapl/roster'), label: 'Team roster' },
   { test: (path) => path.startsWith('/usapl/past-divisions'), label: 'Past divisions' },

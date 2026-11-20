@@ -8,10 +8,59 @@ export const USAPL_INFO_TOC = [
   { id: 'faq', label: 'FAQ', blurb: 'BCA vs BCAPL vs CSI, and the rulebook Front Range actually uses.' },
 ];
 
+/** Visual theme per topic — keeps modals distinct without changing the copy. */
+export const USAPL_INFO_THEMES = {
+  format: {
+    tone: 'rack',
+    kicker: 'How we play',
+    lead: 'Travel or In-house divisions are available.',
+  },
+  scoring: {
+    tone: 'score',
+    kicker: 'Phone scoring',
+    lead: 'No score sheets. The app shows race-to numbers and does the math.',
+  },
+  fargo: {
+    tone: 'rate',
+    kicker: 'Handicaps',
+    lead: 'Ratings update from real results.',
+    lead2: 'Members can unlock premium after four weeks.',
+  },
+  sanction: {
+    tone: 'dual',
+    kicker: 'USAPL · BCAPL',
+    lead: 'One night can open more than one path to Nationals. Check the division page.',
+  },
+  events: {
+    tone: 'vegas',
+    kicker: 'Road to Vegas',
+    lead: 'Win your division or fight through Redemption — then seed into Vegas Cup.',
+  },
+  links: {
+    tone: 'links',
+    kicker: 'Outside the room',
+    lead: 'Official sites for the rulebooks and organizations behind the leagues.',
+  },
+  faq: {
+    tone: 'faq',
+    kicker: 'Straight answers',
+    lead: 'What people mean by “BCA rules,”',
+    lead2: 'and which book Front Range actually uses.',
+  },
+};
+
+export function usaplInfoTheme(id) {
+  return USAPL_INFO_THEMES[id] || USAPL_INFO_THEMES.format;
+}
+
 export function usaplInfoTopic(id) {
-  if (id === 'faq') return { id: 'faq', title: 'FAQ' };
-  if (id === 'links') return { id: 'links', title: 'Official links' };
-  return USAPL_INFO_FEATURES.find((row) => row.id === id) || null;
+  if (!id) return null;
+  const theme = usaplInfoTheme(id);
+  if (id === 'faq') return { id: 'faq', title: 'FAQ', ...theme };
+  if (id === 'links') return { id: 'links', title: 'Official links', ...theme };
+  const feature = USAPL_INFO_FEATURES.find((row) => row.id === id);
+  if (!feature) return null;
+  return { ...feature, ...theme };
 }
 
 export const USAPL_INFO_FEATURES = [
@@ -52,7 +101,6 @@ export const USAPL_INFO_FEATURES = [
       'FargoRate is a worldwide dynamic rating system, \nfrom new players to professionals.',
       'Your rating is based on how you perform against opponents, \nand how those opponents perform against theirs. \nThe more people you play, the more the rating can settle in.',
       'FRUSAPL members receive a free FargoRate app premium subscription after 4 weeks of play. Email support from within the FargoRate app\n to request access to the premium subscription.',
-    
     ],
   },
   {

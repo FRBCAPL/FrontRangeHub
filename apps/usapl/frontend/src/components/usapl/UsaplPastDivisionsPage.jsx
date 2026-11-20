@@ -16,8 +16,8 @@ export default function UsaplPastDivisionsPage() {
     <div className="usapl-page usapl-divisions-page">
       <h1>Past divisions</h1>
       <p className="usapl-lede">
-        Finished sessions and the teams that won them. Vegas Cup seeding is by division
-        wins — the more you win, the higher you seed.
+        Finished sessions and the teams that won them.<br />
+        Vegas Cup seeding is by division wins — the more you win, the higher you seed.
       </p>
       <UsaplVegasWinnerTicker />
       {groups.length > 1 ? (

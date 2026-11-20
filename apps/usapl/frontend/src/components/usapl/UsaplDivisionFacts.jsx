@@ -5,6 +5,7 @@ import UsaplFargoCapNotice from './UsaplFargoCapNotice.jsx';
 
 export default function UsaplDivisionFacts({ division }) {
   const [open, setOpen] = useState(false);
+  const title = division?.name || division?.shortName || 'Division details';
 
   return (
     <>
@@ -12,7 +13,11 @@ export default function UsaplDivisionFacts({ division }) {
         Division details
       </button>
       {open ? (
-        <UsaplDivisionFactsModal title="Division details" onClose={() => setOpen(false)}>
+        <UsaplDivisionFactsModal
+          kicker="Division details"
+          title={title}
+          onClose={() => setOpen(false)}
+        >
           <UsaplDivisionFactsBody division={division} />
           <UsaplFargoCapNotice division={division} />
         </UsaplDivisionFactsModal>

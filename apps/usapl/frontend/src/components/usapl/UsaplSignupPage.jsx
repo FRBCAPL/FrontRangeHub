@@ -22,7 +22,7 @@ export default function UsaplSignupPage() {
           <h1>Signup received</h1>
           <p>Thanks. The league office will follow up. You can add or update a roster any time.</p>
           <div className="usapl-actions">
-            <Link className="usapl-btn" to="/usapl/roster">Submit a roster</Link>
+            <Link className="usapl-btn" to="/usapl/signup?tab=roster">Submit a roster</Link>
             <Link className="usapl-btn-secondary" to="/usapl">League home</Link>
           </div>
         </div>

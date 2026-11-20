@@ -31,6 +31,8 @@ export default function UsaplInfoPage() {
       {topic ? (
         <UsaplInfoModal
           title={topic.title}
+          kicker={topic.kicker}
+          tone={topic.tone}
           fillHeight
           onClose={() => setOpenId(null)}
         >

@@ -1,4 +1,4 @@
-import { sortUsaplDivisionsByPlayDay, usaplDivisionIsInSession, usaplDivisionSignupOpen } from './usaplDivisions.js';
+import { usaplDivisionIsInSession, usaplDivisionSignupOpen } from './usaplDivisions.js';
 import { parseUsaplFormat } from './usaplFormat.js';
 
 export function usaplDivisionIsPast(division) {
@@ -40,8 +40,22 @@ export function usaplDivisionSessionYear(division) {
   return Number.isFinite(year) && year >= 1990 ? year : 0;
 }
 
+function sessionSortKey(division) {
+  return String(division?.lastWeek || division?.playStarts || '').slice(0, 10);
+}
+
+/** Newest sessions first; same end date falls back to name. */
+export function sortUsaplPastDivisionsNewestFirst(list) {
+  return [...(list || [])].sort((a, b) => {
+    const dateA = sessionSortKey(a);
+    const dateB = sessionSortKey(b);
+    if (dateA !== dateB) return dateB.localeCompare(dateA);
+    return String(a.shortName || a.name || '').localeCompare(String(b.shortName || b.name || ''));
+  });
+}
+
 export function groupUsaplPastDivisions(list) {
-  const past = sortUsaplDivisionsByPlayDay((list || []).filter(usaplDivisionIsPast));
+  const past = sortUsaplPastDivisionsNewestFirst((list || []).filter(usaplDivisionIsPast));
   const byYear = new Map();
   past.forEach((row) => {
     const year = usaplDivisionSessionYear(row) || 0;

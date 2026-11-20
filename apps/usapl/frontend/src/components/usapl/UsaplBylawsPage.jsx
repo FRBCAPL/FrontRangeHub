@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { USAPL_LINKS } from '../../data/usaplConstants.js';
+import {
+  resolveUsaplBylawsSrc,
+  USAPL_BYLAWS_FALLBACK,
+} from '../../services/usaplBylaws.js';
 import UsaplBylawsViewer from './UsaplBylawsViewer.jsx';
 
 export default function UsaplBylawsPage() {
+  const [src, setSrc] = useState(USAPL_BYLAWS_FALLBACK);
+
+  useEffect(() => {
+    let cancelled = false;
+    resolveUsaplBylawsSrc()
+      .then((url) => {
+        if (!cancelled && url) setSrc(url);
+      })
+      .catch(() => {
+        if (!cancelled) setSrc(USAPL_BYLAWS_FALLBACK);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="usapl-page usapl-bylaws-page">
       <p className="usapl-kicker">Front Range USA Pool League</p>
@@ -19,7 +38,7 @@ export default function UsaplBylawsPage() {
           Print
         </button>
       </div>
-      <UsaplBylawsViewer src={USAPL_LINKS.localBylaws} />
+      <UsaplBylawsViewer src={src} fallbackSrc={USAPL_BYLAWS_FALLBACK} />
     </div>
   );
 }

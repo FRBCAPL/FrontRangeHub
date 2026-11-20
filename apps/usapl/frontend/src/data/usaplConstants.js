@@ -71,6 +71,5 @@ export const USAPL_NAV = [
   { to: '/usapl/rules', label: 'Rules' },
   { to: '/usapl/info', label: 'Info' },
   { to: '/usapl/dues', label: 'Dues' },
-  { to: '/usapl/signup', label: 'Sign up' },
-  { to: '/usapl/roster', label: 'Roster' },
+  { to: '/usapl/signup', label: 'Sign up / Roster' },
 ];

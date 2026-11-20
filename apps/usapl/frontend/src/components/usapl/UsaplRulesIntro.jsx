@@ -8,7 +8,7 @@ export default function UsaplRulesIntro() {
       <p className="usapl-lede">
         For the full rules: <br />
         Please see the CSI rule book, USAPL handbook, and the local by-laws.<br />
-        Found at the links below.
+        Links are in Full rulebooks below.
       </p>
       <p className="usapl-rules-shout">No slop. Call it - if it isn&apos;t obvious. <br />
         Rack your own. Be friendly.</p>

@@ -22,6 +22,9 @@ export default function UsaplAdminSubnav() {
       <NavLink to="/usapl/admin/income" className={({ isActive }) => `usapl-choice ${isActive ? 'selected' : ''}`}>
         Income
       </NavLink>
+      <NavLink to="/usapl/admin/bylaws" className={({ isActive }) => `usapl-choice ${isActive ? 'selected' : ''}`}>
+        By-laws
+      </NavLink>
     </div>
   );
 }

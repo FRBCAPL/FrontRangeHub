@@ -1,6 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-export default function UsaplBylawsViewer({ src }) {
+async function loadPdfBytes(src, fallbackSrc) {
+  const tryFetch = async (url) => {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) throw new Error('missing');
+    return response.arrayBuffer();
+  };
+
+  try {
+    return await tryFetch(src);
+  } catch (err) {
+    if (fallbackSrc && fallbackSrc !== src) return tryFetch(fallbackSrc);
+    throw err;
+  }
+}
+
+export default function UsaplBylawsViewer({ src, fallbackSrc = '' }) {
   const hostRef = useRef(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -19,9 +34,7 @@ export default function UsaplBylawsViewer({ src }) {
         const pdfjs = mod.default ?? mod;
         pdfjs.GlobalWorkerOptions.workerSrc = `${import.meta.env.BASE_URL}usapl/pdf.worker.min.js`;
 
-        const response = await fetch(src, { cache: 'no-store' });
-        if (!response.ok) throw new Error('missing');
-        const data = await response.arrayBuffer();
+        const data = await loadPdfBytes(src, fallbackSrc);
         pdfDoc = await pdfjs.getDocument({
           data,
           disableStream: true,
@@ -62,7 +75,7 @@ export default function UsaplBylawsViewer({ src }) {
       cancelled = true;
       pdfDoc?.destroy?.();
     };
-  }, [src]);
+  }, [src, fallbackSrc]);
 
   return (
     <div className="usapl-bylaws-viewer" onContextMenu={(event) => event.preventDefault()}>
