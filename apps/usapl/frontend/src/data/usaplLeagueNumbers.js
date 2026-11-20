@@ -61,5 +61,9 @@ export function parseUsaplLeaguePair(value) {
 }
 
 export function usaplDivisionLeagueNumbers(division) {
-  return parseUsaplLeaguePair(division?.leagueNumbers || '');
+  return (
+    parseUsaplLeaguePair(division?.leagueNumbers || '')
+    || parseUsaplLeaguePair(division?.shortName || '')
+    || parseUsaplLeaguePair(division?.name || '')
+  );
 }

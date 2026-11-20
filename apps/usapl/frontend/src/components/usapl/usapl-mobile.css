@@ -34,14 +34,14 @@
 }
 
 @media (max-width: 640px) {
-  .usapl-nav {
+  nav.usapl-nav {
     justify-content: center;
     gap: 0 4px;
     padding: 6px 8px max(8px, env(safe-area-inset-top));
   }
 
-  .usapl-nav a,
-  .usapl-nav-link {
+  nav.usapl-nav a,
+  nav.usapl-nav .usapl-nav-link {
     min-height: 44px;
     padding: 10px 8px;
     font-size: 0.82rem;

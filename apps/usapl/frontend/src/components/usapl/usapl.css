@@ -26,21 +26,24 @@
   background: #000 !important;
 }
 
-.usapl-nav {
+/* Scope to <nav> so hub's .hub-navigation.usapl-nav does not inherit these rules. */
+nav.usapl-nav {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-wrap: nowrap;
   gap: 4px 14px;
   justify-content: center;
   margin: 0;
-  padding: 14px 20px 10px;
-  background: rgba(8, 8, 10, 0.92);
+  padding: 14px 20px 12px;
+  background: #0b0b0d;
   border-bottom: 1px solid var(--usapl-line);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-.usapl-nav a,
-.usapl-nav-link {
+nav.usapl-nav a,
+nav.usapl-nav .usapl-nav-link {
   flex: 0 0 auto;
   color: var(--usapl-muted);
   text-decoration: none;
@@ -51,13 +54,13 @@
   white-space: nowrap;
 }
 
-.usapl-nav a:hover,
-.usapl-nav-link:hover {
+nav.usapl-nav a:hover,
+nav.usapl-nav .usapl-nav-link:hover {
   color: var(--usapl-gold);
 }
 
-.usapl-nav a.active,
-.usapl-nav-link.active {
+nav.usapl-nav a.active,
+nav.usapl-nav .usapl-nav-link.active {
   color: var(--usapl-ink);
   border-bottom-color: var(--usapl-gold);
   background: none;
@@ -87,13 +90,14 @@
 .usapl-hero-welcome {
   position: relative;
   text-align: center;
-  padding: 28px 108px 28px;
+  /* Side padding must clear the corner wordmarks (wide logo art). */
+  padding: 32px 180px 28px;
 }
 
 .usapl-hero-corner {
   position: absolute;
-  top: 12px;
-  height: 80px;
+  top: 18px;
+  height: 64px;
   width: auto;
   object-fit: contain;
 }
@@ -142,12 +146,13 @@
 .usapl-hero-welcome .usapl-league-name {
   margin: 0 0 10px;
   font-family: "Paytone One", "Trebuchet MS", sans-serif !important;
-  font-size: clamp(1.85rem, 5.6vw, 3.1rem) !important;
+  font-size: clamp(1.45rem, 4.2vw, 2.65rem) !important;
   font-weight: 400;
-  line-height: 1.2;
+  line-height: 1.15;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 100%;
   color: #e23b4a !important;
   -webkit-text-stroke: 2px #f4efe6;
   paint-order: stroke fill;
@@ -1460,15 +1465,19 @@ button.usapl-vegas-fold-action {
 
 @media (max-width: 800px) {
   .usapl-hero-welcome {
-    padding: 24px 80px 28px;
+    padding: 24px 96px 28px;
   }
 
   .usapl-league-mark {
-    padding: 24px 80px 16px;
+    padding: 24px 96px 16px;
   }
 
   .usapl-hero-corner {
-    height: 60px;
+    height: 48px;
+  }
+
+  .usapl-vegas-hero .usapl-hero-corner {
+    height: 44px;
   }
 
   .usapl-logos {
@@ -1857,16 +1866,24 @@ button.usapl-vegas-fold-action {
 }
 
 @media (max-width: 1200px) {
-  .usapl-nav {
+  nav.usapl-nav {
     gap: 2px 10px;
     padding: 10px 16px 8px;
     justify-content: flex-start;
   }
 
-  .usapl-nav a,
-  .usapl-nav-link {
+  nav.usapl-nav a,
+  nav.usapl-nav .usapl-nav-link {
     font-size: 0.84rem;
     padding: 6px 2px 8px;
+  }
+
+  .usapl-hero-welcome {
+    padding: 28px 140px 28px;
+  }
+
+  .usapl-hero-corner {
+    height: 52px;
   }
 }
 
@@ -1921,14 +1938,14 @@ button.usapl-vegas-fold-action {
     right: 8px;
   }
 
-  .usapl-nav {
+  nav.usapl-nav {
     gap: 2px 10px;
     padding: 10px 12px 8px;
     justify-content: flex-start;
   }
 
-  .usapl-nav a,
-  .usapl-nav-link {
+  nav.usapl-nav a,
+  nav.usapl-nav .usapl-nav-link {
     font-size: 0.82rem;
   }
 
@@ -1943,11 +1960,19 @@ button.usapl-vegas-fold-action {
 }
 
 .usapl-vegas-hero {
+  padding-top: 36px;
   padding-bottom: 12px;
 }
 
+.usapl-vegas-hero .usapl-hero-corner {
+  top: 22px;
+  height: 56px;
+}
+
 .usapl-vegas-hero .usapl-league-name {
-  margin-bottom: 24px;
+  margin: 0 0 24px;
+  position: relative;
+  z-index: 1;
 }
 
 .usapl-vegas-hero .usapl-rotate-banner {
@@ -2534,7 +2559,7 @@ button.usapl-vegas-fold-action {
 
 @media print {
   body:has(.usapl-bylaws-page) .app-hub-header,
-  body:has(.usapl-bylaws-page) .usapl-nav,
+  body:has(.usapl-bylaws-page) nav.usapl-nav,
   body:has(.usapl-bylaws-page) .usapl-bylaws-toolbar,
   body:has(.usapl-bylaws-page) .usapl-bylaws-page .usapl-kicker,
   body:has(.usapl-bylaws-page) .usapl-bylaws-page h1,

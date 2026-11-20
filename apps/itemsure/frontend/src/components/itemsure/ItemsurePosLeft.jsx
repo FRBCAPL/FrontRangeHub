@@ -35,8 +35,8 @@ function useUnsetAddons(organizationId, enabled) {
 }
 
 /**
- * "What's left" on Settings → Point of sale: one line per thing still to do, each jumping to its
- * tab with onGo(tab). Read-only.
+ * "What's left" on Clover setup: one line per thing still to do, each jumping to its
+ * tab with onGo(tab) (or Inventory for unmatched items). Read-only.
  */
 export default function ItemsurePosLeft({ organizationId, can, salesReady, onGo }) {
   const navigate = useNavigate();

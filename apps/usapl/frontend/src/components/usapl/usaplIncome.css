@@ -360,7 +360,7 @@
 
 @media print {
   body:has(.usapl-payout-chart-page) .app-hub-header,
-  body:has(.usapl-payout-chart-page) .usapl-nav,
+  body:has(.usapl-payout-chart-page) nav.usapl-nav,
   body:has(.usapl-payout-chart-page) .usapl-payout-chart-toolbar {
     display: none !important;
   }

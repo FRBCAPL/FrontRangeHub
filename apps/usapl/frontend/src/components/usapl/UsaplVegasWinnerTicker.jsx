@@ -15,10 +15,10 @@ function loopTrack(items) {
 }
 
 export default function UsaplVegasWinnerTicker() {
-  const { board, ineligible } = useUsaplVegasSeedStats();
+  const { board } = useUsaplVegasSeedStats();
   const items = useMemo(
-    () => usaplWinnerTickerItems([...board, ...ineligible]),
-    [board, ineligible]
+    () => usaplWinnerTickerItems(board),
+    [board]
   );
   const lines = items.length
     ? items

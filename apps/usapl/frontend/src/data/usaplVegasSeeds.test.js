@@ -125,4 +125,19 @@ describe('usaplVegasSeedBoard', () => {
     assert.equal(items[0].text, 'Break Time · 23861 · #1 seed');
     assert.equal(items[1].text, 'Rack Attack · 13861 · 13061 · not eligible');
   });
+
+  it('ticker pulls division numbers from shortName when leagueNumbers is blank', () => {
+    const result = usaplVegasSeedResult([
+      division({
+        shortName: 'Weds. 13863/13063',
+        leagueNumbers: '',
+        winnerTeam: 'Just Do It',
+        winnerTeamB: '8 Ball Mafia',
+      }),
+    ], 2026);
+    const items = usaplWinnerTickerItems(result.board);
+    assert.equal(items.length, 2);
+    assert.equal(items[0].text, '8 Ball Mafia · 13063 · T-1 seed');
+    assert.equal(items[1].text, 'Just Do It · 13863 · T-1 seed');
+  });
 });

@@ -311,18 +311,29 @@ html body .hub-navigation.homepage-nav .nav-content {
   /* Logged-in greeting / Admin / Switch App / Logout sit on the right — keep the title out of them. */
   .hub-navigation.consignment-nav:not(.homepage-nav) .nav-center,
   .hub-navigation.arcade-nav .nav-center,
-  .hub-navigation.admin-home-nav .nav-center {
+  .hub-navigation.admin-home-nav .nav-center,
+  .hub-navigation.usapl-nav:not(.homepage-nav) .nav-center {
     width: calc(100vw - 2 * var(--cs-nav-side, 300px)) !important;
     max-width: calc(100vw - 2 * var(--cs-nav-side, 300px)) !important;
+    min-width: 0 !important;
     margin: 0 auto;
     padding: 0 8px !important;
     box-sizing: border-box;
+    overflow: hidden;
     z-index: 1;
+  }
+
+  .hub-navigation.usapl-nav:not(.homepage-nav) .app-title {
+    white-space: nowrap !important;
+    word-break: normal !important;
+    font-size: clamp(1.05rem, 1.6vw + 0.55rem, 2.15rem) !important;
+    line-height: 1.15 !important;
   }
 
   .hub-navigation.consignment-nav[data-title-cramped]:not(.homepage-nav) .nav-center,
   .hub-navigation.arcade-nav[data-title-cramped] .nav-center,
-  .hub-navigation.admin-home-nav[data-title-cramped] .nav-center {
+  .hub-navigation.admin-home-nav[data-title-cramped] .nav-center,
+  .hub-navigation.usapl-nav[data-title-cramped]:not(.homepage-nav) .nav-center {
     visibility: hidden;
   }
 
@@ -334,7 +345,6 @@ html body .hub-navigation.homepage-nav .nav-content {
 .hub-navigation.ladder-app .app-title,
 .hub-navigation.cueless-app .app-title,
 .hub-navigation.tournament-app .app-title,
-.hub-navigation.usapl-nav:not(.homepage-nav) .app-title,
 .hub-navigation.consignment-nav:not(.homepage-nav) .app-title,
 .hub-navigation.arcade-nav .app-title,
 .hub-navigation.admin-home-nav .app-title {
@@ -347,7 +357,6 @@ html body .hub-navigation.homepage-nav .nav-content {
   .hub-navigation.ladder-app .nav-center,
   .hub-navigation.cueless-app .nav-center,
   .hub-navigation.tournament-app .nav-center,
-  .hub-navigation.usapl-nav:not(.homepage-nav) .nav-center,
   .hub-navigation.homepage-nav .nav-center {
     width: calc(100vw - 360px) !important;
     max-width: calc(100vw - 360px) !important;
@@ -355,7 +364,6 @@ html body .hub-navigation.homepage-nav .nav-content {
     box-sizing: border-box;
   }
 
-  .hub-navigation.usapl-nav:not(.homepage-nav) .app-title,
   .hub-navigation.consignment-nav:not(.homepage-nav) .app-title,
   .hub-navigation.arcade-nav .app-title,
   .hub-navigation.admin-home-nav .app-title,
@@ -364,6 +372,13 @@ html body .hub-navigation.homepage-nav .nav-content {
     word-break: break-word !important;
     font-size: clamp(0.92rem, 2.15vw, 1.55rem) !important;
     line-height: 1.12 !important;
+  }
+
+  .hub-navigation.usapl-nav:not(.homepage-nav) .app-title {
+    white-space: nowrap !important;
+    word-break: normal !important;
+    font-size: clamp(1rem, 1.45vw + 0.5rem, 1.85rem) !important;
+    line-height: 1.15 !important;
   }
 
   .hub-navigation .hub-brand {

@@ -246,9 +246,19 @@ export default function ItemsureRestock() {
     <div className="isu-page">
       <PageHead
         title="Shopping list"
-        description={showMoves
-          ? 'What to buy, and what you can move from another place instead. Amounts fill each place back up to its "Fill up to" number.'
-          : 'What to buy. Amounts fill each place back up to its "Fill up to" number.'}
+        description={showMoves ? (
+          <>
+            What to buy, and what you can move from another place instead.
+            <br />
+            Amounts fill each place back up to its &quot;Fill up to&quot; number.
+          </>
+        ) : (
+          <>
+            What to buy.
+            <br />
+            Amounts fill each place back up to its &quot;Fill up to&quot; number.
+          </>
+        )}
       />
       {ready ? <ErrorNote message={error || dataError} /> : null}
       {!ready && (error || dataError) ? <LoadFailed message={error || dataError} onRetry={() => { load(); reloadData(); }} /> : null}

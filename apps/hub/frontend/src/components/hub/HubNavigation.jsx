@@ -146,7 +146,11 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const centerTitle = hubCenterTitle(location.pathname, currentAppName, userFirstName, location.search);
   const fullName = [userFirstName, userLastName].filter(Boolean).join(' ');
   const navRootRef = React.useRef(null);
-  useNavSideWidth(navRootRef, (isConsignmentApp || isArcadeApp || isAdminHome) && !isMobile, [userFirstName, isAdmin, isSuperAdmin]);
+  useNavSideWidth(
+    navRootRef,
+    (isConsignmentApp || isArcadeApp || isAdminHome || isUsaplApp || isLegendsApp) && !isMobile,
+    [userFirstName, isAdmin, isSuperAdmin]
+  );
   useHubNavHeightVar(navRootRef, !isMobileMenuOpen);
   const handleHamburgerClick = (event) => {
     event.preventDefault();
