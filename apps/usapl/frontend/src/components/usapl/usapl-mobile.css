@@ -79,9 +79,10 @@
     padding: 18px 16px 12px;
   }
 
-  .usapl-league-mark .usapl-hero-corner {
+  .usapl-league-mark .usapl-hero-corner,
+  .usapl-vegas-hero .usapl-hero-corner {
     top: 8px;
-    height: 40px;
+    height: 52px;
   }
 
   .usapl-league-mark .usapl-league-name,
@@ -97,7 +98,7 @@
   }
 
   .usapl-hero-corner {
-    height: 40px;
+    height: 52px;
     top: 8px;
   }
 

@@ -144,7 +144,7 @@ nav.usapl-nav .usapl-nav-link.active {
 .usapl-hero-corner {
   position: absolute;
   top: 18px;
-  height: 64px;
+  height: 80px;
   width: auto;
   object-fit: contain;
 }
@@ -1654,12 +1654,10 @@ button.usapl-vegas-fold-action {
     padding: 24px 96px 16px;
   }
 
-  .usapl-hero-corner {
-    height: 48px;
-  }
-
+  .usapl-hero-corner,
+  .usapl-league-mark .usapl-hero-corner,
   .usapl-vegas-hero .usapl-hero-corner {
-    height: 44px;
+    height: 64px;
   }
 
   .usapl-logos {
@@ -2064,8 +2062,10 @@ button.usapl-vegas-fold-action {
     padding: 28px 140px 28px;
   }
 
-  .usapl-hero-corner {
-    height: 52px;
+  .usapl-hero-corner,
+  .usapl-league-mark .usapl-hero-corner,
+  .usapl-vegas-hero .usapl-hero-corner {
+    height: 68px;
   }
 }
 
@@ -2084,8 +2084,10 @@ button.usapl-vegas-fold-action {
     padding: 72px 16px 24px;
   }
 
-  .usapl-hero-corner {
-    height: 48px;
+  .usapl-hero-corner,
+  .usapl-league-mark .usapl-hero-corner,
+  .usapl-vegas-hero .usapl-hero-corner {
+    height: 56px;
     top: 8px;
   }
 
@@ -2147,8 +2149,8 @@ button.usapl-vegas-fold-action {
 }
 
 .usapl-vegas-hero .usapl-hero-corner {
-  top: 22px;
-  height: 56px;
+  top: 18px;
+  height: 80px;
 }
 
 .usapl-vegas-hero .usapl-league-name {
