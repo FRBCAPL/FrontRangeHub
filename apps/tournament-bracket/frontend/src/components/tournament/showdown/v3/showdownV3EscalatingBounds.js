@@ -1,8 +1,10 @@
 /**
  * Worst-case finishing-order bounds for an escalating (D10) V3 plan. Integer cents throughout.
  *
- * Champion first (hard rule). The champion is paid what is left of the pool after everyone else, so
- *   champion − X = initial fund + champion's earnings − X's earnings + every reserved cent nobody earned.
+ * Champion first (hard rule). At completion the Champion Fund (initial fund + unearned) is split between
+ * champion and runner-up (see V3_ESCALATING champion/runner-up fund shares), so
+ *   champion − runner-up ≥ (champShare − ruShare) + champion's earnings − runner-up's earnings
+ *   champion − other     ≥ champShare + champion's earnings − other's earnings.
  * Unearned reserve is never negative, and a walkover or vacated position leaves at least the k games the
  * champion would have needed in that match unearned, so the worst case is every playoff match played out:
  *   champion: their qualifying + k games at each stage they played (+ the bye credit on a bye path);
@@ -73,10 +75,19 @@ export function v3EscalatingBounds({
   const hardFloor = coversQualifyingWithdrawals ? { wLast: 0, wBye: 0 } : ranked;
   const p = stagePaths({ rates, k, byes, byeCreditCents });
   const hard = { q, G, byes, floor: hardFloor };
+  const unit = V3_ESCALATING.unitCents;
+  const fundUnits = Math.floor(fundCents / unit);
+  const champUnits = Math.floor((fundUnits * V3_ESCALATING.championFundSharePct) / 100);
+  const champFund = champUnits * unit;
+  const runnerUpFund = (fundUnits - champUnits) * unit;
   const byStage = {};
-  stageKeys.forEach((key, i) => { byStage[key] = worstPair(hard, p.champion, p.lostAt(i), fundCents); });
+  stageKeys.forEach((key, i) => {
+    // Final-stage opponent is the runner-up and receives the runner-up share of the fund.
+    const extra = i === stageKeys.length - 1 ? champFund - runnerUpFund : champFund;
+    byStage[key] = worstPair(hard, p.champion, p.lostAt(i), extra);
+  });
   const marginCents = Math.min(...Object.values(byStage).map((w) => w.marginCents));
-  const minTotalCents = Math.min(...p.champion.map((c) => fundCents + c.min + (c.bye ? hardFloor.wBye : hardFloor.wLast) * q));
+  const minTotalCents = Math.min(...p.champion.map((c) => champFund + c.min + (c.bye ? hardFloor.wBye : hardFloor.wLast) * q));
   const soft = { q, G, byes, floor: ranked };
   const R = rates.length;
   return {

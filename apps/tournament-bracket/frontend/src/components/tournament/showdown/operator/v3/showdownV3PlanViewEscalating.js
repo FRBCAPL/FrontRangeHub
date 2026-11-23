@@ -6,7 +6,7 @@ const pctOf = (part, whole) => (whole ? Math.round((part * 100) / whole) : 0);
 
 export const V3_CHAMPION_FUND_LABEL = 'Champion Fund';
 
-export const V3_ESCALATING_SUMMARY = 'Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is awarded to the tournament champion.';
+export const V3_ESCALATING_SUMMARY = 'Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is split 70/30 between the champion and runner-up.';
 
 export function escalatingPlanView(plan) {
   const template = playoffTemplate(plan.templateId);
@@ -55,7 +55,7 @@ export function escalatingPlanView(plan) {
     tierText: `The champion always earns more than every other player: in the worst possible case by at least ${formatCents(g.margins?.championCents || 0)}, with at least ${formatCents(g.championMinCents || 0)} in total.`,
     checks,
     scope: g.scope || '',
-    remainderText: `Game money nobody wins (unplayed qualifying games and the unused part of each playoff match) joins the ${V3_CHAMPION_FUND_LABEL}, which starts at ${fund} and goes to the champion when the event is completed. Bye credits are not games won.`,
+    remainderText: `Game money nobody wins (unplayed qualifying games and the unused part of each playoff match) joins the ${V3_CHAMPION_FUND_LABEL}, which starts at ${fund} and is split 70/30 between the champion and runner-up when the event is completed. Bye credits are not games won.`,
     warnings: g.warnings || [],
     summary: V3_ESCALATING_SUMMARY,
   };
@@ -68,6 +68,6 @@ export function escalatingPlanSummary(view) {
     `Qualifying: ${view.qualifyingGames} games per match. Every game won pays ${view.rates.qualifying}.`,
     `Playoffs: race to ${view.playoffRaceTo}. Each game won pays ${view.stages.map((s) => `${s.rate} in the ${s.label.toLowerCase()}`).join(', ')}.`,
     ...(view.bye ? [`${view.bye.count} opening-round bye${view.bye.count === 1 ? '' : 's'}, each earning a ${view.bye.each} bye credit.`] : []),
-    `Starting ${V3_CHAMPION_FUND_LABEL}: ${view.championFund.start}, plus every unplayed game\u2019s money, to the champion.`,
+    `Starting ${V3_CHAMPION_FUND_LABEL}: ${view.championFund.start}, plus every unplayed game\u2019s money, split 70/30 between champion and runner-up.`,
   ];
 }

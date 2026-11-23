@@ -6,7 +6,7 @@ import { startV3, toPlayoffsV3, runV3, playQualifyingV3, playPlayoffsV3, money }
 import { isEscalatingPlan, V3_ESCALATING_FORMULA } from './showdownV3Rules.js';
 
 describe('D10 events through the operator workflow', () => {
-  it('the Champion Fund grows from its starting amount and, at completion, is what the champion receives on top of earnings', () => {
+  it('the Champion Fund grows from its starting amount and, at completion, is split 70/30 between champion and runner-up', () => {
     const { s, op } = startV3(12, { seed: 4, formula: V3_ESCALATING_FORMULA });
     assert.ok(isEscalatingPlan(s.payoutPlan));
     const start = s.payoutPlan.reserves.championFund;
@@ -16,11 +16,15 @@ describe('D10 events through the operator workflow', () => {
     assert.ok(mid.currentCents >= start && !mid.final && /so far/.test(mid.label));
     const { s: done } = runV3(12, { seed: 4, formula: V3_ESCALATING_FORMULA });
     const v = moneyViewV3(done);
+    const m = money(done);
     const champ = done.championId;
+    const runnerUp = m.status.runnerUpId;
     assert.equal(v.championFund.final, true);
-    assert.equal(money(done).settlement.rows[champ].settlementCents, v.championFund.currentCents);
+    assert.ok(runnerUp);
+    assert.equal(m.settlement.rows[champ].settlementCents + m.settlement.rows[runnerUp].settlementCents, v.championFund.currentCents);
+    assert.ok(m.settlement.rows[champ].settlementCents > m.settlement.rows[runnerUp].settlementCents);
     assert.equal(E.reconciliationProblem(done), '');
-    assert.ok(v.championFund.text.includes('paid to the champion'));
+    assert.ok(/champion and runner-up/.test(v.championFund.text));
   });
 
   it('adjustments come out of the Champion Fund in 25\u00a2 steps and never reduce earned pay', () => {

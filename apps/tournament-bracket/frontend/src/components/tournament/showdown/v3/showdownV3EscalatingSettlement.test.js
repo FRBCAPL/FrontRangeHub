@@ -69,7 +69,7 @@ describe(`D10 randomized events (${EVENTS}): withdrawals, walkovers, double forf
     assert.ok(checked > 500, `${checked} completed events`);
   });
 
-  it('the Champion Fund: start + unplayed games; at completion it is exactly what the champion receives on top of earnings', () => {
+  it('the Champion Fund: start + unplayed games; at completion it is split 70/30 between champion and runner-up', () => {
     runs.forEach(({ ev, e, outcome }, i) => {
       const fund = fundOf(ev, e);
       const where = `event ${i + 1} (${outcome})`;
@@ -77,8 +77,18 @@ describe(`D10 randomized events (${EVENTS}): withdrawals, walkovers, double forf
       assert.ok(fund.transferredCents >= 0, where);
       if (outcome !== 'completed') return;
       const champ = e.status.championId;
-      assert.equal(e.settlement.rows[champ].settlementCents, fund.currentCents, where);
+      const runnerUp = e.status.runnerUpId;
       assert.equal(e.settlement.remainderCents, fund.currentCents, where);
+      if (!runnerUp) {
+        assert.equal(e.settlement.rows[champ].settlementCents, fund.currentCents, where);
+        return;
+      }
+      assert.equal(
+        e.settlement.rows[champ].settlementCents + e.settlement.rows[runnerUp].settlementCents,
+        fund.currentCents,
+        where,
+      );
+      assert.ok(e.settlement.rows[champ].settlementCents > e.settlement.rows[runnerUp].settlementCents, where);
     });
   });
 

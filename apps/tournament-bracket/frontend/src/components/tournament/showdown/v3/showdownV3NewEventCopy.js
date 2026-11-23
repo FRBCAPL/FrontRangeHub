@@ -27,7 +27,7 @@ const EQUAL_RATE_COPY = {
 };
 
 const D10_COPY = {
-  formatSummary: 'Every qualifying match plays a fixed number of games, all of them played, and can end in a tie. Each game won pays, and game values increase every playoff round; the champion takes the Champion Fund.',
+  formatSummary: 'Every qualifying match plays a fixed number of games, all of them played, and can end in a tie. Each game won pays, and game values increase every playoff round; the Champion Fund is a finish premium split between champion and runner-up.',
   chip: 'Games pay more every round',
   playoffStage: 'The top players go head to head. \nPlayoff matches are a race. Lose and you are out. \n Every game you win is worth more each round.',
   playoffs: [
@@ -35,15 +35,15 @@ const D10_COPY = {
     'With 5\u20137 players in the playoffs, the top qualifiers skip straight to the semifinals and earn a bye credit worth half a full quarterfinal win. A bye credit is not a game won.',
   ],
   playoffsTv: 'Every game still pays, and pays more each round.',
-  shortLead: ['Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is awarded to the tournament champion.'],
+  shortLead: ['Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is split 70/30 between the champion and runner-up.'],
   shortPlayoffs: [],
   shortTv: 'Playoff games pay more each round.',
-  leftover: 'The Champion Fund is set aside from the prize pool when the event starts. Money for games that are never played, like when a race to 5 ends 5\u20130, is added to it, and the champion takes all of it. The champion always earns the most.',
-  leftoverTv: 'Unplayed game money grows the Champion Fund for the champion.',
+  leftover: 'The Champion Fund is set aside from the prize pool when the event starts. Money for games that are never played, like when a race to 5 ends 5\u20130, is added to it. At the end it is split 70/30 between the champion and the runner-up. The champion always earns the most.',
+  leftoverTv: 'Unplayed game money grows the Champion Fund, split 70/30 at the end.',
   compare: {
     game: 'Pays, win or lose, and more in each playoff round',
     playoffWin: 'Nothing extra; the games you win pay more each round',
-    champion: 'The Champion Fund: set aside at the start, plus every unplayed game',
+    champion: 'The Champion Fund: set aside at the start, plus every unplayed game (70/30 at the end)',
   },
 };
 

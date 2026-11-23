@@ -91,12 +91,18 @@ function outcomes(node, plan, size) {
   return out;
 }
 
-/** Smallest (champion − best other player) over every qualifying gap, pairing and playoff score. */
+/**
+ * Smallest (champion − best other player) over every qualifying gap, pairing and playoff score.
+ * Matches settlement: remainder R = pool − all qualifying − all playoff games − all bye credits is split
+ * 70/30 between champion and runner-up (final loser); everyone else gets none of R.
+ */
 function bruteChampionMargin(plan) {
   const { entrants: n, qualifyingGames: g, qualifiers: Q, byes: B, poolCents: pool, byeCreditCents: credit } = plan;
   const q = plan.rates.r1;
   const k = plan.playoffRaceTo;
   const finalRate = plan.rates.byRound.final;
+  const unit = plan.unitCents || 25;
+  const champPct = 70;
   const gap = qualifyingGaps(n, g, Q);
   const bye = (j) => (j < B ? credit : 0);
   let worst = Infinity;
@@ -109,15 +115,22 @@ function bruteChampionMargin(plan) {
           const adds = A.adds.map((v, j) => v + R.adds[j]);
           adds[c] += k * finalRate;
           adds[l] += s * finalRate;
-          let others = (B - (c < B ? 1 : 0)) * credit;
-          let best = gap[Q][c] * q;
+          let playoffAndByes = B * credit;
+          for (let j = 0; j < Q; j += 1) playoffAndByes += adds[j];
+          const remainder = pool - n * g * q - playoffAndByes;
+          const units = Math.floor(remainder / unit);
+          const champUnits = Math.floor((units * champPct) / 100);
+          const champShare = champUnits * unit;
+          const ruShare = (units - champUnits) * unit;
+          // Relative to champ: opponent j is ahead by at most gap[j][c] qualifying games.
+          let bestOther = ruShare + adds[l] + bye(l) + gap[l][c] * q; // runner-up gets 20%
+          bestOther = Math.max(bestOther, gap[Q][c] * q); // best non-qualifier (no fund share)
           for (let j = 0; j < Q; j += 1) {
             if (j === c) continue;
-            others += adds[j];
-            best = Math.max(best, adds[j] + bye(j) + gap[j][c] * q);
+            const fund = j === l ? ruShare : 0;
+            bestOther = Math.max(bestOther, fund + adds[j] + bye(j) + gap[j][c] * q);
           }
-          // champion − best = (pool − all qualifying + champion's qualifying − others) − (best's qualifying + playoffs)
-          const margin = pool - n * g * q - others - best;
+          const margin = adds[c] + bye(c) + champShare - bestOther;
           if (margin < worst) worst = margin;
         }
       }
@@ -155,7 +168,7 @@ describe('D10 champion-first by brute force (every pairing and score; bye credit
   it('the search finds a violation when one exists (bye credit or semifinal rate raised past the fund)', () => {
     const plan = buildV3Plan({ entrants: 12, entryFee: 20, qualifyingGames: 3, playoffRaceTo: 5 });
     assert.ok(bruteChampionMargin(plan) > 0);
-    assert.ok(bruteChampionMargin({ ...plan, byeCreditCents: plan.byeCreditCents + 1000 }) < 0);
+    assert.ok(bruteChampionMargin({ ...plan, byeCreditCents: plan.byeCreditCents + 3000 }) < 0);
     const semifinal = plan.rates.byRound.semifinal * 3;
     assert.ok(bruteChampionMargin({ ...plan, rates: { ...plan.rates, byRound: { ...plan.rates.byRound, semifinal } } }) < 0);
   });

@@ -9,9 +9,9 @@
  *   Champion Fund       pool − Q − P − B                    (must not be negative)
  *
  * A candidate is valid when the champion strictly out-earns every other player in the worst case
- * (showdownV3EscalatingBounds.js). Selection: the highest valid q with the smallest step allowed at that q,
- * tried from the affordability ceiling downward; then, at that q, the step is raised 25¢ at a time while the
- * plan stays valid. There is no champion minimum and no match-win pay.
+ * (showdownV3EscalatingBounds.js). Selection: the highest valid q whose minimum climb still leaves at least
+ * targetFundPct of the pool in the Champion Fund (a finish premium). The climb stays at the minimum step so
+ * the fund is not drained by a steeper playoff ladder. There is no champion minimum and no match-win pay.
  */
 import { v3SettingsProblems, v3Field } from './showdownV3Rates.js';
 import { maxPlayoffGames, V3_ESCALATING as D } from './showdownV3Rules.js';
@@ -69,34 +69,38 @@ export function selectV3Escalating(settings) {
   const field = v3Field(s.entrants);
   const stages = field.template.rounds.length;
   const pool = s.entrants * s.entryFee * 100;
+  const fundTarget = Math.ceil((pool * D.targetFundPct) / 100);
   const slots = s.entrants * s.qualifyingGames + field.playoffMatches * maxPlayoffGames(s.playoffRaceTo);
   const ceiling = Math.floor(pool / slots / U) * U;
   const tried = [];
   let choice = null;
-  for (let q = ceiling; q >= U && !choice; q -= U) {
+  let bestFund = null;
+  for (let q = ceiling; q >= U; q -= U) {
     const c = v3EscalatingCandidate(s, field, q, v3MinStepCents(q, stages));
-    tried.push({ rateCents: q, stepCents: c.step, status: c.status });
-    if (c.status === 'valid') choice = c;
+    tried.push({ rateCents: q, stepCents: c.step, status: c.status, fundCents: c.fund });
+    if (c.status !== 'valid') continue;
+    if (!bestFund || c.fund > bestFund.fund) bestFund = c;
+    if (c.fund >= fundTarget) {
+      choice = c;
+      break;
+    }
   }
+  if (!choice) choice = bestFund;
   if (!choice) {
     return {
       ok: false,
       problems: ['This configuration cannot meet the V3 payout rules: no qualifying rate keeps the champion ahead of every other player. Use fewer qualifying games, a shorter playoff race or a higher entry fee.'],
-      settings: s, field, trace: { ceilingRateCents: ceiling, tried: tried.length, higherRejected: tried.slice(0, 5) },
+      settings: s, field, trace: { ceilingRateCents: ceiling, fundTargetCents: fundTarget, tried: tried.length, higherRejected: tried.slice(0, 5) },
     };
-  }
-  const minStep = choice.step;
-  for (let step = minStep + U; ; step += U) {
-    const c = v3EscalatingCandidate(s, field, choice.q, step);
-    if (c.status !== 'valid') break;
-    choice = c;
   }
   const trace = {
     ceilingRateCents: ceiling,
+    fundTargetCents: fundTarget,
     tried: tried.length,
     chosenRateCents: choice.q,
-    minStepCents: minStep,
+    minStepCents: choice.step,
     stepCents: choice.step,
+    fundCents: choice.fund,
     higherRejected: tried.filter((t) => t.rateCents > choice.q).slice(0, 5),
   };
   return { ok: true, problems: [], settings: s, field, choice, trace };

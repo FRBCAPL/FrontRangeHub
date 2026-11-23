@@ -33,7 +33,7 @@ function championFundView(fund, outcome, settlement) {
     currentCents: fund.currentCents,
     final,
     label: final ? `Final ${V3_CHAMPION_FUND_LABEL}` : `${V3_CHAMPION_FUND_LABEL} so far`,
-    text: `${V3_CHAMPION_FUND_LABEL}: ${formatCents(fund.startCents)} reserved at the start + ${formatCents(fund.transferredCents)} from games not played = ${formatCents(fund.currentCents)}${final ? ', paid to the champion' : ''}.`,
+    text: `${V3_CHAMPION_FUND_LABEL}: ${formatCents(fund.startCents)} reserved at the start + ${formatCents(fund.transferredCents)} from games not played = ${formatCents(fund.currentCents)}${final ? ', split 70/30 between the champion and runner-up' : ''}.`,
   };
 }
 

@@ -34,7 +34,7 @@ function escalatingRules(v) {
     `The top ${v.qualifiers} in qualifying dollars reach the playoffs.${v.bye ? ` The top ${v.bye.count} get a bye to the semifinals and a ${v.bye.each} bye credit (half a full quarterfinal win). A bye credit is not a game won.` : ''}`,
     `Playoff matches are races to ${v.playoffRaceTo}. Each game won pays more every round: ${v.stages.map((s) => `${s.rate} in the ${s.label.toLowerCase()}`).join(', ')}. There are no match-win bonuses.`,
     'If a player forfeits, the games already played are paid to both players. The opponent gets an administrative credit for the unplayed games: it counts toward qualifying dollars, not games won.',
-    `The Champion Fund starts at ${v.championFund.start}, set aside from the ${v.pool} pool when the event starts. Money for games that are never played is added to it, and the champion receives the whole fund when the event is completed, so every cent goes to players.`,
+    `The Champion Fund starts at ${v.championFund.start}, set aside from the ${v.pool} pool when the event starts. Money for games that are never played is added to it, and when the event is completed it is split 70/30 between the champion and the runner-up, so every cent goes to players.`,
     'The champion always earns more than every other player, even with forfeits, walkovers or withdrawals.',
   ];
 }
@@ -120,7 +120,7 @@ export function v3PublicSettlement(event) {
     lines.push(`${m.paid} of the ${m.pool} pool has been earned so far.${m.heldCents ? ` ${m.held} is still to be won.` : ''}`);
     if (m.championFund) lines.push(`Champion Fund so far: ${m.championFund.current} (${m.championFund.start} set aside at the start plus ${m.championFund.transferred} from games not played).`);
   } else if (m.outcome === 'completed' && m.championFund) {
-    lines.push(`Every cent of the ${m.pool} pool was paid to players.${m.recipients.length ? ` The ${m.championFund.current} Champion Fund (${m.championFund.start} set aside at the start plus ${m.championFund.transferred} from games not played) went to the champion, ${m.recipients.join(', ')}.` : ''}`);
+    lines.push(`Every cent of the ${m.pool} pool was paid to players.${m.recipients.length ? ` The ${m.championFund.current} Champion Fund (${m.championFund.start} set aside at the start plus ${m.championFund.transferred} from games not played) was split 70/30 between the champion and runner-up: ${m.recipients.join(', ')}.` : ''}`);
   } else if (m.outcome === 'completed') {
     const toChampion = m.plan.equalRate ? 'The money nobody won (the playoff reserve remainder) went to the champion' : 'The money nobody won went to the champion';
     lines.push(`Every cent of the ${m.pool} pool was paid to players.${m.recipients.length ? ` ${toChampion}, ${m.recipients.join(', ')}.` : ''}`);

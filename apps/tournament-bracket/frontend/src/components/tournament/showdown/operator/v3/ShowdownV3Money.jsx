@@ -3,8 +3,6 @@ import ShowdownV3PlanPanel from './ShowdownV3PlanPanel.jsx';
 
 function Tag({ p }) {
   if (p.withdrawn) return <small> (withdrew)</small>;
-  if (p.hasBye) return <small className="sd-tag">Bye</small>;
-  if (p.qualified) return <small className="sd-tag">Playoffs</small>;
   return null;
 }
 

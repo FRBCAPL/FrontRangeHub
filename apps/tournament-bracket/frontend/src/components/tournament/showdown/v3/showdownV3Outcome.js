@@ -17,6 +17,7 @@ export function v3PlayoffStatus(plan, playoffMatches, { qualifierIds = [], withd
   const final = playoffMatches.find((m) => m.roundKey === finalKey);
   const championId = final?.status === 'completed' && paysMatchWin(final) ? final.winnerId : null;
   const finalistIds = final ? [final.p1, final.p2].filter(Boolean) : [];
+  const runnerUpId = championId ? finalistIds.find((id) => id !== championId) || final?.loserId || null : null;
   const aliveIds = qualifierIds.filter((id) => !out.has(id));
-  return { championId, finalistIds, aliveIds, finalMatch: final || null, started: playoffMatches.length > 0 };
+  return { championId, runnerUpId, finalistIds, aliveIds, finalMatch: final || null, started: playoffMatches.length > 0 };
 }

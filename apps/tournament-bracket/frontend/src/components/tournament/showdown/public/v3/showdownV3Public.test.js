@@ -124,12 +124,11 @@ describe('V3 player screens', () => {
   it('money: locked plan rules in plain language, game pay, bonuses and totals', async () => {
     const rules = v3PayoutRules(ev.tie.payoutPlan);
     assert.equal(rules.length, 7);
-    assert.equal(rules[0], 'Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is awarded to the tournament champion.');
-    assert.match(rules[1], /Every qualifying game you win pays \$1\.75.*6 games/);
-    assert.match(rules[3], /races to 5\. Each game won pays more every round: \$2 in the semifinal, \$2\.25 in the championship\. There are no match-win bonuses\./);
-    assert.match(rules[5], /Champion Fund starts at \$19\.75.*champion receives the whole fund/);
+    assert.equal(rules[0], 'Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is split 70/30 between the champion and runner-up.');
+    assert.match(rules[1], /Every qualifying game you win pays \$1\.25.*6 games/);
+    assert.match(rules[3], /races to 5\. Each game won pays more every round: \$1\.50 in the semifinal, \$1\.75 in the championship\. There are no match-win bonuses\./);
+    assert.match(rules[5], /Champion Fund starts at \$57\.25.*split 70\/30 between the champion and the runner-up/);
     assert.match(rules[6], /champion always earns more than every other player, even with forfeits, walkovers or withdrawals/);
-    assert.ok(!rules.some((l) => /runner-up/.test(l)), 'the runner-up order is not promised');
     const equal = v3PayoutRules(buildV3EqualRatePlan({ entrants: 8, entryFee: 20, qualifyingGames: 6, playoffRaceTo: 5 }));
     assert.equal(equal[0], 'Every game you win pays $0.75, in qualifying and in the playoffs.');
     assert.match(equal[5], /goes to the champion as the playoff reserve remainder/);

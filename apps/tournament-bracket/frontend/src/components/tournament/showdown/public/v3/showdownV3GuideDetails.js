@@ -88,7 +88,7 @@ export function showdownV3GuideDetails({ copy, tiebreakers, d10 }) {
       icon: '\u{1F3C6}',
       title: ex?.escalating ? 'The Champion Fund' : 'The champion',
       topic: 'Good to know',
-      summary: ex?.escalating ? 'The champion takes the fund and earns the most.' : 'Leftover playoff money goes to the champion.',
+      summary: ex?.escalating ? 'The fund is split 70/30; the champion still earns the most.' : 'Leftover playoff money goes to the champion.',
       lead: copy.leftover,
       example: ex?.escalating ? {
         title: `Example (${eventName})`,

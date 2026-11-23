@@ -79,7 +79,7 @@ describe('Showdown V3 guide copy', () => {
 
   it('D10 copy: escalating game values, bye credits and the Champion Fund, and points to each event page for exact rates', () => {
     const all = bodyOf(showdownV3Guide(v3GuideCopy(true)));
-    assert.ok(all.includes('Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is awarded to the tournament champion.'));
+    assert.ok(all.includes('Every game won earns money. Game values increase as the tournament progresses. Players receiving an opening-round bye earn a bye credit. Unused game money grows the Champion Fund, which is split 70/30 between the champion and runner-up.'));
     assert.match(all, /Every game you win adds to your payout, in qualifying and in the playoffs/);
     assert.match(all, /each playoff round pays more per game than the round before\. There are no match-win bonuses/);
     assert.match(all, /A bye credit is not a game won/);

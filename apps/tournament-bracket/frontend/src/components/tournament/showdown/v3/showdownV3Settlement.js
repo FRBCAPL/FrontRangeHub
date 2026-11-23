@@ -5,8 +5,9 @@
  * games, match-win pay nobody earned and the ladder's leftover cents.
  *
  *   in-progress       — the remainder is held (not paid yet)
- *   completed         — the remainder goes to the champion (the playoff reserve remainder; for escalating
- *                       plans the Champion Fund: the initial fund plus every reserved cent nobody earned)
+ *   completed         — the remainder goes to the champion (equal-rate / legacy). For escalating plans the
+ *                       Champion Fund (initial fund plus every reserved cent nobody earned) is split between
+ *                       champion and runner-up per V3_ESCALATING champion/runner-up fund shares.
  *   interrupted-final — the final was not finished: the remainder (which includes the final's match-win
  *                       pay) is split between the two finalists
  *   interrupted       — the event stopped before the final: the remainder is split among the players still
@@ -22,10 +23,27 @@
  * leftover units go to the earliest recipients in current standings order.
  */
 import { applyV3Adjustments } from './showdownV3Adjustments.js';
-import { V3_UNIT_CENTS, formatCents, v3UnitCents, isUnitMultiple, unitText } from './showdownV3Rules.js';
+import {
+  V3_UNIT_CENTS, V3_ESCALATING, formatCents, v3UnitCents, isUnitMultiple, unitText, isEscalatingPlan,
+} from './showdownV3Rules.js';
 
 export const V3_OUTCOMES = ['in-progress', 'completed', 'interrupted-final', 'interrupted', 'abandoned'];
 export const V3_ABANDONMENT_RETENTION_APPROVED = false;
+
+/** Split `cents` by whole-percent shares into `unit` steps; leftover units go to the first recipient. */
+export function splitByShares(cents, recipients, unit) {
+  if (!recipients.length) return {};
+  if (recipients.length === 1) return { [recipients[0].id]: cents };
+  const units = Math.floor(cents / unit);
+  const out = {};
+  let used = 0;
+  recipients.forEach((r, i) => {
+    const n = i === recipients.length - 1 ? units - used : Math.floor((units * r.pct) / 100);
+    used += n;
+    out[r.id] = n * unit;
+  });
+  return out;
+}
 
 export function v3UnresolvedDisclosure(cents) {
   return `Nobody was still eligible when the event was interrupted, so ${formatCents(cents)} is unresolved. It is not assigned to anyone automatically: the operator must review it and record any payout as an audited adjustment.`;
@@ -103,6 +121,14 @@ export function settleV3({ plan, playerIds, qualifying, playoffs, status, outcom
     } else if (outcome === 'interrupted' && !status.aliveIds.length) {
       unresolved = remainder;
       disclosures.push(v3UnresolvedDisclosure(remainder));
+    } else if (outcome === 'completed' && isEscalatingPlan(plan) && status.runnerUpId) {
+      const shares = [
+        { id: status.championId, pct: V3_ESCALATING.championFundSharePct },
+        { id: status.runnerUpId, pct: V3_ESCALATING.runnerUpFundSharePct },
+      ];
+      recipients = shares.map((r) => r.id);
+      const split = splitByShares(remainder, shares, unit);
+      Object.entries(split).forEach(([id, v]) => { rows[id].settlementCents = v; });
     } else {
       const pool = outcome === 'completed' ? [status.championId] : status.aliveIds;
       recipients = seedOrder.filter((id) => pool.includes(id));

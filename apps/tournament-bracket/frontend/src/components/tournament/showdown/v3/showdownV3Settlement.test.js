@@ -17,13 +17,17 @@ function run(config, { quits, script, withdrawnIds = [] } = {}) {
 const sum = (rows, f) => Object.values(rows).reduce((s, r) => s + r[f], 0);
 
 describe('V3 settlement', () => {
-  it('normal completion pays the whole pool; the champion takes the remainder as the bonus', () => {
+  it('normal completion pays the whole pool; escalating fund is split 70/30 between champion and runner-up', () => {
     const ev = run(cfg(16));
     const { settlement: s, status } = earnings(ev, { outcome: 'completed' });
     assert.equal(s.ok, true, s.problems.join('; '));
     assert.equal(s.paidCents, ev.plan.poolCents);
-    assert.deepEqual(s.bonusRecipients, [status.championId]);
-    assert.equal(s.rows[status.championId].settlementCents, s.remainderCents);
+    assert.deepEqual(s.bonusRecipients, [status.championId, status.runnerUpId]);
+    assert.equal(
+      s.rows[status.championId].settlementCents + s.rows[status.runnerUpId].settlementCents,
+      s.remainderCents,
+    );
+    assert.ok(s.rows[status.championId].settlementCents > s.rows[status.runnerUpId].settlementCents);
     assert.equal(sum(s.rows, 'byeCents'), ev.plan.byes * v3ByeCents(ev.plan));
   });
 
@@ -168,12 +172,16 @@ describe('V3 operator adjustments', () => {
     const ev = run(cfg(12));
     const before = earnings(ev, { outcome: 'completed' }).settlement;
     const champ = before.bonusRecipients[0];
-    const other = ev.playerIds.find((id) => id !== champ);
+    const runnerUp = before.bonusRecipients[1];
+    const other = ev.playerIds.find((id) => id !== champ && id !== runnerUp);
     const adj = { id: 'a1', playerId: other, amountCents: 500, reason: 'Scoring error in q3', by, at };
     const after = earnings(ev, { outcome: 'completed', adjustments: [adj] }).settlement;
     assert.equal(after.ok, true, after.problems.join('; '));
     assert.equal(after.rows[other].adjustmentCents, 500);
-    assert.equal(after.rows[champ].settlementCents, before.rows[champ].settlementCents - 500);
+    assert.equal(
+      after.rows[champ].settlementCents + after.rows[runnerUp].settlementCents,
+      before.remainderCents - 500,
+    );
     assert.equal(after.paidCents, ev.plan.poolCents);
     assert.deepEqual(v3AdjustmentAudit(adj).details.fundedFrom, 'remainder');
 

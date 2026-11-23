@@ -31,13 +31,19 @@ export const V3_EQUAL_RATE = {
 /**
  * Escalating formula (D10): every game won pays its stage's rate, the qualifying rate is as high as the
  * champion-first guarantee allows, each playoff stage pays at least 10% more per game than the stage before,
- * opening-round byes earn half a full quarterfinal win, and what is left is the Champion Fund.
+ * opening-round byes earn half a full quarterfinal win, and what is left is the Champion Fund (a finish
+ * premium, split on completion between champion and runner-up).
  */
 export const V3_ESCALATING_FORMULA = 'escalating-d10-2026-10';
 export const V3_ESCALATING = {
   unitCents: 25,
   minStepPct: 10,
   byeCreditPct: 50,
+  /** Prefer leaving at least this share of the pool in the starting Champion Fund when a valid plan can. */
+  targetFundPct: 14,
+  /** On a completed event, the Champion Fund / remainder is split this way (must sum to 100). */
+  championFundSharePct: 70,
+  runnerUpFundSharePct: 30,
   /** The champion-first proof assumes any number of players may withdraw during qualifying. */
   coversQualifyingWithdrawals: true,
 };

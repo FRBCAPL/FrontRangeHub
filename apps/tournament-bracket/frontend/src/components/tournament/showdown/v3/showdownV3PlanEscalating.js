@@ -2,7 +2,7 @@
  * The escalating (D10) V3 payout plan, locked at the start (`formula: V3_ESCALATING_FORMULA`, 25¢ unit).
  * It has no match-win ladder (`ladder: null`): playoff games pay `rates.byRound[stage]`, each confirmed
  * opening-round bye earns `byeCreditCents`, and `reserves.championFund` is the initial Champion Fund.
- * Unearned reserves join the fund; at completion the champion receives it (showdownV3Settlement.js).
+ * Unearned reserves join the fund; at completion it is split 70/30 between champion and runner-up (showdownV3Settlement.js).
  */
 import { SHOWDOWN_PAYOUT_V3 } from '../showdownRules.js';
 import { playoffTemplate } from '../showdownPlayoffTemplates.js';
