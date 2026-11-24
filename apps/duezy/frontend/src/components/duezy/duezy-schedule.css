@@ -3,15 +3,87 @@
 .dz-history-list li { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 6px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); font-size: 0.85rem; overflow-wrap: anywhere; }
 .dz-history-list small { font-size: 0.75rem; }
 
+/* Compact week strip above the Teams / Late / Activity tabs. */
 .dz-week-nav-wrap {
-  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 4px;
+  width: 100%;
+  margin: 4px 0 2px;
 }
-.dz-week-nav-wrap > .dz-link { align-self: center; }
-.dz-week-note { align-self: center; color: var(--dz-muted); font-size: 0.8rem; }
+.dz-week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--dz-line-strong);
+}
+.dz-week-nav-mid {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 28px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.dz-week-nav-num {
+  color: var(--dz-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dz-week-nav-date {
+  margin: 0;
+  color: var(--dz-text);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-align: center;
+}
+.dz-week-nav-status {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dz-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: default;
+}
+.dz-week-nav-status:disabled { opacity: 1; cursor: default; }
+.dz-week-nav-status.is-back {
+  color: var(--dz-accent, #818cf8);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dz-week-nav-status.is-back:hover { color: var(--dz-text); }
+.dz-week-nav > button {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--dz-line-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dz-text);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.dz-week-nav > button:not(:disabled):hover { background: rgba(129, 140, 248, 0.18); border-color: var(--dz-accent); }
+.dz-week-nav > button:disabled { opacity: 0.3; cursor: not-allowed; }
+.dz-week-note { align-self: center; color: var(--dz-muted); font-size: 0.8rem; text-align: center; }
 
 .dz-owe-late { color: #fca5a5; font-weight: 600; }
 .dz-owe-due { color: #fcd34d; }

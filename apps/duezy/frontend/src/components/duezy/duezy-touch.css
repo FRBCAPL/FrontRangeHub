@@ -13,7 +13,8 @@
 
   .dz-contact-btn.is-compact { min-height: 40px; }
 
-  .dz-week-nav button,
+  .dz-week-nav { width: 100%; min-height: 52px; }
+  .dz-week-nav > button { width: 40px; height: 40px; }
   .dz-toast-close,
   .dz-tip-close { width: 44px; height: 44px; }
 }

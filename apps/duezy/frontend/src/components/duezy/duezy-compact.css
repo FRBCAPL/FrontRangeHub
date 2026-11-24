@@ -1,24 +1,15 @@
 /* Denser league page so the team list is reachable without much scrolling. Loaded last. */
 .dz-stack--lg { gap: 14px; }
 
-/* Header: name, settings and week arrows on one row on wider screens */
+/* Header: name + settings denser; week strip sits under the hero. */
 .dz-hero { padding: 14px 16px; gap: 12px; }
 .dz-hero-icon { width: 44px; height: 44px; font-size: 1.4rem; border-radius: 12px; }
 .dz-hero .dz-h1 { font-size: 1.35rem; }
 .dz-hero-meta { font-size: 0.85rem; }
-.dz-week-nav { padding: 4px; }
-.dz-week-nav button { width: 36px; height: 36px; font-size: 1.25rem; border-radius: 10px; }
-.dz-week-nav strong { font-size: 1.4rem; }
-@media (min-width: 681px) {
-  .dz-hero { grid-template-columns: auto 1fr auto auto; }
-  .dz-week-nav-wrap { grid-column: auto; gap: 4px; }
-  .dz-week-nav { gap: 10px; }
-}
 
 .dz-hero.dz-hero--centered { grid-template-columns: minmax(44px, 1fr) minmax(0, auto) minmax(44px, 1fr); }
 .dz-hero--centered .dz-hero-body { text-align: center; }
-.dz-hero--centered .dz-hero-settings { justify-self: end; }
-.dz-hero--centered .dz-week-nav-wrap { grid-column: 1 / -1; }
+.dz-hero--centered .dz-hero-settings { justify-self: end; align-items: flex-end; }
 @media (max-width: 680px) {
   .dz-hero.dz-hero--centered { grid-template-columns: 1fr; gap: 10px; }
   .dz-hero--centered .dz-hero-icon { display: none; }
@@ -36,22 +27,33 @@
 .dz-stat strong { font-size: 1.35rem; }
 .dz-stat-icon { top: 10px; right: 10px; width: 22px; height: 22px; font-size: 0.75rem; }
 
-.dz-full-season { margin: 0; padding: 0 14px; gap: 6px; }
-.dz-full-season summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  cursor: pointer;
-  list-style: none;
+.dz-stat.dz-season-card { gap: 4px; justify-content: flex-start; }
+.dz-season-card-bar { display: block; height: 6px; margin: 2px 0 0; }
+.dz-season-card-meta {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  color: var(--dz-muted);
 }
-.dz-full-season summary::-webkit-details-marker { display: none; }
-.dz-full-season summary > span:first-child::before { content: '▸'; display: inline-block; margin-right: 6px; transition: transform 0.15s ease; }
-.dz-full-season[open] summary > span:first-child::before { transform: rotate(90deg); }
-.dz-full-season[open] { padding-bottom: 12px; }
-.dz-full-season > .dz-league-progress { display: block; height: 6px; margin: 2px 0 8px; }
-.dz-full-season > span.dz-small { display: block; }
+.dz-season-card-meta b { color: var(--dz-text); font-weight: 700; }
+.dz-season-card-link {
+  align-self: flex-start;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dz-season-outlook-pct {
+  margin: 10px 0 6px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.dz-season-outlook-modal .dz-season-card-bar { margin: 0 0 8px; }
 
 /* Team rows */
 .dz-panel-head { margin-bottom: 10px; }
@@ -83,6 +85,26 @@
   background: rgba(129, 140, 248, 0.1);
   border: 1px solid rgba(129, 140, 248, 0.3);
   font-size: 0.88rem;
+}
+.dz-summary-tip { margin: 0 0 8px; }
+.dz-summary-tip .dz-tip--quiet { margin-top: 0; width: 100%; }
+.dz-tip--quiet {
+  gap: 8px;
+  margin-top: 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  border-radius: 10px;
+  background: rgba(129, 140, 248, 0.12);
+  color: var(--dz-text);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+.dz-tip--quiet .dz-link { font-weight: 600; }
+.dz-tip-cta { white-space: nowrap; }
+.dz-tip--quiet .dz-tip-close {
+  width: 26px;
+  height: 26px;
+  font-size: 1.05rem;
 }
 .dz-tip-text { flex: 1; min-width: 0; }
 .dz-tip-close {

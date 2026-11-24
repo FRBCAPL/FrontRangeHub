@@ -3,18 +3,21 @@ import { money } from '../../utils/duezyMath.js';
 
 const teamsText = (n) => `${n} ${n === 1 ? 'team' : 'teams'}`;
 
-function Line({ className, onClick, title, children }) {
-  if (!onClick) return <li className={className} title={title}>{children}</li>;
+function Chip({ className, onClick, title, children }) {
+  if (!onClick) {
+    return <span className={`dz-owed-chip ${className}`} title={title}>{children}</span>;
+  }
   return (
-    <li className={className}>
-      <button type="button" className="dz-owed-link" onClick={onClick} title={title}>{children} <span aria-hidden="true">›</span></button>
-    </li>
+    <button type="button" className={`dz-owed-chip dz-owed-link ${className}`} onClick={onClick} title={title}>
+      {children} <span aria-hidden="true">›</span>
+    </button>
   );
 }
 
 /**
  * "Still to collect" box: late (past grace), make-ups (postponed, never late), and this week's dues
- * that aren't late yet, plus prepaid make-ups still to play. owed = { late, lateTeams, makeup, makeupTeams, prepaidTeams, current }.
+ * that aren't late yet, plus prepaid make-ups still to play. Compact chips so height matches the
+ * other summary cards. owed = { late, lateTeams, makeup, makeupTeams, prepaidTeams, current }.
  */
 export default function DuezyOwedStat({ owed, onShowLate, onShowMakeups, currentNote = '' }) {
   const { late = 0, lateTeams = 0, makeup = 0, makeupTeams = 0, prepaidTeams = 0, current = 0 } = owed || {};
@@ -25,29 +28,29 @@ export default function DuezyOwedStat({ owed, onShowLate, onShowMakeups, current
       <span className="dz-stat-icon" aria-hidden="true">$</span>
       <small className="dz-owed-title">Still to collect</small>
       <strong>{money(total)}</strong>
-      <ul className="dz-owed-list">
+      <div className="dz-owed-chips">
         {late > 0 ? (
-          <Line className="is-late" onClick={onShowLate} title="Past the grace period">
+          <Chip className="is-late" onClick={onShowLate} title="Past the grace period">
             <b>{money(late)}</b> late · {teamsText(lateTeams)}
-          </Line>
+          </Chip>
         ) : null}
         {makeup > 0 ? (
-          <Line className="is-makeup" onClick={onShowMakeups} title="Postponed matches: still owed, but not late until they're made up">
+          <Chip className="is-makeup" onClick={onShowMakeups} title="Postponed matches: still owed, but not late until they're made up">
             ↻ <b>{money(makeup)}</b> make-ups · {teamsText(makeupTeams)}
-          </Line>
+          </Chip>
         ) : null}
         {prepaidTeams > 0 ? (
-          <Line className="is-makeup" onClick={onShowMakeups} title="Paid ahead for a make-up match that hasn't been played yet">
-            ↻ {prepaidTeams} prepaid make-up{prepaidTeams === 1 ? '' : 's'} to play
-          </Line>
+          <Chip className="is-makeup" onClick={onShowMakeups} title="Paid ahead for a make-up match that hasn't been played yet">
+            ↻ {prepaidTeams} prepaid to play
+          </Chip>
         ) : null}
         {current > 0 ? (
-          <Line className="is-current" title={currentNote || undefined}>
-            <b>{money(current)}</b> this week · not late yet
-          </Line>
+          <Chip className="is-current" title={currentNote || undefined}>
+            <b>{money(current)}</b> this week
+          </Chip>
         ) : null}
-        {total === 0 ? <li className="is-clear">Nothing owed right now</li> : null}
-      </ul>
+        {total === 0 ? <span className="dz-owed-chip is-clear">Nothing owed</span> : null}
+      </div>
     </div>
   );
 }

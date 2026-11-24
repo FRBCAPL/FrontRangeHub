@@ -61,37 +61,18 @@
 .dz-hero-icon { width: 62px; height: 62px; font-size: 2rem; }
 .dz-hero-body { min-width: 0; }
 .dz-hero-meta { color: var(--dz-muted); font-size: 0.9rem; }
-
-.dz-week-nav {
-  grid-column: 1 / -1;
+.dz-hero-settings {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid var(--dz-line);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  justify-self: end;
 }
-.dz-week-nav > span { display: flex; align-items: baseline; gap: 8px; }
-.dz-week-nav small { color: var(--dz-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; }
-.dz-week-nav strong { font-size: 1.8rem; font-weight: 800; line-height: 1; }
-.dz-week-nav button {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--dz-line-strong);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--dz-text);
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-}
-.dz-week-nav button:not(:disabled):hover { background: rgba(129, 140, 248, 0.18); border-color: var(--dz-accent); }
-.dz-week-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.dz-hero-league-settings { white-space: nowrap; }
 
 /* Summary */
-.dz-summary { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+.dz-summary { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: stretch; }
+.dz-summary--4 { grid-template-columns: 1fr 1.6fr 1fr 1fr; }
 .dz-summary-main,
 .dz-stat {
   padding: 16px;
@@ -100,6 +81,26 @@
   border: 1px solid var(--dz-line);
 }
 .dz-summary-main { display: flex; align-items: center; gap: 18px; }
+.dz-summary-hit {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dz-summary-hit:focus-visible { outline: 2px solid rgba(129, 140, 248, 0.55); outline-offset: 2px; }
+.dz-summary-main.is-tappable:hover {
+  border-color: rgba(129, 140, 248, 0.45);
+  background: rgba(129, 140, 248, 0.06);
+}
 
 .dz-ring {
   --dz-pct: 0;
@@ -315,9 +316,11 @@ button.dz-add-team:hover { text-decoration: none; border-color: var(--dz-accent)
 
 @media (max-width: 680px) {
   .dz-hero { grid-template-columns: auto 1fr; padding: 18px; }
-  .dz-hero-settings { grid-column: 1 / -1; justify-self: start; }
-  .dz-summary { grid-template-columns: 1fr 1fr; }
-  .dz-summary-main { grid-column: 1 / -1; }
+  .dz-hero-settings { grid-column: 1 / -1; justify-self: start; align-items: flex-start; }
+  .dz-summary,
+  .dz-summary--4 { grid-template-columns: 1fr 1fr; }
+  .dz-summary-main,
+  .dz-summary--4 .dz-season-card { grid-column: 1 / -1; }
   .dz-behind { grid-template-columns: 1fr; }
   .dz-team-main { flex-wrap: wrap; }
   .dz-team-name { flex: 1 1 160px; }

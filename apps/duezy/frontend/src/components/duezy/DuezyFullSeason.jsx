@@ -1,29 +1,66 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { money } from '../../utils/duezyMath.js';
 import useSeasonTerms from '../../hooks/useSeasonTerms.js';
+import DuezyModal from './DuezyModal.jsx';
 
 const percent = (part, whole) => (whole > 0 ? Math.min(100, Math.round((part / whole) * 100)) : 0);
 
-/** Collapsed "Full season outlook": collected so far vs every week of the season, and what's still to come. */
+/**
+ * Season-to-date summary card: collected vs dues due so far.
+ * “Full season outlook” opens a small modal with the whole-season total.
+ */
 export default function DuezyFullSeason({ season, allDivisions = false }) {
   const terms = useSeasonTerms();
-  const collectedAll = season.collectedAll ?? season.collected;
-  const { seasonValue } = season;
-  if (!seasonValue) return null;
-  const pct = percent(collectedAll, seasonValue);
+  const [open, setOpen] = useState(false);
+  const collected = season.collected ?? 0;
+  const expected = season.expected ?? 0;
+  const collectedAll = season.collectedAll ?? collected;
+  const seasonValue = season.seasonValue ?? 0;
+  const ahead = Math.max(0, collectedAll - collected);
+  const toDatePct = expected > 0 ? percent(collected, expected) : (collected > 0 ? 100 : 0);
+  const fullPct = percent(collectedAll, seasonValue);
+  const fullLeft = Math.max(0, seasonValue - collectedAll);
+
+  if (!expected && !collectedAll && !seasonValue) return null;
 
   return (
-    <details className="dz-season-total dz-full-season">
-      <summary>
-        <span className="dz-small dz-muted">Full {terms.one} outlook{allDivisions ? ' · all divisions' : ''}</span>
-        <span className="dz-small"><strong>{pct}%</strong> <span className="dz-muted">collected</span></span>
-      </summary>
-      <span className="dz-league-progress" aria-label={`${pct}% of the full ${terms.one} collected`}>
-        <span style={{ width: `${pct}%` }} />
+    <div className="dz-stat dz-season-card">
+      <small className="dz-owed-title">
+        {terms.One} to date{allDivisions ? ' · all divisions' : ''}
+      </small>
+      <strong>{toDatePct}%</strong>
+      <span
+        className="dz-league-progress dz-season-card-bar"
+        aria-label={`${toDatePct}% of dues due so far collected`}
+      >
+        <span style={{ width: `${toDatePct}%` }} />
       </span>
-      <span className="dz-small dz-muted">
-        {money(collectedAll)} of {money(seasonValue)} for every week of the {terms.one} · {money(Math.max(0, seasonValue - collectedAll))} still to come
-      </span>
-    </details>
+      <p className="dz-season-card-meta">
+        <b>{money(collected)}</b> of {money(expected)} due
+        {ahead > 0 ? <> · {money(ahead)} paid ahead</> : null}
+      </p>
+      {seasonValue > 0 ? (
+        <button type="button" className="dz-link dz-season-card-link" onClick={() => setOpen(true)}>
+          Full {terms.one} outlook ›
+        </button>
+      ) : null}
+
+      {open ? (
+        <DuezyModal title={`Full ${terms.one} outlook`} onClose={() => setOpen(false)} className="dz-season-outlook-modal">
+          <p className="dz-small dz-muted">
+            Every week of the {terms.one}
+            {allDivisions ? ' across all divisions' : ''} — including money paid ahead.
+          </p>
+          <p className="dz-season-outlook-pct"><strong>{fullPct}%</strong> collected</p>
+          <span className="dz-league-progress dz-season-card-bar" aria-hidden="true">
+            <span style={{ width: `${fullPct}%` }} />
+          </span>
+          <p className="dz-season-card-meta">
+            <b>{money(collectedAll)}</b> of {money(seasonValue)}
+            {fullLeft > 0 ? <> · {money(fullLeft)} still to come</> : null}
+          </p>
+        </DuezyModal>
+      ) : null}
+    </div>
   );
 }

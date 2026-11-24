@@ -48,37 +48,153 @@
 .dz-team-name small.dz-makeup-weeks { color: #67e8f9; font-size: 0.75rem; }
 .dz-legend .is-makeup::before { background: var(--dz-cyan); }
 
-/* "Still to collect" box: late / make-ups / this week. */
-.dz-owed { gap: 4px; }
-.dz-owed .dz-owed-title { color: var(--dz-muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-.dz-owed-list { display: flex; flex-direction: column; gap: 3px; margin: 2px 0 0; padding: 0; list-style: none; font-size: 0.8rem; color: var(--dz-muted); }
-.dz-owed-list b { font-weight: 700; }
-.dz-owed-list .is-late b { color: #f87171; }
-.dz-owed-list .is-makeup b { color: #67e8f9; }
-.dz-owed-list .is-current b { color: #facc15; }
-.dz-owed-link { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+/* "Still to collect" box: late / make-ups / this week — chips, not a tall stack. */
+.dz-stat.dz-owed {
+  gap: 4px;
+  justify-content: flex-start;
+}
+.dz-owed .dz-owed-title {
+  color: var(--dz-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.dz-owed > strong { line-height: 1.1; }
+.dz-owed-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.2;
+  color: var(--dz-muted);
+}
+.dz-owed-chip {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.dz-owed-chips b { font-weight: 700; }
+.dz-owed-chips .is-late b { color: #f87171; }
+.dz-owed-chips .is-makeup b { color: #67e8f9; }
+.dz-owed-chips .is-current b { color: #facc15; }
+.dz-owed-link { cursor: pointer; }
 .dz-owed-link:hover { color: var(--dz-text); text-decoration: underline; }
 
 /* Week by method card: cash vs digital. */
 .dz-cash-card { gap: 6px; justify-content: flex-start; }
 .dz-cash-split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.dz-cash-split > div { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.dz-cash-split > div,
+.dz-cash-split > .dz-cash-hit {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+}
 .dz-cash-split span { font-size: 0.75rem; color: var(--dz-muted); }
 .dz-cash-split strong { font-size: 1.35rem; line-height: 1.15; }
 .dz-cash-split small { font-size: 0.72rem; color: var(--dz-muted); }
 .dz-cash-split .is-cash strong { color: #4ade80; }
 .dz-cash-split .is-digital strong { color: #60a5fa; }
+.dz-cash-hit {
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.dz-cash-hit:hover,
+.dz-cash-hit:focus-visible {
+  background: rgba(129, 140, 248, 0.12);
+  border-color: rgba(129, 140, 248, 0.35);
+  outline: none;
+}
 .dz-cash-bar { display: flex; height: 6px; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, 0.08); }
 .dz-cash-bar .is-cash { background: #4ade80; }
 .dz-cash-bar .is-digital { background: #60a5fa; }
-.dz-cash-list { display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0; list-style: none; font-size: 0.8rem; color: var(--dz-muted); }
-.dz-cash-list li { display: flex; justify-content: space-between; gap: 8px; }
-.dz-cash-list b { color: var(--dz-text); font-weight: 700; }
-.dz-cash-list .is-unrecorded { font-style: italic; }
 .dz-cash-empty { margin: 0; font-size: 0.8rem; color: var(--dz-muted); }
 
-.dz-summary-season { margin: 4px 0 0; padding-top: 6px; border-top: 1px solid var(--dz-line); font-size: 0.8rem; color: var(--dz-muted); }
-.dz-summary-season b { color: var(--dz-text); font-weight: 700; }
+.dz-collected-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+.dz-collected-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--dz-line);
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--dz-muted);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+.dz-collected-tab b { color: var(--dz-text); font-weight: 700; }
+.dz-collected-tab:hover,
+.dz-collected-tab:focus-visible {
+  border-color: rgba(129, 140, 248, 0.45);
+  background: rgba(129, 140, 248, 0.1);
+  outline: none;
+}
+.dz-collected-tab.is-on {
+  border-color: rgba(129, 140, 248, 0.55);
+  background: rgba(129, 140, 248, 0.18);
+  color: var(--dz-text);
+}
+.dz-collected-teams { margin-top: 10px; max-height: min(50vh, 360px); overflow: auto; }
+
+.dz-method-groups { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; max-height: min(55vh, 420px); overflow: auto; }
+.dz-method-group-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--dz-text);
+}
+.dz-method-group-title span { color: var(--dz-muted); font-weight: 600; }
+.dz-method-modal .dz-method-teams {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--dz-line);
+  border-radius: 12px;
+}
+.dz-method-modal > .dz-method-teams { margin-top: 8px; max-height: min(50vh, 360px); overflow: auto; }
+.dz-method-teams li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--dz-line);
+}
+.dz-method-teams li:first-child { border-top: 0; }
+.dz-method-team-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dz-method-team-name b { font-weight: 700; color: var(--dz-text); overflow-wrap: anywhere; }
+.dz-method-team-name small { font-size: 0.75rem; color: var(--dz-muted); }
+.dz-method-team-amt { flex-shrink: 0; font-weight: 700; color: var(--dz-text); }
 
 /* Season so far: tappable week boxes + the week panel. */
 .dz-strip button {

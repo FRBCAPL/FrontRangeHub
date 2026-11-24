@@ -6,7 +6,7 @@ import useSeasonTerms from '../../hooks/useSeasonTerms.js';
 
 const percent = (part, whole) => (whole > 0 ? Math.min(100, Math.round((part / whole) * 100)) : 100);
 
-/** All-divisions header: season to date (each division through its own week) + collapsed full-season outlook. */
+/** All-divisions header: season to date, late count, still to collect, and full-season outlook. */
 export default function DuezySeasonSummary({ season, behind, owed, divisionCount, onShowLate }) {
   const { collected, expected } = season;
   const collectedAll = season.collectedAll ?? collected;
@@ -17,7 +17,8 @@ export default function DuezySeasonSummary({ season, behind, owed, divisionCount
 
   return (
     <>
-      <section className="dz-summary">
+      <section className="dz-summary dz-summary--4">
+        <DuezyFullSeason season={season} allDivisions={divisionCount > 1} />
         <div className="dz-summary-main">
           <div
             className="dz-ring"
@@ -49,8 +50,6 @@ export default function DuezySeasonSummary({ season, behind, owed, divisionCount
         </div>
         <DuezyOwedStat owed={owed} onShowLate={onShowLate} currentNote="Each division uses its own dates and grace period." />
       </section>
-
-      <DuezyFullSeason season={season} allDivisions={divisionCount > 1} />
     </>
   );
 }

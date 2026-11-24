@@ -28,12 +28,10 @@ export default function DuezyGettingStarted({ league, teamCount, settingsTo }) {
   };
 
   return (
-    <p className="dz-tip">
-      <span aria-hidden="true">💡</span>
+    <p className="dz-tip dz-tip--quiet">
       <span className="dz-tip-text">
-        <strong>Where should teams send dues?</strong>{' '}
-        Add your Venmo or Cash App and it’s included in reminder texts.{' '}
-        <Link to={`${settingsTo}?tab=league&section=payments`} className="dz-link">Add it ›</Link>
+        Reminder tip: add Venmo or Cash App so texts tell teams where to pay.{' '}
+        <Link to={`${settingsTo}?tab=league&section=payments`} className="dz-link dz-tip-cta">Add it&nbsp;›</Link>
       </span>
       <button type="button" className="dz-tip-close" onClick={dismiss} aria-label="Hide this tip">×</button>
     </p>

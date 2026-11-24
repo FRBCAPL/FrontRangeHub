@@ -1,17 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, matchPath, useLocation } from 'react-router-dom';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
 
-/** Avatar button → Billing, Admin (admins only), Log out. Closes on outside click, Escape or navigation. */
+/** League id from /duezy/league/:id/…, or null on the home / billing / admin pages. */
+function leagueIdFromPath(pathname) {
+  const match = matchPath({ path: `${DUEZY_PATH}/league/:leagueId/*`, end: false }, pathname)
+    || matchPath({ path: `${DUEZY_PATH}/league/:leagueId`, end: true }, pathname);
+  return match?.params?.leagueId || null;
+}
+
+/** Avatar button → this league's settings (when on a league), Billing, Admin (admins only), Log out. */
 export default function DuezyAccountMenu({ user, isAdmin, onSignOut }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const buttonRef = useRef(null);
   const location = useLocation();
+  const leagueId = leagueIdFromPath(location.pathname);
   const name = user?.user_metadata?.full_name || user?.email || '';
   const initial = (name.trim()[0] || '?').toUpperCase();
 
-  useEffect(() => { setOpen(false); }, [location.pathname]);
+  useEffect(() => { setOpen(false); }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -54,6 +62,11 @@ export default function DuezyAccountMenu({ user, isAdmin, onSignOut }) {
             <small className="dz-muted">{user?.email}</small>
           </div>
           <Link role="menuitem" to={DUEZY_PATH} className="dz-account-item">Your leagues</Link>
+          {leagueId ? (
+            <Link role="menuitem" to={`${DUEZY_PATH}/league/${leagueId}/settings`} className="dz-account-item">
+              League settings
+            </Link>
+          ) : null}
           <Link role="menuitem" to={`${DUEZY_PATH}/billing`} className="dz-account-item">Billing &amp; plan</Link>
           {isAdmin ? <Link role="menuitem" to={`${DUEZY_PATH}/admin`} className="dz-account-item">Admin</Link> : null}
           <button role="menuitem" type="button" className="dz-account-item is-danger" onClick={onSignOut}>Log out</button>

@@ -15,7 +15,6 @@ import DuezyActivityPanel from './DuezyActivityPanel.jsx';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyUndoToast from './DuezyUndoToast.jsx';
 import DuezyErrorBanner from './DuezyErrorBanner.jsx';
-import DuezyGettingStarted from './DuezyGettingStarted.jsx';
 import DuezySessionNudge from './DuezySessionNudge.jsx';
 import DuezyPastSessions from './DuezyPastSessions.jsx';
 import DuezyJoinRequests from './DuezyJoinRequests.jsx';
@@ -48,7 +47,8 @@ export default function DuezyLeagueView({ data, demo = false }) {
 
   const sport = sportOf(league.sport);
   const terms = seasonTerms(league);
-  const settingsTo = data.canEdit && !demo ? `${DUEZY_PATH}/league/${league.id}/settings` : null;
+  const leagueSettingsTo = data.canEdit && !demo ? `${DUEZY_PATH}/league/${league.id}/settings` : null;
+  const settingsTo = leagueSettingsTo;
   const lastChange = data.payments.reduce((m, p) => (p.updated_at > m ? p.updated_at : m), '');
   const requested = params.get('div');
   const current = several ? all.per.find((s) => s.unit.id === requested) || null : all.per[0];
@@ -97,12 +97,14 @@ export default function DuezyLeagueView({ data, demo = false }) {
   }
 
   const named = !showAll && Boolean(several || (selected.unit.id && selected.unit.name));
+  const divisionSettingsTo = leagueSettingsTo && !showAll
+    ? `${leagueSettingsTo}?tab=divisions${selected.unit.id ? `&div=${selected.unit.id}` : ''}`
+    : null;
   const hero = showAll ? (
     <DuezyLeagueHero
       icon={sport.icon}
       title={league.name}
       meta={[sport.short, `${units.length} divisions`, `${teams.length} teams`]}
-      settingsTo={settingsTo}
     />
   ) : (
     <DuezyLeagueHero
@@ -119,8 +121,8 @@ export default function DuezyLeagueView({ data, demo = false }) {
           `double play (${money(selected.dues / matchesPerNight(selected.unit))} × ${matchesPerNight(selected.unit)})`,
         `${selected.teams.length} teams`,
       ]}
-      settingsTo={settingsTo}
-      weekNav={weekNav}
+      settingsTo={divisionSettingsTo}
+      settingsLabel="Division settings"
     />
   );
 
@@ -174,9 +176,6 @@ export default function DuezyLeagueView({ data, demo = false }) {
 
       <DuezyErrorBanner error={error} onDismiss={() => setError('')} />
 
-      {data.isOwner && data.canEdit ? (
-        <DuezyGettingStarted league={league} teamCount={teams.length} settingsTo={settingsTo} />
-      ) : null}
       {data.canEdit && !demo && !league.archived && !league.is_test ? <DuezyJoinRequests data={data} /> : null}
       {data.isOwner && !demo && !league.archived ? <DuezySessionNudge league={league} units={units} /> : null}
       {league.archived ? (
@@ -209,6 +208,8 @@ export default function DuezyLeagueView({ data, demo = false }) {
           section={section}
           tabs={sectionTabs('Teams', selected.behind.length)}
           activity={activity}
+          settingsTo={settingsTo}
+          weekNav={weekNav}
           onShowLate={() => showSection('late')}
           onShowMakeups={() => {
             showSection('main');

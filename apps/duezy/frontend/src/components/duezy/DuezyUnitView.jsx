@@ -3,11 +3,12 @@ import { graceLabel } from '../../utils/duezySchedule.js';
 import { weekMethodTotals } from '../../utils/duezyMethodTotals.js';
 import { playersWith } from '../../utils/duezyPayers.js';
 import DuezyWeekSummary from './DuezyWeekSummary.jsx';
+import DuezyWeekNav from './DuezyWeekNav.jsx';
 import DuezyBehindPanel from './DuezyBehindPanel.jsx';
 import DuezyCatchUp from './DuezyCatchUp.jsx';
 import DuezyTeamsPanel from './DuezyTeamsPanel.jsx';
-import DuezyFullSeason from './DuezyFullSeason.jsx';
 import DuezyMakeupModal from './DuezyMakeupModal.jsx';
+import DuezyGettingStarted from './DuezyGettingStarted.jsx';
 
 /**
  * One division (or a single-division league) at its current week.
@@ -16,7 +17,7 @@ import DuezyMakeupModal from './DuezyMakeupModal.jsx';
  */
 export default function DuezyUnitView({
   league, stats, data, divisions, section = 'main', tabs = null, activity = null, onShowLate, onShowMakeups, onOpenTeam,
-  correctRequest = null, filterRequest = null,
+  correctRequest = null, filterRequest = null, settingsTo = null, weekNav = null,
 }) {
   const { week, schedule, summary, behind } = stats;
   const [makeupsOpen, setMakeupsOpen] = useState(false);
@@ -51,9 +52,17 @@ export default function DuezyUnitView({
         currentNote={graceNote}
         onShowLate={onShowLate}
         onShowMakeups={data.canEdit ? () => setMakeupsOpen(true) : onShowMakeups}
+        tip={data.isOwner && data.canEdit ? (
+          <DuezyGettingStarted league={league} teamCount={stats.teams.length} settingsTo={settingsTo} />
+        ) : null}
+        methodTeams={stats.teams}
+        methodWeek={week}
+        methodDues={stats.dues}
+        methodIndex={data.paymentIndex}
+        methodWeekLabel={isCurrent ? 'this week' : weekName}
       />
-      <DuezyFullSeason season={stats.season} />
 
+      {weekNav ? <DuezyWeekNav weekNav={weekNav} /> : null}
       {tabs}
 
       {section === 'main' ? <DuezyTeamsPanel league={league} stats={stats} data={data} divisions={divisions} correctRequest={correctRequest} filterRequest={filterRequest} /> : null}

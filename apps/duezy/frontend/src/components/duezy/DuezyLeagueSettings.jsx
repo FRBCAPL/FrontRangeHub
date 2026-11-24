@@ -80,7 +80,16 @@ export default function DuezyLeagueSettings() {
     <div className="dz-stack dz-stack--lg">
       {header(TITLES[tab])}
       {form.is_test ? <DuezyTestLeagueBanner league={form} /> : null}
-      <DuezySectionTabs label="Settings sections" tabs={TABS} active={tab} onChange={(id) => setParams({ tab: id }, { replace: true })} />
+      <DuezySectionTabs
+        label="Settings sections"
+        tabs={TABS}
+        active={tab}
+        onChange={(id) => {
+          const next = { tab: id };
+          if (id === 'divisions' && params.get('div')) next.div = params.get('div');
+          setParams(next, { replace: true });
+        }}
+      />
       <p className="dz-scope"><span aria-hidden="true">{tab === 'league' ? '🌐' : tab === 'divisions' ? '📅' : '👥'}</span>{SCOPE[tab][owner ? 'owner' : 'other']}</p>
       {tab === 'league' ? (owner ? <DuezyLeagueForm form={form} setForm={setForm} owner /> : <DuezyLeagueSummary league={form} />) : null}
       {tab === 'league' && !form.archived && form.is_test ? (
