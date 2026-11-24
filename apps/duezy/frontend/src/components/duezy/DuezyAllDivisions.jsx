@@ -64,7 +64,14 @@ export default function DuezyAllDivisions({
       />
       {tabs}
       {section === 'main' ? <DivisionCards per={per} onOpen={onOpen} /> : null}
-      {section === 'late' ? <DuezyBehindPanel league={league} behind={behind} graceNote="Each division uses its own dates and grace period." /> : null}
+      {section === 'late' ? (
+        <DuezyBehindPanel
+          league={league}
+          behind={behind}
+          graceNote="Each division uses its own dates and grace period."
+          onOpenTeam={onOpenTeam}
+        />
+      ) : null}
       {section === 'prepay' ? <DuezyPrepayPanel prepays={prepays} onOpenTeam={onOpenTeam} /> : null}
       {section === 'activity' ? activity : null}
     </>

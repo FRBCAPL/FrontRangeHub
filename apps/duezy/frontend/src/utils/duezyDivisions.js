@@ -134,7 +134,7 @@ export function unitStats(unit, teams, paymentIndex, isFirst = false, opts = {})
   const week = Math.max(1, Math.min(Number(opts.viewWeek) || currentWeek, total));
   const behind = teamsBehind(unitTeams, lateThrough, dues, paymentIndex).map((x) => {
     const weeks = unpaidWeeks(x.team.id, lateThrough, dues, paymentIndex, LATE);
-    return { ...x, when: weeks.map(label).join(', '), nights: nightsWithWeeks(weeks, schedule) };
+    return { ...x, weeks, when: weeks.map(label).join(', '), nights: nightsWithWeeks(weeks, schedule) };
   });
   const dueThrough = started ? currentWeek : 0;
   const dueTotal = unitTeams.reduce(

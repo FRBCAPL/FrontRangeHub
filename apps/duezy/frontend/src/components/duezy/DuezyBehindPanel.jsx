@@ -3,7 +3,7 @@ import { money, reminderText, teamReminder } from '../../utils/duezyMath.js';
 import DuezyContactLinks from './DuezyContactLinks.jsx';
 
 /** Late teams (past the grace period) with the nights they missed, plus reminder text. */
-export default function DuezyBehindPanel({ league, behind, graceNote = '' }) {
+export default function DuezyBehindPanel({ league, behind, graceNote = '', onOpenTeam = null }) {
   const [copied, setCopied] = useState(false);
   const text = reminderText(league, null, behind);
 
@@ -34,21 +34,38 @@ export default function DuezyBehindPanel({ league, behind, graceNote = '' }) {
       <div className="dz-panel dz-panel--alert">
         <h3 className="dz-h3">Who's late</h3>
         <ul className="dz-behind-list">
-          {behind.map(({ team, owed, division, when, nights }) => (
-            <li key={team.id}>
-              <span className="dz-behind-name">
-                <span>
-                  {team.name}
-                  {division ? <small className="dz-div-tag">{division}</small> : null}
+          {behind.map(({ team, owed, division, when, nights, weeks }) => {
+            const openWeek = weeks?.[0] || null;
+            const name = (
+              <>
+                {team.name}
+                {division ? <small className="dz-div-tag">{division}</small> : null}
+              </>
+            );
+            return (
+              <li key={team.id}>
+                <span className="dz-behind-name">
+                  {onOpenTeam ? (
+                    <button
+                      type="button"
+                      className="dz-behind-team"
+                      onClick={() => onOpenTeam(team.id, openWeek)}
+                      title="Open payment for this team"
+                    >
+                      {name}
+                    </button>
+                  ) : (
+                    <span>{name}</span>
+                  )}
+                  {nights || when ? <small className="dz-behind-weeks">{nights || when}</small> : null}
                 </span>
-                {nights || when ? <small className="dz-behind-weeks">{nights || when}</small> : null}
-              </span>
-              <span className="dz-behind-right">
-                <DuezyContactLinks contact={team.contact} message={teamReminder(league, team, owed, when)} compact />
-                <strong>{money(owed)}</strong>
-              </span>
-            </li>
-          ))}
+                <span className="dz-behind-right">
+                  <DuezyContactLinks contact={team.contact} message={teamReminder(league, team, owed, when)} compact />
+                  <strong>{money(owed)}</strong>
+                </span>
+              </li>
+            );
+          })}
         </ul>
         {graceNote ? <p className="dz-small dz-muted">{graceNote}</p> : null}
       </div>

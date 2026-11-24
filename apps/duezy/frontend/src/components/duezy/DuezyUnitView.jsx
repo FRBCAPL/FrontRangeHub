@@ -69,7 +69,9 @@ export default function DuezyUnitView({
       {tabs}
 
       {section === 'main' ? <DuezyTeamsPanel league={league} stats={stats} data={data} divisions={divisions} correctRequest={correctRequest} filterRequest={filterRequest} /> : null}
-      {section === 'late' ? <DuezyBehindPanel league={league} behind={behind} graceNote={graceNote} /> : null}
+      {section === 'late' ? (
+        <DuezyBehindPanel league={league} behind={behind} graceNote={graceNote} onOpenTeam={onOpenTeam} />
+      ) : null}
       {section === 'prepay' ? (
         <DuezyPrepayPanel prepays={stats.prepays || []} onOpenTeam={onOpenTeam} />
       ) : null}

@@ -316,6 +316,22 @@ button.dz-add-team:hover { text-decoration: none; border-color: var(--dz-accent)
   cursor: pointer;
 }
 .dz-prepay-row:hover .dz-behind-name > span:first-child { text-decoration: underline; }
+.dz-behind-team {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.dz-behind-team:hover { text-decoration: underline; color: #c7d2fe; }
 
 .dz-allgood {
   display: flex;
