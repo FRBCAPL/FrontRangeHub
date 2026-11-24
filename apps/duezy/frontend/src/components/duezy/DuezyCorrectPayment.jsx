@@ -13,7 +13,8 @@ import DuezyAddPayment from './DuezyAddPayment.jsx';
  * A partly paid week can also "Add payment" — the rest coming in later, maybe by another method (a split).
  */
 export default function DuezyCorrectPayment({
-  league, team = null, dues, weekName, payment, onSetPayment, onAddPlayer, startOpen = false, startAdd = false,
+  league, team = null, dues, weekName, payment, onSetPayment, onAddPlayer,
+  startOpen = false, startAdd = false, compact = false,
 }) {
   const recorded = paidFor(payment, dues);
   const canAdd = payment?.status === 'partial' && canAddPart(payment, dues);
@@ -63,13 +64,15 @@ export default function DuezyCorrectPayment({
   if (step === 'view') {
     const how = methodText(payment);
     return (
-      <div className="dz-recorded">
-        <p className="dz-small">
-          <strong>{money(recorded)} recorded</strong> for {weekName}
-          {how ? ` · ${how}` : ''}
-          {payment?.status === 'partial' ? ` · partial (${money(dues - recorded)} still due)` : ''}
-        </p>
-        <div className="dz-row dz-row--start">
+      <div className={`dz-recorded${compact ? ' dz-recorded--compact' : ''}`}>
+        {compact ? null : (
+          <p className="dz-small">
+            <strong>{money(recorded)} recorded</strong> for {weekName}
+            {how ? ` · ${how}` : ''}
+            {payment?.status === 'partial' ? ` · partial (${money(dues - recorded)} still due)` : ''}
+          </p>
+        )}
+        <div className={`dz-row${compact ? '' : ' dz-row--start'}`}>
           {canAdd ? (
             <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={() => setStep('add')} title="The rest came in — any method, it's kept as a split">
               + Add payment

@@ -9,6 +9,11 @@
   gap: 8px 12px;
 }
 .dz-recorded p { margin: 0; }
+.dz-recorded--compact {
+  justify-content: center;
+  width: 100%;
+}
+.dz-recorded--compact .dz-row { justify-content: center; }
 .dz-correct {
   display: flex;
   flex-direction: column;

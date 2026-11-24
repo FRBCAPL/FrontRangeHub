@@ -143,6 +143,22 @@ export function makeupWeeks(teamId, throughWeek, paymentIndex, { dues = null, pr
   return weeks;
 }
 
+/**
+ * Weeks after currentWeek that already have paid/partial money (not make-up-pending).
+ * Those are plain early payments — they become "this week" when the calendar catches up.
+ */
+export function prepaidFutureWeeks(teamId, currentWeek, totalWeeks, paymentIndex) {
+  const weeks = [];
+  const from = Math.max(0, Number(currentWeek) || 0) + 1;
+  const through = Math.max(from - 1, Number(totalWeeks) || 0);
+  for (let w = from; w <= through; w += 1) {
+    const p = paymentIndex.get(`${teamId}:${w}`);
+    if (!p || isPrepaidMakeup(p)) continue;
+    if (p.status === 'paid' || p.status === 'partial') weeks.push(w);
+  }
+  return weeks;
+}
+
 /** week = null for a roundup; entries may carry a `division` name and a `when` ("Sep 16, Sep 23"). */
 export function reminderText(league, week, behind) {
   if (!behind.length) return '';

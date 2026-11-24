@@ -3,9 +3,8 @@ import DuezyModal from './DuezyModal.jsx';
 import DuezyTeamDetail from './DuezyTeamDetail.jsx';
 
 /**
- * Team window (tap a team's name or status): Season so far picks the week (the page's week by default),
- * one payment panel records it, then history and contact. Saving the page's week closes the window
- * (the undo toast confirms it); other weeks stay open for catching up several at once.
+ * Team window (tap a team's name or status): catch-up jumps, pay panel, season strip, history.
+ * Settling a late/make-up week advances to the next; the modal stays open until dismissed.
  */
 export default function DuezyTeamPayModal({
   league, team, week, dues, schedule, balance, paymentIndex, canEdit, canSavePlayers,
@@ -13,8 +12,7 @@ export default function DuezyTeamPayModal({
 }) {
   const setWeekPayment = async (w, entry) => {
     if (w !== week) return onSetWeekPayment(w, entry);
-    await onSetPayment(entry);
-    return onClose();
+    return onSetPayment(entry);
   };
   return (
     <DuezyModal title={team.name} onClose={onClose} className="dz-pay-modal">

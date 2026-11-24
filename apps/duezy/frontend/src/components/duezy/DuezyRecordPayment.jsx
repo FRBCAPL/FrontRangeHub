@@ -11,7 +11,7 @@ import DuezyPayerSelect from './DuezyPayerSelect.jsx';
  * A week that already has money recorded gets "Correct this entry" (and "Add payment" while partial) instead.
  */
 export default function DuezyRecordPayment({
-  league, team, dues, weekName, payment, onSetPayment, onAddPlayer, startCorrect = false,
+  league, team, dues, weekName, payment, onSetPayment, onAddPlayer, startCorrect = false, onCancel = null,
 }) {
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState(payment?.method || defaultMethod(league));
@@ -23,6 +23,7 @@ export default function DuezyRecordPayment({
       <DuezyCorrectPayment
         league={league} team={team} dues={dues} weekName={weekName} payment={payment}
         onSetPayment={onSetPayment} onAddPlayer={onAddPlayer} startOpen={startCorrect}
+        compact
       />
     );
   }
@@ -54,6 +55,9 @@ export default function DuezyRecordPayment({
         {askPayer ? <DuezyPayerSelect team={team} value={payer} onChange={setPayer} /> : null}
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" maxLength={300} aria-label="Note" />
         <button type="button" className="dz-btn dz-btn--primary dz-btn--sm" onClick={save} disabled={!(Number(amount) > 0)}>Save</button>
+        {onCancel ? (
+          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={onCancel}>Cancel</button>
+        ) : null}
       </div>
       <p className="dz-small dz-muted">
         Less than {money(dues)} is saved as a partial payment. Duezy keeps a record of dues you've collected — it doesn't move money.

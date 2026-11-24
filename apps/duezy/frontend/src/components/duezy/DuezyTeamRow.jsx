@@ -110,6 +110,11 @@ export default function DuezyTeamRow({
                 ↻ Prepaid make-up to play: {shortNights(balance.prepaidNights)}
               </small>
             ) : null}
+            {balance.prepaidFutureNights?.length ? (
+              <small className="dz-makeup-weeks" title={`Paid ahead for ${balance.prepaidFutureWhen}`}>
+                Paid ahead: {shortNights(balance.prepaidFutureNights)}
+              </small>
+            ) : null}
           </span>
         </button>
         {canEdit && !team.contact ? (

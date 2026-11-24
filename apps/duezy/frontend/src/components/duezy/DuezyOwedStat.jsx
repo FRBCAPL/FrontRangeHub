@@ -16,12 +16,17 @@ function Chip({ className, onClick, title, children }) {
 
 /**
  * "Still to collect" box: late (past grace), make-ups (postponed, never late), and this week's dues
- * that aren't late yet, plus prepaid make-ups still to play. Compact chips so height matches the
- * other summary cards. owed = { late, lateTeams, makeup, makeupTeams, prepaidTeams, current }.
+ * that aren't late yet. Prepaid chips jump to the Prepay section (make-up to play + future weeks).
  */
-export default function DuezyOwedStat({ owed, onShowLate, onShowMakeups, currentNote = '' }) {
-  const { late = 0, lateTeams = 0, makeup = 0, makeupTeams = 0, prepaidTeams = 0, current = 0 } = owed || {};
+export default function DuezyOwedStat({
+  owed, onShowLate, onShowMakeups, onShowPrepay, currentNote = '',
+}) {
+  const {
+    late = 0, lateTeams = 0, makeup = 0, makeupTeams = 0,
+    prepaidTeams = 0, prepaidFutureTeams = 0, current = 0,
+  } = owed || {};
   const total = late + makeup + current;
+  const openPrepay = onShowPrepay || onShowMakeups;
 
   return (
     <div className={`dz-stat dz-owed ${late ? 'is-warn' : total ? '' : 'is-good'}`}>
@@ -40,8 +45,13 @@ export default function DuezyOwedStat({ owed, onShowLate, onShowMakeups, current
           </Chip>
         ) : null}
         {prepaidTeams > 0 ? (
-          <Chip className="is-makeup" onClick={onShowMakeups} title="Paid ahead for a make-up match that hasn't been played yet">
+          <Chip className="is-makeup" onClick={openPrepay} title="Paid for a make-up that hasn't been played yet — see Prepay">
             ↻ {prepaidTeams} prepaid to play
+          </Chip>
+        ) : null}
+        {prepaidFutureTeams > 0 ? (
+          <Chip className="is-makeup" onClick={openPrepay} title="Dues collected for weeks that haven't arrived yet">
+            {prepaidFutureTeams} paid ahead
           </Chip>
         ) : null}
         {current > 0 ? (

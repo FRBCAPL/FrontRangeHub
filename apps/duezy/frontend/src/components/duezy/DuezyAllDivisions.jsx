@@ -2,6 +2,7 @@ import React from 'react';
 import { money } from '../../utils/duezyMath.js';
 import DuezySeasonSummary from './DuezySeasonSummary.jsx';
 import DuezyBehindPanel from './DuezyBehindPanel.jsx';
+import DuezyPrepayPanel from './DuezyPrepayPanel.jsx';
 
 function DivisionCards({ per, onOpen }) {
   return (
@@ -45,16 +46,26 @@ function DivisionCards({ per, onOpen }) {
   );
 }
 
-/** Combined view: every division at its own current week. section: 'main' | 'late' | 'activity'. */
-export default function DuezyAllDivisions({ league, all, onOpen, section = 'main', tabs = null, activity = null, onShowLate }) {
-  const { per, season, behind, owed } = all;
+/** Combined view: every division at its own current week. section: 'main' | 'late' | 'prepay' | 'activity'. */
+export default function DuezyAllDivisions({
+  league, all, onOpen, section = 'main', tabs = null, activity = null, onShowLate, onShowPrepay, onOpenTeam,
+}) {
+  const { per, season, behind, owed, prepays = [] } = all;
 
   return (
     <>
-      <DuezySeasonSummary season={season} behind={behind} owed={owed} divisionCount={per.length} onShowLate={onShowLate} />
+      <DuezySeasonSummary
+        season={season}
+        behind={behind}
+        owed={owed}
+        divisionCount={per.length}
+        onShowLate={onShowLate}
+        onShowPrepay={onShowPrepay}
+      />
       {tabs}
       {section === 'main' ? <DivisionCards per={per} onOpen={onOpen} /> : null}
       {section === 'late' ? <DuezyBehindPanel league={league} behind={behind} graceNote="Each division uses its own dates and grace period." /> : null}
+      {section === 'prepay' ? <DuezyPrepayPanel prepays={prepays} onOpenTeam={onOpenTeam} /> : null}
       {section === 'activity' ? activity : null}
     </>
   );

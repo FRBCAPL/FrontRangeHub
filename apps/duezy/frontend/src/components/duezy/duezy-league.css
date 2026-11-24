@@ -300,6 +300,22 @@ button.dz-add-team:hover { text-decoration: none; border-color: var(--dz-accent)
 .dz-behind-list li { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--dz-line); }
 .dz-behind-list li:last-child { border-bottom: none; }
 .dz-behind-list strong { color: #f87171; }
+.dz-prepay-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.dz-prepay-row:hover .dz-behind-name > span:first-child { text-decoration: underline; }
 
 .dz-allgood {
   display: flex;

@@ -8,7 +8,7 @@ import DuezyFullSeason from './DuezyFullSeason.jsx';
 /** Division header: season to date, collected this week, by method, still to collect. */
 export default function DuezyWeekSummary({
   summary, season = null, owed, cash, title = 'Collected this week', cashTitle, currentNote = '',
-  onShowLate, onShowMakeups, tip = null,
+  onShowLate, onShowMakeups, onShowPrepay, tip = null,
   methodTeams = null, methodWeek = null, methodDues = null, methodIndex = null, methodWeekLabel = 'this week',
 }) {
   const { paid, partial, bye, makeup = 0, collected, expected } = summary;
@@ -60,7 +60,13 @@ export default function DuezyWeekSummary({
           paymentIndex={methodIndex}
           weekLabel={methodWeekLabel}
         />
-        <DuezyOwedStat owed={owed} onShowLate={onShowLate} onShowMakeups={onShowMakeups} currentNote={currentNote} />
+        <DuezyOwedStat
+          owed={owed}
+          onShowLate={onShowLate}
+          onShowMakeups={onShowMakeups}
+          onShowPrepay={onShowPrepay}
+          currentNote={currentNote}
+        />
 
         {open ? (
           <DuezyWeekCollectedModal

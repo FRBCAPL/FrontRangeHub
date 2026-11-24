@@ -85,6 +85,7 @@ export default function DuezyMakeupModal({ league, stats, paymentIndex, onSetPay
                         dues={dues}
                         schedule={schedule}
                         payment={pay(team, week)}
+                        paymentIndex={paymentIndex}
                         canSavePlayers={'players' in team}
                         heading={team.name}
                         onSetPayment={(entry) => onSetPayment(team.id, week, entry)}

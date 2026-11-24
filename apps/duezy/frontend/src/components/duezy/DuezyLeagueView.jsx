@@ -23,7 +23,7 @@ import DuezySkeleton from './DuezySkeleton.jsx';
 import DuezyNoAccess from './DuezyNoAccess.jsx';
 import { roleLabel } from '../../utils/duezyPeople.js';
 
-const SECTIONS = ['main', 'late', 'activity'];
+const SECTIONS = ['main', 'late', 'prepay', 'activity'];
 
 /**
  * One league's page, given its data (useDuezyLeague, or useDuezyDemoLeague for the public demo).
@@ -126,7 +126,7 @@ export default function DuezyLeagueView({ data, demo = false }) {
     />
   );
 
-  const sectionTabs = (mainLabel, lateCount) => (
+  const sectionTabs = (mainLabel, lateCount, prepayCount) => (
     <DuezySectionTabs
       label="League sections"
       active={section}
@@ -134,6 +134,7 @@ export default function DuezyLeagueView({ data, demo = false }) {
       tabs={[
         { id: 'main', label: mainLabel },
         { id: 'late', label: 'Late', count: lateCount, tone: 'bad' },
+        { id: 'prepay', label: 'Prepay', count: prepayCount },
         { id: 'activity', label: 'Activity' },
       ]}
     />
@@ -194,9 +195,15 @@ export default function DuezyLeagueView({ data, demo = false }) {
           all={all}
           onOpen={(id) => updateParams({ div: id, view: null })}
           section={section}
-          tabs={sectionTabs('Divisions', all.behind.length)}
+          tabs={sectionTabs('Divisions', all.behind.length, all.prepayTeams || 0)}
           activity={activity}
           onShowLate={() => showSection('late')}
+          onShowPrepay={() => showSection('prepay')}
+          onOpenTeam={(teamId, week) => {
+            const team = teams.find((t) => t.id === teamId);
+            updateParams({ view: null, ...(team?.division_id ? { div: team.division_id } : {}) });
+            setFilterRequest({ teamId, week, key: Date.now() });
+          }}
         />
       ) : (
         <DuezyUnitView
@@ -206,11 +213,12 @@ export default function DuezyLeagueView({ data, demo = false }) {
           data={data}
           divisions={units}
           section={section}
-          tabs={sectionTabs('Teams', selected.behind.length)}
+          tabs={sectionTabs('Teams', selected.behind.length, selected.prepayTeams || 0)}
           activity={activity}
           settingsTo={settingsTo}
           weekNav={weekNav}
           onShowLate={() => showSection('late')}
+          onShowPrepay={() => showSection('prepay')}
           onShowMakeups={() => {
             showSection('main');
             setFilterRequest({ filter: 'makeup', key: Date.now() });

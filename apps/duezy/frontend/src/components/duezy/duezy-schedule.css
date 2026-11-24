@@ -1,5 +1,11 @@
 .dz-history { margin-top: 10px; }
+.dz-history-modal { width: min(520px, 100%); }
 .dz-history-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.dz-history-list--modal {
+  margin: 0;
+  max-height: min(60vh, 420px);
+  text-align: left;
+}
 .dz-history-list li { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 6px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.04); font-size: 0.85rem; overflow-wrap: anywhere; }
 .dz-history-list small { font-size: 0.75rem; }
 

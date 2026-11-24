@@ -27,8 +27,11 @@ test('teamBalance lists the late nights; shortNights trims long lists', () => {
   const dated = { dates: ['2026-08-12', '2026-08-19'], label: (w) => ['Aug 12', 'Aug 19'][w - 1] };
   assert.equal(nightsWithWeeks([1, 2], dated), 'Aug 12 (week 1), Aug 19 (week 2)');
   assert.equal(nightsWithWeeks([1, 3], { dates: null, label: (w) => `week ${w}` }), 'week 1, week 3');
+  assert.deepEqual(b.lateWeeks, [2, 4]);
   assert.deepEqual(b.lateNights, ['week 2', 'week 4']);
   assert.equal(b.lateWhen, 'week 2, week 4');
+  assert.ok(Array.isArray(b.makeupWeeks));
+  assert.ok(Array.isArray(b.prepaidWeeks));
   assert.equal(teamBalance('x', schedule, 20, indexPayments([])).lateNights.length, 4);
   assert.equal(shortNights(['Oct 6', 'Oct 13']), 'Oct 6, Oct 13');
   assert.equal(shortNights(['a', 'b', 'c', 'd', 'e']), 'a, b, c +2 more');
@@ -194,7 +197,9 @@ test('owed splits into late, make-ups and this week', async () => {
     { team_id: 'b', week: 1, status: 'paid', amount: 20 },
   ]);
   const s = unitStats(unit, teams, idx, true);
-  assert.deepEqual(s.owed, { late: 20, lateTeams: 1, makeup: 20, makeupTeams: 1, prepaidTeams: 0, current: 40 });
+  assert.deepEqual(s.owed, {
+    late: 20, lateTeams: 1, makeup: 20, makeupTeams: 1, prepaidTeams: 0, prepaidFutureTeams: 0, current: 40,
+  });
 });
 
 test('a prepaid make-up owes nothing, is never late, and stays on the make-up list', async () => {
@@ -206,13 +211,17 @@ test('a prepaid make-up owes nothing, is never late, and stays on the make-up li
     { team_id: 'a', week: 2, status: 'paid', amount: 20 },
   ]);
   const s = unitStats(unit, teams, idx, true);
-  assert.deepEqual(s.owed, { late: 0, lateTeams: 0, makeup: 0, makeupTeams: 0, prepaidTeams: 1, current: 0 });
+  assert.deepEqual(s.owed, {
+    late: 0, lateTeams: 0, makeup: 0, makeupTeams: 0, prepaidTeams: 1, prepaidFutureTeams: 0, current: 0,
+  });
   assert.deepEqual(s.makeups.map((m) => m.weeks), [[1]]);
   assert.equal(s.summary.paid, 1);
-  const schedule = { started: true, currentWeek: 2, lateThrough: 1, dates: null, label: (w) => `week ${w}` };
+  assert.equal(s.prepayTeams, 1);
+  const schedule = { started: true, currentWeek: 2, lateThrough: 1, totalWeeks: 10, dates: null, label: (w) => `week ${w}` };
   const b = teamBalance('a', schedule, 20, idx);
   assert.deepEqual(b.makeupNights, []);
   assert.deepEqual(b.prepaidNights, ['week 1']);
+  assert.deepEqual(b.prepaidFutureWeeks, []);
 });
 
 test('a partly prepaid make-up still owes the rest, but not as late', async () => {
@@ -224,5 +233,26 @@ test('a partly prepaid make-up still owes the rest, but not as late', async () =
     { team_id: 'a', week: 3, status: 'paid', amount: 20 },
   ]);
   const s = unitStats(unit, [{ id: 'a', name: 'A' }], idx, true);
-  assert.deepEqual(s.owed, { late: 0, lateTeams: 0, makeup: 15, makeupTeams: 1, prepaidTeams: 0, current: 0 });
+  assert.deepEqual(s.owed, {
+    late: 0, lateTeams: 0, makeup: 15, makeupTeams: 1, prepaidTeams: 0, prepaidFutureTeams: 0, current: 0,
+  });
+});
+
+test('paying a future week shows up as prepaidFuture, not late or make-up', async () => {
+  const { unitStats } = await import('./duezyDivisions.js');
+  const unit = { id: null, name: 'L', dues_amount: 20, current_week: 2, total_weeks: 10 };
+  const idx = indexPayments([
+    { team_id: 'a', week: 1, status: 'paid', amount: 20 },
+    { team_id: 'a', week: 2, status: 'paid', amount: 20 },
+    { team_id: 'a', week: 5, status: 'paid', amount: 20, method: 'Venmo' },
+  ]);
+  const s = unitStats(unit, [{ id: 'a', name: 'A' }], idx, true);
+  assert.equal(s.owed.prepaidFutureTeams, 1);
+  assert.equal(s.prepayTeams, 1);
+  assert.deepEqual(s.prepays[0].futureWeeks, [5]);
+  assert.deepEqual(s.prepays[0].makeupWeeks, []);
+  const schedule = unitSchedule(unit);
+  const b = teamBalance('a', schedule, 20, idx);
+  assert.deepEqual(b.prepaidFutureWeeks, [5]);
+  assert.deepEqual(b.prepaidWeeks, []);
 });

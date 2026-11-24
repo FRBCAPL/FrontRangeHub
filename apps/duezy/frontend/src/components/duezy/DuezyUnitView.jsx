@@ -5,6 +5,7 @@ import { playersWith } from '../../utils/duezyPayers.js';
 import DuezyWeekSummary from './DuezyWeekSummary.jsx';
 import DuezyWeekNav from './DuezyWeekNav.jsx';
 import DuezyBehindPanel from './DuezyBehindPanel.jsx';
+import DuezyPrepayPanel from './DuezyPrepayPanel.jsx';
 import DuezyCatchUp from './DuezyCatchUp.jsx';
 import DuezyTeamsPanel from './DuezyTeamsPanel.jsx';
 import DuezyMakeupModal from './DuezyMakeupModal.jsx';
@@ -12,11 +13,12 @@ import DuezyGettingStarted from './DuezyGettingStarted.jsx';
 
 /**
  * One division (or a single-division league) at its current week.
- * section: 'main' (teams) | 'late' | 'activity'; `tabs` is the tab bar, `activity` the league-wide log.
+ * section: 'main' (teams) | 'late' | 'prepay' | 'activity'; `tabs` is the tab bar, `activity` the league-wide log.
  * Editors get the make-ups popup; viewers jump to the Make up filter instead.
  */
 export default function DuezyUnitView({
-  league, stats, data, divisions, section = 'main', tabs = null, activity = null, onShowLate, onShowMakeups, onOpenTeam,
+  league, stats, data, divisions, section = 'main', tabs = null, activity = null,
+  onShowLate, onShowMakeups, onShowPrepay, onOpenTeam,
   correctRequest = null, filterRequest = null, settingsTo = null, weekNav = null,
 }) {
   const { week, schedule, summary, behind } = stats;
@@ -52,6 +54,7 @@ export default function DuezyUnitView({
         currentNote={graceNote}
         onShowLate={onShowLate}
         onShowMakeups={data.canEdit ? () => setMakeupsOpen(true) : onShowMakeups}
+        onShowPrepay={onShowPrepay}
         tip={data.isOwner && data.canEdit ? (
           <DuezyGettingStarted league={league} teamCount={stats.teams.length} settingsTo={settingsTo} />
         ) : null}
@@ -67,6 +70,9 @@ export default function DuezyUnitView({
 
       {section === 'main' ? <DuezyTeamsPanel league={league} stats={stats} data={data} divisions={divisions} correctRequest={correctRequest} filterRequest={filterRequest} /> : null}
       {section === 'late' ? <DuezyBehindPanel league={league} behind={behind} graceNote={graceNote} /> : null}
+      {section === 'prepay' ? (
+        <DuezyPrepayPanel prepays={stats.prepays || []} onOpenTeam={onOpenTeam} />
+      ) : null}
       {section === 'activity' ? activity : null}
 
       {makeupsOpen ? (
