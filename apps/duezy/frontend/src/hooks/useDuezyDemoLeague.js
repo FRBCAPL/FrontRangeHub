@@ -64,7 +64,7 @@ export default function useDuezyDemoLeague() {
 
   const toTeam = (t, divisionId, order) => ({
     id: nextId('team'), league_id: DEMO_ID, division_id: divisionId, name: t.name.trim(), captain: t.captain?.trim() || null,
-    contact: t.contact?.trim() || null, players: t.players || [], sort_order: order, archived: false,
+    contact: t.contact?.trim() || null, venue: t.venue?.trim() || null, players: t.players || [], sort_order: order, archived: false,
   });
   const addTeam = useCallback(async (team, divisionId = null) => {
     setTeams((prev) => [...prev, toTeam(team, divisionId, prev.length)]);

@@ -35,13 +35,16 @@ const teamRow = (leagueId, t, sortOrder) => ({
   name: t.name.trim(),
   captain: t.captain?.trim() || null,
   contact: t.contact?.trim() || null,
+  venue: t.venue?.trim() || null,
   ...(t.players?.length ? { players: t.players } : {}),
   sort_order: sortOrder,
 });
 
 const PAYERS_SQL_NEEDED = 'Saving team players needs the "who paid" database update (duezy-payers-2026-10.sql).';
+const VENUE_SQL_NEEDED = 'Saving a venue needs the team-venue database update (duezy-team-venue-2026-11.sql).';
 const checkTeam = (result) => {
   if (result.error && /players/.test(result.error.message)) throw new Error(PAYERS_SQL_NEEDED);
+  if (result.error && /venue/.test(result.error.message)) throw new Error(VENUE_SQL_NEEDED);
   return check(result);
 };
 

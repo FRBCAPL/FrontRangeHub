@@ -53,7 +53,8 @@ function statusChip(status, payment) {
  * and the week's status. Tapping the name or status opens the team window (every option, history, contact).
  */
 export default function DuezyTeamRow({
-  league, team, week, dues, schedule, paymentIndex, divisions = [], open, onToggle, onSetPayment, onSetWeekPayment, onUpdateTeam,
+  league, team, week, dues, schedule, paymentIndex, divisions = [], venueOptions = [],
+  open, onToggle, onSetPayment, onSetWeekPayment, onUpdateTeam,
   canEdit = true, correctKey = 0, focusWeek = null,
 }) {
   const payment = paymentIndex.get(`${team.id}:${week}`);
@@ -186,6 +187,7 @@ export default function DuezyTeamRow({
           team={team}
           divisions={divisions}
           sport={league?.sport}
+          venueOptions={venueOptions}
           focus={editFocus}
           onSave={onUpdateTeam}
           onRemove={() => onUpdateTeam({ archived: true })}

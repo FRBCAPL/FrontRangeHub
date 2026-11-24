@@ -76,6 +76,54 @@
 .dz-team-modal-form .dz-field em { font-style: normal; font-weight: 400; opacity: 0.75; }
 .dz-team-modal-form textarea { min-height: 120px; resize: vertical; font-family: inherit; }
 
+.dz-player-list { display: flex; flex-direction: column; gap: 8px; }
+.dz-player-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dz-player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 4px 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--dz-line-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dz-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.dz-player-chip-x {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--dz-muted);
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.dz-player-chip-x:hover { color: var(--dz-text); background: rgba(255, 255, 255, 0.08); }
+.dz-player-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.dz-player-add input { flex: 1 1 160px; min-width: 0; }
+
 .dz-team-modal-hint { font-size: 0.8rem; line-height: 1.4; color: var(--dz-muted); }
 .dz-team-modal-hint.is-ok { color: #86efac; }
 .dz-team-modal-hint.is-warn { color: #fcd34d; }

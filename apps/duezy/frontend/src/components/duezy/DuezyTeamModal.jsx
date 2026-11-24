@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import DuezyModal from './DuezyModal.jsx';
 import DuezySectionTabs from './DuezySectionTabs.jsx';
 import DuezyTeamPaste from './DuezyTeamPaste.jsx';
 import DuezyTeamUpload from './DuezyTeamUpload.jsx';
+import DuezyPlayerList from './DuezyPlayerList.jsx';
 import { contactHint, formatContact } from '../../utils/duezyContact.js';
-import { parsePlayers, teamPlayers } from '../../utils/duezyPayers.js';
+import { cleanPayerName, teamPlayers } from '../../utils/duezyPayers.js';
 import { duplicateOf, entryWords, isSingles } from '../../utils/duezyTeamWords.js';
 
 const tabsFor = (words) => [
@@ -37,7 +38,8 @@ function DivisionPicker({ divisions, value, onChange, moving }) {
  * Singles divisions (team size 1) say "player" and skip the captain / other-players boxes; `singles` covers leagues without division rows.
  */
 export default function DuezyTeamModal({
-  team = null, divisions = [], divisionId = null, existingNames = [], focus = null, sport = '', singles: singlesDefault = false,
+  team = null, divisions = [], divisionId = null, existingNames = [], venueOptions = [],
+  focus = null, sport = '', singles: singlesDefault = false,
   onAdd, onAddMany, onSave, onRemove, onClose,
 }) {
   const editing = Boolean(team);
@@ -45,8 +47,10 @@ export default function DuezyTeamModal({
   const [name, setName] = useState(team?.name || '');
   const [captain, setCaptain] = useState(team?.captain || '');
   const [contact, setContact] = useState(team?.contact || '');
-  const [players, setPlayers] = useState(teamPlayers(team).join(', '));
+  const [venue, setVenue] = useState(team?.venue || '');
+  const [players, setPlayers] = useState(() => teamPlayers(team));
   const [division, setDivision] = useState(team?.division_id || divisionId || divisions[0]?.id || null);
+  const venueListId = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [added, setAdded] = useState([]);
@@ -66,12 +70,14 @@ export default function DuezyTeamModal({
 
   /** players is only sent when it changed, so teams keep saving before the "who paid" SQL is run. */
   const values = () => {
-    const list = parsePlayers(players, captain);
+    const cap = cleanPayerName(captain);
+    const list = players.filter((n) => n && !(cap && n.toLowerCase() === cap.toLowerCase()));
     const changed = list.join('\n') !== teamPlayers(team).join('\n');
     return {
       name: name.trim(),
-      captain: captain.trim() || null,
+      captain: cleanPayerName(captain) || null,
       contact: formatContact(contact) || null,
+      venue: venue.trim().slice(0, 80) || null,
       ...(changed ? { players: list } : {}),
     };
   };
@@ -107,7 +113,8 @@ export default function DuezyTeamModal({
     setName('');
     setCaptain('');
     setContact('');
-    setPlayers('');
+    setVenue('');
+    setPlayers([]);
     nameRef.current?.focus();
   });
 
@@ -178,19 +185,30 @@ export default function DuezyTeamModal({
             />
             <small className={`dz-team-modal-hint is-${hint.tone}`}>{hint.text}</small>
           </label>
+          <label className="dz-field">
+            <span>Venue <em>(optional)</em></span>
+            <input
+              value={venue}
+              onChange={(e) => setVenue(e.target.value)}
+              maxLength={80}
+              placeholder="e.g. Rack 'Em Billiards"
+              list={venueOptions.length ? venueListId : undefined}
+              autoComplete="off"
+            />
+            {venueOptions.length ? (
+              <datalist id={venueListId}>
+                {venueOptions.map((v) => <option key={v} value={v} />)}
+              </datalist>
+            ) : null}
+            <small className="dz-team-modal-hint">Home bar or club where this {words.one} plays.</small>
+          </label>
           {singles ? null : (
-            <label className="dz-field">
-              <span>Other players <em>(optional)</em></span>
-              <input
-                value={players}
-                onChange={(e) => setPlayers(e.target.value)}
-                placeholder="Ana, Lee, Sam"
-                autoComplete="off"
-              />
-              <small className="dz-team-modal-hint">
-                Separate names with commas. They show up under “Who paid?” for Venmo, Zelle and other non-cash payments.
-              </small>
-            </label>
+            <DuezyPlayerList
+              players={players}
+              captain={captain}
+              onChange={setPlayers}
+              disabled={busy}
+            />
           )}
           {picker}
 

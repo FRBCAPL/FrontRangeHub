@@ -106,6 +106,20 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
     setCorrecting(null);
   };
 
+  const venueOptions = useMemo(() => {
+    const seen = new Set();
+    const out = [];
+    data.teams.forEach((t) => {
+      const v = String(t.venue || '').trim();
+      if (!v) return;
+      const key = v.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(v);
+    });
+    return out.sort((a, b) => a.localeCompare(b));
+  }, [data.teams]);
+
   const row = (team) => (
     <DuezyTeamRow
       key={team.id}
@@ -116,6 +130,7 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
       schedule={schedule}
       paymentIndex={paymentIndex}
       divisions={divisions}
+      venueOptions={venueOptions}
       open={openTeamId === team.id}
       onToggle={() => toggleTeam(team)}
       onSetPayment={(entry) => {
@@ -208,6 +223,7 @@ export default function DuezyTeamsPanel({ league, stats, data, divisions, correc
           singles={singles}
           words={words}
           existingNames={data.teams.map((t) => t.name)}
+          venueOptions={venueOptions}
           onAdd={(team, divisionId) => data.addTeam(team, divisionId || unit.id)}
           onAddMany={(list, divisionId) => data.addTeams(list, divisionId || unit.id)}
         />

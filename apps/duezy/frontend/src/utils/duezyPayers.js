@@ -3,7 +3,24 @@
 export const PAYER_NAME_MAX = 60;
 export const MAX_PLAYERS = 30;
 
-export const cleanPayerName = (raw) => String(raw || '').replace(/\s+/g, ' ').trim().slice(0, PAYER_NAME_MAX);
+/** "ana lee" / "MARY-JANE o'brien" → "Ana Lee" / "Mary-Jane O'Brien" */
+function titleCaseName(raw) {
+  return String(raw || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word
+      .split('-')
+      .map((part) => part
+        .split("'")
+        .map((bit) => (bit ? bit.charAt(0).toUpperCase() + bit.slice(1).toLowerCase() : bit))
+        .join("'"))
+      .join('-'))
+    .join(' ');
+}
+
+export const cleanPayerName = (raw) => titleCaseName(raw).slice(0, PAYER_NAME_MAX);
 
 /** Cash is handed over in person, so there's no one to match up. */
 export const asksWhoPaid = (method) => Boolean(method) && String(method).trim().toLowerCase() !== 'cash';

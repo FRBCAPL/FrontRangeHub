@@ -32,9 +32,15 @@
   text-align: center;
   pointer-events: none;
   padding: 0 44px;
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 .dz-pay-modal .dz-modal-close { position: relative; z-index: 1; }
 .dz-pay-modal-sub { margin: -4px 0 0; text-align: center; line-height: 1.2; }
+.dz-pay-modal-venue { font-weight: 600; color: var(--dz-text); }
+.dz-pay-modal-venue + .dz-pay-modal-sub { margin-top: 2px; }
 .dz-pay-modal .dz-team-detail {
   margin: 0;
   padding: 0;

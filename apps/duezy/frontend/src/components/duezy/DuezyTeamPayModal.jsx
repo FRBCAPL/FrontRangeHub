@@ -16,6 +16,7 @@ export default function DuezyTeamPayModal({
   };
   return (
     <DuezyModal title={team.name} onClose={onClose} className="dz-pay-modal">
+      {team.venue ? <p className="dz-small dz-muted dz-pay-modal-sub dz-pay-modal-venue">{team.venue}</p> : null}
       {team.captain ? <p className="dz-small dz-muted dz-pay-modal-sub">Captain: {team.captain}</p> : null}
       <DuezyTeamDetail
         league={league}

@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import DuezyTeamModal from './DuezyTeamModal.jsx';
 
 /** "+ Add teams" button → add-team popup (one team, a pasted list or a spreadsheet), defaulting to the current division. */
-export default function DuezyAddTeam({ divisions = [], divisionId = null, existingNames = [], sport = '', singles = false, words, onAdd, onAddMany }) {
+export default function DuezyAddTeam({
+  divisions = [], divisionId = null, existingNames = [], venueOptions = [],
+  sport = '', singles = false, words, onAdd, onAddMany,
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -13,6 +16,7 @@ export default function DuezyAddTeam({ divisions = [], divisionId = null, existi
           divisions={divisions}
           divisionId={divisionId}
           existingNames={existingNames}
+          venueOptions={venueOptions}
           sport={sport}
           singles={singles}
           onAdd={onAdd}
