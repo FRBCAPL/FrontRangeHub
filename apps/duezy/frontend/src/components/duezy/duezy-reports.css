@@ -1,5 +1,7 @@
 /* Bookkeeping reports page: controls, summary figures, preview table, download actions. */
+.dz-report-backup { margin: 0; }
 .dz-report-controls { align-items: center; }
+.dz-report-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .dz-check-label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dz-muted); }
 .dz-check-label input { width: 16px; height: 16px; accent-color: var(--dz-accent); }
 

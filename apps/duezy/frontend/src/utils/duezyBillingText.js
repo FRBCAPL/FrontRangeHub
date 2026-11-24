@@ -4,6 +4,7 @@ import { trialUsage } from './duezyPricingText.js';
 export const TRIAL_LIMIT_MESSAGE = 'Your free trial covers up to 2 divisions. Choose a plan in Billing to add more.';
 export const TEST_LEAGUE_TAKEN = 'You already have a test league. Use Reset on it to start over, or archive it first.';
 export const LOCKED_MESSAGE = 'Your leagues are read-only until you choose a plan. Pick a plan in Billing to keep recording.';
+export const EXPORT_REMINDER = 'Export PDF/CSV from Reports on each league before data is removed.';
 
 const shortDate = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -50,28 +51,41 @@ export function canAddDivisions(access, count = 1) {
   return Number(access.divisions_used || 0) + count <= Number(limit);
 }
 
+/** True when we should nudge the owner to export records (trial winding down or locked). */
+export function shouldRemindExport(access) {
+  if (!access) return false;
+  if (access.phase === 'locked') return true;
+  if (access.phase === 'trial') return Number(access.days_remaining ?? 0) <= 7;
+  return false;
+}
+
 /** What (if anything) the top-of-app banner should say. */
 export function billingBanner(access) {
   if (!access) return null;
   switch (access.phase) {
     case 'trial': {
       const days = Number(access.days_remaining ?? 0);
+      const ending = days <= 7;
+      const base = `${days <= 0 ? 'Your free trial ends today' : `Free trial · ${days} ${days === 1 ? 'day' : 'days'} left`} · ${trialUsage(access)}`;
       return {
         tone: days <= 5 ? 'warn' : 'info',
-        text: `${days <= 0 ? 'Your free trial ends today' : `Free trial · ${days} ${days === 1 ? 'day' : 'days'} left`} · ${trialUsage(access)}`,
+        text: ending ? `${base}. ${EXPORT_REMINDER}` : base,
         cta: 'See plans',
+        showExport: ending,
       };
     }
     case 'grace':
-      return { tone: 'warn', text: 'Your last payment didn’t go through. Update your card to keep recording.', cta: 'Fix billing' };
+      return { tone: 'warn', text: 'Your last payment didn’t go through. Update your card to keep recording.', cta: 'Fix billing', showExport: false };
     case 'locked': {
       const ended = access.status === 'trialing' || access.status === 'none' ? 'Your free trial has ended' : 'Your plan has ended';
       const note = deletionNote(access);
       const lastWeek = !access.delete_on || Number(access.days_until_delete ?? 0) <= 7;
+      const core = note ? `${ended} and your leagues are read-only. ${note}` : `${ended} — your leagues are read-only.`;
       return {
         tone: lastWeek ? 'bad' : 'warn',
-        text: note ? `${ended} and your leagues are read-only. ${note}` : `${ended} — your leagues are read-only.`,
+        text: `${core} ${EXPORT_REMINDER}`,
         cta: 'Choose a plan',
+        showExport: true,
       };
     }
     default:

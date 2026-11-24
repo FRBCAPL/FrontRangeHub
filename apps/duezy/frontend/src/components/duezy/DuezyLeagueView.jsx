@@ -145,9 +145,12 @@ export default function DuezyLeagueView({ data, demo = false }) {
     <SeasonTermsContext.Provider value={terms}>
     <div className="dz-stack dz-stack--lg">
       {!demo ? (
-        <div className="dz-row">
+        <div className="dz-row dz-row--wrap dz-league-tools">
           <Link to={DUEZY_PATH} className="dz-link dz-small">‹ All leagues</Link>
-          <DuezyExportButton league={league} />
+          <span className="dz-league-tools-actions">
+            <DuezyExportButton league={league} label="Export reports" />
+            <DuezyExportButton league={league} report="deposits" label="Bank deposits" />
+          </span>
         </div>
       ) : null}
 
@@ -217,6 +220,7 @@ export default function DuezyLeagueView({ data, demo = false }) {
           activity={activity}
           settingsTo={settingsTo}
           weekNav={weekNav}
+          showReports={!demo}
           onShowLate={() => showSection('late')}
           onShowPrepay={() => showSection('prepay')}
           onShowMakeups={() => {

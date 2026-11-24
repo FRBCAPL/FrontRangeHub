@@ -17,6 +17,7 @@
 }
 .dz-bill-banner.is-warn { border-color: rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.12); color: #fde68a; }
 .dz-bill-banner.is-bad { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.14); color: #fecaca; }
+.dz-bill-banner-actions { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
 .dz-bill-banner-cta { color: inherit; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; padding: 0; min-height: 0; }
 
 .dz-bill-note {

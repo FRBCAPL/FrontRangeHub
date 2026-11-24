@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import { graceLabel } from '../../utils/duezySchedule.js';
 import { weekMethodTotals } from '../../utils/duezyMethodTotals.js';
 import { playersWith } from '../../utils/duezyPayers.js';
@@ -20,6 +21,7 @@ export default function DuezyUnitView({
   league, stats, data, divisions, section = 'main', tabs = null, activity = null,
   onShowLate, onShowMakeups, onShowPrepay, onOpenTeam,
   correctRequest = null, filterRequest = null, settingsTo = null, weekNav = null,
+  showReports = true,
 }) {
   const { week, schedule, summary, behind } = stats;
   const [makeupsOpen, setMakeupsOpen] = useState(false);
@@ -63,6 +65,7 @@ export default function DuezyUnitView({
         methodDues={stats.dues}
         methodIndex={data.paymentIndex}
         methodWeekLabel={isCurrent ? 'this week' : weekName}
+        depositsTo={showReports ? `${DUEZY_PATH}/league/${league.id}/reports?report=deposits` : null}
       />
 
       {weekNav ? <DuezyWeekNav weekNav={weekNav} /> : null}

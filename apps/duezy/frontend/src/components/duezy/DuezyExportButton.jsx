@@ -2,11 +2,18 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { DUEZY_PATH } from '../../data/duezyOptions.js';
 
-/** Header link to the reports & deposits page (preview + PDF, bank deposits). `report` picks the starting tab. */
-export default function DuezyExportButton({ league, report = '', label = 'Reports & deposits' }) {
+const TITLES = {
+  '': 'Season ledger, change history, and by-method PDF/CSV — full dues-cycle backup',
+  history: 'Change history report (PDF/CSV)',
+  methods: 'Totals by payment method (PDF/CSV)',
+  deposits: 'Reconcile cash and app money with bank deposits',
+};
+
+/** Link to reports & deposits. `report` opens that tab (ledger when empty). */
+export default function DuezyExportButton({ league, report = '', label = 'Export reports' }) {
   const to = `${DUEZY_PATH}/league/${league.id}/reports${report ? `?report=${report}` : ''}`;
   return (
-    <Link to={to} className="dz-btn dz-btn--ghost dz-btn--sm" title="Season, change-history and payment-method reports, plus bank deposits">
+    <Link to={to} className="dz-btn dz-btn--ghost dz-btn--sm" title={TITLES[report] || TITLES['']}>
       {label}
     </Link>
   );

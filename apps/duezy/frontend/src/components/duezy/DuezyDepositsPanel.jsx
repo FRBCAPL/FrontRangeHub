@@ -45,11 +45,27 @@ export default function DuezyDepositsPanel({ league, totals, canEdit, today }) {
 
   return (
     <div className="dz-stack">
+      <div className="dz-deposit-intro">
+        <h2 className="dz-h3">Bank reconciliation</h2>
+        <p className="dz-small dz-muted">
+          Match what teams paid (by method) to what you put in the bank. On hand should go to $0 after you deposit — Duezy only records the deposit; it never moves money.
+        </p>
+      </div>
+
       <div className="dz-deposit-sums">
         <div><small>Collected</small><strong>{money(sums.collected)}</strong></div>
         <div><small>Deposited</small><strong>{money(sums.deposited)}</strong></div>
-        <div className="is-hand"><small>On hand</small><strong>{money(sums.onHand)}</strong></div>
+        <div className={`is-hand${sums.onHand > 0 ? ' is-attention' : ''}`}>
+          <small>On hand</small>
+          <strong>{money(sums.onHand)}</strong>
+        </div>
       </div>
+
+      {ready && sums.onHand > 0 ? (
+        <p className="dz-small dz-deposit-nudge" role="status">
+          {money(sums.onHand)} still on hand — tap <strong>Deposited in bank</strong> on each method after you bank it.
+        </p>
+      ) : null}
 
       {!ready ? <p className="dz-small dz-owe-due">{DEPOSITS_SQL_NEEDED} Totals below show collections only until it’s run.</p> : null}
 
@@ -71,7 +87,7 @@ export default function DuezyDepositsPanel({ league, totals, canEdit, today }) {
                 className={`dz-btn dz-btn--sm ${b.onHand > 0 ? 'dz-btn--primary' : 'dz-btn--ghost'}`}
                 onClick={() => setDepositing(b)}
               >
-                🏦 Deposited in bank
+                Deposited in bank
               </button>
             ) : null}
           </li>

@@ -1,6 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { DUEZY_PATH } from '../../data/duezyOptions.js';
 import { TRIAL_DAYS, TRIAL_DIVISIONS } from '../../utils/duezyPricing.js';
-import { deletionNote } from '../../utils/duezyBillingText.js';
+import { deletionNote, EXPORT_REMINDER, shouldRemindExport } from '../../utils/duezyBillingText.js';
 
 const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '');
 
@@ -24,7 +26,9 @@ export default function DuezyPlanStatus({ access }) {
   let text = '';
   if (phase === 'trial') {
     title = `Free trial · ${access.days_remaining} ${access.days_remaining === 1 ? 'day' : 'days'} left`;
-    text = `Ends ${fmt(access.trial_ends_at)}. No card needed until then.`;
+    text = shouldRemindExport(access)
+      ? `Ends ${fmt(access.trial_ends_at)}. ${EXPORT_REMINDER}`
+      : `Ends ${fmt(access.trial_ends_at)}. No card needed until then.`;
   } else if (phase === 'active') {
     icon = '✅';
     title = 'Your plan is active';
@@ -59,6 +63,12 @@ export default function DuezyPlanStatus({ access }) {
         <strong>{title}</strong>
       </div>
       <p className="dz-small dz-muted">{text}</p>
+      {shouldRemindExport(access) ? (
+        <p className="dz-bill-hint">
+          Open any league → <strong>Export reports</strong> for PDF and CSV. Still deciding?{' '}
+          <Link to={DUEZY_PATH} className="dz-link">Go to your leagues ›</Link>
+        </p>
+      ) : null}
       {phase === 'trial' ? (
         <div className="dz-plan-meters">
           <Meter label="Trial days" value={daysLeft} max={TRIAL_DAYS} text={`${daysLeft} of ${TRIAL_DAYS} left`} />

@@ -131,6 +131,9 @@ export default function DuezyReportsPage() {
         </section>
       ) : (
       <section className="dz-panel dz-stack">
+        <p className="dz-small dz-muted dz-report-backup">
+          Full dues-cycle backup: download PDF for treasurers, or CSV for spreadsheets. Includes paid, partial, bye, make-up, and corrections — change history keeps who fixed what.
+        </p>
         <div className="dz-row dz-row--wrap dz-report-controls">
           {units.length > 1 || past.length ? (
             <label className="dz-quick-method">
@@ -158,10 +161,10 @@ export default function DuezyReportsPage() {
         {error ? <p className="dz-error" role="alert">{error}</p> : null}
         <div className="dz-report-actions">
           <button type="button" className="dz-btn dz-btn--primary" onClick={pdf} disabled={busy || (reportId === 'history' && history === undefined)}>
-            {busy ? 'Making PDF…' : 'Download PDF'}
+            {busy ? 'Making PDF…' : 'Download PDF backup'}
           </button>
-          <button type="button" className="dz-link dz-small" onClick={csv} disabled={reportId === 'history' && history === undefined}>
-            Also download as CSV (spreadsheet)
+          <button type="button" className="dz-btn dz-btn--ghost dz-btn--sm" onClick={csv} disabled={reportId === 'history' && history === undefined}>
+            Download CSV spreadsheet
           </button>
         </div>
       </section>

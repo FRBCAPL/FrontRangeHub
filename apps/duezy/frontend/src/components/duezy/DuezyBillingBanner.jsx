@@ -15,7 +15,14 @@ export default function DuezyBillingBanner() {
   return (
     <div className={`dz-bill-banner is-${banner.tone}`} role={banner.tone === 'bad' ? 'alert' : 'status'}>
       <span>{banner.text}</span>
-      <Link to={BILLING_PATH} className="dz-bill-banner-cta">{banner.cta} ›</Link>
+      <span className="dz-bill-banner-actions">
+        {banner.showExport ? (
+          <Link to={DUEZY_PATH} className="dz-bill-banner-cta">
+            Export records ›
+          </Link>
+        ) : null}
+        <Link to={BILLING_PATH} className="dz-bill-banner-cta">{banner.cta} ›</Link>
+      </span>
     </div>
   );
 }

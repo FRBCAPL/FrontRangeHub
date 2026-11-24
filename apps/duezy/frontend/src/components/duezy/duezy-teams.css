@@ -124,6 +124,9 @@
 .dz-cash-bar .is-cash { background: #4ade80; }
 .dz-cash-bar .is-digital { background: #60a5fa; }
 .dz-cash-empty { margin: 0; font-size: 0.8rem; color: var(--dz-muted); }
+.dz-cash-deposits { margin-top: 2px; align-self: flex-start; }
+.dz-league-tools { justify-content: space-between; align-items: center; gap: 10px; }
+.dz-league-tools-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 
 .dz-collected-methods {
   display: flex;

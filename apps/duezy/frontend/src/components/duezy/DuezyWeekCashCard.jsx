@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { money } from '../../utils/duezyMath.js';
 import {
   METHOD_FILTER_CASH,
@@ -23,6 +24,7 @@ function MethodHit({ active, className = '', onOpen, children }) {
  */
 export default function DuezyWeekCashCard({
   totals, title = 'This week by method', teams, week, dues, paymentIndex, weekLabel = 'this week',
+  depositsTo = null,
 }) {
   const { cash, digital, unrecorded, total } = totals;
   const otherTotal = Math.max(0, total - cash.total);
@@ -57,6 +59,12 @@ export default function DuezyWeekCashCard({
       ) : (
         <p className="dz-cash-empty">No payments recorded yet.</p>
       )}
+
+      {depositsTo ? (
+        <Link to={depositsTo} className="dz-link dz-small dz-cash-deposits">
+          Reconcile bank deposits ›
+        </Link>
+      ) : null}
 
       {filter ? (
         <DuezyWeekMethodModal

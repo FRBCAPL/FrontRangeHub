@@ -10,6 +10,7 @@ export default function DuezyWeekSummary({
   summary, season = null, owed, cash, title = 'Collected this week', cashTitle, currentNote = '',
   onShowLate, onShowMakeups, onShowPrepay, tip = null,
   methodTeams = null, methodWeek = null, methodDues = null, methodIndex = null, methodWeekLabel = 'this week',
+  depositsTo = null,
 }) {
   const { paid, partial, bye, makeup = 0, collected, expected } = summary;
   const pct = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 100;
@@ -59,6 +60,7 @@ export default function DuezyWeekSummary({
           dues={methodDues}
           paymentIndex={methodIndex}
           weekLabel={methodWeekLabel}
+          depositsTo={depositsTo}
         />
         <DuezyOwedStat
           owed={owed}

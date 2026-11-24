@@ -1,5 +1,17 @@
 /* Bookkeeping → Deposits: per-method collected / deposited / on hand, deposit log, deposit popup. */
+.dz-deposit-intro { display: flex; flex-direction: column; gap: 4px; }
+.dz-deposit-intro .dz-h3 { margin: 0; }
+.dz-deposit-intro p { margin: 0; }
+.dz-deposit-nudge {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.1);
+  color: #bbf7d0;
+}
 .dz-deposit-sums { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.dz-deposit-sums .is-attention strong { color: #86efac; }
 .dz-deposit-sums > div,
 .dz-deposit-method {
   padding: 10px 12px;

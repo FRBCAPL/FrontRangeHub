@@ -88,8 +88,36 @@
 .dz-collect-name strong { overflow-wrap: anywhere; }
 .dz-collect-name small { color: var(--dz-muted); font-size: 0.8rem; }
 .dz-quick-pay--big { min-height: 48px; padding: 0 16px; font-size: 1rem; font-weight: 700; }
-.dz-collect-more { display: flex; gap: 6px; }
-.dz-collect-more .dz-chip { min-height: 34px; font-size: 0.8rem; }
+.dz-collect-alts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+.dz-collect-alts-toggle {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+.dz-collect-alts-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+.dz-collect-alts-row .dz-chip {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 0.88rem;
+}
+.dz-collect-more { display: flex; flex-wrap: wrap; gap: 8px; }
+.dz-collect-more .dz-chip { min-height: 44px; padding: 0 14px; font-size: 0.9rem; }
 .dz-collect-row .dz-payer { margin: 0; }
 .dz-collect-empty { margin: 8px 0; text-align: center; font-size: 1.05rem; }
 

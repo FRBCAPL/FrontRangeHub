@@ -6,8 +6,9 @@ const icon = (method) => (asksWhoPaid(method) ? '🧾' : '💵');
 const HOLD_MS = 450;
 
 /**
- * One-tap pay with the team's usual method (learned from recent weeks). Press and hold (or right-click)
- * for the other methods. usual = usualPay(); owed = what's left this week. A partial week shows "+$22".
+ * One-tap pay with the team's usual method (learned from recent weeks). Hold / right-click still opens
+ * other methods as a backup; Collect tonight also shows a visible “Other method ›” link.
+ * usual = usualPay(); owed = what's left this week. A partial week shows "+$22".
  */
 export default function DuezyQuickPay({ usual, owed, partial, picking, methods = [], onPay, onPayWith, big = false }) {
   const { method, paid_by: payer, learned } = usual;

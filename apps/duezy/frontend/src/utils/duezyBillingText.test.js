@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LOCKED_MESSAGE, TRIAL_LIMIT_MESSAGE, billingBanner, canAddDivisions, deletionNote, friendlyError } from './duezyBillingText.js';
+import {
+  EXPORT_REMINDER,
+  LOCKED_MESSAGE,
+  TRIAL_LIMIT_MESSAGE,
+  billingBanner,
+  canAddDivisions,
+  deletionNote,
+  friendlyError,
+  shouldRemindExport,
+} from './duezyBillingText.js';
 
 test('billing errors become plain English; others pass through', () => {
   assert.equal(friendlyError('duezy_trial_division_limit: the free trial covers up to 2 divisions'), TRIAL_LIMIT_MESSAGE);
@@ -26,20 +35,32 @@ test('trial allows 2 divisions in total; paid has no cap; locked allows none', (
 });
 
 test('banner copy by phase', () => {
-  assert.equal(
-    billingBanner({ phase: 'trial', days_remaining: 18, divisions_used: 1, division_limit: 2 }).text,
-    'Free trial · 18 days left · 1 of 2 divisions used'
-  );
-  assert.equal(billingBanner({ phase: 'trial', days_remaining: 3 }).tone, 'warn');
+  const early = billingBanner({ phase: 'trial', days_remaining: 18, divisions_used: 1, division_limit: 2 });
+  assert.equal(early.text, 'Free trial · 18 days left · 1 of 2 divisions used');
+  assert.equal(early.showExport, false);
+  const late = billingBanner({ phase: 'trial', days_remaining: 3, divisions_used: 1, division_limit: 2 });
+  assert.equal(late.tone, 'warn');
+  assert.equal(late.showExport, true);
+  assert.match(late.text, new RegExp(EXPORT_REMINDER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.equal(billingBanner({ phase: 'locked', status: 'trialing' }).tone, 'bad');
+  assert.equal(billingBanner({ phase: 'locked', status: 'trialing' }).showExport, true);
   assert.equal(billingBanner({ phase: 'active' }), null);
   assert.equal(billingBanner(null), null);
+});
+
+test('export reminder when trial ends soon or leagues are locked', () => {
+  assert.equal(shouldRemindExport({ phase: 'trial', days_remaining: 8 }), false);
+  assert.equal(shouldRemindExport({ phase: 'trial', days_remaining: 7 }), true);
+  assert.equal(shouldRemindExport({ phase: 'locked' }), true);
+  assert.equal(shouldRemindExport({ phase: 'active' }), false);
+  assert.equal(shouldRemindExport(null), false);
 });
 
 test('read-only banner counts down to deletion, red in the last week', () => {
   const far = { phase: 'locked', status: 'trialing', delete_on: '2026-11-20T15:00:00Z', days_until_delete: 25 };
   assert.equal(billingBanner(far).tone, 'warn');
   assert.match(billingBanner(far).text, /^Your free trial has ended and your leagues are read-only\. Your leagues will be deleted on Nov 20/);
+  assert.match(billingBanner(far).text, new RegExp(EXPORT_REMINDER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   const near = { ...far, status: 'canceled', days_until_delete: 1 };
   assert.equal(billingBanner(near).tone, 'bad');
   assert.match(billingBanner(near).text, /^Your plan has ended.*deleted in 1 day \(Nov 20\)/);

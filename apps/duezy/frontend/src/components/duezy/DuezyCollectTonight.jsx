@@ -48,7 +48,7 @@ export default function DuezyCollectTonight({ league, teams, week, dues, schedul
           {night}: {money(totals.collected)} of {money(totals.due)}
           {' · '}{totals.left ? `${totals.left} ${totals.left === 1 ? 'team' : 'teams'} left` : 'all in'}
         </p>
-        <p className="dz-small dz-muted dz-collect-tip">Tap to record the usual way · hold for another method</p>
+        <p className="dz-small dz-muted dz-collect-tip">Tap the usual method, or Other method › for Cash, Venmo, Card, and more</p>
       </div>
 
       {list.length ? (
