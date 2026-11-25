@@ -202,7 +202,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
                 setShowRules(true);
               }}
             >
-              Show Rules
+              Show Tutorial
             </button>
           )}
         </div>

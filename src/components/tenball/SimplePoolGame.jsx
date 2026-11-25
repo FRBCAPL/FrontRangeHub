@@ -207,6 +207,19 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const [showCallShotModal, setShowCallShotModal] = useState(false); // Show call shot interface
   const [isPushOut, setIsPushOut] = useState(false); // Push out after break
   const [pushOutAvailable, setPushOutAvailable] = useState(false); // Push out available after break
+  const pushOutAnnounced = useRef(false);
+  useEffect(() => {
+    if (!pushOutAvailable) {
+      pushOutAnnounced.current = false;
+      return;
+    }
+    if (isBreak(gameState.gamePhase) || pushOutAnnounced.current) return;
+    pushOutAnnounced.current = true;
+    showSplash(`${nameFor(gameState.currentPlayer)} can push out`, 'turn', {
+      text: 'The cue ball does not have to hit a ball or a rail',
+      tone: 'turn'
+    });
+  }, [pushOutAvailable, gameState.gamePhase, gameState.currentPlayer, showSplash]);
   const [firstShotAfterBreak, setFirstShotAfterBreak] = useState(false); // Track if first shot after break has been taken
   const [isBreakShot, setIsBreakShot] = useState(false); // Track if current shot is a break shot
   const [pushOutResult, setPushOutResult] = useState(null); // Track push out result for opponent decision
@@ -2838,9 +2851,9 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       <div className={styles.aimingInstructions}>
         <div className={styles.instructions}>
           <strong>How To Aim:</strong><br/>
-          Move the mouse to aim • Click the felt to lock • Lowest ball is called — use the tracker only to change it, then click a pocket • Click SHOOT<br/>
+          Move the mouse to aim • Click the felt to lock • Mouse wheel nudges a locked aim • Lowest ball is called — use the tracker only to change it, then click a pocket • Click SHOOT<br/>
           <small style={{color: '#888', fontSize: '12px'}}>
-            The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the nudge smaller. Escape clears the call.
+            The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape clears the call.
           </small>
         </div>
       </div>
@@ -2885,7 +2898,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
               className={isPushOut ? styles.pushOutOn : styles.pushOutOff}
               onClick={() => setIsPushOut((on) => !on)}
             >
-              {isPushOut ? 'Push out on' : 'Push out'}
+              {isPushOut ? 'Push out on' : 'Push out?'}
             </button>
           )}
           </>
