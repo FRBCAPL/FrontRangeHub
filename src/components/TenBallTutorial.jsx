@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import SimplePoolGame from './tenball/SimplePoolGame';
 import TutorialRules from './tenball/TutorialRules';
 import GameModeSelector from './tenball/GameModeSelector';
+import PlayerSetupModal from './tenball/PlayerSetupModal';
 import TipManager from './tenball/TipManager';
 import styles from './tenball/TenBallTutorial.module.css';
 
@@ -10,6 +11,9 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showHints, setShowHints] = useState(true);
   const [showRules, setShowRules] = useState(true);
+  const [playerNames, setPlayerNames] = useState({ 1: '', 2: '' });
+  const [vsComputer, setVsComputer] = useState(true);
+  const [setupOpen, setSetupOpen] = useState(false);
   const [gameState, setGameState] = useState({
     player1Score: 0,
     player2Score: 0,
@@ -25,21 +29,25 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
 
   const tutorialSteps = [
     {
-      title: "The Break Shot",
-      content: "Start the game with a legal break shot. You must break from the kitchen hitting the 1-ball first and drive at least 4 balls to the rails or pocket a ball.",
-      proTip: "A good break can set up your entire game!"
-    },
-    
-    {
       title: "Welcome to 10-Ball!",
       content: "10-Ball is a call-shot game where you must hit the lowest numbered ball first and call your shots. The 10-ball is the game-winning ball!",
       proTip: "Always hit the lowest numbered ball first!"
+    },
+    {
+      title: "The Break Shot",
+      content: "Start the game with a legal break shot. You must break from the kitchen hitting the 1-ball first and drive at least 4 balls to the rails or pocket a ball.",
+      proTip: "A good break can set up your entire game!"
     },
   
     {
       title: "Call Shot Rules",
       content: "After the break, you must call both the ball and the pocket for every shot. If you don't call it, it doesn't count!",
-      proTip: "Call the ball and the pocket. Banks, kicks, and caroms are called the same way. Make sure your opponent hears the call."
+      proTip: "Always call a ball abnd a pocket for every shot."
+    },
+    {
+      title: "Illegal Ball",
+      content: "A ball is illegal if the called ball goes in the wrong pocket, or another ball falls when the called shot was not made. The other player can accept the table or make the shooter shoot again. An illegal 10-ball is spotted. Other illegal balls stay down.",
+      proTip: "If the called ball also goes in the called pocket, extra balls stay down and the shooter continues. An extra 10-ball is still spotted."
     },
     {
       title: "Push Out Option",
@@ -48,7 +56,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     },
     {
       title: "Fouls and Penalties",
-      content: "Common fouls include: scratching (cue ball in pocket), hitting wrong ball first, not hitting any rail after contact, and jumping the cue ball off the table.",
+      content: "Common fouls include: scratching (cue ball in pocket), hitting wrong ball first, not hitting any rail after contact, and jumping any ball off the table.",
       proTip: "Three consecutive fouls by the same player results in loss of game!"
     },
     {
@@ -69,12 +77,24 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   ];
 
   const handleGameModeSelect = (mode) => {
-    setCurrentMode(mode);
-    if (mode === 'tutorial') {
+    if (mode === 'tutorial') setSetupOpen(true);
+  };
+
+  const confirmSetup = ({ names, vsComputer: computer }) => {
+    setPlayerNames(names);
+    setVsComputer(computer);
+    setSetupOpen(false);
+    if (currentMode === 'menu') {
+      setCurrentMode('tutorial');
       setTutorialStep(0);
       setShowHints(true);
       setShowRules(true);
     }
+  };
+
+  const seatLabel = (id) => {
+    if (vsComputer && id === 2) return 'Computer';
+    return (playerNames[id] || '').trim() || `Player ${id}`;
   };
 
   const handleTutorialNext = () => {
@@ -131,18 +151,13 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
       case 'tutorial':
       case 'game':
         return (
-          <div className={`${styles.tutorialContainer} ${rulesOpen ? '' : styles.rulesHidden}`}>
-            {rulesOpen && (
-              <TutorialRules 
-                step={tutorialSteps[tutorialStep]}
-                currentStep={tutorialStep}
-                totalSteps={tutorialSteps.length}
-                onNext={handleTutorialNext}
-                onBack={handleTutorialBack}
-                onSkip={() => setShowRules(false)}
-              />
-            )}
-            <SimplePoolGame onGameEnd={handleGameEnd} />
+          <div className={styles.tutorialContainer}>
+            <SimplePoolGame
+              onGameEnd={handleGameEnd}
+              playerNames={playerNames}
+              vsComputer={vsComputer}
+              onEditPlayers={() => setSetupOpen(true)}
+            />
           </div>
         );
       
@@ -197,13 +212,34 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
         <div className={styles.gameInfo}>
           <div className={styles.scoreBoard}>
             <div className={styles.playerScore}>
-              <span>Player 1: {gameState.player1Score}</span>
+              <span>{seatLabel(1)}: {gameState.player1Score}</span>
             </div>
             <div className={styles.playerScore}>
-              <span>Player 2: {gameState.player2Score}</span>
+              <span>{seatLabel(2)}: {gameState.player2Score}</span>
             </div>
           </div>
         </div>
+      )}
+
+      {rulesOpen && (
+        <TutorialRules
+          step={tutorialSteps[tutorialStep]}
+          currentStep={tutorialStep}
+          totalSteps={tutorialSteps.length}
+          onNext={handleTutorialNext}
+          onBack={handleTutorialBack}
+          onSkip={() => setShowRules(false)}
+        />
+      )}
+
+      {setupOpen && (
+        <PlayerSetupModal
+          initialNames={playerNames}
+          initialVsComputer={vsComputer}
+          confirmLabel={currentMode === 'menu' ? 'Start' : 'Save'}
+          onConfirm={confirmSetup}
+          onCancel={() => setSetupOpen(false)}
+        />
       )}
     </div>
   );

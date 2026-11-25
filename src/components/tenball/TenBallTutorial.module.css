@@ -81,17 +81,12 @@
 }
 
 .tutorialContainer {
-  display: grid;
-  grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
-  gap: 16px;
-  align-items: stretch;
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
-}
-
-.rulesHidden {
-  grid-template-columns: minmax(0, 1fr);
 }
 
 .navigation {
@@ -159,8 +154,6 @@
   }
   
   .tutorialContainer {
-    grid-template-columns: 1fr;
-    gap: 12px;
     overflow: visible;
   }
 

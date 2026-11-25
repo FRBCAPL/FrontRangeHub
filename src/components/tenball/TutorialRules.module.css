@@ -1,18 +1,45 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 10, 20, 0.55);
+  padding: 16px;
+}
+
 .tutorialRules {
+  position: relative;
   background: #0b1020;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 15px;
   padding: 16px 18px;
-  height: 100%;
-  max-height: 100%;
+  width: min(460px, 100%);
+  max-height: min(640px, 90vh);
   overflow-y: auto;
   overflow-x: hidden;
-  width: 100%;
   box-sizing: border-box;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
 }
 
 .header {
   margin-bottom: 16px;
+  padding-right: 36px;
 }
 
 .header h3 {
@@ -245,7 +272,7 @@
 @media (max-width: 768px) {
   .tutorialRules {
     padding: 20px;
-    max-height: none;
+    max-height: 90vh;
   }
   
   .navigation {

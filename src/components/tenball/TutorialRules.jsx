@@ -5,19 +5,10 @@ import styles from './TutorialRules.module.css';
 const TutorialRules = ({ step, currentStep, totalSteps, onNext, onBack, onSkip }) => {
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
-  const tips = [
-    "Remember: Always hit the lowest numbered ball first!",
-    "Call your shots clearly - specify ball and pocket.",
-    "The 10-ball is the money ball - pocket it legally to win!",
-    "Use the push out strategically to improve your position.",
-    "Three consecutive fouls result in loss of game.",
-    "Practice your break shot - it sets up the entire game.",
-    "Defensive play is just as important as offensive play.",
-    "Watch for safety opportunities when you can't make a shot."
-  ];
-
   return (
-    <div className={styles.tutorialRules}>
+    <div className={styles.overlay} onClick={onSkip}>
+    <div className={styles.tutorialRules} onClick={(event) => event.stopPropagation()}>
+      <button type="button" className={styles.close} onClick={onSkip} aria-label="Close tutorial">×</button>
       <div className={styles.header}>
         <h3>10-Ball Rules Tutorial</h3>
         <div className={styles.progressContainer}>
@@ -48,7 +39,7 @@ const TutorialRules = ({ step, currentStep, totalSteps, onNext, onBack, onSkip }
 
         <div className={styles.tipSection}>
           <h5>💡 Pro Tip</h5>
-          <p>{tips[currentStep % tips.length]}</p>
+          <p>{step.proTip}</p>
         </div>
       </div>
 
@@ -111,6 +102,7 @@ const TutorialRules = ({ step, currentStep, totalSteps, onNext, onBack, onSkip }
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 };

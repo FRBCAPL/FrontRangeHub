@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from './SimplePoolGame.module.css';
 import TableDecisionCard from './TableDecisionCard';
+import PlayerSetupModal from './PlayerSetupModal';
 import { readMutedTipSeats, writeMutedTipSeats } from './TipManager';
 import { planComputerShot, computerTakesTheTable } from './computerOpponent';
 import { PHASES, isBreak, isPlay, nextPhaseAfterShot, shouldEnablePushOut, canShowPushOut } from './turnStateMachine';
@@ -116,7 +117,7 @@ function lowestBallOnTable(balls) {
   return visible.reduce((lowest, ball) => (ball.id < lowest.id ? ball : lowest)).id;
 }
 
-const SimplePoolGame = ({ onGameEnd }) => {
+const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: vsComputerProp, onEditPlayers }) => {
   // Remove the console.log that's causing spam
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState({
@@ -148,9 +149,17 @@ const SimplePoolGame = ({ onGameEnd }) => {
   // CSI 10-Ball Rules - Call Shot System
   const [calledBall, setCalledBall] = useState(null); // Ball player is calling
   const [calledPocket, setCalledPocket] = useState(null); // Pocket player is calling
-  const [playerNames, setPlayerNames] = useState({ 1: '', 2: '' });
+  const [localNames, setLocalNames] = useState({ 1: '', 2: '' });
+  const [localVsComputer, setLocalVsComputer] = useState(false);
+  const [localSetupOpen, setLocalSetupOpen] = useState(false);
+  const [turnSplash, setTurnSplash] = useState(null);
+  const [turnCue, setTurnCue] = useState(0);
+  const splashTimer = useRef(null);
+  const splashOpenRef = useRef(false);
+  const suppressTurnSplash = useRef(false);
+  const playerNames = playerNamesProp ?? localNames;
+  const vsComputer = vsComputerProp !== undefined ? vsComputerProp : localVsComputer;
   const [mutedTipSeats, setMutedTipSeats] = useState(() => readMutedTipSeats());
-  const [vsComputer, setVsComputer] = useState(false);
   const playerNamesRef = useRef(playerNames);
   const vsComputerRef = useRef(vsComputer);
   playerNamesRef.current = playerNames;
@@ -163,6 +172,34 @@ const SimplePoolGame = ({ onGameEnd }) => {
   const tipSeat = (vsComputer && gameState.currentPlayer === 2) ? 1 : gameState.currentPlayer;
   window.__tenballTipSeat = tipSeat;
   window.__tenballTipAllow = !mutedTipSeats.has(tipSeat);
+
+  const showSplash = useCallback((text, tone, next) => {
+    const splashMs = (stepTone) => (stepTone === 'win' ? 4000 : 1200);
+    splashOpenRef.current = true;
+    setTurnSplash({ text, tone });
+    if (splashTimer.current) clearTimeout(splashTimer.current);
+    splashTimer.current = setTimeout(() => {
+      const advance = (step) => {
+        if (!step) {
+          splashOpenRef.current = false;
+          setTurnSplash(null);
+          return;
+        }
+        setTurnSplash(step);
+        splashTimer.current = setTimeout(() => advance(step.next), splashMs(step.tone));
+      };
+      advance(next);
+    }, splashMs(tone));
+  }, []);
+
+  useEffect(() => {
+    if (suppressTurnSplash.current) {
+      suppressTurnSplash.current = false;
+      return undefined;
+    }
+    showSplash(`${nameFor(gameState.currentPlayer)}'s turn`, 'turn');
+    return undefined;
+  }, [gameState.currentPlayer, turnCue, showSplash]);
   const [computerArmed, setComputerArmed] = useState(false);
   const computerBusy = useRef(false);
   const tipOpenRef = useRef(false);
@@ -480,6 +517,14 @@ const SimplePoolGame = ({ onGameEnd }) => {
     const fouledName = nameFor(playerWhoFouled);
     const incomingName = otherName(playerWhoFouled);
     const ballNote = nextBall ? ` The ${nextBall}-ball is still the ball to hit first.` : '';
+    let foulReason = 'That shot was a foul';
+    if (foulType === 'scratch') foulReason = 'The cue ball was pocketed';
+    else if (foulType === 'wrong_ball_first' || foulType === 'break_wrong_ball_first') {
+      foulReason = nextBall ? `The ${nextBall}-ball had to be hit first` : 'The wrong ball was hit first';
+    } else if (foulType === 'break_cushion_first') foulReason = 'The cue ball hit a rail before the 1-ball';
+    else if (foulType === 'break_insufficient_cushions') foulReason = 'The break needed a pocketed ball or four rails';
+    else if (foulType === 'no_contact') foulReason = 'The cue ball missed every ball';
+    else if (foulType === 'no_rail_contact') foulReason = 'No ball reached a rail after the hit';
     let foulTip = `Foul. ${incomingName} has ball in hand.${ballNote}`;
     if (nextFoulCount >= 3) {
       foulTip = `That is three fouls in a row. ${fouledName} loses the game.`;
@@ -522,6 +567,11 @@ const SimplePoolGame = ({ onGameEnd }) => {
     if (nextFoulCount >= 3) {
       const winner = playerWhoFouled === 1 ? 2 : 1;
       gameOverRef.current = true;
+      showSplash('FOUL', 'foul', {
+        text: 'Three fouls in a row',
+        tone: 'foulReason',
+        next: { text: `${nameFor(winner)} wins`, tone: 'win' }
+      });
       if (onGameEnd) onGameEnd(winner);
       setTimeout(() => {
         setGameState(prev => ({
@@ -539,12 +589,19 @@ const SimplePoolGame = ({ onGameEnd }) => {
         setCalledPocket(null);
         setShowAimLine(true);
         gameOverRef.current = false;
-      }, 2000);
+        setTurnCue((cue) => cue + 1);
+      }, 6600);
       setFoulType(foulType);
       return;
     }
 
     // Apply ball-in-hand penalty
+    suppressTurnSplash.current = true;
+    showSplash('FOUL', 'foul', {
+      text: foulReason,
+      tone: 'foulReason',
+      next: { text: `${incomingName} has ball in hand`, tone: 'turn' }
+    });
     setGameState(prev => ({
       ...prev,
       ballInHand: true,
@@ -569,7 +626,7 @@ const SimplePoolGame = ({ onGameEnd }) => {
 
     // Set foul type for display
     setFoulType(foulType);
-  }, [gameState.currentPlayer, gameState.balls, shotPlayer, consecutiveFouls, offerTableTip, onGameEnd]);
+  }, [gameState.currentPlayer, gameState.balls, shotPlayer, consecutiveFouls, offerTableTip, onGameEnd, showSplash]);
 
   // Check if click is on cue ball
   const isClickOnCueBall = useCallback((x, y) => {
@@ -1575,6 +1632,7 @@ const SimplePoolGame = ({ onGameEnd }) => {
           }
           
           offerTableTip('game-won', `The 10-ball is down in the called pocket. ${nameFor(winner)} wins the game.`);
+          showSplash(`${nameFor(winner)} wins`, 'win');
           
           setTimeout(() => {
             setGameState(prev => ({
@@ -1603,7 +1661,8 @@ const SimplePoolGame = ({ onGameEnd }) => {
             if (window.tipManager && window.tipManager.resetTips) {
               window.tipManager.resetTips();
             }
-          }, 2000); // 2 second delay to show the win
+            setTurnCue((cue) => cue + 1);
+          }, 4200); // Keep the winner splash up before the next rack
         } else {
           // 10-ball was illegally pocketed - spot it on the foot spot and continue
           debugLog('10-ball illegally pocketed - spotting it on the foot spot');
@@ -1857,23 +1916,24 @@ const SimplePoolGame = ({ onGameEnd }) => {
 
   useEffect(() => {
     if (!computerArmed || !vsComputer) return undefined;
-    if (tipOpenRef.current || tipBlockingComputer) return undefined;
+    if (tipOpenRef.current || tipBlockingComputer || splashOpenRef.current || turnSplash) return undefined;
     const timer = setTimeout(() => {
       setComputerArmed(false);
       handleShoot();
     }, 700);
     return () => clearTimeout(timer);
-  }, [computerArmed, vsComputer, handleShoot, tipBlockingComputer]);
+  }, [computerArmed, vsComputer, handleShoot, tipBlockingComputer, turnSplash]);
 
   useEffect(() => {
     if (!vsComputer) {
       computerBusy.current = false;
+      setComputerArmed(false);
       return undefined;
     }
     if (gameState.isAnimating) return undefined;
 
     if (showPushOutDecision || showIllegalPocketOption) return undefined;
-    if (tipOpenRef.current || tipBlockingComputer) return undefined;
+    if (tipOpenRef.current || tipBlockingComputer || splashOpenRef.current || turnSplash) return undefined;
 
     if (gameOverRef.current || gameState.currentPlayer !== 2 || computerBusy.current || computerArmed) return undefined;
     const plan = planComputerShot({
@@ -1912,6 +1972,7 @@ const SimplePoolGame = ({ onGameEnd }) => {
     showPushOutDecision,
     showIllegalPocketOption,
     tipBlockingComputer,
+    turnSplash,
     illegallyPocketedBalls,
     pushOutAvailable,
     computerArmed,
@@ -2662,43 +2723,29 @@ const SimplePoolGame = ({ onGameEnd }) => {
   // English control drag handlers for UI button
   const [isDraggingEnglish, setIsDraggingEnglish] = useState(false);
   
+  const applyEnglishFromPointer = useCallback((event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const relX = (event.clientX - rect.left) / rect.width;
+    const relY = (event.clientY - rect.top) / rect.height;
+    const distance = Math.sqrt((relX - 0.5) ** 2 + (relY - 0.5) ** 2);
+    const clampedDistance = Math.min(distance, 0.4);
+    const intensity = Math.min(clampedDistance / 0.4, 1);
+    const angle = Math.atan2(relY - 0.5, relX - 0.5);
+    const degrees = (angle * 180 / Math.PI + 360) % 360;
+    setEnglish(intensity);
+    setEnglishDirection(degrees);
+  }, []);
+
   const handleEnglishMouseDown = useCallback((event) => {
     event.preventDefault();
     setIsDraggingEnglish(true);
-    console.log('English drag started');
-  }, []);
-  
+    applyEnglishFromPointer(event);
+  }, [applyEnglishFromPointer]);
+
   const handleEnglishMouseMove = useCallback((event) => {
     if (!isDraggingEnglish) return;
-    
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // Convert to relative coordinates (0-1)
-    const relX = x / rect.width;
-    const relY = y / rect.height;
-    
-    // Calculate distance from center
-    const centerX = 0.5;
-    const centerY = 0.5;
-    const distance = Math.sqrt((relX - centerX) ** 2 + (relY - centerY) ** 2);
-    
-    // Clamp distance to ball radius
-    const clampedDistance = Math.min(distance, 0.4);
-    
-    // Calculate English intensity based on distance from center
-    const intensity = Math.min(clampedDistance / 0.4, 1);
-    
-    // Calculate direction from center
-    const angle = Math.atan2(relY - centerY, relX - centerX);
-    const degrees = (angle * 180 / Math.PI + 360) % 360;
-    
-    setEnglish(intensity);
-    setEnglishDirection(degrees);
-    
-    console.log(`English updated: ${Math.round(intensity * 100)}% at ${Math.round(degrees)}°`);
-  }, [isDraggingEnglish]);
+    applyEnglishFromPointer(event);
+  }, [isDraggingEnglish, applyEnglishFromPointer]);
   
   const handleEnglishMouseUp = useCallback(() => {
     setIsDraggingEnglish(false);
@@ -2807,7 +2854,7 @@ const SimplePoolGame = ({ onGameEnd }) => {
                 <img src={ballImages[calledBall]} alt="" className={styles.callBadgeBall} />
               )}
               <strong>
-                {calledBall && calledPocket ? `${calledBall}-ball` : 'Call your shot'}
+                {calledBall ? `${calledBall}-ball` : 'Call your shot'}
               </strong>
               <span>
                 {calledBall && calledPocket
@@ -2848,35 +2895,17 @@ const SimplePoolGame = ({ onGameEnd }) => {
       <div className={styles.playerNames}>
         <button
           type="button"
-          className={vsComputer ? styles.opponentToggleOn : styles.opponentToggle}
-          onClick={() => {
-            setComputerArmed(false);
-            computerBusy.current = false;
-            setVsComputer((on) => !on);
-          }}
+          className={styles.editPlayers}
+          onClick={() => (onEditPlayers ? onEditPlayers() : setLocalSetupOpen(true))}
         >
-          {vsComputer ? 'Two players' : 'Play computer'}
+          Edit
         </button>
         {[1, 2].map((id) => {
           const shooting = gameState.currentPlayer === id;
           const computerSeat = vsComputer && id === 2;
           return (
             <label key={id} className={shooting ? styles.playerTurn : styles.playerWaiting}>
-              {computerSeat ? (
-                <span className={styles.computerName}>Computer</span>
-              ) : (
-                <input
-                  type="text"
-                  maxLength={20}
-                  placeholder={`Player ${id}`}
-                  aria-label={`Player ${id} name, optional`}
-                  value={playerNames[id]}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setPlayerNames((prev) => ({ ...prev, [id]: value }));
-                  }}
-                />
-              )}
+              <span className={styles.seatName}>{nameFor(id)}</span>
               {shooting && <em>to shoot</em>}
               {consecutiveFouls[id] > 0 && (
                 <span className={styles.foulCount}>
@@ -2954,6 +2983,21 @@ const SimplePoolGame = ({ onGameEnd }) => {
             onContextMenu={(e) => e.preventDefault()}
             className={styles.tableCanvas}
           />
+          {turnSplash && (
+            <div className={styles.turnSplash}>
+              <span
+                key={turnSplash.text}
+                className={
+                  turnSplash.tone === 'foul' ? styles.splashFoul
+                  : turnSplash.tone === 'foulReason' ? styles.splashReason
+                  : turnSplash.tone === 'win' ? styles.splashWin
+                  : undefined
+                }
+              >
+                {turnSplash.text}
+              </span>
+            </div>
+          )}
           {showPushOutDecision && (
             <TableDecisionCard>
                 <h3>Push Out Result</h3>
@@ -3077,44 +3121,24 @@ const SimplePoolGame = ({ onGameEnd }) => {
                />
                </div>
              
-             {english !== 0 && (
-               <div style={{
-                 fontSize: '12px',
-                 color: getSpinColor(englishDirection),
-                 fontWeight: 'bold'
-               }}>
-                 {getSpinType(englishDirection)}
-               </div>
-             )}
-             {english === 0 && (
-               <div style={{
-                 fontSize: '12px',
-                 color: '#666'
-               }}>
-                 No Spin
-               </div>
-             )}
-             
-             {english !== 0 && (
-               <button
-                 onClick={() => {
-                   setEnglish(0);
-                   setEnglishDirection(0);
-                 }}
-                 style={{
-                   fontSize: '10px',
-                   padding: '2px 6px',
-                   background: '#666',
-                   color: 'white',
-                   border: 'none',
-                   borderRadius: '3px',
-                   cursor: 'pointer',
-                   marginLeft: '5px'
-                 }}
-               >
-                 Reset
-               </button>
-             )}
+             {english === 0 ? (
+              <div className={styles.spinReadout}>No Spin</div>
+            ) : (
+              <div className={styles.spinReadout} style={{ color: getSpinColor(englishDirection) }}>
+                {getSpinType(englishDirection)}
+              </div>
+            )}
+            <button
+              type="button"
+              className={styles.spinReset}
+              style={{ visibility: english === 0 ? 'hidden' : 'visible' }}
+              onClick={() => {
+                setEnglish(0);
+                setEnglishDirection(0);
+              }}
+            >
+              Reset
+            </button>
           </div>
         </div>
       </div>
@@ -3165,6 +3189,7 @@ const SimplePoolGame = ({ onGameEnd }) => {
                }));
                setShowAimLine(true);
                setIsDraggingCueBall(false); // Reset dragging state
+               setTurnCue((cue) => cue + 1);
                setHighlightedPocket(null);
                setAimLocked(false);
                setCalledBall(null);
@@ -3201,8 +3226,23 @@ const SimplePoolGame = ({ onGameEnd }) => {
            >
              Reset Game
            </button>
-         </div>
-       </div>
+        </div>
+      </div>
+      {!onEditPlayers && localSetupOpen && (
+        <PlayerSetupModal
+          initialNames={playerNames}
+          initialVsComputer={vsComputer}
+          confirmLabel="Save"
+          onConfirm={({ names, vsComputer: computer }) => {
+            setLocalNames(names);
+            setLocalVsComputer(computer);
+            setComputerArmed(false);
+            computerBusy.current = false;
+            setLocalSetupOpen(false);
+          }}
+          onCancel={() => setLocalSetupOpen(false)}
+        />
+      )}
     </div>
   );
 };
