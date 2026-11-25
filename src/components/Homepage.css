@@ -295,6 +295,24 @@
   border-color: #818cf8;
 }
 
+.homepage-footer .homepage-footer-ball {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.homepage-footer .homepage-footer-app--tenball {
+  border-color: rgba(76, 175, 80, 0.55);
+  background: rgba(76, 175, 80, 0.12);
+  color: #dcfce7;
+}
+
+.homepage-footer .homepage-footer-app--tenball:hover,
+.homepage-footer .homepage-footer-app--tenball:focus-visible {
+  background: rgba(76, 175, 80, 0.28);
+  border-color: #4caf50;
+}
+
 .section-title {
   color: #fff;
   font-size: 2rem;

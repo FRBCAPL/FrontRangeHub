@@ -35,6 +35,7 @@ function hubCenterTitle(pathname, currentAppName, userFirstName, search) {
   if (pathname === '/hub') return !userFirstName ? 'Ladder - Login' : 'Ladder of Legends';
   if (pathname === '/guest/ladder' || pathname === '/ladder') return 'Ladder of Legends';
   if (pathname === '/cueless') return 'Cueless in the Booth';
+  if (pathname === '/tenball-tutorial' || pathname === '/simple-pool') return '10-Ball';
   if (pathname === '/admin') return 'Singles League Admin';
   if (ADMIN_HOME_PATHS.includes(pathname)) return 'Admin Home';
   if (pathname === '/platform-admin') return 'Platform Admin';
@@ -137,6 +138,8 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   const isCuelessApp = location.pathname === '/cueless' || location.pathname.startsWith('/cueless/');
   const isArcadeApp = location.pathname.startsWith('/arcade/');
   const isAdminHome = ADMIN_HOME_PATHS.includes(location.pathname);
+  const isPoolGame =
+    location.pathname === '/tenball-tutorial' || location.pathname === '/simple-pool';
   const isTournamentApp =
     location.pathname.startsWith('/tournament-bracket') &&
     location.pathname !== '/tournament-bracket/tv' &&
@@ -159,7 +162,7 @@ const HubNavigation = ({ currentAppName, isAdmin, isSuperAdmin, onLogout, userFi
   };
   
   return (
-    <div ref={navRootRef} className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp || isLegendsApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isArcadeApp ? 'arcade-nav' : ''} ${isAdminHome ? 'admin-home-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+    <div ref={navRootRef} className={`hub-navigation ${isLadderApp ? 'ladder-app' : ''} ${isUsaplApp || isLegendsApp ? 'usapl-nav' : ''} ${isConsignmentApp ? 'consignment-nav' : ''} ${isArcadeApp ? 'arcade-nav' : ''} ${isAdminHome ? 'admin-home-nav' : ''} ${isCuelessApp ? 'cueless-app' : ''} ${isTournamentApp ? 'tournament-app' : ''} ${isPoolGame ? 'pool-game-nav' : ''} ${location.pathname === '/' ? 'homepage-nav' : ''} ${isMobile ? 'mobile-nav' : ''} ${isMobileMenuOpen ? 'mobile-menu-open' : ''}`}>
       <div className="nav-content">
         {/* Mobile layout: 8/9/10 ball button above title */}
         <div className={`nav-left ${location.pathname === '/' ? 'hide-on-homepage' : ''}`} style={{ 

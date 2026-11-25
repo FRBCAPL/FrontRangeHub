@@ -9,6 +9,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   const [currentMode, setCurrentMode] = useState('menu'); // menu, tutorial, game
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showHints, setShowHints] = useState(true);
+  const [showRules, setShowRules] = useState(true);
   const [gameState, setGameState] = useState({
     player1Score: 0,
     player2Score: 0,
@@ -38,11 +39,11 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     {
       title: "Call Shot Rules",
       content: "After the break, you must call both the ball and the pocket for every shot. If you don't call it, it doesn't count!",
-      proTip: "CSI rules state that you do not have to call obvious shots. Banks, Kicks, and Caroms should always be called. Be specific about which pocket you're aiming for! Make sure your opponent acknowledges your called shot."
+      proTip: "Call the ball and the pocket. Banks, kicks, and caroms are called the same way. Make sure your opponent hears the call."
     },
     {
       title: "Push Out Option",
-      content: "After a legal break, the incoming player may choose to 'push out' - shoot the cue ball anywhere without hitting any ball. The opponent then chooses to shoot or pass.",
+      content: "After a legal break, the player at the table may push out. The cue ball does not have to hit a ball or a rail. Balls that fall stay down, except the 10-ball, which is spotted. The other player then shoots, or gives the shot back.",
       proTip: "Use push out to improve your position when the table is difficult!"
     },
     {
@@ -72,6 +73,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     if (mode === 'tutorial') {
       setTutorialStep(0);
       setShowHints(true);
+      setShowRules(true);
     }
   };
 
@@ -79,7 +81,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     if (tutorialStep < tutorialSteps.length - 1) {
       setTutorialStep(tutorialStep + 1);
     } else {
-      setCurrentMode('game');
+      setShowRules(false);
     }
   };
 
@@ -113,6 +115,9 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     });
   };
 
+  const playing = currentMode === 'tutorial' || currentMode === 'game';
+  const rulesOpen = currentMode === 'tutorial' && showRules;
+
   const renderContent = () => {
     switch (currentMode) {
       case 'menu':
@@ -124,23 +129,21 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
         );
       
       case 'tutorial':
-        return (
-          <div className={styles.tutorialContainer}>
-            <TutorialRules 
-              step={tutorialSteps[tutorialStep]}
-              currentStep={tutorialStep}
-              totalSteps={tutorialSteps.length}
-              onNext={handleTutorialNext}
-              onBack={handleTutorialBack}
-              onSkip={() => setCurrentMode('game')}
-            />
-            <SimplePoolGame onGameEnd={handleGameEnd} />
-          </div>
-        );
-      
       case 'game':
         return (
-          <SimplePoolGame onGameEnd={handleGameEnd} />
+          <div className={`${styles.tutorialContainer} ${rulesOpen ? '' : styles.rulesHidden}`}>
+            {rulesOpen && (
+              <TutorialRules 
+                step={tutorialSteps[tutorialStep]}
+                currentStep={tutorialStep}
+                totalSteps={tutorialSteps.length}
+                onNext={handleTutorialNext}
+                onBack={handleTutorialBack}
+                onSkip={() => setShowRules(false)}
+              />
+            )}
+            <SimplePoolGame onGameEnd={handleGameEnd} />
+          </div>
         );
       
       default:
@@ -166,14 +169,27 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
         />
       )}
       
-      {currentMode !== 'menu' && !fromLogin && (
+      {playing && (
         <div className={styles.navigation}>
-          <button 
-            className={styles.backButton}
-            onClick={() => setCurrentMode('menu')}
-          >
-            ← Back to Menu
-          </button>
+          {!fromLogin && (
+            <button 
+              className={styles.backButton}
+              onClick={() => setCurrentMode('menu')}
+            >
+              ← Back to Menu
+            </button>
+          )}
+          {!rulesOpen && (
+            <button
+              className={styles.backButton}
+              onClick={() => {
+                setCurrentMode('tutorial');
+                setShowRules(true);
+              }}
+            >
+              Show Rules
+            </button>
+          )}
         </div>
       )}
       

@@ -856,6 +856,7 @@ function AppContent() {
 
   // When ?preview=1 on homepage, show logged-out nav (for embed previews on frusapl.com etc.)
   const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
+  const isPoolGame = location.pathname === '/tenball-tutorial' || location.pathname === '/simple-pool';
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", background: "#000" }}>
@@ -884,7 +885,7 @@ function AppContent() {
         />
         ) : null}
 
-                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}${isConsignment ? ' cs-shell' : ''}${isLegends ? ' lg-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague || isConsignment || isLegends ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", overflowX: "hidden", background: "none", minHeight: "100vh", paddingTop: isEstateInventory ? "0px" : isConsignment ? "120px" : "96px" }}>
+                 <div className={`main-content-wrapper${isEstateInventory ? ' estateit-shell' : ''}${isUsaplLeague ? ' usapl-shell' : ''}${isConsignment ? ' cs-shell' : ''}${isLegends ? ' lg-shell' : ''}${isPoolGame ? ' pool-game-shell' : ''}`} style={{ position: "relative", zIndex: 3, maxWidth: isPoolGame ? '100%' : location.pathname === '/' ? 1400 : location.pathname === '/embed-preview' ? 1000 : isUsaplLeague || isConsignment || isLegends ? '100%' : location.pathname === '/estateit/super' ? 1100 : location.pathname === '/estateit' ? 920 : isEstateInventory ? 720 : 900, margin: "0 auto", width: "100%", overflowX: "hidden", background: "none", minHeight: isPoolGame ? 0 : "100vh", paddingTop: isPoolGame ? "var(--hub-nav-h, 72px)" : isEstateInventory ? "0px" : isConsignment ? "120px" : "96px" }}>
           <Routes>
             
             {/* League App Routes */}

@@ -1,12 +1,17 @@
 .container {
   max-width: 100%;
   margin: 0 auto;
-  padding: 20px;
-  min-height: 100vh;
+  padding: 8px 12px 8px;
+  height: 100%;
+  min-height: 0;
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   width: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 6px;
 }
 
 
@@ -67,7 +72,6 @@
 
 .backButton:hover {
   background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-50%) scale(1.05);
 }
 
 .content {
@@ -78,9 +82,41 @@
 
 .tutorialContainer {
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 30px;
-  align-items: start;
+  grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rulesHidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.navigation {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.backButton {
+  position: static;
+  transform: none;
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+.gameInfo {
+  flex: 0 0 auto;
+}
+
+.scoreBoard {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  font-size: 0.85rem;
 }
 
 .controls {
@@ -124,7 +160,13 @@
   
   .tutorialContainer {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 12px;
+    overflow: visible;
+  }
+
+  .container {
+    height: auto;
+    overflow: visible;
   }
   
   .backButton {

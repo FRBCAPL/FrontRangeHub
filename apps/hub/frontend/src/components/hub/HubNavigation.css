@@ -935,6 +935,72 @@ html body .hub-navigation.homepage-nav .nav-content {
   padding-top: calc(var(--hub-nav-h, 112px) + 6px) !important;
 }
 
+/* 10-ball play screen: one short bar, game fills the rest of the window */
+.hub-navigation.pool-game-nav {
+  min-height: 4.2rem;
+  padding: 0.45rem 0;
+}
+
+.hub-navigation.pool-game-nav .nav-content {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0 12px;
+  gap: 0.75rem;
+}
+
+.hub-navigation.pool-game-nav .nav-center {
+  position: static;
+  left: auto;
+  top: auto;
+  transform: none;
+  width: auto;
+  max-width: none;
+  min-width: 0;
+  flex: 1;
+}
+
+.hub-navigation.pool-game-nav .app-title,
+.hub-navigation.pool-game-nav .nav-center .app-title {
+  font-size: 2.75rem !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  white-space: nowrap !important;
+}
+
+.hub-navigation.pool-game-nav .hub-brand {
+  padding: 0.3rem 0.65rem;
+  font-size: 0.95rem;
+}
+
+#root:has(.pool-game-shell) {
+  padding: 0 !important;
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.main-content-wrapper.pool-game-shell {
+  padding-top: var(--hub-nav-h, 72px) !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 900px) {
+  .main-content-wrapper.pool-game-shell {
+    height: auto !important;
+    min-height: 100dvh !important;
+    overflow: auto !important;
+  }
+}
+
 .main-content-wrapper.cs-shell > main.main-app-content {
   margin-top: 0 !important;
   padding-top: 0 !important;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Homepage.css';
 import frontRangeLogo from '../assets/logo.png';
+import tenBall from '@shared/assets/tenball.svg';
 import usaplLogo from '../assets/usapl_logo.png';
 import cuesyncIcon from '../assets/cuesync_icon.png';
 import CuelessCubeLogo from './CuelessCubeLogo';
@@ -410,6 +411,10 @@ const Homepage = ({ canRunTournament = false }) => {
           </button>
           <button type="button" className="homepage-footer-app homepage-footer-app--legends" onClick={() => navigate('/legends')}>
             <span aria-hidden="true">🎱</span> Legends Brews &amp; Cues
+          </button>
+          <button type="button" className="homepage-footer-app homepage-footer-app--tenball" onClick={() => navigate('/tenball-tutorial')}>
+            <img src={tenBall} alt="" aria-hidden="true" className="homepage-footer-ball" />
+            Play 10-Ball
           </button>
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>

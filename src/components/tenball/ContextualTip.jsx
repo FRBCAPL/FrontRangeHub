@@ -1,12 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import styles from './ContextualTip.module.css';
 
-const ContextualTip = ({ tip, isVisible, onClose }) => {
+const ContextualTip = ({ tip, isVisible, onClose, onStopTips }) => {
   const [isAnimating, setIsAnimating] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const tipRef = useRef(null);
+
+  const placeOnTable = () => {
+    const table = document.querySelector('canvas');
+    const tip = tipRef.current;
+    if (!table || !tip) return;
+    const tableRect = table.getBoundingClientRect();
+    const tipRect = tip.getBoundingClientRect();
+    const x = tableRect.left + (tableRect.width - tipRect.width) / 2;
+    const y = tableRect.top + (tableRect.height - tipRect.height) / 2;
+    setPosition({
+      x: Math.max(8, Math.min(x, window.innerWidth - tipRect.width - 8)),
+      y: Math.max(8, Math.min(y, window.innerHeight - tipRect.height - 8))
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!isVisible) {
+      setPosition(null);
+      return;
+    }
+    placeOnTable();
+  }, [isVisible, tip]);
 
   useEffect(() => {
     if (isVisible) {
@@ -72,9 +94,10 @@ const ContextualTip = ({ tip, isVisible, onClose }) => {
         maxWidth: '250px',
         width: '250px',
         minWidth: '250px',
-        top: position.y || 20,
-        left: position.x || '50%',
-        transform: position.x ? 'none' : 'translateX(-50%)',
+        top: position ? position.y : 210,
+        left: position ? position.x : '50%',
+        transform: position ? 'none' : 'translateX(-50%)',
+        visibility: position ? 'visible' : 'hidden',
         right: 'auto',
         cursor: isDragging ? 'grabbing' : 'grab'
       }}
@@ -91,6 +114,11 @@ const ContextualTip = ({ tip, isVisible, onClose }) => {
         <div className={styles.tipText}>
           {tip}
         </div>
+        {onStopTips && (
+          <button type="button" className={styles.stopTips} onClick={onStopTips}>
+            Stop tips
+          </button>
+        )}
       </div>
     </div>
   );
