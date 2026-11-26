@@ -561,6 +561,9 @@
   flex: 0 0 auto;
   min-width: 72px;
   color: #ffd700;
+  user-select: none;
+  -webkit-user-select: none;
+  caret-color: transparent;
 }
 
 .powerTrack {
@@ -595,7 +598,7 @@
 
 .powerValue,
 .englishControl label,
-.powerControl label {
+.powerHeading {
   color: #ffd700;
   font-weight: bold;
   font-size: 0.85rem;
@@ -743,7 +746,7 @@
     0 0 15px rgba(255, 215, 0, 0.5);
 }
 
-.powerControl label {
+.powerHeading {
   color: #ffd700;
   font-weight: bold;
   font-size: 1rem;
@@ -914,7 +917,7 @@
     padding: 10px;
   }
   
-  .powerControl label {
+  .powerHeading {
     font-size: 0.9rem;
   }
   

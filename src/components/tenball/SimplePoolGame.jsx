@@ -28,6 +28,86 @@ const POCKET_LABELS = {
   'bottom-center': 'bottom side'
 };
 
+const CUE_STICK_LENGTH = 170;
+const CUE_BUTT_GRAB = 26;
+const CUE_SHAFT_GRAB = 18;
+
+function cueStickGeometry(cue, angle) {
+  const backX = -Math.cos(angle);
+  const backY = -Math.sin(angle);
+  const tipX = cue.x + backX * (BALL_RADIUS + 4);
+  const tipY = cue.y + backY * (BALL_RADIUS + 4);
+  const room = (dir, start, limit) => {
+    if (Math.abs(dir) < 0.001) return Infinity;
+    return dir > 0 ? (limit - 6 - start) / dir : (6 - start) / dir;
+  };
+  const length = Math.max(42, Math.min(
+    CUE_STICK_LENGTH,
+    room(backX, tipX, TABLE_WIDTH),
+    room(backY, tipY, TABLE_HEIGHT)
+  ));
+  return {
+    tipX,
+    tipY,
+    buttX: tipX + backX * length,
+    buttY: tipY + backY * length
+  };
+}
+
+function distanceToSegment(px, py, ax, ay, bx, by) {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const len2 = dx * dx + dy * dy || 1;
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+  return Math.hypot(px - (ax + dx * t), py - (ay + dy * t));
+}
+
+function cueStickHit(x, y, cue, angle) {
+  const stick = cueStickGeometry(cue, angle);
+  if (Math.hypot(x - stick.buttX, y - stick.buttY) <= CUE_BUTT_GRAB) return 'butt';
+  if (distanceToSegment(x, y, stick.tipX, stick.tipY, stick.buttX, stick.buttY) <= CUE_SHAFT_GRAB) return 'shaft';
+  return null;
+}
+
+function drawCueStick(ctx, cue, angle, locked) {
+  const stick = cueStickGeometry(cue, angle);
+  const dx = stick.buttX - stick.tipX;
+  const dy = stick.buttY - stick.tipY;
+  const len = Math.hypot(dx, dy) || 1;
+  const px = -dy / len;
+  const py = dx / len;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(stick.tipX + px * 1.7, stick.tipY + py * 1.7);
+  ctx.lineTo(stick.buttX + px * 3.4, stick.buttY + py * 3.4);
+  ctx.lineTo(stick.buttX - px * 3.4, stick.buttY - py * 3.4);
+  ctx.lineTo(stick.tipX - px * 1.7, stick.tipY - py * 1.7);
+  ctx.closePath();
+  const wood = ctx.createLinearGradient(stick.tipX, stick.tipY, stick.buttX, stick.buttY);
+  wood.addColorStop(0, '#f4efe6');
+  wood.addColorStop(0.05, '#f7f7f7');
+  wood.addColorStop(0.1, '#e7c98a');
+  wood.addColorStop(0.72, '#c4894a');
+  wood.addColorStop(1, '#5c3317');
+  ctx.fillStyle = wood;
+  ctx.fill();
+  ctx.lineWidth = 0.7;
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(stick.tipX, stick.tipY, 2.4, 0, Math.PI * 2);
+  ctx.fillStyle = '#2f9ed8';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(stick.buttX, stick.buttY, 6, 0, Math.PI * 2);
+  ctx.fillStyle = locked ? '#ffd700' : '#3b2415';
+  ctx.fill();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = locked ? '#fff4b0' : 'rgba(255,255,255,0.45)';
+  ctx.stroke();
+  ctx.restore();
+}
+
 // Same hit the live shot uses. The aim line calls this on every small step.
 function resolveEqualBallHit(a, b) {
   const dx = b.x - a.x;
@@ -143,6 +223,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const [aimAngle, setAimAngle] = useState(0);
   const aimAngleRef = useRef(0);
   aimAngleRef.current = aimAngle;
+  const draggingCueStick = useRef(false);
   const [power, setPower] = useState(0.5);
   const [english, setEnglish] = useState(0); // English (spin) control -1 to 1
   const [englishDirection, setEnglishDirection] = useState(0); // 0-360 degrees
@@ -2083,6 +2164,22 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       return;
     }
 
+    const stickHit = gameState.cueBall.visible
+      ? cueStickHit(x, y, gameState.cueBall, aimAngleRef.current)
+      : null;
+    const aimWithStick = () => {
+      draggingCueStick.current = true;
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* keep the drag local */ }
+      const angle = Math.atan2(gameState.cueBall.y - y, gameState.cueBall.x - x);
+      aimAngleRef.current = angle;
+      setAimAngle(angle);
+      setLastAimAngle(angle);
+    };
+    if (stickHit === 'butt') {
+      aimWithStick();
+      return;
+    }
+
     if (isPlay(gameState.gamePhase) && !isPushOut) {
       const clickedPocket = pocketPositions.find((pocket) => {
         return Math.hypot(pocket.callX - x, pocket.callY - y) < pocket.callR;
@@ -2093,10 +2190,16 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       }
     }
 
+    if (stickHit) {
+      aimWithStick();
+      return;
+    }
+
     setAimLocked((locked) => !locked);
-  }, [vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.ballInHand, gameState.gamePhase, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions]);
+  }, [vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.ballInHand, gameState.gamePhase, gameState.cueBall, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions]);
 
   const handlePointerUp = useCallback(() => {
+    draggingCueStick.current = false;
     if (isDraggingCueBall) stopDraggingCueBall();
   }, [isDraggingCueBall, stopDraggingCueBall]);
   
@@ -2115,10 +2218,24 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       updateCueBallPosition(x, y);
       return;
     }
-    
+
+    if (draggingCueStick.current) {
+      const angle = Math.atan2(gameState.cueBall.y - y, gameState.cueBall.x - x);
+      aimAngleRef.current = angle;
+      setAimAngle(angle);
+      setLastAimAngle(angle);
+      return;
+    }
+
     if (aimLocked) return;
 
-    const angle = Math.atan2(y - gameState.cueBall.y, x - gameState.cueBall.x);
+    const cue = gameState.cueBall;
+    const toPointerX = x - cue.x;
+    const toPointerY = y - cue.y;
+    const forward = toPointerX * Math.cos(aimAngleRef.current) + toPointerY * Math.sin(aimAngleRef.current);
+    if (forward < BALL_RADIUS) return;
+
+    const angle = Math.atan2(toPointerY, toPointerX);
     setAimAngle(angle);
     setLastAimAngle(angle);
   }, [vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.cueBall, isDraggingCueBall, updateCueBallPosition, aimLocked]);
@@ -2692,6 +2809,9 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     }
       
       // Draw cue ball LAST (on top of everything, without measles effect)
+      if (showAimLine && !gameState.isAnimating && gameState.cueBall.visible) {
+        drawCueStick(ctx, gameState.cueBall, aimAngle, aimLocked);
+      }
       if (gameState.cueBall.visible) {
         const ball = gameState.cueBall;
         const imageSrc = ballImages.cue;
@@ -2897,13 +3017,13 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         <div className={styles.instructions}>
           <div className={styles.aimDesktop}>
             <strong>How To Aim:</strong><br/>
-            Move the mouse to aim • Click the felt to lock • Mouse wheel nudges a locked aim • Lowest ball is called — use the tracker only to change it, then click a pocket • Click SHOOT<br/>
+            Move the mouse to aim, or drag the cue stick from behind the cue ball • Click the felt to lock • Mouse wheel nudges a locked aim • Lowest ball is called — use the tracker only to change it, then click a pocket • Click SHOOT<br/>
             <small style={{color: '#888', fontSize: '12px'}}>
               The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape clears the call.
             </small>
           </div>
           <div className={styles.aimPhone}>
-            <strong>How to aim:</strong> Drag on the felt, tap to lock, tap a pocket, then SHOOT.
+            <strong>How to aim:</strong> Drag the cue stick behind the cue ball. Tap the felt to lock, tap a pocket, then SHOOT.
           </div>
         </div>
       </div>
@@ -3018,10 +3138,12 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
 
         <div className={styles.playCluster}>
         <div className={styles.powerControl}>
-          <label>Power</label>
+          <span className={styles.powerHeading}>Power</span>
           <div
             className={styles.powerTrack}
             onPointerDown={(event) => {
+              event.preventDefault();
+              window.getSelection()?.removeAllRanges();
               setPowerFromPointer(event);
               try {
                 event.currentTarget.setPointerCapture(event.pointerId);
