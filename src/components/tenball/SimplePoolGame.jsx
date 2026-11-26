@@ -31,6 +31,14 @@ const POCKET_LABELS = {
 const CUE_STICK_LENGTH = 170;
 const CUE_BUTT_GRAB = 26;
 const CUE_SHAFT_GRAB = 18;
+const TOUCH_AIM_SLOP = 8;
+
+function wrapAimDelta(delta) {
+  let angle = delta;
+  while (angle > Math.PI) angle -= Math.PI * 2;
+  while (angle < -Math.PI) angle += Math.PI * 2;
+  return angle;
+}
 
 function cueStickGeometry(cue, angle) {
   const backX = -Math.cos(angle);
@@ -224,6 +232,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const aimAngleRef = useRef(0);
   aimAngleRef.current = aimAngle;
   const draggingCueStick = useRef(false);
+  const touchAimRef = useRef(null);
   const obviousAimRef = useRef(null);
   const pocketLockRef = useRef(false);
   const holdEmptyCallRef = useRef(false);
@@ -2194,6 +2203,25 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       return;
     }
 
+    const clickedPocket = (isPlay(gameState.gamePhase) && !isPushOut)
+      ? pocketPositions.find((pocket) => Math.hypot(pocket.callX - x, pocket.callY - y) < pocket.callR)
+      : null;
+
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      const cue = gameState.cueBall;
+      touchAimRef.current = {
+        pointerId: e.pointerId,
+        originX: x,
+        originY: y,
+        moved: false,
+        aim: aimAngleRef.current,
+        lastPointerAngle: Math.atan2(y - cue.y, x - cue.x),
+        pocketId: clickedPocket ? clickedPocket.id : null
+      };
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* drag stays on the canvas */ }
+      return;
+    }
+
     const stickHit = gameState.cueBall.visible
       ? cueStickHit(x, y, gameState.cueBall, aimAngleRef.current)
       : null;
@@ -2210,16 +2238,11 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       return;
     }
 
-    if (isPlay(gameState.gamePhase) && !isPushOut) {
-      const clickedPocket = pocketPositions.find((pocket) => {
-        return Math.hypot(pocket.callX - x, pocket.callY - y) < pocket.callR;
-      });
-      if (clickedPocket) {
-        pocketLockRef.current = true;
-        setObviousCall(false);
-        setCalledPocket(clickedPocket.id);
-        return;
-      }
+    if (clickedPocket) {
+      pocketLockRef.current = true;
+      setObviousCall(false);
+      setCalledPocket(clickedPocket.id);
+      return;
     }
 
     if (stickHit) {
@@ -2230,7 +2253,20 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     setAimLocked((locked) => !locked);
   }, [vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.ballInHand, gameState.gamePhase, gameState.cueBall, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions]);
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e) => {
+    const touch = touchAimRef.current;
+    if (touch && (!e || e.pointerId == null || e.pointerId === touch.pointerId)) {
+      touchAimRef.current = null;
+      if (!touch.moved) {
+        if (touch.pocketId) {
+          pocketLockRef.current = true;
+          setObviousCall(false);
+          setCalledPocket(touch.pocketId);
+        } else {
+          setAimLocked((locked) => !locked);
+        }
+      }
+    }
     draggingCueStick.current = false;
     if (isDraggingCueBall) stopDraggingCueBall();
   }, [isDraggingCueBall, stopDraggingCueBall]);
@@ -2248,6 +2284,25 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     // Update cue ball position if dragging
     if (isDraggingCueBall) {
       updateCueBallPosition(x, y);
+      return;
+    }
+
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      const touch = touchAimRef.current;
+      if (!touch || touch.pointerId !== e.pointerId) return;
+      if (!touch.moved) {
+        if (Math.hypot(x - touch.originX, y - touch.originY) <= TOUCH_AIM_SLOP) return;
+        touch.moved = true;
+        touch.lastPointerAngle = Math.atan2(y - gameState.cueBall.y, x - gameState.cueBall.x);
+        return;
+      }
+      const pointerAngle = Math.atan2(y - gameState.cueBall.y, x - gameState.cueBall.x);
+      const step = wrapAimDelta(pointerAngle - touch.lastPointerAngle);
+      touch.lastPointerAngle = pointerAngle;
+      touch.aim = wrapAimDelta(touch.aim + step);
+      aimAngleRef.current = touch.aim;
+      setAimAngle(touch.aim);
+      setLastAimAngle(touch.aim);
       return;
     }
 
@@ -3121,7 +3176,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             </small>
           </div>
           <div className={styles.aimPhone}>
-            <strong>How to aim:</strong> The cue starts on the lowest ball. Drag the stick to change it. A straight-in fills the pocket. Tap a pocket for a bank or kick, then SHOOT.
+            <strong>How to aim:</strong> The cue starts on the lowest ball. Drag anywhere on the felt. Farther from the cue ball is a finer aim. Tap the felt to lock. Tap a pocket for a bank or kick, then SHOOT.
           </div>
         </div>
       </div>
@@ -3285,6 +3340,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             height={TABLE_HEIGHT}
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
             onPointerMove={handlePointerMove}
             onPointerLeave={handlePointerLeave}
             onContextMenu={(e) => e.preventDefault()}
