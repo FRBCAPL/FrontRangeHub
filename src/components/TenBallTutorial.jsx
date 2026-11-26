@@ -43,8 +43,8 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   
     {
       title: "Call Shot Rules",
-      content: "After the break, you must call both the ball and the pocket for every shot. If you don't call it, it doesn't count!",
-      proTip: "Always call a ball abnd a pocket for every shot."
+      content: "Obvious shots do not need a call. A straight-in on the lowest ball fills the pocket in for you. Call the ball and the pocket for a bank, kick, or combination. If you don't call a shot that is not obvious, it doesn't count!",
+      proTip: "A straight-in is obvious. Call the ball and the pocket when the shot is not."
     },
     {
       title: "Illegal Ball",
@@ -63,7 +63,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     },
     {
       title: "Winning the Game",
-      content: "Legally pocket the 10-ball to win! Yes, you can win with an early ten ball...Remember, you must call the 10-ball and the pocket, and hit the lowest numbered ball first.",
+      content: "Legally pocket the 10-ball to win! Yes, you can win with an early ten ball. Hit the lowest numbered ball first. Call the 10 and the pocket unless that shot is obvious.",
       proTip: "The 10-ball is the only ball that matters for winning!"
     },
     {

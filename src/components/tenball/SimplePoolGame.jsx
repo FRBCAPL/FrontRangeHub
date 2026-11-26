@@ -224,6 +224,11 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const aimAngleRef = useRef(0);
   aimAngleRef.current = aimAngle;
   const draggingCueStick = useRef(false);
+  const obviousAimRef = useRef(null);
+  const pocketLockRef = useRef(false);
+  const holdEmptyCallRef = useRef(false);
+  const lockedAimRef = useRef(null);
+  const [obviousCall, setObviousCall] = useState(false);
   const [power, setPower] = useState(0.5);
   const [english, setEnglish] = useState(0); // English (spin) control -1 to 1
   const [englishDirection, setEnglishDirection] = useState(0); // 0-360 degrees
@@ -1002,8 +1007,12 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
      };
      
      // Simplified simulation for better performance and accuracy
+     let obviousPocket = null;
      const simulateShot = () => {
        const ballStates = new Map();
+       let firstObjectId = null;
+       let cueRailedBeforeHit = false;
+       const notStraight = new Set();
        
        // Initialize all balls with current positions
         gameState.balls.forEach(ball => {
@@ -1091,6 +1100,20 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
              ball.vy *= predictedDrag;
 
              const pocketed = !(ignoreCuePocket && ball.id === 'cue') && isInPocket(ball);
+             if (ball.id === 'cue' && bounced && firstObjectId == null) cueRailedBeforeHit = true;
+             const nearPocket = ball.id !== 'cue' && pocketPositions.some((pocket) => (
+               Math.hypot(ball.x - pocket.x, ball.y - pocket.y) < BALL_SIZE * 3
+             ));
+             if (ball.id !== 'cue' && bounced && !pocketed && !nearPocket) notStraight.add(ball.id);
+             if (
+               pocketed
+               && ball.id === firstObjectId
+               && !cueRailedBeforeHit
+               && !notStraight.has(ball.id)
+               && !obviousPocket
+             ) {
+               obviousPocket = { ballId: ball.id, pocketId: getPocketId(ball.x, ball.y) };
+             }
              if (pocketed) {
                ball.visible = false;
                ball.vx = 0;
@@ -1113,6 +1136,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
            if (cueBall && cueBall.visible) {
              ballStates.forEach((ball, ballId) => {
                if (ballId !== 'cue' && ball.visible && resolveEqualBallHit(cueBall, ball)) {
+                 if (firstObjectId == null) firstObjectId = ball.id;
                  cueBall._hit = true;
                  ball._hit = true;
                }
@@ -1125,6 +1149,8 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
                const ballA = ballArray[i];
                const ballB = ballArray[j];
                if (resolveEqualBallHit(ballA, ballB)) {
+                 notStraight.add(ballA.id);
+                 notStraight.add(ballB.id);
                  ballA._hit = true;
                  ballB._hit = true;
                }
@@ -1166,8 +1192,12 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
    };
    
    simulateShot();
+   Object.defineProperty(trajectories, 'obvious', {
+     value: obviousPocket && obviousPocket.pocketId ? obviousPocket : null,
+     enumerable: false
+   });
    return trajectories;
- }, [gameState.balls, gameState.cueBall, isInPocket]);
+ }, [gameState.balls, gameState.cueBall, isInPocket, getPocketId, pocketPositions]);
   
   // Enhanced ball collision resolution with spin transfer
   const resolveBallCollision = useCallback((a, b) => resolveEqualBallHit(a, b), []);
@@ -1693,13 +1723,13 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             offerTableTip(
               `miss-${nextBall || 'none'}`,
               nextBall
-                ? `Nothing fell. The ${nextBall}-ball is still first, so ${otherName(shotPlayer)} has to hit that one and call a pocket.`
+                ? `Nothing fell. The ${nextBall}-ball is still first. ${otherName(shotPlayer)} aims next. A straight-in fills the pocket; a bank, kick, or combination has to be called.`
                 : `Nothing fell. ${otherName(shotPlayer)} shoots next.`
             );
           } else if (nextBall) {
             offerTableTip(
               `made-${nextBall}`,
-              `A ball fell, and ${nameFor(shotPlayer)} keeps shooting. The ${nextBall}-ball is next. Call it and a pocket.`
+              `A ball fell, and ${nameFor(shotPlayer)} keeps shooting. The ${nextBall}-ball is next. A straight-in fills the pocket.`
             );
           }
           // The called ball in the called pocket keeps the turn.
@@ -1737,8 +1767,8 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
           offerTableTip(
             `break-done-${nextBall || 'none'}`,
             nextBall
-              ? `The break is legal. ${pushOutPlayer} can push out. The ${nextBall}-ball is the ball to hit, and the next shot has to be called.`
-              : `The break is legal. ${pushOutPlayer} can push out, and the next shot has to be called.`
+              ? `The break is legal. ${pushOutPlayer} can push out. The ${nextBall}-ball is the ball to hit. A straight-in fills the pocket; call a bank, kick, or combination.`
+              : `The break is legal. ${pushOutPlayer} can push out. A straight-in fills the pocket; call a bank, kick, or combination.`
           );
           // If ball was pocketed, player continues shooting
         }
@@ -2185,6 +2215,8 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         return Math.hypot(pocket.callX - x, pocket.callY - y) < pocket.callR;
       });
       if (clickedPocket) {
+        pocketLockRef.current = true;
+        setObviousCall(false);
         setCalledPocket(clickedPocket.id);
         return;
       }
@@ -2286,6 +2318,46 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     // Fallback: aim toward center of table
     return Math.atan2(TABLE_HEIGHT / 2 - cueBall.y, TABLE_WIDTH / 2 - cueBall.x);
   }, [gameState.cueBall, gameState.balls]);
+
+  const autoAimRef = useRef(null);
+  const wasAnimatingRef = useRef(false);
+  const wasDraggingCueRef = useRef(false);
+  const rackCueRef = useRef(null);
+
+  // Point the cue at the lowest ball after a shot, a cue-ball placement, or a new rack.
+  // Leave the aim alone once the player has moved it.
+  useEffect(() => {
+    const shotJustEnded = wasAnimatingRef.current && !gameState.isAnimating;
+    const placeJustEnded = wasDraggingCueRef.current && !isDraggingCueBall;
+    const rackChanged = rackCueRef.current !== turnCue;
+    wasAnimatingRef.current = gameState.isAnimating;
+    wasDraggingCueRef.current = isDraggingCueBall;
+    rackCueRef.current = turnCue;
+
+    if (gameState.isAnimating || isDraggingCueBall) return;
+    if (vsComputer && gameState.currentPlayer === 2) return;
+    if (!gameState.cueBall.visible) return;
+    if (!gameState.balls.some((ball) => ball.visible && !ball.pocketed)) return;
+
+    const untouched = autoAimRef.current == null || aimAngleRef.current === autoAimRef.current;
+    if (!shotJustEnded && !placeJustEnded && !rackChanged && !untouched) return;
+
+    const angle = getDefaultAimAngle();
+    if (autoAimRef.current === angle && aimAngleRef.current === angle) return;
+    autoAimRef.current = angle;
+    aimAngleRef.current = angle;
+    setAimAngle(angle);
+    setLastAimAngle(angle);
+  }, [
+    gameState.isAnimating,
+    isDraggingCueBall,
+    gameState.currentPlayer,
+    gameState.cueBall,
+    gameState.balls,
+    vsComputer,
+    turnCue,
+    getDefaultAimAngle
+  ]);
   
   // Initialize game
   useEffect(() => {
@@ -2294,15 +2366,6 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       balls: initializeBalls()
     }));
   }, [initializeBalls]);
-  
-  // Set default aim angle when game starts - DISABLED to prevent interference with mouse aiming
-  // useEffect(() => {
-  //   if (!gameState.isAnimating && gameState.balls.length > 0) {
-  //     const defaultAngle = getDefaultAimAngle();
-  //     setAimAngle(defaultAngle);
-  //     setShowAimLine(true);
-  //   }
-  // }, [gameState.isAnimating, gameState.balls.length, getDefaultAimAngle]);
   
   // Physics animation loop
   useEffect(() => {
@@ -2322,6 +2385,10 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       if (vsComputer && gameState.currentPlayer === 2) return;
       if (event.key === 'Escape') {
         if (calledBall || calledPocket) {
+          pocketLockRef.current = false;
+          holdEmptyCallRef.current = true;
+          lockedAimRef.current = aimAngleRef.current;
+          setObviousCall(false);
           setCalledBall(null);
           setCalledPocket(null);
         }
@@ -2567,6 +2634,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             }
             
     // Draw multi-ball trajectory predictions (separate from aim line)
+    obviousAimRef.current = null;
     if (showAimLine && !gameState.isAnimating) {
       // Use current cue ball position, but ensure it's within table boundaries
       const currentCueBall = {
@@ -2588,6 +2656,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         spinFollow: aimEnglish.follow,
         spinSide: aimEnglish.side
       });
+      obviousAimRef.current = allTrajectories.obvious || null;
       
       // Debug: Log positions to check for discrepancies
       if (allTrajectories['cue'] && allTrajectories['cue'].points.length > 1) {
@@ -2875,6 +2944,35 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   useEffect(() => {
     draw();
   }, [gameState.isAnimating, showAimLine, aimAngle, power, highlightedPocket, aimLocked, calledBall, calledPocket, pushOutAvailable, isPushOut]);
+
+  useEffect(() => {
+    if (gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return;
+    if (vsComputer && gameState.currentPlayer === 2) return;
+    if (!calledPocket && pocketLockRef.current && !holdEmptyCallRef.current) {
+      pocketLockRef.current = false;
+    }
+    if (holdEmptyCallRef.current) {
+      if (aimAngleRef.current !== lockedAimRef.current) holdEmptyCallRef.current = false;
+      else return;
+    }
+    if (pocketLockRef.current) return;
+    const obvious = obviousAimRef.current;
+    const lowest = getLowestNumberedBall();
+    const straightIn = Boolean(
+      obvious
+      && obvious.pocketId
+      && lowest
+      && obvious.ballId === lowest.id
+      && (!calledBall || calledBall === lowest.id)
+    );
+    if (straightIn) {
+      setCalledPocket((current) => (current === obvious.pocketId ? current : obvious.pocketId));
+      setObviousCall(true);
+      return;
+    }
+    setObviousCall(false);
+    setCalledPocket((current) => (current == null ? current : null));
+  }, [gameState.isAnimating, gameState.gamePhase, gameState.currentPlayer, gameState.balls, isPushOut, vsComputer, aimAngle, power, english, englishDirection, calledBall, calledPocket, getLowestNumberedBall]);
   
   // Load table image
   useEffect(() => {
@@ -3017,13 +3115,13 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         <div className={styles.instructions}>
           <div className={styles.aimDesktop}>
             <strong>How To Aim:</strong><br/>
-            Move the mouse to aim, or drag the cue stick from behind the cue ball • Click the felt to lock • Mouse wheel nudges a locked aim • Lowest ball is called — use the tracker only to change it, then click a pocket • Click SHOOT<br/>
+            The cue starts pointed at the lowest ball • Move the mouse to aim, or drag the cue stick from behind the cue ball • Click the felt to lock • A straight-in pocket fills in by itself • Click a pocket for a bank, kick, or combination • Click SHOOT<br/>
             <small style={{color: '#888', fontSize: '12px'}}>
               The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape clears the call.
             </small>
           </div>
           <div className={styles.aimPhone}>
-            <strong>How to aim:</strong> Drag the cue stick behind the cue ball. Tap the felt to lock, tap a pocket, then SHOOT.
+            <strong>How to aim:</strong> The cue starts on the lowest ball. Drag the stick to change it. A straight-in fills the pocket. Tap a pocket for a bank or kick, then SHOOT.
           </div>
         </div>
       </div>
@@ -3041,9 +3139,9 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
               </strong>
               <span>
                 {calledBall && calledPocket
-                  ? `in the ${POCKET_LABELS[calledPocket] || calledPocket}`
+                  ? `in the ${POCKET_LABELS[calledPocket] || calledPocket}${obviousCall ? ' — obvious shot' : ''}`
                   : calledBall
-                    ? 'is called — click a pocket, or pick another ball in the tracker'
+                    ? 'is called — click a pocket for a bank, kick, or combination'
                     : calledPocket
                       ? `${POCKET_LABELS[calledPocket] || calledPocket} — pick a ball in the tracker`
                       : 'Pick a ball in the tracker, then click a pocket'}
@@ -3053,6 +3151,10 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
                   type="button"
                   className={styles.callClear}
                   onClick={() => {
+                    pocketLockRef.current = false;
+                    holdEmptyCallRef.current = true;
+                    lockedAimRef.current = aimAngleRef.current;
+                    setObviousCall(false);
                     setCalledBall(null);
                     setCalledPocket(null);
                   }}
@@ -3484,4 +3586,5 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   );
 };
 
-export default SimplePoolGame; 
+export default SimplePoolGame;
+ 
