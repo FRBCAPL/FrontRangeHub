@@ -1,7 +1,7 @@
 /* Force narrow width for the entire component with maximum specificity */
 div[class*="gameModeSelector"] {
-  max-width: 800px !important;
-  width: 800px !important;
+  max-width: 100% !important;
+  width: min(800px, 100%) !important;
   margin: 0 auto !important;
   padding: 20px;
   background: #23232a29;
@@ -13,8 +13,8 @@ div[class*="gameModeSelector"] {
 }
 
 .gameModeSelector {
-  max-width: 280px !important;
-  width: 280px !important;
+  max-width: 100% !important;
+  width: min(800px, 100%) !important;
   margin: 0 auto !important;
   padding: 20px;
   background: #23232a29;
@@ -349,6 +349,11 @@ div[class*="gameModeSelector"] {
   .gameModeSelector {
     padding: 10px;
     margin: 5px;
+  }
+
+  .backToDashboardButton {
+    position: static;
+    margin: 0 auto 12px;
   }
   
   .header h2 {

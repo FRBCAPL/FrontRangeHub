@@ -13,7 +13,7 @@
 
 .tableRow {
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   justify-content: center;
   gap: 12px;
@@ -21,6 +21,99 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
+}
+
+.playCluster {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.scoreboard {
+  justify-self: start;
+  align-self: center;
+  width: min(220px, 100%);
+  margin-left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #12182b 0%, #0c1222 100%);
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.scoreboardTitle {
+  color: #ffd700;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.scoreboardFormat {
+  margin-top: -6px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.scoreCard,
+.scoreCardOn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.scoreCardOn {
+  border-color: rgba(255, 215, 0, 0.85);
+  background: rgba(255, 215, 0, 0.1);
+}
+
+.scoreName {
+  max-width: 100%;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scoreGames {
+  color: #ffd700;
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreMeta {
+  color: #9aa4b2;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scoreCardOn .scoreMeta {
+  color: #ffd700;
+}
+
+.scoreboardBalance {
+  min-width: 0;
 }
 
 .tableContainer {
@@ -66,7 +159,6 @@
   font-size: 40px;
   font-weight: 800;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
-  animation: turnSplashFade 1.2s ease forwards;
   max-width: 90%;
   text-align: center;
   line-height: 1.15;
@@ -86,14 +178,6 @@
 
 .turnSplash span.splashWin {
   color: #5dff6a;
-  animation-duration: 4s;
-}
-
-@keyframes turnSplashFade {
-  0% { opacity: 0; }
-  12% { opacity: 1; }
-  68% { opacity: 1; }
-  100% { opacity: 0; }
 }
 
 .ballTracker {
@@ -251,6 +335,10 @@
 }
 
 .aimingInstructions small {
+  display: none;
+}
+
+.aimPhone {
   display: none;
 }
 
@@ -540,6 +628,25 @@
   cursor: pointer;
 }
 
+.spinBall {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid #333;
+  background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.spinBall:active {
+  cursor: grabbing;
+}
+
 .cueTip {
   position: absolute;
   z-index: 3;
@@ -722,6 +829,39 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1240px) {
+  .tableRow {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .scoreboardBalance {
+    display: none;
+  }
+
+  .scoreboard {
+    width: min(560px, 100%);
+    margin-left: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+  }
+
+  .scoreboardTitle {
+    width: 100%;
+  }
+
+  .scoreCard,
+  .scoreCardOn {
+    flex: 1 1 180px;
+  }
+
+  .scoreGames {
+    font-size: 48px;
+  }
+}
+
 @media (max-width: 768px) {
   .simplePoolGame {
     padding: 10px;
@@ -788,6 +928,177 @@
     min-width: 120px;
     padding: 10px 16px;
     font-size: 14px;
+  }
+}
+
+@media (max-width: 960px) {
+  .simplePoolGame,
+  .tableRow,
+  .playCluster,
+  .tableContainer,
+  .tableStage {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .simplePoolGame {
+    gap: 4px;
+  }
+
+  .playCluster {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "table table"
+      "power spin";
+    justify-items: center;
+    gap: 8px;
+  }
+
+  .tableContainer {
+    grid-area: table;
+  }
+
+  .powerControl {
+    grid-area: power;
+    justify-self: end;
+  }
+
+  .englishControl {
+    grid-area: spin;
+    justify-self: start;
+  }
+
+  .tableCanvas {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .powerTrack {
+    width: 48px;
+    height: 120px;
+  }
+
+  .powerBar {
+    height: 3px;
+  }
+
+  .spinBall {
+    width: 72px;
+    height: 72px;
+  }
+
+  .scoreboard {
+    width: 100%;
+    margin-left: 0;
+    padding: 6px 8px;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .scoreboardTitle {
+    display: none;
+  }
+
+  .scoreGames {
+    font-size: 22px;
+  }
+
+  .scoreName {
+    font-size: 13px;
+  }
+
+  .scoreCard,
+  .scoreCardOn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 6px 8px;
+  }
+
+  .trackerBall {
+    width: 26px;
+    height: 26px;
+  }
+
+  .ballTracker {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .aimDesktop {
+    display: none;
+  }
+
+  .aimingInstructions {
+    padding: 4px 8px;
+  }
+
+  .aimPhone {
+    display: block;
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .playerNames {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .buttonRow {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tableNotices {
+    height: auto;
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+
+  .controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .buttonRow {
+    width: auto;
+    gap: 6px;
+  }
+
+  .resetButton,
+  .resetAimButton,
+  .shootButton {
+    min-width: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+
+  .callShotNotice {
+    height: auto;
+    white-space: normal;
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .turnSplash span {
+    font-size: 28px;
+  }
+
+  .turnSplash span.splashFoul {
+    font-size: 48px;
+  }
+
+  .turnSplash span.splashReason {
+    font-size: 20px;
   }
 }
 

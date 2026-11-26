@@ -3,6 +3,7 @@ import styles from './SimplePoolGame.module.css';
 import TableDecisionCard from './TableDecisionCard';
 import PlayerSetupModal from './PlayerSetupModal';
 import { readMutedTipSeats, writeMutedTipSeats } from './TipManager';
+import { DEFAULT_MATCH, leadingWinner, matchLabel, matchWinLine, matchWonLabel } from './matchFormat';
 import { planComputerShot, computerTakesTheTable } from './computerOpponent';
 import { PHASES, isBreak, isPlay, nextPhaseAfterShot, shouldEnablePushOut, canShowPushOut } from './turnStateMachine';
   // Debug flag and logger
@@ -13,6 +14,10 @@ import { PHASES, isBreak, isPlay, nextPhaseAfterShot, shouldEnablePushOut, canSh
       console.log(...args);
     }
   };
+
+const splashDuration = (tone) => (tone === 'win' ? 5000 : 3000);
+
+const splashChainMs = (...tones) => tones.reduce((sum, tone) => sum + splashDuration(tone), 200);
 
 const POCKET_LABELS = {
   'top-left': 'top left corner',
@@ -117,7 +122,7 @@ function lowestBallOnTable(balls) {
   return visible.reduce((lowest, ball) => (ball.id < lowest.id ? ball : lowest)).id;
 }
 
-const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: vsComputerProp, onEditPlayers }) => {
+const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: vsComputerProp, onEditPlayers, matchScores, matchFormat, onRestartMatch }) => {
   // Remove the console.log that's causing spam
   const canvasRef = useRef(null);
   const [gameState, setGameState] = useState({
@@ -152,11 +157,35 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const [localNames, setLocalNames] = useState({ 1: '', 2: '' });
   const [localVsComputer, setLocalVsComputer] = useState(false);
   const [localSetupOpen, setLocalSetupOpen] = useState(false);
+  const [localScores, setLocalScores] = useState({ 1: 0, 2: 0 });
+  const [localMatch, setLocalMatch] = useState(DEFAULT_MATCH);
   const [turnSplash, setTurnSplash] = useState(null);
   const [turnCue, setTurnCue] = useState(0);
   const splashTimer = useRef(null);
   const splashOpenRef = useRef(false);
   const suppressTurnSplash = useRef(false);
+  const externalScoresRef = useRef(matchScores);
+  externalScoresRef.current = matchScores;
+  const scores = matchScores ?? localScores;
+  const localScoresRef = useRef(scores);
+  localScoresRef.current = scores;
+  const match = matchFormat ?? localMatch;
+  const matchRef = useRef(match);
+  matchRef.current = match;
+  const recordWinRef = useRef(() => ({ clinched: false, format: DEFAULT_MATCH }));
+  recordWinRef.current = (winner) => {
+    const format = matchRef.current || DEFAULT_MATCH;
+    const before = externalScoresRef.current ?? localScoresRef.current ?? { 1: 0, 2: 0 };
+    const already = leadingWinner(before, format);
+    const next = { 1: before[1] || 0, 2: before[2] || 0 };
+    next[winner] = (next[winner] || 0) + 1;
+    if (!externalScoresRef.current) {
+      localScoresRef.current = next;
+      setLocalScores(next);
+    }
+    if (onGameEnd) onGameEnd(winner);
+    return { clinched: !already && !!leadingWinner(next, format), format };
+  };
   const playerNames = playerNamesProp ?? localNames;
   const vsComputer = vsComputerProp !== undefined ? vsComputerProp : localVsComputer;
   const [mutedTipSeats, setMutedTipSeats] = useState(() => readMutedTipSeats());
@@ -174,7 +203,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   window.__tenballTipAllow = !mutedTipSeats.has(tipSeat);
 
   const showSplash = useCallback((text, tone, next) => {
-    const splashMs = (stepTone) => (stepTone === 'win' ? 4000 : 1200);
+    const splashMs = (stepTone) => splashDuration(stepTone);
     splashOpenRef.current = true;
     setTurnSplash({ text, tone });
     if (splashTimer.current) clearTimeout(splashTimer.current);
@@ -241,6 +270,9 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const cueRailBeforeContactRef = useRef(false);
   const contactMadeRef = useRef(false);
   const gameOverRef = useRef(false);
+  useEffect(() => {
+    gameOverRef.current = !!leadingWinner(scores, match);
+  }, [scores, match]);
   const [illegallyPocketedBalls, setIllegallyPocketedBalls] = useState([]); // Track illegally pocketed balls
   const [showIllegalPocketOption, setShowIllegalPocketOption] = useState(false); // Show opponent option modal
   const tableTipForShot = useRef(null);
@@ -580,12 +612,16 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     if (nextFoulCount >= 3) {
       const winner = playerWhoFouled === 1 ? 2 : 1;
       gameOverRef.current = true;
+      const { clinched, format } = recordWinRef.current(winner);
+      const gameLine = `${nameFor(winner)} wins`;
       showSplash('FOUL', 'foul', {
         text: 'Three fouls in a row',
         tone: 'foulReason',
-        next: { text: `${nameFor(winner)} wins`, tone: 'win' }
+        next: clinched && format.type !== 'single'
+          ? { text: gameLine, tone: 'win', next: { text: matchWinLine(nameFor(winner), format), tone: 'win' } }
+          : { text: gameLine, tone: 'win' }
       });
-      if (onGameEnd) onGameEnd(winner);
+      if (!clinched) {
       setTimeout(() => {
         setGameState(prev => ({
           ...prev,
@@ -603,7 +639,8 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         setShowAimLine(true);
         gameOverRef.current = false;
         setTurnCue((cue) => cue + 1);
-      }, 6600);
+      }, splashChainMs('foul', 'foulReason', 'win'));
+      }
       setFoulType(foulType);
       return;
     }
@@ -1639,14 +1676,19 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
           const winner = shotPlayer;
           debugLog(`Game won by Player ${winner}! 10-ball was legally called and pocketed.`);
           
-          // Call the parent's handleGameEnd function to update score
-          if (onGameEnd) {
-            onGameEnd(winner);
-          }
+          const { clinched, format } = recordWinRef.current(winner);
+          if (clinched) gameOverRef.current = true;
           
           offerTableTip('game-won', `The 10-ball is down in the called pocket. ${nameFor(winner)} wins the game.`);
-          showSplash(`${nameFor(winner)} wins`, 'win');
+          showSplash(
+            `${nameFor(winner)} wins`,
+            'win',
+            clinched && format.type !== 'single'
+              ? { text: matchWinLine(nameFor(winner), format), tone: 'win' }
+              : undefined
+          );
           
+          if (!clinched) {
           setTimeout(() => {
             setGameState(prev => ({
               ...prev,
@@ -1675,7 +1717,8 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
               window.tipManager.resetTips();
             }
             setTurnCue((cue) => cue + 1);
-          }, 4200); // Keep the winner splash up before the next rack
+          }, splashChainMs('win')); // Keep the winner splash up before the next rack
+          }
         } else {
           // 10-ball was illegally pocketed - spot it on the foot spot and continue
           debugLog('10-ball illegally pocketed - spotting it on the foot spot');
@@ -2844,17 +2887,24 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     });
     setPower((closest + 1) / POWER_BAR_COUNT);
   };
-  
+
+  const matchDecided = leadingWinner(scores, match);
+
   return (
     <div className={styles.simplePoolGame}>
       {/* Aiming Instructions moved above the table */}
       <div className={styles.aimingInstructions}>
         <div className={styles.instructions}>
-          <strong>How To Aim:</strong><br/>
-          Move the mouse to aim • Click the felt to lock • Mouse wheel nudges a locked aim • Lowest ball is called — use the tracker only to change it, then click a pocket • Click SHOOT<br/>
-          <small style={{color: '#888', fontSize: '12px'}}>
-            The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape clears the call.
-          </small>
+          <div className={styles.aimDesktop}>
+            <strong>How To Aim:</strong><br/>
+            Move the mouse to aim • Click the felt to lock • Mouse wheel nudges a locked aim • Lowest ball is called — use the tracker only to change it, then click a pocket • Click SHOOT<br/>
+            <small style={{color: '#888', fontSize: '12px'}}>
+              The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape clears the call.
+            </small>
+          </div>
+          <div className={styles.aimPhone}>
+            <strong>How to aim:</strong> Drag on the felt, tap to lock, tap a pocket, then SHOOT.
+          </div>
         </div>
       </div>
 
@@ -2911,7 +2961,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
           className={styles.editPlayers}
           onClick={() => (onEditPlayers ? onEditPlayers() : setLocalSetupOpen(true))}
         >
-          Edit
+          Edit match
         </button>
         {[1, 2].map((id) => {
           const shooting = gameState.currentPlayer === id;
@@ -2947,6 +2997,26 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       </div>
 
       <div className={styles.tableRow}>
+        <aside className={styles.scoreboard} aria-label="Scoreboard">
+          <div className={styles.scoreboardTitle}>Score</div>
+          <div className={styles.scoreboardFormat}>{matchLabel(match)}</div>
+          {[1, 2].map((id) => {
+            const shooting = gameState.currentPlayer === id;
+            const won = matchDecided === id;
+            const featured = won || (!matchDecided && shooting);
+            return (
+              <div key={id} className={featured ? styles.scoreCardOn : styles.scoreCard}>
+                <span className={styles.scoreName}>{nameFor(id)}</span>
+                <span className={styles.scoreGames}>{scores[id] ?? 0}</span>
+                <span className={styles.scoreMeta}>
+                  {won ? matchWonLabel(match) : shooting && !matchDecided ? 'Shooting' : 'Games'}
+                </span>
+              </div>
+            );
+          })}
+        </aside>
+
+        <div className={styles.playCluster}>
         <div className={styles.powerControl}>
           <label>Power</label>
           <div
@@ -3104,32 +3174,23 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
           <label>Spin</label>
           <div className={styles.englishBody}>
              <div
-               onMouseDown={handleEnglishMouseDown}
-               onMouseMove={handleEnglishMouseMove}
-               onMouseUp={handleEnglishMouseUp}
-               onMouseLeave={handleEnglishMouseUp}
-               style={{
-                 width: '120px',
-                 height: '120px',
-                 borderRadius: '50%',
-                 border: '2px solid #333',
-                 background: 'linear-gradient(135deg, #fff 0%, #f0f0f0 100%)',
-                 position: 'relative',
-                 display: 'flex',
-                 alignItems: 'center',
-                 justifyContent: 'center',
-                 fontSize: '16px',
-                 fontWeight: 'bold',
-                 color: '#333',
-                 cursor: isDraggingEnglish ? 'grabbing' : 'grab',
-                 userSelect: 'none'
+               className={styles.spinBall}
+               onPointerDown={(event) => {
+                 event.currentTarget.setPointerCapture(event.pointerId);
+                 handleEnglishMouseDown(event);
                }}
+               onPointerMove={(event) => {
+                 if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+                 handleEnglishMouseMove(event);
+               }}
+               onPointerUp={handleEnglishMouseUp}
+               onPointerCancel={handleEnglishMouseUp}
              >
                <div
                  className={styles.cueTip}
                  style={{
-                   left: `calc(50% + ${Math.cos(englishDirection * Math.PI / 180) * english * 46}px)`,
-                   top: `calc(50% + ${Math.sin(englishDirection * Math.PI / 180) * english * 46}px)`
+                   left: `calc(50% + ${Math.cos(englishDirection * Math.PI / 180) * english * 38}%)`,
+                   top: `calc(50% + ${Math.sin(englishDirection * Math.PI / 180) * english * 38}%)`
                  }}
                />
                </div>
@@ -3154,6 +3215,9 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             </button>
           </div>
         </div>
+        </div>
+
+        <div className={styles.scoreboardBalance} aria-hidden="true" />
       </div>
 
       <div className={styles.controls}>
@@ -3190,6 +3254,14 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
            <button 
              className={styles.resetButton}
              onClick={() => {
+               if (leadingWinner(externalScoresRef.current ?? localScoresRef.current, matchRef.current)) {
+                 if (onRestartMatch) onRestartMatch();
+                 else {
+                   const cleared = { 1: 0, 2: 0 };
+                   localScoresRef.current = cleared;
+                   setLocalScores(cleared);
+                 }
+               }
                setGameState(prev => ({
                  ...prev,
                  balls: initializeBalls(),
@@ -3237,7 +3309,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
                }
              }}
            >
-             Reset Game
+             {matchDecided ? 'New match' : 'Reset Game'}
            </button>
         </div>
       </div>
@@ -3245,15 +3317,45 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         <PlayerSetupModal
           initialNames={playerNames}
           initialVsComputer={vsComputer}
+          initialMatch={match}
+          title="Edit match"
           confirmLabel="Save"
-          onConfirm={({ names, vsComputer: computer }) => {
+          onConfirm={({ names, vsComputer: computer, match: nextMatch }) => {
             setLocalNames(names);
             setLocalVsComputer(computer);
+            if (nextMatch) setLocalMatch(nextMatch);
             setComputerArmed(false);
             computerBusy.current = false;
             setLocalSetupOpen(false);
           }}
           onCancel={() => setLocalSetupOpen(false)}
+          onCancelMatch={() => {
+            setLocalSetupOpen(false);
+            setLocalNames({ 1: '', 2: '' });
+            setLocalVsComputer(false);
+            setLocalMatch(DEFAULT_MATCH);
+            const cleared = { 1: 0, 2: 0 };
+            localScoresRef.current = cleared;
+            setLocalScores(cleared);
+            gameOverRef.current = false;
+            setComputerArmed(false);
+            computerBusy.current = false;
+            setGameState((prev) => ({
+              ...prev,
+              balls: initializeBalls(),
+              cueBall: { x: 100, y: 150, originalX: 100, originalY: 150, vx: 0, vy: 0, visible: true, isMoving: false, rotation: 0, rotationSpeed: 0 },
+              isAnimating: false,
+              gamePhase: 'break',
+              ballInHand: false,
+              scratchOccurred: false,
+              currentPlayer: 1
+            }));
+            setConsecutiveFouls({ 1: 0, 2: 0 });
+            setCalledBall(null);
+            setCalledPocket(null);
+            setAimLocked(false);
+            setTurnCue((cue) => cue + 1);
+          }}
         />
       )}
     </div>

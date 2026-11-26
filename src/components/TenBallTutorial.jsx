@@ -3,6 +3,7 @@ import SimplePoolGame from './tenball/SimplePoolGame';
 import TutorialRules from './tenball/TutorialRules';
 import GameModeSelector from './tenball/GameModeSelector';
 import PlayerSetupModal from './tenball/PlayerSetupModal';
+import { DEFAULT_MATCH } from './tenball/matchFormat';
 import TipManager from './tenball/TipManager';
 import styles from './tenball/TenBallTutorial.module.css';
 
@@ -13,6 +14,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   const [showRules, setShowRules] = useState(true);
   const [playerNames, setPlayerNames] = useState({ 1: '', 2: '' });
   const [vsComputer, setVsComputer] = useState(true);
+  const [match, setMatch] = useState(DEFAULT_MATCH);
   const [setupOpen, setSetupOpen] = useState(false);
   const [gameState, setGameState] = useState({
     player1Score: 0,
@@ -80,9 +82,10 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     if (mode === 'tutorial') setSetupOpen(true);
   };
 
-  const confirmSetup = ({ names, vsComputer: computer }) => {
+  const confirmSetup = ({ names, vsComputer: computer, match: nextMatch }) => {
     setPlayerNames(names);
     setVsComputer(computer);
+    if (nextMatch) setMatch(nextMatch);
     setSetupOpen(false);
     if (currentMode === 'menu') {
       setCurrentMode('tutorial');
@@ -90,11 +93,6 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
       setShowHints(true);
       setShowRules(true);
     }
-  };
-
-  const seatLabel = (id) => {
-    if (vsComputer && id === 2) return 'Computer';
-    return (playerNames[id] || '').trim() || `Player ${id}`;
   };
 
   const handleTutorialNext = () => {
@@ -135,6 +133,16 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     });
   };
 
+  const cancelMatch = () => {
+    setSetupOpen(false);
+    setShowRules(false);
+    setCurrentMode('menu');
+    setPlayerNames({ 1: '', 2: '' });
+    setVsComputer(true);
+    setMatch(DEFAULT_MATCH);
+    resetGame();
+  };
+
   const playing = currentMode === 'tutorial' || currentMode === 'game';
   const rulesOpen = currentMode === 'tutorial' && showRules;
 
@@ -156,6 +164,13 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
               onGameEnd={handleGameEnd}
               playerNames={playerNames}
               vsComputer={vsComputer}
+              matchScores={{ 1: gameState.player1Score, 2: gameState.player2Score }}
+              matchFormat={match}
+              onRestartMatch={() => setGameState((prev) => ({
+                ...prev,
+                player1Score: 0,
+                player2Score: 0
+              }))}
               onEditPlayers={() => setSetupOpen(true)}
             />
           </div>
@@ -208,19 +223,6 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
         </div>
       )}
       
-      {currentMode !== 'menu' && (
-        <div className={styles.gameInfo}>
-          <div className={styles.scoreBoard}>
-            <div className={styles.playerScore}>
-              <span>{seatLabel(1)}: {gameState.player1Score}</span>
-            </div>
-            <div className={styles.playerScore}>
-              <span>{seatLabel(2)}: {gameState.player2Score}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {rulesOpen && (
         <TutorialRules
           step={tutorialSteps[tutorialStep]}
@@ -236,9 +238,12 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
         <PlayerSetupModal
           initialNames={playerNames}
           initialVsComputer={vsComputer}
+          initialMatch={match}
+          title={currentMode === 'menu' ? 'New match' : 'Edit match'}
           confirmLabel={currentMode === 'menu' ? 'Start' : 'Save'}
           onConfirm={confirmSetup}
           onCancel={() => setSetupOpen(false)}
+          onCancelMatch={currentMode === 'menu' ? undefined : cancelMatch}
         />
       )}
     </div>

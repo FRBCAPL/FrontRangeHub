@@ -10,7 +10,9 @@
 }
 
 .card {
-  width: min(420px, 100%);
+  width: min(460px, 100%);
+  max-height: min(90vh, 680px);
+  overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -70,6 +72,55 @@
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+.groupLabel {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.lengths {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lengthOn,
+.lengthOff {
+  min-width: 48px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+}
+
+.lengthOn {
+  background: rgba(255, 215, 0, 0.22);
+  border: 1px solid rgba(255, 215, 0, 0.85);
+}
+
+.lengthOff {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.otherLength {
+  width: 72px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 215, 0, 0.85);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.hint {
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
@@ -77,6 +128,7 @@
 }
 
 .cancel,
+.cancelMatch,
 .confirm {
   padding: 8px 14px;
   border-radius: 999px;
@@ -88,6 +140,13 @@
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: #fff;
+}
+
+.cancelMatch {
+  margin-right: auto;
+  background: transparent;
+  border: 1px solid rgba(255, 107, 107, 0.75);
+  color: #ff8a80;
 }
 
 .confirm {
