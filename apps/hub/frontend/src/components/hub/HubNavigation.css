@@ -1002,11 +1002,25 @@ html body .hub-navigation.homepage-nav .nav-content {
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
-  .main-content-wrapper.pool-game-shell {
+  html:has(.pool-game-live) .hub-navigation.pool-game-nav {
+    display: none !important;
+  }
+
+  html:has(.pool-game-live) .main-content-wrapper.pool-game-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    padding-top: 0 !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
     min-height: 0 !important;
     overflow: hidden !important;
+  }
+
+  html:has(.pool-game-live) .main-content-wrapper.pool-game-shell > main.main-app-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 }
 

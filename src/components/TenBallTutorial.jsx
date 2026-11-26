@@ -159,7 +159,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
       case 'tutorial':
       case 'game':
         return (
-          <div className={styles.tutorialContainer}>
+          <div className={`${styles.tutorialContainer} pool-game-live`}>
             <SimplePoolGame
               onGameEnd={handleGameEnd}
               playerNames={playerNames}
