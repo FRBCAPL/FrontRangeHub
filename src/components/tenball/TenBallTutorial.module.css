@@ -175,6 +175,8 @@
     max-height: calc(100dvh - var(--hub-nav-h, 64px));
     min-height: 0;
     overflow: hidden;
+    padding: 2px 4px;
+    gap: 2px;
   }
 
   .tutorialContainer {
