@@ -1001,6 +1001,15 @@ html body .hub-navigation.homepage-nav .nav-content {
   }
 }
 
+@media (orientation: landscape) and (max-height: 520px) {
+  .main-content-wrapper.pool-game-shell {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+}
+
 .main-content-wrapper.cs-shell > main.main-app-content {
   margin-top: 0 !important;
   padding-top: 0 !important;

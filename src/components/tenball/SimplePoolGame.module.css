@@ -1105,6 +1105,207 @@
   }
 }
 
+/* Phone turned sideways: the screen is short, so size the table to the height that is left. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .simplePoolGame {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 72px;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "notices notices notices"
+      "names names names"
+      "board board board"
+      "power table spin"
+      "controls controls controls";
+    gap: 2px 6px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    align-items: center;
+  }
+
+  .aimingInstructions {
+    display: none;
+  }
+
+  .tableNotices {
+    grid-area: notices;
+    height: auto;
+    min-height: 0;
+  }
+
+  .playerNames {
+    grid-area: names;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .playerNames .editPlayers,
+  .playerNames .playerTurn,
+  .playerNames .playerWaiting {
+    min-height: 0;
+    padding: 2px 8px;
+    line-height: 1.1;
+  }
+
+  .scoreboard {
+    grid-area: board;
+    width: 100%;
+    margin-left: 0;
+    padding: 2px 8px;
+    gap: 6px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .scoreboardTitle {
+    display: none;
+  }
+
+  .scoreboardFormat {
+    width: auto;
+    margin: 0;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .scoreCard,
+  .scoreCardOn {
+    flex: 1 1 0;
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 3px 8px;
+  }
+
+  .scoreGames {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .scoreName {
+    font-size: 12px;
+  }
+
+  .scoreMeta {
+    display: none;
+  }
+
+  .tableRow,
+  .playCluster {
+    display: contents;
+  }
+
+  .scoreboardBalance {
+    display: none;
+  }
+
+  .tableContainer {
+    grid-area: table;
+    align-self: stretch;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    max-height: 100%;
+    height: auto;
+    padding: 2px;
+    gap: 2px;
+    overflow: hidden;
+  }
+
+  .tableStage {
+    flex: 1 1 0;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .powerControl {
+    grid-area: power;
+    justify-self: end;
+    align-self: center;
+    min-width: 0;
+    min-height: 0;
+    gap: 2px;
+  }
+
+  .englishControl {
+    grid-area: spin;
+    justify-self: start;
+    align-self: center;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .tableCanvas {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: 2 / 1;
+  }
+
+  .powerTrack {
+    width: 34px;
+    height: 88px;
+  }
+
+  .powerBar {
+    height: 2px;
+  }
+
+  .spinBall {
+    width: 58px;
+    height: 58px;
+  }
+
+  .trackerBall {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ballTracker {
+    gap: 3px;
+    padding: 0;
+    flex-wrap: nowrap;
+  }
+
+  .controls {
+    grid-area: controls;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    padding: 2px 6px;
+    gap: 6px;
+  }
+
+  .buttonRow {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    width: auto;
+    gap: 6px;
+  }
+
+  .controls .resetButton,
+  .controls .resetAimButton,
+  .controls .shootButton {
+    min-width: 0;
+    min-height: 0;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+}
+
 /* CSI Call Shot Modal Styles */
 .callShotModal {
   position: fixed;
