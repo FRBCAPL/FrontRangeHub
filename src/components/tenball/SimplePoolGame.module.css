@@ -600,7 +600,50 @@
   color: #ff8a80;
   font-size: 12px;
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 220px;
+  text-align: right;
+}
+
+.foulNotice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 138, 128, 0.55);
+  background: rgba(80, 20, 20, 0.92);
+  color: #ffebee;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.foulNotice strong {
+  color: #ff8a80;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.foulNotice span {
+  flex: 1 1 160px;
+}
+
+.foulNoticeDismiss {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: transparent;
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.foulNoticeDismiss:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .tipsOff {

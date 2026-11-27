@@ -57,6 +57,27 @@ const POCKET_LABELS = {
   'bottom-center': 'bottom side'
 };
 
+/** Short foul label for seat / sticky notice (splash still has the full sentence). */
+function foulShortLabel(foulType, { isEight = false, isOnePocket = false } = {}) {
+  switch (foulType) {
+    case 'scratch':
+      return 'Scratch';
+    case 'break_insufficient_cushions':
+      return isOnePocket ? 'Illegal break' : 'Break — need pocket or 4 rails';
+    case 'break_cushion_first':
+      return isEight ? 'Cue hit rail before rack' : 'Cue hit rail before the 1';
+    case 'break_wrong_ball_first':
+    case 'wrong_ball_first':
+      return isEight ? 'Wrong ball first' : 'Must hit lowest first';
+    case 'no_contact':
+      return 'Missed all balls';
+    case 'no_rail_contact':
+      return 'No rail after contact';
+    default:
+      return 'Foul';
+  }
+}
+
 const CUE_STICK_LENGTH = 170;
 const CUE_BUTT_GRAB = 26;
 const CUE_SHAFT_GRAB = 18;
@@ -443,6 +464,8 @@ const SimplePoolGame = ({
   // Removed foulCount - only tracking consecutive fouls for 3-foul rule
   const [consecutiveFouls, setConsecutiveFouls] = useState({ 1: 0, 2: 0 }); // Consecutive fouls per player
   const [foulType, setFoulType] = useState(null); // Type of foul committed
+  // Sticky foul reason so break/shot rulings stay readable after the splash.
+  const [lastFoulNotice, setLastFoulNotice] = useState(null);
   const [firstBallHit, setFirstBallHit] = useState(null); // First ball hit in shot
   const [railContact, setRailContact] = useState(false); // Whether any ball hit a rail after contact
   const [lowestNumberedBall, setLowestNumberedBall] = useState(null); // Lowest numbered ball on table
@@ -1149,6 +1172,12 @@ const SimplePoolGame = ({
 
     if (threeFoulRule && nextFoulCount >= 3) {
       const winner = playerWhoFouled === 1 ? 2 : 1;
+      const shortFoul = foulShortLabel(foulType, { isEight, isOnePocket });
+      setLastFoulNotice({
+        player: playerWhoFouled,
+        short: shortFoul,
+        detail: 'Three fouls in a row — loss of game'
+      });
       if (rackWinRecordedRef.current || gameOverRef.current) {
         setFoulType(foulType);
         return;
@@ -1157,7 +1186,7 @@ const SimplePoolGame = ({
       gameOverRef.current = true;
       const { clinched, format } = recordWinRef.current(winner);
       const gameLine = `${nameFor(winner)} wins`;
-      showSplash('FOUL', 'foul', {
+      showSplash(shortFoul, 'foul', {
         text: 'Three fouls in a row',
         tone: 'foulReason',
         next: clinched && format.type !== 'single'
@@ -1235,7 +1264,13 @@ const SimplePoolGame = ({
     suppressTurnSplash.current = true;
     const incomingPlayer = playerWhoFouled === 1 ? 2 : 1;
     const giveKitchenHand = !isOnePocket || foulType === 'scratch';
-    showSplash('FOUL', 'foul', {
+    const shortFoul = foulShortLabel(foulType, { isEight, isOnePocket });
+    setLastFoulNotice({
+      player: playerWhoFouled,
+      short: shortFoul,
+      detail: foulReason
+    });
+    showSplash(shortFoul, 'foul', {
       text: foulReason,
       tone: 'foulReason',
       next: {
@@ -2584,6 +2619,7 @@ const SimplePoolGame = ({
     setFirstBallHit(null);
     setRailContact(false);
     setFoulType(null);
+    setLastFoulNotice(null);
     setFoulHandled(false);
     setContactMade(false);
     setFirstContactDetected(false);
@@ -3966,6 +4002,7 @@ const SimplePoolGame = ({
     setLowestNumberedBall(null);
     setConsecutiveFouls({ 1: 0, 2: 0 });
     setFoulType(null);
+    setLastFoulNotice(null);
     setFoulHandled(false);
     setShotProcessed(false);
     setShotPlayer(null);
@@ -4248,8 +4285,16 @@ const SimplePoolGame = ({
                   {won && <span className={styles.sessionWon}>{matchWonLabel(match)}</span>}
                   {!won && shooting && <em>to shoot</em>}
                   {threeFoulRule && consecutiveFouls[id] > 0 && (
-                    <span className={styles.foulCount}>
+                    <span className={styles.foulCount} title={lastFoulNotice?.player === id ? lastFoulNotice.detail : undefined}>
                       {consecutiveFouls[id]} foul{consecutiveFouls[id] === 1 ? '' : 's'}
+                      {lastFoulNotice?.player === id && lastFoulNotice.short
+                        ? ` — ${lastFoulNotice.short}`
+                        : ''}
+                    </span>
+                  )}
+                  {!threeFoulRule && lastFoulNotice?.player === id && (
+                    <span className={styles.foulCount} title={lastFoulNotice.detail}>
+                      Foul — {lastFoulNotice.short}
                     </span>
                   )}
                   {!computerSeat && mutedTipSeats.has(id) && (
@@ -4274,6 +4319,21 @@ const SimplePoolGame = ({
           );
         })}
       </div>
+
+      {lastFoulNotice && (
+        <div className={styles.foulNotice} role="status">
+          <strong>Foul</strong>
+          <span>{lastFoulNotice.detail}</span>
+          <button
+            type="button"
+            className={styles.foulNoticeDismiss}
+            onClick={() => setLastFoulNotice(null)}
+            aria-label="Dismiss foul notice"
+          >
+            OK
+          </button>
+        </div>
+      )}
 
       <div className={styles.tableRow}>
         <div className={styles.playCluster}>
