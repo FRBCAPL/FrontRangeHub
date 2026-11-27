@@ -93,6 +93,9 @@ export function applyHitEnglish(cue, objectBall, preVx, preVy) {
 export const RAIL_FRICTION = 0.955;     // Speed kept on a cushion, before bounce
 export const CUSHION_BOUNCE = 0.953;    // Combined with rail friction, cushions keep about 91% of speed
 export const MAX_SHOT_SPEED = 46;       // Cue speed at full power, in table pixels per frame
+// Tiny hit variance so live rolls are not pixel-perfect to the aim preview.
+export const SHOT_ANGLE_JITTER = 0.02;  // ± radians (~1.1°) applied at strike only
+export const SHOT_POWER_JITTER = 0.05;  // ± fraction of power applied at strike only
 export const SPIN_DECAY = 0.95;         // How quickly spin decays
 export const MAX_SPIN = 0.3;            // Maximum spin effect on ball movement
 export const SPIN_TRANSFER = 0.8;       // How much spin transfers in collisions

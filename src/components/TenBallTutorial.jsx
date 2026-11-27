@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import SimplePoolGame from './tenball/SimplePoolGame';
 import TutorialRules from './tenball/TutorialRules';
 import GameModeSelector from './tenball/GameModeSelector';
 import PlayerSetupModal from './tenball/PlayerSetupModal';
+import CoinFlipBreak from './tenball/CoinFlipBreak';
 import { DEFAULT_MATCH } from './tenball/matchFormat';
 import TipManager from './tenball/TipManager';
+import { NINEBALL_TUTORIAL_STEPS, TUTORIAL_STEPS } from './tenball/tutorialGuide';
+import { GAME_NINE, GAME_TEN, getGameRules } from './tenball/gameRules';
 import styles from './tenball/TenBallTutorial.module.css';
 
 const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   const [currentMode, setCurrentMode] = useState('menu'); // menu, tutorial, game
+  const [gameType, setGameType] = useState(GAME_TEN);
+  const [lessonOn, setLessonOn] = useState(true);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showHints, setShowHints] = useState(true);
   const [showRules, setShowRules] = useState(true);
@@ -16,70 +21,39 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   const [vsComputer, setVsComputer] = useState(true);
   const [match, setMatch] = useState(DEFAULT_MATCH);
   const [setupOpen, setSetupOpen] = useState(false);
+  const [flipOpen, setFlipOpen] = useState(false);
+  const [openingBreaker, setOpeningBreaker] = useState(1);
+  const [gameKey, setGameKey] = useState(0);
+  const [pendingMatchStart, setPendingMatchStart] = useState(false);
+  const pendingMatchStartRef = useRef(false);
+  pendingMatchStartRef.current = pendingMatchStart;
+  const rules = getGameRules(gameType);
+  const tutorialSteps = gameType === GAME_NINE ? NINEBALL_TUTORIAL_STEPS : TUTORIAL_STEPS;
   const [gameState, setGameState] = useState({
     player1Score: 0,
     player2Score: 0,
     currentPlayer: 1,
     gamePhase: 'break',
     rules: {
-      callPocket: true,
+      callPocket: rules.callShot,
       pushOut: true,
       threeFoulRule: true,
       jumpShots: true
     }
   });
 
-  const tutorialSteps = [
-    {
-      title: "Welcome to 10-Ball!",
-      content: "10-Ball is a call-shot game where you must hit the lowest numbered ball first and call your shots. The 10-ball is the game-winning ball!",
-      proTip: "Always hit the lowest numbered ball first!"
-    },
-    {
-      title: "The Break Shot",
-      content: "Start the game with a legal break shot. You must break from the kitchen hitting the 1-ball first and drive at least 4 balls to the rails or pocket a ball.",
-      proTip: "A good break can set up your entire game!"
-    },
-  
-    {
-      title: "Call Shot Rules",
-      content: "Obvious shots do not need a call. A straight-in on the lowest ball fills the pocket in for you. Call the ball and the pocket for a bank, kick, or combination. If you don't call a shot that is not obvious, it doesn't count!",
-      proTip: "A straight-in is obvious. Call the ball and the pocket when the shot is not."
-    },
-    {
-      title: "Illegal Ball",
-      content: "A ball is illegal if the called ball goes in the wrong pocket, or another ball falls when the called shot was not made. The other player can accept the table or make the shooter shoot again. An illegal 10-ball is spotted. Other illegal balls stay down.",
-      proTip: "If the called ball also goes in the called pocket, extra balls stay down and the shooter continues. An extra 10-ball is still spotted."
-    },
-    {
-      title: "Push Out Option",
-      content: "After a legal break, the player at the table may push out. The cue ball does not have to hit a ball or a rail. Balls that fall stay down, except the 10-ball, which is spotted. The other player then shoots, or gives the shot back.",
-      proTip: "Use push out to improve your position when the table is difficult!"
-    },
-    {
-      title: "Fouls and Penalties",
-      content: "Common fouls include: scratching (cue ball in pocket), hitting wrong ball first, not hitting any rail after contact, and jumping any ball off the table.",
-      proTip: "Three consecutive fouls by the same player results in loss of game!"
-    },
-    {
-      title: "Winning the Game",
-      content: "Legally pocket the 10-ball to win! Yes, you can win with an early ten ball. Hit the lowest numbered ball first. Call the 10 and the pocket unless that shot is obvious.",
-      proTip: "The 10-ball is the only ball that matters for winning!"
-    },
-    {
-      title: "Strategy Tips",
-      content: "Plan your shots ahead, use defensive play when needed, and always consider your opponent's options after your shot.",
-      proTip: "Sometimes the best shot is the one that leaves your opponent nothing!"
-    },
-    {
-      title: "Ready to Play!",
-      content: "You now know the basics of 10-Ball! Practice these rules and strategies to improve your game.",
-      proTip: "Practice makes perfect - keep playing and learning!"
-    }
-  ];
-
   const handleGameModeSelect = (mode) => {
-    if (mode === 'tutorial') setSetupOpen(true);
+    if (mode === 'tutorial' || mode === 'play') {
+      setGameType(GAME_TEN);
+      setLessonOn(mode === 'tutorial');
+      setSetupOpen(true);
+      return;
+    }
+    if (mode === 'nine-tutorial' || mode === 'nine-play') {
+      setGameType(GAME_NINE);
+      setLessonOn(mode === 'nine-tutorial');
+      setSetupOpen(true);
+    }
   };
 
   const confirmSetup = ({ names, vsComputer: computer, match: nextMatch }) => {
@@ -88,11 +62,42 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     if (nextMatch) setMatch(nextMatch);
     setSetupOpen(false);
     if (currentMode === 'menu') {
-      setCurrentMode('tutorial');
-      setTutorialStep(0);
-      setShowHints(true);
-      setShowRules(true);
+      setPendingMatchStart(true);
+      setFlipOpen(true);
+      return;
     }
+  };
+
+  const finishFlip = (breaker) => {
+    const startNew = pendingMatchStartRef.current || currentMode === 'menu';
+    setOpeningBreaker(breaker);
+    setFlipOpen(false);
+    setPendingMatchStart(false);
+    setGameKey((key) => key + 1);
+    if (startNew) {
+      setCurrentMode(lessonOn ? 'tutorial' : 'game');
+      setTutorialStep(0);
+      setShowHints(lessonOn);
+      setShowRules(lessonOn);
+      setGameState((prev) => ({
+        ...prev,
+        player1Score: 0,
+        player2Score: 0,
+        currentPlayer: breaker,
+        gamePhase: 'break',
+        rules: {
+          ...prev.rules,
+          callPocket: getGameRules(gameType).callShot
+        }
+      }));
+      return;
+    }
+    // Keep session / match scores — only the opening breaker changes.
+    setGameState((prev) => ({
+      ...prev,
+      currentPlayer: breaker,
+      gamePhase: 'break'
+    }));
   };
 
   const handleTutorialNext = () => {
@@ -110,7 +115,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   };
 
   const handleGameEnd = (winner) => {
-    setGameState(prev => ({
+    setGameState((prev) => ({
       ...prev,
       gamePhase: 'end',
       player1Score: winner === 1 ? prev.player1Score + 1 : prev.player1Score,
@@ -119,13 +124,14 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   };
 
   const resetGame = () => {
+    const nextRules = getGameRules(gameType);
     setGameState({
       player1Score: 0,
       player2Score: 0,
       currentPlayer: 1,
       gamePhase: 'break',
       rules: {
-        callPocket: true,
+        callPocket: nextRules.callShot,
         pushOut: true,
         threeFoulRule: true,
         jumpShots: true
@@ -135,14 +141,24 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
 
   const cancelMatch = () => {
     setSetupOpen(false);
+    setFlipOpen(false);
+    setPendingMatchStart(false);
     setShowRules(false);
     setCurrentMode('menu');
     setPlayerNames({ 1: '', 2: '' });
     setVsComputer(true);
     setMatch(DEFAULT_MATCH);
+    setOpeningBreaker(1);
     resetGame();
   };
 
+  const [gameMenuSlot, setGameMenuSlot] = useState(null);
+  useEffect(() => {
+    if (lessonOn) return undefined;
+    window.__tenballTipAllow = false;
+    window.tipManager = null;
+    return undefined;
+  }, [lessonOn]);
   const playing = currentMode === 'tutorial' || currentMode === 'game';
   const rulesOpen = currentMode === 'tutorial' && showRules;
 
@@ -150,17 +166,20 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     switch (currentMode) {
       case 'menu':
         return (
-          <GameModeSelector 
+          <GameModeSelector
             onModeSelect={handleGameModeSelect}
             fromLogin={fromLogin}
           />
         );
-      
+
       case 'tutorial':
       case 'game':
         return (
           <div className={`${styles.tutorialContainer} pool-game-live`}>
             <SimplePoolGame
+              key={gameKey}
+              gameType={gameType}
+              initialBreaker={openingBreaker}
               onGameEnd={handleGameEnd}
               playerNames={playerNames}
               vsComputer={vsComputer}
@@ -171,11 +190,20 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
                 player1Score: 0,
                 player2Score: 0
               }))}
+              onRequestFirstBreak={() => {
+                setPendingMatchStart(false);
+                setFlipOpen(true);
+              }}
               onEditPlayers={() => setSetupOpen(true)}
+              onContinue={({ names, vsComputer: computer }) => {
+                setPlayerNames(names);
+                setVsComputer(computer);
+              }}
+              menuSlot={gameMenuSlot}
             />
           </div>
         );
-      
+
       default:
         return <GameModeSelector onModeSelect={handleGameModeSelect} />;
     }
@@ -184,25 +212,23 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   return (
     <div className={styles.container}>
       {renderContent()}
-      
-      {/* Contextual Tips Manager */}
-      {(currentMode === 'game' || currentMode === 'tutorial') && (
-        <TipManager 
-          gameState={gameState}
+
+      {(currentMode === 'game' || currentMode === 'tutorial') && lessonOn && (
+        <TipManager
+          gameType={gameType}
           onTipShown={(tipKey) => console.log(`Tip shown: ${tipKey}`)}
           ref={(tipManagerRef) => {
-            // Store the tip manager reference so the game can trigger tips
             if (tipManagerRef) {
               window.tipManager = tipManagerRef;
             }
           }}
         />
       )}
-      
+
       {playing && (
         <div className={styles.navigation}>
           {!fromLogin && (
-            <button 
+            <button
               className={styles.backButton}
               onClick={() => setCurrentMode('menu')}
             >
@@ -215,14 +241,16 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
               onClick={() => {
                 setCurrentMode('tutorial');
                 setShowRules(true);
+                setTutorialStep(0);
               }}
             >
               Show Tutorial
             </button>
           )}
+          <div ref={setGameMenuSlot} className={styles.gameMenuSlot} />
         </div>
       )}
-      
+
       {rulesOpen && (
         <TutorialRules
           step={tutorialSteps[tutorialStep]}
@@ -231,6 +259,22 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
           onNext={handleTutorialNext}
           onBack={handleTutorialBack}
           onSkip={() => setShowRules(false)}
+          title={gameType === GAME_NINE ? '9-Ball Rules Tutorial' : '10-Ball Rules Tutorial'}
+          quickRules={
+            gameType === GAME_NINE
+              ? [
+                  'Hit lowest ball first',
+                  'No call shot required',
+                  '9-ball wins the game',
+                  'Push out after break'
+                ]
+              : [
+                  'Hit lowest ball first',
+                  'Call your shots',
+                  '10-ball wins the game',
+                  'Push out after break'
+                ]
+          }
         />
       )}
 
@@ -239,15 +283,27 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
           initialNames={playerNames}
           initialVsComputer={vsComputer}
           initialMatch={match}
-          title={currentMode === 'menu' ? 'New match' : 'Edit match'}
+          title={currentMode === 'menu' ? `New ${rules.label} match` : 'Edit match'}
           confirmLabel={currentMode === 'menu' ? 'Start' : 'Save'}
           onConfirm={confirmSetup}
-          onCancel={() => setSetupOpen(false)}
+          onCancel={() => {
+            setSetupOpen(false);
+            setPendingMatchStart(false);
+          }}
           onCancelMatch={currentMode === 'menu' ? undefined : cancelMatch}
+        />
+      )}
+
+      {flipOpen && (
+        <CoinFlipBreak
+          name1={playerNames[1]}
+          name2={playerNames[2]}
+          vsComputer={vsComputer}
+          onDone={finishFlip}
         />
       )}
     </div>
   );
 };
 
-export default TenBallTutorial; 
+export default TenBallTutorial;

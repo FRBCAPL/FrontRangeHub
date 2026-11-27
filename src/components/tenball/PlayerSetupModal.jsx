@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import styles from './PlayerSetupModal.module.css';
-import { BEST_OF_LENGTHS, DEFAULT_MATCH, RACE_LENGTHS, customLength, gamesNeeded } from './matchFormat';
+import {
+  BEST_OF_LENGTHS,
+  BREAK_RULES,
+  DEFAULT_MATCH,
+  RACE_LENGTHS,
+  customLength,
+  gamesNeeded
+} from './matchFormat';
 
 const capitalizeName = (value) => value.replace(/(^|\s)([a-z])/g, (_, space, letter) => space + letter.toUpperCase());
 
@@ -18,6 +25,7 @@ const PlayerSetupModal = ({
   const [names, setNames] = useState(initialNames);
   const [vsComputer, setVsComputer] = useState(initialVsComputer);
   const [matchType, setMatchType] = useState(starting.type || 'single');
+  const [breakRule, setBreakRule] = useState(starting.breakRule || DEFAULT_MATCH.breakRule);
   const [raceTo, setRaceTo] = useState(starting.type === 'race' && RACE_LENGTHS.includes(starting.length) ? starting.length : 5);
   const [bestOf, setBestOf] = useState(starting.type === 'bestof' && BEST_OF_LENGTHS.includes(starting.length) ? starting.length : 5);
   const [raceOther, setRaceOther] = useState(starting.type === 'race' && !RACE_LENGTHS.includes(starting.length));
@@ -30,19 +38,28 @@ const PlayerSetupModal = ({
   const customInvalid = (matchType === 'race' && raceOther && !raceLength)
     || (matchType === 'bestof' && bestOther && !bestLength);
 
-  const match = matchType === 'race'
-    ? { type: 'race', length: raceLength || 2 }
-    : matchType === 'bestof'
-      ? { type: 'bestof', length: bestLength || 3 }
-      : { type: 'single', length: 1 };
+  const match = {
+    ...(matchType === 'race'
+      ? { type: 'race', length: raceLength || 2 }
+      : matchType === 'bestof'
+        ? { type: 'bestof', length: bestLength || 3 }
+        : { type: 'single', length: 1 }),
+    breakRule
+  };
+
+  const breakHint = breakRule === 'winner'
+    ? 'Winner of each game breaks the next.'
+    : breakRule === 'loser'
+      ? 'Loser of each game breaks the next.'
+      : 'Players alternate the break each game.';
 
   const hint = matchType === 'single'
-    ? 'One game, then the match is over.'
+    ? `One game, then the match is over. Opening break is a coin flip. ${breakHint}`
     : customInvalid
       ? matchType === 'race'
         ? 'Enter a race from 2 to 99.'
         : 'Enter an odd number from 3 to 99.'
-      : `First to ${gamesNeeded(match)} games.`;
+      : `First to ${gamesNeeded(match)} games. Opening break is a coin flip. ${breakHint}`;
 
   const submit = (event) => {
     event.preventDefault();
@@ -199,6 +216,19 @@ const PlayerSetupModal = ({
             )}
           </div>
         )}
+        <div className={styles.groupLabel}>Who breaks next</div>
+        <div className={styles.choice}>
+          {BREAK_RULES.map((rule) => (
+            <button
+              key={rule.id}
+              type="button"
+              className={breakRule === rule.id ? styles.choiceOn : styles.choiceOff}
+              onClick={() => setBreakRule(rule.id)}
+            >
+              {rule.label}
+            </button>
+          ))}
+        </div>
         <p className={styles.hint}>{hint}</p>
         {confirmLabel === 'Save' && (
           <p className={styles.hint}>Games already won stay on the board.</p>

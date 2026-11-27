@@ -12,8 +12,7 @@
 }
 
 .tableRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
@@ -32,89 +31,6 @@
   min-width: 0;
 }
 
-.scoreboard {
-  justify-self: start;
-  align-self: center;
-  width: min(220px, 100%);
-  margin-left: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 14px 16px;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #12182b 0%, #0c1222 100%);
-  border: 1px solid rgba(255, 215, 0, 0.45);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
-}
-
-.scoreboardTitle {
-  color: #ffd700;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-align: center;
-}
-
-.scoreboardFormat {
-  margin-top: -6px;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.scoreCard,
-.scoreCardOn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 10px 8px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.scoreCardOn {
-  border-color: rgba(255, 215, 0, 0.85);
-  background: rgba(255, 215, 0, 0.1);
-}
-
-.scoreName {
-  max-width: 100%;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.scoreGames {
-  color: #ffd700;
-  font-size: 64px;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.scoreMeta {
-  color: #9aa4b2;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.scoreCardOn .scoreMeta {
-  color: #ffd700;
-}
-
-.scoreboardBalance {
-  min-width: 0;
-}
 
 .tableContainer {
   position: relative;
@@ -294,34 +210,33 @@
   transform: none;
 }
 
-.pushOutOff,
-.pushOutOn {
+.pushOutChip,
+.pushOutChipOn {
   border: none;
   border-radius: 999px;
   padding: 5px 12px;
+  font-size: 0.82rem;
   font-weight: 700;
-  font-size: 13px;
   cursor: pointer;
+  line-height: 1.2;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.pushOutOff {
-  background: rgba(255, 215, 0, 0.95);
-  color: #111;
-  font-size: 15px;
-  padding: 6px 14px;
-  animation: pushOutPulse 1.2s ease-in-out infinite;
+.pushOutChip {
+  background: rgba(255, 213, 74, 0.95);
+  color: #1a1a1a;
+  box-shadow: 0 0 0 0 rgba(255, 213, 74, 0.5);
+  animation: pushOutChipPulse 1.4s ease-in-out infinite;
 }
 
-.pushOutOn {
-  background: #4caf50;
+.pushOutChipOn {
+  background: #4CAF50;
   color: #fff;
-  font-size: 15px;
-  padding: 6px 14px;
 }
 
-@keyframes pushOutPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.75); }
-  50% { box-shadow: 0 0 0 7px rgba(255, 215, 0, 0); }
+@keyframes pushOutChipPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 213, 74, 0.55); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 213, 74, 0); }
 }
 
 .aimingInstructions {
@@ -378,7 +293,7 @@
   flex-direction: column;
   align-items: center;
   position: relative;
-  z-index: 1;
+  z-index: 4;
   gap: 8px;
   width: 100%;
   max-width: 760px;
@@ -388,6 +303,97 @@
   padding: 8px 12px;
   flex: 0 0 auto;
   box-sizing: border-box;
+}
+
+.sessionBoard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: 10px;
+  width: min(720px, 100%);
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
+  padding: 6px 8px;
+  box-sizing: border-box;
+}
+
+.sessionSeat,
+.sessionSeatOn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sessionSeatOn {
+  border-color: rgba(255, 215, 0, 0.85);
+  background: rgba(255, 215, 0, 0.12);
+}
+
+.sessionSeatTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sessionGames {
+  color: #ffd700;
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.sessionSeatMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.sessionSeatMeta em {
+  font-style: normal;
+  color: #ffd700;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sessionWon {
+  color: #81c784;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sessionMid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 10px;
+  min-width: 88px;
+}
+
+.sessionLabel {
+  color: #9aa4b2;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sessionScoreLine {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .playerNames {
@@ -518,63 +524,26 @@
   min-width: 150px;
 }
 
-.shootButton:hover:not(.disabled) {
+.shootButton:hover:not(:disabled) {
   background: linear-gradient(45deg, #45a049, #4CAF50);
-  transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
-.shootButton:active:not(.disabled) {
-  transform: translateY(0);
+.shootButton:active:not(:disabled) {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.shootButton.disabled {
-  background: linear-gradient(45deg, #666, #555);
-  color: #ccc;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+.shootButton:disabled {
+  background: linear-gradient(45deg, #4CAF50, #45a049);
+  color: white;
+  opacity: 1;
+  cursor: pointer;
 }
 
 .buttonRow {
   display: flex;
   gap: 15px;
   justify-content: center;
-}
-
-.resetAimButton {
-  background: linear-gradient(45deg, #2196F3, #1976D2);
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.resetAimButton:hover:not(:disabled) {
-  background: linear-gradient(45deg, #1976D2, #1565C0);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
-}
-
-.resetAimButton:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.resetAimButton:disabled {
-  background: linear-gradient(45deg, #666, #555);
-  color: #ccc;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .powerControl,
@@ -857,37 +826,60 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
+.matchMenuWrap {
+  position: relative;
+}
+
+.matchMenuButton {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 0;
+  min-height: 0;
+  min-width: 0;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.matchMenu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 6px);
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  min-width: 168px;
+  padding: 6px;
+  gap: 4px;
+  background: #121826;
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.matchMenu button {
+  background: transparent;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.matchMenu button:hover {
+  background: rgba(255, 215, 0, 0.16);
+}
+
 /* Responsive Design */
 @media (max-width: 1240px) {
-  .tableRow {
-    grid-template-columns: 1fr;
-    justify-items: center;
-  }
-
-  .scoreboardBalance {
-    display: none;
-  }
-
-  .scoreboard {
-    width: min(560px, 100%);
-    margin-left: 0;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: stretch;
-  }
-
-  .scoreboardTitle {
-    width: 100%;
-  }
-
-  .scoreCard,
-  .scoreCardOn {
-    flex: 1 1 180px;
-  }
-
-  .scoreGames {
-    font-size: 48px;
+  .sessionBoard {
+    width: min(640px, 100%);
   }
 }
 
@@ -947,8 +939,7 @@
     font-size: 0.9rem;
   }
   
-  .resetButton,
-  .resetAimButton {
+  .resetButton {
     padding: 10px 20px;
     font-size: 14px;
   }
@@ -1030,31 +1021,18 @@
     height: 72px;
   }
 
-  .scoreboard {
+  .sessionBoard {
     width: 100%;
-    margin-left: 0;
-    padding: 6px 8px;
     gap: 6px;
-    flex-wrap: nowrap;
+    padding: 4px 6px;
   }
 
-  .scoreboardTitle {
-    display: none;
+  .sessionGames {
+    font-size: 1.25rem;
   }
 
-  .scoreGames {
-    font-size: 22px;
-  }
-
-  .scoreName {
+  .seatName {
     font-size: 13px;
-  }
-
-  .scoreCard,
-  .scoreCardOn {
-    flex: 1 1 0;
-    min-width: 0;
-    padding: 6px 8px;
   }
 
   .trackerBall {
@@ -1113,7 +1091,7 @@
   }
 
   .resetButton,
-  .resetAimButton,
+  .matchMenuButton,
   .shootButton {
     min-width: 0;
     padding: 8px 10px;
@@ -1199,68 +1177,29 @@
     text-overflow: ellipsis;
   }
 
-  .playerNames {
+  .sessionBoard {
     order: 2;
-    flex: 1.4 1 0;
-    flex-wrap: nowrap;
+    width: 100%;
+    flex: 0 0 auto;
     gap: 4px;
-    min-width: 0;
-    height: 34px;
-    overflow: hidden;
+    padding: 2px 4px;
   }
 
-  .playerNames .editPlayers,
-  .playerNames .playerTurn,
-  .playerNames .playerWaiting {
-    min-height: 0;
-    padding: 2px 8px;
-    line-height: 1.1;
+  .sessionSeat,
+  .sessionSeatOn {
+    padding: 4px 8px;
   }
 
-  .scoreboard {
-    order: 2;
-    flex: 0.8 1 0;
-    width: auto;
-    margin-left: 0;
-    padding: 0 6px;
-    gap: 6px;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-items: center;
-    min-width: 0;
-    height: 34px;
-    overflow: hidden;
+  .sessionGames {
+    font-size: 1.1rem;
   }
 
-  .scoreboardTitle {
-    display: none;
+  .sessionLabel {
+    font-size: 0.62rem;
   }
 
-  .scoreboardFormat {
-    display: none;
-  }
-
-  .scoreCard,
-  .scoreCardOn {
-    flex: 1 1 0;
-    flex-direction: row;
-    justify-content: center;
-    gap: 8px;
-    min-width: 0;
-    padding: 3px 8px;
-  }
-
-  .scoreGames {
-    font-size: 18px;
-    line-height: 1;
-  }
-
-  .scoreName {
-    font-size: 12px;
-  }
-
-  .scoreMeta {
-    display: none;
+  .sessionScoreLine {
+    font-size: 0.95rem;
   }
 
   .tableRow {
@@ -1299,10 +1238,6 @@
   .fineAimRight {
     grid-area: aimR;
     align-self: end;
-  }
-
-  .scoreboardBalance {
-    display: none;
   }
 
   .tableContainer {
@@ -1388,9 +1323,10 @@
     flex-wrap: nowrap;
     min-width: 0;
     height: 34px;
-    overflow: hidden;
+    overflow: visible;
     padding: 0 4px;
     gap: 4px;
+    z-index: 6;
   }
 
   .buttonRow {
@@ -1401,7 +1337,7 @@
   }
 
   .controls .resetButton,
-  .controls .resetAimButton,
+  .controls .matchMenuButton,
   .controls .shootButton {
     min-width: 0;
     min-height: 0;
@@ -1788,6 +1724,45 @@
   line-height: 1.4;
 }
 
+.playAgainSeat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.playAgainSeat strong {
+  color: #f8fafc;
+  font-size: 0.95rem;
+}
+
+.playAgainSeat .pushOutButtons {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.playAgainSeat .acceptButton,
+.playAgainSeat .declineButton {
+  flex: 0 0 72px;
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
+.playAgainYes,
+.playAgainNo {
+  min-width: 64px;
+  font-weight: 700;
+}
+
+.playAgainYes {
+  color: #7dffa1;
+}
+
+.playAgainNo {
+  color: #ffb4a8;
+}
+
 .pushOutContent ul {
   margin: 0 0 8px;
   padding-left: 18px;
@@ -1839,6 +1814,43 @@
 @media (hover: hover) and (pointer: fine) {
   .declineButton:hover {
     background: linear-gradient(45deg, #c0392b, #e74c3c);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.pushOutChoiceButton,
+.shootNormalButton {
+  flex: 1 1 120px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+  touch-action: manipulation;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.pushOutChoiceButton {
+  background: linear-gradient(45deg, #ffd54a, #fbc02d);
+  color: #1a1a1a;
+}
+
+.shootNormalButton {
+  background: linear-gradient(45deg, #27ae60, #2ecc71);
+  color: #fff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pushOutChoiceButton:hover {
+    background: linear-gradient(45deg, #ffe082, #ffd54a);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .shootNormalButton:hover {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
   }
 } 

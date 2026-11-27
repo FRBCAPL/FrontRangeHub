@@ -35,7 +35,7 @@ function hubCenterTitle(pathname, currentAppName, userFirstName, search) {
   if (pathname === '/hub') return !userFirstName ? 'Ladder - Login' : 'Ladder of Legends';
   if (pathname === '/guest/ladder' || pathname === '/ladder') return 'Ladder of Legends';
   if (pathname === '/cueless') return 'Cueless in the Booth';
-  if (pathname === '/tenball-tutorial' || pathname === '/simple-pool') return '10-Ball';
+  if (pathname === '/tenball-tutorial' || pathname === '/simple-pool') return 'Play Pool';
   if (pathname === '/admin') return 'Singles League Admin';
   if (ADMIN_HOME_PATHS.includes(pathname)) return 'Admin Home';
   if (pathname === '/platform-admin') return 'Platform Admin';

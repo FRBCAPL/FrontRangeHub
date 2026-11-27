@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './SimplePoolGame.module.css';
 import TableDecisionCard from './TableDecisionCard';
+import PlayAgainPrompt from './PlayAgainPrompt';
 import PlayerSetupModal from './PlayerSetupModal';
 import { readMutedTipSeats, writeMutedTipSeats } from './TipManager';
-import { DEFAULT_MATCH, leadingWinner, matchLabel, matchWinLine, matchWonLabel } from './matchFormat';
+import { DEFAULT_MATCH, leadingWinner, matchLabel, matchWinLine, matchWonLabel, nextBreaker } from './matchFormat';
+import { nextGameAfterVotes } from './playAgain';
 import { planComputerShot, computerTakesTheTable } from './computerOpponent';
 import { PHASES, isBreak, isPlay, nextPhaseAfterShot, shouldEnablePushOut, canShowPushOut } from './turnStateMachine';
+import { createRack, getGameRules, spotMoneyBall, GAME_TEN } from './gameRules';
   // Debug flag and logger
   const DEBUG = false;
   const debugLog = (...args) => {
@@ -197,6 +201,8 @@ import {
       RAIL_FRICTION,
       CUSHION_BOUNCE,
       MAX_SHOT_SPEED,
+      SHOT_ANGLE_JITTER,
+      SHOT_POWER_JITTER,
       englishFromControl,
       applyRailEnglish,
       applyHitEnglish,
@@ -210,14 +216,33 @@ function lowestBallOnTable(balls) {
   return visible.reduce((lowest, ball) => (ball.id < lowest.id ? ball : lowest)).id;
 }
 
-const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: vsComputerProp, onEditPlayers, matchScores, matchFormat, onRestartMatch }) => {
+const SimplePoolGame = ({
+  onGameEnd,
+  playerNames: playerNamesProp,
+  vsComputer: vsComputerProp,
+  onEditPlayers,
+  matchScores,
+  matchFormat,
+  onRestartMatch,
+  onRequestFirstBreak,
+  onContinue,
+  menuSlot = null,
+  gameType = GAME_TEN,
+  initialBreaker = 1
+}) => {
+  const rules = getGameRules(gameType);
+  const moneyBall = rules.moneyBall;
+  const callShot = rules.callShot;
+  const winOnBreak = rules.winOnBreak;
+  const ballIds = rules.ballIds;
   // Remove the console.log that's causing spam
   const canvasRef = useRef(null);
+  const lastBreakerRef = useRef(initialBreaker === 2 ? 2 : 1);
   const [gameState, setGameState] = useState({
     balls: [],
     cueBall: { x: 100, y: 150, originalX: 100, originalY: 150, vx: 0, vy: 0, visible: true, isMoving: false, rotation: 0, rotationSpeed: 0, spinX: 0, spinY: 0 },
     isAnimating: false,
-    currentPlayer: 1,
+    currentPlayer: initialBreaker === 2 ? 2 : 1,
     gamePhase: PHASES.BREAK,
     ballInHand: false,
     scratchOccurred: false
@@ -279,7 +304,11 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       setLocalScores(next);
     }
     if (onGameEnd) onGameEnd(winner);
-    return { clinched: !already && !!leadingWinner(next, format), format };
+    // Single-game mode is a session tally — every finished game "clinches" that game only.
+    const clinched = (format.type || 'single') === 'single'
+      ? true
+      : (!already && !!leadingWinner(next, format));
+    return { clinched, format };
   };
   const playerNames = playerNamesProp ?? localNames;
   const vsComputer = vsComputerProp !== undefined ? vsComputerProp : localVsComputer;
@@ -331,19 +360,20 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const [showCallShotModal, setShowCallShotModal] = useState(false); // Show call shot interface
   const [isPushOut, setIsPushOut] = useState(false); // Push out after break
   const [pushOutAvailable, setPushOutAvailable] = useState(false); // Push out available after break
-  const pushOutAnnounced = useRef(false);
+  const [showPushOutOffer, setShowPushOutOffer] = useState(false); // Choose push out vs normal shot
+  const pushOutOfferShown = useRef(false);
   useEffect(() => {
     if (!pushOutAvailable) {
-      pushOutAnnounced.current = false;
+      pushOutOfferShown.current = false;
+      setShowPushOutOffer(false);
       return;
     }
-    if (isBreak(gameState.gamePhase) || pushOutAnnounced.current) return;
-    pushOutAnnounced.current = true;
-    showSplash(`${nameFor(gameState.currentPlayer)} can push out`, 'turn', {
-      text: 'The cue ball does not have to hit a ball or a rail',
-      tone: 'turn'
-    });
-  }, [pushOutAvailable, gameState.gamePhase, gameState.currentPlayer, showSplash]);
+    if (isBreak(gameState.gamePhase) || pushOutOfferShown.current) return;
+    // Computer decides via its planner — no human offer card.
+    if (vsComputer && gameState.currentPlayer === 2) return;
+    pushOutOfferShown.current = true;
+    setShowPushOutOffer(true);
+  }, [pushOutAvailable, gameState.gamePhase, gameState.currentPlayer, vsComputer]);
   const [firstShotAfterBreak, setFirstShotAfterBreak] = useState(false); // Track if first shot after break has been taken
   const [isBreakShot, setIsBreakShot] = useState(false); // Track if current shot is a break shot
   const [pushOutResult, setPushOutResult] = useState(null); // Track push out result for opponent decision
@@ -365,17 +395,30 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const cueRailBeforeContactRef = useRef(false);
   const contactMadeRef = useRef(false);
   const gameOverRef = useRef(false);
+  const [playAgainOpen, setPlayAgainOpen] = useState(false);
+  const playAgainTimer = useRef(null);
+  const queuePlayAgain = (delay) => {
+    if (playAgainTimer.current) clearTimeout(playAgainTimer.current);
+    playAgainTimer.current = setTimeout(() => setPlayAgainOpen(true), delay);
+  };
+  useEffect(() => () => {
+    if (playAgainTimer.current) clearTimeout(playAgainTimer.current);
+  }, []);
   useEffect(() => {
+    // Session scores in single-game mode must not freeze the table.
+    if ((match?.type || 'single') === 'single') return;
     gameOverRef.current = !!leadingWinner(scores, match);
   }, [scores, match]);
   const [illegallyPocketedBalls, setIllegallyPocketedBalls] = useState([]); // Track illegally pocketed balls
   const [showIllegalPocketOption, setShowIllegalPocketOption] = useState(false); // Show opponent option modal
   const tableTipForShot = useRef(null);
 
-  const offerTableTip = useCallback((key, text) => {
+  const offerTableTip = useCallback((key, text, options = {}) => {
     if (!key || !text || tableTipForShot.current) return;
     tableTipForShot.current = key;
-    window.dispatchEvent(new CustomEvent('tableTip', { detail: { key, text } }));
+    window.dispatchEvent(new CustomEvent('tableTip', {
+      detail: { key, text, repeat: Boolean(options.repeat) }
+    }));
   }, []);
   
   // Table/physics constants moved to constants.js
@@ -413,11 +456,11 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   })();
 
   const handleTrackerBallClick = useCallback((id) => {
-    if (gameState.isAnimating || isBreak(gameState.gamePhase) || isPushOut) return;
+    if (!callShot || gameState.isAnimating || isBreak(gameState.gamePhase) || isPushOut) return;
     const ball = gameState.balls.find((entry) => entry.id === id);
     if (!ball?.visible || ball.pocketed) return;
     setCalledBall(id);
-  }, [gameState.isAnimating, gameState.gamePhase, gameState.balls, isPushOut]);
+  }, [callShot, gameState.isAnimating, gameState.gamePhase, gameState.balls, isPushOut]);
   
      // Get pocket ID for a given position
   const getPocketId = useCallback((x, y) => {
@@ -526,13 +569,13 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   }, [gameState.balls]);
 
   useEffect(() => {
-    if (gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return;
+    if (!callShot || gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return;
     const lowest = getLowestNumberedBall();
     if (!lowest) return;
     const called = gameState.balls.find((ball) => ball.id === calledBall);
     if (called && called.visible && !called.pocketed) return;
     setCalledBall(lowest.id);
-  }, [gameState.isAnimating, gameState.gamePhase, gameState.balls, isPushOut, calledBall, getLowestNumberedBall]);
+  }, [callShot, gameState.isAnimating, gameState.gamePhase, gameState.balls, isPushOut, calledBall, getLowestNumberedBall]);
 
   // Foul detection functions
   const detectFouls = useCallback(() => {
@@ -609,10 +652,9 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     return foulDetected;
   }, [isPushOut, firstBallHit, railContact, contactMade, getLowestNumberedBall, gameState.balls, lowestNumberedBall, gameState.cueBall.visible, gameState.gamePhase, objectBallsHitCushions]);
 
-  // Detect illegally pocketed balls (CSI 10-Ball rules)
+  // Detect illegally pocketed balls (CSI 10-Ball call-shot rules; off for 9-Ball)
   const detectIllegallyPocketedBalls = useCallback(() => {
-    if (gameState.gamePhase === 'break' || isPushOut) {
-      // No call shot required on break or push out, so no illegally pocketed balls
+    if (!callShot || gameState.gamePhase === 'break' || isPushOut) {
       return [];
     }
 
@@ -645,7 +687,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     });
 
     return illegallyPocketed;
-  }, [gameState.gamePhase, isPushOut, calledBall, calledPocket, gameState.balls]);
+  }, [callShot, gameState.gamePhase, isPushOut, calledBall, calledPocket, gameState.balls]);
 
   const handleFoul = useCallback((foulType) => {
     // Use shotPlayer instead of currentPlayer to ensure we're handling the foul for the correct player
@@ -683,7 +725,11 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     } else if (foulType === 'no_rail_contact') {
       foulTip = `After the hit, a ball has to reach a rail or be pocketed. This is a foul. ${incomingName} has ball in hand.`;
     }
-    offerTableTip(nextFoulCount >= 3 ? 'three-foul' : `foul-${foulType}-${nextBall || 'none'}`, foulTip);
+    offerTableTip(
+      nextFoulCount >= 3 ? 'three-foul' : `foul-${foulType}`,
+      foulTip,
+      nextFoulCount >= 3 ? undefined : { repeat: true }
+    );
     
     // Update consecutive fouls (for 3-foul rule)
     setConsecutiveFouls(prev => {
@@ -716,14 +762,25 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
           ? { text: gameLine, tone: 'win', next: { text: matchWinLine(nameFor(winner), format), tone: 'win' } }
           : { text: gameLine, tone: 'win' }
       });
+      if (clinched) {
+        const tones = ['foul', 'foulReason', 'win'];
+        if (format.type !== 'single') tones.push('win');
+        queuePlayAgain(splashChainMs(...tones));
+      }
       if (!clinched) {
       setTimeout(() => {
+        const breaker = nextBreaker({
+          breakRule: matchRef.current?.breakRule || 'alternate',
+          lastBreaker: lastBreakerRef.current,
+          winner
+        });
+        lastBreakerRef.current = breaker;
         setGameState(prev => ({
           ...prev,
           balls: initializeBalls(),
           cueBall: { x: 100, y: 150, originalX: 100, originalY: 150, vx: 0, vy: 0, visible: true, isMoving: false },
           isAnimating: false,
-          currentPlayer: 1,
+          currentPlayer: breaker,
           gamePhase: 'break',
           ballInHand: false,
           scratchOccurred: false
@@ -732,6 +789,9 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         setCalledBall(null);
         setCalledPocket(null);
         setShowAimLine(true);
+        setPushOutAvailable(false);
+        setIsPushOut(false);
+        setFirstShotAfterBreak(false);
         gameOverRef.current = false;
         setTurnCue((cue) => cue + 1);
       }, splashChainMs('foul', 'foulReason', 'win'));
@@ -742,15 +802,18 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
 
     // Apply ball-in-hand penalty
     suppressTurnSplash.current = true;
+    const incomingPlayer = playerWhoFouled === 1 ? 2 : 1;
     showSplash('FOUL', 'foul', {
       text: foulReason,
       tone: 'foulReason',
       next: { text: `${incomingName} has ball in hand`, tone: 'turn' }
     });
+    setShowPushOutDecision(false);
+    setPushOutResult(null);
     setGameState(prev => ({
       ...prev,
       ballInHand: true,
-      currentPlayer: prev.currentPlayer === 1 ? 2 : 1, // Switch players
+      currentPlayer: incomingPlayer,
       scratchOccurred: foulType === 'scratch'
     }));
 
@@ -1211,97 +1274,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   // Enhanced ball collision resolution with spin transfer
   const resolveBallCollision = useCallback((a, b) => resolveEqualBallHit(a, b), []);
   
-  // Initialize balls in 10-ball rack formation
-  const initializeBalls = useCallback(() => {
-    const balls = [];
-    const rackApexX = TABLE_WIDTH * 0.75;
-    const rackApexY = TABLE_HEIGHT / 2;
-    const rackSpacingX = BALL_SIZE * 0.87;
-    const rackSpacingY = BALL_SIZE / 2;
-
-         function jitter() {
-       return (Math.random() - 0.5) * 1.5;
-     }
-
-              // 10-ball rack formation (proper triangle, apex pointing toward cue ball)
-     const rackPositions = [
-       { x: rackApexX, y: rackApexY }, // 1-ball (apex) - front center
-       { x: rackApexX + BALL_SIZE * 0.95, y: rackApexY - BALL_SIZE * 0.48 }, // Row 2 left
-       { x: rackApexX + BALL_SIZE * 0.95, y: rackApexY + BALL_SIZE * 0.48 }, // Row 2 right
-       { x: rackApexX + 2 * BALL_SIZE * 0.95, y: rackApexY - BALL_SIZE * 0.95 }, // Row 3 left
-       { x: rackApexX + 2 * BALL_SIZE * 0.95, y: rackApexY }, // 10-ball (middle)
-       { x: rackApexX + 2 * BALL_SIZE * 0.95, y: rackApexY + BALL_SIZE * 0.95 }, // Row 3 right
-       { x: rackApexX + 3 * BALL_SIZE * 0.95, y: rackApexY - BALL_SIZE * 1.43 }, // Row 4 left (2-ball corner)
-       { x: rackApexX + 3 * BALL_SIZE * 0.95, y: rackApexY - BALL_SIZE * 0.48 }, // Row 4 center-left
-       { x: rackApexX + 3 * BALL_SIZE * 0.95, y: rackApexY + BALL_SIZE * 0.48 }, // Row 4 center-right
-       { x: rackApexX + 3 * BALL_SIZE * 0.95, y: rackApexY + BALL_SIZE * 1.43 }  // Row 4 right (3-ball corner)
-     ];
-
-     // Official CSI 10-ball rack order: 1 at front, 10 in middle, 2&3 in back corners, rest random
-     const backCornerPositions = [
-       { x: rackApexX + 3 * BALL_SIZE * 0.95, y: rackApexY - BALL_SIZE * 1.43 }, // Back left corner (2-ball)
-       { x: rackApexX + 3 * BALL_SIZE * 0.95, y: rackApexY + BALL_SIZE * 1.43 }  // Back right corner (3-ball)
-     ];
-     
-     // Randomly place 2 and 3 in back corners
-     const cornerBalls = [2, 3];
-     const shuffledCorners = cornerBalls.sort(() => Math.random() - 0.5);
-     
-     // Create random order for balls 4-9
-     const remainingBalls = [4, 5, 6, 7, 8, 9];
-     const shuffledRemaining = remainingBalls.sort(() => Math.random() - 0.5);
-     
-     // Final ball order: 1, 10, 2&3 in corners, rest random
-     const ballOrder = [1, 10, ...shuffledCorners, ...shuffledRemaining];
-
-         // Place balls according to CSI rules
-     ballOrder.forEach((ballId, index) => {
-       let position;
-       
-       if (index === 0) {
-         // 1-ball at apex
-         position = rackPositions[0];
-       } else if (index === 1) {
-         // 10-ball in middle (third row center)
-         position = rackPositions[4];
-       } else if (index === 2 || index === 3) {
-         // 2 and 3 balls in back corners (last row)
-         const cornerIndex = index - 2;
-         position = backCornerPositions[cornerIndex];
-                } else {
-           // Remaining balls (4-9) in random positions
-           const remainingPositions = [
-             rackPositions[1], // Row 2 left
-             rackPositions[2], // Row 2 right
-             rackPositions[3], // Row 3 left (but not center - that's 10-ball)
-             rackPositions[5], // Row 3 right
-             rackPositions[7], // Row 4 center-left
-             rackPositions[8]  // Row 4 center-right
-           ];
-           position = remainingPositions[index - 4];
-         }
-       
-       if (position) {
-         balls.push({
-           id: ballId,
-           x: position.x + jitter(),
-           y: position.y + jitter(),
-           vx: 0,
-           vy: 0,
-           visible: true,
-           pocketed: false,
-           wasPocketedBeforeShot: false, // Track if ball was pocketed before current shot
-           isMoving: false,
-           rotation: 0, // Ball rotation angle
-           rotationSpeed: 0, // Ball rotation speed
-           spinX: 0, // Spin effect on X axis
-           spinY: 0  // Spin effect on Y axis
-         });
-       }
-     });
-
-    return balls;
-  }, []);
+  const initializeBalls = useCallback(() => createRack(gameType), [gameType]);
   
   // Main animation loop (from working simulation)
   const animateBalls = useCallback(() => {
@@ -1588,10 +1561,11 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       // Check if all balls stopped
       const allStopped = gameState.balls.every(ball => !ball.isMoving) && !gameState.cueBall.isMoving;
 
-      // Handle push out result when animation ends
+      // A legal push out asks the other player to take the table or give it back.
+      // A scratch is a foul, so that choice must not hand the shot back to the shooter.
       if (allStopped && pushOutResult) {
-        setShowPushOutDecision(true);
-        setPushOutResult(null); // Clear the result
+        if (gameState.cueBall.visible) setShowPushOutDecision(true);
+        setPushOutResult(null);
       }
 
       // Check for push out fouls FIRST (only scratches are fouls during push out)
@@ -1674,7 +1648,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
               setGameState(prev => ({ ...prev, isAnimating: false }));
               const missed = illegallyPocketed.map((ball) => ball.id).join(' and ');
               offerTableTip(
-                `illegal-${missed}`,
+                'illegal-call',
                 `The ${missed}-ball went in, but that was not the called shot. ${otherName(shotPlayer)} can accept the table or make ${nameFor(shotPlayer)} shoot again.`
               );
               
@@ -1712,36 +1686,33 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
           );
           
           const nextBall = lowestBallOnTable(gameState.balls);
-          // A ball that was not the called shot does not keep the turn.
-          if (ballsPocketedThisShot.length > 0 && !calledShotMade) {
+          // CSI 10-Ball: a pocketed ball that was not the called shot is illegal.
+          if (callShot && ballsPocketedThisShot.length > 0 && !calledShotMade) {
             setIllegallyPocketedBalls(ballsPocketedThisShot);
             setShowIllegalPocketOption(true);
             setGameState(prev => ({ ...prev, isAnimating: false }));
             const missed = ballsPocketedThisShot.map((ball) => ball.id).join(' and ');
             offerTableTip(
-              `illegal-${missed}`,
+              'illegal-call',
               `The ${missed}-ball went in, but that was not the called shot. ${otherName(shotPlayer)} can accept the table or make ${nameFor(shotPlayer)} shoot again.`
             );
             return;
           } else if (ballsPocketedThisShot.length === 0) {
             debugLog('No ball pocketed - switching players');
-      setGameState(prev => ({
-        ...prev,
+            setGameState(prev => ({
+              ...prev,
               currentPlayer: prev.currentPlayer === 1 ? 2 : 1
             }));
             offerTableTip(
-              `miss-${nextBall || 'none'}`,
+              'miss',
               nextBall
-                ? `Nothing fell. The ${nextBall}-ball is still first. ${otherName(shotPlayer)} aims next. A straight-in fills the pocket; a bank, kick, or combination has to be called.`
+                ? (callShot
+                  ? `Nothing fell. The ${nextBall}-ball is still first. ${otherName(shotPlayer)} aims next. A straight-in fills the pocket; a bank, kick, or combination has to be called.`
+                  : `Nothing fell. The ${nextBall}-ball is still first. ${otherName(shotPlayer)} aims next.`)
                 : `Nothing fell. ${otherName(shotPlayer)} shoots next.`
             );
-          } else if (nextBall) {
-            offerTableTip(
-              `made-${nextBall}`,
-              `A ball fell, and ${nameFor(shotPlayer)} keeps shooting. The ${nextBall}-ball is next. A straight-in fills the pocket.`
-            );
           }
-          // The called ball in the called pocket keeps the turn.
+          // Legal pocket keeps the turn. No “ball made” tip every shot.
           // A foul switches players in handleFoul.
         }
       }
@@ -1774,32 +1745,45 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
           }
           const pushOutPlayer = ballsPocketedThisShot.length === 0 ? otherName(shotPlayer) : nameFor(shotPlayer);
           offerTableTip(
-            `break-done-${nextBall || 'none'}`,
+            'break-done',
             nextBall
-              ? `The break is legal. ${pushOutPlayer} can push out. The ${nextBall}-ball is the ball to hit. A straight-in fills the pocket; call a bank, kick, or combination.`
-              : `The break is legal. ${pushOutPlayer} can push out. A straight-in fills the pocket; call a bank, kick, or combination.`
+              ? (callShot
+                ? `The break is legal. ${pushOutPlayer} can push out. The ${nextBall}-ball is the ball to hit. A straight-in fills the pocket; call a bank, kick, or combination.`
+                : `The break is legal. ${pushOutPlayer} can push out. The ${nextBall}-ball is the ball to hit first.`)
+              : (callShot
+                ? `The break is legal. ${pushOutPlayer} can push out. A straight-in fills the pocket; call a bank, kick, or combination.`
+                : `The break is legal. ${pushOutPlayer} can push out. Hit the lowest numbered ball first.`)
           );
           // If ball was pocketed, player continues shooting
         }
       }
 
-      // Check if 10-ball was legally pocketed (game win condition)
-      const tenBallPocketed = gameState.balls.find(ball => ball.id === 10 && ball.pocketed);
-      
-      if (allStopped && tenBallPocketed && !showIllegalPocketOption) {
-        // A legal win is a called 10 in the called pocket, and not a break, push-out, or foul.
-        const wasCalledPocketCorrect = calledPocket && tenBallPocketed.pocketedPocket === calledPocket;
-        const legalTen = !shotEndedInFoul && !isPushOut && !isBreakShot && !isBreak(gameState.gamePhase) && calledBall === 10 && wasCalledPocketCorrect;
-        
-        if (legalTen) {
-          // 10-ball was legally called and pocketed - GAME WON!
+      // Money ball pocketed (10 in 10-Ball, 9 in 9-Ball)
+      const moneyPocketed = gameState.balls.find((ball) => ball.id === moneyBall && ball.pocketed);
+
+      if (allStopped && moneyPocketed && !showIllegalPocketOption) {
+        const wasCalledPocketCorrect = calledPocket && moneyPocketed.pocketedPocket === calledPocket;
+        const legalCall = callShot
+          && !isBreakShot
+          && !isBreak(gameState.gamePhase)
+          && calledBall === moneyBall
+          && wasCalledPocketCorrect;
+        const legalRotation = !callShot && (winOnBreak || (!isBreakShot && !isBreak(gameState.gamePhase)));
+        const legalMoney = !shotEndedInFoul && !isPushOut && (legalCall || legalRotation);
+
+        if (legalMoney) {
           const winner = shotPlayer;
-          debugLog(`Game won by Player ${winner}! 10-ball was legally called and pocketed.`);
-          
+          debugLog(`Game won by Player ${winner}! ${moneyBall}-ball legally pocketed.`);
+
           const { clinched, format } = recordWinRef.current(winner);
           if (clinched) gameOverRef.current = true;
-          
-          offerTableTip('game-won', `The 10-ball is down in the called pocket. ${nameFor(winner)} wins the game.`);
+
+          offerTableTip(
+            'game-won',
+            callShot
+              ? `The ${moneyBall}-ball is down in the called pocket. ${nameFor(winner)} wins the game.`
+              : `The ${moneyBall}-ball is down. ${nameFor(winner)} wins the game.`
+          );
           showSplash(
             `${nameFor(winner)} wins`,
             'win',
@@ -1807,74 +1791,61 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
               ? { text: matchWinLine(nameFor(winner), format), tone: 'win' }
               : undefined
           );
-          
+          if (clinched) {
+            queuePlayAgain(splashChainMs('win', ...(format.type !== 'single' ? ['win'] : [])));
+          }
+
           if (!clinched) {
-          setTimeout(() => {
-            setGameState(prev => ({
-              ...prev,
-              balls: initializeBalls(),
-              cueBall: { x: 100, y: 150, originalX: 100, originalY: 150, vx: 0, vy: 0, visible: true, isMoving: false },
-              isAnimating: false,
-              gamePhase: 'break',
-              ballInHand: false,
-              scratchOccurred: false
-            }));
-            setIsDragging(false);
-      setShowAimLine(true);
-            
-            // Reset foul counters for new game
-            debugLog('Resetting foul counters after game win');
-            setConsecutiveFouls({ 1: 0, 2: 0 });
-            
-            // Force a re-render by updating game state
-            setGameState(prev => ({
-              ...prev,
-              _foulReset: Date.now() // Add a timestamp to force re-render
-            }));
-            
-            // Reset contextual tips for new game
-            if (window.tipManager && window.tipManager.resetTips) {
-              window.tipManager.resetTips();
-            }
-            setTurnCue((cue) => cue + 1);
-          }, splashChainMs('win')); // Keep the winner splash up before the next rack
+            setTimeout(() => {
+              const breaker = nextBreaker({
+                breakRule: matchRef.current?.breakRule || 'alternate',
+                lastBreaker: lastBreakerRef.current,
+                winner
+              });
+              lastBreakerRef.current = breaker;
+              setGameState((prev) => ({
+                ...prev,
+                balls: initializeBalls(),
+                cueBall: { x: 100, y: 150, originalX: 100, originalY: 150, vx: 0, vy: 0, visible: true, isMoving: false },
+                isAnimating: false,
+                currentPlayer: breaker,
+                gamePhase: 'break',
+                ballInHand: false,
+                scratchOccurred: false
+              }));
+              setIsDragging(false);
+              setShowAimLine(true);
+              setConsecutiveFouls({ 1: 0, 2: 0 });
+              setPushOutAvailable(false);
+              setIsPushOut(false);
+              setFirstShotAfterBreak(false);
+              setCalledBall(null);
+              setCalledPocket(null);
+              if (window.tipManager && window.tipManager.resetTips) {
+                window.tipManager.resetTips();
+              }
+              setTurnCue((cue) => cue + 1);
+            }, splashChainMs('win'));
           }
         } else {
-          // 10-ball was illegally pocketed - spot it on the foot spot and continue
-          debugLog('10-ball illegally pocketed - spotting it on the foot spot');
-          
-          // Spot the 10-ball back on the table at the foot spot
-          setGameState(prev => ({
+          debugLog(`${moneyBall}-ball illegally pocketed - spotting on the foot spot`);
+          setGameState((prev) => ({
             ...prev,
-            balls: prev.balls.map(ball => 
-              ball.id === 10 ? { 
-                ...ball, 
-                pocketed: false, 
-                visible: true, 
-                x: FOOT_SPOT_X,
-                y: FOOT_SPOT_Y,
-                vx: 0,
-                vy: 0,
-                isMoving: false
-              } : ball
-            )
+            balls: spotMoneyBall(prev.balls, moneyBall, FOOT_SPOT_X, FOOT_SPOT_Y)
           }));
-          
-          // The break, a push-out, and a foul already decided whose shot it is.
-          if (!shotEndedInFoul && !isPushOut && !isBreakShot && !isBreak(gameState.gamePhase)) {
-            const calledBallPocketed = gameState.balls.find(ball => 
+
+          if (callShot && !shotEndedInFoul && !isPushOut && !isBreakShot && !isBreak(gameState.gamePhase)) {
+            const calledBallPocketed = gameState.balls.find((ball) =>
               ball.id === calledBall && ball.pocketed && !ball.wasPocketedBeforeShot
             );
             if (!(calledBallPocketed && calledBallPocketed.pocketedPocket === calledPocket)) {
-              debugLog('Called ball was not made - switching players');
-              setGameState(prev => ({
+              setGameState((prev) => ({
                 ...prev,
                 currentPlayer: prev.currentPlayer === 1 ? 2 : 1
               }));
             }
           }
-          
-          // Reset call shot state for next turn
+
           setCalledBall(null);
           setCalledPocket(null);
         }
@@ -1905,29 +1876,30 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     }
 
     animationFrame.current = requestAnimationFrame(step);
-  }, [gameState, isInPocket, resolveBallCollision, firstBallHit, isPushOut, detectFouls, handleFoul, pushOutResult, foulHandled, shotPlayer, shotProcessed, detectIllegallyPocketedBalls, isBreakShot, offerTableTip, showIllegalPocketOption]);
+  }, [gameState, isInPocket, resolveBallCollision, firstBallHit, isPushOut, detectFouls, handleFoul, pushOutResult, foulHandled, shotPlayer, shotProcessed, detectIllegallyPocketedBalls, isBreakShot, offerTableTip, showIllegalPocketOption, moneyBall, callShot, winOnBreak, initializeBalls]);
   
   const handleShoot = useCallback(() => {
-    if (gameOverRef.current || gameState.isAnimating || !aimLocked) return;
+    if (gameOverRef.current || gameState.isAnimating || !aimLocked || showPushOutOffer) return;
     tableTipForShot.current = null;
     
-    // Check if call shot is required (CSI rules)
-    // No call shot required on break shot or push out
-    if (isBreak(gameState.gamePhase)) {
-      // Break shot - no call shot required
-    } else if (isPushOut) {
-      // Push out - no call shot required
-    } else if (!calledBall || !calledPocket) {
+    // Call shot only for CSI 10-Ball play shots (not break / push-out / 9-Ball)
+    if (callShot && !isBreak(gameState.gamePhase) && !isPushOut && (!calledBall || !calledPocket)) {
       return;
     }
     
-    // Execute shot
+    // Execute shot — tiny strike variance so rolls are not pixel-perfect to the aim line.
+    // Computer keeps a tighter stroke so it plays like a sharp player, not a blaster.
     const cueBall = gameState.cueBall;
-    const speed = power * MAX_SHOT_SPEED;
+    const computerShooting = vsComputer && gameState.currentPlayer === 2;
+    // Above-average stroke: much tighter than a human's natural miss.
+    const jitter = computerShooting ? 0.15 : 1;
+    const strikeAngle = aimAngle + (Math.random() - 0.5) * SHOT_ANGLE_JITTER * jitter;
+    const strikePower = power * (1 + (Math.random() - 0.5) * SHOT_POWER_JITTER * jitter);
+    const speed = Math.max(0.05, strikePower) * MAX_SHOT_SPEED;
     
     // English is relative to the shot: up the cue ball is follow, down is draw, sides are english.
-    const computerShooting = vsComputer && gameState.currentPlayer === 2;
-    const shotEnglish = computerShooting ? { follow: 0, side: 0 } : englishFromControl(english, englishDirection);
+    // Computer plans can set english/direction before arming; humans use the spin control.
+    const shotEnglish = englishFromControl(english, englishDirection);
     
     // Reset foul detection states for new shot
     setFirstBallHit(null);
@@ -1938,7 +1910,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     setFirstContactDetected(false);
     setShotProcessed(false); // Reset shot processed flag
     setShotPlayer(gameState.currentPlayer); // Track which player is taking this shot
-    shotCallRef.current = (isBreak(gameState.gamePhase) || isPushOut)
+    shotCallRef.current = (!callShot || isBreak(gameState.gamePhase) || isPushOut)
       ? { ball: null, pocket: null }
       : { ball: calledBall, pocket: calledPocket };
     breakCushionBallsRef.current = new Set();
@@ -1964,8 +1936,8 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       ...prev,
       cueBall: {
         ...prev.cueBall,
-        vx: Math.cos(aimAngle) * speed,
-        vy: Math.sin(aimAngle) * speed,
+        vx: Math.cos(strikeAngle) * speed,
+        vy: Math.sin(strikeAngle) * speed,
         isMoving: true,
         spinX: 0,
         spinY: 0,
@@ -2012,7 +1984,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       setPushOutAvailable(false);
       setFirstShotAfterBreak(true);
     }
-  }, [gameState.isAnimating, aimLocked, gameState.cueBall, power, aimAngle, english, englishDirection, isPushOut, calledBall, calledPocket, gameState.gamePhase, pushOutAvailable, firstShotAfterBreak, vsComputer, gameState.currentPlayer]);
+  }, [callShot, gameState.isAnimating, aimLocked, showPushOutOffer, gameState.cueBall, power, aimAngle, english, englishDirection, isPushOut, calledBall, calledPocket, gameState.gamePhase, pushOutAvailable, firstShotAfterBreak, vsComputer, gameState.currentPlayer]);
 
   const decisionLock = useRef(false);
   const takeDecision = useCallback((action) => {
@@ -2037,36 +2009,26 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   }, []);
 
   const acceptIllegalTable = useCallback(() => {
-    const spotTen = illegallyPocketedBalls.some((ball) => ball.id === 10);
+    const spotMoney = illegallyPocketedBalls.some((ball) => ball.id === moneyBall);
     setShowIllegalPocketOption(false);
     setIllegallyPocketedBalls([]);
     setGameState((prev) => ({
       ...prev,
       currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
-      balls: spotTen
-        ? prev.balls.map((ball) => (
-          ball.id === 10
-            ? { ...ball, pocketed: false, visible: true, x: FOOT_SPOT_X, y: FOOT_SPOT_Y }
-            : ball
-        ))
-        : prev.balls
+      balls: spotMoney ? spotMoneyBall(prev.balls, moneyBall, FOOT_SPOT_X, FOOT_SPOT_Y) : prev.balls
     }));
-  }, [illegallyPocketedBalls]);
+  }, [illegallyPocketedBalls, moneyBall]);
 
   const requireReshot = useCallback(() => {
-    const spotTen = illegallyPocketedBalls.some((ball) => ball.id === 10);
+    const spotMoney = illegallyPocketedBalls.some((ball) => ball.id === moneyBall);
     setShowIllegalPocketOption(false);
     setIllegallyPocketedBalls([]);
-    if (!spotTen) return;
+    if (!spotMoney) return;
     setGameState((prev) => ({
       ...prev,
-      balls: prev.balls.map((ball) => (
-        ball.id === 10
-          ? { ...ball, pocketed: false, visible: true, x: FOOT_SPOT_X, y: FOOT_SPOT_Y, vx: 0, vy: 0, isMoving: false }
-          : ball
-      ))
+      balls: spotMoneyBall(prev.balls, moneyBall, FOOT_SPOT_X, FOOT_SPOT_Y)
     }));
-  }, [illegallyPocketedBalls]);
+  }, [illegallyPocketedBalls, moneyBall]);
 
   useEffect(() => {
     if (gameState.isAnimating) computerBusy.current = false;
@@ -2118,7 +2080,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     }
     if (gameState.isAnimating) return undefined;
 
-    if (showPushOutDecision || showIllegalPocketOption) return undefined;
+    if (showPushOutDecision || showIllegalPocketOption || showPushOutOffer) return undefined;
     if (tipOpenRef.current || tipBlockingComputer || splashOpenRef.current || turnSplash) return undefined;
 
     if (gameOverRef.current || gameState.currentPlayer !== 2 || computerBusy.current || computerArmed) return undefined;
@@ -2139,8 +2101,8 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     }
     setAimAngle(plan.aimAngle);
     setPower(plan.power);
-    setEnglish(0);
-    setEnglishDirection(0);
+    setEnglish(plan.english || 0);
+    setEnglishDirection(plan.englishDirection || 0);
     setCalledBall(plan.calledBall);
     setCalledPocket(plan.calledPocket);
     setIsPushOut(plan.pushOut);
@@ -2157,6 +2119,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     gameState.gamePhase,
     showPushOutDecision,
     showIllegalPocketOption,
+    showPushOutOffer,
     tipBlockingComputer,
     turnSplash,
     illegallyPocketedBalls,
@@ -2174,10 +2137,13 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     if (!showPushOutDecision && !showIllegalPocketOption) return undefined;
     const cue = gameState.cueBall;
     const balls = gameState.balls;
-    const spotTen = illegallyPocketedBalls.some((ball) => ball.id === 10);
+    const spotMoney = illegallyPocketedBalls.some((ball) => ball.id === moneyBall);
     const decidingPush = showPushOutDecision;
     const timer = setTimeout(() => {
-      const takeIt = computerTakesTheTable(cue, balls, { spotTen: decidingPush ? false : spotTen });
+      const takeIt = computerTakesTheTable(cue, balls, {
+        spotMoney: decidingPush ? false : spotMoney,
+        moneyBall
+      });
       if (decidingPush) {
         if (takeIt) acceptPushOut();
         else declinePushOut();
@@ -2196,7 +2162,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       }));
     }, 700);
     return () => clearTimeout(timer);
-  }, [vsComputer, shotPlayer, showPushOutDecision, showIllegalPocketOption, acceptPushOut, declinePushOut, acceptIllegalTable, requireReshot, gameState.cueBall, gameState.balls, illegallyPocketedBalls]);
+  }, [vsComputer, shotPlayer, showPushOutDecision, showIllegalPocketOption, acceptPushOut, declinePushOut, acceptIllegalTable, requireReshot, gameState.cueBall, gameState.balls, illegallyPocketedBalls, moneyBall]);
 
   const handlePointerDown = useCallback((e) => {
     if (vsComputer && gameState.currentPlayer === 2) return;
@@ -2249,7 +2215,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       return;
     }
 
-    if (clickedPocket) {
+    if (callShot && clickedPocket) {
       pocketLockRef.current = true;
       setObviousCall(false);
       setCalledPocket(clickedPocket.id);
@@ -2262,7 +2228,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     }
 
     setAimLocked((locked) => !locked);
-  }, [vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.ballInHand, gameState.gamePhase, gameState.cueBall, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions]);
+  }, [callShot, vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.ballInHand, gameState.gamePhase, gameState.cueBall, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions]);
 
   const handlePointerUp = useCallback((e) => {
     const touch = touchAimRef.current;
@@ -2280,7 +2246,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         aimAngleRef.current = settled;
         setAimAngle(settled);
         setLastAimAngle(settled);
-      } else if (touch.pocketId) {
+      } else if (callShot && touch.pocketId) {
         pocketLockRef.current = true;
         setObviousCall(false);
         setCalledPocket(touch.pocketId);
@@ -2290,7 +2256,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     }
     draggingCueStick.current = false;
     if (isDraggingCueBall) stopDraggingCueBall();
-  }, [isDraggingCueBall, stopDraggingCueBall]);
+  }, [callShot, isDraggingCueBall, stopDraggingCueBall]);
   
   const handlePointerMove = useCallback((e) => {
     if (vsComputer && gameState.currentPlayer === 2) return;
@@ -2370,7 +2336,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   const startFineAim = useCallback((direction) => {
     if (gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)) return;
     stopFineAim();
-    const step = direction * (0.55 * Math.PI / 180);
+    const step = direction * (0.03 * Math.PI) / 180;
     const apply = () => {
       const next = wrapAimDelta(aimAngleRef.current + step);
       aimAngleRef.current = next;
@@ -2388,18 +2354,6 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     // Keep aim locked when pointer leaves table
   }, []);
 
-  
-  // Touch-specific handlers for better mobile support
-
-  
-  const handleResetAim = useCallback(() => {
-    setShowAimLine(true);
-    setPower(0.5);
-    setEnglish(0);
-    setEnglishDirection(0);
-    setHighlightedPocket(null);
-    setAimLocked(false);
-  }, []);
   
   // Calculate default aim angle toward the lowest numbered ball
   const getDefaultAimAngle = useCallback(() => {
@@ -3049,7 +3003,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
   }, [gameState.isAnimating, showAimLine, aimAngle, power, highlightedPocket, aimLocked, calledBall, calledPocket, pushOutAvailable, isPushOut]);
 
   useEffect(() => {
-    if (gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return;
+    if (!callShot || gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return;
     if (vsComputer && gameState.currentPlayer === 2) return;
     if (!calledPocket && pocketLockRef.current && !holdEmptyCallRef.current) {
       pocketLockRef.current = false;
@@ -3075,7 +3029,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     }
     setObviousCall(false);
     setCalledPocket((current) => (current == null ? current : null));
-  }, [gameState.isAnimating, gameState.gamePhase, gameState.currentPlayer, gameState.balls, isPushOut, vsComputer, aimAngle, power, english, englishDirection, calledBall, calledPocket, getLowestNumberedBall]);
+  }, [callShot, gameState.isAnimating, gameState.gamePhase, gameState.currentPlayer, gameState.balls, isPushOut, vsComputer, aimAngle, power, english, englishDirection, calledBall, calledPocket, getLowestNumberedBall]);
   
   // Load table image
   useEffect(() => {
@@ -3209,7 +3163,168 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     setPower((closest + 1) / POWER_BAR_COUNT);
   };
 
-  const matchDecided = leadingWinner(scores, match);
+  const [matchMenuOpen, setMatchMenuOpen] = useState(false);
+  const matchMenuRef = useRef(null);
+  useEffect(() => {
+    if (!matchMenuOpen) return undefined;
+    const close = (event) => {
+      if (matchMenuRef.current?.contains(event.target)) return;
+      setMatchMenuOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === 'Escape') setMatchMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [matchMenuOpen]);
+
+  const startFreshRack = (options = false) => {
+    const opts = typeof options === 'boolean'
+      ? { clearScores: options, requestFlip: options }
+      : {
+        clearScores: !!options.clearScores,
+        requestFlip: !!options.requestFlip
+      };
+    setPlayAgainOpen(false);
+    if (playAgainTimer.current) {
+      clearTimeout(playAgainTimer.current);
+      playAgainTimer.current = null;
+    }
+    setMatchMenuOpen(false);
+    if (opts.clearScores) {
+      if (onRestartMatch) onRestartMatch();
+      else {
+        const cleared = { 1: 0, 2: 0 };
+        localScoresRef.current = cleared;
+        setLocalScores(cleared);
+      }
+    }
+    if (opts.requestFlip && onRequestFirstBreak) {
+      onRequestFirstBreak();
+      return;
+    }
+    // Reset game keeps the same breaker; flip path remounts after the coin toss.
+    const breaker = opts.clearScores
+      ? (initialBreaker === 2 ? 2 : 1)
+      : lastBreakerRef.current;
+    lastBreakerRef.current = breaker;
+    setGameState((prev) => ({
+      ...prev,
+      balls: initializeBalls(),
+      cueBall: { x: 100, y: 150, originalX: 100, originalY: 150, vx: 0, vy: 0, visible: true, isMoving: false, rotation: 0, rotationSpeed: 0 },
+      isAnimating: false,
+      gamePhase: 'break',
+      ballInHand: false,
+      scratchOccurred: false,
+      currentPlayer: breaker
+    }));
+    setShowAimLine(true);
+    setIsDraggingCueBall(false);
+    setTurnCue((cue) => cue + 1);
+    setHighlightedPocket(null);
+    setAimLocked(false);
+    setCalledBall(null);
+    setCalledPocket(null);
+    setEnglish(0);
+    setEnglishDirection(0);
+    setPushOutAvailable(false);
+    setFirstShotAfterBreak(false);
+    setIsPushOut(false);
+    setPushOutResult(null);
+    setShowPushOutDecision(false);
+    setLowestNumberedBall(null);
+    setConsecutiveFouls({ 1: 0, 2: 0 });
+    setFoulType(null);
+    setFoulHandled(false);
+    setShotProcessed(false);
+    setShotPlayer(null);
+    breakCushionBallsRef.current = new Set();
+    cueRailBeforeContactRef.current = false;
+    contactMadeRef.current = false;
+    gameOverRef.current = false;
+    setObjectBallsHitCushions(0);
+    setIllegallyPocketedBalls([]);
+    setShowIllegalPocketOption(false);
+    if (window.tipManager && window.tipManager.resetTips) {
+      window.tipManager.resetTips();
+    }
+  };
+
+  const answerPlayAgain = (votes) => {
+    setPlayAgainOpen(false);
+    const next = nextGameAfterVotes({ votes, vsComputer, names: playerNames });
+    if (!next.play) return;
+    if (next.vsComputer !== vsComputer || next.names[1] !== (playerNames[1] || '')) {
+      if (onContinue) onContinue({ names: next.names, vsComputer: next.vsComputer });
+      else {
+        setLocalNames(next.names);
+        setLocalVsComputer(next.vsComputer);
+      }
+      setComputerArmed(false);
+      computerBusy.current = false;
+    }
+    const singleSession = (match?.type || 'single') === 'single';
+    startFreshRack({
+      clearScores: !singleSession,
+      requestFlip: true
+    });
+  };
+
+  // Race/best-of can be decided; single-game mode keeps a running session score.
+  const matchDecided = (match?.type || 'single') === 'single' ? null : leadingWinner(scores, match);
+  const boardLabel = (match?.type || 'single') === 'single'
+    ? 'Session'
+    : matchLabel(match);
+  const computerTurn = vsComputer && gameState.currentPlayer === 2;
+  const needsCall = callShot && isPlay(gameState.gamePhase) && !isPushOut && !(calledBall && calledPocket);
+  const pressShoot = () => {
+    if (computerTurn || gameState.isAnimating) return;
+    if (!aimLocked) {
+      setAimLocked(true);
+      return;
+    }
+    if (needsCall) return;
+    handleShoot();
+  };
+
+  const gameMenu = (
+    <div className={styles.matchMenuWrap} ref={matchMenuRef}>
+      <button
+        type="button"
+        className={styles.matchMenuButton}
+        aria-expanded={matchMenuOpen}
+        aria-haspopup="menu"
+        onClick={() => setMatchMenuOpen((open) => !open)}
+      >
+        Game menu
+      </button>
+      {matchMenuOpen && (
+        <div className={styles.matchMenu} role="menu">
+          <button type="button" role="menuitem" onClick={() => startFreshRack({ clearScores: false, requestFlip: false })}>
+            Reset game
+          </button>
+          <button type="button" role="menuitem" onClick={() => startFreshRack({ clearScores: true, requestFlip: true })}>
+            Reset match
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setMatchMenuOpen(false);
+              if (onEditPlayers) onEditPlayers();
+              else setLocalSetupOpen(true);
+            }}
+          >
+            Edit match
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className={styles.simplePoolGame}>
@@ -3218,13 +3333,13 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         <div className={styles.instructions}>
           <div className={styles.aimDesktop}>
             <strong>How To Aim:</strong><br/>
-            The cue starts pointed at the lowest ball • Move the mouse to aim, or drag the cue stick from behind the cue ball • Click the felt to lock • A straight-in pocket fills in by itself • Click a pocket for a bank, kick, or combination • Click SHOOT<br/>
+            The cue starts pointed at the lowest ball • Move the mouse to aim, or drag the cue stick from behind the cue ball • Click the felt or Lock Aim • A straight-in pocket fills in by itself • Click a pocket for a bank, kick, or combination • Then press Shoot<br/>
             <small style={{color: '#888', fontSize: '12px'}}>
               The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape clears the call.
             </small>
           </div>
           <div className={styles.aimPhone}>
-            <strong>How to aim:</strong> Drag the felt to aim. The arrows nudge it. Tap the felt to lock. Tap a pocket for a bank or kick, then SHOOT.
+            <strong>How to aim:</strong> Drag the felt to aim. The arrows nudge it. Tap Lock Aim or the felt to lock. Tap a pocket for a bank or kick, then Shoot.
           </div>
         </div>
       </div>
@@ -3232,7 +3347,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       <div className={styles.tableNotices}>
         {(isPlay(gameState.gamePhase) || calledBall || calledPocket || canShowPushOut(gameState.gamePhase, pushOutAvailable)) && (
           <>
-          {(isPlay(gameState.gamePhase) || calledBall || calledPocket) && !isPushOut && (
+          {callShot && (isPlay(gameState.gamePhase) || calledBall || calledPocket) && !isPushOut && (
             <div className={styles.callShotNotice}>
               {calledBall && (
                 <img src={ballImages[calledBall]} alt="" className={styles.callBadgeBall} />
@@ -3276,11 +3391,14 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
               )}
             </div>
           )}
-          {canShowPushOut(gameState.gamePhase, pushOutAvailable) && (
+          {canShowPushOut(gameState.gamePhase, pushOutAvailable) && !showPushOutOffer && (
             <button
               type="button"
-              className={isPushOut ? styles.pushOutOn : styles.pushOutOff}
+              className={isPushOut ? styles.pushOutChipOn : styles.pushOutChip}
               onClick={() => setIsPushOut((on) => !on)}
+              title={isPushOut
+                ? 'Push out is on — click to shoot normally'
+                : 'Change your mind — take the push out'}
             >
               {isPushOut ? 'Push out on' : 'Push out?'}
             </button>
@@ -3289,67 +3407,59 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         )}
       </div>
 
-      <div className={styles.playerNames}>
-        <button
-          type="button"
-          className={styles.editPlayers}
-          onClick={() => (onEditPlayers ? onEditPlayers() : setLocalSetupOpen(true))}
-        >
-          Edit match
-        </button>
-        {[1, 2].map((id) => {
+      <div className={styles.sessionBoard} aria-label="Scoreboard">
+        {[1, 2].map((id, index) => {
           const shooting = gameState.currentPlayer === id;
           const computerSeat = vsComputer && id === 2;
+          const won = matchDecided === id;
+          const featured = won || (!matchDecided && shooting);
           return (
-            <label key={id} className={shooting ? styles.playerTurn : styles.playerWaiting}>
-              <span className={styles.seatName}>{nameFor(id)}</span>
-              {shooting && <em>to shoot</em>}
-              {consecutiveFouls[id] > 0 && (
-                <span className={styles.foulCount}>
-                  {consecutiveFouls[id]} foul{consecutiveFouls[id] === 1 ? '' : 's'}
-                </span>
+            <React.Fragment key={id}>
+              {index === 1 && (
+                <div className={styles.sessionMid}>
+                  <span className={styles.sessionLabel}>{boardLabel}</span>
+                  <span className={styles.sessionScoreLine}>
+                    {scores[1] ?? 0} – {scores[2] ?? 0}
+                  </span>
+                </div>
               )}
-              {!computerSeat && mutedTipSeats.has(id) && (
-                <button
-                  type="button"
-                  className={styles.tipsOff}
-                  onClick={() => {
-                    setMutedTipSeats((prev) => {
-                      const next = new Set(prev);
-                      next.delete(id);
-                      writeMutedTipSeats(next);
-                      return next;
-                    });
-                  }}
-                >
-                  Tips off
-                </button>
-              )}
-            </label>
+              <div className={featured ? styles.sessionSeatOn : styles.sessionSeat}>
+                <div className={styles.sessionSeatTop}>
+                  <span className={styles.seatName}>{nameFor(id)}</span>
+                  <span className={styles.sessionGames}>{scores[id] ?? 0}</span>
+                </div>
+                <div className={styles.sessionSeatMeta}>
+                  {won && <span className={styles.sessionWon}>{matchWonLabel(match)}</span>}
+                  {!won && shooting && <em>to shoot</em>}
+                  {consecutiveFouls[id] > 0 && (
+                    <span className={styles.foulCount}>
+                      {consecutiveFouls[id]} foul{consecutiveFouls[id] === 1 ? '' : 's'}
+                    </span>
+                  )}
+                  {!computerSeat && mutedTipSeats.has(id) && (
+                    <button
+                      type="button"
+                      className={styles.tipsOff}
+                      onClick={() => {
+                        setMutedTipSeats((prev) => {
+                          const next = new Set(prev);
+                          next.delete(id);
+                          writeMutedTipSeats(next);
+                          return next;
+                        });
+                      }}
+                    >
+                      Tips off
+                    </button>
+                  )}
+                </div>
+              </div>
+            </React.Fragment>
           );
         })}
       </div>
 
       <div className={styles.tableRow}>
-        <aside className={styles.scoreboard} aria-label="Scoreboard">
-          <div className={styles.scoreboardTitle}>Score</div>
-          <div className={styles.scoreboardFormat}>{matchLabel(match)}</div>
-          {[1, 2].map((id) => {
-            const shooting = gameState.currentPlayer === id;
-            const won = matchDecided === id;
-            const featured = won || (!matchDecided && shooting);
-            return (
-              <div key={id} className={featured ? styles.scoreCardOn : styles.scoreCard}>
-                <span className={styles.scoreName}>{nameFor(id)}</span>
-                <span className={styles.scoreGames}>{scores[id] ?? 0}</span>
-                <span className={styles.scoreMeta}>
-                  {won ? matchWonLabel(match) : shooting && !matchDecided ? 'Shooting' : 'Games'}
-                </span>
-              </div>
-            );
-          })}
-        </aside>
-
         <div className={styles.playCluster}>
         <div className={styles.powerControl}>
           <span className={styles.powerHeading}>Power</span>
@@ -3418,6 +3528,59 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
               </span>
             </div>
           )}
+          {playAgainOpen && (
+            <PlayAgainPrompt
+              playerOne={nameFor(1)}
+              playerTwo={nameFor(2)}
+              vsComputer={vsComputer}
+              keepSessionScores={(match?.type || 'single') === 'single'}
+              onDone={answerPlayAgain}
+            />
+          )}
+          {showPushOutOffer && (
+            <TableDecisionCard>
+              <h3>Push Out?</h3>
+              <p>
+                {nameFor(gameState.currentPlayer)}, you can push out after the break.
+                The cue ball does not have to hit a ball or a rail. After a push out,
+                your opponent chooses whether to take the table or give the shot back.
+              </p>
+              <div className={styles.pushOutButtons}>
+                <button
+                  type="button"
+                  className={styles.pushOutChoiceButton}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onPointerUp={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setIsPushOut(true);
+                    setShowPushOutOffer(false);
+                  }}
+                >
+                  Push Out
+                </button>
+                <button
+                  type="button"
+                  className={styles.shootNormalButton}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onPointerUp={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setIsPushOut(false);
+                    setShowPushOutOffer(false);
+                  }}
+                >
+                  Shoot Normally
+                </button>
+              </div>
+            </TableDecisionCard>
+          )}
           {showPushOutDecision && (
             <TableDecisionCard>
                 <h3>Push Out Result</h3>
@@ -3473,7 +3636,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
                     <ul>
                       {illegallyPocketedBalls.map(ball => (
                         <li key={ball.id}>
-                          Ball {ball.id} {ball.id === 10 ? '(will be spotted)' : '(remains pocketed)'}
+                          Ball {ball.id} {ball.id === moneyBall ? '(will be spotted)' : '(remains pocketed)'}
                         </li>
                       ))}
                     </ul>
@@ -3516,12 +3679,12 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
           )}
           </div>
           <div className={styles.ballTracker} aria-label="Balls remaining">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((id) => {
+            {ballIds.map((id) => {
               const ball = gameState.balls.find((entry) => entry.id === id);
               const made = Boolean(ball?.pocketed);
               const lowest = isPlay(gameState.gamePhase) ? getLowestNumberedBall() : null;
               const isNext = !made && lowest?.id === id;
-              const canCall = isPlay(gameState.gamePhase) && !isPushOut && !gameState.isAnimating && !made;
+              const canCall = callShot && isPlay(gameState.gamePhase) && !isPushOut && !gameState.isAnimating && !made;
               const className = [
                 styles.trackerBall,
                 made ? styles.trackerBallMade : '',
@@ -3622,102 +3785,31 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         </button>
         </div>
 
-        <div className={styles.scoreboardBalance} aria-hidden="true" />
       </div>
 
       <div className={styles.controls}>
          <div className={styles.shootButton}>
-           <button 
+           <button
+             type="button"
              className={styles.shootButton}
-             onClick={handleShoot}
-             disabled={
-               (vsComputer && gameState.currentPlayer === 2) ||
-               gameState.isAnimating ||
-               !aimLocked ||
-               (isPlay(gameState.gamePhase) && !isPushOut && !(calledBall && calledPocket))
-             }
+             disabled={computerTurn || gameState.isAnimating || (aimLocked && needsCall)}
+             onPointerDown={(event) => event.preventDefault()}
+             onPointerUp={(event) => {
+               if (event.button > 0) return;
+               pressShoot();
+             }}
+             onKeyDown={(event) => {
+               if (event.key !== 'Enter' && event.key !== ' ') return;
+               event.preventDefault();
+               pressShoot();
+             }}
            >
-             {vsComputer && gameState.currentPlayer === 2 ? 'COMPUTER' :
-              !aimLocked ? 'LOCK AIM FIRST' :
-              isPlay(gameState.gamePhase) && !isPushOut && !(calledBall && calledPocket) ? 'CALL SHOT' : 'SHOOT!'}
+             {computerTurn ? 'Computer' : !aimLocked ? 'Lock aim' : needsCall ? 'Call shot' : 'Shoot!'}
            </button>
          </div>
 
-         <div className={styles.buttonRow}>
-           <button 
-             className={styles.resetAimButton}
-             onClick={() => {
-               setIsDragging(false);
-               setShowAimLine(false);
-               setPower(0.5);
-             }}
-             disabled={gameState.isAnimating}
-           >
-             Reset Aim
-           </button>
-           
-           <button 
-             className={styles.resetButton}
-             onClick={() => {
-               if (leadingWinner(externalScoresRef.current ?? localScoresRef.current, matchRef.current)) {
-                 if (onRestartMatch) onRestartMatch();
-                 else {
-                   const cleared = { 1: 0, 2: 0 };
-                   localScoresRef.current = cleared;
-                   setLocalScores(cleared);
-                 }
-               }
-               setGameState(prev => ({
-                 ...prev,
-                 balls: initializeBalls(),
-                 cueBall: { x: 100, y: 150, originalX: 100, originalY: 150, vx: 0, vy: 0, visible: true, isMoving: false, rotation: 0, rotationSpeed: 0 },
-                 isAnimating: false,
-                 gamePhase: 'break', // Reset to break phase to show kitchen
-                 ballInHand: false,
-                 scratchOccurred: false,
-                 currentPlayer: 1 // Reset to player 1
-               }));
-               setShowAimLine(true);
-               setIsDraggingCueBall(false); // Reset dragging state
-               setTurnCue((cue) => cue + 1);
-               setHighlightedPocket(null);
-               setAimLocked(false);
-               setCalledBall(null);
-               setCalledPocket(null);
-               setEnglish(0);
-               setEnglishDirection(0);
-               // Reset push out states
-               setPushOutAvailable(false);
-               setFirstShotAfterBreak(false);
-               setIsPushOut(false);
-               setPushOutResult(null);
-               setShowPushOutDecision(false);
-               // Reset foul detection states
-               setLowestNumberedBall(null);
-               console.log('Resetting foul counters via reset button');
-               setConsecutiveFouls({ 1: 0, 2: 0 });
-               setFoulType(null);
-               setFoulHandled(false);
-               setShotProcessed(false);
-               setShotPlayer(null);
-               breakCushionBallsRef.current = new Set();
-               cueRailBeforeContactRef.current = false;
-               contactMadeRef.current = false;
-               gameOverRef.current = false;
-               setObjectBallsHitCushions(0);
-               setIllegallyPocketedBalls([]);
-               setShowIllegalPocketOption(false);
-               
-               // Reset contextual tips for new game
-               if (window.tipManager && window.tipManager.resetTips) {
-                 window.tipManager.resetTips();
-               }
-             }}
-           >
-             {matchDecided ? 'New match' : 'Reset Game'}
-           </button>
-        </div>
       </div>
+      {menuSlot ? createPortal(gameMenu, menuSlot) : gameMenu}
       {!onEditPlayers && localSetupOpen && (
         <PlayerSetupModal
           initialNames={playerNames}
@@ -3745,6 +3837,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             gameOverRef.current = false;
             setComputerArmed(false);
             computerBusy.current = false;
+            lastBreakerRef.current = 1;
             setGameState((prev) => ({
               ...prev,
               balls: initializeBalls(),

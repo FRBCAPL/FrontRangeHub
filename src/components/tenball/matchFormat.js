@@ -1,6 +1,17 @@
 export const RACE_LENGTHS = [2, 3, 5, 7, 9];
 export const BEST_OF_LENGTHS = [3, 5, 7, 9];
-export const DEFAULT_MATCH = { type: 'single', length: 1 };
+export const BREAK_RULES = [
+  { id: 'winner', label: 'Winner breaks' },
+  { id: 'alternate', label: 'Alternate' },
+  { id: 'loser', label: 'Loser breaks' }
+];
+export const DEFAULT_MATCH = { type: 'single', length: 1, breakRule: 'alternate' };
+
+export function nextBreaker({ breakRule = 'alternate', lastBreaker = 1, winner }) {
+  if (breakRule === 'winner') return winner;
+  if (breakRule === 'loser') return winner === 1 ? 2 : 1;
+  return lastBreaker === 1 ? 2 : 1;
+}
 
 export function customLength(value, { min, max, odd = false }) {
   const text = String(value ?? '').trim();
@@ -26,11 +37,18 @@ export function leadingWinner(scores, match) {
   return null;
 }
 
+export function breakRuleLabel(breakRule) {
+  if (breakRule === 'winner') return 'Winner breaks';
+  if (breakRule === 'loser') return 'Loser breaks';
+  return 'Alternate break';
+}
+
 export function matchLabel(match) {
-  if (!match || match.type === 'single') return 'Single game';
-  if (match.type === 'race') return `Race to ${match.length}`;
-  if (match.type === 'bestof') return `Best of ${match.length}`;
-  return 'Single game';
+  const breakBit = match?.breakRule ? ` · ${breakRuleLabel(match.breakRule)}` : '';
+  if (!match || match.type === 'single') return `Single game${breakBit}`;
+  if (match.type === 'race') return `Race to ${match.length}${breakBit}`;
+  if (match.type === 'bestof') return `Best of ${match.length}${breakBit}`;
+  return `Single game${breakBit}`;
 }
 
 export function matchWinLine(name, match) {

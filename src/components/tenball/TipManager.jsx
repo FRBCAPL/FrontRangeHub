@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import ContextualTip from './ContextualTip';
-
-const OPENING_TIP = {
-  key: 'break-open',
-  text: 'Break from the kitchen. Hit the 1-ball first, and either pocket a ball or drive four balls to a rail.'
-};
+import { BREAK_OPENING_TIP, NINE_BREAK_OPENING_TIP } from './tutorialGuide';
+import { GAME_NINE } from './gameRules';
 
 const TIP_MUTE_KEY = 'frph-tenball-tip-mute';
 
@@ -21,17 +18,23 @@ export function writeMutedTipSeats(seats) {
   localStorage.setItem(TIP_MUTE_KEY, JSON.stringify([...seats]));
 }
 
-const TipManager = forwardRef(({ onTipShown }, ref) => {
-  const [queue, setQueue] = useState(() => (window.__tenballTipAllow === false ? [] : [OPENING_TIP]));
+const TipManager = forwardRef(({ onTipShown, gameType }, ref) => {
+  const openingTip = {
+    key: 'break-open',
+    text: gameType === GAME_NINE ? NINE_BREAK_OPENING_TIP : BREAK_OPENING_TIP
+  };
+  const [queue, setQueue] = useState(() => (window.__tenballTipAllow === false ? [] : [openingTip]));
   const [currentTip, setCurrentTip] = useState(null);
   const [isTipVisible, setIsTipVisible] = useState(false);
   const [tipsAllowed, setTipsAllowed] = useState(() => window.__tenballTipAllow !== false);
-  const seen = useRef(new Set([OPENING_TIP.key]));
+  const seen = useRef(new Set([openingTip.key]));
 
   const enqueue = (tip) => {
     if (window.__tenballTipAllow === false) return;
-    if (!tip?.key || !tip?.text || seen.current.has(tip.key)) return;
-    seen.current.add(tip.key);
+    if (!tip?.key || !tip?.text) return;
+    // Most tips show once per game. Ball-in-hand / foul tips may repeat.
+    if (!tip.repeat && seen.current.has(tip.key)) return;
+    if (!tip.repeat) seen.current.add(tip.key);
     window.dispatchEvent(new CustomEvent('tableTipVisibility', { detail: { open: true } }));
     setQueue((pending) => [...pending, tip]);
     onTipShown?.(tip.key);
@@ -76,8 +79,8 @@ const TipManager = forwardRef(({ onTipShown }, ref) => {
 
   useEffect(() => {
     const onTableTip = (event) => {
-      const { key, text } = event.detail || {};
-      enqueue({ key, text });
+      const { key, text, repeat } = event.detail || {};
+      enqueue({ key, text, repeat: Boolean(repeat) });
     };
     window.addEventListener('tableTip', onTableTip);
     return () => window.removeEventListener('tableTip', onTableTip);

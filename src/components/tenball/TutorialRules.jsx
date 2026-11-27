@@ -2,7 +2,21 @@ import React from 'react';
 import { FaChevronLeft, FaChevronRight, FaPlay, FaLightbulb } from 'react-icons/fa';
 import styles from './TutorialRules.module.css';
 
-const TutorialRules = ({ step, currentStep, totalSteps, onNext, onBack, onSkip }) => {
+const TutorialRules = ({
+  step,
+  currentStep,
+  totalSteps,
+  onNext,
+  onBack,
+  onSkip,
+  title = '10-Ball Rules Tutorial',
+  quickRules = [
+    'Hit lowest ball first',
+    'Call your shots',
+    '10-ball wins the game',
+    'Push out after break'
+  ]
+}) => {
   const progress = ((currentStep + 1) / totalSteps) * 100;
 
   return (
@@ -10,7 +24,7 @@ const TutorialRules = ({ step, currentStep, totalSteps, onNext, onBack, onSkip }
     <div className={styles.tutorialRules} onClick={(event) => event.stopPropagation()}>
       <button type="button" className={styles.close} onClick={onSkip} aria-label="Close tutorial">×</button>
       <div className={styles.header}>
-        <h3>10-Ball Rules Tutorial</h3>
+        <h3>{title}</h3>
         <div className={styles.progressContainer}>
           <div className={styles.progressBar}>
             <div 
@@ -84,22 +98,12 @@ const TutorialRules = ({ step, currentStep, totalSteps, onNext, onBack, onSkip }
       <div className={styles.quickRules}>
         <h5>Quick Reference</h5>
         <div className={styles.ruleGrid}>
-          <div className={styles.ruleItem}>
-            <span className={styles.ruleNumber}>1</span>
-            <span>Hit lowest ball first</span>
-          </div>
-          <div className={styles.ruleItem}>
-            <span className={styles.ruleNumber}>2</span>
-            <span>Call your shots</span>
-          </div>
-          <div className={styles.ruleItem}>
-            <span className={styles.ruleNumber}>3</span>
-            <span>10-ball wins the game</span>
-          </div>
-          <div className={styles.ruleItem}>
-            <span className={styles.ruleNumber}>4</span>
-            <span>Push out after break</span>
-          </div>
+          {quickRules.map((rule, index) => (
+            <div key={rule} className={styles.ruleItem}>
+              <span className={styles.ruleNumber}>{index + 1}</span>
+              <span>{rule}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
