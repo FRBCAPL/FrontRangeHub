@@ -2,6 +2,8 @@ export const BREAK_OPENING_TIP = 'Break from the kitchen. Hit the 1-ball first, 
 
 export const NINE_BREAK_OPENING_TIP = 'Break from the kitchen. Hit the 1-ball first, and either pocket a ball or drive four object balls to a rail.';
 
+export const EIGHT_BREAK_OPENING_TIP = 'Break from the kitchen. Contact the rack, and either pocket a ball or drive four object balls to a rail. Table stays open after the break.';
+
 export const TUTORIAL_STEPS = [
   {
     title: "Welcome to 10-Ball!",
@@ -85,5 +87,43 @@ export const NINEBALL_TUTORIAL_STEPS = [
     title: 'Ready to Play!',
     content: 'You know the CSI 9-Ball basics. Hit lowest first, keep shooting when you pocket a ball, and legally pocket the 9 to win.',
     proTip: 'Plan the run so the cue ball is in shape for the next lowest ball.'
+  }
+];
+
+export const EIGHTBALL_TUTORIAL_STEPS = [
+  {
+    title: 'Welcome to 8-Ball!',
+    content: '8-Ball uses all 15 object balls. After the table opens, one player shoots solids (1–7) and the other shoots stripes (9–15). Legally pocket the 8 last to win.',
+    proTip: 'Clear your group first. The 8 is only legal after that.'
+  },
+  {
+    title: 'The 8-Ball Rack',
+    content: 'Rack in a triangle with a random apex ball on the foot spot, the 8 in the center of the rack, and one solid and one stripe in the back corners. Other balls are random.',
+    proTip: '8 in the heart of the rack. Corners are opposite groups.'
+  },
+  {
+    title: 'The Break Shot',
+    content: 'Break from behind the head string. You must contact the rack and either pocket a ball or drive at least four object balls to a cushion. An 8 on the break is spotted; the breaker keeps shooting if the break was otherwise legal.',
+    proTip: 'No push-out in 8-Ball. After a legal break the table is open.'
+  },
+  {
+    title: 'Open Table and Groups',
+    content: 'The table stays open until a player legally pockets a solid or a stripe after the break. That player takes that group; the opponent takes the other. Keep shooting when you legally pocket one of your balls.',
+    proTip: 'On an open table you may hit any ball except the 8 first.'
+  },
+  {
+    title: 'Call Shot',
+    content: 'CSI 8-Ball is call shot. Designate the ball and the pocket for every shot after the break. On an open table you may call any solid or stripe. After groups are set, call one of your balls. When your group is gone, call the 8. Scratching or fouling on the 8, or pocketing the 8 early or in the wrong pocket, loses the game.',
+    proTip: 'A straight-in fills the pocket for you. Call banks, kicks, and combinations.'
+  },
+  {
+    title: 'Fouls',
+    content: 'Scratch, wrong ball first, no rail after contact, and similar fouls give the opponent ball in hand anywhere on the table. There is no three-foul rule in 8-Ball. Scratching or fouling while shooting the 8, pocketing the 8 early, or putting the 8 in the wrong pocket loses the game.',
+    proTip: 'After groups are set, hit your ball first — or the 8 when you are on it.'
+  },
+  {
+    title: 'Ready to Play!',
+    content: 'You know the 8-Ball basics. Take a group, clear it, then call and pocket the 8.',
+    proTip: 'Leave yourself a simple look at the 8 after your last group ball.'
   }
 ];

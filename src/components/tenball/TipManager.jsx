@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import ContextualTip from './ContextualTip';
-import { BREAK_OPENING_TIP, NINE_BREAK_OPENING_TIP } from './tutorialGuide';
-import { GAME_NINE } from './gameRules';
+import { BREAK_OPENING_TIP, EIGHT_BREAK_OPENING_TIP, NINE_BREAK_OPENING_TIP } from './tutorialGuide';
+import { GAME_EIGHT, GAME_NINE } from './gameRules';
 
 const TIP_MUTE_KEY = 'frph-tenball-tip-mute';
 
@@ -21,12 +21,17 @@ export function writeMutedTipSeats(seats) {
 const TipManager = forwardRef(({ onTipShown, gameType }, ref) => {
   const openingTip = {
     key: 'break-open',
-    text: gameType === GAME_NINE ? NINE_BREAK_OPENING_TIP : BREAK_OPENING_TIP
+    text: gameType === GAME_NINE
+      ? NINE_BREAK_OPENING_TIP
+      : gameType === GAME_EIGHT
+        ? EIGHT_BREAK_OPENING_TIP
+        : BREAK_OPENING_TIP
   };
-  const [queue, setQueue] = useState(() => (window.__tenballTipAllow === false ? [] : [openingTip]));
+  // Mounted only after the rules tutorial is closed — start with the break tip.
+  const [queue, setQueue] = useState(() => [openingTip]);
   const [currentTip, setCurrentTip] = useState(null);
   const [isTipVisible, setIsTipVisible] = useState(false);
-  const [tipsAllowed, setTipsAllowed] = useState(() => window.__tenballTipAllow !== false);
+  const [tipsAllowed, setTipsAllowed] = useState(true);
   const seen = useRef(new Set([openingTip.key]));
 
   const enqueue = (tip) => {
@@ -54,6 +59,10 @@ const TipManager = forwardRef(({ onTipShown, gameType }, ref) => {
     const sync = () => setTipsAllowed(window.__tenballTipAllow !== false);
     window.addEventListener('tableTipAudience', sync);
     return () => window.removeEventListener('tableTipAudience', sync);
+  }, []);
+
+  useEffect(() => () => {
+    window.dispatchEvent(new CustomEvent('tableTipVisibility', { detail: { open: false } }));
   }, []);
 
   useEffect(() => {

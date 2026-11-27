@@ -2,6 +2,7 @@ import { BALL_SIZE, TABLE_WIDTH, TABLE_HEIGHT } from './constants';
 
 export const GAME_TEN = 'tenball';
 export const GAME_NINE = 'nineball';
+export const GAME_EIGHT = 'eightball';
 
 const TEN_RULES = {
   id: GAME_TEN,
@@ -9,7 +10,11 @@ const TEN_RULES = {
   moneyBall: 10,
   ballIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   callShot: true,
-  winOnBreak: false
+  callEight: false,
+  winOnBreak: false,
+  pushOut: true,
+  groups: false,
+  threeFoulRule: true
 };
 
 const NINE_RULES = {
@@ -18,11 +23,31 @@ const NINE_RULES = {
   moneyBall: 9,
   ballIds: [1, 2, 3, 4, 5, 6, 7, 8, 9],
   callShot: false,
-  winOnBreak: true
+  callEight: false,
+  winOnBreak: true,
+  pushOut: true,
+  groups: false,
+  threeFoulRule: true
+};
+
+const EIGHT_RULES = {
+  id: GAME_EIGHT,
+  label: '8-Ball',
+  moneyBall: 8,
+  ballIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  // CSI / BCA 8-Ball: call shot, groups, no push-out, no three-foul rule.
+  callShot: true,
+  callEight: true,
+  winOnBreak: false,
+  pushOut: false,
+  groups: true,
+  threeFoulRule: false
 };
 
 export function getGameRules(gameType = GAME_TEN) {
-  return gameType === GAME_NINE ? NINE_RULES : TEN_RULES;
+  if (gameType === GAME_NINE) return NINE_RULES;
+  if (gameType === GAME_EIGHT) return EIGHT_RULES;
+  return TEN_RULES;
 }
 
 function jitter() {
@@ -122,8 +147,50 @@ export function createNineBallRack() {
   return balls;
 }
 
+/**
+ * CSI / BCA 8-ball triangle: 15 balls, 8 in the center of the rack,
+ * one back corner solid and the other stripe, remaining balls random.
+ */
+export function createEightBallRack() {
+  const rackApexX = TABLE_WIDTH * 0.75;
+  const rackApexY = TABLE_HEIGHT / 2;
+  const s = BALL_SIZE * 0.95;
+  const spots = [];
+  for (let row = 0; row < 5; row += 1) {
+    for (let col = 0; col <= row; col += 1) {
+      spots.push({
+        x: rackApexX + row * s,
+        y: rackApexY - row * BALL_SIZE * 0.48 + col * BALL_SIZE * 0.95
+      });
+    }
+  }
+  // 5-row triangle: index 4 is rack center (8-ball); 10 and 14 are back corners.
+  const eightSpot = spots[4];
+  const cornerSpots = [spots[10], spots[14]];
+  const solids = shuffle([1, 2, 3, 4, 5, 6, 7]);
+  const stripes = shuffle([9, 10, 11, 12, 13, 14, 15]);
+  const cornerSolid = solids.pop();
+  const cornerStripe = stripes.pop();
+  const remaining = shuffle([...solids, ...stripes]);
+  const remainingSpots = spots.filter((_, index) => ![0, 4, 10, 14].includes(index));
+
+  const balls = [
+    ballAt(remaining.pop(), spots[0].x, spots[0].y),
+    ballAt(8, eightSpot.x, eightSpot.y),
+    ballAt(cornerSolid, cornerSpots[0].x, cornerSpots[0].y),
+    ballAt(cornerStripe, cornerSpots[1].x, cornerSpots[1].y)
+  ];
+  remaining.forEach((id, index) => {
+    const position = remainingSpots[index];
+    balls.push(ballAt(id, position.x, position.y));
+  });
+  return balls;
+}
+
 export function createRack(gameType = GAME_TEN) {
-  return gameType === GAME_NINE ? createNineBallRack() : createTenBallRack();
+  if (gameType === GAME_NINE) return createNineBallRack();
+  if (gameType === GAME_EIGHT) return createEightBallRack();
+  return createTenBallRack();
 }
 
 export function spotMoneyBall(balls, moneyBall, x, y) {

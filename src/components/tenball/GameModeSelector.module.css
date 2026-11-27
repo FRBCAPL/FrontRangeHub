@@ -14,9 +14,15 @@ div[class*="gameModeSelector"],
 
 .bundlesRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .bundlesRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .gameModeSelector * {
@@ -180,6 +186,20 @@ div[class*="gameModeSelector"],
 .nineBundle .modeCard.nineCard:hover,
 .nineBundle .modeCard.ninePlayCard:hover {
   background: rgba(255, 213, 74, 0.12);
+}
+
+.eightBundle {
+  border-color: #ef5350;
+  box-shadow: 0 2px 8px #ef535022;
+}
+
+.eightBundle .launcherStack {
+  border-top-color: rgba(239, 83, 80, 0.3);
+}
+
+.eightBundle .modeCard.eightCard:hover,
+.eightBundle .modeCard.eightPlayCard:hover {
+  background: rgba(239, 83, 80, 0.12);
 }
 
 .recommendedBadge {

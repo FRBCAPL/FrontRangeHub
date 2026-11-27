@@ -114,11 +114,16 @@ const ContextualTip = ({ tip, isVisible, onClose, onStopTips }) => {
         <div className={styles.tipText}>
           {tip}
         </div>
-        {onStopTips && (
-          <button type="button" className={styles.stopTips} onClick={onStopTips}>
-            Stop tips
+        <div className={styles.tipActions}>
+          <button type="button" className={styles.okButton} onClick={onClose}>
+            OK
           </button>
-        )}
+          {onStopTips && (
+            <button type="button" className={styles.stopTips} onClick={onStopTips}>
+              Stop tips
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

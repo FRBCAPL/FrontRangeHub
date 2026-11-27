@@ -414,7 +414,7 @@ const Homepage = ({ canRunTournament = false }) => {
           </button>
           <button type="button" className="homepage-footer-app homepage-footer-app--tenball" onClick={() => navigate('/tenball-tutorial')}>
             <img src={tenBall} alt="" aria-hidden="true" className="homepage-footer-ball" />
-            Play 10-Ball
+            Play Pool
           </button>
           <p>Thanks for visiting www.frontrangepool.com</p>
         </footer>

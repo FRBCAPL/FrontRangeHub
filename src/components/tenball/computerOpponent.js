@@ -37,6 +37,21 @@ const nextBallAfter = (balls, currentId) => liveBalls(balls)
   .filter((ball) => ball.id !== currentId)
   .sort((a, b) => a.id - b.id)[0] || null;
 
+// legalBallIds array => 8-ball (or open table); null/undefined => rotation (9/10).
+const isGroupMode = (legalBallIds) => Array.isArray(legalBallIds);
+
+/** Next ball to leave shape on: own group / legal set, then the 8; rotation stays lowest-next. */
+const nextBallForShape = (balls, currentId, legalBallIds = null) => {
+  if (!isGroupMode(legalBallIds)) return nextBallAfter(balls, currentId);
+  const allowed = new Set(legalBallIds);
+  const ownNext = liveBalls(balls)
+    .filter((ball) => ball.id !== currentId && allowed.has(ball.id) && ball.id !== 8)
+    .sort((a, b) => a.id - b.id)[0];
+  if (ownNext) return ownNext;
+  const eight = liveBalls(balls).find((ball) => ball.id === 8);
+  return eight && eight.id !== currentId ? eight : null;
+};
+
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 const clampToTable = (x, y, kitchenOnly) => {
@@ -129,8 +144,8 @@ const estimateLeave = (ball, pocket, englishFollow) => {
   };
 };
 
-const positionBonus = (ball, pocket, balls, englishFollow = 0) => {
-  const next = nextBallAfter(balls, ball.id);
+const positionBonus = (ball, pocket, balls, englishFollow = 0, legalBallIds = null) => {
+  const next = nextBallForShape(balls, ball.id, legalBallIds);
   if (!next) return 80;
   const leave = estimateLeave(ball, pocket, englishFollow);
   let best = Infinity;
@@ -148,8 +163,8 @@ const positionBonus = (ball, pocket, balls, englishFollow = 0) => {
   return clamp(190 - best * 0.5 - bestCut * 70, -10, 180);
 };
 
-const pickEnglish = (ball, pocket, balls, cut) => {
-  const next = nextBallAfter(balls, ball.id);
+const pickEnglish = (ball, pocket, balls, cut, legalBallIds = null) => {
+  const next = nextBallForShape(balls, ball.id, legalBallIds);
   if (!next) return { english: 0, englishDirection: 0 };
   const toPocket = Math.atan2(pocket.y - ball.y, pocket.x - ball.x);
   const toNext = Math.atan2(next.y - ball.y, next.x - ball.x);
@@ -165,7 +180,7 @@ const pickEnglish = (ball, pocket, balls, cut) => {
   return { english: 0.12, englishDirection: 90 };
 };
 
-const finishShot = (cue, ball, target, pocket, balls, { scoreBase, kind = 'direct' }) => {
+const finishShot = (cue, ball, target, pocket, balls, { scoreBase, kind = 'direct', legalBallIds = null }) => {
   const ghost = ghostFor(ball, target);
   if (!pathClear(cue.x, cue.y, ghost.x, ghost.y, balls, [ball.id])) return null;
   if (!pathClear(ball.x, ball.y, target.x, target.y, balls, [ball.id])) return null;
@@ -175,9 +190,15 @@ const finishShot = (cue, ball, target, pocket, balls, { scoreBase, kind = 'direc
   const objectTravel = Math.hypot(ball.x - target.x, ball.y - target.y);
   const cueDist = Math.hypot(cue.x - ghost.x, cue.y - ghost.y);
   if (kind === 'direct' && objectTravel > 340 && cut > 0.7) return null;
-  const english = pickEnglish(ball, pocket, balls, cut);
+  const english = pickEnglish(ball, pocket, balls, cut, legalBallIds);
   const corner = pocket.id.includes('center') ? -6 : 32;
-  const shape = positionBonus(ball, pocket, balls, english.englishDirection === 270 ? english.english : 0);
+  const shape = positionBonus(
+    ball,
+    pocket,
+    balls,
+    english.englishDirection === 270 ? english.english : 0,
+    legalBallIds
+  );
   const percent = 240 - cut * 280 - objectTravel * 0.28 - cueDist * 0.1;
   return {
     score: scoreBase + percent + corner + shape,
@@ -191,12 +212,16 @@ const finishShot = (cue, ball, target, pocket, balls, { scoreBase, kind = 'direc
   };
 };
 
-const scoreDirectShot = (cue, ball, pocket, balls) => {
+const scoreDirectShot = (cue, ball, pocket, balls, legalBallIds = null) => {
   if (!pathClear(ball.x, ball.y, pocket.x, pocket.y, balls, [ball.id])) return null;
-  return finishShot(cue, ball, pocket, pocket, balls, { scoreBase: 1120, kind: 'direct' });
+  return finishShot(cue, ball, pocket, pocket, balls, {
+    scoreBase: 1120,
+    kind: 'direct',
+    legalBallIds
+  });
 };
 
-const scoreBankShot = (cue, ball, pocket, balls) => {
+const scoreBankShot = (cue, ball, pocket, balls, legalBallIds = null) => {
   const mirrors = [
     { x: pocket.x, y: 2 * FELT_TOP - pocket.y },
     { x: pocket.x, y: 2 * FELT_BOTTOM - pocket.y },
@@ -210,15 +235,16 @@ const scoreBankShot = (cue, ball, pocket, balls) => {
     if (objectTravel > 300) return;
     const shot = finishShot(cue, ball, virt, pocket, balls, {
       scoreBase: 800,
-      kind: 'bank'
+      kind: 'bank',
+      legalBallIds
     });
     if (shot && (!best || shot.score > best.score)) best = shot;
   });
   return best;
 };
 
-// One-rail kick when the direct line to the lowest is blocked.
-const scoreKickShot = (cue, ball, pocket, balls) => {
+// One-rail kick when the direct line to the object ball is blocked.
+const scoreKickShot = (cue, ball, pocket, balls, legalBallIds = null) => {
   if (pathClear(cue.x, cue.y, ball.x, ball.y, balls, [ball.id])) return null;
   if (!pathClear(ball.x, ball.y, pocket.x, pocket.y, balls, [ball.id])) return null;
   const ghost = ghostFor(ball, pocket);
@@ -235,8 +261,8 @@ const scoreKickShot = (cue, ball, pocket, balls) => {
     if (cut > 0.85) return;
     const travel = Math.hypot(cue.x - virt.x, cue.y - virt.y) + Math.hypot(virt.x - ghost.x, virt.y - ghost.y);
     if (travel > 420) return;
-    const english = pickEnglish(ball, pocket, balls, cut);
-    const shape = positionBonus(ball, pocket, balls, 0);
+    const english = pickEnglish(ball, pocket, balls, cut, legalBallIds);
+    const shape = positionBonus(ball, pocket, balls, 0, legalBallIds);
     const shot = {
       score: 780 - travel * 0.35 - cut * 260 + shape,
       aimAngle: Math.atan2(virt.y - cue.y, virt.x - cue.x),
@@ -298,25 +324,45 @@ const cuePlacements = (ball, pocket, balls, kitchenOnly) => {
   return spots;
 };
 
-const bestShotFromCue = (cue, balls) => {
-  const ball = lowestBall(balls);
-  if (!ball) return null;
+const targetBalls = (balls, legalBallIds) => {
+  // 8-ball / open table: only the supplied legal set (may be empty).
+  if (isGroupMode(legalBallIds)) {
+    const allowed = new Set(legalBallIds);
+    return liveBalls(balls).filter((ball) => allowed.has(ball.id));
+  }
+  // Rotation: always the lowest ball on the table.
+  const lowest = lowestBall(balls);
+  return lowest ? [lowest] : [];
+};
+
+const bestShotFromCue = (cue, balls, legalBallIds = null) => {
+  const targets = targetBalls(balls, legalBallIds);
+  if (targets.length === 0) return null;
   let best = null;
+  const groupMode = isGroupMode(legalBallIds);
+  const allowed = groupMode ? new Set(legalBallIds) : null;
 
   const consider = (shot) => {
     if (shot && (!best || shot.score > best.score)) best = shot;
   };
 
-  POCKETS.forEach((pocket) => {
-    consider(scoreDirectShot(cue, ball, pocket, balls));
-    consider(scoreBankShot(cue, ball, pocket, balls));
-    consider(scoreKickShot(cue, ball, pocket, balls));
-  });
-
-  liveBalls(balls).forEach((object) => {
-    if (object.id === ball.id) return;
+  targets.forEach((ball) => {
     POCKETS.forEach((pocket) => {
-      consider(scoreComboShot(cue, ball, object, pocket, balls));
+      consider(scoreDirectShot(cue, ball, pocket, balls, legalBallIds));
+      consider(scoreBankShot(cue, ball, pocket, balls, legalBallIds));
+      consider(scoreKickShot(cue, ball, pocket, balls, legalBallIds));
+    });
+
+    liveBalls(balls).forEach((object) => {
+      if (object.id === ball.id) return;
+      // 8-ball: only combo into another legal (own-group / open) ball — never opponent balls.
+      if (groupMode && !allowed.has(object.id)) return;
+      // Never combo the 8 as the first-hit ball into something else when on the 8;
+      // and never call the 8 via combo unless it is the object and legal.
+      if (groupMode && ball.id === 8) return;
+      POCKETS.forEach((pocket) => {
+        consider(scoreComboShot(cue, ball, object, pocket, balls));
+      });
     });
   });
 
@@ -336,8 +382,9 @@ const withAimMiss = (shot) => {
   };
 };
 
-const safetyShot = (cue, balls) => {
-  const ball = lowestBall(balls);
+const safetyShot = (cue, balls, legalBallIds = null) => {
+  const ball = targetBalls(balls, legalBallIds)[0]
+    || (isGroupMode(legalBallIds) ? null : lowestBall(balls));
   if (!ball) return null;
 
   // Prefer thin rails or length-of-table send that parks the lowest.
@@ -402,21 +449,31 @@ const safetyShot = (cue, balls) => {
   };
 };
 
-const takeMakeOrSafety = (shot, cue, balls) => {
+const takeMakeOrSafety = (shot, cue, balls, legalBallIds = null) => {
   if (shot && shot.score >= MIN_MAKE_SCORE && shot.cut <= MAX_MAKE_CUT) {
     return { ...withAimMiss(shot), canMake: true, pushOut: false, cue: null };
   }
-  return { ...safetyShot(cue, balls), canMake: false };
+  const safe = safetyShot(cue, balls, legalBallIds);
+  if (!safe) return null;
+  return { ...safe, canMake: false };
 };
 
-export function planComputerShot({ cue, balls, ballInHand, isBreakShot, pushOutAvailable }) {
-  const ball = lowestBall(balls);
-  if (!ball) return null;
+export function planComputerShot({
+  cue,
+  balls,
+  ballInHand,
+  isBreakShot,
+  pushOutAvailable,
+  legalBallIds = null
+}) {
+  const candidates = targetBalls(balls, legalBallIds);
 
   if (isBreakShot) {
+    const apex = lowestBall(balls) || candidates[0];
+    if (!apex) return null;
     const side = Math.random() > 0.5 ? 1 : -1;
     const spot = clampToTable(114, 150 + side * (4 + Math.random() * 6), true);
-    const aimAngle = Math.atan2(ball.y - spot.y, ball.x - spot.x) + side * 0.012;
+    const aimAngle = Math.atan2(apex.y - spot.y, apex.x - spot.x) + side * 0.012;
     return {
       canMake: true,
       aimAngle,
@@ -430,16 +487,22 @@ export function planComputerShot({ cue, balls, ballInHand, isBreakShot, pushOutA
     };
   }
 
+  const ball = candidates[0]
+    || (isGroupMode(legalBallIds) ? null : lowestBall(balls));
+  if (!ball) return null;
+
   if (ballInHand) {
     let best = null;
     let bestCue = null;
-    POCKETS.forEach((pocket) => {
-      cuePlacements(ball, pocket, balls, false).forEach((spot) => {
-        const shot = scoreDirectShot(spot, ball, pocket, balls);
-        if (shot && (!best || shot.score > best.score)) {
-          best = shot;
-          bestCue = spot;
-        }
+    candidates.forEach((target) => {
+      POCKETS.forEach((pocket) => {
+        cuePlacements(target, pocket, balls, false).forEach((spot) => {
+          const shot = scoreDirectShot(spot, target, pocket, balls, legalBallIds);
+          if (shot && (!best || shot.score > best.score)) {
+            best = shot;
+            bestCue = spot;
+          }
+        });
       });
     });
     // Widen the search if the dunk isn't obvious — look for banks / kicks / shape.
@@ -456,7 +519,7 @@ export function planComputerShot({ cue, balls, ballInHand, isBreakShot, pushOutA
     ];
     probes.forEach((spot) => {
       if (overlapsBall(spot.x, spot.y, balls)) return;
-      const shot = bestShotFromCue(spot, balls);
+      const shot = bestShotFromCue(spot, balls, legalBallIds);
       if (shot && (!best || shot.score > best.score)) {
         best = shot;
         bestCue = spot;
@@ -470,7 +533,7 @@ export function planComputerShot({ cue, balls, ballInHand, isBreakShot, pushOutA
         cue: bestCue
       };
     }
-    // BIH safety: park cue far from an easy look at the lowest.
+    // BIH safety: park cue far from an easy look at the object ball.
     let safeCue = clampToTable(MID_X, 150, false);
     let safeScore = -Infinity;
     [
@@ -488,12 +551,14 @@ export function planComputerShot({ cue, balls, ballInHand, isBreakShot, pushOutA
         safeCue = spot;
       }
     });
-    return { ...safetyShot(safeCue, balls), canMake: false, cue: safeCue };
+    const safe = safetyShot(safeCue, balls, legalBallIds);
+    if (!safe) return null;
+    return { ...safe, canMake: false, cue: safeCue };
   }
 
-  const made = bestShotFromCue(cue, balls);
-  const choice = takeMakeOrSafety(made, cue, balls);
-  if (choice.canMake) return choice;
+  const made = bestShotFromCue(cue, balls, legalBallIds);
+  const choice = takeMakeOrSafety(made, cue, balls, legalBallIds);
+  if (choice?.canMake) return choice;
 
   if (pushOutAvailable) {
     // Soft nudge that doesn't gift a straight-in — leave the cue off-center.
@@ -513,7 +578,7 @@ export function planComputerShot({ cue, balls, ballInHand, isBreakShot, pushOutA
   return choice;
 }
 
-export function computerTakesTheTable(cue, balls, { spotMoney = false, moneyBall = 10 } = {}) {
+export function computerTakesTheTable(cue, balls, { spotMoney = false, moneyBall = 10, legalBallIds = null } = {}) {
   const table = spotMoney
     ? balls.map((ball) => (
       ball.id === moneyBall
@@ -521,6 +586,6 @@ export function computerTakesTheTable(cue, balls, { spotMoney = false, moneyBall
         : ball
     ))
     : balls;
-  const shot = bestShotFromCue(cue, table);
+  const shot = bestShotFromCue(cue, table, legalBallIds);
   return Boolean(shot && shot.score >= MIN_MAKE_SCORE && shot.cut <= MAX_MAKE_CUT);
 }

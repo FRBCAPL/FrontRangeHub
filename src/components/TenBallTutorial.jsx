@@ -6,8 +6,8 @@ import PlayerSetupModal from './tenball/PlayerSetupModal';
 import CoinFlipBreak from './tenball/CoinFlipBreak';
 import { DEFAULT_MATCH } from './tenball/matchFormat';
 import TipManager from './tenball/TipManager';
-import { NINEBALL_TUTORIAL_STEPS, TUTORIAL_STEPS } from './tenball/tutorialGuide';
-import { GAME_NINE, GAME_TEN, getGameRules } from './tenball/gameRules';
+import { EIGHTBALL_TUTORIAL_STEPS, NINEBALL_TUTORIAL_STEPS, TUTORIAL_STEPS } from './tenball/tutorialGuide';
+import { GAME_EIGHT, GAME_NINE, GAME_TEN, getGameRules } from './tenball/gameRules';
 import styles from './tenball/TenBallTutorial.module.css';
 
 const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
@@ -28,7 +28,11 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   const pendingMatchStartRef = useRef(false);
   pendingMatchStartRef.current = pendingMatchStart;
   const rules = getGameRules(gameType);
-  const tutorialSteps = gameType === GAME_NINE ? NINEBALL_TUTORIAL_STEPS : TUTORIAL_STEPS;
+  const tutorialSteps = gameType === GAME_NINE
+    ? NINEBALL_TUTORIAL_STEPS
+    : gameType === GAME_EIGHT
+      ? EIGHTBALL_TUTORIAL_STEPS
+      : TUTORIAL_STEPS;
   const [gameState, setGameState] = useState({
     player1Score: 0,
     player2Score: 0,
@@ -36,8 +40,8 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     gamePhase: 'break',
     rules: {
       callPocket: rules.callShot,
-      pushOut: true,
-      threeFoulRule: true,
+      pushOut: rules.pushOut !== false,
+      threeFoulRule: rules.threeFoulRule !== false,
       jumpShots: true
     }
   });
@@ -52,6 +56,12 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     if (mode === 'nine-tutorial' || mode === 'nine-play') {
       setGameType(GAME_NINE);
       setLessonOn(mode === 'nine-tutorial');
+      setSetupOpen(true);
+      return;
+    }
+    if (mode === 'eight-tutorial' || mode === 'eight-play') {
+      setGameType(GAME_EIGHT);
+      setLessonOn(mode === 'eight-tutorial');
       setSetupOpen(true);
     }
   };
@@ -87,7 +97,9 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
         gamePhase: 'break',
         rules: {
           ...prev.rules,
-          callPocket: getGameRules(gameType).callShot
+          callPocket: getGameRules(gameType).callShot,
+          pushOut: getGameRules(gameType).pushOut !== false,
+          threeFoulRule: getGameRules(gameType).threeFoulRule !== false
         }
       }));
       return;
@@ -132,8 +144,8 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
       gamePhase: 'break',
       rules: {
         callPocket: nextRules.callShot,
-        pushOut: true,
-        threeFoulRule: true,
+        pushOut: nextRules.pushOut !== false,
+        threeFoulRule: nextRules.threeFoulRule !== false,
         jumpShots: true
       }
     });
@@ -153,14 +165,22 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   };
 
   const [gameMenuSlot, setGameMenuSlot] = useState(null);
-  useEffect(() => {
-    if (lessonOn) return undefined;
-    window.__tenballTipAllow = false;
-    window.tipManager = null;
-    return undefined;
-  }, [lessonOn]);
   const playing = currentMode === 'tutorial' || currentMode === 'game';
   const rulesOpen = currentMode === 'tutorial' && showRules;
+  // Pro tips wait until the rules tutorial is dismissed and the table is live.
+  const tipsReady = lessonOn && playing && !rulesOpen;
+  // Keep the window flag in sync during render so TipManager mounts with tips allowed.
+  window.__tenballTipAllow = tipsReady;
+
+  useEffect(() => {
+    if (!tipsReady) {
+      window.tipManager = null;
+      window.dispatchEvent(new CustomEvent('tableTipVisibility', { detail: { open: false } }));
+      return undefined;
+    }
+    window.dispatchEvent(new CustomEvent('tableTipAudience'));
+    return undefined;
+  }, [tipsReady]);
 
   const renderContent = () => {
     switch (currentMode) {
@@ -213,7 +233,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     <div className={styles.container}>
       {renderContent()}
 
-      {(currentMode === 'game' || currentMode === 'tutorial') && lessonOn && (
+      {tipsReady && (
         <TipManager
           gameType={gameType}
           onTipShown={(tipKey) => console.log(`Tip shown: ${tipKey}`)}

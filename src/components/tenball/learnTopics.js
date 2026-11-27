@@ -1,5 +1,7 @@
 import {
   BREAK_OPENING_TIP,
+  EIGHT_BREAK_OPENING_TIP,
+  EIGHTBALL_TUTORIAL_STEPS,
   NINE_BREAK_OPENING_TIP,
   NINEBALL_TUTORIAL_STEPS,
   TUTORIAL_STEPS
@@ -7,6 +9,7 @@ import {
 
 const step = (title) => TUTORIAL_STEPS.find((item) => item.title === title);
 const nineStep = (title) => NINEBALL_TUTORIAL_STEPS.find((item) => item.title === title);
+const eightStep = (title) => EIGHTBALL_TUTORIAL_STEPS.find((item) => item.title === title);
 
 export const LEARN_TOPICS = [
   {
@@ -84,5 +87,41 @@ export const NINE_LEARN_TOPICS = [
     label: 'Winning the Game',
     steps: [nineStep('Ready to Play!')],
     moreTips: ['Legally pocket the 9-ball to win, including on the break or on a combination after contacting the lowest ball first.']
+  }
+];
+
+export const EIGHT_LEARN_TOPICS = [
+  {
+    id: 'eight-rules',
+    label: '8-Ball Rules Overview',
+    steps: [eightStep('Welcome to 8-Ball!'), eightStep('Call Shot')]
+  },
+  {
+    id: 'eight-rack',
+    label: '8-Ball Rack',
+    steps: [eightStep('The 8-Ball Rack')]
+  },
+  {
+    id: 'eight-break',
+    label: 'Break and Open Table',
+    steps: [eightStep('The Break Shot'), eightStep('Open Table and Groups')],
+    moreTips: [EIGHT_BREAK_OPENING_TIP]
+  },
+  {
+    id: 'eight-fouls',
+    label: 'Fouls and Losing on the 8',
+    steps: [eightStep('Fouls'), eightStep('Call Shot')],
+    moreTips: [
+      'Scratch. The cue ball went in. The other player has ball in hand.',
+      'Wrong ball first. The other player has ball in hand.',
+      'Scratch or foul while shooting the 8 loses the game.',
+      'There is no three-foul rule in 8-Ball.'
+    ]
+  },
+  {
+    id: 'eight-win',
+    label: 'Winning the Game',
+    steps: [eightStep('Ready to Play!')],
+    moreTips: ['Clear your group, call the 8 and the pocket, then pocket it legally to win.']
   }
 ];

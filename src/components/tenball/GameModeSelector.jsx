@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { FaGraduationCap, FaPlay } from 'react-icons/fa';
 import styles from './GameModeSelector.module.css';
-import { LEARN_TOPICS, NINE_LEARN_TOPICS } from './learnTopics';
+import { EIGHT_LEARN_TOPICS, LEARN_TOPICS, NINE_LEARN_TOPICS } from './learnTopics';
 import LearnTopicModal from './LearnTopicModal';
 import tenBallImg from '../../assets/tenball.svg';
 import nineBallImg from '../../assets/ball9.svg';
+import eightBallImg from '../../assets/8ball.svg';
 
 const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
   const [openTopicId, setOpenTopicId] = useState(null);
-  const allTopics = [...LEARN_TOPICS, ...NINE_LEARN_TOPICS];
+  const allTopics = [...LEARN_TOPICS, ...NINE_LEARN_TOPICS, ...EIGHT_LEARN_TOPICS];
   const openTopic = allTopics.find((topic) => topic.id === openTopicId) || null;
 
   const tenTutorial = {
@@ -38,6 +39,20 @@ const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
     description: 'Match vs computer or a friend.',
     icon: FaPlay,
     color: '#f9a825'
+  };
+  const eightTutorial = {
+    id: 'eight-tutorial',
+    title: '8-Ball Tutorial',
+    description: 'Solids, stripes, and calling the 8.',
+    icon: FaGraduationCap,
+    color: '#ef5350'
+  };
+  const eightPlay = {
+    id: 'eight-play',
+    title: 'Play 8-Ball',
+    description: 'Match vs computer or a friend.',
+    icon: FaPlay,
+    color: '#c62828'
   };
 
   const renderLauncher = (mode, className) => {
@@ -120,6 +135,30 @@ const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
           <div className={styles.launcherStack}>
             {renderLauncher(nineTutorial, `${styles.modeCard} ${styles.nineCard}`)}
             {renderLauncher(ninePlay, `${styles.modeCard} ${styles.ninePlayCard}`)}
+          </div>
+        </div>
+
+        <div className={`${styles.tutorialBundle} ${styles.eightBundle}`}>
+          <div className={styles.tutorialIntro}>
+            <img src={eightBallImg} alt="8-ball" className={styles.gameBall} />
+            <h3>8-Ball</h3>
+            <p>Solids & stripes · call the 8</p>
+          </div>
+          <div className={styles.whatYoullLearn}>
+            <h3>What You'll Learn</h3>
+            <ul>
+              {EIGHT_LEARN_TOPICS.map((topic) => (
+                <li key={topic.id}>
+                  <button type="button" onClick={() => setOpenTopicId(topic.id)}>
+                    {topic.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className={styles.launcherStack}>
+            {renderLauncher(eightTutorial, `${styles.modeCard} ${styles.eightCard}`)}
+            {renderLauncher(eightPlay, `${styles.modeCard} ${styles.eightPlayCard}`)}
           </div>
         </div>
       </div>

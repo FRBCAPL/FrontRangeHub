@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="ball15White" cx="34%" cy="30%" r="68%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f7f7f7"/>
+      <stop offset="100%" stop-color="#d0d0d0"/>
+    </radialGradient>
+    <linearGradient id="ball15Stripe" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a1887f"/>
+      <stop offset="45%" stop-color="#6d4c41"/>
+      <stop offset="100%" stop-color="#5d4037"/>
+    </linearGradient>
+    <radialGradient id="ball15Highlight" cx="30%" cy="28%" r="40%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="ball15Clip">
+      <circle cx="16" cy="16" r="15"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#ball15Clip)">
+    <!-- Full white base so poles stay bright -->
+    <circle cx="16" cy="16" r="15" fill="url(#ball15White)"/>
+    <!-- Mid stripe band (~half the ball) with crisp edges -->
+    <rect x="0" y="8" width="32" height="16" fill="url(#ball15Stripe)"/>
+    <line x1="0" y1="8" x2="32" y2="8" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.85"/>
+    <line x1="0" y1="24" x2="32" y2="24" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.85"/>
+    <!-- Large white number disc — main stripe cue at table scale -->
+    <circle cx="16" cy="16" r="7.2" fill="#ffffff" stroke="#5d4037" stroke-width="1.1"/>
+  </g>
+  <circle cx="16" cy="16" r="15" fill="none" stroke="#3e2723" stroke-width="0.7"/>
+  <circle cx="11.5" cy="10.5" r="3.6" fill="url(#ball15Highlight)"/>
+  <text x="16" y="20.4" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#111111">15</text>
+</svg>
