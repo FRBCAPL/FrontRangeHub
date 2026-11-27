@@ -8,17 +8,13 @@ export default function TableDecisionCard({ children }) {
 
   const onPointerDown = (event) => {
     if (event.target.closest('button')) return;
-    const card = cardRef.current;
-    if (!card) return;
-    try {
-      card.setPointerCapture(event.pointerId);
-    } catch {
-      // Pointer capture is only available for a real pointer event.
-    }
     dragRef.current = {
       pointerId: event.pointerId,
       originX: event.clientX - offset.x,
-      originY: event.clientY - offset.y
+      originY: event.clientY - offset.y,
+      startX: event.clientX,
+      startY: event.clientY,
+      dragging: false
     };
   };
 
@@ -26,6 +22,11 @@ export default function TableDecisionCard({ children }) {
     const drag = dragRef.current;
     const card = cardRef.current;
     if (!drag || drag.pointerId !== event.pointerId || !card) return;
+    if (!drag.dragging) {
+      if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 8) return;
+      drag.dragging = true;
+      try { card.setPointerCapture(event.pointerId); } catch { /* a tap should not become a drag */ }
+    }
     const stage = card.parentElement;
     if (!stage) return;
 

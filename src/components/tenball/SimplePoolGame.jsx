@@ -2014,6 +2014,16 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     }
   }, [gameState.isAnimating, aimLocked, gameState.cueBall, power, aimAngle, english, englishDirection, isPushOut, calledBall, calledPocket, gameState.gamePhase, pushOutAvailable, firstShotAfterBreak, vsComputer, gameState.currentPlayer]);
 
+  const decisionLock = useRef(false);
+  const takeDecision = useCallback((action) => {
+    if (decisionLock.current) return;
+    decisionLock.current = true;
+    action();
+  }, []);
+  useEffect(() => {
+    if (showPushOutDecision || showIllegalPocketOption) decisionLock.current = false;
+  }, [showPushOutDecision, showIllegalPocketOption]);
+
   const acceptPushOut = useCallback(() => {
     setShowPushOutDecision(false);
     setGameState((prev) => ({
@@ -2216,6 +2226,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
         moved: false,
         aim: aimAngleRef.current,
         lastPointerAngle: Math.atan2(y - cue.y, x - cue.x),
+        samples: [{ t: performance.now(), aim: aimAngleRef.current }],
         pocketId: clickedPocket ? clickedPocket.id : null
       };
       try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* drag stays on the canvas */ }
@@ -2257,14 +2268,24 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     const touch = touchAimRef.current;
     if (touch && (!e || e.pointerId == null || e.pointerId === touch.pointerId)) {
       touchAimRef.current = null;
-      if (!touch.moved) {
-        if (touch.pocketId) {
-          pocketLockRef.current = true;
-          setObviousCall(false);
-          setCalledPocket(touch.pocketId);
-        } else {
-          setAimLocked((locked) => !locked);
+      if (touch.moved) {
+        const now = performance.now();
+        let settled = touch.aim;
+        for (let i = touch.samples.length - 1; i >= 0; i -= 1) {
+          if (now - touch.samples[i].t >= 90) {
+            settled = touch.samples[i].aim;
+            break;
+          }
         }
+        aimAngleRef.current = settled;
+        setAimAngle(settled);
+        setLastAimAngle(settled);
+      } else if (touch.pocketId) {
+        pocketLockRef.current = true;
+        setObviousCall(false);
+        setCalledPocket(touch.pocketId);
+      } else {
+        setAimLocked((locked) => !locked);
       }
     }
     draggingCueStick.current = false;
@@ -2299,7 +2320,10 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
       const pointerAngle = Math.atan2(y - gameState.cueBall.y, x - gameState.cueBall.x);
       const step = wrapAimDelta(pointerAngle - touch.lastPointerAngle);
       touch.lastPointerAngle = pointerAngle;
+      if (Math.abs(step) > 0.22) return;
       touch.aim = wrapAimDelta(touch.aim + step);
+      touch.samples.push({ t: performance.now(), aim: touch.aim });
+      if (touch.samples.length > 24) touch.samples.shift();
       aimAngleRef.current = touch.aim;
       setAimAngle(touch.aim);
       setLastAimAngle(touch.aim);
@@ -2335,6 +2359,30 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
     setAimAngle(next);
     setLastAimAngle(next);
   }, [gameState.isAnimating, aimLocked]);
+
+  const fineAimTimer = useRef(null);
+  const stopFineAim = useCallback(() => {
+    if (fineAimTimer.current == null) return;
+    clearTimeout(fineAimTimer.current);
+    clearInterval(fineAimTimer.current);
+    fineAimTimer.current = null;
+  }, []);
+  const startFineAim = useCallback((direction) => {
+    if (gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)) return;
+    stopFineAim();
+    const step = direction * (0.55 * Math.PI / 180);
+    const apply = () => {
+      const next = wrapAimDelta(aimAngleRef.current + step);
+      aimAngleRef.current = next;
+      setAimAngle(next);
+      setLastAimAngle(next);
+    };
+    apply();
+    const delay = setTimeout(() => {
+      fineAimTimer.current = setInterval(apply, 70);
+    }, 260);
+    fineAimTimer.current = delay;
+  }, [gameState.isAnimating, gameState.currentPlayer, vsComputer, stopFineAim]);
 
   const handlePointerLeave = useCallback(() => {
     // Keep aim locked when pointer leaves table
@@ -3176,7 +3224,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             </small>
           </div>
           <div className={styles.aimPhone}>
-            <strong>How to aim:</strong> The cue starts on the lowest ball. Drag anywhere on the felt. Farther from the cue ball is a finer aim. Tap the felt to lock. Tap a pocket for a bank or kick, then SHOOT.
+            <strong>How to aim:</strong> Drag the felt to aim. The arrows nudge it. Tap the felt to lock. Tap a pocket for a bank or kick, then SHOOT.
           </div>
         </div>
       </div>
@@ -3192,7 +3240,7 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
               <strong>
                 {calledBall ? `${calledBall}-ball` : 'Call your shot'}
               </strong>
-              <span>
+              <span className={styles.callDetail}>
                 {calledBall && calledPocket
                   ? `in the ${POCKET_LABELS[calledPocket] || calledPocket}${obviousCall ? ' — obvious shot' : ''}`
                   : calledBall
@@ -3200,6 +3248,15 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
                     : calledPocket
                       ? `${POCKET_LABELS[calledPocket] || calledPocket} — pick a ball in the tracker`
                       : 'Pick a ball in the tracker, then click a pocket'}
+              </span>
+              <span className={styles.callDetailShort}>
+                {calledBall && calledPocket
+                  ? `${POCKET_LABELS[calledPocket] || calledPocket}${obviousCall ? ' · obvious' : ''}`
+                  : calledBall
+                    ? 'call a pocket'
+                    : calledPocket
+                      ? (POCKET_LABELS[calledPocket] || calledPocket)
+                      : 'call the shot'}
               </span>
               {(calledBall || calledPocket) && (
                 <button
@@ -3346,6 +3403,40 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             onContextMenu={(e) => e.preventDefault()}
             className={styles.tableCanvas}
           />
+          <div className={styles.fineAim}>
+            <button
+              type="button"
+              className={styles.fineAimButton}
+              aria-label="Aim left"
+              disabled={gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
+              onPointerDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* hold stays on the button */ }
+                startFineAim(-1);
+              }}
+              onPointerUp={stopFineAim}
+              onPointerCancel={stopFineAim}
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              className={styles.fineAimButton}
+              aria-label="Aim right"
+              disabled={gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
+              onPointerDown={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* hold stays on the button */ }
+                startFineAim(1);
+              }}
+              onPointerUp={stopFineAim}
+              onPointerCancel={stopFineAim}
+            >
+              ›
+            </button>
+          </div>
           {turnSplash && (
             <div className={styles.turnSplash}>
               <span
@@ -3371,14 +3462,32 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
                     <p>{nameFor(gameState.currentPlayer === 1 ? 2 : 1)}, do you want to accept this push out result?</p>
                     <div className={styles.pushOutButtons}>
                       <button
-                        onClick={acceptPushOut}
+                        type="button"
                         className={styles.acceptButton}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                        onPointerUp={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          takeDecision(acceptPushOut);
+                        }}
                       >
                         Accept
                       </button>
                       <button
-                        onClick={declinePushOut}
+                        type="button"
                         className={styles.declineButton}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                        onPointerUp={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          takeDecision(declinePushOut);
+                        }}
                       >
                         Decline
                       </button>
@@ -3405,14 +3514,32 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
                     <p>Do you want to:</p>
                     <div className={styles.pushOutButtons}>
                       <button
-                        onClick={acceptIllegalTable}
+                        type="button"
                         className={styles.acceptButton}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                        onPointerUp={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          takeDecision(acceptIllegalTable);
+                        }}
                       >
                         Accept Table
                       </button>
                       <button
-                        onClick={requireReshot}
+                        type="button"
                         className={styles.declineButton}
+                        onPointerDown={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                        }}
+                        onPointerUp={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          takeDecision(requireReshot);
+                        }}
                       >
                         Require Re-Shot
                       </button>

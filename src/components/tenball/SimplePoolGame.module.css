@@ -269,6 +269,10 @@
   font-size: 18px;
 }
 
+.callDetailShort {
+  display: none;
+}
+
 .callClear {
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: transparent;
@@ -340,6 +344,29 @@
 
 .aimPhone {
   display: none;
+}
+
+.fineAim {
+  display: none;
+}
+
+.fineAimButton {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 213, 74, 0.95);
+  background: rgba(8, 14, 28, 0.88);
+  color: #ffe082;
+  font-size: 32px;
+  line-height: 1;
+  padding: 0 0 4px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.fineAimButton:disabled {
+  opacity: 0.35;
 }
 
 .instructions {
@@ -1043,6 +1070,22 @@
     line-height: 1.35;
   }
 
+  .fineAim {
+    display: flex;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 8px;
+    justify-content: space-between;
+    padding: 0 16%;
+    z-index: 6;
+    pointer-events: none;
+  }
+
+  .fineAimButton {
+    pointer-events: auto;
+  }
+
   .playerNames {
     flex-wrap: wrap;
     gap: 6px;
@@ -1124,15 +1167,16 @@
   }
 
   .tableNotices {
-    position: absolute;
-    top: 2px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: max-content;
-    max-width: 70%;
-    height: auto;
+    position: static;
+    transform: none;
+    order: 1;
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+    height: 26px;
     min-height: 0;
-    z-index: 4;
+    z-index: 2;
+    overflow: hidden;
     pointer-events: none;
   }
 
@@ -1141,12 +1185,32 @@
     pointer-events: auto;
   }
 
+  .callShotNotice {
+    height: 24px;
+    max-width: 100%;
+    white-space: nowrap;
+    font-size: 12px;
+    padding: 0 8px;
+    gap: 6px;
+  }
+
+  .callDetail {
+    display: none;
+  }
+
+  .callDetailShort {
+    display: inline;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .playerNames {
-    flex: 1.2 1 0;
+    order: 2;
+    flex: 1.4 1 0;
     flex-wrap: nowrap;
     gap: 4px;
     min-width: 0;
-    height: 32px;
+    height: 34px;
     overflow: hidden;
   }
 
@@ -1159,7 +1223,8 @@
   }
 
   .scoreboard {
-    flex: 1 1 0;
+    order: 2;
+    flex: 0.8 1 0;
     width: auto;
     margin-left: 0;
     padding: 0 6px;
@@ -1168,7 +1233,7 @@
     flex-wrap: nowrap;
     align-items: center;
     min-width: 0;
-    height: 32px;
+    height: 34px;
     overflow: hidden;
   }
 
@@ -1177,10 +1242,7 @@
   }
 
   .scoreboardFormat {
-    width: auto;
-    margin: 0;
-    font-size: 12px;
-    white-space: nowrap;
+    display: none;
   }
 
   .scoreCard,
@@ -1213,7 +1275,7 @@
   .playCluster {
     order: -1;
     flex: 1 0 100%;
-    height: calc(100% - 36px);
+    height: calc(100% - 66px);
     min-height: 0;
     width: 100%;
     display: grid;
@@ -1279,6 +1341,25 @@
     aspect-ratio: 2 / 1;
   }
 
+  .fineAim {
+    display: flex;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 6px;
+    justify-content: space-between;
+    padding: 0 14%;
+    z-index: 6;
+    pointer-events: none;
+  }
+
+  .fineAimButton {
+    pointer-events: auto;
+    width: 42px;
+    height: 42px;
+    font-size: 28px;
+  }
+
   .powerTrack {
     width: 36px;
     height: 140px;
@@ -1305,11 +1386,12 @@
   }
 
   .controls {
+    order: 2;
     flex: 1.3 1 0;
     flex-direction: row;
     flex-wrap: nowrap;
     min-width: 0;
-    height: 32px;
+    height: 34px;
     overflow: hidden;
     padding: 0 4px;
     gap: 4px;
@@ -1660,7 +1742,7 @@
 .pushOutModal {
   position: absolute;
   inset: 0;
-  z-index: 5;
+  z-index: 8;
   border-radius: 5px;
   background: transparent;
 }
@@ -1727,17 +1809,18 @@
 
 .acceptButton,
 .declineButton {
-  padding: 8px 12px;
+  flex: 1 1 120px;
+  min-height: 48px;
+  padding: 10px 14px;
   border: none;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: bold;
   cursor: pointer;
-  touch-action: auto;
+  touch-action: manipulation;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
 }
 
 .acceptButton {
@@ -1745,10 +1828,11 @@
   color: white;
 }
 
-.acceptButton:hover {
-  background: linear-gradient(45deg, #2ecc71, #27ae60);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+@media (hover: hover) and (pointer: fine) {
+  .acceptButton:hover {
+    background: linear-gradient(45deg, #2ecc71, #27ae60);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .declineButton {
@@ -1756,8 +1840,9 @@
   color: white;
 }
 
-.declineButton:hover {
-  background: linear-gradient(45deg, #c0392b, #e74c3c);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+@media (hover: hover) and (pointer: fine) {
+  .declineButton:hover {
+    background: linear-gradient(45deg, #c0392b, #e74c3c);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
 } 
