@@ -3403,40 +3403,6 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             onContextMenu={(e) => e.preventDefault()}
             className={styles.tableCanvas}
           />
-          <div className={styles.fineAim}>
-            <button
-              type="button"
-              className={styles.fineAimButton}
-              aria-label="Aim left"
-              disabled={gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
-              onPointerDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* hold stays on the button */ }
-                startFineAim(-1);
-              }}
-              onPointerUp={stopFineAim}
-              onPointerCancel={stopFineAim}
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              className={styles.fineAimButton}
-              aria-label="Aim right"
-              disabled={gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
-              onPointerDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* hold stays on the button */ }
-                startFineAim(1);
-              }}
-              onPointerUp={stopFineAim}
-              onPointerCancel={stopFineAim}
-            >
-              ›
-            </button>
-          </div>
           {turnSplash && (
             <div className={styles.turnSplash}>
               <span
@@ -3622,6 +3588,38 @@ const SimplePoolGame = ({ onGameEnd, playerNames: playerNamesProp, vsComputer: v
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          className={`${styles.fineAimButton} ${styles.fineAimLeft}`}
+          aria-label="Aim left"
+          disabled={gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* hold stays on the button */ }
+            startFineAim(-1);
+          }}
+          onPointerUp={stopFineAim}
+          onPointerCancel={stopFineAim}
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          className={`${styles.fineAimButton} ${styles.fineAimRight}`}
+          aria-label="Aim right"
+          disabled={gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* hold stays on the button */ }
+            startFineAim(1);
+          }}
+          onPointerUp={stopFineAim}
+          onPointerCancel={stopFineAim}
+        >
+          ›
+        </button>
         </div>
 
         <div className={styles.scoreboardBalance} aria-hidden="true" />

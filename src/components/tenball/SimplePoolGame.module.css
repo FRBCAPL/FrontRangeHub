@@ -346,23 +346,22 @@
   display: none;
 }
 
-.fineAim {
-  display: none;
-}
-
 .fineAimButton {
-  width: 48px;
-  height: 48px;
+  display: none;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 2px solid rgba(255, 213, 74, 0.95);
   background: rgba(8, 14, 28, 0.88);
   color: #ffe082;
-  font-size: 32px;
+  font-size: 30px;
   line-height: 1;
-  padding: 0 0 4px;
+  padding: 0 0 3px;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  align-items: center;
+  justify-content: center;
 }
 
 .fineAimButton:disabled {
@@ -977,12 +976,24 @@
   }
 
   .playCluster {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr) 52px;
     grid-template-areas:
-      "table table"
-      "power spin";
+      "table table table table"
+      "aimL power spin aimR";
     justify-items: center;
     gap: 8px;
+  }
+
+  .fineAimButton {
+    display: inline-flex;
+  }
+
+  .fineAimLeft {
+    grid-area: aimL;
+  }
+
+  .fineAimRight {
+    grid-area: aimR;
   }
 
   .tableContainer {
@@ -1068,22 +1079,6 @@
     display: block;
     font-size: 13px;
     line-height: 1.35;
-  }
-
-  .fineAim {
-    display: flex;
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 8px;
-    justify-content: space-between;
-    padding: 0 16%;
-    z-index: 6;
-    pointer-events: none;
-  }
-
-  .fineAimButton {
-    pointer-events: auto;
   }
 
   .playerNames {
@@ -1280,10 +1275,30 @@
     width: 100%;
     display: grid;
     grid-template-columns: 56px minmax(0, 1fr) 76px;
-    grid-template-areas: "power table spin";
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "power table spin"
+      "aimL table aimR";
     align-items: center;
     justify-items: center;
     gap: 6px;
+  }
+
+  .fineAimButton {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    font-size: 26px;
+  }
+
+  .fineAimLeft {
+    grid-area: aimL;
+    align-self: end;
+  }
+
+  .fineAimRight {
+    grid-area: aimR;
+    align-self: end;
   }
 
   .scoreboardBalance {
@@ -1339,25 +1354,6 @@
     min-width: 0;
     min-height: 0;
     aspect-ratio: 2 / 1;
-  }
-
-  .fineAim {
-    display: flex;
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 6px;
-    justify-content: space-between;
-    padding: 0 14%;
-    z-index: 6;
-    pointer-events: none;
-  }
-
-  .fineAimButton {
-    pointer-events: auto;
-    width: 42px;
-    height: 42px;
-    font-size: 28px;
   }
 
   .powerTrack {
