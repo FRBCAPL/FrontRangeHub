@@ -3,6 +3,7 @@ import { BALL_SIZE, TABLE_WIDTH, TABLE_HEIGHT } from './constants';
 export const GAME_TEN = 'tenball';
 export const GAME_NINE = 'nineball';
 export const GAME_EIGHT = 'eightball';
+export const GAME_ONE_POCKET = 'onepocket';
 
 const TEN_RULES = {
   id: GAME_TEN,
@@ -14,6 +15,7 @@ const TEN_RULES = {
   winOnBreak: false,
   pushOut: true,
   groups: false,
+  onePocket: false,
   threeFoulRule: true
 };
 
@@ -27,6 +29,7 @@ const NINE_RULES = {
   winOnBreak: true,
   pushOut: true,
   groups: false,
+  onePocket: false,
   threeFoulRule: true
 };
 
@@ -41,12 +44,30 @@ const EIGHT_RULES = {
   winOnBreak: false,
   pushOut: false,
   groups: true,
+  onePocket: false,
   threeFoulRule: false
+};
+
+const ONE_POCKET_RULES = {
+  id: GAME_ONE_POCKET,
+  label: 'One Pocket',
+  moneyBall: null,
+  ballIds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  // CSI One Pocket §5: foot-corner scoring, no call shot, alternate break, 3-foul loss.
+  callShot: false,
+  callEight: false,
+  winOnBreak: false,
+  pushOut: false,
+  groups: false,
+  onePocket: true,
+  threeFoulRule: true,
+  raceToBalls: 8
 };
 
 export function getGameRules(gameType = GAME_TEN) {
   if (gameType === GAME_NINE) return NINE_RULES;
   if (gameType === GAME_EIGHT) return EIGHT_RULES;
+  if (gameType === GAME_ONE_POCKET) return ONE_POCKET_RULES;
   return TEN_RULES;
 }
 
@@ -187,9 +208,30 @@ export function createEightBallRack() {
   return balls;
 }
 
+/**
+ * CSI One Pocket triangle: apex on the foot spot, all fifteen balls random.
+ */
+export function createOnePocketRack() {
+  const rackApexX = TABLE_WIDTH * 0.75;
+  const rackApexY = TABLE_HEIGHT / 2;
+  const s = BALL_SIZE * 0.95;
+  const spots = [];
+  for (let row = 0; row < 5; row += 1) {
+    for (let col = 0; col <= row; col += 1) {
+      spots.push({
+        x: rackApexX + row * s,
+        y: rackApexY - row * BALL_SIZE * 0.48 + col * BALL_SIZE * 0.95
+      });
+    }
+  }
+  const ids = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+  return ids.map((id, index) => ballAt(id, spots[index].x, spots[index].y));
+}
+
 export function createRack(gameType = GAME_TEN) {
   if (gameType === GAME_NINE) return createNineBallRack();
   if (gameType === GAME_EIGHT) return createEightBallRack();
+  if (gameType === GAME_ONE_POCKET) return createOnePocketRack();
   return createTenBallRack();
 }
 

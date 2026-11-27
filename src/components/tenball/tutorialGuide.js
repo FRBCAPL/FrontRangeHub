@@ -4,6 +4,8 @@ export const NINE_BREAK_OPENING_TIP = 'Break from the kitchen. Hit the 1-ball fi
 
 export const EIGHT_BREAK_OPENING_TIP = 'Break from the kitchen. Contact the rack, and either pocket a ball or drive four object balls to a rail. Table stays open after the break.';
 
+export const ONE_POCKET_BREAK_OPENING_TIP = 'Choose your foot-corner pocket, then break from the kitchen. Pocket in your hole or send a ball (or the cue) to a rail after contact.';
+
 export const TUTORIAL_STEPS = [
   {
     title: "Welcome to 10-Ball!",
@@ -87,6 +89,39 @@ export const NINEBALL_TUTORIAL_STEPS = [
     title: 'Ready to Play!',
     content: 'You know the CSI 9-Ball basics. Hit lowest first, keep shooting when you pocket a ball, and legally pocket the 9 to win.',
     proTip: 'Plan the run so the cue ball is in shape for the next lowest ball.'
+  }
+];
+
+export const ONE_POCKET_TUTORIAL_STEPS = [
+  {
+    title: 'Welcome to One Pocket!',
+    content: 'CSI One Pocket uses all 15 object balls and only the two foot-corner pockets for scoring. Each player owns one of those pockets. First to eight balls wins.',
+    proTip: 'Defense matters as much as offense — do not gift balls into their hole.'
+  },
+  {
+    title: 'The Rack and Pocket Choice',
+    content: 'Rack in a triangle with a random apex on the foot spot. Before the break, the breaker chooses one foot-corner pocket; the opponent takes the other for the whole game.',
+    proTip: 'Pick the pocket that fits how you like to bank and freeze.'
+  },
+  {
+    title: 'The Break',
+    content: 'Break from behind the head string. You must legally pocket a ball in your pocket, or contact a ball and then have the cue or an object ball hit a cushion. A failed break is a foul.',
+    proTip: 'A soft controlled break often leaves a safer table than a blast.'
+  },
+  {
+    title: 'Scoring',
+    content: 'All object balls are legal — no call shot. A ball in your pocket scores for you and you keep shooting. A ball you put in their pocket scores for them. Balls in any other pocket are illegal and get spotted when your inning ends.',
+    proTip: 'If you make their eighth ball for them, you lose — unless you scratch on that stroke.'
+  },
+  {
+    title: 'Fouls',
+    content: 'Each foul costs one of your scored balls (or you “owe one” if you have none). After most fouls the opponent takes the table in position. Scratch or jumped cue ball: they get ball in hand behind the head string. Three successive fouls lose the game.',
+    proTip: 'Owed balls are spotted after your next scoring inning until the debt is clear.'
+  },
+  {
+    title: 'Ready to Play!',
+    content: 'Choose a pocket, race to eight, and keep their hole locked up. Spot illegal balls when the inning ends, and never forget an owe.',
+    proTip: 'Leave the cue snookered or frozen when you cannot score safely.'
   }
 ];
 

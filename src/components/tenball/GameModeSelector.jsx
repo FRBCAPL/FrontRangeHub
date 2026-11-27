@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { FaGraduationCap, FaPlay } from 'react-icons/fa';
 import styles from './GameModeSelector.module.css';
-import { EIGHT_LEARN_TOPICS, LEARN_TOPICS, NINE_LEARN_TOPICS } from './learnTopics';
+import { EIGHT_LEARN_TOPICS, LEARN_TOPICS, NINE_LEARN_TOPICS, ONE_POCKET_LEARN_TOPICS } from './learnTopics';
 import LearnTopicModal from './LearnTopicModal';
 import tenBallImg from '../../assets/tenball.svg';
 import nineBallImg from '../../assets/ball9.svg';
 import eightBallImg from '../../assets/8ball.svg';
+import onePocketImg from '../../assets/ball8.svg';
 
 const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
   const [openTopicId, setOpenTopicId] = useState(null);
-  const allTopics = [...LEARN_TOPICS, ...NINE_LEARN_TOPICS, ...EIGHT_LEARN_TOPICS];
+  const allTopics = [...LEARN_TOPICS, ...NINE_LEARN_TOPICS, ...EIGHT_LEARN_TOPICS, ...ONE_POCKET_LEARN_TOPICS];
   const openTopic = allTopics.find((topic) => topic.id === openTopicId) || null;
 
   const tenTutorial = {
@@ -54,6 +55,20 @@ const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
     icon: FaPlay,
     color: '#c62828'
   };
+  const onePocketTutorial = {
+    id: 'onepocket-tutorial',
+    title: 'One Pocket Tutorial',
+    description: 'CSI foot-corner scoring. Race to 8.',
+    icon: FaGraduationCap,
+    color: '#66bb6a'
+  };
+  const onePocketPlay = {
+    id: 'onepocket-play',
+    title: 'Play One Pocket',
+    description: 'Match vs computer or a friend.',
+    icon: FaPlay,
+    color: '#2e7d32'
+  };
 
   const renderLauncher = (mode, className) => {
     const IconComponent = mode.icon;
@@ -89,17 +104,16 @@ const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
       </div>
 
       <div className={styles.bundlesRow}>
-        <div className={styles.tutorialBundle}>
-          <div className={styles.recommendedBadge}>Recommended</div>
+        <div className={`${styles.tutorialBundle} ${styles.eightBundle}`}>
           <div className={styles.tutorialIntro}>
-            <img src={tenBallImg} alt="10-ball" className={styles.gameBall} />
-            <h3>10-Ball</h3>
-            <p>Official CSI 10-Ball rules</p>
+            <img src={eightBallImg} alt="8-ball" className={styles.gameBall} />
+            <h3>8-Ball</h3>
+            <p>Solids & stripes · call the 8</p>
           </div>
           <div className={styles.whatYoullLearn}>
             <h3>What You'll Learn</h3>
             <ul>
-              {LEARN_TOPICS.map((topic) => (
+              {EIGHT_LEARN_TOPICS.map((topic) => (
                 <li key={topic.id}>
                   <button type="button" onClick={() => setOpenTopicId(topic.id)}>
                     {topic.label}
@@ -109,8 +123,8 @@ const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
             </ul>
           </div>
           <div className={styles.launcherStack}>
-            {renderLauncher(tenTutorial, `${styles.modeCard} ${styles.recommended}`)}
-            {renderLauncher(tenPlay, `${styles.modeCard} ${styles.playCard}`)}
+            {renderLauncher(eightTutorial, `${styles.modeCard} ${styles.eightCard}`)}
+            {renderLauncher(eightPlay, `${styles.modeCard} ${styles.eightPlayCard}`)}
           </div>
         </div>
 
@@ -138,16 +152,17 @@ const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
           </div>
         </div>
 
-        <div className={`${styles.tutorialBundle} ${styles.eightBundle}`}>
+        <div className={styles.tutorialBundle}>
+          <div className={styles.recommendedBadge}>Recommended</div>
           <div className={styles.tutorialIntro}>
-            <img src={eightBallImg} alt="8-ball" className={styles.gameBall} />
-            <h3>8-Ball</h3>
-            <p>Solids & stripes · call the 8</p>
+            <img src={tenBallImg} alt="10-ball" className={styles.gameBall} />
+            <h3>10-Ball</h3>
+            <p>Official CSI 10-Ball rules</p>
           </div>
           <div className={styles.whatYoullLearn}>
             <h3>What You'll Learn</h3>
             <ul>
-              {EIGHT_LEARN_TOPICS.map((topic) => (
+              {LEARN_TOPICS.map((topic) => (
                 <li key={topic.id}>
                   <button type="button" onClick={() => setOpenTopicId(topic.id)}>
                     {topic.label}
@@ -157,8 +172,34 @@ const GameModeSelector = ({ onModeSelect, fromLogin = false }) => {
             </ul>
           </div>
           <div className={styles.launcherStack}>
-            {renderLauncher(eightTutorial, `${styles.modeCard} ${styles.eightCard}`)}
-            {renderLauncher(eightPlay, `${styles.modeCard} ${styles.eightPlayCard}`)}
+            {renderLauncher(tenTutorial, `${styles.modeCard} ${styles.recommended}`)}
+            {renderLauncher(tenPlay, `${styles.modeCard} ${styles.playCard}`)}
+          </div>
+        </div>
+      </div>
+
+      <div className={`${styles.bundlesRow} ${styles.bundlesRowSecondary}`}>
+        <div className={`${styles.tutorialBundle} ${styles.onePocketBundle}`}>
+          <div className={styles.tutorialIntro}>
+            <img src={onePocketImg} alt="One Pocket" className={styles.gameBall} />
+            <h3>One Pocket</h3>
+            <p>Foot corners · race to 8</p>
+          </div>
+          <div className={styles.whatYoullLearn}>
+            <h3>What You'll Learn</h3>
+            <ul>
+              {ONE_POCKET_LEARN_TOPICS.map((topic) => (
+                <li key={topic.id}>
+                  <button type="button" onClick={() => setOpenTopicId(topic.id)}>
+                    {topic.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className={styles.launcherStack}>
+            {renderLauncher(onePocketTutorial, `${styles.modeCard} ${styles.onePocketCard}`)}
+            {renderLauncher(onePocketPlay, `${styles.modeCard} ${styles.onePocketPlayCard}`)}
           </div>
         </div>
       </div>

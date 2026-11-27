@@ -19,8 +19,17 @@ div[class*="gameModeSelector"],
   align-items: stretch;
 }
 
+.bundlesRowSecondary {
+  margin-top: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 @media (max-width: 900px) {
   .bundlesRow {
+    grid-template-columns: 1fr;
+  }
+
+  .bundlesRowSecondary {
     grid-template-columns: 1fr;
   }
 }
@@ -200,6 +209,20 @@ div[class*="gameModeSelector"],
 .eightBundle .modeCard.eightCard:hover,
 .eightBundle .modeCard.eightPlayCard:hover {
   background: rgba(239, 83, 80, 0.12);
+}
+
+.onePocketBundle {
+  border-color: #66bb6a;
+  box-shadow: 0 2px 8px #66bb6a22;
+}
+
+.onePocketBundle .launcherStack {
+  border-top-color: rgba(102, 187, 106, 0.3);
+}
+
+.onePocketBundle .modeCard.onePocketCard:hover,
+.onePocketBundle .modeCard.onePocketPlayCard:hover {
+  background: rgba(102, 187, 106, 0.12);
 }
 
 .recommendedBadge {

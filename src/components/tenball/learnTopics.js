@@ -4,12 +4,15 @@ import {
   EIGHTBALL_TUTORIAL_STEPS,
   NINE_BREAK_OPENING_TIP,
   NINEBALL_TUTORIAL_STEPS,
+  ONE_POCKET_BREAK_OPENING_TIP,
+  ONE_POCKET_TUTORIAL_STEPS,
   TUTORIAL_STEPS
 } from './tutorialGuide';
 
 const step = (title) => TUTORIAL_STEPS.find((item) => item.title === title);
 const nineStep = (title) => NINEBALL_TUTORIAL_STEPS.find((item) => item.title === title);
 const eightStep = (title) => EIGHTBALL_TUTORIAL_STEPS.find((item) => item.title === title);
+const oneStep = (title) => ONE_POCKET_TUTORIAL_STEPS.find((item) => item.title === title);
 
 export const LEARN_TOPICS = [
   {
@@ -87,6 +90,41 @@ export const NINE_LEARN_TOPICS = [
     label: 'Winning the Game',
     steps: [nineStep('Ready to Play!')],
     moreTips: ['Legally pocket the 9-ball to win, including on the break or on a combination after contacting the lowest ball first.']
+  }
+];
+
+export const ONE_POCKET_LEARN_TOPICS = [
+  {
+    id: 'one-pocket-rules',
+    label: 'One Pocket Overview',
+    steps: [oneStep('Welcome to One Pocket!'), oneStep('Scoring')]
+  },
+  {
+    id: 'one-pocket-rack',
+    label: 'Rack and Pocket Choice',
+    steps: [oneStep('The Rack and Pocket Choice')]
+  },
+  {
+    id: 'one-pocket-break',
+    label: 'Break Requirements',
+    steps: [oneStep('The Break')],
+    moreTips: [ONE_POCKET_BREAK_OPENING_TIP]
+  },
+  {
+    id: 'one-pocket-fouls',
+    label: 'Fouls and Owes',
+    steps: [oneStep('Fouls')],
+    moreTips: [
+      'Each foul spots one of your scored balls, or you owe one.',
+      'Scratch: opponent gets ball in hand behind the head string.',
+      'Three successive fouls lose the game.'
+    ]
+  },
+  {
+    id: 'one-pocket-win',
+    label: 'Winning the Game',
+    steps: [oneStep('Ready to Play!')],
+    moreTips: ['First to eight with no owes wins. Making their eighth for them loses the game.']
   }
 ];
 

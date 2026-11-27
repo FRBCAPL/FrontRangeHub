@@ -17,6 +17,10 @@ const MID_X = (FELT_LEFT + FELT_RIGHT) / 2;
 // Above-average: takes solid mid-table pots, still refuses hero cuts.
 const MAX_MAKE_CUT = 1.02;
 const MIN_MAKE_SCORE = 900;
+// One Pocket: only soft, high-percentage pots — otherwise play safe.
+const ONE_POCKET_MAX_CUT = 0.55;
+const ONE_POCKET_MIN_MAKE = 1180;
+const ONE_POCKET_MAX_POWER = 0.36;
 
 const POCKETS = [
   { id: 'top-left', x: FELT_LEFT, y: FELT_TOP },
@@ -324,7 +328,9 @@ const cuePlacements = (ball, pocket, balls, kitchenOnly) => {
   return spots;
 };
 
-const targetBalls = (balls, legalBallIds) => {
+const targetBalls = (balls, legalBallIds, onePocket = false) => {
+  // One Pocket: every object ball is legal.
+  if (onePocket) return liveBalls(balls);
   // 8-ball / open table: only the supplied legal set (may be empty).
   if (isGroupMode(legalBallIds)) {
     const allowed = new Set(legalBallIds);
@@ -335,32 +341,101 @@ const targetBalls = (balls, legalBallIds) => {
   return lowest ? [lowest] : [];
 };
 
-const bestShotFromCue = (cue, balls, legalBallIds = null) => {
-  const targets = targetBalls(balls, legalBallIds);
+const pocketsForShot = (targetPocketId) => {
+  if (!targetPocketId) return POCKETS;
+  return POCKETS.filter((pocket) => pocket.id === targetPocketId);
+};
+
+const oppositeFootPocketId = (targetPocketId) => (
+  targetPocketId === 'top-right' ? 'bottom-right'
+    : targetPocketId === 'bottom-right' ? 'top-right'
+      : null
+);
+
+const pocketById = (id) => POCKETS.find((pocket) => pocket.id === id) || null;
+
+/** Soften power and punish shots that open the opponent's side of the foot. */
+const tuneOnePocketMake = (shot, cue, balls, targetPocketId) => {
+  if (!shot || !targetPocketId) return shot;
+  const oppId = oppositeFootPocketId(targetPocketId);
+  const opp = pocketById(oppId);
+  const own = pocketById(targetPocketId);
+  let score = shot.score;
+  let power = Math.min(shot.power * 0.55, ONE_POCKET_MAX_POWER);
+
+  // Only short, soft, nearly straight pots.
+  if (shot.cut > ONE_POCKET_MAX_CUT) return null;
+  if (shot.kind && shot.kind !== 'direct') return null;
+
+  const objectTravel = shot.calledBall != null
+    ? (() => {
+      const ball = liveBalls(balls).find((b) => b.id === shot.calledBall);
+      return ball && own ? Math.hypot(ball.x - own.x, ball.y - own.y) : 200;
+    })()
+    : 200;
+  if (objectTravel > 160) score -= (objectTravel - 160) * 2.2;
+  if (objectTravel > 220) return null;
+
+  // Cluster near the opponent's hole — blasting here gifts them the table.
+  if (opp) {
+    const nearOpp = liveBalls(balls).filter((ball) => (
+      Math.hypot(ball.x - opp.x, ball.y - opp.y) < 95
+    )).length;
+    if (nearOpp >= 2) score -= 180 + nearOpp * 40;
+    // Object ball sitting on their side of the foot rail is a bad first target.
+    const obj = liveBalls(balls).find((b) => b.id === shot.calledBall);
+    if (obj) {
+      const towardOpp = Math.hypot(obj.x - opp.x, obj.y - opp.y);
+      const towardOwn = own ? Math.hypot(obj.x - own.x, obj.y - own.y) : 999;
+      if (towardOpp + 30 < towardOwn) score -= 220;
+    }
+  }
+
+  // Prefer stun / soft — no follow-through power wars.
+  power = clamp(power, 0.18, ONE_POCKET_MAX_POWER);
+  score -= power * 120;
+
+  return {
+    ...shot,
+    score,
+    power,
+    english: Math.min(shot.english || 0, 0.14),
+    englishDirection: 90
+  };
+};
+
+const bestShotFromCue = (cue, balls, legalBallIds = null, targetPocketId = null) => {
+  const onePocket = Boolean(targetPocketId);
+  const targets = targetBalls(balls, legalBallIds, onePocket);
   if (targets.length === 0) return null;
   let best = null;
-  const groupMode = isGroupMode(legalBallIds);
+  const groupMode = !onePocket && isGroupMode(legalBallIds);
   const allowed = groupMode ? new Set(legalBallIds) : null;
+  const pocketList = pocketsForShot(targetPocketId);
 
   const consider = (shot) => {
-    if (shot && (!best || shot.score > best.score)) best = shot;
+    const tuned = onePocket ? tuneOnePocketMake(shot, cue, balls, targetPocketId) : shot;
+    if (tuned && (!best || tuned.score > best.score)) best = tuned;
   };
 
   targets.forEach((ball) => {
-    POCKETS.forEach((pocket) => {
+    pocketList.forEach((pocket) => {
       consider(scoreDirectShot(cue, ball, pocket, balls, legalBallIds));
-      consider(scoreBankShot(cue, ball, pocket, balls, legalBallIds));
-      consider(scoreKickShot(cue, ball, pocket, balls, legalBallIds));
+      // One Pocket: no banks / kicks / combos — those are the hard, stack-opening shots.
+      if (!onePocket) {
+        consider(scoreBankShot(cue, ball, pocket, balls, legalBallIds));
+        consider(scoreKickShot(cue, ball, pocket, balls, legalBallIds));
+      }
     });
 
+    if (onePocket) return;
     liveBalls(balls).forEach((object) => {
       if (object.id === ball.id) return;
       // 8-ball: only combo into another legal (own-group / open) ball — never opponent balls.
       if (groupMode && !allowed.has(object.id)) return;
-      // Never combo the 8 as the first-hit ball into something else when on the 8;
-      // and never call the 8 via combo unless it is the object and legal.
+      // Never combo the 8 as the first-hit ball into something else when on the 8.
       if (groupMode && ball.id === 8) return;
-      POCKETS.forEach((pocket) => {
+      pocketList.forEach((pocket) => {
         consider(scoreComboShot(cue, ball, object, pocket, balls));
       });
     });
@@ -382,29 +457,45 @@ const withAimMiss = (shot) => {
   };
 };
 
-const safetyShot = (cue, balls, legalBallIds = null) => {
-  const ball = targetBalls(balls, legalBallIds)[0]
-    || (isGroupMode(legalBallIds) ? null : lowestBall(balls));
+const safetyShot = (cue, balls, legalBallIds = null, targetPocketId = null) => {
+  const onePocket = Boolean(targetPocketId);
+  const opp = onePocket ? pocketById(oppositeFootPocketId(targetPocketId)) : null;
+  // One Pocket: pick a ball far from the opponent's hole when possible.
+  const pool = targetBalls(balls, legalBallIds, onePocket);
+  const ball = (onePocket && opp
+    ? [...pool].sort((a, b) => (
+      Math.hypot(b.x - opp.x, b.y - opp.y) - Math.hypot(a.x - opp.x, a.y - opp.y)
+    ))[0]
+    : pool[0])
+    || (onePocket || isGroupMode(legalBallIds) ? null : lowestBall(balls));
   if (!ball) return null;
 
-  // Prefer thin rails or length-of-table send that parks the lowest.
-  const railTargets = [
-    { x: ball.x, y: FELT_TOP },
-    { x: ball.x, y: FELT_BOTTOM },
-    { x: FELT_LEFT, y: ball.y },
-    { x: FELT_RIGHT, y: ball.y },
-    { x: FELT_LEFT, y: FELT_TOP },
-    { x: FELT_RIGHT, y: FELT_TOP },
-    { x: FELT_LEFT, y: FELT_BOTTOM },
-    { x: FELT_RIGHT, y: FELT_BOTTOM }
-  ];
+  // Soft rail taps / thin freezes — never a length-of-table blast.
+  const railTargets = onePocket
+    ? [
+      { x: ball.x, y: FELT_TOP },
+      { x: ball.x, y: FELT_BOTTOM },
+      { x: FELT_LEFT, y: ball.y },
+      // Prefer short side of foot rail on own half, not into their jaw.
+      { x: FELT_RIGHT - 8, y: ball.y }
+    ]
+    : [
+      { x: ball.x, y: FELT_TOP },
+      { x: ball.x, y: FELT_BOTTOM },
+      { x: FELT_LEFT, y: ball.y },
+      { x: FELT_RIGHT, y: ball.y },
+      { x: FELT_LEFT, y: FELT_TOP },
+      { x: FELT_RIGHT, y: FELT_TOP },
+      { x: FELT_LEFT, y: FELT_BOTTOM },
+      { x: FELT_RIGHT, y: FELT_BOTTOM }
+    ];
 
   let best = null;
   railTargets.forEach((target) => {
     const ghost = ghostFor(ball, target);
     if (!pathClear(cue.x, cue.y, ghost.x, ghost.y, balls, [ball.id])) return;
     const cut = cutAngle(cue, ball, target);
-    if (cut > 1.15) return;
+    if (cut > (onePocket ? 0.95 : 1.15)) return;
     const cueDist = Math.hypot(cue.x - ghost.x, cue.y - ghost.y);
     const railDist = Math.min(
       Math.abs(ball.x - FELT_LEFT),
@@ -414,17 +505,27 @@ const safetyShot = (cue, balls, legalBallIds = null) => {
     );
     // Hide the cue near a rail opposite the object ball when possible.
     const hide = Math.hypot(cue.x - MID_X, cue.y - 150) * 0.05;
-    const score = 280 - cut * 40 - cueDist * 0.07 + railDist * 0.25 - hide;
+    let score = 280 - cut * 40 - cueDist * 0.07 + railDist * 0.25 - hide;
+    if (onePocket && opp) {
+      // Do not send the object ball toward their pocket.
+      const sendTowardOpp = Math.hypot(target.x - opp.x, target.y - opp.y)
+        < Math.hypot(ball.x - opp.x, ball.y - opp.y);
+      if (sendTowardOpp) score -= 200;
+      score += Math.hypot(ball.x - opp.x, ball.y - opp.y) * 0.15;
+    }
+    const power = onePocket
+      ? clamp(0.16 + Math.hypot(ball.x - target.x, ball.y - target.y) / 2200, 0.14, 0.26)
+      : clamp(0.22 + Math.hypot(ball.x - target.x, ball.y - target.y) / 1300, 0.2, 0.4);
     if (!best || score > best.score) {
       best = {
         score,
         aimAngle: Math.atan2(ghost.y - cue.y, ghost.x - cue.x),
-        power: clamp(0.22 + Math.hypot(ball.x - target.x, ball.y - target.y) / 1300, 0.2, 0.4),
+        power,
         calledBall: ball.id,
-        calledPocket: nearestPocket(ball).id,
+        calledPocket: onePocket ? targetPocketId : nearestPocket(ball).id,
         pushOut: false,
         cue: null,
-        english: 0.22,
+        english: onePocket ? 0.1 : 0.22,
         englishDirection: 90
       };
     }
@@ -435,13 +536,13 @@ const safetyShot = (cue, balls, legalBallIds = null) => {
     return shot;
   }
 
-  const pocket = nearestPocket(ball);
+  const pocket = onePocket ? pocketById(targetPocketId) : nearestPocket(ball);
   return {
     canMake: false,
     aimAngle: Math.atan2(ball.y - cue.y, ball.x - cue.x),
-    power: 0.24,
+    power: onePocket ? 0.16 : 0.24,
     calledBall: ball.id,
-    calledPocket: pocket.id,
+    calledPocket: pocket?.id || nearestPocket(ball).id,
     pushOut: false,
     cue: null,
     english: 0.1,
@@ -449,11 +550,23 @@ const safetyShot = (cue, balls, legalBallIds = null) => {
   };
 };
 
-const takeMakeOrSafety = (shot, cue, balls, legalBallIds = null) => {
-  if (shot && shot.score >= MIN_MAKE_SCORE && shot.cut <= MAX_MAKE_CUT) {
-    return { ...withAimMiss(shot), canMake: true, pushOut: false, cue: null };
+const takeMakeOrSafety = (shot, cue, balls, legalBallIds = null, targetPocketId = null) => {
+  const onePocket = Boolean(targetPocketId);
+  const minScore = onePocket ? ONE_POCKET_MIN_MAKE : MIN_MAKE_SCORE;
+  const maxCut = onePocket ? ONE_POCKET_MAX_CUT : MAX_MAKE_CUT;
+  if (
+    shot
+    && shot.score >= minScore
+    && shot.cut <= maxCut
+    && (!onePocket || (shot.power || 0) <= ONE_POCKET_MAX_POWER + 0.02)
+  ) {
+    const played = withAimMiss(shot);
+    if (onePocket) {
+      played.power = clamp(played.power * 0.85, 0.16, ONE_POCKET_MAX_POWER);
+    }
+    return { ...played, canMake: true, pushOut: false, cue: null };
   }
-  const safe = safetyShot(cue, balls, legalBallIds);
+  const safe = safetyShot(cue, balls, legalBallIds, targetPocketId);
   if (!safe) return null;
   return { ...safe, canMake: false };
 };
@@ -464,39 +577,51 @@ export function planComputerShot({
   ballInHand,
   isBreakShot,
   pushOutAvailable,
-  legalBallIds = null
+  legalBallIds = null,
+  targetPocketId = null
 }) {
-  const candidates = targetBalls(balls, legalBallIds);
+  const onePocket = Boolean(targetPocketId);
+  const candidates = targetBalls(balls, legalBallIds, onePocket);
+  const pocketList = pocketsForShot(targetPocketId);
 
   if (isBreakShot) {
     const apex = lowestBall(balls) || candidates[0];
     if (!apex) return null;
-    const side = Math.random() > 0.5 ? 1 : -1;
+    // One Pocket: softish break toward the foot; prefer own-side lean when pocket known.
+    const side = targetPocketId === 'top-right'
+      ? -1
+      : targetPocketId === 'bottom-right'
+        ? 1
+        : (Math.random() > 0.5 ? 1 : -1);
     const spot = clampToTable(114, 150 + side * (4 + Math.random() * 6), true);
     const aimAngle = Math.atan2(apex.y - spot.y, apex.x - spot.x) + side * 0.012;
     return {
       canMake: true,
       aimAngle,
-      power: 0.78,
+      // Soft One Pocket break — just meet the cushion rule, don't scatter their side.
+      power: onePocket ? 0.34 : 0.78,
       calledBall: null,
       calledPocket: null,
       pushOut: false,
       cue: spot,
-      english: 0.15,
+      english: onePocket ? 0.08 : 0.15,
       englishDirection: 270
     };
   }
 
   const ball = candidates[0]
-    || (isGroupMode(legalBallIds) ? null : lowestBall(balls));
+    || (onePocket || isGroupMode(legalBallIds) ? null : lowestBall(balls));
   if (!ball) return null;
+
+  // One Pocket kitchen BIH: placements stay in the kitchen.
+  const kitchenOnly = onePocket && ballInHand;
 
   if (ballInHand) {
     let best = null;
     let bestCue = null;
     candidates.forEach((target) => {
-      POCKETS.forEach((pocket) => {
-        cuePlacements(target, pocket, balls, false).forEach((spot) => {
+      pocketList.forEach((pocket) => {
+        cuePlacements(target, pocket, balls, kitchenOnly).forEach((spot) => {
           const shot = scoreDirectShot(spot, target, pocket, balls, legalBallIds);
           if (shot && (!best || shot.score > best.score)) {
             best = shot;
@@ -505,45 +630,64 @@ export function planComputerShot({
         });
       });
     });
-    // Widen the search if the dunk isn't obvious — look for banks / kicks / shape.
-    const probes = [
-      clampToTable(MID_X - 50, 150, false),
-      clampToTable(MID_X + 50, 150, false),
-      clampToTable(MID_X - 25, 110, false),
-      clampToTable(MID_X + 25, 190, false),
-      clampToTable(MID_X, 130, false),
-      clampToTable(MID_X, 170, false),
-      clampToTable(160, 90, false),
-      clampToTable(160, 210, false),
-      clampToTable(200, 150, false)
-    ];
+    const probes = kitchenOnly
+      ? [
+        clampToTable(90, 110, true),
+        clampToTable(90, 150, true),
+        clampToTable(90, 190, true),
+        clampToTable(120, 130, true),
+        clampToTable(120, 170, true)
+      ]
+      : [
+        clampToTable(MID_X - 50, 150, false),
+        clampToTable(MID_X + 50, 150, false),
+        clampToTable(MID_X - 25, 110, false),
+        clampToTable(MID_X + 25, 190, false),
+        clampToTable(MID_X, 130, false),
+        clampToTable(MID_X, 170, false),
+        clampToTable(160, 90, false),
+        clampToTable(160, 210, false),
+        clampToTable(200, 150, false)
+      ];
     probes.forEach((spot) => {
       if (overlapsBall(spot.x, spot.y, balls)) return;
-      const shot = bestShotFromCue(spot, balls, legalBallIds);
+      const shot = bestShotFromCue(spot, balls, legalBallIds, targetPocketId);
       if (shot && (!best || shot.score > best.score)) {
         best = shot;
         bestCue = spot;
       }
     });
-    if (best && best.score >= MIN_MAKE_SCORE - 40) {
+    const bihMin = onePocket ? ONE_POCKET_MIN_MAKE - 60 : MIN_MAKE_SCORE - 40;
+    if (best && best.score >= bihMin && (!onePocket || best.cut <= ONE_POCKET_MAX_CUT)) {
+      const played = withAimMiss(best);
+      if (onePocket) {
+        played.power = clamp(played.power * 0.8, 0.16, ONE_POCKET_MAX_POWER);
+      }
       return {
-        ...withAimMiss(best),
+        ...played,
         canMake: true,
         pushOut: false,
         cue: bestCue
       };
     }
-    // BIH safety: park cue far from an easy look at the object ball.
-    let safeCue = clampToTable(MID_X, 150, false);
+    let safeCue = clampToTable(kitchenOnly ? 100 : MID_X, 150, kitchenOnly);
     let safeScore = -Infinity;
-    [
-      clampToTable(FELT_LEFT + 40, FELT_TOP + 40, false),
-      clampToTable(FELT_RIGHT - 40, FELT_TOP + 40, false),
-      clampToTable(FELT_LEFT + 40, FELT_BOTTOM - 40, false),
-      clampToTable(FELT_RIGHT - 40, FELT_BOTTOM - 40, false),
-      clampToTable(MID_X, FELT_TOP + 36, false),
-      clampToTable(MID_X, FELT_BOTTOM - 36, false)
-    ].forEach((spot) => {
+    const safeSpots = kitchenOnly
+      ? [
+        clampToTable(60, 80, true),
+        clampToTable(60, 220, true),
+        clampToTable(120, 80, true),
+        clampToTable(120, 220, true)
+      ]
+      : [
+        clampToTable(FELT_LEFT + 40, FELT_TOP + 40, false),
+        clampToTable(FELT_RIGHT - 40, FELT_TOP + 40, false),
+        clampToTable(FELT_LEFT + 40, FELT_BOTTOM - 40, false),
+        clampToTable(FELT_RIGHT - 40, FELT_BOTTOM - 40, false),
+        clampToTable(MID_X, FELT_TOP + 36, false),
+        clampToTable(MID_X, FELT_BOTTOM - 36, false)
+      ];
+    safeSpots.forEach((spot) => {
       if (overlapsBall(spot.x, spot.y, balls)) return;
       const openness = -Math.hypot(spot.x - ball.x, spot.y - ball.y);
       if (openness > safeScore) {
@@ -551,17 +695,16 @@ export function planComputerShot({
         safeCue = spot;
       }
     });
-    const safe = safetyShot(safeCue, balls, legalBallIds);
+    const safe = safetyShot(safeCue, balls, legalBallIds, targetPocketId);
     if (!safe) return null;
     return { ...safe, canMake: false, cue: safeCue };
   }
 
-  const made = bestShotFromCue(cue, balls, legalBallIds);
-  const choice = takeMakeOrSafety(made, cue, balls, legalBallIds);
+  const made = bestShotFromCue(cue, balls, legalBallIds, targetPocketId);
+  const choice = takeMakeOrSafety(made, cue, balls, legalBallIds, targetPocketId);
   if (choice?.canMake) return choice;
 
   if (pushOutAvailable) {
-    // Soft nudge that doesn't gift a straight-in — leave the cue off-center.
     return {
       canMake: false,
       aimAngle: Math.atan2((ball.y + 40) - cue.y, (ball.x - 50) - cue.x),
@@ -578,7 +721,12 @@ export function planComputerShot({
   return choice;
 }
 
-export function computerTakesTheTable(cue, balls, { spotMoney = false, moneyBall = 10, legalBallIds = null } = {}) {
+export function computerTakesTheTable(cue, balls, {
+  spotMoney = false,
+  moneyBall = 10,
+  legalBallIds = null,
+  targetPocketId = null
+} = {}) {
   const table = spotMoney
     ? balls.map((ball) => (
       ball.id === moneyBall
@@ -586,6 +734,6 @@ export function computerTakesTheTable(cue, balls, { spotMoney = false, moneyBall
         : ball
     ))
     : balls;
-  const shot = bestShotFromCue(cue, table, legalBallIds);
+  const shot = bestShotFromCue(cue, table, legalBallIds, targetPocketId);
   return Boolean(shot && shot.score >= MIN_MAKE_SCORE && shot.cut <= MAX_MAKE_CUT);
 }

@@ -9,7 +9,7 @@ import { DEFAULT_MATCH, leadingWinner, matchLabel, matchWinLine, matchWonLabel, 
 import { nextGameAfterVotes } from './playAgain';
 import { planComputerShot, computerTakesTheTable } from './computerOpponent';
 import { PHASES, isBreak, isPlay, nextPhaseAfterShot, shouldEnablePushOut, canShowPushOut } from './turnStateMachine';
-import { createRack, getGameRules, spotMoneyBall, GAME_TEN, GAME_EIGHT } from './gameRules';
+import { createRack, getGameRules, spotMoneyBall, GAME_TEN, GAME_EIGHT, GAME_ONE_POCKET } from './gameRules';
 import {
   GROUP_SOLIDS,
   GROUP_STRIPES,
@@ -23,6 +23,18 @@ import {
   shotContinuesInEight,
   tableIsOpen
 } from './eightBallLogic';
+import OnePocketChoice from './OnePocketChoice';
+import {
+  FOOT_POCKET_BOTTOM,
+  ONE_POCKET_RACE,
+  applyFoulBallPenalty,
+  assignTargetPockets,
+  classifyOnePocketPocketed,
+  clearOwesAfterScoring,
+  hasWonOnePocket,
+  pocketLabelShort,
+  spotObjectBalls
+} from './onePocketLogic';
   // Debug flag and logger
   const DEBUG = false;
   const debugLog = (...args) => {
@@ -257,6 +269,7 @@ const SimplePoolGame = ({
   const allowPushOut = rules.pushOut !== false;
   const threeFoulRule = rules.threeFoulRule !== false;
   const isEight = gameType === GAME_EIGHT || rules.groups;
+  const isOnePocket = gameType === GAME_ONE_POCKET || !!rules.onePocket;
   const ballIds = rules.ballIds;
   // Remove the console.log that's causing spam
   const canvasRef = useRef(null);
@@ -388,6 +401,23 @@ const SimplePoolGame = ({
   const [playerGroups, setPlayerGroups] = useState({ 1: null, 2: null });
   const playerGroupsRef = useRef(playerGroups);
   playerGroupsRef.current = playerGroups;
+  // One Pocket rack score (balls), owes, scored ball ids, and foot-corner targets.
+  const [targetPockets, setTargetPockets] = useState({ 1: null, 2: null });
+  const targetPocketsRef = useRef(targetPockets);
+  targetPocketsRef.current = targetPockets;
+  const [pocketScores, setPocketScores] = useState({ 1: 0, 2: 0 });
+  const pocketScoresRef = useRef(pocketScores);
+  pocketScoresRef.current = pocketScores;
+  const [owedBalls, setOwedBalls] = useState({ 1: 0, 2: 0 });
+  const owedBallsRef = useRef(owedBalls);
+  owedBallsRef.current = owedBalls;
+  const [scoredBallIds, setScoredBallIds] = useState({ 1: [], 2: [] });
+  const scoredBallIdsRef = useRef(scoredBallIds);
+  scoredBallIdsRef.current = scoredBallIds;
+  const [heldIllegalIds, setHeldIllegalIds] = useState([]);
+  const heldIllegalIdsRef = useRef(heldIllegalIds);
+  heldIllegalIdsRef.current = heldIllegalIds;
+  const [showPocketChoice, setShowPocketChoice] = useState(false);
   // Snapshot at shoot time — after a make the object ball is pocketed and must not
   // drop out of the "legal first ball" list during foul checks.
   const legalIdsAtShotStartRef = useRef([]);
@@ -457,6 +487,7 @@ const SimplePoolGame = ({
     if ((match?.type || 'single') === 'single') return;
     gameOverRef.current = !!leadingWinner(scores, match);
   }, [scores, match]);
+
   const [illegallyPocketedBalls, setIllegallyPocketedBalls] = useState([]); // Track illegally pocketed balls
   const [showIllegalPocketOption, setShowIllegalPocketOption] = useState(false); // Show opponent option modal
   const tableTipForShot = useRef(null);
@@ -468,6 +499,152 @@ const SimplePoolGame = ({
       detail: { key, text, repeat: Boolean(options.repeat) }
     }));
   }, []);
+
+  const onePocketInningScoredRef = useRef(false);
+
+  const resetOnePocketRackStats = useCallback(() => {
+    const clearedScores = { 1: 0, 2: 0 };
+    const clearedOwed = { 1: 0, 2: 0 };
+    const clearedIds = { 1: [], 2: [] };
+    pocketScoresRef.current = clearedScores;
+    owedBallsRef.current = clearedOwed;
+    scoredBallIdsRef.current = clearedIds;
+    heldIllegalIdsRef.current = [];
+    onePocketInningScoredRef.current = false;
+    setPocketScores(clearedScores);
+    setOwedBalls(clearedOwed);
+    setScoredBallIds(clearedIds);
+    setHeldIllegalIds([]);
+  }, []);
+
+  const chooseOnePocket = useCallback((pocketId) => {
+    const breaker = lastBreakerRef.current === 2 ? 2 : 1;
+    const next = assignTargetPockets(pocketId, breaker);
+    targetPocketsRef.current = next;
+    setTargetPockets(next);
+    setShowPocketChoice(false);
+    offerTableTip(
+      'pocket-chosen',
+      `${nameFor(breaker)} takes the ${pocketLabelShort(next[breaker]).toLowerCase()}. ${otherName(breaker)} takes the ${pocketLabelShort(next[breaker === 1 ? 2 : 1]).toLowerCase()}.`
+    );
+  }, [offerTableTip]);
+
+  useEffect(() => {
+    if (!isOnePocket) {
+      setShowPocketChoice(false);
+      return undefined;
+    }
+    if (!targetPockets[1] && !targetPockets[2]) {
+      setShowPocketChoice(true);
+    }
+    return undefined;
+  }, [isOnePocket, targetPockets]);
+
+  // Computer breaker auto-picks a foot pocket.
+  useEffect(() => {
+    if (!isOnePocket || !showPocketChoice || !vsComputer) return undefined;
+    const breaker = lastBreakerRef.current === 2 ? 2 : 1;
+    if (breaker !== 2) return undefined;
+    const timer = setTimeout(() => {
+      chooseOnePocket(FOOT_POCKET_BOTTOM);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [isOnePocket, showPocketChoice, vsComputer, chooseOnePocket]);
+
+  /** Score / hold / spot object balls for One Pocket after the shot settles. */
+  const applyOnePocketPocketed = useCallback((shooter, { foul = false, scratchCue = false } = {}) => {
+    const ballsPocketed = gameState.balls.filter((ball) => ball.pocketed && !ball.wasPocketedBeforeShot);
+    const classified = classifyOnePocketPocketed(
+      ballsPocketed,
+      targetPocketsRef.current,
+      shooter,
+      { scratchCue }
+    );
+    let scores = { 1: pocketScoresRef.current[1] || 0, 2: pocketScoresRef.current[2] || 0 };
+    let owed = { 1: owedBallsRef.current[1] || 0, 2: owedBallsRef.current[2] || 0 };
+    let scoredIds = {
+      1: [...(scoredBallIdsRef.current[1] || [])],
+      2: [...(scoredBallIdsRef.current[2] || [])]
+    };
+    let held = [...(heldIllegalIdsRef.current || [])];
+    const spotNow = [];
+
+    if (foul) {
+      classified.forShooter.forEach((ball) => spotNow.push(ball.id));
+      if (!scratchCue) {
+        const opp = shooter === 1 ? 2 : 1;
+        classified.forOpponent.forEach((ball) => {
+          scores[opp] += 1;
+          scoredIds[opp].push(ball.id);
+        });
+      } else {
+        classified.forOpponent.forEach((ball) => spotNow.push(ball.id));
+      }
+      classified.illegal.forEach((ball) => spotNow.push(ball.id));
+      // Scoring inning ended by foul — still clear owes if they scored this inning.
+      if (onePocketInningScoredRef.current) {
+        const cleared = clearOwesAfterScoring(scores, owed, scoredIds, shooter);
+        scores = cleared.scores;
+        owed = cleared.owed;
+        scoredIds = cleared.scoredIds;
+        spotNow.push(...cleared.spotIds);
+      }
+      onePocketInningScoredRef.current = false;
+    } else {
+      classified.forShooter.forEach((ball) => {
+        scores[shooter] += 1;
+        scoredIds[shooter].push(ball.id);
+      });
+      const opp = shooter === 1 ? 2 : 1;
+      classified.forOpponent.forEach((ball) => {
+        scores[opp] += 1;
+        scoredIds[opp].push(ball.id);
+      });
+      classified.illegal.forEach((ball) => {
+        if (!held.includes(ball.id)) held.push(ball.id);
+      });
+      if (classified.forShooter.length > 0) onePocketInningScoredRef.current = true;
+    }
+
+    const continued = !foul && classified.forShooter.length > 0;
+
+    if (!continued) {
+      spotNow.push(...held);
+      held = [];
+      if (!foul && onePocketInningScoredRef.current) {
+        const cleared = clearOwesAfterScoring(scores, owed, scoredIds, shooter);
+        scores = cleared.scores;
+        owed = cleared.owed;
+        scoredIds = cleared.scoredIds;
+        spotNow.push(...cleared.spotIds);
+      }
+      onePocketInningScoredRef.current = false;
+    }
+
+    pocketScoresRef.current = scores;
+    owedBallsRef.current = owed;
+    scoredBallIdsRef.current = scoredIds;
+    heldIllegalIdsRef.current = held;
+    setPocketScores(scores);
+    setOwedBalls(owed);
+    setScoredBallIds(scoredIds);
+    setHeldIllegalIds(held);
+
+    if (spotNow.length > 0) {
+      setGameState((prev) => ({
+        ...prev,
+        balls: spotObjectBalls(prev.balls, spotNow, FOOT_SPOT_X, FOOT_SPOT_Y, BALL_RADIUS)
+      }));
+    }
+
+    return {
+      continued,
+      scores,
+      owed,
+      forShooterCount: classified.forShooter.length,
+      forOpponentCount: classified.forOpponent.length
+    };
+  }, [gameState.balls]);
   
   // Table/physics constants moved to constants.js
   
@@ -763,14 +940,26 @@ const SimplePoolGame = ({
       foulDetected = 'scratch';
     }
 
-    // Break shot foul detection (CSI 4-3). A scratch is already recorded above.
+    // Break shot foul detection. A scratch is already recorded above.
     if (gameState.gamePhase === 'break' && !foulDetected) {
       const ballsPocketedThisShot = gameState.balls.filter(ball => 
         ball.pocketed && !ball.wasPocketedBeforeShot
       );
       const cushionsHit = breakCushionBallsRef.current.size;
+      const myPocket = targetPocketsRef.current?.[shotPlayer || gameState.currentPlayer];
+      const scoredOwnOnBreak = isOnePocket && myPocket && ballsPocketedThisShot.some(
+        (ball) => ball.pocketedPocket === myPocket
+      );
 
-      if (cueRailBeforeContactRef.current) {
+      if (isOnePocket) {
+        // CSI 5-4: pocket in your target OR cue contacts a ball then a cushion (cue or object).
+        if (!firstBallHit && !contactMade) {
+          foulDetected = 'no_contact';
+        } else if (!scoredOwnOnBreak && !railContact && cushionsHit < 1) {
+          // After contact, need cue or object to a cushion (railContact covers that) unless own pocket scored.
+          foulDetected = 'break_insufficient_cushions';
+        }
+      } else if (cueRailBeforeContactRef.current) {
         debugLog('Break foul detected - cue ball hit a cushion before contacting the rack');
         foulDetected = 'break_cushion_first';
       } else if (!isEight && firstBallHit && firstBallHit !== 1) {
@@ -785,7 +974,8 @@ const SimplePoolGame = ({
     }
 
     // Wrong ball first: rotation games hit lowest; 8-ball hits legal group / open-table ball.
-    if (!foulDetected && firstBallHit && gameState.gamePhase !== 'break') {
+    // One Pocket: all object balls are legal — no wrong-ball-first.
+    if (!foulDetected && firstBallHit && gameState.gamePhase !== 'break' && !isOnePocket) {
       if (isEight) {
         if (!Array.isArray(legalIds) || !legalIds.includes(firstBallHit)) {
           debugLog('Wrong ball first foul (8-ball) - Hit:', firstBallHit, 'Legal:', legalIds);
@@ -823,7 +1013,7 @@ const SimplePoolGame = ({
     debugLog('Current lowest ball:', currentLowestBall ? currentLowestBall.id : 'none');
 
     return foulDetected;
-  }, [isPushOut, firstBallHit, railContact, contactMade, getLowestNumberedBall, gameState.balls, lowestNumberedBall, gameState.cueBall.visible, gameState.gamePhase, objectBallsHitCushions, isEight]);
+  }, [isPushOut, firstBallHit, railContact, contactMade, getLowestNumberedBall, gameState.balls, lowestNumberedBall, gameState.cueBall.visible, gameState.gamePhase, objectBallsHitCushions, isEight, isOnePocket, shotPlayer]);
 
   // Detect illegally pocketed balls (CSI 10-Ball call-shot rules; off for 9-Ball)
   const detectIllegallyPocketedBalls = useCallback(() => {
@@ -899,11 +1089,19 @@ const SimplePoolGame = ({
     } else if (foulType === 'break_insufficient_cushions') foulReason = 'The break needed a pocketed ball or four rails';
     else if (foulType === 'no_contact') foulReason = 'The cue ball missed every ball';
     else if (foulType === 'no_rail_contact') foulReason = 'No ball reached a rail after the hit';
-    let foulTip = `Foul. ${incomingName} has ball in hand.${ballNote}`;
+    const onePocketScratch = isOnePocket && (foulType === 'scratch');
+    const onePocketIncomingNote = isOnePocket
+      ? (onePocketScratch
+        ? `${incomingName} has ball in hand behind the head string.`
+        : `${incomingName} accepts the table in position.`)
+      : `${incomingName} has ball in hand.`;
+    let foulTip = `Foul. ${onePocketIncomingNote}${ballNote}`;
     if (threeFoulRule && nextFoulCount >= 3) {
       foulTip = `That is three fouls in a row. ${fouledName} loses the game.`;
     } else if (foulType === 'scratch') {
-      foulTip = `Scratch. The cue ball went in. ${incomingName} has ball in hand.${ballNote}`;
+      foulTip = isOnePocket
+        ? `Scratch. Spot one ball. ${incomingName} has ball in hand behind the head string.`
+        : `Scratch. The cue ball went in. ${incomingName} has ball in hand.${ballNote}`;
     } else if (foulType === 'wrong_ball_first' || foulType === 'break_wrong_ball_first') {
       foulTip = isEight
         ? `Wrong ball first. ${incomingName} has ball in hand.${ballNote}`
@@ -915,11 +1113,17 @@ const SimplePoolGame = ({
         ? `The cue ball hit a cushion before the rack. ${incomingName} has ball in hand.`
         : `The cue ball hit a cushion before the 1-ball. ${incomingName} has ball in hand.`;
     } else if (foulType === 'break_insufficient_cushions') {
-      foulTip = `The break did not pocket a ball or drive four balls to a rail. ${incomingName} has ball in hand.`;
+      foulTip = isOnePocket
+        ? `Illegal break. Spot one ball. ${onePocketIncomingNote}`
+        : `The break did not pocket a ball or drive four balls to a rail. ${incomingName} has ball in hand.`;
     } else if (foulType === 'no_contact') {
-      foulTip = `The cue ball missed every ball.${ballNote} ${incomingName} has ball in hand.`;
+      foulTip = isOnePocket
+        ? `The cue ball missed every ball. Spot one ball. ${onePocketIncomingNote}`
+        : `The cue ball missed every ball.${ballNote} ${incomingName} has ball in hand.`;
     } else if (foulType === 'no_rail_contact') {
-      foulTip = `After the hit, a ball has to reach a rail or be pocketed. This is a foul. ${incomingName} has ball in hand.`;
+      foulTip = isOnePocket
+        ? `No rail after contact. Spot one ball. ${onePocketIncomingNote}`
+        : `After the hit, a ball has to reach a rail or be pocketed. This is a foul. ${incomingName} has ball in hand.`;
     }
     offerTableTip(
       threeFoulRule && nextFoulCount >= 3 ? 'three-foul' : `foul-${foulType}`,
@@ -990,6 +1194,12 @@ const SimplePoolGame = ({
         setPushOutAvailable(false);
         setIsPushOut(false);
         setFirstShotAfterBreak(false);
+        if (isOnePocket) {
+          resetOnePocketRackStats();
+          targetPocketsRef.current = { 1: null, 2: null };
+          setTargetPockets({ 1: null, 2: null });
+          setShowPocketChoice(true);
+        }
         gameOverRef.current = false;
         rackWinRecordedRef.current = false;
         setTurnCue((cue) => cue + 1);
@@ -999,19 +1209,47 @@ const SimplePoolGame = ({
       return;
     }
 
-    // Apply ball-in-hand penalty
+    // One Pocket foul penalty: spot one scored ball or owe one (CSI 5-9).
+    if (isOnePocket) {
+      const penalty = applyFoulBallPenalty(
+        pocketScoresRef.current,
+        owedBallsRef.current,
+        scoredBallIdsRef.current,
+        playerWhoFouled
+      );
+      pocketScoresRef.current = penalty.scores;
+      owedBallsRef.current = penalty.owed;
+      scoredBallIdsRef.current = penalty.scoredIds;
+      setPocketScores(penalty.scores);
+      setOwedBalls(penalty.owed);
+      setScoredBallIds(penalty.scoredIds);
+      if (penalty.spottedId != null) {
+        setGameState((prev) => ({
+          ...prev,
+          balls: spotObjectBalls(prev.balls, [penalty.spottedId], FOOT_SPOT_X, FOOT_SPOT_Y, BALL_RADIUS)
+        }));
+      }
+    }
+
+    // Apply turn / ball-in-hand penalty
     suppressTurnSplash.current = true;
     const incomingPlayer = playerWhoFouled === 1 ? 2 : 1;
+    const giveKitchenHand = !isOnePocket || foulType === 'scratch';
     showSplash('FOUL', 'foul', {
       text: foulReason,
       tone: 'foulReason',
-      next: { text: `${incomingName} has ball in hand`, tone: 'turn' }
+      next: {
+        text: giveKitchenHand
+          ? (isOnePocket ? `${incomingName} — ball in hand (kitchen)` : `${incomingName} has ball in hand`)
+          : `${incomingName}'s shot`,
+        tone: 'turn'
+      }
     });
     setShowPushOutDecision(false);
     setPushOutResult(null);
     setGameState(prev => ({
       ...prev,
-      ballInHand: true,
+      ballInHand: giveKitchenHand,
       currentPlayer: incomingPlayer,
       scratchOccurred: foulType === 'scratch'
     }));
@@ -1033,7 +1271,7 @@ const SimplePoolGame = ({
 
     // Set foul type for display
     setFoulType(foulType);
-  }, [gameState.currentPlayer, gameState.balls, shotPlayer, consecutiveFouls, offerTableTip, onGameEnd, showSplash, threeFoulRule, isEight]);
+  }, [gameState.currentPlayer, gameState.balls, shotPlayer, consecutiveFouls, offerTableTip, onGameEnd, showSplash, threeFoulRule, isEight, isOnePocket]);
 
   // Check if click is on cue ball
   const isClickOnCueBall = useCallback((x, y) => {
@@ -1061,13 +1299,13 @@ const SimplePoolGame = ({
        
        let constrainedX, constrainedY;
        
-       if (gameState.gamePhase === 'break') {
-         // During break: constrain to kitchen area
+       const kitchenHand = gameState.gamePhase === 'break' || gameState.scratchOccurred;
+       if (kitchenHand) {
+         // Break / One Pocket scratch: constrain to kitchen area
          constrainedX = Math.max(KITCHEN_LEFT + BALL_RADIUS, Math.min(KITCHEN_RIGHT - BALL_RADIUS, newX));
          constrainedY = Math.max(KITCHEN_TOP + BALL_RADIUS, Math.min(KITCHEN_BOTTOM - BALL_RADIUS, newY));
        } else {
-         // During regular gameplay: allow placement anywhere on table (but not in pockets)
-         // Use proper felt boundaries to keep cue ball on playing surface
+         // Regular ball-in-hand: anywhere on the felt
      const FELT_LEFT = 30.0;
      const FELT_RIGHT = 570.77;
      const FELT_TOP = 24.5;
@@ -1086,7 +1324,7 @@ const SimplePoolGame = ({
          }
        }));
      }
-   }, [isDraggingCueBall, dragOffset, gameState.gamePhase]);
+   }, [isDraggingCueBall, dragOffset, gameState.gamePhase, gameState.scratchOccurred]);
    
    // Stop dragging and place cue ball
    const stopDraggingCueBall = useCallback(() => {
@@ -1846,6 +2084,12 @@ const SimplePoolGame = ({
           
           shotEndedInFoul = true;
           handleFoul(foulDetected); // Handle foul immediately, no setTimeout
+          if (isOnePocket) {
+            applyOnePocketPocketed(shotPlayer, {
+              foul: true,
+              scratchCue: foulDetected === 'scratch'
+            });
+          }
         } else {
           // No foul detected - check for illegally pocketed balls (but not on break shots)
           if (!isBreakShot) {
@@ -1919,9 +2163,29 @@ const SimplePoolGame = ({
           
           const nextBall = lowestBallOnTable(gameState.balls);
           const eightDown = ballsPocketedThisShot.some((ball) => ball.id === moneyBall);
+          if (isOnePocket) {
+            const result = applyOnePocketPocketed(shotPlayer, { foul: false });
+            if (!result.continued) {
+              setGameState((prev) => ({
+                ...prev,
+                currentPlayer: prev.currentPlayer === 1 ? 2 : 1
+              }));
+              offerTableTip(
+                'miss',
+                result.forShooterCount === 0
+                  ? `Nothing in the target pocket. ${otherName(shotPlayer)} shoots.`
+                  : `${otherName(shotPlayer)} shoots.`
+              );
+            } else {
+              offerTableTip(
+                'one-pocket-continue',
+                `Ball counts. ${nameFor(shotPlayer)} continues — ${result.scores[shotPlayer]} to ${ONE_POCKET_RACE}.`,
+                { repeat: true }
+              );
+            }
           // CSI 10-Ball: a pocketed ball that was not the called shot is illegal.
           // 8-Ball missed calls are handled above via detectIllegallyPocketedBalls.
-          if (callShot && !isEight && ballsPocketedThisShot.length > 0 && !calledShotMade) {
+          } else if (callShot && !isEight && ballsPocketedThisShot.length > 0 && !calledShotMade) {
             setIllegallyPocketedBalls(ballsPocketedThisShot);
             setShowIllegalPocketOption(true);
             setGameState(prev => ({ ...prev, isAnimating: false }));
@@ -1996,6 +2260,12 @@ const SimplePoolGame = ({
           setFoulHandled(true);
           shotEndedInFoul = true;
           handleFoul(breakFoulDetected);
+          if (isOnePocket) {
+            applyOnePocketPocketed(shotPlayer || gameState.currentPlayer, {
+              foul: true,
+              scratchCue: breakFoulDetected === 'scratch'
+            });
+          }
         } else {
           // No break foul - legal break shot (no call shot required on break)
           const ballsPocketedThisShot = gameState.balls.filter(ball => 
@@ -2006,14 +2276,32 @@ const SimplePoolGame = ({
           const wonOnBreak = winOnBreak && moneyDownOnBreak;
           
           const nextBall = lowestBallOnTable(gameState.balls);
-          if (ballsPocketedThisShot.length === 0) {
+          if (isOnePocket) {
+            const result = applyOnePocketPocketed(shotPlayer || gameState.currentPlayer, { foul: false });
+            const shooter = shotPlayer || gameState.currentPlayer;
+            if (!result.continued) {
+              setGameState((prev) => ({
+                ...prev,
+                currentPlayer: prev.currentPlayer === 1 ? 2 : 1
+              }));
+              offerTableTip(
+                'break-done',
+                `Legal break. ${otherName(shooter)} shoots.`
+              );
+            } else {
+              offerTableTip(
+                'break-done',
+                `Legal break — ball in your pocket. ${nameFor(shooter)} continues.`
+              );
+            }
+          } else if (ballsPocketedThisShot.length === 0) {
             // Switch players if no ball was pocketed on break
             setGameState(prev => ({
               ...prev,
               currentPlayer: prev.currentPlayer === 1 ? 2 : 1
             }));
           }
-          if (!wonOnBreak) {
+          if (!isOnePocket && !wonOnBreak) {
             const pushOutPlayer = ballsPocketedThisShot.length === 0 ? otherName(shotPlayer) : nameFor(shotPlayer);
             if (isEight) {
               offerTableTip(
@@ -2060,6 +2348,11 @@ const SimplePoolGame = ({
         setIsPushOut(false);
         setPlayerGroups({ 1: null, 2: null });
         playerGroupsRef.current = { 1: null, 2: null };
+        if (isOnePocket) {
+          resetOnePocketRackStats();
+          targetPocketsRef.current = { 1: null, 2: null };
+          setTargetPockets({ 1: null, 2: null });
+        }
         offerTableTip('game-won', tipText);
         showSplash(
           `${nameFor(winner)} wins`,
@@ -2100,6 +2393,12 @@ const SimplePoolGame = ({
             setCalledPocket(null);
             setPlayerGroups({ 1: null, 2: null });
             playerGroupsRef.current = { 1: null, 2: null };
+            if (isOnePocket) {
+              resetOnePocketRackStats();
+              targetPocketsRef.current = { 1: null, 2: null };
+              setTargetPockets({ 1: null, 2: null });
+              setShowPocketChoice(true);
+            }
             if (window.tipManager && window.tipManager.resetTips) {
               window.tipManager.resetTips();
             }
@@ -2107,6 +2406,17 @@ const SimplePoolGame = ({
           }, splashChainMs('win'));
         }
       };
+
+      // One Pocket race-to-8 win check (after scoring updates above).
+      if (isOnePocket && allStopped && !rackWinRecordedRef.current) {
+        const s = pocketScoresRef.current;
+        const o = owedBallsRef.current;
+        if (hasWonOnePocket(s, o, 1)) {
+          endGameForWinner(1, `${nameFor(1)} scored ${ONE_POCKET_RACE}. ${nameFor(1)} wins the game.`);
+        } else if (hasWonOnePocket(s, o, 2)) {
+          endGameForWinner(2, `${nameFor(2)} scored ${ONE_POCKET_RACE}. ${nameFor(2)} wins the game.`);
+        }
+      }
 
       if (
         allStopped
@@ -2232,7 +2542,7 @@ const SimplePoolGame = ({
     }
 
     animationFrame.current = requestAnimationFrame(step);
-  }, [gameState, isInPocket, resolveBallCollision, firstBallHit, isPushOut, detectFouls, handleFoul, pushOutResult, foulHandled, shotPlayer, shotProcessed, detectIllegallyPocketedBalls, isBreakShot, offerTableTip, showIllegalPocketOption, moneyBall, callShot, winOnBreak, initializeBalls, isEight, allowPushOut, calledBall, calledPocket]);
+  }, [gameState, isInPocket, resolveBallCollision, firstBallHit, isPushOut, detectFouls, handleFoul, pushOutResult, foulHandled, shotPlayer, shotProcessed, detectIllegallyPocketedBalls, isBreakShot, offerTableTip, showIllegalPocketOption, moneyBall, callShot, winOnBreak, initializeBalls, isEight, isOnePocket, allowPushOut, calledBall, calledPocket, applyOnePocketPocketed, resetOnePocketRackStats]);
   
   const handleShoot = useCallback(() => {
     if (gameOverRef.current || gameState.isAnimating || !aimLocked || showPushOutOffer) return;
@@ -2454,7 +2764,7 @@ const SimplePoolGame = ({
     }
     if (gameState.isAnimating) return undefined;
 
-    if (showPushOutDecision || showIllegalPocketOption || showPushOutOffer) return undefined;
+    if (showPushOutDecision || showIllegalPocketOption || showPushOutOffer || showPocketChoice) return undefined;
     if (tipOpenRef.current || tipBlockingComputer || splashOpenRef.current || turnSplash) return undefined;
 
     if (gameOverRef.current || gameState.currentPlayer !== 2 || computerBusy.current || computerArmed) return undefined;
@@ -2469,7 +2779,8 @@ const SimplePoolGame = ({
       ballInHand: gameState.ballInHand,
       isBreakShot: isBreak(gameState.gamePhase),
       pushOutAvailable: allowPushOut && pushOutAvailable,
-      legalBallIds
+      legalBallIds,
+      targetPocketId: isOnePocket ? (targetPocketsRef.current?.[2] || null) : null
     });
     if (!plan) return undefined;
     computerBusy.current = true;
@@ -2500,6 +2811,7 @@ const SimplePoolGame = ({
     showPushOutDecision,
     showIllegalPocketOption,
     showPushOutOffer,
+    showPocketChoice,
     tipBlockingComputer,
     turnSplash,
     illegallyPocketedBalls,
@@ -2902,8 +3214,8 @@ const SimplePoolGame = ({
       ctx.restore();
     }
     
-    // Draw kitchen area (only for break shots, not for regular ball-in-hand)
-    if (isBreak(gameState.gamePhase) && !gameState.isAnimating) {
+    // Draw kitchen for break shots and One Pocket scratch ball-in-hand
+    if ((isBreak(gameState.gamePhase) || gameState.scratchOccurred) && !gameState.isAnimating) {
       ctx.save();
       ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
       ctx.lineWidth = 2;
@@ -3659,6 +3971,12 @@ const SimplePoolGame = ({
     setShotPlayer(null);
     setPlayerGroups({ 1: null, 2: null });
     playerGroupsRef.current = { 1: null, 2: null };
+    if (isOnePocket) {
+      resetOnePocketRackStats();
+      targetPocketsRef.current = { 1: null, 2: null };
+      setTargetPockets({ 1: null, 2: null });
+      setShowPocketChoice(true);
+    }
     breakCushionBallsRef.current = new Set();
     cueRailBeforeContactRef.current = false;
     contactMadeRef.current = false;
@@ -3882,6 +4200,19 @@ const SimplePoolGame = ({
                   <span className={styles.seatName}>{nameFor(id)}</span>
                   <span className={styles.sessionGames}>{scores[id] ?? 0}</span>
                 </div>
+                {isOnePocket && (
+                  <div className={styles.groupRow}>
+                    <span className={`${styles.groupBadge} ${styles.groupBadgeOpen}`}>
+                      {targetPockets[id]
+                        ? pocketLabelShort(targetPockets[id])
+                        : 'Choose pocket'}
+                    </span>
+                    <span className={styles.sessionGames} title="Balls scored this game">
+                      {pocketScores[id] || 0}/{ONE_POCKET_RACE}
+                      {(owedBalls[id] || 0) > 0 ? ` (−${owedBalls[id]} owed)` : ''}
+                    </span>
+                  </div>
+                )}
                 {isEight && (
                   <div className={styles.groupRow}>
                     <span
@@ -4020,6 +4351,12 @@ const SimplePoolGame = ({
               vsComputer={vsComputer}
               keepSessionScores={(match?.type || 'single') === 'single'}
               onDone={answerPlayAgain}
+            />
+          )}
+          {showPocketChoice && (
+            <OnePocketChoice
+              breakerName={nameFor(lastBreakerRef.current === 2 ? 2 : 1)}
+              onChoose={chooseOnePocket}
             />
           )}
           {showPushOutOffer && (

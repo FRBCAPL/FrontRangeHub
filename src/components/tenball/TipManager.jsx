@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import ContextualTip from './ContextualTip';
-import { BREAK_OPENING_TIP, EIGHT_BREAK_OPENING_TIP, NINE_BREAK_OPENING_TIP } from './tutorialGuide';
-import { GAME_EIGHT, GAME_NINE } from './gameRules';
+import { BREAK_OPENING_TIP, EIGHT_BREAK_OPENING_TIP, NINE_BREAK_OPENING_TIP, ONE_POCKET_BREAK_OPENING_TIP } from './tutorialGuide';
+import { GAME_EIGHT, GAME_NINE, GAME_ONE_POCKET } from './gameRules';
 
 const TIP_MUTE_KEY = 'frph-tenball-tip-mute';
 
@@ -25,7 +25,9 @@ const TipManager = forwardRef(({ onTipShown, gameType }, ref) => {
       ? NINE_BREAK_OPENING_TIP
       : gameType === GAME_EIGHT
         ? EIGHT_BREAK_OPENING_TIP
-        : BREAK_OPENING_TIP
+        : gameType === GAME_ONE_POCKET
+          ? ONE_POCKET_BREAK_OPENING_TIP
+          : BREAK_OPENING_TIP
   };
   // Mounted only after the rules tutorial is closed — start with the break tip.
   const [queue, setQueue] = useState(() => [openingTip]);

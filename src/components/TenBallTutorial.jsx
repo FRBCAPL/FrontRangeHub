@@ -6,8 +6,8 @@ import PlayerSetupModal from './tenball/PlayerSetupModal';
 import CoinFlipBreak from './tenball/CoinFlipBreak';
 import { DEFAULT_MATCH } from './tenball/matchFormat';
 import TipManager from './tenball/TipManager';
-import { EIGHTBALL_TUTORIAL_STEPS, NINEBALL_TUTORIAL_STEPS, TUTORIAL_STEPS } from './tenball/tutorialGuide';
-import { GAME_EIGHT, GAME_NINE, GAME_TEN, getGameRules } from './tenball/gameRules';
+import { EIGHTBALL_TUTORIAL_STEPS, NINEBALL_TUTORIAL_STEPS, ONE_POCKET_TUTORIAL_STEPS, TUTORIAL_STEPS } from './tenball/tutorialGuide';
+import { GAME_EIGHT, GAME_NINE, GAME_ONE_POCKET, GAME_TEN, getGameRules } from './tenball/gameRules';
 import styles from './tenball/TenBallTutorial.module.css';
 
 const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
@@ -32,7 +32,9 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     ? NINEBALL_TUTORIAL_STEPS
     : gameType === GAME_EIGHT
       ? EIGHTBALL_TUTORIAL_STEPS
-      : TUTORIAL_STEPS;
+      : gameType === GAME_ONE_POCKET
+        ? ONE_POCKET_TUTORIAL_STEPS
+        : TUTORIAL_STEPS;
   const [gameState, setGameState] = useState({
     player1Score: 0,
     player2Score: 0,
@@ -62,6 +64,12 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     if (mode === 'eight-tutorial' || mode === 'eight-play') {
       setGameType(GAME_EIGHT);
       setLessonOn(mode === 'eight-tutorial');
+      setSetupOpen(true);
+      return;
+    }
+    if (mode === 'onepocket-tutorial' || mode === 'onepocket-play') {
+      setGameType(GAME_ONE_POCKET);
+      setLessonOn(mode === 'onepocket-tutorial');
       setSetupOpen(true);
     }
   };
@@ -279,7 +287,15 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
           onNext={handleTutorialNext}
           onBack={handleTutorialBack}
           onSkip={() => setShowRules(false)}
-          title={gameType === GAME_NINE ? '9-Ball Rules Tutorial' : '10-Ball Rules Tutorial'}
+          title={
+            gameType === GAME_NINE
+              ? '9-Ball Rules Tutorial'
+              : gameType === GAME_EIGHT
+                ? '8-Ball Rules Tutorial'
+                : gameType === GAME_ONE_POCKET
+                  ? 'One Pocket Rules Tutorial'
+                  : '10-Ball Rules Tutorial'
+          }
           quickRules={
             gameType === GAME_NINE
               ? [
@@ -288,12 +304,26 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
                   '9-ball wins the game',
                   'Push out after break'
                 ]
-              : [
-                  'Hit lowest ball first',
-                  'Call your shots',
-                  '10-ball wins the game',
-                  'Push out after break'
-                ]
+              : gameType === GAME_EIGHT
+                ? [
+                    'Solids vs stripes',
+                    'Call your shots',
+                    '8-ball wins last',
+                    'No three-foul rule'
+                  ]
+                : gameType === GAME_ONE_POCKET
+                  ? [
+                      'Choose a foot corner',
+                      'Score only in your pocket',
+                      'Race to 8 balls',
+                      'Foul = spot one / owe one'
+                    ]
+                  : [
+                      'Hit lowest ball first',
+                      'Call your shots',
+                      '10-ball wins the game',
+                      'Push out after break'
+                    ]
           }
         />
       )}
