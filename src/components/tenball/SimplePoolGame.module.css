@@ -25,6 +25,7 @@
 .playCluster {
   display: grid;
   grid-template-columns: auto auto auto;
+  grid-template-rows: auto auto;
   align-items: center;
   justify-content: center;
   gap: 12px;
@@ -102,10 +103,11 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 0 6px 4px;
+  padding: 2px 6px 4px;
   flex: 0 0 auto;
+  grid-column: 1 / -1;
   position: relative;
-  z-index: 1;
+  z-index: 5;
 }
 
 .ballTrackerEight {
@@ -1131,9 +1133,11 @@
 
   .playCluster {
     grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr) 52px;
+    grid-template-rows: auto auto auto;
     grid-template-areas:
       "table table table table"
-      "aimL power spin aimR";
+      "aimL power spin aimR"
+      "tracker tracker tracker tracker";
     justify-items: center;
     gap: 8px;
   }
@@ -1152,6 +1156,10 @@
 
   .tableContainer {
     grid-area: table;
+  }
+
+  .ballTracker {
+    grid-area: tracker;
   }
 
   .powerControl {
@@ -1377,10 +1385,11 @@
     width: 100%;
     display: grid;
     grid-template-columns: 56px minmax(0, 1fr) 76px;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, 1fr) auto auto;
     grid-template-areas:
       "power table spin"
-      "aimL table aimR";
+      "aimL table aimR"
+      "tracker tracker tracker";
     align-items: center;
     justify-items: center;
     gap: 6px;
@@ -1474,9 +1483,11 @@
   }
 
   .ballTracker {
+    grid-area: tracker;
     gap: 3px;
     padding: 0;
     flex-wrap: nowrap;
+    z-index: 5;
   }
 
   .controls {

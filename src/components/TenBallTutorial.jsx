@@ -227,6 +227,13 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
                 setPlayerNames(names);
                 setVsComputer(computer);
               }}
+              onLeaveMatch={() => {
+                setCurrentMode('menu');
+                setShowRules(false);
+                setSetupOpen(false);
+                setFlipOpen(false);
+                setPendingMatchStart(false);
+              }}
               menuSlot={gameMenuSlot}
             />
           </div>
@@ -307,7 +314,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
               : gameType === GAME_EIGHT
                 ? [
                     'Solids vs stripes',
-                    'Call your shots',
+                    'Call ball & pocket (except obvious shots)',
                     '8-ball wins last',
                     'No three-foul rule'
                   ]
@@ -320,7 +327,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
                     ]
                   : [
                       'Hit lowest ball first',
-                      'Call your shots',
+                      'Call ball & pocket (except obvious shots)',
                       '10-ball wins the game',
                       'Push out after break'
                     ]

@@ -150,8 +150,8 @@ export const EIGHT_LEARN_TOPICS = [
     label: 'Fouls and Losing on the 8',
     steps: [eightStep('Fouls'), eightStep('Call Shot')],
     moreTips: [
-      'Scratch. The cue ball went in. The other player has ball in hand.',
-      'Wrong ball first. The other player has ball in hand.',
+      'Scratch. The cue ball went in. The other player has ball in hand behind the head string.',
+      'Wrong ball first. The other player has ball in hand anywhere.',
       'Scratch or foul while shooting the 8 loses the game.',
       'There is no three-foul rule in 8-Ball.'
     ]

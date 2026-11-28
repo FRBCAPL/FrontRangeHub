@@ -575,6 +575,7 @@ export function planComputerShot({
   cue,
   balls,
   ballInHand,
+  kitchenBallInHand = false,
   isBreakShot,
   pushOutAvailable,
   legalBallIds = null,
@@ -613,8 +614,8 @@ export function planComputerShot({
     || (onePocket || isGroupMode(legalBallIds) ? null : lowestBall(balls));
   if (!ball) return null;
 
-  // One Pocket kitchen BIH: placements stay in the kitchen.
-  const kitchenOnly = onePocket && ballInHand;
+  // Kitchen BIH: One Pocket scratch, or CSI 9/10 scratch on the break.
+  const kitchenOnly = Boolean(ballInHand && kitchenBallInHand);
 
   if (ballInHand) {
     let best = null;

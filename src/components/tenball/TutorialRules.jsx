@@ -12,7 +12,7 @@ const TutorialRules = ({
   title = '10-Ball Rules Tutorial',
   quickRules = [
     'Hit lowest ball first',
-    'Call your shots',
+    'Call ball & pocket (except obvious shots)',
     '10-ball wins the game',
     'Push out after break'
   ]

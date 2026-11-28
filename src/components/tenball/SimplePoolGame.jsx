@@ -278,6 +278,7 @@ const SimplePoolGame = ({
   onRestartMatch,
   onRequestFirstBreak,
   onContinue,
+  onLeaveMatch = null,
   menuSlot = null,
   gameType = GAME_TEN,
   initialBreaker = 1
@@ -486,6 +487,9 @@ const SimplePoolGame = ({
   const [playAgainOpen, setPlayAgainOpen] = useState(false);
   // Survives score-update re-renders that can cancel a lone timeout.
   const [awaitingPlayAgain, setAwaitingPlayAgain] = useState(false);
+  // Declining "another game" keeps the table finished (no live call/shoot UI).
+  const [sessionOver, setSessionOver] = useState(false);
+  const [lastRackWinner, setLastRackWinner] = useState(null);
   const playAgainTimer = useRef(null);
   const queuePlayAgain = (delay) => {
     setAwaitingPlayAgain(true);
@@ -1124,7 +1128,9 @@ const SimplePoolGame = ({
     } else if (foulType === 'scratch') {
       foulTip = isOnePocket
         ? `Scratch. Spot one ball. ${incomingName} has ball in hand behind the head string.`
-        : `Scratch. The cue ball went in. ${incomingName} has ball in hand.${ballNote}`;
+        : isEight
+          ? `Scratch. The cue ball went in. ${incomingName} has ball in hand behind the head string.`
+          : `Scratch. The cue ball went in. ${incomingName} has ball in hand anywhere.${ballNote}`;
     } else if (foulType === 'wrong_ball_first' || foulType === 'break_wrong_ball_first') {
       foulTip = isEight
         ? `Wrong ball first. ${incomingName} has ball in hand.${ballNote}`
@@ -1263,20 +1269,27 @@ const SimplePoolGame = ({
     // Apply turn / ball-in-hand penalty
     suppressTurnSplash.current = true;
     const incomingPlayer = playerWhoFouled === 1 ? 2 : 1;
-    const giveKitchenHand = !isOnePocket || foulType === 'scratch';
+    const fouledOnBreak = isBreak(gameState.gamePhase) || isBreakShot;
+    // 9/10-Ball: scratch (break or play) → ball in hand anywhere.
+    // 8-Ball & One Pocket: scratch → ball in hand behind the head string (kitchen).
+    const kitchenBallInHand = foulType === 'scratch' && (isEight || isOnePocket);
+    const giveBallInHand = isOnePocket ? foulType === 'scratch' : true;
     const shortFoul = foulShortLabel(foulType, { isEight, isOnePocket });
     setLastFoulNotice({
       player: playerWhoFouled,
       short: shortFoul,
       detail: foulReason
     });
+    const handLine = !giveBallInHand
+      ? `${incomingName}'s shot`
+      : kitchenBallInHand
+        ? `${incomingName} — ball in hand behind the head string`
+        : `${incomingName} has ball in hand`;
     showSplash(shortFoul, 'foul', {
       text: foulReason,
       tone: 'foulReason',
       next: {
-        text: giveKitchenHand
-          ? (isOnePocket ? `${incomingName} — ball in hand (kitchen)` : `${incomingName} has ball in hand`)
-          : `${incomingName}'s shot`,
+        text: handLine,
         tone: 'turn'
       }
     });
@@ -1284,9 +1297,12 @@ const SimplePoolGame = ({
     setPushOutResult(null);
     setGameState(prev => ({
       ...prev,
-      ballInHand: giveKitchenHand,
+      ballInHand: giveBallInHand,
       currentPlayer: incomingPlayer,
-      scratchOccurred: foulType === 'scratch'
+      // scratchOccurred = cue must stay in the kitchen (8-Ball / One Pocket scratch only).
+      scratchOccurred: kitchenBallInHand,
+      // Break is over once a break foul is resolved — don't keep break-only placement rules.
+      gamePhase: fouledOnBreak ? 'play' : prev.gamePhase
     }));
 
     // If it's a scratch, reposition the cue ball for ball-in-hand
@@ -1306,7 +1322,7 @@ const SimplePoolGame = ({
 
     // Set foul type for display
     setFoulType(foulType);
-  }, [gameState.currentPlayer, gameState.balls, shotPlayer, consecutiveFouls, offerTableTip, onGameEnd, showSplash, threeFoulRule, isEight, isOnePocket]);
+  }, [gameState.currentPlayer, gameState.balls, gameState.gamePhase, shotPlayer, consecutiveFouls, offerTableTip, onGameEnd, showSplash, threeFoulRule, isEight, isOnePocket, isBreakShot]);
 
   // Check if click is on cue ball
   const isClickOnCueBall = useCallback((x, y) => {
@@ -1334,9 +1350,12 @@ const SimplePoolGame = ({
        
        let constrainedX, constrainedY;
        
-       const kitchenHand = gameState.gamePhase === 'break' || gameState.scratchOccurred;
+       // Kitchen: opening break placement, or 8-Ball / One Pocket scratch BIH.
+       const kitchenHand = (
+         (isBreak(gameState.gamePhase) && !gameState.ballInHand)
+         || gameState.scratchOccurred
+       );
        if (kitchenHand) {
-         // Break / One Pocket scratch: constrain to kitchen area
          constrainedX = Math.max(KITCHEN_LEFT + BALL_RADIUS, Math.min(KITCHEN_RIGHT - BALL_RADIUS, newX));
          constrainedY = Math.max(KITCHEN_TOP + BALL_RADIUS, Math.min(KITCHEN_BOTTOM - BALL_RADIUS, newY));
        } else {
@@ -1359,7 +1378,7 @@ const SimplePoolGame = ({
          }
        }));
      }
-   }, [isDraggingCueBall, dragOffset, gameState.gamePhase, gameState.scratchOccurred]);
+   }, [isDraggingCueBall, dragOffset, gameState.gamePhase, gameState.scratchOccurred, gameState.ballInHand]);
    
    // Stop dragging and place cue ball
    const stopDraggingCueBall = useCallback(() => {
@@ -2376,6 +2395,8 @@ const SimplePoolGame = ({
         suppressTurnSplash.current = true;
         const { clinched, format } = recordWinRef.current(winner);
         gameOverRef.current = true;
+        setLastRackWinner(winner);
+        setSessionOver(false);
         setComputerArmed(false);
         computerBusy.current = false;
         setPushOutAvailable(false);
@@ -2666,6 +2687,7 @@ const SimplePoolGame = ({
       },
       isAnimating: true,
       ballInHand: false, // End ball-in-hand mode when taking a shot
+      scratchOccurred: false, // Kitchen BIH ends with this shot
       gamePhase: prev.gamePhase // Don't change phase here - let animation step handle it
     }));
     
@@ -2813,6 +2835,7 @@ const SimplePoolGame = ({
       cue: gameState.cueBall,
       balls: gameState.balls,
       ballInHand: gameState.ballInHand,
+      kitchenBallInHand: Boolean(gameState.scratchOccurred),
       isBreakShot: isBreak(gameState.gamePhase),
       pushOutAvailable: allowPushOut && pushOutAvailable,
       legalBallIds,
@@ -3951,6 +3974,7 @@ const SimplePoolGame = ({
       };
     setPlayAgainOpen(false);
     setAwaitingPlayAgain(false);
+    setSessionOver(false);
     if (playAgainTimer.current) {
       clearTimeout(playAgainTimer.current);
       playAgainTimer.current = null;
@@ -4030,10 +4054,18 @@ const SimplePoolGame = ({
   const answerPlayAgain = (votes) => {
     setPlayAgainOpen(false);
     setAwaitingPlayAgain(false);
+    const next = nextGameAfterVotes({ votes, vsComputer, names: playerNames });
+    if (!next.play) {
+      // Keep the finished rack locked — do not revive call/shoot UI.
+      gameOverRef.current = true;
+      rackWinRecordedRef.current = true;
+      setComputerArmed(false);
+      computerBusy.current = false;
+      setSessionOver(true);
+      return;
+    }
     gameOverRef.current = false;
     rackWinRecordedRef.current = false;
-    const next = nextGameAfterVotes({ votes, vsComputer, names: playerNames });
-    if (!next.play) return;
     if (next.vsComputer !== vsComputer || next.names[1] !== (playerNames[1] || '')) {
       if (onContinue) onContinue({ names: next.names, vsComputer: next.vsComputer });
       else {
@@ -4056,7 +4088,12 @@ const SimplePoolGame = ({
     ? 'Session'
     : matchLabel(match);
   const computerTurn = vsComputer && gameState.currentPlayer === 2;
-  const needsCall = callActive() && isPlay(gameState.gamePhase) && !isPushOut && !(calledBall && calledPocket);
+  const tableLocked = sessionOver || playAgainOpen || awaitingPlayAgain;
+  const needsCall = !tableLocked && callActive() && isPlay(gameState.gamePhase) && !isPushOut && !(calledBall && calledPocket);
+  const sessionLeader = scores[1] === scores[2]
+    ? null
+    : ((scores[1] || 0) > (scores[2] || 0) ? 1 : 2);
+  const finishedWinner = matchDecided || lastRackWinner || sessionLeader;
   // 8-Ball: Lock aim → Shoot (call is filled from aim). 10-Ball still uses Call shot step.
   const shootLabel = computerTurn
     ? 'Computer'
@@ -4135,7 +4172,7 @@ const SimplePoolGame = ({
       </div>
 
       <div className={styles.tableNotices}>
-        {(isPlay(gameState.gamePhase) || calledBall || calledPocket || canShowPushOut(gameState.gamePhase, pushOutAvailable)) && (
+        {!tableLocked && (isPlay(gameState.gamePhase) || calledBall || calledPocket || canShowPushOut(gameState.gamePhase, pushOutAvailable)) && (
           <>
           {callActive() && (isPlay(gameState.gamePhase) || calledBall || calledPocket) && !isPushOut && (
             <div className={styles.callShotNotice}>
@@ -4283,7 +4320,8 @@ const SimplePoolGame = ({
                 )}
                 <div className={styles.sessionSeatMeta}>
                   {won && <span className={styles.sessionWon}>{matchWonLabel(match)}</span>}
-                  {!won && shooting && <em>to shoot</em>}
+                  {!won && !sessionOver && shooting && <em>to shoot</em>}
+                  {sessionOver && finishedWinner === id && <span className={styles.sessionWon}>winner</span>}
                   {threeFoulRule && consecutiveFouls[id] > 0 && (
                     <span className={styles.foulCount} title={lastFoulNotice?.player === id ? lastFoulNotice.detail : undefined}>
                       {consecutiveFouls[id]} foul{consecutiveFouls[id] === 1 ? '' : 's'}
@@ -4412,6 +4450,58 @@ const SimplePoolGame = ({
               keepSessionScores={(match?.type || 'single') === 'single'}
               onDone={answerPlayAgain}
             />
+          )}
+          {sessionOver && !playAgainOpen && (
+            <TableDecisionCard>
+              <h3>Game finished</h3>
+              <p>
+                {finishedWinner
+                  ? `${nameFor(finishedWinner)} wins`
+                  : 'Session complete'}
+                {' — '}
+                {scores[1] ?? 0} – {scores[2] ?? 0}
+              </p>
+              <div className={styles.pushOutButtons}>
+                <button
+                  type="button"
+                  className={styles.acceptButton}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onPointerUp={(event) => {
+                    if (event.button > 0) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const singleSession = (match?.type || 'single') === 'single';
+                    startFreshRack({
+                      clearScores: !singleSession,
+                      requestFlip: true
+                    });
+                  }}
+                >
+                  Play again
+                </button>
+                <button
+                  type="button"
+                  className={styles.declineButton}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                  }}
+                  onPointerUp={(event) => {
+                    if (event.button > 0) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (onLeaveMatch) onLeaveMatch();
+                    else if (onEditPlayers) onEditPlayers();
+                    else setLocalSetupOpen(true);
+                  }}
+                >
+                  Back to menu
+                </button>
+              </div>
+            </TableDecisionCard>
           )}
           {showPocketChoice && (
             <OnePocketChoice
@@ -4560,51 +4650,6 @@ const SimplePoolGame = ({
             </TableDecisionCard>
           )}
           </div>
-          <div
-            className={`${styles.ballTracker}${isEight ? ` ${styles.ballTrackerEight}` : ''}`}
-            aria-label="Balls remaining"
-          >
-            {ballIds.map((id) => {
-              const ball = gameState.balls.find((entry) => entry.id === id);
-              const made = Boolean(ball?.pocketed);
-              const lowest = isPlay(gameState.gamePhase) ? getLowestNumberedBall() : null;
-              const legalNow = isEight
-                ? legalObjectBallIds(gameState.balls, playerGroups, gameState.currentPlayer, {
-                    isBreak: isBreak(gameState.gamePhase)
-                  })
-                : null;
-              const isNext = !made && (isEight
-                ? legalNow?.includes(id)
-                : lowest?.id === id);
-              const canCall = callShot
-                && isPlay(gameState.gamePhase)
-                && !isPushOut
-                && !gameState.isAnimating
-                && !made
-                && (!isEight || legalNow?.includes(id));
-              const isStripeBall = isEight && id >= 9 && id <= 15;
-              const isSolidBall = isEight && id >= 1 && id <= 7;
-              const className = [
-                styles.trackerBall,
-                made ? styles.trackerBallMade : '',
-                isNext ? styles.trackerBallNext : '',
-                canCall ? styles.trackerBallCallable : '',
-                calledBall === id && !made ? styles.trackerBallCalled : '',
-                isStripeBall ? styles.trackerBallStripe : '',
-                isSolidBall ? styles.trackerBallSolid : ''
-              ].filter(Boolean).join(' ');
-              return (
-                <img
-                  key={id}
-                  src={ballImages[id]}
-                  alt={made ? `${id}-ball pocketed` : `${id}-ball`}
-                  className={className}
-                  draggable={false}
-                  onClick={canCall ? () => handleTrackerBallClick(id) : undefined}
-                />
-              );
-            })}
-          </div>
         </div>
 
         <div className={styles.englishControl}>
@@ -4656,7 +4701,7 @@ const SimplePoolGame = ({
           type="button"
           className={`${styles.fineAimButton} ${styles.fineAimLeft}`}
           aria-label="Aim left"
-          disabled={gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
+          disabled={tableLocked || gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
           onPointerDown={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -4672,7 +4717,7 @@ const SimplePoolGame = ({
           type="button"
           className={`${styles.fineAimButton} ${styles.fineAimRight}`}
           aria-label="Aim right"
-          disabled={gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
+          disabled={tableLocked || gameState.isAnimating || (vsComputer && gameState.currentPlayer === 2)}
           onPointerDown={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -4684,6 +4729,52 @@ const SimplePoolGame = ({
         >
           ›
         </button>
+        <div
+          className={`${styles.ballTracker}${isEight ? ` ${styles.ballTrackerEight}` : ''}`}
+          aria-label="Balls remaining"
+        >
+          {ballIds.map((id) => {
+            const ball = gameState.balls.find((entry) => entry.id === id);
+            const made = Boolean(ball?.pocketed);
+            const lowest = isPlay(gameState.gamePhase) ? getLowestNumberedBall() : null;
+            const legalNow = isEight
+              ? legalObjectBallIds(gameState.balls, playerGroups, gameState.currentPlayer, {
+                  isBreak: isBreak(gameState.gamePhase)
+                })
+              : null;
+            const isNext = !made && (isEight
+              ? legalNow?.includes(id)
+              : lowest?.id === id);
+            const canCall = !tableLocked
+              && callShot
+              && isPlay(gameState.gamePhase)
+              && !isPushOut
+              && !gameState.isAnimating
+              && !made
+              && (!isEight || legalNow?.includes(id));
+            const isStripeBall = isEight && id >= 9 && id <= 15;
+            const isSolidBall = isEight && id >= 1 && id <= 7;
+            const className = [
+              styles.trackerBall,
+              made ? styles.trackerBallMade : '',
+              isNext ? styles.trackerBallNext : '',
+              canCall ? styles.trackerBallCallable : '',
+              calledBall === id && !made ? styles.trackerBallCalled : '',
+              isStripeBall ? styles.trackerBallStripe : '',
+              isSolidBall ? styles.trackerBallSolid : ''
+            ].filter(Boolean).join(' ');
+            return (
+              <img
+                key={id}
+                src={ballImages[id]}
+                alt={made ? `${id}-ball pocketed` : `${id}-ball`}
+                className={className}
+                draggable={false}
+                onClick={canCall ? () => handleTrackerBallClick(id) : undefined}
+              />
+            );
+          })}
+        </div>
         </div>
 
       </div>
@@ -4693,19 +4784,21 @@ const SimplePoolGame = ({
            <button
              type="button"
              className={styles.shootButton}
-             disabled={computerTurn || gameState.isAnimating || (!isEight && aimLocked && needsCall)}
+             disabled={tableLocked || computerTurn || gameState.isAnimating || (!isEight && aimLocked && needsCall)}
              onPointerDown={(event) => event.preventDefault()}
              onPointerUp={(event) => {
                if (event.button > 0) return;
+               if (tableLocked) return;
                pressShoot();
              }}
              onKeyDown={(event) => {
                if (event.key !== 'Enter' && event.key !== ' ') return;
                event.preventDefault();
+               if (tableLocked) return;
                pressShoot();
              }}
            >
-             {shootLabel}
+             {tableLocked ? 'Finished' : shootLabel}
            </button>
          </div>
 
@@ -4737,6 +4830,8 @@ const SimplePoolGame = ({
             setLocalScores(cleared);
             gameOverRef.current = false;
             rackWinRecordedRef.current = false;
+            setSessionOver(false);
+            setLastRackWinner(null);
             setComputerArmed(false);
             computerBusy.current = false;
             lastBreakerRef.current = 1;

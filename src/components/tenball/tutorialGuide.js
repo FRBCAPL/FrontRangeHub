@@ -153,7 +153,7 @@ export const EIGHTBALL_TUTORIAL_STEPS = [
   },
   {
     title: 'Fouls',
-    content: 'Scratch, wrong ball first, no rail after contact, and similar fouls give the opponent ball in hand anywhere on the table. There is no three-foul rule in 8-Ball. Scratching or fouling while shooting the 8, pocketing the 8 early, or putting the 8 in the wrong pocket loses the game.',
+    content: 'Scratch gives the opponent ball in hand behind the head string. Other fouls (wrong ball first, no rail after contact, and similar) give ball in hand anywhere on the table. There is no three-foul rule in 8-Ball. Scratching or fouling while shooting the 8, pocketing the 8 early, or putting the 8 in the wrong pocket loses the game.',
     proTip: 'After groups are set, hit your ball first — or the 8 when you are on it.'
   },
   {
