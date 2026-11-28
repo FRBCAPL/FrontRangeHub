@@ -223,8 +223,9 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/arcade': '#/arcade/kiosk',
   '/arcade/kiosk': '#/arcade/kiosk',
   '/arcade/admin': '#/arcade/admin',
+  '/play-pool': '#/play-pool',
   '/play-pool/admin': '#/play-pool/admin',
-  '/tenball-tutorial': '#/tenball-tutorial',
+  '/tenball-tutorial': '#/play-pool',
   '/simple-pool': '#/simple-pool',
   '/usapl': '#/usapl',
   '/usapl/signup': '#/usapl/signup',
@@ -860,7 +861,7 @@ function AppContent() {
 
   // When ?preview=1 on homepage, show logged-out nav (for embed previews on frusapl.com etc.)
   const isPreviewMode = location.pathname === '/' && (location.search?.includes('preview=1') || window.location.hash?.includes('preview=1'));
-  const isPoolGame = location.pathname === '/tenball-tutorial' || location.pathname === '/simple-pool';
+  const isPoolGame = location.pathname === '/play-pool' || location.pathname === '/tenball-tutorial' || location.pathname === '/simple-pool';
 
   return (
     <div style={{ position: "relative", minHeight: "100vh", width: "100%", background: "#000" }}>
@@ -1150,8 +1151,12 @@ function AppContent() {
               element={<SimplePoolGame />}
             />
             <Route
-              path="/tenball-tutorial"
+              path="/play-pool"
               element={<TenBallTutorial canAdmin={isAuthenticated && isAdmin()} />}
+            />
+            <Route
+              path="/tenball-tutorial"
+              element={<Navigate to="/play-pool" replace />}
             />
             <Route
               path="/play-pool/admin"
@@ -1163,7 +1168,7 @@ function AppContent() {
                     </main>
                   </AppRouteWrapper>
                 ) : (
-                  <Navigate to="/tenball-tutorial" replace />
+                  <Navigate to="/play-pool" replace />
                 )
               }
             />

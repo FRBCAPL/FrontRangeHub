@@ -12,14 +12,14 @@ function queryView(path) {
 }
 
 export function playPoolVisitPath(pathname, search = '') {
-  const raw = `${pathname || ''}${search || ''}`.split('#')[0].trim() || '/tenball-tutorial';
+  const raw = `${pathname || ''}${search || ''}`.split('#')[0].trim() || '/play-pool';
   return raw.slice(0, 200);
 }
 
-/** Admin is never counted. */
+/** Admin is never counted. Legacy /tenball-tutorial still recognized for old rows. */
 export function playPoolVisitIsPublic(path) {
   const base = basePath(path);
-  return base === '/tenball-tutorial' || base === '/simple-pool';
+  return base === '/play-pool' || base === '/tenball-tutorial' || base === '/simple-pool';
 }
 
 const VIEW_LABELS = {
@@ -40,7 +40,7 @@ export function playPoolVisitPageLabel(path) {
   if (base === '/simple-pool') return 'Simple pool';
   const view = queryView(path);
   if (view && VIEW_LABELS[view]) return VIEW_LABELS[view];
-  if (base === '/tenball-tutorial') return 'Play Pool menu';
+  if (base === '/play-pool' || base === '/tenball-tutorial') return 'Play Pool menu';
   return base;
 }
 
@@ -48,7 +48,7 @@ export function playPoolVisitPageLabel(path) {
 export function playPoolSessionPath(view = 'menu') {
   const key = String(view || 'menu').slice(0, 40);
   if (key === 'simple') return '/simple-pool?view=simple';
-  return `/tenball-tutorial?view=${encodeURIComponent(key)}`;
+  return `/play-pool?view=${encodeURIComponent(key)}`;
 }
 
 export function playPoolSessionView({ gameType, lessonOn, mode = 'game' }) {

@@ -12,8 +12,8 @@ const DEDUPE_MS = 20000;
 
 /**
  * Records one view per public Play Pool route.
- * - string view → `/tenball-tutorial?view=…` (or simple-pool)
- * - false → do not record (nested game under TenBallTutorial)
+ * - string view → `/play-pool?view=…` (or simple-pool)
+ * - false → do not record (nested game under Play Pool shell)
  * - omitted/null → use current router path
  */
 export default function usePlayPoolPageVisitTracker(view) {

@@ -6,6 +6,7 @@ export const ADMIN_TOOLS = [
   { label: 'Players', icon: '👥', to: '/admin/players' },
   { label: 'Consignment admin', icon: '🏷️', to: '/consignment/admin' },
   { label: 'USA Pool League admin', icon: '🎱', to: '/usapl/admin' },
+  { label: 'Play Pool admin', icon: '🕹️', to: '/play-pool/admin' },
   { label: 'Tournaments', icon: '🎯', to: '/tournament-bracket' },
   { label: 'Duezy', icon: '💵', to: '/dues-tracker' },
   { label: 'Estate Vault', icon: '🏛️', to: '/estateit/super' },

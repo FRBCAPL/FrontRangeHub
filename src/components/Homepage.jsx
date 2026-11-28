@@ -412,7 +412,7 @@ const Homepage = ({ canRunTournament = false }) => {
           <button type="button" className="homepage-footer-app homepage-footer-app--legends" onClick={() => navigate('/legends')}>
             <span aria-hidden="true">🎱</span> Legends Brews &amp; Cues
           </button>
-          <button type="button" className="homepage-footer-app homepage-footer-app--tenball" onClick={() => navigate('/tenball-tutorial')}>
+          <button type="button" className="homepage-footer-app homepage-footer-app--tenball" onClick={() => navigate('/play-pool')}>
             <img src={tenBall} alt="" aria-hidden="true" className="homepage-footer-ball" />
             Play Pool
           </button>

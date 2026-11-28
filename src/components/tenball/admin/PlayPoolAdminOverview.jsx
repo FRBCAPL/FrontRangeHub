@@ -53,7 +53,7 @@ export default function PlayPoolAdminOverview({ settings }) {
       </ul>
 
       <div className={styles.links}>
-        <Link to="/tenball-tutorial">Open Play Pool</Link>
+        <Link to="/play-pool">Open Play Pool</Link>
         <Link to="/play-pool/admin?tab=visitors">Visitors</Link>
         <Link to="/admin/inbox">Admin Home</Link>
       </div>

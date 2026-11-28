@@ -62,7 +62,7 @@ export default function PlayPoolAdminPage() {
       {tab === 'settings' ? <PlayPoolAdminSettings settings={settings} /> : null}
 
       <div className={styles.links}>
-        <Link to="/tenball-tutorial">← Play Pool</Link>
+        <Link to="/play-pool">← Play Pool</Link>
         <Link to="/admin/inbox">Admin Home</Link>
       </div>
     </div>

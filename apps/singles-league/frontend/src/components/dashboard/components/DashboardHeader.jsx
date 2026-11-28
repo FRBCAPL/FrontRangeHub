@@ -82,7 +82,7 @@ const DashboardHeader = ({
           textAlign: 'center'
         }}>
           <button
-            onClick={() => window.location.hash = '#/tenball-tutorial'}
+            onClick={() => window.location.hash = '#/play-pool'}
             style={{
               background: 'linear-gradient(45deg, #4CAF50, #8BC34A)',
               border: 'none',
