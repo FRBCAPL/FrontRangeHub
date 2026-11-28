@@ -8,13 +8,19 @@ import {
   ONE_POCKET_TUTORIAL_STEPS,
   TUTORIAL_STEPS
 } from './tutorialGuide';
+import { HOW_TO_PLAY_TOPIC } from './howToPlayGuide';
 
 const step = (title) => TUTORIAL_STEPS.find((item) => item.title === title);
 const nineStep = (title) => NINEBALL_TUTORIAL_STEPS.find((item) => item.title === title);
 const eightStep = (title) => EIGHTBALL_TUTORIAL_STEPS.find((item) => item.title === title);
 const oneStep = (title) => ONE_POCKET_TUTORIAL_STEPS.find((item) => item.title === title);
 
-export const LEARN_TOPICS = [
+export { HOW_TO_PLAY_TOPIC };
+
+/** Shared controls guide — first item in every mode’s learn list. */
+const withHowToPlay = (topics) => [HOW_TO_PLAY_TOPIC, ...topics];
+
+export const LEARN_TOPICS = withHowToPlay([
   {
     id: 'rules',
     label: 'Official CSI 10-Ball Rules',
@@ -56,9 +62,9 @@ export const LEARN_TOPICS = [
     label: 'Advanced Shot Planning',
     steps: [step('Strategy Tips')]
   }
-];
+]);
 
-export const NINE_LEARN_TOPICS = [
+export const NINE_LEARN_TOPICS = withHowToPlay([
   {
     id: 'nine-rules',
     label: 'Official CSI 9-Ball Rules',
@@ -91,9 +97,9 @@ export const NINE_LEARN_TOPICS = [
     steps: [nineStep('Ready to Play!')],
     moreTips: ['Legally pocket the 9-ball to win, including on the break or on a combination after contacting the lowest ball first.']
   }
-];
+]);
 
-export const ONE_POCKET_LEARN_TOPICS = [
+export const ONE_POCKET_LEARN_TOPICS = withHowToPlay([
   {
     id: 'one-pocket-rules',
     label: 'One Pocket Overview',
@@ -126,9 +132,9 @@ export const ONE_POCKET_LEARN_TOPICS = [
     steps: [oneStep('Ready to Play!')],
     moreTips: ['First to eight with no owes wins. Making their eighth for them loses the game.']
   }
-];
+]);
 
-export const EIGHT_LEARN_TOPICS = [
+export const EIGHT_LEARN_TOPICS = withHowToPlay([
   {
     id: 'eight-rules',
     label: '8-Ball Rules Overview',
@@ -162,4 +168,4 @@ export const EIGHT_LEARN_TOPICS = [
     steps: [eightStep('Ready to Play!')],
     moreTips: ['Clear your group, call the 8 and the pocket, then pocket it legally to win.']
   }
-];
+]);

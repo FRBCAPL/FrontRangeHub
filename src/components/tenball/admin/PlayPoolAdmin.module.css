@@ -1,0 +1,278 @@
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+  color: #eee;
+}
+
+.header h1 {
+  margin: 0 0 6px;
+  font-size: 1.7rem;
+  color: #ffd54a;
+}
+
+.lede {
+  margin: 0 0 16px;
+  color: #aaa;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1.5px solid #444;
+  border-radius: 10px;
+  background: #1a1a24;
+  color: #ccc;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tabActive {
+  border-color: #ffd54a;
+  background: #2a2208;
+  color: #fff;
+}
+
+.panel {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background: #14141c;
+}
+
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.hint {
+  margin: 0 0 14px;
+  color: #999;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.links a {
+  color: #ffd54a;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.links a:hover {
+  text-decoration: underline;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #2a2a34;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rowLabel strong {
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.rowLabel span {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.toggle,
+.select,
+.number,
+.textarea {
+  accent-color: #ffd54a;
+}
+
+.select,
+.number {
+  min-width: 120px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #0f0f14;
+  color: #eee;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #0f0f14;
+  color: #eee;
+  resize: vertical;
+  font: inherit;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn,
+.btnGhost {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn {
+  border: 1.5px solid #ffd54a;
+  background: rgba(255, 213, 74, 0.15);
+  color: #ffd54a;
+}
+
+.btnGhost {
+  border: 1.5px solid #555;
+  background: transparent;
+  color: #ccc;
+}
+
+.status {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #1a3020;
+  border: 1px solid #4caf50;
+  color: #c8e6c9;
+  font-size: 0.85rem;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.statCard {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #1a1a24;
+}
+
+.statCard strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #ffd54a;
+}
+
+.statCard span {
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.visitRanges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.visitRange,
+.visitRangeActive {
+  min-height: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #aaa;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.visitRangeActive {
+  border-color: #ffd54a;
+  background: rgba(255, 213, 74, 0.14);
+  color: #ffe082;
+}
+
+.visitError {
+  color: #ef9a9a;
+  font-size: 0.9rem;
+}
+
+.visitSubhead {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.visitPeopleHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.visitMine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.visitTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.visitTable th,
+.visitTable td {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid #2a2a34;
+  vertical-align: top;
+}
+
+.visitTable th {
+  color: #888;
+  font-weight: 600;
+}
+
+.visitYou td {
+  opacity: 0.55;
+}

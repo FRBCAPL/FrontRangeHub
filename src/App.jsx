@@ -90,6 +90,7 @@ import SupabaseLogin from "@shared/components/modal/modal/SupabaseLogin";
 import FloatingLogos from './components/FloatingLogos';
 import TenBallTutorial from './components/TenBallTutorial';
 import SimplePoolGame from './components/tenball/SimplePoolGame';
+import PlayPoolAdminPage from './components/tenball/admin/PlayPoolAdminPage';
 import MobileTestPage from './components/MobileTestPage';
 import AppHub from '@apps/hub/frontend/src/components/hub/AppHub';
 import LoggedOutHub from '@apps/hub/frontend/src/components/hub/LoggedOutHub';
@@ -222,6 +223,9 @@ const PATHNAME_TO_HASH_ROUTE = {
   '/arcade': '#/arcade/kiosk',
   '/arcade/kiosk': '#/arcade/kiosk',
   '/arcade/admin': '#/arcade/admin',
+  '/play-pool/admin': '#/play-pool/admin',
+  '/tenball-tutorial': '#/tenball-tutorial',
+  '/simple-pool': '#/simple-pool',
   '/usapl': '#/usapl',
   '/usapl/signup': '#/usapl/signup',
   '/usapl/roster': '#/usapl/roster',
@@ -1147,7 +1151,21 @@ function AppContent() {
             />
             <Route
               path="/tenball-tutorial"
-              element={<TenBallTutorial />}
+              element={<TenBallTutorial canAdmin={isAuthenticated && isAdmin()} />}
+            />
+            <Route
+              path="/play-pool/admin"
+              element={
+                isAuthenticated && isAdmin() ? (
+                  <AppRouteWrapper appName="Play Pool Admin">
+                    <main className="main-app-content">
+                      <PlayPoolAdminPage />
+                    </main>
+                  </AppRouteWrapper>
+                ) : (
+                  <Navigate to="/tenball-tutorial" replace />
+                )
+              }
             />
             <Route
               path="/mobile-test"

@@ -24,11 +24,33 @@
 
 .playCluster {
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: 44px auto auto auto 44px;
+  grid-template-areas: "aimL power table spin aimR";
   align-items: center;
   justify-content: center;
+  justify-items: center;
   gap: 12px;
   min-width: 0;
+}
+
+.playCluster .powerControl {
+  grid-area: power;
+}
+
+.playCluster .tableContainer {
+  grid-area: table;
+}
+
+.playCluster .englishControl {
+  grid-area: spin;
+}
+
+.fineAimLeft {
+  grid-area: aimL;
+}
+
+.fineAimRight {
+  grid-area: aimR;
 }
 
 
@@ -385,7 +407,7 @@
 }
 
 .fineAimButton {
-  display: none;
+  display: inline-flex;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -400,6 +422,7 @@
   -webkit-user-select: none;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 }
 
 .fineAimButton:disabled {
@@ -1893,6 +1916,16 @@
   z-index: 8;
   border-radius: 5px;
   background: transparent;
+}
+
+/* Decision cards / timing meter leave the clipped table and sit on the viewport. */
+.viewportOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  border-radius: 0;
+  background: rgba(8, 12, 24, 0.28);
+  pointer-events: auto;
 }
 
 .pushOutContent {

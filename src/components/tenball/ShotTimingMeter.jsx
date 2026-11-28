@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { timingErrorFromOffset, timingMeterParams } from './shotTimingDifficulty';
 import styles from './ShotTimingMeter.module.css';
 
@@ -102,7 +103,7 @@ const ShotTimingMeter = forwardRef(function ShotTimingMeter({
       ? 'Medium stroke'
       : 'Hard stroke';
 
-  return (
+  return createPortal(
     <div className={styles.wrap} role="dialog" aria-label="Hit timing">
       <div className={styles.card}>
         <p className={styles.title}>Time your hit</p>
@@ -138,7 +139,8 @@ const ShotTimingMeter = forwardRef(function ShotTimingMeter({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 });
 

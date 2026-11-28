@@ -1,12 +1,13 @@
 .wrap {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 12;
+  z-index: 1300;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding: 12px;
-  background: rgba(8, 12, 24, 0.35);
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  background: rgba(8, 12, 24, 0.45);
   pointer-events: auto;
   box-sizing: border-box;
 }
@@ -139,6 +140,20 @@
   color: #fff;
 }
 
+@media (max-width: 480px) {
+  .wrap {
+    align-items: center;
+    padding: 16px 12px;
+  }
+
+  .card {
+    width: min(420px, 100%);
+    max-height: min(70vh, 360px);
+    overflow: auto;
+    padding: 12px 12px 14px;
+  }
+}
+
 @media (max-height: 520px) {
   .wrap {
     align-items: center;
@@ -147,10 +162,12 @@
 
   .card {
     padding: 8px 10px 10px;
+    max-height: 90vh;
+    overflow: auto;
   }
 
   .hint {
-    display: none;
+    margin-bottom: 6px;
   }
 
   .track {

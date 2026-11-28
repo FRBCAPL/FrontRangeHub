@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './SimplePoolGame.module.css';
 
+/** Viewport-level decision card so phone table overflow cannot clip Accept / Take the table. */
 export default function TableDecisionCard({ children }) {
   const cardRef = useRef(null);
   const dragRef = useRef(null);
@@ -27,14 +29,11 @@ export default function TableDecisionCard({ children }) {
       drag.dragging = true;
       try { card.setPointerCapture(event.pointerId); } catch { /* a tap should not become a drag */ }
     }
-    const stage = card.parentElement;
-    if (!stage) return;
 
-    const stageRect = stage.getBoundingClientRect();
     const cardRect = card.getBoundingClientRect();
     const grip = 48;
-    const limitX = Math.max(0, (stageRect.width + cardRect.width) / 2 - grip);
-    const limitY = Math.max(0, (stageRect.height + cardRect.height) / 2 - grip);
+    const limitX = Math.max(0, (window.innerWidth + cardRect.width) / 2 - grip);
+    const limitY = Math.max(0, (window.innerHeight + cardRect.height) / 2 - grip);
     const x = Math.max(-limitX, Math.min(limitX, event.clientX - drag.originX));
     const y = Math.max(-limitY, Math.min(limitY, event.clientY - drag.originY));
     setOffset({ x, y });
@@ -46,8 +45,8 @@ export default function TableDecisionCard({ children }) {
     }
   };
 
-  return (
-    <div className={styles.pushOutModal}>
+  return createPortal(
+    <div className={`${styles.pushOutModal} ${styles.viewportOverlay}`}>
       <div
         ref={cardRef}
         className={styles.pushOutContent}
@@ -60,6 +59,7 @@ export default function TableDecisionCard({ children }) {
         <p className={styles.dragHint}>Drag to see the table</p>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

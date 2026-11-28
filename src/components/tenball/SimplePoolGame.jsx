@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import styles from './SimplePoolGame.module.css';
 import TableDecisionCard from './TableDecisionCard';
 import PlayAgainPrompt from './PlayAgainPrompt';
@@ -11,6 +12,8 @@ import { nextGameAfterVotes } from './playAgain';
 import { planComputerShot, computerTakesTheTable } from './computerOpponent';
 import { PHASES, isBreak, isPlay, nextPhaseAfterShot, shouldEnablePushOut, canShowPushOut } from './turnStateMachine';
 import { createRack, getGameRules, spotMoneyBall, GAME_TEN, GAME_EIGHT, GAME_ONE_POCKET } from './gameRules';
+import { getPlayPoolAdminSettings } from './admin/playPoolAdminStore';
+import usePlayPoolPageVisitTracker from './visits/usePlayPoolPageVisitTracker';
 import {
   GROUP_SOLIDS,
   GROUP_STRIPES,
@@ -84,7 +87,7 @@ const CUE_BUTT_GRAB = 26;
 const CUE_SHAFT_GRAB = 18;
 const TOUCH_AIM_SLOP = 8;
 /** Mouse hover aim follow rate (0–1). Lower = slower / less twitchy. */
-const MOUSE_AIM_SMOOTH = 0.22;
+const MOUSE_AIM_SMOOTH = 0.1;
 
 function wrapAimDelta(delta) {
   let angle = delta;
@@ -286,6 +289,9 @@ const SimplePoolGame = ({
   gameType = GAME_TEN,
   initialBreaker = 1
 }) => {
+  const location = useLocation();
+  // Only the standalone /simple-pool route; TenBallTutorial tracks its own sessions.
+  usePlayPoolPageVisitTracker(location.pathname === '/simple-pool' ? 'simple' : false);
   const rules = getGameRules(gameType);
   const moneyBall = rules.moneyBall;
   const callShot = rules.callShot;
@@ -470,6 +476,8 @@ const SimplePoolGame = ({
   const [isBreakShot, setIsBreakShot] = useState(false); // Track if current shot is a break shot
   const [pushOutResult, setPushOutResult] = useState(null); // Track push out result for opponent decision
   const [showPushOutDecision, setShowPushOutDecision] = useState(false); // Show push out accept/decline UI
+  // Survives animation-callback identity changes so the accept/return card always opens.
+  const pushOutPendingRef = useRef(false);
   // Removed foulCount - only tracking consecutive fouls for 3-foul rule
   const [consecutiveFouls, setConsecutiveFouls] = useState({ 1: 0, 2: 0 }); // Consecutive fouls per player
   const [foulType, setFoulType] = useState(null); // Type of foul committed
@@ -2092,45 +2100,38 @@ const SimplePoolGame = ({
       // Check if all balls stopped
       const allStopped = gameState.balls.every(ball => !ball.isMoving) && !gameState.cueBall.isMoving;
 
-      // A legal push out asks the other player to take the table or give it back.
-      // A scratch is a foul, so that choice must not hand the shot back to the shooter.
-      if (allStopped && pushOutResult) {
-        if (gameState.cueBall.visible) setShowPushOutDecision(true);
-        setPushOutResult(null);
-      }
-
-      // Check for push out fouls FIRST (only scratches are fouls during push out)
-      if (allStopped && isPushOut && !foulHandled && !shotProcessed && shotPlayer === gameState.currentPlayer) {
+      // Check for push out fouls FIRST (only scratches are fouls during push out).
+      // Use pushOutPendingRef so a recreated animation callback cannot drop the handoff.
+      if (
+        allStopped
+        && (isPushOut || pushOutPendingRef.current)
+        && !foulHandled
+        && !shotProcessed
+        && shotPlayer === gameState.currentPlayer
+      ) {
         debugLog('=== PUSH OUT DETECTION ===');
         debugLog('isPushOut:', isPushOut);
-        debugLog('allStopped:', allStopped);
-        debugLog('foulHandled:', foulHandled);
-        debugLog('shotProcessed:', shotProcessed);
-        debugLog('shotPlayer:', shotPlayer);
-        debugLog('currentPlayer:', gameState.currentPlayer);
+        debugLog('pushOutPending:', pushOutPendingRef.current);
         debugLog('cueBall visible:', gameState.cueBall.visible);
-        
+
         // During push out, only scratches are fouls
         if (!gameState.cueBall.visible) {
           debugLog('Push out scratch foul detected');
+          pushOutPendingRef.current = false;
+          setPushOutResult(null);
           setFoulHandled(true);
           setShotProcessed(true);
-          setIsPushOut(false); // Reset push out state after foul detection
+          setIsPushOut(false);
           shotEndedInFoul = true;
           handleFoul('scratch');
         } else {
-          // No scratch occurred, it's a legal push out
-          setShotProcessed(true); // Mark shot as processed
-          setIsPushOut(false); // Reset push out state after foul detection
-          const nextBall = lowestBallOnTable(gameState.balls);
-          const deciding = otherName(shotPlayer);
-          offerTableTip(
-            'push-out-choice',
-            nextBall
-              ? `Push out is done. ${deciding} can take this leave, or give it back to ${nameFor(shotPlayer)}. The ${nextBall}-ball is still first.`
-              : `Push out is done. ${deciding} can take this leave, or give it back to ${nameFor(shotPlayer)}.`
-          );
-          debugLog('Legal push out completed - NO FOULS ALLOWED');
+          // Legal push out — incoming player must accept the table or give the shot back.
+          debugLog('Legal push out completed — opening accept/return choice');
+          pushOutPendingRef.current = false;
+          setPushOutResult(null);
+          setShotProcessed(true);
+          setIsPushOut(false);
+          setShowPushOutDecision(true);
         }
       }
       
@@ -2774,13 +2775,16 @@ const SimplePoolGame = ({
     setShowAimLine(true); // Show aim line again for next shot
     setHighlightedPocket(null);
     
-    // Handle push out result
+    // Handle push out result — ref makes the settle-frame handoff reliable.
     if (isPushOut) {
+      pushOutPendingRef.current = true;
       setPushOutResult({
         ballsPocketed: gameState.balls.filter(ball => ball.pocketed).length,
         cueBallPosition: { x: gameState.cueBall.x, y: gameState.cueBall.y },
         player: gameState.currentPlayer
       });
+    } else {
+      pushOutPendingRef.current = false;
     }
     
     // Don't reset the called ball yet - wait until after foul detection
@@ -2810,15 +2814,28 @@ const SimplePoolGame = ({
   }, [showPushOutDecision, showIllegalPocketOption]);
 
   const acceptPushOut = useCallback(() => {
+    // Incoming player takes the table.
+    pushOutPendingRef.current = false;
+    setPushOutResult(null);
     setShowPushOutDecision(false);
+    setAimLocked(false);
+    setShowAimLine(true);
+    setTurnCue((cue) => cue + 1);
     setGameState((prev) => ({
       ...prev,
-      currentPlayer: prev.currentPlayer === 1 ? 2 : 1
+      currentPlayer: prev.currentPlayer === 1 ? 2 : 1,
+      isAnimating: false
     }));
   }, []);
 
   const declinePushOut = useCallback(() => {
+    // Give the shot back to the original shooter.
+    pushOutPendingRef.current = false;
+    setPushOutResult(null);
     setShowPushOutDecision(false);
+    setAimLocked(false);
+    setShowAimLine(true);
+    setTurnCue((cue) => cue + 1);
   }, []);
 
   const acceptIllegalTable = useCallback(() => {
@@ -4111,6 +4128,7 @@ const SimplePoolGame = ({
     setPushOutAvailable(false);
     setFirstShotAfterBreak(false);
     setIsPushOut(false);
+    pushOutPendingRef.current = false;
     setPushOutResult(null);
     setShowPushOutDecision(false);
     setLowestNumberedBall(null);
@@ -4276,7 +4294,7 @@ const SimplePoolGame = ({
         <div className={styles.instructions}>
           <div className={styles.aimDesktop}>
             <strong>How To Aim:</strong><br/>
-            The cue starts pointed at the lowest ball • Move the mouse to aim, or drag the cue stick from behind the cue ball • Click the felt or Lock Aim • A straight-in pocket fills in by itself • Click a pocket for a bank, kick, or combination • Then press Shoot<br/>
+            The cue starts pointed at the lowest ball • Move the mouse to aim, or drag the cue stick from behind the cue ball • Use the ‹ › arrows or the mouse wheel to fine-tune • Click the felt or Lock Aim • A straight-in pocket fills in by itself • Click a pocket for a bank, kick, or combination • Then press Shoot<br/>
             <small style={{color: '#888', fontSize: '12px'}}>
               The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape or Clear call cancels the call until you pick again.
             </small>
@@ -4563,7 +4581,7 @@ const SimplePoolGame = ({
               ref={timingMeterRef}
               power={power}
               english={english}
-              skillLevel={1}
+              skillLevel={getPlayPoolAdminSettings().skillLevel}
               onCommit={commitTimingShot}
               onCancel={cancelTimingShot}
             />
@@ -4686,10 +4704,13 @@ const SimplePoolGame = ({
             <TableDecisionCard>
                 <h3>Push Out Result</h3>
                 {vsComputer && shotPlayer === 1 ? (
-                  <p>Computer is deciding whether to take this leave or give it back.</p>
+                  <p>Computer is deciding whether to take this leave or give the shot back.</p>
                 ) : (
                   <>
-                    <p>{nameFor(gameState.currentPlayer === 1 ? 2 : 1)}, do you want to accept this push out result?</p>
+                    <p>
+                      {nameFor(shotPlayer === 1 ? 2 : 1)}, the push out is done.
+                      Take this leave, or give the shot back to {nameFor(shotPlayer)}.
+                    </p>
                     <div className={styles.pushOutButtons}>
                       <button
                         type="button"
@@ -4704,7 +4725,7 @@ const SimplePoolGame = ({
                           takeDecision(acceptPushOut);
                         }}
                       >
-                        Accept
+                        Take the table
                       </button>
                       <button
                         type="button"
@@ -4719,7 +4740,7 @@ const SimplePoolGame = ({
                           takeDecision(declinePushOut);
                         }}
                       >
-                        Decline
+                        Give shot back
                       </button>
                     </div>
                   </>

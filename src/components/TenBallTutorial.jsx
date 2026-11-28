@@ -7,18 +7,33 @@ import CoinFlipBreak from './tenball/CoinFlipBreak';
 import { DEFAULT_MATCH } from './tenball/matchFormat';
 import TipManager from './tenball/TipManager';
 import { EIGHTBALL_TUTORIAL_STEPS, NINEBALL_TUTORIAL_STEPS, ONE_POCKET_TUTORIAL_STEPS, TUTORIAL_STEPS } from './tenball/tutorialGuide';
+import { HOW_TO_PLAY_TOPIC } from './tenball/learnTopics';
+import LearnTopicModal from './tenball/LearnTopicModal';
 import { GAME_EIGHT, GAME_NINE, GAME_ONE_POCKET, GAME_TEN, getGameRules } from './tenball/gameRules';
+import { getPlayPoolAdminSettings } from './tenball/admin/playPoolAdminStore';
+import usePlayPoolAdminSettings from './tenball/admin/usePlayPoolAdminSettings';
+import usePlayPoolPageVisitTracker from './tenball/visits/usePlayPoolPageVisitTracker';
+import { playPoolSessionView } from './tenball/visits/playPoolVisitPages';
 import styles from './tenball/TenBallTutorial.module.css';
 
-const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
+const TenBallTutorial = ({ fromLogin = false, onBackToLogin, canAdmin = false }) => {
+  const adminSettings = usePlayPoolAdminSettings();
   const [currentMode, setCurrentMode] = useState('menu'); // menu, tutorial, game
   const [gameType, setGameType] = useState(GAME_TEN);
   const [lessonOn, setLessonOn] = useState(true);
+  usePlayPoolPageVisitTracker(
+    playPoolSessionView({
+      gameType,
+      lessonOn,
+      mode: currentMode === 'menu' ? 'menu' : 'game'
+    })
+  );
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showHints, setShowHints] = useState(true);
   const [showRules, setShowRules] = useState(true);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [playerNames, setPlayerNames] = useState({ 1: '', 2: '' });
-  const [vsComputer, setVsComputer] = useState(true);
+  const [vsComputer, setVsComputer] = useState(() => getPlayPoolAdminSettings().defaultVsComputer !== false);
   const [match, setMatch] = useState(DEFAULT_MATCH);
   const [setupOpen, setSetupOpen] = useState(false);
   const [flipOpen, setFlipOpen] = useState(false);
@@ -166,7 +181,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
     setShowRules(false);
     setCurrentMode('menu');
     setPlayerNames({ 1: '', 2: '' });
-    setVsComputer(true);
+    setVsComputer(getPlayPoolAdminSettings().defaultVsComputer !== false);
     setMatch(DEFAULT_MATCH);
     setOpeningBreaker(1);
     resetGame();
@@ -176,7 +191,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
   const playing = currentMode === 'tutorial' || currentMode === 'game';
   const rulesOpen = currentMode === 'tutorial' && showRules;
   // Pro tips wait until the rules tutorial is dismissed and the table is live.
-  const tipsReady = lessonOn && playing && !rulesOpen;
+  const tipsReady = lessonOn && playing && !rulesOpen && adminSettings.tipsEnabled !== false;
   // Keep the window flag in sync during render so TipManager mounts with tips allowed.
   window.__tenballTipAllow = tipsReady;
 
@@ -197,6 +212,7 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
           <GameModeSelector
             onModeSelect={handleGameModeSelect}
             fromLogin={fromLogin}
+            canAdmin={canAdmin}
           />
         );
 
@@ -240,7 +256,12 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
         );
 
       default:
-        return <GameModeSelector onModeSelect={handleGameModeSelect} />;
+        return (
+          <GameModeSelector
+            onModeSelect={handleGameModeSelect}
+            canAdmin={canAdmin}
+          />
+        );
     }
   };
 
@@ -282,9 +303,21 @@ const TenBallTutorial = ({ fromLogin = false, onBackToLogin }) => {
               Show Tutorial
             </button>
           )}
+          <button
+            type="button"
+            className={styles.backButton}
+            onClick={() => setShowHowToPlay(true)}
+          >
+            How to Play
+          </button>
           <div ref={setGameMenuSlot} className={styles.gameMenuSlot} />
         </div>
       )}
+
+      <LearnTopicModal
+        topic={showHowToPlay ? HOW_TO_PLAY_TOPIC : null}
+        onClose={() => setShowHowToPlay(false)}
+      />
 
       {rulesOpen && (
         <TutorialRules

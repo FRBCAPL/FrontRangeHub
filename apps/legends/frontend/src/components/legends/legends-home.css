@@ -102,14 +102,20 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  border: 1px solid var(--lg-line);
-  border-radius: 1.5rem;
-  background: rgba(41, 39, 44, 0.6);
-  padding: 1.25rem;
+  box-sizing: border-box;
+  border: 1px solid var(--lg-line) !important;
+  border-radius: 1.5rem !important;
+  background: rgba(41, 39, 44, 0.72) !important;
+  padding: 1.25rem !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
-.lg-card--link { color: #fff; transition: border-color 0.15s; }
-.lg-card--link:hover { border-color: rgba(174, 0, 232, 0.7); color: #fff; }
-.lg-card--link:focus-visible { border-color: var(--lg-purple); }
+.lg-card--link {
+  color: #fff !important;
+  text-decoration: none !important;
+  transition: border-color 0.15s;
+}
+.lg-card--link:hover { border-color: rgba(174, 0, 232, 0.7) !important; color: #fff !important; }
+.lg-card--link:focus-visible { border-color: var(--lg-purple) !important; }
 .lg-card--tonight {
   border-color: rgba(174, 0, 232, 0.6);
   box-shadow: 0 0 0 1px rgba(174, 0, 232, 0.45), 0 0 32px rgba(174, 0, 232, 0.18);
@@ -138,8 +144,8 @@
 .lg-section--announce { padding-top: 0; }
 .lg-announce { display: grid; gap: 1rem; max-width: 72rem !important; margin: 0 auto; padding: 0 1.25rem 1rem; list-style: none; }
 .lg-announce__card {
-  border-radius: 1.5rem;
-  border: 1px solid rgba(174, 0, 232, 0.45);
+  border-radius: 1.5rem !important;
+  border: 1px solid rgba(174, 0, 232, 0.55) !important;
   background: rgba(174, 0, 232, 0.08);
   padding: 1.25rem 1.35rem;
 }
@@ -198,10 +204,12 @@
 .lg-visit-card {
   display: grid;
   gap: 2rem;
-  border: 1px solid var(--lg-line);
-  border-radius: 1.5rem;
-  background: rgba(41, 39, 44, 0.6);
+  box-sizing: border-box;
+  border: 1px solid var(--lg-line) !important;
+  border-radius: 1.5rem !important;
+  background: rgba(41, 39, 44, 0.72) !important;
   padding: 1.5rem;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 @media (min-width: 768px) {

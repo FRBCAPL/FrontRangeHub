@@ -1,0 +1,68 @@
+import { supabase } from '@shared/config/supabase.js';
+
+const TABLE = 'play_pool_page_visits';
+const TENANT_ID = 'frpl';
+const VISITOR_KEY = 'play_pool_visitor_id';
+
+export function getPlayPoolVisitorId() {
+  try {
+    const existing = localStorage.getItem(VISITOR_KEY);
+    if (existing && existing.length >= 8) return existing.slice(0, 64);
+    const id = (crypto.randomUUID && crypto.randomUUID()) || `v${Date.now()}${Math.random()}`;
+    localStorage.setItem(VISITOR_KEY, id);
+    return id;
+  } catch {
+    return `anon-${Date.now()}`;
+  }
+}
+
+function outsideReferrer() {
+  try {
+    const ref = document.referrer || '';
+    if (!ref || ref.includes(window.location.hostname)) return null;
+    return ref.slice(0, 200);
+  } catch {
+    return null;
+  }
+}
+
+/** visitor_email is filled by a DB trigger from the sign-in token — never send it from the browser. */
+export async function recordPlayPoolPageVisit({ path, pageLabel }) {
+  const { error } = await supabase.from(TABLE).insert({
+    tenant_id: TENANT_ID,
+    visitor_id: getPlayPoolVisitorId(),
+    path: String(path || '').slice(0, 200),
+    page_label: pageLabel ? String(pageLabel).slice(0, 120) : null,
+    referrer: outsideReferrer()
+  });
+  if (error) throw error;
+}
+
+const CHUNK = 1000;
+
+/** Newest first. Reads in chunks because Supabase returns at most 1,000 rows per request. */
+export async function listPlayPoolPageVisits({ sinceIso, limit = 20000 } = {}) {
+  const rows = [];
+  while (rows.length < limit) {
+    let query = supabase
+      .from(TABLE)
+      .select('id, visitor_id, visitor_email, path, page_label, referrer, created_at')
+      .eq('tenant_id', TENANT_ID)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(rows.length, Math.min(rows.length + CHUNK, limit) - 1);
+    if (sinceIso) query = query.gte('created_at', sinceIso);
+    const { data, error } = await query;
+    if (error) {
+      if (/play_pool_page_visits|relation|schema cache/i.test(error.message || '')) {
+        throw new Error(
+          'Visitor stats are not set up yet. Run play-pool-page-visits-2026-11.sql in Supabase, then refresh.'
+        );
+      }
+      throw error;
+    }
+    rows.push(...(data || []));
+    if (!data || data.length < CHUNK) break;
+  }
+  return rows;
+}
