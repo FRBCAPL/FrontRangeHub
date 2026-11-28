@@ -83,6 +83,8 @@ const CUE_STICK_LENGTH = 170;
 const CUE_BUTT_GRAB = 26;
 const CUE_SHAFT_GRAB = 18;
 const TOUCH_AIM_SLOP = 8;
+/** Mouse hover aim follow rate (0–1). Lower = slower / less twitchy. */
+const MOUSE_AIM_SMOOTH = 0.22;
 
 function wrapAimDelta(delta) {
   let angle = delta;
@@ -3156,7 +3158,11 @@ const SimplePoolGame = ({
     const forward = toPointerX * Math.cos(aimAngleRef.current) + toPointerY * Math.sin(aimAngleRef.current);
     if (forward < BALL_RADIUS) return;
 
-    const angle = Math.atan2(toPointerY, toPointerX);
+    // Ease toward the pointer so the aim line doesn't snap / overshoot with every mouse pixel.
+    const target = Math.atan2(toPointerY, toPointerX);
+    const delta = wrapAimDelta(target - aimAngleRef.current);
+    const angle = wrapAimDelta(aimAngleRef.current + delta * MOUSE_AIM_SMOOTH);
+    aimAngleRef.current = angle;
     setAimAngle(angle);
     setLastAimAngle(angle);
   }, [vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.cueBall, isDraggingCueBall, updateCueBallPosition, aimLocked]);
