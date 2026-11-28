@@ -490,6 +490,7 @@ const SimplePoolGame = ({
   // Declining "another game" keeps the table finished (no live call/shoot UI).
   const [sessionOver, setSessionOver] = useState(false);
   const [lastRackWinner, setLastRackWinner] = useState(null);
+  const [lastWinReason, setLastWinReason] = useState(null);
   const playAgainTimer = useRef(null);
   const queuePlayAgain = (delay) => {
     setAwaitingPlayAgain(true);
@@ -1113,8 +1114,11 @@ const SimplePoolGame = ({
       foulReason = isEight
         ? 'The cue ball hit a rail before the rack'
         : 'The cue ball hit a rail before the 1-ball';
-    } else if (foulType === 'break_insufficient_cushions') foulReason = 'The break needed a pocketed ball or four rails';
-    else if (foulType === 'no_contact') foulReason = 'The cue ball missed every ball';
+    } else if (foulType === 'break_insufficient_cushions') {
+      foulReason = isOnePocket
+        ? 'Illegal break — need a scored ball or a cushion after contact'
+        : 'Break foul — no ball pocketed and fewer than four object balls hit a rail';
+    } else if (foulType === 'no_contact') foulReason = 'The cue ball missed every ball';
     else if (foulType === 'no_rail_contact') foulReason = 'No ball reached a rail after the hit';
     const onePocketScratch = isOnePocket && (foulType === 'scratch');
     const onePocketIncomingNote = isOnePocket
@@ -1122,6 +1126,7 @@ const SimplePoolGame = ({
         ? `${incomingName} has ball in hand behind the head string.`
         : `${incomingName} accepts the table in position.`)
       : `${incomingName} has ball in hand.`;
+    const isBreakFoul = String(foulType || '').startsWith('break_');
     let foulTip = `Foul. ${onePocketIncomingNote}${ballNote}`;
     if (threeFoulRule && nextFoulCount >= 3) {
       foulTip = `That is three fouls in a row. ${fouledName} loses the game.`;
@@ -1139,12 +1144,12 @@ const SimplePoolGame = ({
           : `The wrong ball was hit first. ${incomingName} has ball in hand.`);
     } else if (foulType === 'break_cushion_first') {
       foulTip = isEight
-        ? `The cue ball hit a cushion before the rack. ${incomingName} has ball in hand.`
-        : `The cue ball hit a cushion before the 1-ball. ${incomingName} has ball in hand.`;
+        ? `Break foul: the cue ball hit a cushion before the rack. ${incomingName} has ball in hand.`
+        : `Break foul: the cue ball hit a cushion before the 1-ball. ${incomingName} has ball in hand.`;
     } else if (foulType === 'break_insufficient_cushions') {
       foulTip = isOnePocket
         ? `Illegal break. Spot one ball. ${onePocketIncomingNote}`
-        : `The break did not pocket a ball or drive four balls to a rail. ${incomingName} has ball in hand.`;
+        : `Break foul: no ball was pocketed and fewer than four object balls hit a rail. ${incomingName} has ball in hand.`;
     } else if (foulType === 'no_contact') {
       foulTip = isOnePocket
         ? `The cue ball missed every ball. Spot one ball. ${onePocketIncomingNote}`
@@ -1182,8 +1187,11 @@ const SimplePoolGame = ({
       setLastFoulNotice({
         player: playerWhoFouled,
         short: shortFoul,
-        detail: 'Three fouls in a row — loss of game'
+        detail: foulTip,
+        headline: 'Three fouls'
       });
+      setLastRackWinner(winner);
+      setLastWinReason(foulTip);
       if (rackWinRecordedRef.current || gameOverRef.current) {
         setFoulType(foulType);
         return;
@@ -1278,14 +1286,15 @@ const SimplePoolGame = ({
     setLastFoulNotice({
       player: playerWhoFouled,
       short: shortFoul,
-      detail: foulReason
+      detail: foulTip,
+      headline: isBreakFoul ? 'Break foul' : 'Foul'
     });
     const handLine = !giveBallInHand
       ? `${incomingName}'s shot`
       : kitchenBallInHand
         ? `${incomingName} — ball in hand behind the head string`
         : `${incomingName} has ball in hand`;
-    showSplash(shortFoul, 'foul', {
+    showSplash(isBreakFoul ? 'Break foul' : shortFoul, 'foul', {
       text: foulReason,
       tone: 'foulReason',
       next: {
@@ -2396,6 +2405,7 @@ const SimplePoolGame = ({
         const { clinched, format } = recordWinRef.current(winner);
         gameOverRef.current = true;
         setLastRackWinner(winner);
+        setLastWinReason(tipText || null);
         setSessionOver(false);
         setComputerArmed(false);
         computerBusy.current = false;
@@ -3975,6 +3985,7 @@ const SimplePoolGame = ({
     setPlayAgainOpen(false);
     setAwaitingPlayAgain(false);
     setSessionOver(false);
+    setLastWinReason(null);
     if (playAgainTimer.current) {
       clearTimeout(playAgainTimer.current);
       playAgainTimer.current = null;
@@ -4332,7 +4343,7 @@ const SimplePoolGame = ({
                   )}
                   {!threeFoulRule && lastFoulNotice?.player === id && (
                     <span className={styles.foulCount} title={lastFoulNotice.detail}>
-                      Foul — {lastFoulNotice.short}
+                      {(lastFoulNotice.headline || 'Foul')} — {lastFoulNotice.short}
                     </span>
                   )}
                   {!computerSeat && mutedTipSeats.has(id) && (
@@ -4360,7 +4371,7 @@ const SimplePoolGame = ({
 
       {lastFoulNotice && (
         <div className={styles.foulNotice} role="status">
-          <strong>Foul</strong>
+          <strong>{lastFoulNotice.headline || 'Foul'}</strong>
           <span>{lastFoulNotice.detail}</span>
           <button
             type="button"
@@ -4461,6 +4472,9 @@ const SimplePoolGame = ({
                 {' — '}
                 {scores[1] ?? 0} – {scores[2] ?? 0}
               </p>
+              {lastWinReason && (
+                <p className={styles.sessionWinReason}>{lastWinReason}</p>
+              )}
               <div className={styles.pushOutButtons}>
                 <button
                   type="button"
@@ -4729,54 +4743,55 @@ const SimplePoolGame = ({
         >
           ›
         </button>
-        <div
-          className={`${styles.ballTracker}${isEight ? ` ${styles.ballTrackerEight}` : ''}`}
-          aria-label="Balls remaining"
-        >
-          {ballIds.map((id) => {
-            const ball = gameState.balls.find((entry) => entry.id === id);
-            const made = Boolean(ball?.pocketed);
-            const lowest = isPlay(gameState.gamePhase) ? getLowestNumberedBall() : null;
-            const legalNow = isEight
-              ? legalObjectBallIds(gameState.balls, playerGroups, gameState.currentPlayer, {
-                  isBreak: isBreak(gameState.gamePhase)
-                })
-              : null;
-            const isNext = !made && (isEight
-              ? legalNow?.includes(id)
-              : lowest?.id === id);
-            const canCall = !tableLocked
-              && callShot
-              && isPlay(gameState.gamePhase)
-              && !isPushOut
-              && !gameState.isAnimating
-              && !made
-              && (!isEight || legalNow?.includes(id));
-            const isStripeBall = isEight && id >= 9 && id <= 15;
-            const isSolidBall = isEight && id >= 1 && id <= 7;
-            const className = [
-              styles.trackerBall,
-              made ? styles.trackerBallMade : '',
-              isNext ? styles.trackerBallNext : '',
-              canCall ? styles.trackerBallCallable : '',
-              calledBall === id && !made ? styles.trackerBallCalled : '',
-              isStripeBall ? styles.trackerBallStripe : '',
-              isSolidBall ? styles.trackerBallSolid : ''
-            ].filter(Boolean).join(' ');
-            return (
-              <img
-                key={id}
-                src={ballImages[id]}
-                alt={made ? `${id}-ball pocketed` : `${id}-ball`}
-                className={className}
-                draggable={false}
-                onClick={canCall ? () => handleTrackerBallClick(id) : undefined}
-              />
-            );
-          })}
-        </div>
         </div>
 
+      </div>
+
+      <div
+        className={`${styles.ballTracker}${isEight ? ` ${styles.ballTrackerEight}` : ''}`}
+        aria-label="Balls remaining"
+      >
+        {ballIds.map((id) => {
+          const ball = gameState.balls.find((entry) => entry.id === id);
+          const made = Boolean(ball?.pocketed);
+          const lowest = isPlay(gameState.gamePhase) ? getLowestNumberedBall() : null;
+          const legalNow = isEight
+            ? legalObjectBallIds(gameState.balls, playerGroups, gameState.currentPlayer, {
+                isBreak: isBreak(gameState.gamePhase)
+              })
+            : null;
+          const isNext = !made && (isEight
+            ? legalNow?.includes(id)
+            : lowest?.id === id);
+          const canCall = !tableLocked
+            && callShot
+            && isPlay(gameState.gamePhase)
+            && !isPushOut
+            && !gameState.isAnimating
+            && !made
+            && (!isEight || legalNow?.includes(id));
+          const isStripeBall = isEight && id >= 9 && id <= 15;
+          const isSolidBall = isEight && id >= 1 && id <= 7;
+          const className = [
+            styles.trackerBall,
+            made ? styles.trackerBallMade : '',
+            isNext ? styles.trackerBallNext : '',
+            canCall ? styles.trackerBallCallable : '',
+            calledBall === id && !made ? styles.trackerBallCalled : '',
+            isStripeBall ? styles.trackerBallStripe : '',
+            isSolidBall ? styles.trackerBallSolid : ''
+          ].filter(Boolean).join(' ');
+          return (
+            <img
+              key={id}
+              src={ballImages[id]}
+              alt={made ? `${id}-ball pocketed` : `${id}-ball`}
+              className={className}
+              draggable={false}
+              onClick={canCall ? () => handleTrackerBallClick(id) : undefined}
+            />
+          );
+        })}
       </div>
 
       <div className={styles.controls}>
@@ -4832,6 +4847,7 @@ const SimplePoolGame = ({
             rackWinRecordedRef.current = false;
             setSessionOver(false);
             setLastRackWinner(null);
+            setLastWinReason(null);
             setComputerArmed(false);
             computerBusy.current = false;
             lastBreakerRef.current = 1;
