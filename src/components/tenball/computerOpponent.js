@@ -92,6 +92,58 @@ const pathClear = (x1, y1, x2, y2, balls, ignoreIds = []) => {
   });
 };
 
+/** First cushion hit on the straight line from `from` toward a mirrored target. */
+const railPointForMirror = (from, virt, side) => {
+  const dx = virt.x - from.x;
+  const dy = virt.y - from.y;
+  if (side === 'top') {
+    if (Math.abs(dy) < 1e-6) return null;
+    const t = (FELT_TOP - from.y) / dy;
+    if (t <= 0.02 || t >= 0.98) return null;
+    const x = from.x + t * dx;
+    if (x < FELT_LEFT + 2 || x > FELT_RIGHT - 2) return null;
+    return { x, y: FELT_TOP };
+  }
+  if (side === 'bottom') {
+    if (Math.abs(dy) < 1e-6) return null;
+    const t = (FELT_BOTTOM - from.y) / dy;
+    if (t <= 0.02 || t >= 0.98) return null;
+    const x = from.x + t * dx;
+    if (x < FELT_LEFT + 2 || x > FELT_RIGHT - 2) return null;
+    return { x, y: FELT_BOTTOM };
+  }
+  if (side === 'left') {
+    if (Math.abs(dx) < 1e-6) return null;
+    const t = (FELT_LEFT - from.x) / dx;
+    if (t <= 0.02 || t >= 0.98) return null;
+    const y = from.y + t * dy;
+    if (y < FELT_TOP + 2 || y > FELT_BOTTOM - 2) return null;
+    return { x: FELT_LEFT, y };
+  }
+  if (side === 'right') {
+    if (Math.abs(dx) < 1e-6) return null;
+    const t = (FELT_RIGHT - from.x) / dx;
+    if (t <= 0.02 || t >= 0.98) return null;
+    const y = from.y + t * dy;
+    if (y < FELT_TOP + 2 || y > FELT_BOTTOM - 2) return null;
+    return { x: FELT_RIGHT, y };
+  }
+  return null;
+};
+
+const kickMirrorsFor = (point) => ([
+  { side: 'top', virt: { x: point.x, y: 2 * FELT_TOP - point.y } },
+  { side: 'bottom', virt: { x: point.x, y: 2 * FELT_BOTTOM - point.y } },
+  { side: 'left', virt: { x: 2 * FELT_LEFT - point.x, y: point.y } },
+  { side: 'right', virt: { x: 2 * FELT_RIGHT - point.x, y: point.y } }
+]);
+
+/** Cue path is blocked to ghost — need a rail / alternate route. */
+const cuePathBlocked = (cue, ball, target, balls) => {
+  const ghost = ghostFor(ball, target);
+  return !pathClear(cue.x, cue.y, ghost.x, ghost.y, balls, [ball.id]);
+};
+
 const ghostFor = (ball, target) => {
   const dx = ball.x - target.x;
   const dy = ball.y - target.y;
@@ -247,28 +299,28 @@ const scoreBankShot = (cue, ball, pocket, balls, legalBallIds = null) => {
   return best;
 };
 
-// One-rail kick when the direct line to the object ball is blocked.
+// One-rail kick when the direct cue path to the object ball is blocked.
 const scoreKickShot = (cue, ball, pocket, balls, legalBallIds = null) => {
-  if (pathClear(cue.x, cue.y, ball.x, ball.y, balls, [ball.id])) return null;
+  if (!cuePathBlocked(cue, ball, pocket, balls)) return null;
   if (!pathClear(ball.x, ball.y, pocket.x, pocket.y, balls, [ball.id])) return null;
   const ghost = ghostFor(ball, pocket);
-  const mirrors = [
-    { x: ghost.x, y: 2 * FELT_TOP - ghost.y },
-    { x: ghost.x, y: 2 * FELT_BOTTOM - ghost.y },
-    { x: 2 * FELT_LEFT - ghost.x, y: ghost.y },
-    { x: 2 * FELT_RIGHT - ghost.x, y: ghost.y }
-  ];
   let best = null;
-  mirrors.forEach((virt) => {
-    if (!pathClear(cue.x, cue.y, virt.x, virt.y, balls, [ball.id])) return;
-    const cut = cutAngle({ x: virt.x, y: virt.y }, ball, pocket);
-    if (cut > 0.85) return;
-    const travel = Math.hypot(cue.x - virt.x, cue.y - virt.y) + Math.hypot(virt.x - ghost.x, virt.y - ghost.y);
-    if (travel > 420) return;
+  kickMirrorsFor(ghost).forEach(({ side, virt }) => {
+    const rail = railPointForMirror(cue, virt, side);
+    if (!rail) return;
+    // Real path: cue → cushion → ghost (not a straight line through the mirrored point).
+    if (!pathClear(cue.x, cue.y, rail.x, rail.y, balls, [ball.id])) return;
+    if (!pathClear(rail.x, rail.y, ghost.x, ghost.y, balls, [ball.id])) return;
+    const cut = cutAngle(rail, ball, pocket);
+    if (cut > 0.95) return;
+    const travel = Math.hypot(cue.x - rail.x, cue.y - rail.y)
+      + Math.hypot(rail.x - ghost.x, rail.y - ghost.y);
+    if (travel > 520) return;
     const english = pickEnglish(ball, pocket, balls, cut, legalBallIds);
     const shape = positionBonus(ball, pocket, balls, 0, legalBallIds);
+    // Prefer kicks when the direct line is jammed — score high enough to beat safeties.
     const shot = {
-      score: 780 - travel * 0.35 - cut * 260 + shape,
+      score: 980 - travel * 0.28 - cut * 220 + shape,
       aimAngle: Math.atan2(virt.y - cue.y, virt.x - cue.x),
       power: potPower(travel * 0.55, Math.hypot(ball.x - pocket.x, ball.y - pocket.y), cut, 'kick'),
       calledBall: ball.id,
@@ -280,6 +332,48 @@ const scoreKickShot = (cue, ball, pocket, balls, legalBallIds = null) => {
     if (!best || shot.score > best.score) best = shot;
   });
   return best;
+};
+
+/** Kick just to contact the object ball (no pot) when every direct line is blocked. */
+const kickContactShot = (cue, ball, balls, calledPocketId) => {
+  let best = null;
+  // Aim at several contact points around the ball so a rail line can find the face.
+  const contacts = [
+    { x: ball.x, y: ball.y },
+    { x: ball.x - BALL_RADIUS, y: ball.y },
+    { x: ball.x + BALL_RADIUS, y: ball.y },
+    { x: ball.x, y: ball.y - BALL_RADIUS },
+    { x: ball.x, y: ball.y + BALL_RADIUS }
+  ];
+  contacts.forEach((point) => {
+    kickMirrorsFor(point).forEach(({ side, virt }) => {
+      const rail = railPointForMirror(cue, virt, side);
+      if (!rail) return;
+      if (!pathClear(cue.x, cue.y, rail.x, rail.y, balls, [ball.id])) return;
+      if (!pathClear(rail.x, rail.y, point.x, point.y, balls, [ball.id])) return;
+      const travel = Math.hypot(cue.x - rail.x, cue.y - rail.y)
+        + Math.hypot(rail.x - point.x, rail.y - point.y);
+      if (travel > 560) return;
+      const score = 420 - travel * 0.2;
+      if (!best || score > best.score) {
+        best = {
+          score,
+          aimAngle: Math.atan2(virt.y - cue.y, virt.x - cue.x),
+          power: clamp(0.28 + travel / 1400, 0.26, 0.48),
+          calledBall: ball.id,
+          calledPocket: calledPocketId || nearestPocket(ball).id,
+          pushOut: false,
+          cue: null,
+          english: 0.16,
+          englishDirection: 90,
+          kind: 'kick-safe'
+        };
+      }
+    });
+  });
+  if (!best) return null;
+  const { score, ...shot } = best;
+  return shot;
 };
 
 const scoreComboShot = (cue, lowest, object, pocket, balls) => {
@@ -536,11 +630,46 @@ const safetyShot = (cue, balls, legalBallIds = null, targetPocketId = null) => {
     return shot;
   }
 
+  // Never aim straight through a blocker — kick off a rail to reach the object ball.
   const pocket = onePocket ? pocketById(targetPocketId) : nearestPocket(ball);
+  const kickSafe = kickContactShot(cue, ball, balls, pocket?.id || nearestPocket(ball).id);
+  if (kickSafe) return kickSafe;
+
+  // Last resort: nudge toward the nearest clear gap past the object ball's face.
+  let escape = null;
+  for (let deg = 0; deg < 360; deg += 15) {
+    const rad = (deg * Math.PI) / 180;
+    const gx = ball.x + Math.cos(rad) * BALL_RADIUS * 2;
+    const gy = ball.y + Math.sin(rad) * BALL_RADIUS * 2;
+    if (!pathClear(cue.x, cue.y, gx, gy, balls, [ball.id])) continue;
+    const dist = Math.hypot(cue.x - gx, cue.y - gy);
+    const score = -dist;
+    if (!escape || score > escape.score) {
+      escape = {
+        score,
+        aimAngle: Math.atan2(gy - cue.y, gx - cue.x),
+        power: onePocket ? 0.18 : 0.26,
+        calledBall: ball.id,
+        calledPocket: pocket?.id || nearestPocket(ball).id,
+        pushOut: false,
+        cue: null,
+        english: 0.1,
+        englishDirection: 90
+      };
+    }
+  }
+  if (escape) {
+    const { score, ...shot } = escape;
+    return shot;
+  }
+
+  // Absolute fallback still aims at a rail mirror of the ball, not through traffic.
+  const kickAny = kickContactShot(cue, ball, balls, pocket?.id);
+  if (kickAny) return kickAny;
   return {
     canMake: false,
-    aimAngle: Math.atan2(ball.y - cue.y, ball.x - cue.x),
-    power: onePocket ? 0.16 : 0.24,
+    aimAngle: Math.atan2(FELT_TOP - cue.y, MID_X - cue.x),
+    power: onePocket ? 0.16 : 0.22,
     calledBall: ball.id,
     calledPocket: pocket?.id || nearestPocket(ball).id,
     pushOut: false,
@@ -565,6 +694,17 @@ const takeMakeOrSafety = (shot, cue, balls, legalBallIds = null, targetPocketId 
       played.power = clamp(played.power * 0.85, 0.16, ONE_POCKET_MAX_POWER);
     }
     return { ...played, canMake: true, pushOut: false, cue: null };
+  }
+  // Kick / bank / combo: take a makeable alternate route instead of crashing into traffic.
+  if (
+    !onePocket
+    && shot
+    && shot.kind
+    && shot.kind !== 'direct'
+    && shot.score >= 620
+    && shot.cut <= maxCut + 0.12
+  ) {
+    return { ...withAimMiss(shot), canMake: true, pushOut: false, cue: null };
   }
   const safe = safetyShot(cue, balls, legalBallIds, targetPocketId);
   if (!safe) return null;

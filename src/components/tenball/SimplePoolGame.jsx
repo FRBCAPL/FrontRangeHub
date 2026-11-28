@@ -4,6 +4,7 @@ import styles from './SimplePoolGame.module.css';
 import TableDecisionCard from './TableDecisionCard';
 import PlayAgainPrompt from './PlayAgainPrompt';
 import PlayerSetupModal from './PlayerSetupModal';
+import ShotTimingMeter from './ShotTimingMeter';
 import { readMutedTipSeats, writeMutedTipSeats } from './TipManager';
 import { DEFAULT_MATCH, leadingWinner, matchLabel, matchWinLine, matchWonLabel, nextBreaker } from './matchFormat';
 import { nextGameAfterVotes } from './playAgain';
@@ -333,6 +334,9 @@ const SimplePoolGame = ({
   const [highlightedPocket, setHighlightedPocket] = useState(null); // Pocket being aimed at
   const [aimLocked, setAimLocked] = useState(false); // Lock aim when ready to shoot
   const [lastAimAngle, setLastAimAngle] = useState(0); // For smoothing aim changes
+  // Human strike timing meter (−1…1 offset captured on commit).
+  const [timingMeterOpen, setTimingMeterOpen] = useState(false);
+  const timingMeterRef = useRef(null);
   
   // CSI 10-Ball Rules - Call Shot System
   const [calledBall, setCalledBall] = useState(null); // Ball player is calling
@@ -2638,9 +2642,10 @@ const SimplePoolGame = ({
     animationFrame.current = requestAnimationFrame(step);
   }, [gameState, isInPocket, resolveBallCollision, firstBallHit, isPushOut, detectFouls, handleFoul, pushOutResult, foulHandled, shotPlayer, shotProcessed, detectIllegallyPocketedBalls, isBreakShot, offerTableTip, showIllegalPocketOption, moneyBall, callShot, winOnBreak, initializeBalls, isEight, isOnePocket, allowPushOut, calledBall, calledPocket, applyOnePocketPocketed, resetOnePocketRackStats]);
   
-  const handleShoot = useCallback(() => {
+  const handleShoot = useCallback((timingOffset = null) => {
     if (gameOverRef.current || gameState.isAnimating || !aimLocked || showPushOutOffer) return;
     tableTipForShot.current = null;
+    setTimingMeterOpen(false);
     
     // Call shot for CSI 10-Ball / 8-Ball play shots (not break / push-out)
     const mustCall = callShot
@@ -2660,14 +2665,40 @@ const SimplePoolGame = ({
       return;
     }
     
-    // Execute shot — tiny strike variance so rolls are not pixel-perfect to the aim line.
-    // Computer keeps a tighter stroke so it plays like a sharp player, not a blaster.
-    const cueBall = gameState.cueBall;
+    // Execute shot — humans use the timing meter; computer keeps a tight stroke.
     const computerShooting = vsComputer && gameState.currentPlayer === 2;
-    // Above-average stroke: much tighter than a human's natural miss.
-    const jitter = computerShooting ? 0.15 : 1;
-    const strikeAngle = aimAngle + (Math.random() - 0.5) * SHOT_ANGLE_JITTER * jitter;
-    const strikePower = power * (1 + (Math.random() - 0.5) * SHOT_POWER_JITTER * jitter);
+    let strikeAngle;
+    let strikePower;
+    if (computerShooting) {
+      const jitter = 0.15;
+      strikeAngle = aimAngle + (Math.random() - 0.5) * SHOT_ANGLE_JITTER * jitter;
+      strikePower = power * (1 + (Math.random() - 0.5) * SHOT_POWER_JITTER * jitter);
+    } else {
+      const t = typeof timingOffset === 'number' ? Math.max(-1, Math.min(1, timingOffset)) : 0;
+      const err = Math.abs(t);
+      const side = t === 0 ? 1 : Math.sign(t);
+      if (err < 1e-6) {
+        // Dead center of the green zone — exact stroke as aimed.
+        strikeAngle = aimAngle;
+        strikePower = power;
+      } else if (err <= 0.1) {
+        // Anywhere else in green: still a very good hit, tiny directional drift only.
+        const aimScale = err * 0.55;
+        strikeAngle = aimAngle + side * SHOT_ANGLE_JITTER * aimScale;
+        strikePower = power * (1 + t * SHOT_POWER_JITTER * 0.2);
+      } else {
+        // Outside the green zone — real miss scales with how far they were.
+        const aimScale = 0.55 + (err - 0.1) * 2.4;
+        strikeAngle = aimAngle
+          + side * SHOT_ANGLE_JITTER * aimScale
+          + (Math.random() - 0.5) * SHOT_ANGLE_JITTER * 0.35;
+        strikePower = power * (
+          1
+          + t * SHOT_POWER_JITTER * 1.5
+          + (Math.random() - 0.5) * SHOT_POWER_JITTER * 0.45
+        );
+      }
+    }
     const speed = Math.max(0.05, strikePower) * MAX_SHOT_SPEED;
     
     // English is relative to the shot: up the cue ball is follow, down is draw, sides are english.
@@ -2963,7 +2994,7 @@ const SimplePoolGame = ({
 
   const handlePointerDown = useCallback((e) => {
     if (vsComputer && gameState.currentPlayer === 2) return;
-    if (gameState.isAnimating || e.button === 2) return;
+    if (timingMeterOpen || gameState.isAnimating || e.button === 2) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = rect.width / TABLE_WIDTH;
@@ -3033,7 +3064,7 @@ const SimplePoolGame = ({
       }
       return next;
     });
-  }, [callActive, vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.ballInHand, gameState.gamePhase, gameState.cueBall, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions, resumeCalledShot]);
+  }, [callActive, vsComputer, gameState.currentPlayer, gameState.isAnimating, timingMeterOpen, gameState.ballInHand, gameState.gamePhase, gameState.cueBall, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions, resumeCalledShot]);
 
   const handlePointerUp = useCallback((e) => {
     const touch = touchAimRef.current;
@@ -3254,6 +3285,7 @@ const SimplePoolGame = ({
     const onKey = (event) => {
       if (vsComputer && gameState.currentPlayer === 2) return;
       if (event.key === 'Escape') {
+        if (timingMeterOpen) return;
         if (calledBall || calledPocket || callCleared) {
           clearCalledShot();
         }
@@ -3268,7 +3300,7 @@ const SimplePoolGame = ({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [vsComputer, gameState.currentPlayer, calledBall, calledPocket, callCleared, clearCalledShot, nudgeAim]);
+  }, [vsComputer, gameState.currentPlayer, calledBall, calledPocket, callCleared, clearCalledShot, nudgeAim, timingMeterOpen]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -4063,6 +4095,7 @@ const SimplePoolGame = ({
     setTurnCue((cue) => cue + 1);
     setHighlightedPocket(null);
     setAimLocked(false);
+    setTimingMeterOpen(false);
     holdEmptyCallRef.current = false;
     setCallCleared(false);
     setCalledBall(null);
@@ -4139,7 +4172,7 @@ const SimplePoolGame = ({
     ? 'Session'
     : matchLabel(match);
   const computerTurn = vsComputer && gameState.currentPlayer === 2;
-  const tableLocked = sessionOver || playAgainOpen || awaitingPlayAgain;
+  const tableLocked = sessionOver || playAgainOpen || awaitingPlayAgain || timingMeterOpen;
   const needsCall = !tableLocked && callActive() && isPlay(gameState.gamePhase) && !isPushOut && !(calledBall && calledPocket);
   const sessionLeader = scores[1] === scores[2]
     ? null
@@ -4148,25 +4181,51 @@ const SimplePoolGame = ({
   // 8-Ball: Lock aim → Shoot (call is filled from aim). 10-Ball still uses Call shot step.
   const shootLabel = computerTurn
     ? 'Computer'
-    : !aimLocked
-      ? 'Lock aim'
-      : (isEight || !needsCall)
-        ? 'Shoot!'
-        : 'Call shot';
-  const pressShoot = () => {
-    if (computerTurn || gameState.isAnimating) return;
+    : timingMeterOpen
+      ? 'Strike!'
+      : !aimLocked
+        ? 'Lock aim'
+        : (isEight || !needsCall)
+          ? 'Shoot!'
+          : 'Call shot';
+  const openTimingMeter = () => {
+    if (computerTurn || gameState.isAnimating || timingMeterOpen || sessionOver || playAgainOpen || awaitingPlayAgain) return;
     if (!aimLocked) {
       setAimLocked(true);
       if (isEight) confirmEightCallFromAim();
       return;
     }
-    if (isEight) {
-      confirmEightCallFromAim();
-      handleShoot();
+    if (isEight) confirmEightCallFromAim();
+    else if (needsCall) return;
+    // Validate call before opening the meter so Cancel isn't stuck on a bad shot.
+    const mustCall = callShot && !isBreak(gameState.gamePhase) && !isPushOut;
+    if (mustCall) {
+      let shootBall = calledBall;
+      let shootPocket = calledPocket;
+      if (isEight) {
+        const resolved = confirmEightCallFromAim() || peekEightCallFromAim();
+        if (!ballLockRef.current && resolved?.ball) shootBall = resolved.ball;
+        if (!pocketLockRef.current && resolved?.pocket) shootPocket = resolved.pocket;
+      }
+      if (!shootBall || !shootPocket) return;
+    }
+    setTimingMeterOpen(true);
+  };
+  const pressShoot = () => {
+    if (computerTurn || gameState.isAnimating || sessionOver || playAgainOpen || awaitingPlayAgain) return;
+    // Same button stops the meter at the current marker position.
+    if (timingMeterOpen) {
+      timingMeterRef.current?.commit?.();
       return;
     }
-    if (needsCall) return;
-    handleShoot();
+    openTimingMeter();
+  };
+  const commitTimingShot = (offset) => {
+    setTimingMeterOpen(false);
+    handleShoot(offset);
+  };
+  const cancelTimingShot = () => {
+    setTimingMeterOpen(false);
   };
 
   const gameMenu = (
@@ -4492,6 +4551,16 @@ const SimplePoolGame = ({
                 {turnSplash.text}
               </span>
             </div>
+          )}
+          {timingMeterOpen && (
+            <ShotTimingMeter
+              ref={timingMeterRef}
+              power={power}
+              english={english}
+              skillLevel={1}
+              onCommit={commitTimingShot}
+              onCancel={cancelTimingShot}
+            />
           )}
           {playAgainOpen && (
             <PlayAgainPrompt
@@ -4839,21 +4908,21 @@ const SimplePoolGame = ({
            <button
              type="button"
              className={styles.shootButton}
-             disabled={tableLocked || computerTurn || gameState.isAnimating || (!isEight && aimLocked && needsCall)}
+             disabled={sessionOver || playAgainOpen || awaitingPlayAgain || computerTurn || gameState.isAnimating || (!timingMeterOpen && !isEight && aimLocked && needsCall)}
              onPointerDown={(event) => event.preventDefault()}
              onPointerUp={(event) => {
                if (event.button > 0) return;
-               if (tableLocked) return;
+               if (sessionOver || playAgainOpen || awaitingPlayAgain) return;
                pressShoot();
              }}
              onKeyDown={(event) => {
                if (event.key !== 'Enter' && event.key !== ' ') return;
                event.preventDefault();
-               if (tableLocked) return;
+               if (sessionOver || playAgainOpen || awaitingPlayAgain) return;
                pressShoot();
              }}
            >
-             {tableLocked ? 'Finished' : shootLabel}
+             {sessionOver || playAgainOpen || awaitingPlayAgain ? 'Finished' : shootLabel}
            </button>
          </div>
 
