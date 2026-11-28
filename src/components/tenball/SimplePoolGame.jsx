@@ -323,6 +323,8 @@ const SimplePoolGame = ({
   const ballLockRef = useRef(false); // user picked a ball in the tracker — don't overwrite from aim
   const holdEmptyCallRef = useRef(false);
   const lockedAimRef = useRef(null);
+  // True after Clear call / Escape until the player picks a ball, pocket, or re-locks aim.
+  const [callCleared, setCallCleared] = useState(false);
   const [obviousCall, setObviousCall] = useState(false);
   const [power, setPower] = useState(0.5);
   const [english, setEnglish] = useState(0); // English (spin) control -1 to 1
@@ -720,6 +722,22 @@ const SimplePoolGame = ({
     return isOnEight(gameState.balls, playerGroupsRef.current, gameState.currentPlayer);
   }, [callShot, isEight, callEight, gameState.balls, gameState.currentPlayer]);
 
+  const clearCalledShot = useCallback(() => {
+    pocketLockRef.current = false;
+    ballLockRef.current = false;
+    holdEmptyCallRef.current = true;
+    lockedAimRef.current = aimAngleRef.current;
+    setObviousCall(false);
+    setCalledBall(null);
+    setCalledPocket(null);
+    setCallCleared(true);
+  }, []);
+
+  const resumeCalledShot = useCallback(() => {
+    holdEmptyCallRef.current = false;
+    setCallCleared(false);
+  }, []);
+
   const handleTrackerBallClick = useCallback((id) => {
     if (!callActive() || gameState.isAnimating || isBreak(gameState.gamePhase) || isPushOut) return;
     if (isEight) {
@@ -733,8 +751,9 @@ const SimplePoolGame = ({
     const ball = gameState.balls.find((entry) => entry.id === id);
     if (!ball?.visible || ball.pocketed) return;
     ballLockRef.current = true;
+    resumeCalledShot();
     setCalledBall(id);
-  }, [callActive, gameState.isAnimating, gameState.gamePhase, gameState.balls, isPushOut, isEight, gameState.currentPlayer]);
+  }, [callActive, gameState.isAnimating, gameState.gamePhase, gameState.balls, isPushOut, isEight, gameState.currentPlayer, resumeCalledShot]);
 
   /** Peek 8-ball call from current aim refs (sync — safe to use inside shoot). */
   const peekEightCallFromAim = useCallback(() => {
@@ -768,10 +787,8 @@ const SimplePoolGame = ({
     if (!isEight || !callShot) return null;
     if (gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return null;
     if (vsComputer && gameState.currentPlayer === 2) return null;
-    if (holdEmptyCallRef.current) {
-      if (aimAngleRef.current !== lockedAimRef.current) holdEmptyCallRef.current = false;
-      else return null;
-    }
+    // Cleared call stays empty until the player picks a ball/pocket or re-locks aim.
+    if (callCleared || holdEmptyCallRef.current) return null;
 
     const peeked = peekEightCallFromAim();
     let ball = ballLockRef.current && peeked.legal.includes(calledBall) ? calledBall : peeked.ball;
@@ -797,6 +814,7 @@ const SimplePoolGame = ({
     gameState.gamePhase,
     isPushOut,
     vsComputer,
+    callCleared,
     calledBall,
     calledPocket,
     peekEightCallFromAim
@@ -911,19 +929,21 @@ const SimplePoolGame = ({
   useEffect(() => {
     // 10-Ball only — 8-Ball uses legal group balls, not "lowest on the table".
     if (!callShot || isEight || gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return;
+    if (callCleared) return;
     const lowest = getLowestNumberedBall();
     if (!lowest) return;
     const called = gameState.balls.find((ball) => ball.id === calledBall);
     if (called && called.visible && !called.pocketed) return;
     setCalledBall(lowest.id);
-  }, [callShot, isEight, gameState.isAnimating, gameState.gamePhase, gameState.balls, isPushOut, calledBall, getLowestNumberedBall]);
+  }, [callShot, isEight, gameState.isAnimating, gameState.gamePhase, gameState.balls, isPushOut, calledBall, callCleared, getLowestNumberedBall]);
 
   // 8-ball: only force the 8 when on it. Other calls come from aim-lock / tracker.
   useEffect(() => {
     if (!isEight || !callShot || gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return;
+    if (callCleared) return;
     if (!isOnEight(gameState.balls, playerGroups, gameState.currentPlayer)) return;
     if (!ballLockRef.current && calledBall !== 8) setCalledBall(8);
-  }, [isEight, callShot, gameState.isAnimating, gameState.gamePhase, gameState.balls, gameState.currentPlayer, playerGroups, isPushOut, calledBall]);
+  }, [isEight, callShot, gameState.isAnimating, gameState.gamePhase, gameState.balls, gameState.currentPlayer, playerGroups, isPushOut, calledBall, callCleared]);
 
   // 8-ball: while aim is locked, keep the call matched to what you're aiming at (unless changed).
   useEffect(() => {
@@ -1233,6 +1253,7 @@ const SimplePoolGame = ({
         setConsecutiveFouls({ 1: 0, 2: 0 });
         setCalledBall(null);
         setCalledPocket(null);
+        setCallCleared(false);
         setShowAimLine(true);
         setPushOutAvailable(false);
         setIsPushOut(false);
@@ -2133,6 +2154,7 @@ const SimplePoolGame = ({
           setShotProcessed(true);
           setCalledBall(null);
           setCalledPocket(null);
+          setCallCleared(false);
           setIsPushOut(false);
           shotEndedInFoul = true;
         } else if (foulDetected) {
@@ -2143,6 +2165,7 @@ const SimplePoolGame = ({
           // Reset call shot for next turn (after foul detection is complete)
           setCalledBall(null);
           setCalledPocket(null);
+          setCallCleared(false);
           setIsPushOut(false); // Reset push out state after foul detection
           
           shotEndedInFoul = true;
@@ -2163,6 +2186,7 @@ const SimplePoolGame = ({
               setShotProcessed(true);
               setCalledBall(null);
               setCalledPocket(null);
+              setCallCleared(false);
               const missed = illegallyPocketed.map((ball) => ball.id).join(' and ');
               if (isEight) {
                 // CSI 8-Ball: missed called shot = lose turn. Pocketed balls stay; 8 is spotted.
@@ -2202,6 +2226,7 @@ const SimplePoolGame = ({
           // Reset call shot for next turn (after illegally pocketed detection is complete)
           setCalledBall(null);
           setCalledPocket(null);
+          setCallCleared(false);
           setIsPushOut(false); // Reset push out state after foul detection
           setConsecutiveFouls(prev => {
             debugLog('Previous consecutive fouls:', prev);
@@ -2457,6 +2482,7 @@ const SimplePoolGame = ({
             setFirstShotAfterBreak(false);
             setCalledBall(null);
             setCalledPocket(null);
+            setCallCleared(false);
             setPlayerGroups({ 1: null, 2: null });
             playerGroupsRef.current = { 1: null, 2: null };
             if (isOnePocket) {
@@ -2539,6 +2565,7 @@ const SimplePoolGame = ({
             }));
             setCalledBall(null);
             setCalledPocket(null);
+            setCallCleared(false);
           }
         } else {
           const wasCalledPocketCorrect = calledPocket && moneyPocketed.pocketedPocket === calledPocket;
@@ -2579,6 +2606,7 @@ const SimplePoolGame = ({
 
             setCalledBall(null);
             setCalledPocket(null);
+            setCallCleared(false);
           }
         }
       }
@@ -2863,6 +2891,8 @@ const SimplePoolGame = ({
     setPower(plan.power);
     setEnglish(plan.english || 0);
     setEnglishDirection(plan.englishDirection || 0);
+    holdEmptyCallRef.current = false;
+    setCallCleared(false);
     setCalledBall(plan.calledBall);
     setCalledPocket(plan.calledPocket);
     setIsPushOut(plan.pushOut);
@@ -2984,7 +3014,7 @@ const SimplePoolGame = ({
 
     if (callActive() && clickedPocket) {
       pocketLockRef.current = true;
-      holdEmptyCallRef.current = false;
+      resumeCalledShot();
       setObviousCall(false);
       setCalledPocket(clickedPocket.id);
       return;
@@ -2995,8 +3025,15 @@ const SimplePoolGame = ({
       return;
     }
 
-    setAimLocked((locked) => !locked);
-  }, [callActive, vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.ballInHand, gameState.gamePhase, gameState.cueBall, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions]);
+    setAimLocked((locked) => {
+      const next = !locked;
+      if (next) {
+        holdEmptyCallRef.current = false;
+        setCallCleared(false);
+      }
+      return next;
+    });
+  }, [callActive, vsComputer, gameState.currentPlayer, gameState.isAnimating, gameState.ballInHand, gameState.gamePhase, gameState.cueBall, isClickOnCueBall, startDraggingCueBall, isPushOut, pocketPositions, resumeCalledShot]);
 
   const handlePointerUp = useCallback((e) => {
     const touch = touchAimRef.current;
@@ -3016,16 +3053,23 @@ const SimplePoolGame = ({
         setLastAimAngle(settled);
       } else if (callActive() && touch.pocketId) {
         pocketLockRef.current = true;
-        holdEmptyCallRef.current = false;
+        resumeCalledShot();
         setObviousCall(false);
         setCalledPocket(touch.pocketId);
       } else {
-        setAimLocked((locked) => !locked);
+        setAimLocked((locked) => {
+          const next = !locked;
+          if (next) {
+            holdEmptyCallRef.current = false;
+            setCallCleared(false);
+          }
+          return next;
+        });
       }
     }
     draggingCueStick.current = false;
     if (isDraggingCueBall) stopDraggingCueBall();
-  }, [callActive, isDraggingCueBall, stopDraggingCueBall]);
+  }, [callActive, isDraggingCueBall, stopDraggingCueBall, resumeCalledShot]);
   
   const handlePointerMove = useCallback((e) => {
     if (vsComputer && gameState.currentPlayer === 2) return;
@@ -3210,13 +3254,8 @@ const SimplePoolGame = ({
     const onKey = (event) => {
       if (vsComputer && gameState.currentPlayer === 2) return;
       if (event.key === 'Escape') {
-        if (calledBall || calledPocket) {
-          pocketLockRef.current = false;
-          holdEmptyCallRef.current = true;
-          lockedAimRef.current = aimAngleRef.current;
-          setObviousCall(false);
-          setCalledBall(null);
-          setCalledPocket(null);
+        if (calledBall || calledPocket || callCleared) {
+          clearCalledShot();
         }
         return;
       }
@@ -3229,7 +3268,7 @@ const SimplePoolGame = ({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [vsComputer, gameState.currentPlayer, calledBall, calledPocket, nudgeAim]);
+  }, [vsComputer, gameState.currentPlayer, calledBall, calledPocket, callCleared, clearCalledShot, nudgeAim]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -3793,6 +3832,8 @@ const SimplePoolGame = ({
   useEffect(() => {
     if (!callActive() || gameState.isAnimating || !isPlay(gameState.gamePhase) || isPushOut) return;
     if (vsComputer && gameState.currentPlayer === 2) return;
+    // Cleared call stays empty until the player chooses again.
+    if (callCleared) return;
     // 8-Ball call sync is handled by confirmEightCallFromAim while aim is locked.
     if (isEight) {
       if (aimLocked) confirmEightCallFromAim();
@@ -3801,10 +3842,7 @@ const SimplePoolGame = ({
     if (!calledPocket && pocketLockRef.current && !holdEmptyCallRef.current) {
       pocketLockRef.current = false;
     }
-    if (holdEmptyCallRef.current) {
-      if (aimAngleRef.current !== lockedAimRef.current) holdEmptyCallRef.current = false;
-      else return;
-    }
+    if (holdEmptyCallRef.current) return;
     if (pocketLockRef.current) return;
     const obvious = obviousAimRef.current;
     const targetId = getLowestNumberedBall()?.id;
@@ -3822,7 +3860,7 @@ const SimplePoolGame = ({
     }
     setObviousCall(false);
     setCalledPocket((current) => (current == null ? current : null));
-  }, [callActive, gameState.isAnimating, gameState.gamePhase, gameState.currentPlayer, gameState.balls, isPushOut, vsComputer, aimAngle, power, english, englishDirection, calledBall, calledPocket, getLowestNumberedBall, isEight, aimLocked, confirmEightCallFromAim]);
+  }, [callActive, gameState.isAnimating, gameState.gamePhase, gameState.currentPlayer, gameState.balls, isPushOut, vsComputer, aimAngle, power, english, englishDirection, calledBall, calledPocket, callCleared, getLowestNumberedBall, isEight, aimLocked, confirmEightCallFromAim]);
   
   // Load table image
   useEffect(() => {
@@ -4025,6 +4063,8 @@ const SimplePoolGame = ({
     setTurnCue((cue) => cue + 1);
     setHighlightedPocket(null);
     setAimLocked(false);
+    holdEmptyCallRef.current = false;
+    setCallCleared(false);
     setCalledBall(null);
     setCalledPocket(null);
     setEnglish(0);
@@ -4173,7 +4213,7 @@ const SimplePoolGame = ({
             <strong>How To Aim:</strong><br/>
             The cue starts pointed at the lowest ball • Move the mouse to aim, or drag the cue stick from behind the cue ball • Click the felt or Lock Aim • A straight-in pocket fills in by itself • Click a pocket for a bank, kick, or combination • Then press Shoot<br/>
             <small style={{color: '#888', fontSize: '12px'}}>
-              The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape clears the call.
+              The cue ball path stays white. The ghost ball is where the cue ball meets the object ball. Shift makes the wheel nudge smaller. Escape or Clear call cancels the call until you pick again.
             </small>
           </div>
           <div className={styles.aimPhone}>
@@ -4183,55 +4223,55 @@ const SimplePoolGame = ({
       </div>
 
       <div className={styles.tableNotices}>
-        {!tableLocked && (isPlay(gameState.gamePhase) || calledBall || calledPocket || canShowPushOut(gameState.gamePhase, pushOutAvailable)) && (
+        {!tableLocked && (isPlay(gameState.gamePhase) || calledBall || calledPocket || callCleared || canShowPushOut(gameState.gamePhase, pushOutAvailable)) && (
           <>
-          {callActive() && (isPlay(gameState.gamePhase) || calledBall || calledPocket) && !isPushOut && (
+          {callActive() && (isPlay(gameState.gamePhase) || calledBall || calledPocket || callCleared) && !isPushOut && (
             <div className={styles.callShotNotice}>
               {calledBall && (
                 <img src={ballImages[calledBall]} alt="" className={styles.callBadgeBall} />
               )}
               <strong>
-                {calledBall ? `${calledBall}-ball` : 'Call your shot'}
+                {callCleared && !calledBall && !calledPocket
+                  ? 'Call cleared'
+                  : (calledBall ? `${calledBall}-ball` : 'Call your shot')}
               </strong>
               <span className={styles.callDetail}>
-                {calledBall && calledPocket
-                  ? `in the ${POCKET_LABELS[calledPocket] || calledPocket}${obviousCall ? ' — aimed / obvious' : ''}${isEight ? ' — change ball or pocket if needed' : ''}`
-                  : calledBall
-                    ? (isEight
-                      ? (aimLocked
-                        ? 'aimed ball locked — click a pocket, or pick another ball'
-                        : 'lock aim to confirm the pocket, or click a pocket')
-                      : 'is called — click a pocket for a bank, kick, or combination')
-                    : calledPocket
-                      ? `${POCKET_LABELS[calledPocket] || calledPocket} — pick a ball in the tracker`
-                      : (isEight
-                        ? 'Lock aim to call what you’re aiming at, or pick a ball'
-                        : 'Pick a ball in the tracker, then click a pocket')}
+                {callCleared && !calledBall && !calledPocket
+                  ? (isEight
+                    ? 'pick a ball, click a pocket, or lock aim to call again'
+                    : 'pick a ball in the tracker, then click a pocket')
+                  : calledBall && calledPocket
+                    ? `in the ${POCKET_LABELS[calledPocket] || calledPocket}${obviousCall ? ' — aimed / obvious' : ''}${isEight ? ' — clear call to change ball or pocket' : ''}`
+                    : calledBall
+                      ? (isEight
+                        ? (aimLocked
+                          ? 'aimed ball locked — click a pocket, or pick another ball'
+                          : 'lock aim to confirm the pocket, or click a pocket')
+                        : 'is called — click a pocket for a bank, kick, or combination')
+                      : calledPocket
+                        ? `${POCKET_LABELS[calledPocket] || calledPocket} — pick a ball in the tracker`
+                        : (isEight
+                          ? 'Lock aim to call what you’re aiming at, or pick a ball'
+                          : 'Pick a ball in the tracker, then click a pocket')}
               </span>
               <span className={styles.callDetailShort}>
-                {calledBall && calledPocket
-                  ? `${POCKET_LABELS[calledPocket] || calledPocket}${obviousCall ? ' · aimed' : ''}`
-                  : calledBall
-                    ? 'call a pocket'
-                    : calledPocket
-                      ? (POCKET_LABELS[calledPocket] || calledPocket)
-                      : (isEight ? 'lock aim to call' : 'call the shot')}
+                {callCleared && !calledBall && !calledPocket
+                  ? 'pick ball & pocket'
+                  : calledBall && calledPocket
+                    ? `${POCKET_LABELS[calledPocket] || calledPocket}${obviousCall ? ' · aimed' : ''}`
+                    : calledBall
+                      ? 'call a pocket'
+                      : calledPocket
+                        ? (POCKET_LABELS[calledPocket] || calledPocket)
+                        : (isEight ? 'lock aim to call' : 'call the shot')}
               </span>
               {(calledBall || calledPocket) && (
                 <button
                   type="button"
                   className={styles.callClear}
-                  onClick={() => {
-                    pocketLockRef.current = false;
-                    ballLockRef.current = false;
-                    holdEmptyCallRef.current = true;
-                    lockedAimRef.current = aimAngleRef.current;
-                    setObviousCall(false);
-                    setCalledBall(null);
-                    setCalledPocket(null);
-                  }}
+                  onClick={clearCalledShot}
                 >
-                  Change
+                  Clear call
                 </button>
               )}
             </div>
@@ -4864,6 +4904,7 @@ const SimplePoolGame = ({
             setConsecutiveFouls({ 1: 0, 2: 0 });
             setCalledBall(null);
             setCalledPocket(null);
+            setCallCleared(false);
             setAimLocked(false);
             setTurnCue((cue) => cue + 1);
           }}
